@@ -582,34 +582,6 @@
       background:rgba(0,113,227,0.02);
     }
     
-    /* Customer Search Results */
-    .customer-result-item {
-      padding:10px 12px;
-      cursor:pointer;
-      border-bottom:1px solid rgba(0,0,0,0.06);
-      transition:background 0.15s ease;
-    }
-    
-    .customer-result-item:hover {
-      background:rgba(0,113,227,0.04);
-    }
-    
-    .customer-result-item:last-child {
-      border-bottom:none;
-    }
-    
-    .customer-result-name {
-      font-weight:500;
-      font-size:14px;
-      color:var(--ink);
-    }
-    
-    .customer-result-email {
-      font-size:12px;
-      color:var(--muted);
-      margin-top:2px;
-    }
-    
     /* Responsive */
     @media (max-width: 768px) {
       .artist-item {
@@ -917,117 +889,68 @@
     </div>
   </div>
 
-  <!-- Create Event Modal (Internal/External Events) -->
+  <!-- Create Event Modal -->
   <div class="modal-backdrop" id="createEventModal">
     <div class="modal" style="max-width:600px;">
       <h3>Create New Event</h3>
       <form class="modal-form" id="createEventForm">
         <div class="form-group">
-          <label>Event Name</label>
-          <input type="text" id="createEventName" placeholder="e.g. Team Meeting, Exhibition Opening" required>
+          <label>Event Title</label>
+          <input type="text" id="createEventTitle" placeholder="e.g. Customer Name - Tattoo Session" required>
         </div>
         
         <div class="form-group">
           <label>Event Type</label>
-          <input type="text" id="createEventTypeText" placeholder="e.g. Meeting, Workshop, Exhibition" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Type Category</label>
-          <select id="createEventCategory" required>
-            <option value="">-- Select Category --</option>
-            <option value="internal">Internal</option>
-            <option value="external">External</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Location</label>
-          <input type="text" id="createEventLocation" placeholder="e.g. Conference Room, Studio A" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Visible to Roles</label>
-          <select id="createEventRoles" multiple style="height:100px; border-radius:8px;">
-            <option value="admin">Admin</option>
-            <option value="management">Management</option>
-            <option value="booking">Booking Team</option>
-            <option value="artist">Artists</option>
-            <option value="all">All Staff</option>
-          </select>
-          <small style="color:var(--muted); font-size:12px;">Hold Ctrl/Cmd to select multiple</small>
-        </div>
-        
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" id="createEventDateOnly" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="createEventDescription" rows="3" style="border-radius:8px;" placeholder="Additional details about the event..."></textarea>
-        </div>
-        
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="cancelCreateEvent">Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Event</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Create Booking Modal (Resident/Guest Bookings) -->
-  <div class="modal-backdrop" id="createBookingModal">
-    <div class="modal" style="max-width:600px;">
-      <h3>Create New Booking</h3>
-      <form class="modal-form" id="createBookingForm">
-        <div class="form-group">
-          <label>Booking Name</label>
-          <input type="text" id="createBookingName" placeholder="e.g. John Doe - Sleeve Tattoo" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Customer</label>
-          <div style="position:relative;">
-            <input type="text" id="createBookingCustomerSearch" placeholder="Search customer by name or email..." autocomplete="off">
-            <div id="customerSearchResults" style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid rgba(0,0,0,0.1); border-radius:8px; max-height:200px; overflow-y:auto; z-index:100; box-shadow:var(--shadow); margin-top:4px;"></div>
-          </div>
-          <input type="hidden" id="selectedCustomerId">
-        </div>
-        
-        <div class="form-group">
-          <label>Artist Type</label>
-          <select id="createBookingArtistType" required>
+          <select id="createEventType" required>
             <option value="">-- Select Type --</option>
-            <option value="resident">Resident</option>
-            <option value="guest">Guest</option>
+            <option value="consultation">Consultation</option>
+            <option value="new_tattoo">New Tattoo</option>
+            <option value="continuing_tattoo">Continuing Tattoo</option>
+            <option value="touch_up">Touch Up</option>
+            <option value="selfbooking">Selfbooking</option>
+            <option value="wannado">WannaDo</option>
+            <option value="internal">Internal</option>
+            <option value="move">Move</option>
+            <option value="reserved">Reserved</option>
+            <option value="no_show">No Show</option>
           </select>
         </div>
         
         <div class="form-group">
           <label>Artist</label>
-          <select id="createBookingArtist" disabled required>
-            <option value="">-- Select Artist Type First --</option>
+          <select id="createEventArtist" required>
+            <option value="">-- Select Artist --</option>
           </select>
         </div>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
           <div class="form-group">
             <label>Date</label>
-            <input type="date" id="createBookingDate" required>
+            <input type="date" id="createEventDate" required>
           </div>
           
           <div class="form-group">
-            <label>Slot (Auto-assigned)</label>
-            <input type="text" id="createBookingSlotDisplay" readonly placeholder="Will be auto-assigned" style="background:#f5f5f5;">
-            <input type="hidden" id="createBookingSlot">
+            <label>Slot</label>
+            <select id="createEventSlot" required>
+              <option value="">-- Select Slot --</option>
+              <option value="1">Slot 1</option>
+              <option value="2">Slot 2</option>
+              <option value="3">Slot 3</option>
+              <option value="4">Slot 4</option>
+              <option value="5">Slot 5</option>
+              <option value="6">Slot 6</option>
+              <option value="7">Slot 7</option>
+              <option value="8">Slot 8</option>
+              <option value="9">Slot 9</option>
+              <option value="10">Slot 10</option>
+            </select>
           </div>
         </div>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
           <div class="form-group">
             <label>Start Time</label>
-            <select id="createBookingStartTime" required>
+            <select id="createEventStartTime" required>
               <option value="">-- Select Time --</option>
               <option value="10.0">10:00</option>
               <option value="10.5">10:30</option>
@@ -1055,8 +978,9 @@
           
           <div class="form-group">
             <label>End Time</label>
-            <select id="createBookingEndTime" required>
+            <select id="createEventEndTime" required>
               <option value="">-- Select Time --</option>
+              <option value="10.0">10:00</option>
               <option value="10.5">10:30</option>
               <option value="11.0">11:00</option>
               <option value="11.5">11:30</option>
@@ -1083,8 +1007,8 @@
         </div>
         
         <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="cancelCreateBooking">Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Booking</button>
+          <button type="button" class="btn btn-secondary" id="cancelCreateEvent">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Event</button>
         </div>
       </form>
     </div>
@@ -1837,10 +1761,17 @@
         });
       });
       
-      // Create Event Functions (Internal/External Events)
+      // Create Event Functions
       document.getElementById('createEventBtn')?.addEventListener('click', () => {
+        // Populate artist dropdown
+        const artistSelect = document.getElementById('createEventArtist');
+        if (artistSelect && allArtists.length > 0) {
+          artistSelect.innerHTML = '<option value="">-- Select Artist --</option>' + 
+            allArtists.map(artist => `<option value="${artist.id}">${artist.name} (${artist.is_guest ? 'Guest' : 'Resident'})</option>`).join('');
+        }
+        
         // Set current date as default
-        const dateInput = document.getElementById('createEventDateOnly');
+        const dateInput = document.getElementById('createEventDate');
         if (dateInput) {
           dateInput.value = currentDate.toISOString().split('T')[0];
         }
@@ -1857,30 +1788,36 @@
       document.getElementById('createEventForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const name = document.getElementById('createEventName').value.trim();
-        const typeText = document.getElementById('createEventTypeText').value.trim();
-        const category = document.getElementById('createEventCategory').value;
-        const location = document.getElementById('createEventLocation').value.trim();
-        const rolesSelect = document.getElementById('createEventRoles');
-        const roles = Array.from(rolesSelect.selectedOptions).map(opt => opt.value);
-        const date = document.getElementById('createEventDateOnly').value;
-        const description = document.getElementById('createEventDescription').value.trim();
+        const title = document.getElementById('createEventTitle').value.trim();
+        const type = document.getElementById('createEventType').value;
+        const artistId = document.getElementById('createEventArtist').value;
+        const date = document.getElementById('createEventDate').value;
+        const slot = parseInt(document.getElementById('createEventSlot').value);
+        const startHour = parseFloat(document.getElementById('createEventStartTime').value);
+        const endHour = parseFloat(document.getElementById('createEventEndTime').value);
         
         // Validation
-        if (!name || !typeText || !category || !location || roles.length === 0 || !date) {
-          return alert('Please fill in all required fields');
+        if (!title || !type || !artistId || !date || !slot || !startHour || !endHour) {
+          return alert('Please fill in all fields');
         }
         
+        if (endHour <= startHour) {
+          return alert('End time must be after start time');
+        }
+        
+        // Determine category based on artist
+        const artist = allArtists.find(a => a.id === artistId);
+        const category = type === 'events' ? 'events' : (artist?.is_guest ? 'guest' : 'resident');
+        
         try {
-          // Create event in Supabase events table
+          // Create event in Supabase
           const { data, error } = await supabase.from('events').insert({
-            title: name,
-            type: `${category}_event`,
+            title,
+            type,
+            artist_id: artistId,
             location_id: selectedLocationId,
-            start_time: `${date}T10:00:00`,
-            end_time: `${date}T20:00:00`,
-            // Store additional event metadata
-            artist_id: null // Events don't have artists
+            start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
+            end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
           });
           
           if (error) throw error;
@@ -1888,18 +1825,14 @@
           // Add to local events array
           events.push({
             id: data?.[0]?.id || Date.now(),
-            title: name,
-            type: `${category}_event`,
+            title,
+            type,
             date,
-            category: 'events',
-            slot: 1,
-            startHour: 10,
-            endHour: 20,
-            eventTypeText: typeText,
-            eventCategory: category,
-            eventLocation: location,
-            roles: roles,
-            description: description
+            slot,
+            startHour,
+            endHour,
+            category,
+            artist_id: artistId
           });
           
           // Close modal and reset form
@@ -1917,219 +1850,9 @@
         }
       });
       
-      // Create Booking Functions (Resident/Guest Bookings)
-      let allCustomers = [];
-      
-      document.getElementById('createBookingBtn')?.addEventListener('click', async () => {
-        // Load all customers for search
-        try {
-          const { data, error } = await supabase.from('customers').select('*');
-          if (error) throw error;
-          allCustomers = data || [];
-        } catch (err) {
-          console.error('Error loading customers:', err);
-        }
-        
-        // Set current date as default
-        const dateInput = document.getElementById('createBookingDate');
-        if (dateInput) {
-          dateInput.value = currentDate.toISOString().split('T')[0];
-        }
-        
-        // Reset form
-        document.getElementById('createBookingForm').reset();
-        document.getElementById('createBookingArtist').disabled = true;
-        document.getElementById('selectedCustomerId').value = '';
-        
-        // Open modal
-        document.getElementById('createBookingModal').classList.add('active');
-      });
-      
-      document.getElementById('cancelCreateBooking')?.addEventListener('click', () => {
-        document.getElementById('createBookingModal').classList.remove('active');
-        document.getElementById('createBookingForm').reset();
-      });
-      
-      // Customer search functionality
-      document.getElementById('createBookingCustomerSearch')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        const resultsDiv = document.getElementById('customerSearchResults');
-        
-        if (searchTerm.length < 2) {
-          resultsDiv.style.display = 'none';
-          return;
-        }
-        
-        const filtered = allCustomers.filter(c => 
-          (c.first_name + ' ' + c.last_name).toLowerCase().includes(searchTerm) ||
-          c.email?.toLowerCase().includes(searchTerm)
-        ).slice(0, 5);
-        
-        if (filtered.length === 0) {
-          resultsDiv.innerHTML = '<div style="padding:12px; text-align:center; color:var(--muted); font-size:13px;">No customers found</div>';
-          resultsDiv.style.display = 'block';
-        } else {
-          resultsDiv.innerHTML = filtered.map(c => `
-            <div class="customer-result-item" data-customer-id="${c.id}">
-              <div class="customer-result-name">${c.first_name} ${c.last_name}</div>
-              <div class="customer-result-email">${c.email || ''}</div>
-            </div>
-          `).join('');
-          resultsDiv.style.display = 'block';
-          
-          // Add click handlers
-          resultsDiv.querySelectorAll('.customer-result-item').forEach(item => {
-            item.addEventListener('click', () => {
-              const customerId = item.dataset.customerId;
-              const customer = allCustomers.find(c => c.id === customerId);
-              if (customer) {
-                document.getElementById('createBookingCustomerSearch').value = `${customer.first_name} ${customer.last_name}`;
-                document.getElementById('selectedCustomerId').value = customerId;
-                resultsDiv.style.display = 'none';
-              }
-            });
-          });
-        }
-      });
-      
-      // Hide search results when clicking outside
-      document.addEventListener('click', (e) => {
-        const searchInput = document.getElementById('createBookingCustomerSearch');
-        const resultsDiv = document.getElementById('customerSearchResults');
-        if (searchInput && resultsDiv && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
-          resultsDiv.style.display = 'none';
-        }
-      });
-      
-      // Artist type selection - enables artist dropdown
-      document.getElementById('createBookingArtistType')?.addEventListener('change', (e) => {
-        const type = e.target.value;
-        const artistSelect = document.getElementById('createBookingArtist');
-        
-        if (!type) {
-          artistSelect.disabled = true;
-          artistSelect.innerHTML = '<option value="">-- Select Artist Type First --</option>';
-          return;
-        }
-        
-        const isGuest = type === 'guest';
-        const filteredArtists = allArtists.filter(a => a.is_guest === isGuest);
-        
-        if (filteredArtists.length === 0) {
-          artistSelect.innerHTML = `<option value="">No ${type}s available</option>`;
-          artistSelect.disabled = true;
-        } else {
-          artistSelect.innerHTML = '<option value="">-- Select Artist --</option>' +
-            filteredArtists.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-          artistSelect.disabled = false;
-        }
-      });
-      
-      // Auto-calculate next available slot
-      async function getNextAvailableSlot(date, artistId, artistType) {
-        const dateStr = new Date(date).toISOString().split('T')[0];
-        const category = artistType === 'guest' ? 'guest' : 'resident';
-        
-        // Get existing bookings for this date and category
-        const existingSlots = events
-          .filter(e => e.date === dateStr && e.category === category)
-          .map(e => e.slot);
-        
-        // Find lowest available slot (1-10)
-        for (let slot = 1; slot <= 10; slot++) {
-          if (!existingSlots.includes(slot)) {
-            return slot;
-          }
-        }
-        
-        return 10; // Default to slot 10 if all occupied
-      }
-      
-      // Update slot when date or artist changes
-      document.getElementById('createBookingDate')?.addEventListener('change', updateBookingSlot);
-      document.getElementById('createBookingArtist')?.addEventListener('change', updateBookingSlot);
-      
-      async function updateBookingSlot() {
-        const date = document.getElementById('createBookingDate').value;
-        const artistId = document.getElementById('createBookingArtist').value;
-        const artistType = document.getElementById('createBookingArtistType').value;
-        
-        if (date && artistId && artistType) {
-          const slot = await getNextAvailableSlot(date, artistId, artistType);
-          document.getElementById('createBookingSlot').value = slot;
-          document.getElementById('createBookingSlotDisplay').value = `Slot ${slot} (Auto)`;
-        }
-      }
-      
-      document.getElementById('createBookingForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('createBookingName').value.trim();
-        const customerId = document.getElementById('selectedCustomerId').value;
-        const artistType = document.getElementById('createBookingArtistType').value;
-        const artistId = document.getElementById('createBookingArtist').value;
-        const date = document.getElementById('createBookingDate').value;
-        const slot = parseInt(document.getElementById('createBookingSlot').value);
-        const startHour = parseFloat(document.getElementById('createBookingStartTime').value);
-        const endHour = parseFloat(document.getElementById('createBookingEndTime').value);
-        
-        // Validation
-        if (!name || !customerId || !artistType || !artistId || !date || !slot || !startHour || !endHour) {
-          return alert('Please fill in all fields');
-        }
-        
-        if (endHour <= startHour) {
-          return alert('End time must be after start time');
-        }
-        
-        try {
-          // Create booking in Supabase
-          const { data, error } = await supabase.from('events').insert({
-            title: name,
-            type: 'booking',
-            artist_id: artistId,
-            location_id: selectedLocationId,
-            start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
-            end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
-          });
-          
-          if (error) throw error;
-          
-          // Add to local events array
-          const category = artistType === 'guest' ? 'guest' : 'resident';
-          events.push({
-            id: data?.[0]?.id || Date.now(),
-            title: name,
-            type: 'booking',
-            date,
-            slot,
-            startHour,
-            endHour,
-            category,
-            artist_id: artistId
-          });
-          
-          // Close modal and reset form
-          document.getElementById('createBookingModal').classList.remove('active');
-          document.getElementById('createBookingForm').reset();
-          
-          // Reload events and refresh calendar
-          await loadEvents();
-          renderCalendar();
-          
-          alert('Booking created successfully!');
-        } catch (err) {
-          console.error('Error creating booking:', err);
-          alert('Error creating booking: ' + err.message);
-        }
-      });
-      
-          
-          alert('Event created successfully!');
-        } catch (err) {
-          console.error('Error creating event:', err);
-          alert('Error creating event: ' + err.message);
-        }
+      // Create Booking Button (Simple Alert for now)
+      document.getElementById('createBookingBtn')?.addEventListener('click', () => {
+        alert('Create Booking feature coming soon! This will open a modal to create bookings for Residents/Guests.');
       });
       
       
