@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Management System</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg:#fafafa; --ink:#1d1d1f; --muted:#86868b; --panel:rgba(255,255,255,0.8); --stroke:rgba(0,0,0,0.06);
+      --brand:#1d1d1f; --brand-ink:#ffffff; --accent:#0071e3; --radius:12px;
+      --shadow:0 2px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      --location-primary:#43A047;
+      --location-light:#E8F5E9;
+      --location-dark:#2E7D32;
+      --location-accent:#66BB6A;
+    }
+    * { box-sizing:border-box; }
+    body {
+      font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background:#fafafa;
+      color:var(--ink); margin:0; font-size:15px; line-height:1.47059;
+      -webkit-font-smoothing:antialiased;
+    }
+    nav {
+      position:sticky; top:0; z-index:50; display:flex; gap:18px; align-items:center;
+      background:rgba(255,255,255,0.72); backdrop-filter:saturate(180%) blur(20px);
+      padding:12px 28px; border-bottom:1px solid rgba(0,0,0,0.08);
+    }
+    nav a {
+      color:var(--ink);
+      text-decoration:none;
+      font-weight:500;
+      font-size:14px;
+      padding:6px 4px;
+      border-bottom:2px solid transparent;
+      opacity:0.85;
+      cursor:pointer;
+      transition:opacity 0.2s ease, border-color 0.2s ease;
+    }
+    nav a:hover { opacity:1; }
+    nav a.active { border-color:var(--ink); opacity:1; }
+    section { display:none; padding:24px 5vw; max-width:100%; margin:0 auto; }
+    section.active { display:block; }
+    h2 { margin:0 0 12px; font-size:22px; font-weight:600; letter-spacing:-0.022em; }
+    .badge {
+      background:rgba(255,255,255,0.95);
+      border:1px solid rgba(0,0,0,0.04);
+      border-radius:18px;
+      padding:6px 14px;
+      font-size:13px;
+      box-shadow:0 1px 3px rgba(0,0,0,0.06);
+      display:inline-block;
+      margin-right:8px;
+      margin-bottom:8px;
+    }
+    .calendar-controls {
+      display:flex; gap:12px; margin-bottom:16px; align-items:center; flex-wrap:wrap;
+    }
+    .btn-nav {
+      background:#e0e0e5;
+      color:#1d1d1f;
+      border:none;
+      padding:9px 16px;
+      border-radius:999px;
+      font-weight:400;
+      cursor:pointer;
+      font-size:14px;
+      transition:background 0.2s ease;
+    }
+    .btn-nav:hover { background:#d2d2d7; }
+    input, select, textarea {
+      padding:9px 12px;
+      border:1px solid rgba(0,0,0,0.1);
+      border-radius:999px;
+      font-size:14px;
+      font-family:inherit;
+      background:rgba(255,255,255,0.95);
+      transition:border-color 0.2s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline:none;
+      border-color:var(--accent);
+    }
+    table {
+      width:100%;
+      border-collapse:collapse;
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:12px;
+      overflow:hidden;
+      background:rgba(255,255,255,0.95);
+      box-shadow:var(--shadow);
+    }
+    thead { background:var(--panel); }
+    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--stroke); }
+    tbody tr:last-child td { border-bottom:none; }
+    .calendar-container {
+      background:rgba(255,255,255,0.95);
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      overflow:auto;
+      width:100%;
+    }
+    .calendar-grid {
+      display:grid; grid-template-columns:120px repeat(22, 1fr); min-width:100%;
+    }
+    .calendar-header { display:contents; }
+    .slot-header {
+      background:var(--location-primary); color:white; padding:12px; font-weight:700;
+      text-align:center; border-bottom:1px solid var(--stroke);
+      border-right:1px solid var(--stroke); position:sticky; left:0; z-index:10;
+      min-height:50px; display:flex; align-items:center; justify-content:center;
+      grid-column:1/2;
+    }
+    .hour-header {
+      background:var(--location-primary); color:white; padding:12px; font-weight:400;
+      text-align:center; border-right:none; border-bottom:1px solid var(--stroke);
+      min-height:50px; display:flex; align-items:center; justify-content:center;
+    }
+    .slot-row { display:contents; }
+    .slot-label {
+      background:rgba(249,249,249,0.98);
+      padding:12px;
+      font-weight:500;
+      border-right:1px solid rgba(0,0,0,0.06);
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      position:sticky;
+      left:0;
+      z-index:5;
+      min-height:80px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      grid-column:1;
+    }
+    .category-header {
+      background:var(--location-dark); color:white; padding:10px 12px; font-weight:400;
+      border-right:1px solid var(--stroke); border-bottom:1px solid var(--stroke);
+      position:sticky; left:0; z-index:6; min-height:40px;
+      display:flex; align-items:center; justify-content:center; grid-column:1/2;
+    }
+    .category-spacer {
+      background:var(--location-light); border-right:none; border-bottom:1px solid var(--stroke);
+      min-height:40px;
+    }
+    .slot-cell {
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      border-right:1px solid rgba(0,0,0,0.06);
+      min-height:80px;
+      padding:4px;
+      position:relative;
+      background:rgba(255,255,255,0.8);
+      transition:background 0.15s ease;
+    }
+    .slot-cell.half-hour { border-right:1px solid rgba(0,0,0,0.04); }
+    .slot-cell:hover { background:rgba(0,113,227,0.04); }
+    .event {
+      background:var(--location-primary); color:white; padding:6px; border-radius:4px;
+      font-size:12px; cursor:pointer; transition:background .2s;
+      word-break:break-word; height:100%; display:flex; align-items:center;
+    }
+    .event:hover { background:var(--location-dark); }
+    .event.guest { background:var(--location-accent); }
+    .event.guest:hover { background:var(--location-dark); }
+    
+    /* Dienstplan Styles */
+    .dienstplan-grid {
+      background:rgba(255,255,255,0.95);
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      overflow:auto;
+    }
+    
+    .category-section {
+      border-bottom:1px solid rgba(0,0,0,0.06);
+    }
+    
+    .category-section:last-child {
+      border-bottom:none;
+    }
+    
+    .category-header-btn {
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      background:#f5f5f5;
+      color:#1d1d1f;
+      border:none;
+      padding:12px 16px;
+      font-size:14px;
+      font-weight:600;
+      cursor:pointer;
+      transition:background 0.2s ease;
+      font-family:inherit;
+      text-align:left;
+    }
+    
+    .category-header-btn:hover {
+      background:#e8e8e8;
+    }
+    
+    .category-header-btn .arrow {
+      margin-right:8px;
+      transition:transform 0.3s ease;
+      font-size:12px;
+      display:inline-block;
+      width:16px;
+    }
+    
+    .category-header-btn.active .arrow {
+      transform:rotate(90deg);
+    }
+    
+    .category-content {
+      display:none;
+    }
+    
+    .category-content.active {
+      display:block;
+    }
+    
+    .person-row-container {
+      display:contents;
+    }
+    
+    .dienstplan-table {
+      width:100%;
+      display:grid;
+      grid-template-columns:150px repeat(31, 80px);
+      border-collapse:collapse;
+    }
+    
+    .dp-header-row {
+      display:contents;
+    }
+    
+    .dp-name-header {
+      background:rgba(249,249,249,0.98);
+      padding:12px;
+      font-weight:600;
+      border-right:1px solid rgba(0,0,0,0.06);
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      position:sticky;
+      left:0;
+      z-index:5;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      font-size:13px;
+      color:#666;
+      background:rgba(255,255,255,0.98);
+    }
+    
+    .dp-day-header {
+      background:var(--location-light);
+      padding:8px 4px;
+      font-weight:400;
+      text-align:center;
+      border-right:1px solid rgba(0,0,0,0.06);
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      font-size:11px;
+      min-height:50px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:2px;
+    }
+    
+    .dp-day-header .weekday {
+      font-weight:500;
+      color:#666;
+      font-size:10px;
+    }
+    
+    .dp-day-header .day-num {
+      font-size:13px;
+      font-weight:600;
+      color:#1d1d1f;
+    }
+    
+    .dp-row {
+      display:contents;
+    }
+    
+    .dp-name-cell {
+      background:rgba(255,255,255,0.98);
+      padding:10px 12px 10px 32px;
+      font-weight:400;
+      border-right:1px solid rgba(0,0,0,0.06);
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      position:sticky;
+      left:0;
+      z-index:4;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      font-size:13px;
+      color:#1d1d1f;
+    }
+    
+    .dp-cell {
+      border-right:1px solid rgba(0,0,0,0.06);
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      min-height:40px;
+      background:rgba(255,255,255,0.8);
+      transition:background 0.15s ease;
+      cursor:pointer;
+    }
+    
+    .dp-cell:hover {
+      background:rgba(0,113,227,0.04);
+    }
+    
+    .dp-cell.working {
+      background:var(--location-accent);
+    }
+    
+    .dp-cell.off {
+      background:#FFEBEE;
+    }
+    
+    .dp-cell.vacation {
+      background:#FFF3E0;
+    }
+    
+    /* Apple-style Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 51px;
+      height: 31px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e5e5ea;
+      transition: .3s;
+      border-radius: 15.5px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 27px;
+      width: 27px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 27px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 3px 1px rgba(0,0,0,0.06);
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: #34c759;
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+    
+    .current-time-indicator {
+      position: absolute;
+      top: 100px;
+      bottom: 0;
+      width: 2px;
+      background: #ff3b30;
+      z-index: 20;
+      pointer-events: none;
+    }
+    
+    .current-time-indicator::before {
+      content: '';
+      position: absolute;
+      left: -3px;
+      top: 0;
+      width: 8px;
+      height: 8px;
+      background: #ff3b30;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a id="tab-dashboard" class="active">Dashboard</a>
+    <a id="tab-artists">Artists</a>
+    <a id="tab-customers">Customers</a>
+    <a id="tab-requests">Requests</a>
+    <a id="tab-calendar">Calendar</a>
+    <a id="tab-dienstplan">Dienstplan</a>
+    <a id="tab-analytics">Analytics</a>
+  </nav>
+
+  <section id="dashboard-section" class="active">
+    <h2>Dashboard</h2>
+    <div>
+      <span class="badge" id="badge-pending">Pending: —</span>
+      <span class="badge" id="badge-scheduled">Scheduled: —</span>
+      <span class="badge" id="badge-residents">Residents: —</span>
+      <span class="badge" id="badge-guests">Guests: —</span>
+    </div>
+  </section>
+
+  <section id="requests-section">
+    <h2>Requests</h2>
+    
+    <!-- Sub Navigation -->
+    <div style="position:relative; background:#e8e8ed; border-radius:28px; padding:6px; margin-bottom:24px; display:inline-flex; gap:0;">
+      <div id="requestsIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:white; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 3px 8px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
+      <button class="request-tab active" data-filter="" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">New Request</button>
+      <button class="request-tab" data-filter="my" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">My Requests</button>
+      <button class="request-tab" data-filter="progress" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">In Progress</button>
+      <button class="request-tab" data-filter="scheduled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Scheduled</button>
+      <button class="request-tab" data-filter="finished" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Finished</button>
+      <button class="request-tab" data-filter="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
+    </div>
+    
+    <table id="requestsTable">
+      <thead><tr><th>Name</th><th>Email</th><th>Placement</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="calendar-section">
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+      <h2 style="margin:0; font-size:28px; font-weight:700;">Booking Calendar</h2>
+      <div id="currentDateDisplayTop" style="font-weight:700; font-size:28px; color:var(--ink);"></div>
+    </div>
+    
+    <!-- Event Type Legend -->
+    <div style="display:flex; gap:16px; margin-bottom:50px; padding:16px 20px; background:rgba(255,255,255,0.95); border-radius:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.06);">
+      <span style="font-weight:500; font-size:13px; color:var(--muted);">Booking Types:</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#66BB6A;"></div>
+        <span style="font-size:13px; color:var(--ink);">Consultation</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#EC407A;"></div>
+        <span style="font-size:13px; color:var(--ink);">New Tattoo</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#42A5F5;"></div>
+        <span style="font-size:13px; color:var(--ink);">Continuing Tattoo</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#FFEB3B;"></div>
+        <span style="font-size:13px; color:var(--ink);">Touch Up</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#8D6E63;"></div>
+        <span style="font-size:13px; color:var(--ink);">Selfbooking</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#AB47BC;"></div>
+        <span style="font-size:13px; color:var(--ink);">WannaDo</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#EF5350;"></div>
+        <span style="font-size:13px; color:var(--ink);">Internal</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#26C6DA;"></div>
+        <span style="font-size:13px; color:var(--ink);">Move</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#78909C;"></div>
+        <span style="font-size:13px; color:var(--ink);">Reserved</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#FFFFFF; border:1px solid #BDBDBD;"></div>
+        <span style="font-size:13px; color:var(--ink);">No Show</span>
+      </div>
+    </div>
+    
+    <div class="calendar-controls">
+      <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
+        <label style="font-weight:600; font-size:14px;">Location:</label>
+        <select id="locationDropdown" style="min-width:200px;"></select>
+      </div>
+      <button id="prevDayBtn" class="btn-nav">‹ Prev</button>
+      <input type="date" id="datePickerInput">
+      <button id="todayBtn" class="btn-nav">Today</button>
+      <button id="nextDayBtn" class="btn-nav" style="margin-right:40px;">Next ›</button>
+      <div style="display:flex; gap:24px; align-items:center; margin-left:auto;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+          <span>Events</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="checkEvents" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+          <span>Residents</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="checkResidents" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+          <span>Guests</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="checkGuests" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </label>
+      </div>
+    </div>
+    <div id="locationInfo" style="margin-bottom:12px; padding:10px 16px; background:rgba(255,255,255,0.95); border-radius:10px; font-size:13px; color:var(--muted); box-shadow:0 1px 3px rgba(0,0,0,0.06); border:1px solid rgba(0,0,0,0.04);"></div>
+    <div class="calendar-container" id="calendarContainer"></div>
+  </section>
+
+  <section id="dienstplan-section">
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+      <h2 style="margin:0; font-size:28px; font-weight:700;">Dienstplan</h2>
+      <div id="dienstplanMonth" style="font-weight:700; font-size:28px; color:var(--ink);"></div>
+    </div>
+    
+    <!-- Status Legend -->
+    <div style="display:flex; gap:16px; margin-bottom:24px; padding:16px 20px; background:rgba(255,255,255,0.95); border-radius:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.06);">
+      <span style="font-weight:500; font-size:13px; color:var(--muted);">Status:</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#2196F3;"></div>
+        <span style="font-size:13px; color:var(--ink);">Home office</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#FF9800;"></div>
+        <span style="font-size:13px; color:var(--ink);">Business trip</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#4CAF50;"></div>
+        <span style="font-size:13px; color:var(--ink);">Vacation</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#9C27B0;"></div>
+        <span style="font-size:13px; color:var(--ink);">Others</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#F44336;"></div>
+        <span style="font-size:13px; color:var(--ink);">Sick</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#795548;"></div>
+        <span style="font-size:13px; color:var(--ink);">Guestspot</span>
+      </div>
+    </div>
+    
+    <div class="calendar-controls" style="margin-bottom:24px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
+        <label style="font-weight:600; font-size:14px;">Location:</label>
+        <select id="dienstplanLocationDropdown" style="min-width:200px;"></select>
+      </div>
+      <button id="prevMonthBtn" class="btn-nav">‹ Vorheriger Monat</button>
+      <button id="currentMonthBtn" class="btn-nav">Aktueller Monat</button>
+      <button id="nextMonthBtn" class="btn-nav">Nächster Monat ›</button>
+    </div>
+    
+    <div id="dienstplanContainer" style="width:100%; overflow-x:auto; overflow-y:visible;"></div>
+  </section>
+
+  <section id="artists-section">
+    <h2>Artists</h2>
+    <div style="display:flex;gap:12px;margin-bottom:16px;">
+      <input id="newArtistName" placeholder="Artist name" style="flex:1;">
+      <select id="artistType">
+        <option value="resident">Resident</option>
+        <option value="guest">Guest</option>
+      </select>
+      <button id="addArtistBtn" class="btn-nav">Add</button>
+    </div>
+    <ul id="artistList" style="list-style:none;padding:0;"></ul>
+  </section>
+
+  <section id="customers-section">
+    <h2>Customers</h2>
+    <table id="customersTable">
+      <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Requests</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="analytics-section">
+    <h2>Analytics</h2>
+    <p style="color:var(--muted);">Coming soon...</p>
+  </section>
+
+  <script>
+    const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentDate = new Date();
+    let dienstplanDate = new Date();
+    let events = [];
+    let allArtists = [];
+    let selectedLocationId = null;
+    let selectedDienstplanLocationId = null;
+    let currentLocationName = '';
+    let openCategories = new Set();
+    
+    // Category visibility state
+    let visibleCategories = {
+      events: true,
+      residents: true,
+      guests: true
+    };
+
+    // Google-inspirierte Farbschemata pro Location
+    const locationColors = {
+      'mommy': {
+        primary: '#8E24AA',      // Purple
+        light: '#F3E5F5',
+        dark: '#6A1B9A',
+        accent: '#BA68C8'
+      },
+      'gon': {
+        primary: '#1976D2',      // Blue
+        light: '#E3F2FD',
+        dark: '#0D47A1',
+        accent: '#42A5F5'
+      },
+      'muttersöhne': {
+        primary: '#43A047',      // Green
+        light: '#E8F5E9',
+        dark: '#2E7D32',
+        accent: '#66BB6A'
+      },
+      'pardon': {
+        primary: '#E53935',      // Red
+        light: '#FFEBEE',
+        dark: '#C62828',
+        accent: '#EF5350'
+      },
+      'default': {
+        primary: '#111827',      // Dark Gray
+        light: '#F3F4F6',
+        dark: '#0F172A',
+        accent: '#6B7280'
+      }
+    };
+
+    function getLocationColors(locationName) {
+      const name = (locationName || '').toLowerCase();
+      if (name.includes('mommy')) return locationColors.mommy;
+      if (name.includes('gon')) return locationColors.gon;
+      if (name.includes('muttersöhne') || name.includes('muttersohne')) return locationColors.muttersöhne;
+      if (name.includes('pardon')) return locationColors.pardon;
+      return locationColors.default;
+    }
+
+    function applyLocationTheme(colors) {
+      const root = document.documentElement;
+      root.style.setProperty('--location-primary', colors.primary);
+      root.style.setProperty('--location-light', colors.light);
+      root.style.setProperty('--location-dark', colors.dark);
+      root.style.setProperty('--location-accent', colors.accent);
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const tabs = document.querySelectorAll("nav a");
+      const sections = document.querySelectorAll("section");
+
+      await loadInitialData();
+
+      // Request tabs initialization function
+      function initRequestTabs() {
+        const requestTabs = document.querySelectorAll('.request-tab');
+        const requestsIndicator = document.getElementById('requestsIndicator');
+        
+        console.log('Init Request tabs found:', requestTabs.length);
+        console.log('Init Indicator element:', requestsIndicator);
+        
+        if (!requestsIndicator || requestTabs.length === 0) {
+          console.error('Missing indicator or tabs');
+          return;
+        }
+        
+        function updateRequestsIndicator(tab) {
+          if (!requestsIndicator || !tab) return;
+          
+          const tabRect = tab.getBoundingClientRect();
+          const containerRect = tab.parentElement.getBoundingClientRect();
+          const left = tabRect.left - containerRect.left;
+          const width = tabRect.width;
+          
+          console.log('Updating indicator - Left:', left, 'Width:', width);
+          
+          requestsIndicator.style.width = `${width}px`;
+          requestsIndicator.style.transform = `translateX(${left}px)`;
+        }
+        
+        // Initialize indicator position
+        setTimeout(() => {
+          const activeTab = document.querySelector('.request-tab.active');
+          if (activeTab) {
+            console.log('Initializing indicator for active tab');
+            updateRequestsIndicator(activeTab);
+          }
+        }, 50);
+        
+        // Add click listeners
+        requestTabs.forEach((tab, index) => {
+          console.log('Adding click listener to tab', index, tab.textContent);
+          
+          // Remove old listeners by cloning
+          const newTab = tab.cloneNode(true);
+          tab.parentNode.replaceChild(newTab, tab);
+          
+          newTab.addEventListener('click', function(e) {
+            console.log('Tab clicked:', this.textContent, 'Filter:', this.dataset.filter);
+            
+            document.querySelectorAll('.request-tab').forEach(t => {
+              t.classList.remove('active');
+              t.style.color = '#86868b';
+            });
+            this.classList.add('active');
+            this.style.color = '#1d1d1f';
+            
+            updateRequestsIndicator(this);
+            loadRequests();
+          });
+        });
+      }
+
+      function showSection(tab) {
+        tabs.forEach(x => x.classList.remove("active"));
+        sections.forEach(s => s.classList.remove("active"));
+        tab.classList.add("active");
+        
+        const tabName = tab.id.replace("tab-", "");
+        const target = document.getElementById(tabName + "-section");
+        if (target) {
+          target.classList.add("active");
+          if (tabName === "dashboard") loadDashboard();
+          else if (tabName === "requests") {
+            loadRequests();
+            initRequestTabs();
+          }
+          else if (tabName === "calendar") renderCalendar();
+          else if (tabName === "dienstplan") renderDienstplan();
+          else if (tabName === "artists") loadArtists();
+          else if (tabName === "customers") loadCustomers();
+        }
+      }
+
+      tabs.forEach(tab => tab.addEventListener("click", () => showSection(tab)));
+
+      async function loadInitialData() {
+        try {
+          const { data: artists } = await supabase.from('artists').select('*');
+          allArtists = artists || [];
+          console.log('Artists loaded:', allArtists.length);
+          
+          const { data: locations } = await supabase.from('locations').select('*').order('name', { ascending: true });
+          console.log('Locations loaded:', locations?.length);
+          
+          if (locations && locations.length > 0) {
+            // Finde "mommy i'm sorry" oder nimm die erste Location
+            const mommyLocation = locations.find(l => l.name.toLowerCase().includes("mommy"));
+            selectedLocationId = mommyLocation ? mommyLocation.id : locations[0].id;
+            selectedDienstplanLocationId = selectedLocationId;
+            
+            // Set initial location name and theme
+            const initialLocation = locations.find(l => l.id === selectedLocationId);
+            if (initialLocation) {
+              currentLocationName = initialLocation.name;
+              const colors = getLocationColors(currentLocationName);
+              applyLocationTheme(colors);
+            }
+            
+            const locSelect = document.getElementById('locationDropdown');
+            locSelect.innerHTML = locations.map(l => 
+              `<option value="${l.id}" ${l.id === selectedLocationId ? 'selected' : ''}>${l.name}</option>`
+            ).join('');
+            
+            locSelect.onchange = async (e) => {
+              selectedLocationId = e.target.value;
+              console.log('Location changed to:', selectedLocationId);
+              
+              // Get location name and apply theme
+              const selectedLocation = locations.find(l => l.id === selectedLocationId);
+              if (selectedLocation) {
+                currentLocationName = selectedLocation.name;
+                const colors = getLocationColors(currentLocationName);
+                applyLocationTheme(colors);
+              }
+              
+              await loadEvents();
+              renderCalendar();
+            };
+            
+            // Dienstplan Location Dropdown
+            const dienstplanLocSelect = document.getElementById('dienstplanLocationDropdown');
+            dienstplanLocSelect.innerHTML = locations.map(l => 
+              `<option value="${l.id}" ${l.id === selectedDienstplanLocationId ? 'selected' : ''}>${l.name}</option>`
+            ).join('');
+            
+            dienstplanLocSelect.onchange = (e) => {
+              selectedDienstplanLocationId = e.target.value;
+              console.log('Dienstplan location changed to:', selectedDienstplanLocationId);
+              renderDienstplan();
+            };
+          }
+          
+          await loadEvents();
+          await loadDashboard();
+        } catch(err) {
+          console.error("Load error:", err);
+          alert("Error loading data: " + err.message);
+        }
+      }
+
+      async function loadDashboard() {
+        try {
+          const { data: reqs } = await supabase.from('requests').select('*');
+          const { data: artists } = await supabase.from('artists').select('*');
+          
+          document.getElementById('badge-pending').textContent = `Pending: ${reqs?.filter(r=>r.status==='pending').length || 0}`;
+          document.getElementById('badge-scheduled').textContent = `Scheduled: ${reqs?.filter(r=>r.status==='scheduled').length || 0}`;
+          document.getElementById('badge-residents').textContent = `Residents: ${artists?.filter(a=>!a.is_guest).length || 0}`;
+          document.getElementById('badge-guests').textContent = `Guests: ${artists?.filter(a=>a.is_guest).length || 0}`;
+        } catch(err) {
+          console.error("Dashboard error:", err);
+        }
+      }
+
+      async function loadRequests() {
+        try {
+          const activeTab = document.querySelector('.request-tab.active');
+          const filter = activeTab ? activeTab.dataset.filter : '';
+          
+          let query = supabase.from('requests').select('*');
+          
+          if (filter === 'my') {
+            // Filter for current user's requests (you can adjust this logic)
+            query = query.eq('status', 'pending');
+          } else if (filter === 'progress') {
+            query = query.eq('status', 'in_progress');
+          } else if (filter === 'scheduled') {
+            query = query.eq('status', 'scheduled');
+          } else if (filter === 'finished') {
+            query = query.eq('status', 'done');
+          } else if (filter === 'canceled') {
+            query = query.eq('status', 'canceled');
+          }
+          
+          const { data } = await query;
+          const tbody = document.querySelector('#requestsTable tbody');
+          
+          if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);">No requests found</td></tr>';
+            return;
+          }
+          
+          tbody.innerHTML = data.map(r => `
+            <tr>
+              <td>${r.first_name || ''} ${r.last_name || ''}</td>
+              <td>${r.email || ''}</td>
+              <td>${r.placement || ''}</td>
+              <td>${r.status || ''}</td>
+            </tr>
+          `).join('');
+        } catch(err) {
+          console.error("Requests error:", err);
+        }
+      }
+
+      async function loadArtists() {
+        try {
+          const { data } = await supabase.from('artists').select('*');
+          const list = document.getElementById('artistList');
+          
+          if (!data || data.length === 0) {
+            list.innerHTML = '<li style="padding:12px;color:var(--muted);">No artists yet</li>';
+            return;
+          }
+          
+          list.innerHTML = data.map(a => `
+            <li style="padding:12px;border-bottom:1px solid var(--stroke);">
+              ${a.name} <span style="color:var(--muted);font-size:13px;">(${a.is_guest ? 'Guest' : 'Resident'})</span>
+            </li>
+          `).join('');
+        } catch(err) {
+          console.error("Artists error:", err);
+        }
+      }
+
+      async function loadCustomers() {
+        try {
+          const { data: customers } = await supabase.from('customers').select('*');
+          const { data: reqs } = await supabase.from('requests').select('email');
+          
+          const emailCount = {};
+          reqs?.forEach(r => { if(r.email) emailCount[r.email] = (emailCount[r.email]||0) + 1; });
+          
+          const tbody = document.querySelector('#customersTable tbody');
+          
+          if (!customers || customers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);">No customers found</td></tr>';
+            return;
+          }
+          
+          tbody.innerHTML = customers.map(c => `
+            <tr>
+              <td>${c.first_name || ''} ${c.last_name || ''}</td>
+              <td>${c.email || ''}</td>
+              <td>${c.phone || ''}</td>
+              <td>${emailCount[c.email] || 0}</td>
+            </tr>
+          `).join('');
+        } catch(err) {
+          console.error("Customers error:", err);
+        }
+      }
+
+      async function loadEvents() {
+        try {
+          if (!selectedLocationId) {
+            console.log('No location selected');
+            events = [];
+            return;
+          }
+          
+          const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('location_id', selectedLocationId);
+          
+          if (error) throw error;
+          
+          console.log(`Events loaded for location ${selectedLocationId}:`, data?.length);
+          
+          events = (data || []).map(e => {
+            const artist = allArtists.find(a => a.id === e.artist_id);
+            const start = new Date(e.start_time);
+            const end = new Date(e.end_time);
+            
+            return {
+              id: e.id,
+              date: e.start_time.split('T')[0],
+              category: artist?.is_guest ? 'guest' : 'resident',
+              slot: ((e.artist_id || 1) % 10) || 10,
+              title: e.title || artist?.name || 'Event',
+              startHour: start.getHours() + start.getMinutes()/60,
+              endHour: end.getHours() + end.getMinutes()/60
+            };
+          });
+          
+          // Update Location Info
+          const { data: locationData } = await supabase
+            .from('locations')
+            .select('name')
+            .eq('id', selectedLocationId)
+            .single();
+          
+          const infoDiv = document.getElementById('locationInfo');
+          if (infoDiv) {
+            infoDiv.textContent = `📍 Showing ${events.length} appointment${events.length !== 1 ? 's' : ''} for ${locationData?.name || 'this location'}`;
+          }
+          
+          console.log('Processed events:', events);
+        } catch(err) {
+          console.error("Events error:", err);
+          events = [];
+        }
+      }
+
+      function renderCalendar() {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        document.getElementById('datePickerInput').value = dateStr;
+        
+        // Update date display (z.B. "Mo. 20. Oktober 2025")
+        const dateDisplayTop = document.getElementById('currentDateDisplayTop');
+        if (dateDisplayTop) {
+          const day = currentDate.getDate();
+          const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 
+                              'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+          const month = monthNames[currentDate.getMonth()];
+          const year = currentDate.getFullYear();
+          const weekdayShort = currentDate.toLocaleDateString('de-DE', { weekday: 'short' });
+          const formattedDate = `${weekdayShort} ${day}. ${month} ${year}`;
+          dateDisplayTop.textContent = formattedDate;
+        }
+        
+        // Check if today
+        const today = new Date();
+        const isToday = dateStr === today.toISOString().split('T')[0];
+        
+        const container = document.getElementById('calendarContainer');
+        if (!container) return;
+
+        let html = '<div class="calendar-grid" style="position:relative;">';
+        
+        html += '<div class="calendar-header"><div class="slot-header">Slots</div>';
+        for (let h = 10; h <= 20; h++) html += `<div class="hour-header" style="grid-column:span 2;">${h}:00</div>`;
+        html += '</div>';
+
+        // Define categories to render
+        const categoriesToRender = [
+          { key: 'events', label: 'Events', visible: visibleCategories.events },
+          { key: 'resident', label: 'Residents', visible: visibleCategories.residents },
+          { key: 'guest', label: 'Guests', visible: visibleCategories.guests }
+        ];
+
+        categoriesToRender.forEach(({ key, label, visible }) => {
+          if (!visible) return;
+          
+          const cat = key === 'events' ? 'events' : key;
+          
+          html += '<div class="calendar-header"><div class="category-header">' + label + '</div>';
+          for (let h = 10; h <= 20; h++) html += '<div class="category-spacer" style="grid-column:span 2;"></div>';
+          html += '</div>';
+
+          for (let slot = 1; slot <= 10; slot++) {
+            html += `<div class="slot-row"><div class="slot-label">Slot ${slot}</div>`;
+            
+            for (let h = 10; h <= 20; h++) {
+              [0, 0.5].forEach(offset => {
+                const evts = events.filter(e => 
+                  e.date === dateStr && e.slot === slot && e.category === cat &&
+                  e.startHour >= h + offset && e.startHour < h + offset + 0.5
+                );
+                const content = evts.length > 0 ? `<div class="event ${cat}">${evts[0].title}</div>` : '';
+                html += `<div class="slot-cell ${offset===0?'half-hour':''}">${content}</div>`;
+              });
+            }
+            
+            html += '</div>';
+          }
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+        
+        // Add current time indicator if today
+        if (isToday) {
+          addCurrentTimeIndicator();
+          // Update every minute
+          setInterval(updateCurrentTimeIndicator, 60000);
+        }
+      }
+      
+      function addCurrentTimeIndicator() {
+        const now = new Date();
+        const currentHour = now.getHours() + now.getMinutes() / 60;
+        
+        // Only show if current time is within calendar range (10-20)
+        if (currentHour < 10 || currentHour > 20) return;
+        
+        updateCurrentTimeIndicator();
+      }
+      
+      function updateCurrentTimeIndicator() {
+        // Remove old indicator
+        const oldIndicator = document.querySelector('.current-time-indicator');
+        if (oldIndicator) oldIndicator.remove();
+        
+        const now = new Date();
+        const currentHour = now.getHours() + now.getMinutes() / 60;
+        
+        // Only show if current time is within calendar range
+        if (currentHour < 10 || currentHour > 20) return;
+        
+        const calendarGrid = document.querySelector('.calendar-grid');
+        if (!calendarGrid) return;
+        
+        // Calculate position (10:00 = 0%, 20:00 = 100%)
+        const startHour = 10;
+        const endHour = 20;
+        const totalHours = endHour - startHour;
+        const hoursFromStart = currentHour - startHour;
+        const percentage = (hoursFromStart / totalHours) * 100;
+        
+        // Calculate pixel position
+        // Grid has 1 slot column (120px) + 22 time columns
+        const slotColumnWidth = 120;
+        const gridWidth = calendarGrid.offsetWidth;
+        const timeColumnsWidth = gridWidth - slotColumnWidth;
+        const pixelPosition = slotColumnWidth + (timeColumnsWidth * percentage / 100);
+        
+        const indicator = document.createElement('div');
+        indicator.className = 'current-time-indicator';
+        indicator.style.left = `${pixelPosition}px`;
+        indicator.style.top = '0';
+        indicator.style.bottom = '0';
+        
+        calendarGrid.appendChild(indicator);
+      }
+
+      document.getElementById('prevDayBtn').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() - 1);
+        renderCalendar();
+      });
+
+      document.getElementById('nextDayBtn').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() + 1);
+        renderCalendar();
+      });
+
+      document.getElementById('todayBtn').addEventListener('click', () => {
+        currentDate = new Date();
+        renderCalendar();
+      });
+
+      document.getElementById('datePickerInput').addEventListener('change', (e) => {
+        currentDate = new Date(e.target.value);
+        renderCalendar();
+      });
+      
+      document.getElementById('addArtistBtn')?.addEventListener('click', async () => {
+        const name = document.getElementById('newArtistName').value.trim();
+        const type = document.getElementById('artistType').value;
+        if (!name) return alert('Please enter a name');
+        
+        try {
+          const { error } = await supabase.from('artists').insert({
+            name,
+            is_guest: type === 'guest',
+            active: true,
+            location_id: selectedLocationId
+          });
+          
+          if (error) throw error;
+          
+          document.getElementById('newArtistName').value = '';
+          await loadInitialData();
+          await loadArtists();
+          alert('Artist added successfully!');
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
+      });
+      
+      // Category checkboxes
+      document.getElementById('checkEvents').addEventListener('change', (e) => {
+        visibleCategories.events = e.target.checked;
+        renderCalendar();
+      });
+      
+      document.getElementById('checkResidents').addEventListener('change', (e) => {
+        visibleCategories.residents = e.target.checked;
+        renderCalendar();
+      });
+      
+      document.getElementById('checkGuests').addEventListener('change', (e) => {
+        visibleCategories.guests = e.target.checked;
+        renderCalendar();
+      });
+      
+      document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
+        dienstplanDate.setMonth(dienstplanDate.getMonth() - 1);
+        renderDienstplan();
+      });
+      
+      document.getElementById('nextMonthBtn')?.addEventListener('click', () => {
+        dienstplanDate.setMonth(dienstplanDate.getMonth() + 1);
+        renderDienstplan();
+      });
+      
+      document.getElementById('currentMonthBtn')?.addEventListener('click', () => {
+        dienstplanDate = new Date();
+        renderDienstplan();
+      });
+    });
+
+    function renderDienstplan() {
+      const monthDisplay = document.getElementById('dienstplanMonth');
+      const container = document.getElementById('dienstplanContainer');
+      if (!monthDisplay || !container) return;
+      
+      const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 
+                          'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+      const month = monthNames[dienstplanDate.getMonth()];
+      const year = dienstplanDate.getFullYear();
+      monthDisplay.textContent = `${month} ${year}`;
+      
+      // Get location colors
+      const locationData = document.querySelector('#dienstplanLocationDropdown option:checked')?.textContent || '';
+      const colors = getLocationColors(locationData);
+      
+      const daysInMonth = new Date(dienstplanDate.getFullYear(), dienstplanDate.getMonth() + 1, 0).getDate();
+      
+      const categories = [
+        { name: 'Geschäftsführung', people: ['Name 1', 'Name 2', 'Name 3'] },
+        { name: 'Management', people: ['Name 1', 'Name 2', 'Name 3'] },
+        { name: 'Booking Team', people: ['Name 1', 'Name 2', 'Name 3'] },
+        { name: 'Mediadepartment', people: ['Name 1', 'Name 2', 'Name 3'] },
+        { name: 'Resident Artists', people: ['Name 1', 'Name 2', 'Name 3'] },
+        { name: 'Guest Artists', people: ['Name 1', 'Name 2', 'Name 3'] },
+        { name: 'Azubis', people: ['Name 1', 'Name 2', 'Name 3'] },
+        { name: 'Andere', people: ['Name 1', 'Name 2', 'Name 3'] }
+      ];
+      
+      let html = '<table style="width:auto; min-width:100%; border-collapse:collapse; background:white; table-layout:fixed;">';
+      
+      // Header row with days
+      html += '<thead><tr>';
+      html += '<th style="position:sticky; left:0; z-index:20; background:rgba(249,249,249,0.98); padding:12px; text-align:left; border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); font-size:13px; color:#666; width:150px; min-width:150px; max-width:150px;">Resources</th>';
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(dienstplanDate.getFullYear(), dienstplanDate.getMonth(), day);
+        const weekday = date.toLocaleDateString('de-DE', { weekday: 'short' }).toUpperCase();
+        
+        // Check if this is today
+        const today = new Date();
+        const isToday = date.getDate() === today.getDate() && 
+                        date.getMonth() === today.getMonth() && 
+                        date.getFullYear() === today.getFullYear();
+        
+        const todayStyle = isToday ? 'background:#ff3b30; color:white;' : `background:${colors.light};`;
+        
+        html += `<th style="${todayStyle} padding:8px 4px; text-align:center; border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); font-size:11px; width:80px; min-width:80px; max-width:80px;">
+                   <div style="font-size:13px; font-weight:600; ${isToday ? 'color:white;' : 'color:#1d1d1f;'}">${day}</div>
+                   <div style="font-size:10px; font-weight:500; ${isToday ? 'color:rgba(255,255,255,0.9);' : 'color:#666;'} margin-top:2px;">${weekday}</div>
+                 </th>`;
+      }
+      html += '</tr></thead>';
+      
+      html += '<tbody>';
+      
+      categories.forEach((cat, catIndex) => {
+        // Category header row
+        html += `<tr class="category-row">
+                   <td colspan="${daysInMonth + 1}" style="padding:0; border-bottom:1px solid rgba(0,0,0,0.06);">
+                     <button class="category-header-btn" data-category="${catIndex}" style="width:100%; display:flex; align-items:center; justify-content:flex-start; background:#f5f5f5; color:#1d1d1f; border:none; padding:12px 16px; font-size:14px; font-weight:600; cursor:pointer; text-align:left; font-family:inherit;">
+                       <span class="arrow" style="margin-right:8px; font-size:12px; display:inline-block; width:16px; transition:transform 0.3s ease;">▶</span>
+                       <span>${cat.name}</span>
+                     </button>
+                   </td>
+                 </tr>`;
+        
+        // People rows (hidden by default)
+        cat.people.forEach((person, personIndex) => {
+          html += `<tr class="person-row" data-category="${catIndex}" style="display:none;">
+                     <td style="position:sticky; left:0; z-index:10; background:rgba(255,255,255,0.98); padding:10px 12px 10px 32px; text-align:left; border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); font-size:13px; color:#1d1d1f; width:150px; min-width:150px; max-width:150px;">${person}</td>`;
+          
+          for (let day = 1; day <= daysInMonth; day++) {
+            html += `<td style="border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.8); cursor:pointer; padding:0; width:80px; min-width:80px; max-width:80px;">
+                       <div class="dp-cell" data-cat="${catIndex}" data-person="${personIndex}" data-day="${day}" style="width:100%; height:100%; min-height:40px;"></div>
+                     </td>`;
+          }
+          
+          html += '</tr>';
+        });
+      });
+      
+      html += '</tbody></table>';
+      container.innerHTML = html;
+      
+      // Add event listeners
+      document.querySelectorAll('.category-header-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const catIndex = this.dataset.category;
+          const arrow = this.querySelector('.arrow');
+          const personRows = document.querySelectorAll(`.person-row[data-category="${catIndex}"]`);
+          const isOpen = openCategories.has(catIndex);
+          
+          if (isOpen) {
+            personRows.forEach(row => row.style.display = 'none');
+            arrow.style.transform = 'rotate(0deg)';
+            openCategories.delete(catIndex);
+          } else {
+            personRows.forEach(row => row.style.display = 'table-row');
+            arrow.style.transform = 'rotate(90deg)';
+            openCategories.add(catIndex);
+          }
+        });
+      });
+      
+      // Restore previously open categories
+      openCategories.forEach(catIndex => {
+        const btn = document.querySelector(`.category-header-btn[data-category="${catIndex}"]`);
+        const arrow = btn?.querySelector('.arrow');
+        const personRows = document.querySelectorAll(`.person-row[data-category="${catIndex}"]`);
+        
+        if (btn && arrow) {
+          personRows.forEach(row => row.style.display = 'table-row');
+          arrow.style.transform = 'rotate(90deg)';
+        }
+      });
+      
+      // Cell click handlers with location colors
+      document.querySelectorAll('.dp-cell').forEach(cell => {
+        cell.addEventListener('click', function() {
+          if (!this.classList.contains('working') && !this.classList.contains('off') && !this.classList.contains('vacation')) {
+            this.classList.add('working');
+            this.style.background = colors.accent;
+          } else if (this.classList.contains('working')) {
+            this.classList.remove('working');
+            this.classList.add('off');
+            this.style.background = '#FFEBEE';
+          } else if (this.classList.contains('off')) {
+            this.classList.remove('off');
+            this.classList.add('vacation');
+            this.style.background = '#FFF3E0';
+          } else {
+            this.classList.remove('vacation');
+            this.style.background = '';
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
