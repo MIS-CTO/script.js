@@ -394,6 +394,207 @@
       background: #ff3b30;
       border-radius: 50%;
     }
+    
+    /* Modal Styles */
+    .modal-backdrop {
+      display:none;
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.5);
+      backdrop-filter:blur(4px);
+      z-index:1000;
+      align-items:center;
+      justify-content:center;
+    }
+    
+    .modal-backdrop.active {
+      display:flex;
+    }
+    
+    .modal {
+      background:white;
+      border-radius:12px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.2);
+      padding:24px;
+      max-width:500px;
+      width:90%;
+      max-height:80vh;
+      overflow-y:auto;
+    }
+    
+    .modal h3 {
+      margin:0 0 20px;
+      font-size:20px;
+      font-weight:600;
+    }
+    
+    .modal-form {
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    
+    .form-group {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    
+    .form-group label {
+      font-size:13px;
+      font-weight:500;
+      color:var(--muted);
+    }
+    
+    .modal-actions {
+      display:flex;
+      gap:12px;
+      justify-content:flex-end;
+      margin-top:20px;
+    }
+    
+    .btn {
+      padding:10px 20px;
+      border-radius:8px;
+      border:none;
+      font-size:14px;
+      font-weight:500;
+      cursor:pointer;
+      transition:all 0.2s ease;
+      font-family:inherit;
+    }
+    
+    .btn-primary {
+      background:var(--accent);
+      color:white;
+    }
+    
+    .btn-primary:hover {
+      background:#0077ED;
+    }
+    
+    .btn-secondary {
+      background:#f5f5f5;
+      color:var(--ink);
+    }
+    
+    .btn-secondary:hover {
+      background:#e5e5e5;
+    }
+    
+    .btn-danger {
+      background:#ff3b30;
+      color:white;
+    }
+    
+    .btn-danger:hover {
+      background:#ff2d20;
+    }
+    
+    .btn-icon {
+      background:transparent;
+      border:none;
+      cursor:pointer;
+      padding:6px;
+      border-radius:6px;
+      color:var(--muted);
+      transition:all 0.2s ease;
+      font-size:16px;
+    }
+    
+    .btn-icon:hover {
+      background:rgba(0,0,0,0.05);
+      color:var(--ink);
+    }
+    
+    /* Artist List Styles */
+    .artist-list {
+      list-style:none;
+      padding:0;
+      margin:16px 0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    
+    .artist-item {
+      background:white;
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:10px;
+      padding:12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      transition:all 0.2s ease;
+    }
+    
+    .artist-item:hover {
+      border-color:rgba(0,0,0,0.12);
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .artist-info {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex:1;
+    }
+    
+    .artist-name {
+      font-weight:500;
+      font-size:15px;
+    }
+    
+    .artist-badge {
+      background:var(--location-light);
+      color:var(--location-dark);
+      padding:4px 10px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:500;
+    }
+    
+    .artist-badge.guest {
+      background:#e3f2fd;
+      color:#1565c0;
+    }
+    
+    .artist-instagram {
+      color:var(--muted);
+      font-size:13px;
+      margin-left:8px;
+    }
+    
+    .artist-actions {
+      display:flex;
+      gap:4px;
+    }
+    
+    /* Customer Table Styles */
+    #customersTable tbody tr {
+      transition:background 0.15s ease;
+    }
+    
+    #customersTable tbody tr:hover {
+      background:rgba(0,113,227,0.02);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .artist-item {
+        flex-direction:column;
+        align-items:flex-start;
+        gap:12px;
+      }
+      
+      .artist-actions {
+        width:100%;
+        justify-content:flex-end;
+      }
+    }
   </style>
 </head>
 <body>
@@ -575,22 +776,35 @@
 
   <section id="artists-section">
     <h2>Artists</h2>
-    <div style="display:flex;gap:12px;margin-bottom:16px;">
-      <input id="newArtistName" placeholder="Artist name" style="flex:1;">
+    <div style="display:flex;gap:12px;margin-bottom:16px; flex-wrap:wrap;">
+      <input id="newArtistName" placeholder="Artist name" style="flex:1; min-width:200px;">
+      <input id="newArtistInstagram" placeholder="Instagram handle" style="flex:1; min-width:200px;">
       <select id="artistType">
         <option value="resident">Resident</option>
         <option value="guest">Guest</option>
       </select>
-      <button id="addArtistBtn" class="btn-nav">Add</button>
+      <button id="addArtistBtn" class="btn-nav">Add Artist</button>
     </div>
-    <ul id="artistList" style="list-style:none;padding:0;"></ul>
+    <ul id="artistList" class="artist-list"></ul>
   </section>
 
   <section id="customers-section">
     <h2>Customers</h2>
+    <div style="margin-bottom:16px;">
+      <p style="color:var(--muted); font-size:14px;">Manage your customer database</p>
+    </div>
     <table id="customersTable">
-      <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Requests</th></tr></thead>
-      <tbody></tbody>
+      <thead>
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Created</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="customersTableBody"></tbody>
     </table>
   </section>
 
@@ -598,6 +812,69 @@
     <h2>Analytics</h2>
     <p style="color:var(--muted);">Coming soon...</p>
   </section>
+
+  <!-- Edit Artist Modal -->
+  <div class="modal-backdrop" id="editArtistModal">
+    <div class="modal">
+      <h3>Edit Artist</h3>
+      <form class="modal-form" id="editArtistForm">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="editArtistName" required>
+        </div>
+        <div class="form-group">
+          <label>Instagram Handle</label>
+          <input type="text" id="editArtistInstagram" placeholder="@username">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="editArtistType">
+            <option value="resident">Resident</option>
+            <option value="guest">Guest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="editArtistActive">
+            Active
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelEditArtist">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Customer Modal -->
+  <div class="modal-backdrop" id="editCustomerModal">
+    <div class="modal">
+      <h3>Edit Customer</h3>
+      <form class="modal-form" id="editCustomerForm">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="editCustomerFirstName" required>
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="editCustomerLastName" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="editCustomerEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="editCustomerPhone">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelEditCustomer">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
@@ -880,19 +1157,32 @@
         }
       }
 
+      let currentEditArtistId = null;
+      let currentEditCustomerId = null;
+
       async function loadArtists() {
         try {
-          const { data } = await supabase.from('artists').select('*');
+          const { data } = await supabase.from('artists').select('*').order('name');
+          allArtists = data || [];
           const list = document.getElementById('artistList');
           
           if (!data || data.length === 0) {
-            list.innerHTML = '<li style="padding:12px;color:var(--muted);">No artists yet</li>';
+            list.innerHTML = '<li style="padding:20px; text-align:center; color:var(--muted);">No artists yet. Add one above!</li>';
             return;
           }
           
-          list.innerHTML = data.map(a => `
-            <li style="padding:12px;border-bottom:1px solid var(--stroke);">
-              ${a.name} <span style="color:var(--muted);font-size:13px;">(${a.is_guest ? 'Guest' : 'Resident'})</span>
+          list.innerHTML = data.map(artist => `
+            <li class="artist-item">
+              <div class="artist-info">
+                <span class="artist-name">${artist.name}</span>
+                <span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span>
+                ${artist.instagram ? `<span class="artist-instagram">@${artist.instagram}</span>` : ''}
+                ${!artist.active ? '<span style="color:#ff3b30; font-size:12px; margin-left:8px;">(Inactive)</span>' : ''}
+              </div>
+              <div class="artist-actions">
+                <button class="btn-icon" onclick="editArtist('${artist.id}')" title="Edit">✏️</button>
+                <button class="btn-icon" onclick="deleteArtist('${artist.id}')" title="Delete">🗑️</button>
+              </div>
             </li>
           `).join('');
         } catch(err) {
@@ -902,25 +1192,26 @@
 
       async function loadCustomers() {
         try {
-          const { data: customers } = await supabase.from('customers').select('*');
-          const { data: reqs } = await supabase.from('requests').select('email');
+          const { data: customers } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
           
-          const emailCount = {};
-          reqs?.forEach(r => { if(r.email) emailCount[r.email] = (emailCount[r.email]||0) + 1; });
-          
-          const tbody = document.querySelector('#customersTable tbody');
+          const tbody = document.getElementById('customersTableBody');
           
           if (!customers || customers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);">No customers found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No customers yet</td></tr>';
             return;
           }
           
-          tbody.innerHTML = customers.map(c => `
+          tbody.innerHTML = customers.map(customer => `
             <tr>
-              <td>${c.first_name || ''} ${c.last_name || ''}</td>
-              <td>${c.email || ''}</td>
-              <td>${c.phone || ''}</td>
-              <td>${emailCount[c.email] || 0}</td>
+              <td>${customer.first_name || '-'}</td>
+              <td>${customer.last_name || '-'}</td>
+              <td>${customer.email || '-'}</td>
+              <td>${customer.phone || '-'}</td>
+              <td style="font-size:13px; color:var(--muted);">${new Date(customer.created_at).toLocaleDateString()}</td>
+              <td style="text-align:right;">
+                <button class="btn-icon" onclick="editCustomer('${customer.id}')" title="Edit">✏️</button>
+                <button class="btn-icon" onclick="deleteCustomer('${customer.id}')" title="Delete">🗑️</button>
+              </td>
             </tr>
           `).join('');
         } catch(err) {
@@ -1124,12 +1415,14 @@
       
       document.getElementById('addArtistBtn')?.addEventListener('click', async () => {
         const name = document.getElementById('newArtistName').value.trim();
+        const instagram = document.getElementById('newArtistInstagram').value.trim();
         const type = document.getElementById('artistType').value;
         if (!name) return alert('Please enter a name');
         
         try {
           const { error } = await supabase.from('artists').insert({
             name,
+            instagram: instagram || null,
             is_guest: type === 'guest',
             active: true,
             location_id: selectedLocationId
@@ -1138,6 +1431,7 @@
           if (error) throw error;
           
           document.getElementById('newArtistName').value = '';
+          document.getElementById('newArtistInstagram').value = '';
           await loadInitialData();
           await loadArtists();
           alert('Artist added successfully!');
@@ -1145,6 +1439,190 @@
           alert('Error: ' + err.message);
         }
       });
+      
+      // Edit Artist Functions
+      window.editArtist = async function(artistId) {
+        const artist = allArtists.find(a => a.id === artistId);
+        if (!artist) return;
+        
+        currentEditArtistId = artistId;
+        
+        document.getElementById('editArtistName').value = artist.name;
+        document.getElementById('editArtistInstagram').value = artist.instagram || '';
+        document.getElementById('editArtistType').value = artist.is_guest ? 'guest' : 'resident';
+        document.getElementById('editArtistActive').checked = artist.active;
+        
+        document.getElementById('editArtistModal').classList.add('active');
+      };
+      
+      document.getElementById('cancelEditArtist')?.addEventListener('click', () => {
+        document.getElementById('editArtistModal').classList.remove('active');
+        currentEditArtistId = null;
+      });
+      
+      document.getElementById('editArtistForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('editArtistName').value.trim();
+        const instagram = document.getElementById('editArtistInstagram').value.trim();
+        const type = document.getElementById('editArtistType').value;
+        const active = document.getElementById('editArtistActive').checked;
+        
+        if (!name) return alert('Name is required');
+        
+        try {
+          const { error } = await supabase
+            .from('artists')
+            .update({
+              name,
+              instagram: instagram || null,
+              is_guest: type === 'guest',
+              active
+            })
+            .eq('id', currentEditArtistId);
+          
+          if (error) throw error;
+          
+          document.getElementById('editArtistModal').classList.remove('active');
+          currentEditArtistId = null;
+          
+          await loadArtists();
+          renderCalendar();
+          alert('Artist updated successfully!');
+        } catch (err) {
+          alert('Error updating artist: ' + err.message);
+        }
+      });
+      
+      // Delete Artist Function
+      window.deleteArtist = async function(artistId) {
+        const artist = allArtists.find(a => a.id === artistId);
+        if (!artist) return;
+        
+        if (!confirm(`Are you sure you want to delete "${artist.name}"? This action cannot be undone.`)) {
+          return;
+        }
+        
+        try {
+          const { error } = await supabase
+            .from('artists')
+            .delete()
+            .eq('id', artistId);
+          
+          if (error) throw error;
+          
+          await loadArtists();
+          renderCalendar();
+          alert('Artist deleted successfully!');
+        } catch (err) {
+          alert('Error deleting artist: ' + err.message);
+        }
+      };
+      
+      // Edit Customer Functions
+      window.editCustomer = async function(customerId) {
+        try {
+          const { data, error } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', customerId)
+            .single();
+          
+          if (error) throw error;
+          if (!data) return;
+          
+          currentEditCustomerId = customerId;
+          
+          document.getElementById('editCustomerFirstName').value = data.first_name || '';
+          document.getElementById('editCustomerLastName').value = data.last_name || '';
+          document.getElementById('editCustomerEmail').value = data.email || '';
+          document.getElementById('editCustomerPhone').value = data.phone || '';
+          
+          document.getElementById('editCustomerModal').classList.add('active');
+        } catch (err) {
+          alert('Error loading customer: ' + err.message);
+        }
+      };
+      
+      document.getElementById('cancelEditCustomer')?.addEventListener('click', () => {
+        document.getElementById('editCustomerModal').classList.remove('active');
+        currentEditCustomerId = null;
+      });
+      
+      document.getElementById('editCustomerForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const firstName = document.getElementById('editCustomerFirstName').value.trim();
+        const lastName = document.getElementById('editCustomerLastName').value.trim();
+        const email = document.getElementById('editCustomerEmail').value.trim();
+        const phone = document.getElementById('editCustomerPhone').value.trim();
+        
+        if (!firstName || !lastName || !email) {
+          return alert('First name, last name, and email are required');
+        }
+        
+        try {
+          const { error } = await supabase
+            .from('customers')
+            .update({
+              first_name: firstName,
+              last_name: lastName,
+              email,
+              phone: phone || null
+            })
+            .eq('id', currentEditCustomerId);
+          
+          if (error) throw error;
+          
+          document.getElementById('editCustomerModal').classList.remove('active');
+          currentEditCustomerId = null;
+          
+          await loadCustomers();
+          alert('Customer updated successfully!');
+        } catch (err) {
+          alert('Error updating customer: ' + err.message);
+        }
+      });
+      
+      // Delete Customer Function
+      window.deleteCustomer = async function(customerId) {
+        try {
+          const { data, error } = await supabase
+            .from('customers')
+            .select('first_name, last_name')
+            .eq('id', customerId)
+            .single();
+          
+          if (error) throw error;
+          if (!data) return;
+          
+          if (!confirm(`Are you sure you want to delete "${data.first_name} ${data.last_name}"? This action cannot be undone.`)) {
+            return;
+          }
+          
+          const { error: deleteError } = await supabase
+            .from('customers')
+            .delete()
+            .eq('id', customerId);
+          
+          if (deleteError) throw deleteError;
+          
+          await loadCustomers();
+          alert('Customer deleted successfully!');
+        } catch (err) {
+          alert('Error deleting customer: ' + err.message);
+        }
+      };
+      
+      // Close modals on backdrop click
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.addEventListener('click', (e) => {
+          if (e.target === backdrop) {
+            backdrop.classList.remove('active');
+          }
+        });
+      });
+      
       
       // Category checkboxes
       document.getElementById('checkEvents').addEventListener('change', (e) => {
