@@ -640,8 +640,8 @@
       text-transform:uppercase;
       letter-spacing:0.5px;
     }
-    .request-badge.new { background:#dc3545; color:white; }
-    .request-badge.in-progress { background:#ffc107; color:#000; }
+    .request-badge.open_request { background:#dc3545; color:white; }
+    .request-badge.pending { background:#ffc107; color:#000; }
     .request-badge.scheduled { background:#28a745; color:white; }
     .request-badge.finished { background:#6c757d; color:white; }
     .request-badge.canceled { background:#dc3545; color:white; }
@@ -771,12 +771,12 @@
     <!-- Sub Navigation -->
     <div style="position:relative; background:#e8e8ed; border-radius:28px; padding:6px; margin-bottom:24px; display:inline-flex; gap:0;">
       <div id="requestsIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:white; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 3px 8px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
-      <button class="request-tab active" data-status="new" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+      <button class="request-tab active" data-status="open_request" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
         New Requests
         <span id="badge-new" style="display:inline-block; background:#dc3545; color:white; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; min-width:18px; text-align:center;">0</span>
       </button>
       <button class="request-tab" data-status="my-requests" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">My Requests</button>
-      <button class="request-tab" data-status="in-progress" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">In Progress</button>
+      <button class="request-tab" data-status="pending" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">In Progress</button>
       <button class="request-tab" data-status="scheduled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Scheduled</button>
       <button class="request-tab" data-status="finished" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Finished</button>
       <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
@@ -1486,7 +1486,7 @@
       }
 
       let allRequests = [];
-      let currentRequestStatus = 'new';
+      let currentRequestStatus = 'open_request';
       let selectedRequestId = null;
       let currentUser = 'member1'; // TODO: Replace with actual logged-in user
       
@@ -1524,11 +1524,20 @@
           return;
         }
         
+        // Status display names mapping
+        const statusNames = {
+          'open_request': 'New',
+          'pending': 'Pending',
+          'scheduled': 'Scheduled',
+          'finished': 'Finished',
+          'canceled': 'Canceled'
+        };
+        
         listEl.innerHTML = requests.map(req => `
-          <div class="request-item ${req.status === 'new' ? 'new-status' : ''}" data-id="${req.id}">
+          <div class="request-item ${req.status === 'open_request' ? 'new-status' : ''}" data-id="${req.id}">
             <div class="request-header">
               <div class="request-id">#${req.id.substring(0, 8).toUpperCase()}</div>
-              <div class="request-badge ${req.status}">${req.status.replace('-', ' ')}</div>
+              <div class="request-badge ${req.status}">${statusNames[req.status] || req.status}</div>
             </div>
             <div class="request-name">${req.first_name || ''} ${req.last_name || ''}</div>
             <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
@@ -1552,10 +1561,19 @@
         
         const detailEl = document.getElementById('requestDetail');
         
+        // Status display names
+        const statusNames = {
+          'open_request': 'New',
+          'pending': 'Pending',
+          'scheduled': 'Scheduled',
+          'finished': 'Finished',
+          'canceled': 'Canceled'
+        };
+        
         let actions = '';
-        if (request.status === 'new') {
+        if (request.status === 'open_request') {
           actions = `<button class="btn btn-primary" onclick="assignRequest()">Assign to Team Member</button>`;
-        } else if (request.status === 'in-progress') {
+        } else if (request.status === 'pending') {
           actions = `<button class="btn btn-success" onclick="scheduleAppointment()">Schedule Appointment</button>`;
         } else if (request.status === 'scheduled') {
           actions = `<button class="btn btn-danger" onclick="cancelAppointment()">Cancel Appointment</button>`;
@@ -1579,7 +1597,7 @@
               </div>
               <div class="detail-item">
                 <div class="detail-label">Status</div>
-                <div class="detail-value"><span class="request-badge ${request.status}">${request.status.replace('-', ' ')}</span></div>
+                <div class="detail-value"><span class="request-badge ${request.status}">${statusNames[request.status] || request.status}</span></div>
               </div>
             </div>
           </div>
@@ -1661,7 +1679,7 @@
       }
       
       function updateRequestBadges() {
-        const newCount = allRequests.filter(r => r.status === 'new').length;
+        const newCount = allRequests.filter(r => r.status === 'open_request').length;
         const badgeEl = document.getElementById('badge-new');
         if (badgeEl) {
           badgeEl.textContent = newCount;
@@ -1697,7 +1715,7 @@
           const { error } = await supabase
             .from('requests')
             .update({
-              status: 'in-progress',
+              status: 'pending',
               assigned_to: teamMember
             })
             .eq('id', selectedRequestId);
