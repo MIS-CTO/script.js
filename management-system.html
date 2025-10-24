@@ -134,6 +134,21 @@
       justify-content:center;
       grid-column:1;
     }
+    .slot-label.empty {
+      min-height:40px;
+      background:rgba(240,240,240,0.98);
+      color:#999;
+      font-size:12px;
+      font-weight:400;
+    }
+    .slot-label.empty .slot-number {
+      font-weight:500;
+      color:#666;
+    }
+    .slot-label.empty .empty-text {
+      margin-left:6px;
+      font-style:italic;
+    }
     .category-header {
       background:var(--location-dark); color:white; padding:10px 12px; font-weight:400;
       border-right:1px solid var(--stroke); border-bottom:1px solid var(--stroke);
@@ -152,6 +167,30 @@
       position:relative;
       background:rgba(255,255,255,0.8);
       transition:background 0.15s ease;
+    }
+    .slot-cell.empty-slot {
+      min-height:40px;
+      background:rgba(245,245,245,0.6);
+      cursor:default;
+    }
+    .slot-cell.empty-slot:hover {
+      background:rgba(245,245,245,0.6);
+    }
+    .slot-row.empty-row .slot-label {
+      min-height:40px;
+      background:rgba(249,249,249,0.5);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .slot-row.empty-row .slot-label::after {
+      content: " - Empty";
+      font-weight:400;
+      font-size:11px;
+      color:#999;
+      margin-left:4px;
+    }
+    .slot-row.empty-row .slot-cell {
+      min-height:40px;
     }
     .slot-cell.half-hour { border-right:1px solid rgba(0,0,0,0.04); }
     .slot-cell:hover { background:rgba(0,113,227,0.04); }
@@ -860,21 +899,21 @@
       <button id="nextDayBtn" class="btn-nav" style="margin-right:40px;">Next ›</button>
       <div style="display:flex; gap:24px; align-items:center; margin-left:auto;">
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
-          <span>Events</span>
+          <span style="font-weight:700;">Events</span>
           <label class="toggle-switch">
             <input type="checkbox" id="checkEvents" checked>
             <span class="toggle-slider"></span>
           </label>
         </label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
-          <span>Residents</span>
+          <span style="font-weight:700;">Residents</span>
           <label class="toggle-switch">
             <input type="checkbox" id="checkResidents" checked>
             <span class="toggle-slider"></span>
           </label>
         </label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
-          <span>Guests</span>
+          <span style="font-weight:700;">Guests</span>
           <label class="toggle-switch">
             <input type="checkbox" id="checkGuests" checked>
             <span class="toggle-slider"></span>
@@ -885,11 +924,11 @@
     
     <!-- Create Buttons Row -->
     <div style="margin-bottom:16px; display:flex; gap:12px;">
-      <button id="createEventBtn" class="btn-nav" style="background:var(--accent); color:white; display:flex; align-items:center; gap:8px; padding:10px 20px;">
+      <button id="createEventBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Create Event</span>
       </button>
-      <button id="createBookingBtn" class="btn-nav" style="background:#34c759; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px;">
+      <button id="createBookingBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Create Booking</span>
       </button>
@@ -966,6 +1005,16 @@
     <div style="margin-bottom:16px;">
       <p style="color:var(--muted); font-size:14px;">Manage your customer database</p>
     </div>
+    
+    <!-- Customer Search -->
+    <div style="margin-bottom:16px;">
+      <input 
+        type="text" 
+        id="customerSearchInput" 
+        placeholder="Search customers by name, email or phone..." 
+        style="width:100%; max-width:500px; padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:999px; font-size:14px;">
+    </div>
+    
     <table id="customersTable">
       <thead>
         <tr>
@@ -1224,34 +1273,10 @@
           </div>
         </div>
         
-        <div class="form-group">
-          <label>Artist (Optional)</label>
-          <select id="createEventArtist">
-            <option value="">-- No Artist --</option>
-          </select>
-        </div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div style="display:grid; grid-template-columns:1fr; gap:16px;">
           <div class="form-group">
             <label>Date</label>
             <input type="date" id="createEventDate" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Slot</label>
-            <select id="createEventSlot" required>
-              <option value="">-- Select Slot --</option>
-              <option value="1">Slot 1</option>
-              <option value="2">Slot 2</option>
-              <option value="3">Slot 3</option>
-              <option value="4">Slot 4</option>
-              <option value="5">Slot 5</option>
-              <option value="6">Slot 6</option>
-              <option value="7">Slot 7</option>
-              <option value="8">Slot 8</option>
-              <option value="9">Slot 9</option>
-              <option value="10">Slot 10</option>
-            </select>
           </div>
         </div>
         
@@ -1280,7 +1305,6 @@
               <option value="18.5">18:30</option>
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
-              <option value="20.0">20:00</option>
             </select>
           </div>
           
@@ -1309,7 +1333,6 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
-              <option value="20.5">20:30</option>
             </select>
           </div>
         </div>
@@ -1350,33 +1373,25 @@
         </div>
         
         <div class="form-group">
-          <label>Artist</label>
-          <select id="createBookingArtist" required>
-            <option value="">-- Select Artist --</option>
+          <label>Artist Type</label>
+          <select id="createBookingArtistType" required>
+            <option value="">-- Select Artist Type --</option>
+            <option value="resident">Resident</option>
+            <option value="guest">Guest</option>
           </select>
         </div>
         
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label>Search Artist</label>
+          <input type="text" id="createBookingArtistSearch" placeholder="Type to search artist..." disabled>
+          <input type="hidden" id="createBookingArtistId">
+          <div id="artistSearchResults" style="display:none; max-height:200px; overflow-y:auto; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-top:4px; background:white;"></div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr; gap:16px;">
           <div class="form-group">
             <label>Date</label>
             <input type="date" id="createBookingDate" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Slot</label>
-            <select id="createBookingSlot" required>
-              <option value="">-- Select Slot --</option>
-              <option value="1">Slot 1</option>
-              <option value="2">Slot 2</option>
-              <option value="3">Slot 3</option>
-              <option value="4">Slot 4</option>
-              <option value="5">Slot 5</option>
-              <option value="6">Slot 6</option>
-              <option value="7">Slot 7</option>
-              <option value="8">Slot 8</option>
-              <option value="9">Slot 9</option>
-              <option value="10">Slot 10</option>
-            </select>
           </div>
         </div>
         
@@ -1405,7 +1420,6 @@
               <option value="18.5">18:30</option>
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
-              <option value="20.0">20:00</option>
             </select>
           </div>
           
@@ -1434,7 +1448,6 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
-              <option value="20.5">20:30</option>
             </select>
           </div>
         </div>
@@ -2125,18 +2138,38 @@
         }
       }
 
-      async function loadCustomers() {
+      let allCustomers = [];
+      
+      async function loadCustomers(searchTerm = '') {
         try {
           const { data: customers } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
           
+          allCustomers = customers || [];
+          
+          // Filter customers if search term provided
+          let filteredCustomers = allCustomers;
+          if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filteredCustomers = allCustomers.filter(customer => 
+              (customer.first_name?.toLowerCase().includes(term)) ||
+              (customer.last_name?.toLowerCase().includes(term)) ||
+              (customer.email?.toLowerCase().includes(term)) ||
+              (customer.phone?.toLowerCase().includes(term))
+            );
+          }
+          
           const tbody = document.getElementById('customersTableBody');
           
-          if (!customers || customers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No customers yet</td></tr>';
+          if (filteredCustomers.length === 0) {
+            if (searchTerm) {
+              tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No customers found matching your search</td></tr>';
+            } else {
+              tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No customers yet</td></tr>';
+            }
             return;
           }
           
-          tbody.innerHTML = customers.map(customer => `
+          tbody.innerHTML = filteredCustomers.map(customer => `
             <tr>
               <td>${customer.first_name || '-'}</td>
               <td>${customer.last_name || '-'}</td>
@@ -2205,6 +2238,30 @@
           events = [];
         }
       }
+      
+      // Find available slot for a given date, category, start and end hour
+      function findAvailableSlot(date, category, startHour, endHour) {
+        // Get all events for this date and category
+        const dateEvents = events.filter(e => 
+          e.date === date && 
+          e.category === category
+        );
+        
+        // Check each slot from 1-10
+        for (let slot = 1; slot <= 10; slot++) {
+          // Check if this slot has any overlapping events
+          const hasConflict = dateEvents.some(e => 
+            e.slot === slot &&
+            !(endHour <= e.startHour || startHour >= e.endHour)
+          );
+          
+          if (!hasConflict) {
+            return slot; // Found a free slot
+          }
+        }
+        
+        return null; // All slots are occupied
+      }
 
       function renderCalendar() {
         const dateStr = currentDate.toISOString().split('T')[0];
@@ -2244,29 +2301,38 @@
         ];
 
         categoriesToRender.forEach(({ key, label, visible }) => {
-          if (!visible) return;
-          
           const cat = key === 'events' ? 'events' : key;
           
+          // Always show category header
           html += '<div class="calendar-header"><div class="category-header">' + label + '</div>';
           for (let h = 10; h <= 20; h++) html += '<div class="category-spacer" style="grid-column:span 2;"></div>';
           html += '</div>';
 
-          for (let slot = 1; slot <= 10; slot++) {
-            html += `<div class="slot-row"><div class="slot-label">Slot ${slot}</div>`;
-            
-            for (let h = 10; h <= 20; h++) {
-              [0, 0.5].forEach(offset => {
-                const evts = events.filter(e => 
-                  e.date === dateStr && e.slot === slot && e.category === cat &&
-                  e.startHour >= h + offset && e.startHour < h + offset + 0.5
-                );
-                const content = evts.length > 0 ? `<div class="event ${cat}">${evts[0].title}</div>` : '';
-                html += `<div class="slot-cell ${offset===0?'half-hour':''}">${content}</div>`;
-              });
+          // Only show slots if visible
+          if (visible) {
+            for (let slot = 1; slot <= 10; slot++) {
+              // Check if this slot has any events
+              const slotHasEvents = events.some(e => 
+                e.date === dateStr && e.slot === slot && e.category === cat
+              );
+              
+              const rowClass = slotHasEvents ? '' : 'empty-row';
+              
+              html += `<div class="slot-row ${rowClass}"><div class="slot-label">Slot ${slot}</div>`;
+              
+              for (let h = 10; h <= 20; h++) {
+                [0, 0.5].forEach(offset => {
+                  const evts = events.filter(e => 
+                    e.date === dateStr && e.slot === slot && e.category === cat &&
+                    e.startHour >= h + offset && e.startHour < h + offset + 0.5
+                  );
+                  const content = evts.length > 0 ? `<div class="event ${cat}">${evts[0].title}</div>` : '';
+                  html += `<div class="slot-cell ${offset===0?'half-hour':''}">${content}</div>`;
+                });
+              }
+              
+              html += '</div>';
             }
-            
-            html += '</div>';
           }
         });
 
@@ -2560,13 +2626,6 @@
       
       // Create Event Functions
       document.getElementById('createEventBtn')?.addEventListener('click', () => {
-        // Populate artist dropdown
-        const artistSelect = document.getElementById('createEventArtist');
-        if (artistSelect && allArtists.length > 0) {
-          artistSelect.innerHTML = '<option value="">-- Select Artist --</option>' + 
-            allArtists.map(artist => `<option value="${artist.id}">${artist.name} (${artist.is_guest ? 'Guest' : 'Resident'})</option>`).join('');
-        }
-        
         // Set current date as default
         const dateInput = document.getElementById('createEventDate');
         if (dateInput) {
@@ -2588,9 +2647,7 @@
         const title = document.getElementById('createEventTitle').value.trim();
         const type = document.getElementById('createEventType').value.trim();
         const description = document.getElementById('createEventDescription').value.trim();
-        const artistId = document.getElementById('createEventArtist').value;
         const date = document.getElementById('createEventDate').value;
-        const slot = parseInt(document.getElementById('createEventSlot').value);
         const startHour = parseFloat(document.getElementById('createEventStartTime').value);
         const endHour = parseFloat(document.getElementById('createEventEndTime').value);
         
@@ -2602,7 +2659,7 @@
         });
         
         // Validation
-        if (!title || !type || !date || !slot || !startHour || !endHour) {
+        if (!title || !type || !date || !startHour || !endHour) {
           return alert('Please fill in all required fields');
         }
         
@@ -2610,11 +2667,14 @@
           return alert('End time must be after start time');
         }
         
-        // Determine category based on artist if selected, otherwise 'events'
-        let category = 'events';
-        if (artistId) {
-          const artist = allArtists.find(a => a.id === artistId);
-          category = artist?.is_guest ? 'guest' : 'resident';
+        // Events category is always 'events'
+        const category = 'events';
+        
+        // Find available slot
+        const slot = findAvailableSlot(date, category, startHour, endHour);
+        
+        if (slot === null) {
+          return alert('All slots are occupied for this time range. Please choose a different time or date.');
         }
         
         try {
@@ -2624,7 +2684,7 @@
             type,
             description: description || null,
             visible_groups: selectedGroups.length > 0 ? selectedGroups : null,
-            artist_id: artistId || null,
+            artist_id: null,
             location_id: selectedLocationId,
             start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
             end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
@@ -2644,7 +2704,7 @@
             startHour,
             endHour,
             category,
-            artist_id: artistId || null
+            artist_id: null
           });
           
           // Close modal and reset form
@@ -2670,21 +2730,89 @@
       
       // Create Booking Button - Opens Create Booking Modal
       document.getElementById('createBookingBtn')?.addEventListener('click', () => {
-        // Populate artist dropdown
-        const artistSelect = document.getElementById('createBookingArtist');
-        if (artistSelect && allArtists.length > 0) {
-          artistSelect.innerHTML = '<option value="">-- Select Artist --</option>' + 
-            allArtists.map(artist => `<option value="${artist.id}">${artist.name} (${artist.is_guest ? 'Guest' : 'Resident'})</option>`).join('');
-        }
-        
         // Set current date as default
         const dateInput = document.getElementById('createBookingDate');
         if (dateInput) {
           dateInput.value = currentDate.toISOString().split('T')[0];
         }
         
+        // Reset artist search
+        document.getElementById('createBookingArtistSearch').value = '';
+        document.getElementById('createBookingArtistSearch').disabled = true;
+        document.getElementById('createBookingArtistId').value = '';
+        document.getElementById('artistSearchResults').style.display = 'none';
+        
         // Open modal
         document.getElementById('createBookingModal').classList.add('active');
+      });
+      
+      // Artist Type change handler
+      document.getElementById('createBookingArtistType')?.addEventListener('change', (e) => {
+        const artistType = e.target.value;
+        const searchInput = document.getElementById('createBookingArtistSearch');
+        
+        if (artistType) {
+          searchInput.disabled = false;
+          searchInput.value = '';
+          document.getElementById('createBookingArtistId').value = '';
+          document.getElementById('artistSearchResults').style.display = 'none';
+        } else {
+          searchInput.disabled = true;
+          searchInput.value = '';
+          document.getElementById('createBookingArtistId').value = '';
+          document.getElementById('artistSearchResults').style.display = 'none';
+        }
+      });
+      
+      // Artist search functionality
+      document.getElementById('createBookingArtistSearch')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const artistType = document.getElementById('createBookingArtistType').value;
+        const resultsDiv = document.getElementById('artistSearchResults');
+        
+        if (!searchTerm || !artistType) {
+          resultsDiv.style.display = 'none';
+          return;
+        }
+        
+        // Filter artists by type and search term
+        const isGuest = artistType === 'guest';
+        const filteredArtists = allArtists.filter(artist => 
+          artist.is_guest === isGuest && 
+          artist.active &&
+          artist.name.toLowerCase().includes(searchTerm)
+        );
+        
+        if (filteredArtists.length === 0) {
+          resultsDiv.innerHTML = '<div style="padding:12px; color:var(--muted); font-size:13px;">No artists found</div>';
+          resultsDiv.style.display = 'block';
+          return;
+        }
+        
+        resultsDiv.innerHTML = filteredArtists.map(artist => `
+          <div class="artist-search-result" data-id="${artist.id}" data-name="${artist.name}" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.06); font-size:14px; transition:background 0.15s;">
+            ${artist.name}${artist.instagram ? ` <span style="color:var(--muted); font-size:12px;">@${artist.instagram}</span>` : ''}
+          </div>
+        `).join('');
+        
+        resultsDiv.style.display = 'block';
+        
+        // Add click handlers
+        document.querySelectorAll('.artist-search-result').forEach(item => {
+          item.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(0,113,227,0.06)';
+          });
+          item.addEventListener('mouseleave', function() {
+            this.style.background = '';
+          });
+          item.addEventListener('click', function() {
+            const artistId = this.dataset.id;
+            const artistName = this.dataset.name;
+            document.getElementById('createBookingArtistSearch').value = artistName;
+            document.getElementById('createBookingArtistId').value = artistId;
+            resultsDiv.style.display = 'none';
+          });
+        });
       });
       
       
@@ -2699,14 +2827,13 @@
         
         const customerName = document.getElementById('createBookingCustomer').value.trim();
         const type = document.getElementById('createBookingType').value;
-        const artistId = document.getElementById('createBookingArtist').value;
+        const artistId = document.getElementById('createBookingArtistId').value;
         const date = document.getElementById('createBookingDate').value;
-        const slot = parseInt(document.getElementById('createBookingSlot').value);
         const startHour = parseFloat(document.getElementById('createBookingStartTime').value);
         const endHour = parseFloat(document.getElementById('createBookingEndTime').value);
         
         // Validation
-        if (!customerName || !type || !artistId || !date || !slot || !startHour || !endHour) {
+        if (!customerName || !type || !artistId || !date || !startHour || !endHour) {
           return alert('Please fill in all required fields');
         }
         
@@ -2717,6 +2844,13 @@
         // Determine category based on artist
         const artist = allArtists.find(a => a.id === artistId);
         const category = artist?.is_guest ? 'guest' : 'resident';
+        
+        // Find available slot
+        const slot = findAvailableSlot(date, category, startHour, endHour);
+        
+        if (slot === null) {
+          return alert('All slots are occupied for this time range. Please choose a different time or date.');
+        }
         
         try {
           // Create booking in Supabase events table
@@ -2747,6 +2881,9 @@
           // Close modal and reset form
           document.getElementById('createBookingModal').classList.remove('active');
           document.getElementById('createBookingForm').reset();
+          document.getElementById('createBookingArtistSearch').disabled = true;
+          document.getElementById('createBookingArtistId').value = '';
+          document.getElementById('artistSearchResults').style.display = 'none';
           
           // Reload events and refresh calendar
           await loadEvents();
@@ -2757,6 +2894,18 @@
           console.error('Error creating booking:', err);
           alert('Error creating booking: ' + err.message);
         }
+      });
+      
+      // Customer Search
+      document.getElementById('customerSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.trim();
+        loadCustomers(searchTerm);
+      });
+      
+      // Customer Search
+      document.getElementById('customerSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.trim();
+        loadCustomers(searchTerm);
       });
       
       // Category checkboxes
