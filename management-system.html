@@ -1469,6 +1469,7 @@
     let dienstplanDate = new Date();
     let events = [];
     let allArtists = [];
+    let allTeamMembers = [];
     let selectedLocationId = null;
     let selectedDienstplanLocationId = null;
     let currentLocationName = '';
@@ -1635,6 +1636,11 @@
           const { data: artists } = await supabase.from('artists').select('*');
           allArtists = artists || [];
           console.log('Artists loaded:', allArtists.length);
+          
+          // Load team members
+          const { data: teamMembers } = await supabase.from('team_members').select('*').order('category', { ascending: true }).order('name', { ascending: true });
+          allTeamMembers = teamMembers || [];
+          console.log('Team members loaded:', allTeamMembers.length);
           
           const { data: locations } = await supabase.from('locations').select('*').order('name', { ascending: true });
           console.log('Locations loaded:', locations?.length);
@@ -2957,16 +2963,38 @@
       
       const daysInMonth = new Date(dienstplanDate.getFullYear(), dienstplanDate.getMonth() + 1, 0).getDate();
       
-      const categories = [
-        { name: 'Geschäftsführung', people: ['Name 1', 'Name 2', 'Name 3'] },
-        { name: 'Management', people: ['Name 1', 'Name 2', 'Name 3'] },
-        { name: 'Booking Team', people: ['Name 1', 'Name 2', 'Name 3'] },
-        { name: 'Mediadepartment', people: ['Name 1', 'Name 2', 'Name 3'] },
-        { name: 'Resident Artists', people: ['Name 1', 'Name 2', 'Name 3'] },
-        { name: 'Guest Artists', people: ['Name 1', 'Name 2', 'Name 3'] },
-        { name: 'Azubis', people: ['Name 1', 'Name 2', 'Name 3'] },
-        { name: 'Andere', people: ['Name 1', 'Name 2', 'Name 3'] }
-      ];
+      // Group team members by category
+      const categories = [];
+      const categoryNames = ['Geschäftsführung', 'Management', 'Booking Team', 'Mediadepartment', 'Resident Artists', 'Guest Artists', 'Azubis', 'Andere'];
+      
+      categoryNames.forEach(categoryName => {
+        const members = allTeamMembers.filter(m => m.category === categoryName && m.active);
+        if (members.length > 0 || categoryName === 'Resident Artists' || categoryName === 'Guest Artists') {
+          // For Artist categories, use artists instead
+          if (categoryName === 'Resident Artists') {
+            const residentArtists = allArtists.filter(a => !a.is_guest && a.active);
+            if (residentArtists.length > 0) {
+              categories.push({
+                name: categoryName,
+                people: residentArtists.map(a => a.name)
+              });
+            }
+          } else if (categoryName === 'Guest Artists') {
+            const guestArtists = allArtists.filter(a => a.is_guest && a.active);
+            if (guestArtists.length > 0) {
+              categories.push({
+                name: categoryName,
+                people: guestArtists.map(a => a.name)
+              });
+            }
+          } else {
+            categories.push({
+              name: categoryName,
+              people: members.map(m => m.name)
+            });
+          }
+        }
+      });
       
       let html = '<table style="width:auto; min-width:100%; border-collapse:collapse; background:white; table-layout:fixed;">';
       
