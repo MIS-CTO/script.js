@@ -1368,7 +1368,11 @@
           tab.parentNode.replaceChild(newTab, tab);
           
           newTab.addEventListener('click', function(e) {
-            console.log('Tab clicked:', this.textContent, 'Filter:', this.dataset.filter);
+            console.log('Tab clicked:', this.textContent, 'Status:', this.dataset.status);
+            
+            // Update current status
+            currentRequestStatus = this.dataset.status;
+            console.log('Updated currentRequestStatus to:', currentRequestStatus);
             
             document.querySelectorAll('.request-tab').forEach(t => {
               t.classList.remove('active');
@@ -1488,7 +1492,7 @@
       let allRequests = [];
       let currentRequestStatus = 'open_request';
       let selectedRequestId = null;
-      let currentUser = 'member1'; // TODO: Replace with actual logged-in user
+      let currentUser = null; // null = not logged in, 'member1'/'member2'/'member3' = logged in
       
       async function loadRequests() {
         try {
@@ -1519,8 +1523,35 @@
       function renderRequestsList(requests) {
         const listEl = document.getElementById('requestsList');
         
+        // Check if viewing "My Requests" without being logged in
+        if (currentRequestStatus === 'my-requests' && !currentUser) {
+          listEl.innerHTML = `
+            <div style="text-align:center; padding:60px 20px; color:var(--muted);">
+              <div style="font-size:48px; margin-bottom:16px;">🔒</div>
+              <div style="font-size:18px; font-weight:600; margin-bottom:8px; color:var(--ink);">Nicht angemeldet</div>
+              <div style="font-size:14px;">Bitte melden Sie sich an, um Ihre zugewiesenen Requests zu sehen.</div>
+            </div>
+          `;
+          return;
+        }
+        
         if (requests.length === 0) {
-          listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">No requests found</div>';
+          let emptyMessage = 'No requests found';
+          if (currentRequestStatus === 'my-requests') {
+            emptyMessage = 'Sie haben keine zugewiesenen Requests';
+          } else if (currentRequestStatus === 'open_request') {
+            emptyMessage = 'Keine neuen Requests';
+          } else if (currentRequestStatus === 'pending') {
+            emptyMessage = 'Keine Requests in Bearbeitung';
+          } else if (currentRequestStatus === 'scheduled') {
+            emptyMessage = 'Keine geplanten Termine';
+          } else if (currentRequestStatus === 'finished') {
+            emptyMessage = 'Keine abgeschlossenen Requests';
+          } else if (currentRequestStatus === 'canceled') {
+            emptyMessage = 'Keine stornierten Requests';
+          }
+          
+          listEl.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">${emptyMessage}</div>`;
           return;
         }
         
@@ -1687,15 +1718,7 @@
         }
       }
       
-      // Request Tab Switching
-      document.querySelectorAll('.request-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.request-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          currentRequestStatus = tab.dataset.status;
-          loadRequests();
-        });
-      });
+      // Request Tab Switching is handled in initRequestTabs()
       
       // Assign Request
       window.assignRequest = function() {
