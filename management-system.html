@@ -1382,6 +1382,11 @@
             this.style.color = '#1d1d1f';
             
             updateRequestsIndicator(this);
+            
+            // Close detail view when switching tabs
+            selectedRequestId = null;
+            closeRequestDetail();
+            
             loadRequests();
           });
         });
@@ -1575,15 +1580,35 @@
           </div>
         `).join('');
         
-        // Add click handlers
+        // Add click handlers with toggle functionality
         document.querySelectorAll('.request-item').forEach(item => {
           item.addEventListener('click', () => {
+            const isAlreadyActive = item.classList.contains('active');
+            
+            // Remove active class from all items
             document.querySelectorAll('.request-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            selectedRequestId = item.dataset.id;
-            showRequestDetail(selectedRequestId);
+            
+            if (isAlreadyActive) {
+              // If clicking on already active item, close detail view
+              selectedRequestId = null;
+              closeRequestDetail();
+            } else {
+              // Otherwise, open the clicked item
+              item.classList.add('active');
+              selectedRequestId = item.dataset.id;
+              showRequestDetail(selectedRequestId);
+            }
           });
         });
+      }
+      
+      function closeRequestDetail() {
+        const detailEl = document.getElementById('requestDetail');
+        detailEl.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--muted); font-size:16px;">
+            Select a request to view details
+          </div>
+        `;
       }
       
       function showRequestDetail(requestId) {
