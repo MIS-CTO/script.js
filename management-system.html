@@ -1238,6 +1238,10 @@
         <div class="form-group">
           <label>Visible for Groups</label>
           <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; padding:12px; background:rgba(0,0,0,0.02); border-radius:10px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; grid-column:1/-1; padding-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:4px;">
+              <input type="checkbox" id="groupCheckboxAll" style="width:auto; padding:0;">
+              All Groups
+            </label>
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
               <input type="checkbox" class="group-checkbox" value="geschäftsführung" style="width:auto; padding:0;">
               Geschäftsführung
@@ -1271,6 +1275,14 @@
               Andere
             </label>
           </div>
+        </div>
+        
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+            <input type="checkbox" id="createEventAttendanceRequired" style="width:auto; padding:0;">
+            <span style="font-weight:500;">Anwesenheitspflicht</span>
+          </label>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 0 24px;">Markieren Sie dieses Event als verpflichtend für alle ausgewählten Gruppen</p>
         </div>
         
         <div style="display:grid; grid-template-columns:1fr; gap:16px;">
@@ -2642,6 +2654,27 @@
         document.getElementById('createEventModal').classList.add('active');
       });
       
+      // "All Groups" checkbox handler
+      document.getElementById('groupCheckboxAll')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+        groupCheckboxes.forEach(checkbox => {
+          checkbox.checked = isChecked;
+        });
+      });
+      
+      // Individual group checkbox handler - uncheck "All" if any individual is unchecked
+      document.querySelectorAll('.group-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const allCheckboxes = document.querySelectorAll('.group-checkbox');
+          const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+          const allCheckbox = document.getElementById('groupCheckboxAll');
+          if (allCheckbox) {
+            allCheckbox.checked = allChecked;
+          }
+        });
+      });
+      
       document.getElementById('cancelCreateEvent')?.addEventListener('click', () => {
         document.getElementById('createEventModal').classList.remove('active');
         document.getElementById('createEventForm').reset();
@@ -2656,6 +2689,7 @@
         const date = document.getElementById('createEventDate').value;
         const startHour = parseFloat(document.getElementById('createEventStartTime').value);
         const endHour = parseFloat(document.getElementById('createEventEndTime').value);
+        const attendanceRequired = document.getElementById('createEventAttendanceRequired').checked;
         
         // Collect selected groups
         const selectedGroups = [];
@@ -2690,6 +2724,7 @@
             type,
             description: description || null,
             visible_groups: selectedGroups.length > 0 ? selectedGroups : null,
+            attendance_required: attendanceRequired,
             artist_id: null,
             location_id: selectedLocationId,
             start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
@@ -2705,6 +2740,7 @@
             type,
             description,
             visible_groups: selectedGroups,
+            attendance_required: attendanceRequired,
             date,
             slot,
             startHour,
