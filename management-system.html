@@ -233,6 +233,48 @@
       border-left-color:#5856D6;
     }
     
+    /* Booking Type Colors - Light backgrounds with colored borders */
+    .event[data-type="consultation"] {
+      background:rgba(102, 187, 106, 0.15);
+      border-left-color:#43A047;
+    }
+    .event[data-type="new_tattoo"] {
+      background:rgba(236, 64, 122, 0.15);
+      border-left-color:#C2185B;
+    }
+    .event[data-type="continuing_tattoo"] {
+      background:rgba(66, 165, 245, 0.15);
+      border-left-color:#1976D2;
+    }
+    .event[data-type="touch_up"] {
+      background:rgba(255, 235, 59, 0.25);
+      border-left-color:#FBC02D;
+    }
+    .event[data-type="selfbooking"] {
+      background:rgba(141, 110, 99, 0.15);
+      border-left-color:#5D4037;
+    }
+    .event[data-type="wannado"] {
+      background:rgba(171, 71, 188, 0.15);
+      border-left-color:#7B1FA2;
+    }
+    .event[data-type="internal"] {
+      background:rgba(239, 83, 80, 0.15);
+      border-left-color:#C62828;
+    }
+    .event[data-type="move"] {
+      background:rgba(38, 198, 218, 0.15);
+      border-left-color:#00838F;
+    }
+    .event[data-type="reserved"] {
+      background:rgba(120, 144, 156, 0.15);
+      border-left-color:#455A64;
+    }
+    .event[data-type="no_show"] {
+      background:rgba(189, 189, 189, 0.1);
+      border-left-color:#757575;
+    }
+    
     /* Dienstplan Styles */
     .dienstplan-grid {
       background:rgba(255,255,255,0.95);
@@ -1018,31 +1060,41 @@
 
   <section id="artists-section">
     <h2>Artists</h2>
-    <div style="display:flex;gap:12px;margin-bottom:16px; flex-wrap:wrap;">
-      <input id="newArtistName" placeholder="Artist name" style="flex:1; min-width:200px;">
-      <input id="newArtistInstagram" placeholder="Instagram handle" style="flex:1; min-width:200px;">
-      <select id="artistType">
-        <option value="resident">Resident</option>
-        <option value="guest">Guest</option>
-      </select>
-      <button id="addArtistBtn" class="btn-nav">Add Artist</button>
+    
+    <!-- Search Bar -->
+    <div style="margin-bottom:20px;">
+      <input type="text" id="artistSearchInput" placeholder="🔍 Search artists by name or Instagram..." style="width:100%; max-width:500px; padding:12px 16px; font-size:15px;">
     </div>
+    
+    <!-- Add Artist Button -->
+    <div style="margin-bottom:20px;">
+      <button id="addArtistBtn" class="btn-nav" style="background:var(--accent); color:white; display:flex; align-items:center; gap:8px; padding:10px 20px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Add Artist</span>
+      </button>
+    </div>
+    
     <ul id="artistList" class="artist-list"></ul>
   </section>
 
   <section id="customers-section">
     <h2>Customers</h2>
-    <div style="margin-bottom:16px;">
-      <p style="color:var(--muted); font-size:14px;">Manage your customer database</p>
-    </div>
     
-    <!-- Customer Search -->
-    <div style="margin-bottom:16px;">
+    <!-- Search Bar -->
+    <div style="margin-bottom:20px;">
       <input 
         type="text" 
         id="customerSearchInput" 
-        placeholder="Search customers by name, email or phone..." 
-        style="width:100%; max-width:500px; padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:999px; font-size:14px;">
+        placeholder="🔍 Search customers by name, email or phone..." 
+        style="width:100%; max-width:500px; padding:12px 16px; font-size:15px;">
+    </div>
+    
+    <!-- Add Customer Button -->
+    <div style="margin-bottom:20px;">
+      <button id="addCustomerBtn" class="btn-nav" style="background:var(--accent); color:white; display:flex; align-items:center; gap:8px; padding:10px 20px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Add Customer</span>
+      </button>
     </div>
     
     <table id="customersTable">
@@ -1064,6 +1116,46 @@
     <h2>Analytics</h2>
     <p style="color:var(--muted);">Coming soon...</p>
   </section>
+
+  <!-- Add Artist Modal -->
+  <div class="modal-backdrop" id="addArtistModal">
+    <div class="modal">
+      <h3>Add New Artist</h3>
+      <form class="modal-form" id="addArtistForm">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="addArtistName" required placeholder="Artist name">
+        </div>
+        <div class="form-group">
+          <label>Instagram Handle</label>
+          <input type="text" id="addArtistInstagram" placeholder="@username">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="addArtistType">
+            <option value="resident">Resident</option>
+            <option value="guest">Guest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <select id="addArtistLocation" required>
+            <option value="">-- Select Location --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="addArtistActive" checked>
+            Active
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelAddArtist">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Artist</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Edit Artist Modal -->
   <div class="modal-backdrop" id="editArtistModal">
@@ -1211,6 +1303,35 @@
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="cancelCancelModal">No, Keep it</button>
           <button type="submit" class="btn btn-danger">Yes, Cancel Appointment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Customer Modal -->
+  <div class="modal-backdrop" id="addCustomerModal">
+    <div class="modal">
+      <h3>Add New Customer</h3>
+      <form class="modal-form" id="addCustomerForm">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="addCustomerFirstName" required>
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="addCustomerLastName" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="addCustomerEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="addCustomerPhone">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelAddCustomer">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Customer</button>
         </div>
       </form>
     </div>
@@ -2819,6 +2940,7 @@
               category: category,
               slot: e.slot || 1, // Use slot from database, default to 1 if not set
               title: e.title || artist?.name || 'Event',
+              type: e.type || null,
               startHour: start.getHours() + start.getMinutes()/60,
               endHour: end.getHours() + end.getMinutes()/60
             };
@@ -2964,8 +3086,9 @@
                 if (cell.event) {
                   // This is the start of an event - create a spanning div
                   const isHalfHour = (index % 2) === 1;
+                  const typeAttr = cell.event.type ? `data-type="${cell.event.type}"` : '';
                   html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
-                    <div class="event ${cat}" data-event-id="${cell.event.id}" onclick="openEditEventModal('${cell.event.id}')" style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;">
+                    <div class="event ${cat}" ${typeAttr} data-event-id="${cell.event.id}" onclick="openEditEventModal('${cell.event.id}')" style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;">
                       ${cell.event.title}
                     </div>
                   </div>`;
@@ -3060,31 +3183,117 @@
         renderCalendar();
       });
       
+      // Add Artist Button - Opens Add Artist Modal
       document.getElementById('addArtistBtn')?.addEventListener('click', async () => {
-        const name = document.getElementById('newArtistName').value.trim();
-        const instagram = document.getElementById('newArtistInstagram').value.trim();
-        const type = document.getElementById('artistType').value;
-        if (!name) return alert('Please enter a name');
+        // Populate location dropdown
+        const { data: locations } = await supabase.from('locations').select('*').order('name', { ascending: true });
+        const locSelect = document.getElementById('addArtistLocation');
+        if (locSelect && locations) {
+          locSelect.innerHTML = '<option value="">-- Select Location --</option>' + 
+            locations.map(l => `<option value="${l.id}" ${l.id === selectedLocationId ? 'selected' : ''}>${l.name}</option>`).join('');
+        }
+        
+        // Open modal
+        document.getElementById('addArtistModal').classList.add('active');
+      });
+      
+      // Cancel Add Artist
+      document.getElementById('cancelAddArtist')?.addEventListener('click', () => {
+        document.getElementById('addArtistModal').classList.remove('active');
+        document.getElementById('addArtistForm').reset();
+      });
+      
+      // Submit Add Artist Form
+      document.getElementById('addArtistForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('addArtistName').value.trim();
+        const instagram = document.getElementById('addArtistInstagram').value.trim();
+        const type = document.getElementById('addArtistType').value;
+        const locationId = document.getElementById('addArtistLocation').value;
+        const active = document.getElementById('addArtistActive').checked;
+        
+        if (!name || !locationId) return alert('Please enter name and select location');
         
         try {
           const { error } = await supabase.from('artists').insert({
             name,
             instagram: instagram || null,
             is_guest: type === 'guest',
-            active: true,
-            location_id: selectedLocationId
+            active,
+            location_id: locationId
           });
           
           if (error) throw error;
           
-          document.getElementById('newArtistName').value = '';
-          document.getElementById('newArtistInstagram').value = '';
+          document.getElementById('addArtistModal').classList.remove('active');
+          document.getElementById('addArtistForm').reset();
           await loadInitialData();
           await loadArtists();
           alert('Artist added successfully!');
         } catch(err) {
           alert('Error: ' + err.message);
         }
+      });
+      
+      // Add Customer Button - Opens Add Customer Modal
+      document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
+        document.getElementById('addCustomerModal').classList.add('active');
+      });
+      
+      // Cancel Add Customer
+      document.getElementById('cancelAddCustomer')?.addEventListener('click', () => {
+        document.getElementById('addCustomerModal').classList.remove('active');
+        document.getElementById('addCustomerForm').reset();
+      });
+      
+      // Submit Add Customer Form
+      document.getElementById('addCustomerForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const firstName = document.getElementById('addCustomerFirstName').value.trim();
+        const lastName = document.getElementById('addCustomerLastName').value.trim();
+        const email = document.getElementById('addCustomerEmail').value.trim();
+        const phone = document.getElementById('addCustomerPhone').value.trim();
+        
+        if (!firstName || !lastName || !email) {
+          return alert('Please fill in first name, last name, and email');
+        }
+        
+        try {
+          const { error } = await supabase.from('customers').insert({
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone: phone || null
+          });
+          
+          if (error) throw error;
+          
+          document.getElementById('addCustomerModal').classList.remove('active');
+          document.getElementById('addCustomerForm').reset();
+          await loadCustomers();
+          alert('Customer added successfully!');
+        } catch(err) {
+          alert('Error: ' + err.message);
+        }
+      });
+      
+      // Artist Search Filter
+      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const artistItems = document.querySelectorAll('.artist-item');
+        
+        artistItems.forEach(item => {
+          const artistName = item.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+          const artistInstagram = item.querySelector('.artist-instagram')?.textContent.toLowerCase() || '';
+          
+          if (artistName.includes(searchTerm) || artistInstagram.includes(searchTerm)) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        });
       });
       
       // Edit Artist Functions
