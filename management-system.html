@@ -1594,8 +1594,11 @@
         <input type="hidden" id="editBookingId">
         
         <div class="form-group">
-          <label>Customer Name</label>
-          <input type="text" id="editBookingCustomer" placeholder="Customer Name" required>
+          <label>Search Customer</label>
+          <input type="text" id="editBookingCustomerSearch" placeholder="Type to search or change customer..." autocomplete="off">
+          <input type="hidden" id="editBookingCustomerId">
+          <div id="editCustomerSearchResults" style="display:none; max-height:200px; overflow-y:auto; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-top:4px; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.1); z-index:1000; position:relative;"></div>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 0 0;">Start typing to search existing customers or enter a new name</p>
         </div>
         
         <div class="form-group">
@@ -1844,8 +1847,11 @@
       <h3>Create New Booking</h3>
       <form class="modal-form" id="createBookingForm">
         <div class="form-group">
-          <label>Customer Name</label>
-          <input type="text" id="createBookingCustomer" placeholder="e.g. John Doe" required>
+          <label>Search Customer</label>
+          <input type="text" id="createBookingCustomerSearch" placeholder="Type to search or enter new customer..." autocomplete="off">
+          <input type="hidden" id="createBookingCustomerId">
+          <div id="customerSearchResults" style="display:none; max-height:200px; overflow-y:auto; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-top:4px; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.1); z-index:1000; position:relative;"></div>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 0 0;">Start typing to search existing customers or enter a new name</p>
         </div>
         
         <div class="form-group">
@@ -3462,6 +3468,11 @@
           dateInput.value = currentDate.toISOString().split('T')[0];
         }
         
+        // Reset customer search
+        document.getElementById('createBookingCustomerSearch').value = '';
+        document.getElementById('createBookingCustomerId').value = '';
+        document.getElementById('customerSearchResults').style.display = 'none';
+        
         // Reset artist search
         document.getElementById('createBookingArtistSearch').value = '';
         document.getElementById('createBookingArtistSearch').disabled = true;
@@ -3470,6 +3481,139 @@
         
         // Open modal
         document.getElementById('createBookingModal').classList.add('active');
+      });
+      
+      // Customer Search for Create Booking
+      let allCustomers = [];
+      
+      async function loadCustomersData() {
+        const { data, error } = await supabase.from('customers').select('*').order('first_name', { ascending: true });
+        if (!error) {
+          allCustomers = data || [];
+        }
+      }
+      
+      // Load customers on page load
+      loadCustomersData();
+      
+      // Create Booking Customer Search
+      document.getElementById('createBookingCustomerSearch')?.addEventListener('input', async (e) => {
+        const searchTerm = e.target.value.trim();
+        const resultsDiv = document.getElementById('customerSearchResults');
+        
+        if (searchTerm.length < 2) {
+          resultsDiv.style.display = 'none';
+          document.getElementById('createBookingCustomerId').value = '';
+          return;
+        }
+        
+        // Filter customers
+        const filtered = allCustomers.filter(c => {
+          const fullName = `${c.first_name} ${c.last_name}`.toLowerCase();
+          const email = (c.email || '').toLowerCase();
+          const search = searchTerm.toLowerCase();
+          return fullName.includes(search) || email.includes(search);
+        });
+        
+        if (filtered.length === 0) {
+          resultsDiv.innerHTML = `
+            <div style="padding:12px; color:var(--muted); text-align:center; font-size:13px;">
+              No customers found. You can still use "${searchTerm}" as new customer name.
+            </div>
+          `;
+          resultsDiv.style.display = 'block';
+          document.getElementById('createBookingCustomerId').value = '';
+          return;
+        }
+        
+        resultsDiv.innerHTML = filtered.map(c => `
+          <div class="customer-result-item" data-id="${c.id}" data-name="${c.first_name} ${c.last_name}" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.06); transition:background 0.15s;">
+            <div style="font-weight:500; font-size:14px;">${c.first_name} ${c.last_name}</div>
+            ${c.email ? `<div style="font-size:12px; color:var(--muted); margin-top:2px;">${c.email}</div>` : ''}
+          </div>
+        `).join('');
+        
+        resultsDiv.style.display = 'block';
+        
+        // Add click handlers
+        document.querySelectorAll('.customer-result-item').forEach(item => {
+          item.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(0,113,227,0.08)';
+          });
+          item.addEventListener('mouseleave', function() {
+            this.style.background = '';
+          });
+          item.addEventListener('click', function() {
+            document.getElementById('createBookingCustomerSearch').value = this.dataset.name;
+            document.getElementById('createBookingCustomerId').value = this.dataset.id;
+            resultsDiv.style.display = 'none';
+          });
+        });
+      });
+      
+      // Edit Booking Customer Search
+      document.getElementById('editBookingCustomerSearch')?.addEventListener('input', async (e) => {
+        const searchTerm = e.target.value.trim();
+        const resultsDiv = document.getElementById('editCustomerSearchResults');
+        
+        if (searchTerm.length < 2) {
+          resultsDiv.style.display = 'none';
+          document.getElementById('editBookingCustomerId').value = '';
+          return;
+        }
+        
+        // Filter customers
+        const filtered = allCustomers.filter(c => {
+          const fullName = `${c.first_name} ${c.last_name}`.toLowerCase();
+          const email = (c.email || '').toLowerCase();
+          const search = searchTerm.toLowerCase();
+          return fullName.includes(search) || email.includes(search);
+        });
+        
+        if (filtered.length === 0) {
+          resultsDiv.innerHTML = `
+            <div style="padding:12px; color:var(--muted); text-align:center; font-size:13px;">
+              No customers found. You can still use "${searchTerm}" as new customer name.
+            </div>
+          `;
+          resultsDiv.style.display = 'block';
+          document.getElementById('editBookingCustomerId').value = '';
+          return;
+        }
+        
+        resultsDiv.innerHTML = filtered.map(c => `
+          <div class="edit-customer-result-item" data-id="${c.id}" data-name="${c.first_name} ${c.last_name}" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.06); transition:background 0.15s;">
+            <div style="font-weight:500; font-size:14px;">${c.first_name} ${c.last_name}</div>
+            ${c.email ? `<div style="font-size:12px; color:var(--muted); margin-top:2px;">${c.email}</div>` : ''}
+          </div>
+        `).join('');
+        
+        resultsDiv.style.display = 'block';
+        
+        // Add click handlers
+        document.querySelectorAll('.edit-customer-result-item').forEach(item => {
+          item.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(0,113,227,0.08)';
+          });
+          item.addEventListener('mouseleave', function() {
+            this.style.background = '';
+          });
+          item.addEventListener('click', function() {
+            document.getElementById('editBookingCustomerSearch').value = this.dataset.name;
+            document.getElementById('editBookingCustomerId').value = this.dataset.id;
+            resultsDiv.style.display = 'none';
+          });
+        });
+      });
+      
+      // Hide results when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#createBookingCustomerSearch') && !e.target.closest('#customerSearchResults')) {
+          document.getElementById('customerSearchResults').style.display = 'none';
+        }
+        if (!e.target.closest('#editBookingCustomerSearch') && !e.target.closest('#editCustomerSearchResults')) {
+          document.getElementById('editCustomerSearchResults').style.display = 'none';
+        }
       });
       
       // Artist Type change handler
@@ -3551,7 +3695,7 @@
       document.getElementById('createBookingForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const customerName = document.getElementById('createBookingCustomer').value.trim();
+        const customerName = document.getElementById('createBookingCustomerSearch').value.trim();
         const type = document.getElementById('createBookingType').value;
         const artistId = document.getElementById('createBookingArtistId').value;
         const date = document.getElementById('createBookingDate').value;
@@ -3579,8 +3723,19 @@
         }
         
         try {
+          // Determine status based on date
+          const bookingDate = new Date(date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          bookingDate.setHours(0, 0, 0, 0);
+          
+          let requestStatus = 'scheduled';
+          if (bookingDate < today) {
+            requestStatus = 'finished';
+          }
+          
           // Create booking in Supabase events table
-          const { data, error } = await supabase.from('events').insert({
+          const { data: eventData, error: eventError } = await supabase.from('events').insert({
             title: customerName,
             type,
             slot: slot,
@@ -3588,13 +3743,38 @@
             location_id: selectedLocationId,
             start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
             end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
+          }).select();
+          
+          if (eventError) throw eventError;
+          
+          const eventId = eventData?.[0]?.id;
+          
+          // Create corresponding request in requests table
+          const nameParts = customerName.split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+          
+          const { error: requestError } = await supabase.from('requests').insert({
+            first_name: firstName,
+            last_name: lastName,
+            status: requestStatus,
+            artist_id: artistId,
+            artist_name: artist?.name || '',
+            scheduled_date: date,
+            start_time: `${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}`,
+            end_time: `${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}`,
+            event_id: eventId,
+            placement: type // Store booking type as placement for now
           });
           
-          if (error) throw error;
+          if (requestError) {
+            console.error('Error creating request:', requestError);
+            // Don't fail the whole operation if request creation fails
+          }
           
           // Add to local events array
           events.push({
-            id: data?.[0]?.id || Date.now(),
+            id: eventId || Date.now(),
             title: customerName,
             type,
             date,
@@ -3616,7 +3796,8 @@
           await loadEvents();
           renderCalendar();
           
-          alert('Booking created successfully!');
+          const statusMessage = requestStatus === 'finished' ? ' (marked as finished - date in the past)' : ' (marked as scheduled)';
+          alert('Booking created successfully!' + statusMessage);
         } catch (err) {
           console.error('Error creating booking:', err);
           alert('Error creating booking: ' + err.message);
@@ -3891,7 +4072,8 @@
         
         // Populate form fields
         document.getElementById('editBookingId').value = bookingId;
-        document.getElementById('editBookingCustomer').value = fullBooking.title || '';
+        document.getElementById('editBookingCustomerSearch').value = fullBooking.title || '';
+        document.getElementById('editBookingCustomerId').value = '';
         document.getElementById('editBookingType').value = fullBooking.type || '';
         document.getElementById('editBookingArtistName').value = artist?.name || 'Unknown Artist';
         document.getElementById('editBookingArtistId').value = fullBooking.artist_id;
@@ -4052,7 +4234,7 @@
         e.preventDefault();
         
         const bookingId = document.getElementById('editBookingId').value;
-        const customerName = document.getElementById('editBookingCustomer').value.trim();
+        const customerName = document.getElementById('editBookingCustomerSearch').value.trim();
         const type = document.getElementById('editBookingType').value;
         const artistId = document.getElementById('editBookingArtistId').value;
         const date = document.getElementById('editBookingDate').value;
@@ -4127,11 +4309,22 @@
       document.getElementById('deleteBookingBtn')?.addEventListener('click', async () => {
         const bookingId = document.getElementById('editBookingId').value;
         
-        if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+        if (!confirm('⚠️ WARNING: This will delete the booking from the calendar AND remove the associated request.\n\nThis action cannot be undone.\n\nAre you sure you want to continue?')) {
           return;
         }
         
         try {
+          // Delete associated request first (if exists)
+          const { error: requestError } = await supabase
+            .from('requests')
+            .delete()
+            .eq('event_id', bookingId);
+          
+          if (requestError) {
+            console.warn('No associated request found or error deleting request:', requestError);
+          }
+          
+          // Delete the booking/event
           const { error } = await supabase
             .from('events')
             .delete()
@@ -4146,7 +4339,7 @@
           await loadEvents();
           renderCalendar();
           
-          alert('Booking deleted successfully!');
+          alert('Booking and associated request deleted successfully!');
         } catch (err) {
           console.error('Error deleting booking:', err);
           alert('Error deleting booking: ' + err.message);
