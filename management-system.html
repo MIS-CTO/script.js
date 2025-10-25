@@ -201,25 +201,27 @@
     .event {
       background:rgba(255,255,255,0.95);
       color:#1d1d1f;
-      padding:8px 10px;
+      padding:10px 12px;
       border-radius:6px;
       font-size:13px;
       font-weight:500;
       cursor:pointer;
       transition:all 0.2s ease;
       word-break:break-word;
-      height:100%;
       display:flex;
       flex-direction:column;
-      justify-content:flex-start;
+      justify-content:center;
       align-items:flex-start;
       border-left:4px solid var(--location-primary);
       box-shadow:0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
       overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
     }
     .event:hover {
       box-shadow:0 4px 12px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.06);
       transform:translateY(-1px);
+      z-index:10;
     }
     .event.guest {
       border-left-color:#42A5F5;
@@ -229,6 +231,59 @@
     }
     .event.events {
       border-left-color:#5856D6;
+    }
+    
+    /* Booking Type Colors */
+    .event[data-type="consultation"] {
+      background:#66BB6A;
+      color:white;
+      border-left-color:#43A047;
+    }
+    .event[data-type="new_tattoo"] {
+      background:#EC407A;
+      color:white;
+      border-left-color:#C2185B;
+    }
+    .event[data-type="continuing_tattoo"] {
+      background:#42A5F5;
+      color:white;
+      border-left-color:#1976D2;
+    }
+    .event[data-type="touch_up"] {
+      background:#FFEB3B;
+      color:#1d1d1f;
+      border-left-color:#FBC02D;
+    }
+    .event[data-type="selfbooking"] {
+      background:#8D6E63;
+      color:white;
+      border-left-color:#5D4037;
+    }
+    .event[data-type="wannado"] {
+      background:#AB47BC;
+      color:white;
+      border-left-color:#7B1FA2;
+    }
+    .event[data-type="internal"] {
+      background:#EF5350;
+      color:white;
+      border-left-color:#C62828;
+    }
+    .event[data-type="move"] {
+      background:#26C6DA;
+      color:white;
+      border-left-color:#00838F;
+    }
+    .event[data-type="reserved"] {
+      background:#78909C;
+      color:white;
+      border-left-color:#455A64;
+    }
+    .event[data-type="no_show"] {
+      background:#FFFFFF;
+      color:#1d1d1f;
+      border:1px solid #BDBDBD;
+      border-left:4px solid #757575;
     }
     
     /* Dienstplan Styles */
@@ -2817,6 +2872,7 @@
               category: category,
               slot: e.slot || 1, // Use slot from database, default to 1 if not set
               title: e.title || artist?.name || 'Event',
+              type: e.type || null,
               startHour: start.getHours() + start.getMinutes()/60,
               endHour: end.getHours() + end.getMinutes()/60
             };
@@ -2922,21 +2978,59 @@
               
               html += `<div class="slot-row ${rowClass}"><div class="slot-label">Slot ${slot}</div>`;
               
+              // Collect all events for this slot
+              const slotEvents = events.filter(e => 
+                e.date === dateStr && e.slot === slot && e.category === cat
+              );
+              
+              // Create cells and track which are occupied
+              const cells = [];
               for (let h = 10; h <= 20; h++) {
                 [0, 0.5].forEach(offset => {
                   const currentTime = h + offset;
-                  const currentTimeEnd = currentTime + 0.5;
-                  
-                  // Find events that overlap with this time slot
-                  const evts = events.filter(e => 
-                    e.date === dateStr && e.slot === slot && e.category === cat &&
-                    e.startHour < currentTimeEnd && e.endHour > currentTime
-                  );
-                  
-                  const content = evts.length > 0 ? `<div class="event ${cat}" data-event-id="${evts[0].id}" onclick="openEditEventModal('${evts[0].id}')">${evts[0].title}</div>` : '';
-                  html += `<div class="slot-cell ${offset===0?'half-hour':''}">${content}</div>`;
+                  cells.push({
+                    time: currentTime,
+                    occupied: false,
+                    event: null
+                  });
                 });
               }
+              
+              // Mark cells as occupied by events and create event blocks
+              slotEvents.forEach(evt => {
+                const startIndex = Math.max(0, Math.floor((evt.startHour - 10) * 2));
+                const endIndex = Math.min(cells.length, Math.ceil((evt.endHour - 10) * 2));
+                const span = endIndex - startIndex;
+                
+                if (span > 0 && startIndex < cells.length) {
+                  cells[startIndex].event = evt;
+                  cells[startIndex].span = span;
+                  
+                  // Mark all cells in the span as occupied
+                  for (let i = startIndex; i < endIndex && i < cells.length; i++) {
+                    cells[i].occupied = true;
+                  }
+                }
+              });
+              
+              // Render cells
+              cells.forEach((cell, index) => {
+                if (cell.event) {
+                  // This is the start of an event - create a spanning div
+                  const isHalfHour = (index % 2) === 1;
+                  const typeAttr = cell.event.type ? `data-type="${cell.event.type}"` : '';
+                  html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
+                    <div class="event ${cat}" ${typeAttr} data-event-id="${cell.event.id}" onclick="openEditEventModal('${cell.event.id}')" style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;">
+                      ${cell.event.title}
+                    </div>
+                  </div>`;
+                } else if (!cell.occupied) {
+                  // This cell is not part of any event - render empty cell
+                  const isHalfHour = (index % 2) === 1;
+                  html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}"></div>`;
+                }
+                // If occupied but not the event start, we skip it (it's covered by the span)
+              });
               
               html += '</div>';
             }
