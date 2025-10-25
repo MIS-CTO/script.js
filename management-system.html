@@ -2535,7 +2535,7 @@
               id: e.id,
               date: e.start_time.split('T')[0],
               category: category,
-              slot: ((e.artist_id || 1) % 10) || 10,
+              slot: e.slot || 1, // Use slot from database, default to 1 if not set
               title: e.title || artist?.name || 'Event',
               startHour: start.getHours() + start.getMinutes()/60,
               endHour: end.getHours() + end.getMinutes()/60
@@ -2644,10 +2644,15 @@
               
               for (let h = 10; h <= 20; h++) {
                 [0, 0.5].forEach(offset => {
+                  const currentTime = h + offset;
+                  const currentTimeEnd = currentTime + 0.5;
+                  
+                  // Find events that overlap with this time slot
                   const evts = events.filter(e => 
                     e.date === dateStr && e.slot === slot && e.category === cat &&
-                    e.startHour >= h + offset && e.startHour < h + offset + 0.5
+                    e.startHour < currentTimeEnd && e.endHour > currentTime
                   );
+                  
                   const content = evts.length > 0 ? `<div class="event ${cat}" data-event-id="${evts[0].id}" onclick="openEditEventModal('${evts[0].id}')">${evts[0].title}</div>` : '';
                   html += `<div class="slot-cell ${offset===0?'half-hour':''}">${content}</div>`;
                 });
@@ -3029,6 +3034,7 @@
             description: description || null,
             visible_groups: selectedGroups.length > 0 ? selectedGroups : null,
             attendance_required: attendanceRequired,
+            slot: slot,
             artist_id: null,
             location_id: selectedLocationId,
             start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
@@ -3203,6 +3209,7 @@
           const { data, error } = await supabase.from('events').insert({
             title: customerName,
             type,
+            slot: slot,
             artist_id: artistId,
             location_id: selectedLocationId,
             start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
@@ -3546,6 +3553,28 @@
           return alert('End time must be after start time');
         }
         
+        // Get current event to check if date/time changed
+        const currentEvent = events.find(e => e.id === eventId);
+        let newSlot = currentEvent?.slot || 1;
+        
+        // If date or time changed, find a new available slot
+        if (currentEvent && (currentEvent.date !== date || currentEvent.startHour !== startHour || currentEvent.endHour !== endHour)) {
+          // Temporarily remove current event from events array for slot calculation
+          const tempEvents = events.filter(e => e.id !== eventId);
+          const oldEvents = events;
+          events = tempEvents;
+          
+          const availableSlot = findAvailableSlot(date, 'events', startHour, endHour);
+          
+          // Restore events array
+          events = oldEvents;
+          
+          if (availableSlot === null) {
+            return alert('All slots are occupied for this new time range. Please choose a different time or date.');
+          }
+          newSlot = availableSlot;
+        }
+        
         try {
           // Update event in Supabase
           const { error } = await supabase
@@ -3556,6 +3585,7 @@
               description: description || null,
               visible_groups: selectedGroups.length > 0 ? selectedGroups : null,
               attendance_required: attendanceRequired,
+              slot: newSlot,
               start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
               end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
             })
