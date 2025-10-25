@@ -1357,6 +1357,152 @@
     </div>
   </div>
 
+  <!-- Edit Event Modal -->
+  <div class="modal-backdrop" id="editEventModal">
+    <div class="modal" style="max-width:600px;">
+      <h3>Edit Event</h3>
+      <form class="modal-form" id="editEventForm">
+        <input type="hidden" id="editEventId">
+        
+        <div class="form-group">
+          <label>Event Title</label>
+          <input type="text" id="editEventTitle" placeholder="e.g. Team Meeting" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Event Type</label>
+          <input type="text" id="editEventType" placeholder="e.g. Meeting, Workshop, Training" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="editEventDescription" placeholder="Add details about this event..." style="border-radius:10px; min-height:80px;"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Visible for Groups</label>
+          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; padding:12px; background:rgba(0,0,0,0.02); border-radius:10px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; grid-column:1/-1; padding-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:4px;">
+              <input type="checkbox" id="editGroupCheckboxAll" style="width:auto; padding:0;">
+              All Groups
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="geschäftsführung" style="width:auto; padding:0;">
+              Geschäftsführung
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="management" style="width:auto; padding:0;">
+              Management
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="booking_team" style="width:auto; padding:0;">
+              Booking Team
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="mediadepartment" style="width:auto; padding:0;">
+              Mediadepartment
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="resident_artists" style="width:auto; padding:0;">
+              Resident Artists
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="guest_artists" style="width:auto; padding:0;">
+              Guest Artists
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="azubis" style="width:auto; padding:0;">
+              Azubis
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="andere" style="width:auto; padding:0;">
+              Andere
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+            <input type="checkbox" id="editEventAttendanceRequired" style="width:auto; padding:0;">
+            <span style="font-weight:500;">Anwesenheitspflicht</span>
+          </label>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 0 24px;">Markieren Sie dieses Event als verpflichtend für alle ausgewählten Gruppen</p>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr; gap:16px;">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="editEventDate" required>
+          </div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label>Start Time</label>
+            <select id="editEventStartTime" required>
+              <option value="">-- Select Time --</option>
+              <option value="10.0">10:00</option>
+              <option value="10.5">10:30</option>
+              <option value="11.0">11:00</option>
+              <option value="11.5">11:30</option>
+              <option value="12.0">12:00</option>
+              <option value="12.5">12:30</option>
+              <option value="13.0">13:00</option>
+              <option value="13.5">13:30</option>
+              <option value="14.0">14:00</option>
+              <option value="14.5">14:30</option>
+              <option value="15.0">15:00</option>
+              <option value="15.5">15:30</option>
+              <option value="16.0">16:00</option>
+              <option value="16.5">16:30</option>
+              <option value="17.0">17:00</option>
+              <option value="17.5">17:30</option>
+              <option value="18.0">18:00</option>
+              <option value="18.5">18:30</option>
+              <option value="19.0">19:00</option>
+              <option value="19.5">19:30</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>End Time</label>
+            <select id="editEventEndTime" required>
+              <option value="">-- Select Time --</option>
+              <option value="10.0">10:00</option>
+              <option value="10.5">10:30</option>
+              <option value="11.0">11:00</option>
+              <option value="11.5">11:30</option>
+              <option value="12.0">12:00</option>
+              <option value="12.5">12:30</option>
+              <option value="13.0">13:00</option>
+              <option value="13.5">13:30</option>
+              <option value="14.0">14:00</option>
+              <option value="14.5">14:30</option>
+              <option value="15.0">15:00</option>
+              <option value="15.5">15:30</option>
+              <option value="16.0">16:00</option>
+              <option value="16.5">16:30</option>
+              <option value="17.0">17:00</option>
+              <option value="17.5">17:30</option>
+              <option value="18.0">18:00</option>
+              <option value="18.5">18:30</option>
+              <option value="19.0">19:00</option>
+              <option value="19.5">19:30</option>
+              <option value="20.0">20:00</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="deleteEventBtn">Delete Event</button>
+          <div style="flex:1;"></div>
+          <button type="button" class="btn btn-secondary" id="cancelEditEvent">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Create Booking Modal -->
   <div class="modal-backdrop" id="createBookingModal">
     <div class="modal" style="max-width:600px;">
@@ -1472,6 +1618,154 @@
     </div>
   </div>
 
+  <!-- Edit/View Event Modal -->
+  <div class="modal-backdrop" id="editEventModal">
+    <div class="modal" style="max-width:600px;">
+      <h3 id="editEventModalTitle">Event Details</h3>
+      <form class="modal-form" id="editEventForm">
+        <div class="form-group">
+          <label>Event Title</label>
+          <input type="text" id="editEventTitle" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Event Type</label>
+          <input type="text" id="editEventType" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="editEventDescription" rows="3" style="border-radius:10px; resize:vertical;"></textarea>
+        </div>
+        
+        <div class="form-group" id="editEventArtistGroup" style="display:none;">
+          <label>Artist</label>
+          <input type="text" id="editEventArtistName" readonly style="background:rgba(0,0,0,0.05);">
+        </div>
+        
+        <div class="form-group" id="editEventGroupsContainer">
+          <label>Visible for Groups</label>
+          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; padding:12px; background:rgba(0,0,0,0.02); border-radius:10px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; grid-column:1/-1; padding-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:4px;">
+              <input type="checkbox" id="editGroupCheckboxAll" style="width:auto; padding:0;">
+              All Groups
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="geschäftsführung" style="width:auto; padding:0;">
+              Geschäftsführung
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="management" style="width:auto; padding:0;">
+              Management
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="booking_team" style="width:auto; padding:0;">
+              Booking Team
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="mediadepartment" style="width:auto; padding:0;">
+              Mediadepartment
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="resident_artists" style="width:auto; padding:0;">
+              Resident Artists
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="guest_artists" style="width:auto; padding:0;">
+              Guest Artists
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="azubis" style="width:auto; padding:0;">
+              Azubis
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+              <input type="checkbox" class="edit-group-checkbox" value="andere" style="width:auto; padding:0;">
+              Andere
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group" id="editEventAttendanceGroup">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+            <input type="checkbox" id="editEventAttendanceRequired" style="width:auto; padding:0;">
+            <span style="font-weight:500;">Anwesenheitspflicht</span>
+          </label>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr; gap:16px;">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="editEventDate" required>
+          </div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label>Start Time</label>
+            <select id="editEventStartTime" required>
+              <option value="">-- Select Time --</option>
+              <option value="10.0">10:00</option>
+              <option value="10.5">10:30</option>
+              <option value="11.0">11:00</option>
+              <option value="11.5">11:30</option>
+              <option value="12.0">12:00</option>
+              <option value="12.5">12:30</option>
+              <option value="13.0">13:00</option>
+              <option value="13.5">13:30</option>
+              <option value="14.0">14:00</option>
+              <option value="14.5">14:30</option>
+              <option value="15.0">15:00</option>
+              <option value="15.5">15:30</option>
+              <option value="16.0">16:00</option>
+              <option value="16.5">16:30</option>
+              <option value="17.0">17:00</option>
+              <option value="17.5">17:30</option>
+              <option value="18.0">18:00</option>
+              <option value="18.5">18:30</option>
+              <option value="19.0">19:00</option>
+              <option value="19.5">19:30</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>End Time</label>
+            <select id="editEventEndTime" required>
+              <option value="">-- Select Time --</option>
+              <option value="10.0">10:00</option>
+              <option value="10.5">10:30</option>
+              <option value="11.0">11:00</option>
+              <option value="11.5">11:30</option>
+              <option value="12.0">12:00</option>
+              <option value="12.5">12:30</option>
+              <option value="13.0">13:00</option>
+              <option value="13.5">13:30</option>
+              <option value="14.0">14:00</option>
+              <option value="14.5">14:30</option>
+              <option value="15.0">15:00</option>
+              <option value="15.5">15:30</option>
+              <option value="16.0">16:00</option>
+              <option value="16.5">16:30</option>
+              <option value="17.0">17:00</option>
+              <option value="17.5">17:30</option>
+              <option value="18.0">18:00</option>
+              <option value="18.5">18:30</option>
+              <option value="19.0">19:00</option>
+              <option value="19.5">19:30</option>
+              <option value="20.0">20:00</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="deleteEventBtn">Delete Event</button>
+          <div style="flex:1;"></div>
+          <button type="button" class="btn btn-secondary" id="cancelEditEvent">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";
@@ -1482,6 +1776,7 @@
     let events = [];
     let allArtists = [];
     let allTeamMembers = [];
+    let currentEditingEvent = null;
     let selectedLocationId = null;
     let selectedDienstplanLocationId = null;
     let currentLocationName = '';
@@ -2227,10 +2522,19 @@
             const start = new Date(e.start_time);
             const end = new Date(e.end_time);
             
+            // Determine category:
+            // - If no artist_id, it's an 'events' category event
+            // - If artist exists and is guest, it's 'guest'
+            // - If artist exists and is not guest, it's 'resident'
+            let category = 'events';
+            if (e.artist_id && artist) {
+              category = artist.is_guest ? 'guest' : 'resident';
+            }
+            
             return {
               id: e.id,
               date: e.start_time.split('T')[0],
-              category: artist?.is_guest ? 'guest' : 'resident',
+              category: category,
               slot: ((e.artist_id || 1) % 10) || 10,
               title: e.title || artist?.name || 'Event',
               startHour: start.getHours() + start.getMinutes()/60,
@@ -2344,7 +2648,7 @@
                     e.date === dateStr && e.slot === slot && e.category === cat &&
                     e.startHour >= h + offset && e.startHour < h + offset + 0.5
                   );
-                  const content = evts.length > 0 ? `<div class="event ${cat}">${evts[0].title}</div>` : '';
+                  const content = evts.length > 0 ? `<div class="event ${cat}" data-event-id="${evts[0].id}" onclick="openEditEventModal('${evts[0].id}')">${evts[0].title}</div>` : '';
                   html += `<div class="slot-cell ${offset===0?'half-hour':''}">${content}</div>`;
                 });
               }
@@ -2948,6 +3252,359 @@
       document.getElementById('customerSearchInput')?.addEventListener('input', (e) => {
         const searchTerm = e.target.value.trim();
         loadCustomers(searchTerm);
+      });
+      
+      // Edit Event Modal Functions
+      window.openEditEventModal = async function(eventId) {
+        const event = events.find(e => e.id === eventId);
+        if (!event) return;
+        
+        currentEditingEvent = event;
+        
+        // Load full event data from Supabase
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single();
+        
+        if (error) {
+          console.error('Error loading event:', error);
+          alert('Error loading event details');
+          return;
+        }
+        
+        // Fill form with event data
+        document.getElementById('editEventTitle').value = data.title || '';
+        document.getElementById('editEventType').value = data.type || '';
+        document.getElementById('editEventDescription').value = data.description || '';
+        document.getElementById('editEventDate').value = event.date;
+        document.getElementById('editEventStartTime').value = event.startHour;
+        document.getElementById('editEventEndTime').value = event.endHour;
+        
+        // Handle artist display (for bookings)
+        if (data.artist_id) {
+          const artist = allArtists.find(a => a.id === data.artist_id);
+          document.getElementById('editEventArtistName').value = artist?.name || 'Unknown Artist';
+          document.getElementById('editEventArtistGroup').style.display = 'block';
+          document.getElementById('editEventGroupsContainer').style.display = 'none';
+          document.getElementById('editEventAttendanceGroup').style.display = 'none';
+          document.getElementById('editEventModalTitle').textContent = 'Booking Details';
+        } else {
+          document.getElementById('editEventArtistGroup').style.display = 'none';
+          document.getElementById('editEventGroupsContainer').style.display = 'block';
+          document.getElementById('editEventAttendanceGroup').style.display = 'block';
+          document.getElementById('editEventModalTitle').textContent = 'Event Details';
+          
+          // Set visible groups checkboxes
+          const visibleGroups = data.visible_groups || [];
+          document.querySelectorAll('.edit-group-checkbox').forEach(checkbox => {
+            checkbox.checked = visibleGroups.includes(checkbox.value);
+          });
+          
+          // Set "All Groups" checkbox
+          const allChecked = document.querySelectorAll('.edit-group-checkbox').length === visibleGroups.length;
+          document.getElementById('editGroupCheckboxAll').checked = allChecked;
+          
+          // Set attendance required
+          document.getElementById('editEventAttendanceRequired').checked = data.attendance_required || false;
+        }
+        
+        // Open modal
+        document.getElementById('editEventModal').classList.add('active');
+      };
+      
+      // "All Groups" checkbox handler for edit modal
+      document.getElementById('editGroupCheckboxAll')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const groupCheckboxes = document.querySelectorAll('.edit-group-checkbox');
+        groupCheckboxes.forEach(checkbox => {
+          checkbox.checked = isChecked;
+        });
+      });
+      
+      // Individual group checkbox handler for edit modal
+      document.querySelectorAll('.edit-group-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const allCheckboxes = document.querySelectorAll('.edit-group-checkbox');
+          const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+          const allCheckbox = document.getElementById('editGroupCheckboxAll');
+          if (allCheckbox) {
+            allCheckbox.checked = allChecked;
+          }
+        });
+      });
+      
+      // Cancel edit event
+      document.getElementById('cancelEditEvent')?.addEventListener('click', () => {
+        document.getElementById('editEventModal').classList.remove('active');
+        currentEditingEvent = null;
+      });
+      
+      // Delete event
+      document.getElementById('deleteEventBtn')?.addEventListener('click', async () => {
+        if (!currentEditingEvent) return;
+        
+        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+          return;
+        }
+        
+        try {
+          const { error } = await supabase
+            .from('events')
+            .delete()
+            .eq('id', currentEditingEvent.id);
+          
+          if (error) throw error;
+          
+          // Remove from local array
+          events = events.filter(e => e.id !== currentEditingEvent.id);
+          
+          // Close modal
+          document.getElementById('editEventModal').classList.remove('active');
+          currentEditingEvent = null;
+          
+          // Refresh calendar
+          renderCalendar();
+          
+          alert('Event deleted successfully!');
+        } catch (err) {
+          console.error('Error deleting event:', err);
+          alert('Error deleting event: ' + err.message);
+        }
+      });
+      
+      // Save edited event
+      document.getElementById('editEventForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!currentEditingEvent) return;
+        
+        const title = document.getElementById('editEventTitle').value.trim();
+        const type = document.getElementById('editEventType').value.trim();
+        const description = document.getElementById('editEventDescription').value.trim();
+        const date = document.getElementById('editEventDate').value;
+        const startHour = parseFloat(document.getElementById('editEventStartTime').value);
+        const endHour = parseFloat(document.getElementById('editEventEndTime').value);
+        
+        // Validation
+        if (!title || !type || !date || !startHour || !endHour) {
+          return alert('Please fill in all required fields');
+        }
+        
+        if (endHour <= startHour) {
+          return alert('End time must be after start time');
+        }
+        
+        // Prepare update data
+        const updateData = {
+          title,
+          type,
+          description: description || null,
+          start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
+          end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
+        };
+        
+        // Add event-specific fields (not for bookings)
+        if (currentEditingEvent.category === 'events') {
+          const selectedGroups = [];
+          const groupCheckboxes = document.querySelectorAll('.edit-group-checkbox:checked');
+          groupCheckboxes.forEach(checkbox => {
+            selectedGroups.push(checkbox.value);
+          });
+          
+          updateData.visible_groups = selectedGroups.length > 0 ? selectedGroups : null;
+          updateData.attendance_required = document.getElementById('editEventAttendanceRequired').checked;
+        }
+        
+        try {
+          const { error } = await supabase
+            .from('events')
+            .update(updateData)
+            .eq('id', currentEditingEvent.id);
+          
+          if (error) throw error;
+          
+          // Close modal
+          document.getElementById('editEventModal').classList.remove('active');
+          currentEditingEvent = null;
+          
+          // Reload events and refresh calendar
+          await loadEvents();
+          renderCalendar();
+          
+          alert('Event updated successfully!');
+        } catch (err) {
+          console.error('Error updating event:', err);
+          alert('Error updating event: ' + err.message);
+        }
+      });
+      
+      // Edit Event Modal Functions
+      window.openEditEventModal = async function(eventId) {
+        const event = events.find(e => e.id === eventId);
+        if (!event) {
+          console.error('Event not found:', eventId);
+          return;
+        }
+        
+        // Load full event data from Supabase to get all fields
+        const { data: fullEvent, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single();
+        
+        if (error) {
+          console.error('Error loading event:', error);
+          alert('Error loading event details');
+          return;
+        }
+        
+        // Populate form fields
+        document.getElementById('editEventId').value = eventId;
+        document.getElementById('editEventTitle').value = fullEvent.title || '';
+        document.getElementById('editEventType').value = fullEvent.type || '';
+        document.getElementById('editEventDescription').value = fullEvent.description || '';
+        document.getElementById('editEventDate').value = event.date;
+        document.getElementById('editEventStartTime').value = event.startHour.toString();
+        document.getElementById('editEventEndTime').value = event.endHour.toString();
+        document.getElementById('editEventAttendanceRequired').checked = fullEvent.attendance_required || false;
+        
+        // Clear all group checkboxes first
+        document.querySelectorAll('.edit-group-checkbox').forEach(cb => cb.checked = false);
+        
+        // Set selected groups
+        if (fullEvent.visible_groups && Array.isArray(fullEvent.visible_groups)) {
+          fullEvent.visible_groups.forEach(group => {
+            const checkbox = document.querySelector(`.edit-group-checkbox[value="${group}"]`);
+            if (checkbox) checkbox.checked = true;
+          });
+          
+          // Check if all groups are selected
+          const allCheckboxes = document.querySelectorAll('.edit-group-checkbox');
+          const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+          document.getElementById('editGroupCheckboxAll').checked = allChecked;
+        }
+        
+        // Open modal
+        document.getElementById('editEventModal').classList.add('active');
+      };
+      
+      // Edit "All Groups" checkbox handler
+      document.getElementById('editGroupCheckboxAll')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const groupCheckboxes = document.querySelectorAll('.edit-group-checkbox');
+        groupCheckboxes.forEach(checkbox => {
+          checkbox.checked = isChecked;
+        });
+      });
+      
+      // Individual edit group checkbox handler
+      document.querySelectorAll('.edit-group-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const allCheckboxes = document.querySelectorAll('.edit-group-checkbox');
+          const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+          const allCheckbox = document.getElementById('editGroupCheckboxAll');
+          if (allCheckbox) {
+            allCheckbox.checked = allChecked;
+          }
+        });
+      });
+      
+      // Cancel edit event
+      document.getElementById('cancelEditEvent')?.addEventListener('click', () => {
+        document.getElementById('editEventModal').classList.remove('active');
+      });
+      
+      // Submit edit event form
+      document.getElementById('editEventForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const eventId = document.getElementById('editEventId').value;
+        const title = document.getElementById('editEventTitle').value.trim();
+        const type = document.getElementById('editEventType').value.trim();
+        const description = document.getElementById('editEventDescription').value.trim();
+        const date = document.getElementById('editEventDate').value;
+        const startHour = parseFloat(document.getElementById('editEventStartTime').value);
+        const endHour = parseFloat(document.getElementById('editEventEndTime').value);
+        const attendanceRequired = document.getElementById('editEventAttendanceRequired').checked;
+        
+        // Collect selected groups
+        const selectedGroups = [];
+        const groupCheckboxes = document.querySelectorAll('.edit-group-checkbox:checked');
+        groupCheckboxes.forEach(checkbox => {
+          selectedGroups.push(checkbox.value);
+        });
+        
+        // Validation
+        if (!title || !type || !date || !startHour || !endHour) {
+          return alert('Please fill in all required fields');
+        }
+        
+        if (endHour <= startHour) {
+          return alert('End time must be after start time');
+        }
+        
+        try {
+          // Update event in Supabase
+          const { error } = await supabase
+            .from('events')
+            .update({
+              title,
+              type,
+              description: description || null,
+              visible_groups: selectedGroups.length > 0 ? selectedGroups : null,
+              attendance_required: attendanceRequired,
+              start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
+              end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
+            })
+            .eq('id', eventId);
+          
+          if (error) throw error;
+          
+          // Close modal
+          document.getElementById('editEventModal').classList.remove('active');
+          
+          // Reload events and refresh calendar
+          await loadEvents();
+          renderCalendar();
+          
+          alert('Event updated successfully!');
+        } catch (err) {
+          console.error('Error updating event:', err);
+          alert('Error updating event: ' + err.message);
+        }
+      });
+      
+      // Delete event
+      document.getElementById('deleteEventBtn')?.addEventListener('click', async () => {
+        const eventId = document.getElementById('editEventId').value;
+        
+        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+          return;
+        }
+        
+        try {
+          const { error } = await supabase
+            .from('events')
+            .delete()
+            .eq('id', eventId);
+          
+          if (error) throw error;
+          
+          // Close modal
+          document.getElementById('editEventModal').classList.remove('active');
+          
+          // Reload events and refresh calendar
+          await loadEvents();
+          renderCalendar();
+          
+          alert('Event deleted successfully!');
+        } catch (err) {
+          console.error('Error deleting event:', err);
+          alert('Error deleting event: ' + err.message);
+        }
       });
       
       // Category checkboxes
