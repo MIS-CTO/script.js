@@ -3816,22 +3816,32 @@
         
         try {
           console.log('Updating customer with rank:', rank);
+          console.log('Customer ID to update:', currentEditCustomerId);
+          
+          const updateData = {
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone: phone || null,
+            rank: rank || null
+          };
+          
+          console.log('Update data:', updateData);
           
           const { data, error } = await supabase
             .from('customers')
-            .update({
-              first_name: firstName,
-              last_name: lastName,
-              email,
-              phone: phone || null,
-              rank: rank || null
-            })
+            .update(updateData)
             .eq('id', currentEditCustomerId)
             .select();
           
           console.log('Update result:', data, 'Error:', error);
           
           if (error) throw error;
+          
+          if (!data || data.length === 0) {
+            console.error('WARNING: Update returned no data. Customer ID might be wrong:', currentEditCustomerId);
+            alert('Warning: Customer was updated but could not verify the result. Please refresh the page.');
+          }
           
           console.log('Customer updated successfully, reloading list...');
           
