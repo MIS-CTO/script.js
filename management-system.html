@@ -3079,8 +3079,15 @@
       
       async function loadArtists() {
         try {
-          const { data } = await supabase.from('artists').select('*');
+          const { data, error } = await supabase.from('artists').select('*');
+          
+          if (error) {
+            console.error('Error loading artists:', error);
+            return;
+          }
+          
           allArtists = data || [];
+          console.log('Artists loaded:', allArtists.length, 'artists');
           
           // Apply sorting
           const sorted = sortArtists(allArtists, artistSortConfig.field, artistSortConfig.order);
@@ -3723,6 +3730,8 @@
           document.getElementById('editArtistModal').classList.remove('active');
           currentEditArtistId = null;
           
+          // Reload all data to ensure fresh info
+          await loadInitialData();
           await loadArtists();
           renderCalendar();
           alert('Artist updated successfully!');
