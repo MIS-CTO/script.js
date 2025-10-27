@@ -3141,9 +3141,9 @@
           
           if (filteredCustomers.length === 0) {
             if (searchTerm) {
-              tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No customers found matching your search</td></tr>';
+              tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No customers found matching your search</td></tr>';
             } else {
-              tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No customers yet</td></tr>';
+              tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No customers yet</td></tr>';
             }
             return;
           }
@@ -3779,11 +3779,16 @@
           
           currentEditCustomerId = customerId;
           
+          console.log('Loading customer for edit:', data);
+          console.log('Customer rank:', data.rank);
+          
           document.getElementById('editCustomerFirstName').value = data.first_name || '';
           document.getElementById('editCustomerLastName').value = data.last_name || '';
           document.getElementById('editCustomerEmail').value = data.email || '';
           document.getElementById('editCustomerPhone').value = data.phone || '';
           document.getElementById('editCustomerRank').value = data.rank || '';
+          
+          console.log('Rank field set to:', document.getElementById('editCustomerRank').value);
           
           document.getElementById('editCustomerModal').classList.add('active');
         } catch (err) {
@@ -3810,7 +3815,9 @@
         }
         
         try {
-          const { error } = await supabase
+          console.log('Updating customer with rank:', rank);
+          
+          const { data, error } = await supabase
             .from('customers')
             .update({
               first_name: firstName,
@@ -3819,14 +3826,21 @@
               phone: phone || null,
               rank: rank || null
             })
-            .eq('id', currentEditCustomerId);
+            .eq('id', currentEditCustomerId)
+            .select();
+          
+          console.log('Update result:', data, 'Error:', error);
           
           if (error) throw error;
+          
+          console.log('Customer updated successfully, reloading list...');
           
           document.getElementById('editCustomerModal').classList.remove('active');
           currentEditCustomerId = null;
           
+          // Reload customers to show updated rank
           await loadCustomers();
+          
           alert('Customer updated successfully!');
         } catch (err) {
           alert('Error updating customer: ' + err.message);
