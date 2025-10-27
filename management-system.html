@@ -1312,6 +1312,10 @@
           <label>Location</label>
           <select id="editArtistLocation">
             <option value="">-- Select Location --</option>
+            <option value="Stuttgart">Stuttgart</option>
+            <option value="Köln">Köln</option>
+            <option value="Berlin">Berlin</option>
+            <option value="München">München</option>
           </select>
         </div>
         <div class="form-group">
@@ -3060,19 +3064,11 @@
 
       
       // Open Add Artist Modal
-      document.getElementById('addArtistBtn')?.addEventListener('click', async () => {
+      document.getElementById('addArtistBtn')?.addEventListener('click', () => {
         // Reset form
         document.getElementById('addArtistForm')?.reset();
         
-        // Populate location dropdown
-        const { data: locations } = await supabase.from('locations').select('*').order('name');
-        const locationSelect = document.getElementById('addArtistLocation');
-        if (locationSelect && locations) {
-          locationSelect.innerHTML = '<option value="">-- Select Location --</option>' +
-            locations.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
-        }
-        
-        // Open modal
+        // Open modal (location dropdown is static HTML, no need to populate)
         document.getElementById('addArtistModal').classList.add('active');
       });
       
@@ -3683,21 +3679,8 @@
         document.getElementById('editArtistInstagram').value = artist.instagram || '';
         document.getElementById('editArtistType').value = artist.is_guest ? 'guest' : 'resident';
         
-        // Populate location dropdown
-        const locationSelect = document.getElementById('editArtistLocation');
-        if (locationSelect) {
-          // Get locations from global state or fetch them
-          fetch('https://auxxyehgzkozdjylhqnx.supabase.co/rest/v1/locations?select=*', {
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA'
-            }
-          }).then(res => res.json()).then(locations => {
-            locationSelect.innerHTML = '<option value="">-- Select Location --</option>' +
-              locations.map(l => `<option value="${l.id}" ${l.id === artist.location_id ? 'selected' : ''}>${l.name}</option>`).join('');
-          });
-        }
-        
+        // Set location dropdown (static values, so just select current)
+        document.getElementById('editArtistLocation').value = artist.city_location || '';
         document.getElementById('editArtistRank').value = artist.rank || '';
         document.getElementById('editArtistActive').checked = artist.active;
         
@@ -3720,7 +3703,7 @@
         if (!name) return alert('Name is required');
         
         try {
-          const locationId = document.getElementById('editArtistLocation').value;
+          const location = document.getElementById('editArtistLocation').value;
           const rank = document.getElementById('editArtistRank').value;
           
           const { error } = await supabase
@@ -3729,8 +3712,7 @@
               name,
               instagram: instagram || null,
               is_guest: type === 'guest',
-              location_id: locationId || null,
-              city_location: locationId || null,
+              city_location: location || null,
               rank: rank || null,
               active
             })
@@ -4239,6 +4221,19 @@
           }
         });
       });
+      // Artist Sort Controls
+      document.getElementById('artistSortBy')?.addEventListener('change', () => {
+        loadArtists();
+      });
+      
+      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
+        const currentOrder = this.dataset.order || 'asc';
+        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        this.dataset.order = newOrder;
+        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
+        loadArtists();
+      });
+      
       
       
       // Customer Search
@@ -4302,6 +4297,19 @@
           }
         });
       });
+      // Artist Sort Controls
+      document.getElementById('artistSortBy')?.addEventListener('change', () => {
+        loadArtists();
+      });
+      
+      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
+        const currentOrder = this.dataset.order || 'asc';
+        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        this.dataset.order = newOrder;
+        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
+        loadArtists();
+      });
+      
       
       
       // Edit Event Modal Functions
