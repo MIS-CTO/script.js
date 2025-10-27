@@ -529,9 +529,9 @@
       border-radius:12px;
       box-shadow:0 8px 32px rgba(0,0,0,0.2);
       padding:24px;
-      max-width:500px;
+      max-width:600px;
       width:90%;
-      max-height:80vh;
+      max-height:85vh;
       overflow-y:auto;
     }
     
@@ -544,7 +544,7 @@
     .modal-form {
       display:flex;
       flex-direction:column;
-      gap:16px;
+      gap:12px;
     }
     
     .form-group {
@@ -737,6 +737,14 @@
     }
     
     /* Customer Table Styles */
+    /* Artist Table Styles */
+    #artistsTable tbody tr {
+      transition:background 0.15s ease;
+    }
+    
+    #artistsTable tbody tr:hover {
+      background:rgba(0,113,227,0.02);
+    }
     #customersTable tbody tr {
       transition:background 0.15s ease;
     }
@@ -744,6 +752,15 @@
     #customersTable tbody tr:hover {
       background:rgba(0,113,227,0.02);
     }
+    /* Artists Table Styles */
+    #artistsTable tbody tr {
+      transition:background 0.15s ease;
+    }
+    
+    #artistsTable tbody tr:hover {
+      background:rgba(0,113,227,0.02);
+    }
+    
     
     /* Responsive */
     @media (max-width: 768px) {
@@ -1140,7 +1157,20 @@
       </button>
     </div>
     
-    <ul id="artistList" class="artist-list"></ul>
+    <table id="artistsTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Instagram</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Rank</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="artistsTableBody"></tbody>
+    </table>
   </section>
 
   <section id="customers-section">
@@ -1200,7 +1230,7 @@
 
   <!-- Add Artist Modal -->
   <div class="modal-backdrop" id="addArtistModal">
-    <div class="modal">
+    <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
       <h3>Add New Artist</h3>
       <form class="modal-form" id="addArtistForm">
         <div class="form-group">
@@ -1260,7 +1290,7 @@
 
   <!-- Edit Artist Modal -->
   <div class="modal-backdrop" id="editArtistModal">
-    <div class="modal">
+    <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
       <h3>Edit Artist</h3>
       <form class="modal-form" id="editArtistForm">
         <div class="form-group">
@@ -1411,7 +1441,7 @@
 
   <!-- Add Customer Modal -->
   <div class="modal-backdrop" id="addCustomerModal">
-    <div class="modal">
+    <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
       <h3>Add New Customer</h3>
       <form class="modal-form" id="addCustomerForm">
         <div class="form-group">
@@ -1449,7 +1479,7 @@
 
   <!-- Edit Customer Modal -->
   <div class="modal-backdrop" id="editCustomerModal">
-    <div class="modal">
+    <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
       <h3>Edit Customer</h3>
       <form class="modal-form" id="editCustomerForm">
         <div class="form-group">
@@ -1467,7 +1497,7 @@
         <div class="form-group">
           <label>Phone</label>
           <input type="tel" id="editCustomerPhone">
-        </div>        </div>
+        </div>
         <div class="form-group">
           <label>Rank</label>
           <select id="editCustomerRank">
@@ -1477,6 +1507,7 @@
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
           </select>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="cancelEditCustomer">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -1615,6 +1646,8 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
+              <option value="20.5">20:30</option>
+              <option value="21.0">21:00</option>
             </select>
           </div>
         </div>
@@ -1759,6 +1792,8 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
+              <option value="20.5">20:30</option>
+              <option value="21.0">21:00</option>
             </select>
           </div>
         </div>
@@ -1865,6 +1900,8 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
+              <option value="20.5">20:30</option>
+              <option value="21.0">21:00</option>
             </select>
           </div>
         </div>
@@ -2011,6 +2048,8 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
+              <option value="20.5">20:30</option>
+              <option value="21.0">21:00</option>
             </select>
           </div>
         </div>
@@ -2128,6 +2167,8 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
+              <option value="20.5">20:30</option>
+              <option value="21.0">21:00</option>
             </select>
           </div>
         </div>
@@ -2274,6 +2315,8 @@
               <option value="19.0">19:00</option>
               <option value="19.5">19:30</option>
               <option value="20.0">20:00</option>
+              <option value="20.5">20:30</option>
+              <option value="21.0">21:00</option>
             </select>
           </div>
         </div>
@@ -3005,28 +3048,26 @@
           
           // Apply sorting
           const sorted = sortArtists(allArtists, artistSortConfig.field, artistSortConfig.order);
-          const list = document.getElementById('artistList');
+          const tbody = document.getElementById('artistsTableBody');
           
           if (!data || data.length === 0) {
-            list.innerHTML = '<li style="padding:20px; text-align:center; color:var(--muted);">No artists yet. Add one above!</li>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No artists yet. Add one using the button above!</td></tr>';
             return;
           }
           
-          list.innerHTML = sorted.map(artist => `
-            <li class="artist-item">
-              <div class="artist-info">
-                <span class="artist-name">${artist.name}</span>
-                <span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span>
-                ${artist.city_location ? `<span class="artist-location">${artist.city_location}</span>` : ''}
-                ${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : ''}
-                ${artist.instagram ? `<span class="artist-instagram">@${artist.instagram}</span>` : ''}
-                ${!artist.active ? '<span style="color:#ff3b30; font-size:12px; margin-left:8px;">(Inactive)</span>' : ''}
-              </div>
-              <div class="artist-actions">
+          tbody.innerHTML = sorted.map(artist => `
+            <tr>
+              <td>${artist.name || '-'}</td>
+              <td>${artist.instagram ? `<span style="color:var(--muted); font-size:13px;">@${artist.instagram}</span>` : '-'}</td>
+              <td><span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
+              <td>${artist.city_location ? `<span class="artist-location">${artist.city_location}</span>` : '-'}</td>
+              <td>${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : '-'}</td>
+              <td>${artist.active ? '<span style="color:#34c759; font-weight:500;">Active</span>' : '<span style="color:#ff3b30; font-weight:500;">Inactive</span>'}</td>
+              <td style="text-align:right;">
                 <button class="btn-icon" onclick="editArtist('${artist.id}')" title="Edit">✏️</button>
                 <button class="btn-icon" onclick="deleteArtist('${artist.id}')" title="Delete">🗑️</button>
-              </div>
-            </li>
+              </td>
+            </tr>
           `).join('');
         } catch(err) {
           console.error("Artists error:", err);
@@ -3303,7 +3344,7 @@
               // Mark cells as occupied by events and create event blocks
               slotEvents.forEach(evt => {
                 const startIndex = Math.max(0, Math.floor((evt.startHour - 10) * 2));
-                const endIndex = Math.min(cells.length, Math.ceil((evt.endHour - 10) * 2));
+                const endIndex = Math.min(cells.length, Math.floor((evt.endHour - 10) * 2));
                 const span = endIndex - startIndex;
                 
                 if (span > 0 && startIndex < cells.length) {
@@ -4080,11 +4121,125 @@
         loadCustomers(searchTerm);
       });
       
+      // Artist Search
+      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        if (!searchTerm) {
+          loadArtists();
+          return;
+        }
+        
+        // Filter artists by search term
+        const filtered = allArtists.filter(artist => {
+          const name = (artist.name || '').toLowerCase();
+          const instagram = (artist.instagram || '').toLowerCase();
+          return name.includes(searchTerm) || instagram.includes(searchTerm);
+        });
+        
+        // Apply sorting to filtered results
+        const sorted = sortArtists(filtered, artistSortConfig.field, artistSortConfig.order);
+        
+        const tbody = document.getElementById('artistsTableBody');
+        if (!tbody) return;
+        
+        if (sorted.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No artists found matching your search</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = sorted.map(artist => `
+          <tr>
+            <td style="font-weight:500;">${artist.name}</td>
+            <td>${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color:var(--accent); text-decoration:none;">@${artist.instagram.replace('@', '')}</a>` : '-'}</td>
+            <td><span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
+            <td>${artist.city_location || '-'}</td>
+            <td>${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : '-'}</td>
+            <td>${artist.active ? '<span style="color:#34c759; font-weight:600;">Active</span>' : '<span style="color:#ff3b30; font-weight:600;">Inactive</span>'}</td>
+            <td style="text-align:right;">
+              <button class="btn-icon" onclick="editArtist('${artist.id}')" title="Edit">✏️</button>
+              <button class="btn-icon" onclick="deleteArtist('${artist.id}')" title="Delete">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      });
+      // Artist Search
+      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#artistsTableBody tr');
+        
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+      
+      
       // Customer Search
       document.getElementById('customerSearchInput')?.addEventListener('input', (e) => {
         const searchTerm = e.target.value.trim();
         loadCustomers(searchTerm);
       });
+      
+      // Artist Search
+      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        if (!searchTerm) {
+          loadArtists();
+          return;
+        }
+        
+        // Filter artists by search term
+        const filtered = allArtists.filter(artist => {
+          const name = (artist.name || '').toLowerCase();
+          const instagram = (artist.instagram || '').toLowerCase();
+          return name.includes(searchTerm) || instagram.includes(searchTerm);
+        });
+        
+        // Apply sorting to filtered results
+        const sorted = sortArtists(filtered, artistSortConfig.field, artistSortConfig.order);
+        
+        const tbody = document.getElementById('artistsTableBody');
+        if (!tbody) return;
+        
+        if (sorted.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No artists found matching your search</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = sorted.map(artist => `
+          <tr>
+            <td style="font-weight:500;">${artist.name}</td>
+            <td>${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color:var(--accent); text-decoration:none;">@${artist.instagram.replace('@', '')}</a>` : '-'}</td>
+            <td><span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
+            <td>${artist.city_location || '-'}</td>
+            <td>${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : '-'}</td>
+            <td>${artist.active ? '<span style="color:#34c759; font-weight:600;">Active</span>' : '<span style="color:#ff3b30; font-weight:600;">Inactive</span>'}</td>
+            <td style="text-align:right;">
+              <button class="btn-icon" onclick="editArtist('${artist.id}')" title="Edit">✏️</button>
+              <button class="btn-icon" onclick="deleteArtist('${artist.id}')" title="Delete">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      });
+      // Artist Search
+      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#artistsTableBody tr');
+        
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+      
       
       // Edit Event Modal Functions
       window.openEditEventModal = async function(eventId) {
@@ -4113,8 +4268,39 @@
         document.getElementById('editEventDate').value = event.date;
         
         // Set time dropdowns with formatted values
-        document.getElementById('editEventStartTime').value = event.startHour.toString();
-        document.getElementById('editEventEndTime').value = event.endHour.toString();
+        const startTimeValue = event.startHour.toString();
+        const endTimeValue = event.endHour.toString();
+        
+        console.log('Setting start time to:', startTimeValue, 'Available options:', 
+          Array.from(document.getElementById('editEventStartTime').options).map(o => o.value));
+        console.log('Setting end time to:', endTimeValue, 'Available options:', 
+          Array.from(document.getElementById('editEventEndTime').options).map(o => o.value));
+        
+        document.getElementById('editEventStartTime').value = startTimeValue;
+        document.getElementById('editEventEndTime').value = endTimeValue;
+        
+        // Fallback: if value not set, try to find closest match
+        if (!document.getElementById('editEventStartTime').value) {
+          console.warn('Start time not set, trying fallback');
+          const startSelect = document.getElementById('editEventStartTime');
+          for (let option of startSelect.options) {
+            if (parseFloat(option.value) === event.startHour) {
+              startSelect.value = option.value;
+              break;
+            }
+          }
+        }
+        
+        if (!document.getElementById('editEventEndTime').value) {
+          console.warn('End time not set, trying fallback');
+          const endSelect = document.getElementById('editEventEndTime');
+          for (let option of endSelect.options) {
+            if (parseFloat(option.value) === event.endHour) {
+              endSelect.value = option.value;
+              break;
+            }
+          }
+        }
         
         // Handle artist display (for bookings)
         if (data.artist_id) {
