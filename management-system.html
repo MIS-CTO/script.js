@@ -1309,8 +1309,25 @@
           </select>
         </div>
         <div class="form-group">
+          <label>Location</label>
+          <select id="editArtistLocation">
+            <option value="">-- Select Location --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Rank</label>
+          <select id="editArtistRank">
+            <option value="">-- No Rank --</option>
+            <option value="R1">R1</option>
+            <option value="R2">R2</option>
+            <option value="R3">R3</option>
+            <option value="R4">R4</option>
+            <option value="R5">R5</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" id="editArtistActive">
+            <input type="checkbox" id="editArtistActive" style="width:auto; padding:0;">
             Active
           </label>
         </div>
@@ -3041,6 +3058,29 @@
       let currentEditArtistId = null;
       let currentEditCustomerId = null;
 
+      
+      // Open Add Artist Modal
+      document.getElementById('addArtistBtn')?.addEventListener('click', async () => {
+        // Reset form
+        document.getElementById('addArtistForm')?.reset();
+        
+        // Populate location dropdown
+        const { data: locations } = await supabase.from('locations').select('*').order('name');
+        const locationSelect = document.getElementById('addArtistLocation');
+        if (locationSelect && locations) {
+          locationSelect.innerHTML = '<option value="">-- Select Location --</option>' +
+            locations.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+        }
+        
+        // Open modal
+        document.getElementById('addArtistModal').classList.add('active');
+      });
+      
+      // Close Add Artist Modal
+      document.getElementById('cancelAddArtist')?.addEventListener('click', () => {
+        document.getElementById('addArtistModal').classList.remove('active');
+      });
+      
       async function loadArtists() {
         try {
           const { data } = await supabase.from('artists').select('*');
@@ -3064,8 +3104,8 @@
               <td>${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : '-'}</td>
               <td>${artist.active ? '<span style="color:#34c759; font-weight:500;">Active</span>' : '<span style="color:#ff3b30; font-weight:500;">Inactive</span>'}</td>
               <td style="text-align:right;">
-                <button class="btn-icon" onclick="editArtist('${artist.id}')" title="Edit">✏️</button>
-                <button class="btn-icon" onclick="deleteArtist('${artist.id}')" title="Delete">🗑️</button>
+                <button class="btn btn-secondary" onclick="editArtist('${artist.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
+                <button class="btn btn-danger" onclick="deleteArtist('${artist.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
               </td>
             </tr>
           `).join('');
@@ -3114,8 +3154,8 @@
               <td>${customer.rank ? `<span class="customer-rank ${customer.rank.toLowerCase()}">${customer.rank}</span>` : '-'}</td>
               <td style="font-size:13px; color:var(--muted);">${new Date(customer.created_at).toLocaleDateString()}</td>
               <td style="text-align:right;">
-                <button class="btn-icon" onclick="editCustomer('${customer.id}')" title="Edit">✏️</button>
-                <button class="btn-icon" onclick="deleteCustomer('${customer.id}')" title="Delete">🗑️</button>
+                <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
+                <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
               </td>
             </tr>
           `).join('');
@@ -3642,6 +3682,23 @@
         document.getElementById('editArtistName').value = artist.name;
         document.getElementById('editArtistInstagram').value = artist.instagram || '';
         document.getElementById('editArtistType').value = artist.is_guest ? 'guest' : 'resident';
+        
+        // Populate location dropdown
+        const locationSelect = document.getElementById('editArtistLocation');
+        if (locationSelect) {
+          // Get locations from global state or fetch them
+          fetch('https://auxxyehgzkozdjylhqnx.supabase.co/rest/v1/locations?select=*', {
+            headers: {
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA',
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA'
+            }
+          }).then(res => res.json()).then(locations => {
+            locationSelect.innerHTML = '<option value="">-- Select Location --</option>' +
+              locations.map(l => `<option value="${l.id}" ${l.id === artist.location_id ? 'selected' : ''}>${l.name}</option>`).join('');
+          });
+        }
+        
+        document.getElementById('editArtistRank').value = artist.rank || '';
         document.getElementById('editArtistActive').checked = artist.active;
         
         document.getElementById('editArtistModal').classList.add('active');
@@ -3663,12 +3720,18 @@
         if (!name) return alert('Name is required');
         
         try {
+          const locationId = document.getElementById('editArtistLocation').value;
+          const rank = document.getElementById('editArtistRank').value;
+          
           const { error } = await supabase
             .from('artists')
             .update({
               name,
               instagram: instagram || null,
               is_guest: type === 'guest',
+              location_id: locationId || null,
+              city_location: locationId || null,
+              rank: rank || null,
               active
             })
             .eq('id', currentEditArtistId);
