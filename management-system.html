@@ -3114,8 +3114,16 @@
           
           events = (data || []).map(e => {
             const artist = allArtists.find(a => a.id === e.artist_id);
-            const start = new Date(e.start_time);
-            const end = new Date(e.end_time);
+            
+            // Parse time without timezone conversion
+            const parseLocalTime = (timeStr) => {
+              const [datePart, timePart] = timeStr.split('T');
+              const [hours, minutes] = timePart.split(':').map(Number);
+              return hours + minutes / 60;
+            };
+            
+            const startHour = parseLocalTime(e.start_time);
+            const endHour = parseLocalTime(e.end_time);
             
             // Determine category:
             // - If no artist_id, it's an 'events' category event
@@ -3136,8 +3144,10 @@
               artistName: artist?.name || null,
               customerName: e.title || null,
               attendanceRequired: e.attendance_required || false,
-              startHour: start.getHours() + start.getMinutes()/60,
-              endHour: end.getHours() + end.getMinutes()/60
+              startHour: startHour,
+              endHour: endHour,
+              startTimeRaw: e.start_time,
+              endTimeRaw: e.end_time
             };
           });
           
@@ -3184,6 +3194,24 @@
         return null; // All slots are occupied
       }
 
+
+      // Helper function to get readable event type labels
+      function getEventTypeLabel(type) {
+        const typeLabels = {
+          'consultation': 'Consultation',
+          'new_tattoo': 'New Tattoo',
+          'continuing_tattoo': 'Continuing',
+          'touch_up': 'Touch Up',
+          'selfbooking': 'Selfbooking',
+          'wannado': 'WannaDo',
+          'internal': 'Internal',
+          'move': 'Move',
+          'reserved': 'Reserved',
+          'no_show': 'No Show'
+        };
+        return typeLabels[type] || type;
+      }
+      
       function renderCalendar() {
         const dateStr = currentDate.toISOString().split('T')[0];
         document.getElementById('datePickerInput').value = dateStr;
@@ -3231,7 +3259,20 @@
 
           // Only show slots if visible
           if (visible) {
-            for (let slot = 1; slot <= 10; slot++) {
+            // Calculate max slot for this category and date
+            const categoryEvents = events.filter(e => 
+              e.date === dateStr && e.category === cat
+            );
+            
+            // Find highest slot number used
+            const maxUsedSlot = categoryEvents.length > 0 
+              ? Math.max(...categoryEvents.map(e => e.slot || 1))
+              : 0;
+            
+            // Show minimum 5 slots, or more if needed
+            const maxSlot = Math.max(5, maxUsedSlot);
+            
+            for (let slot = 1; slot <= maxSlot; slot++) {
               // Check if this slot has any events
               const slotHasEvents = events.some(e => 
                 e.date === dateStr && e.slot === slot && e.category === cat
@@ -3307,10 +3348,11 @@
                   // Build content based on category
                   let content = '';
                   if (cat === 'events') {
-                    // For events: just time and title
+                    // For events: time, title, and type
                     content = `
                       <div style="font-weight:600; font-size:13px; margin-bottom:2px;">${timeStr}</div>
-                      <div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cell.event.title}</div>
+                      <div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.title}</div>
+                      ${typeLabel ? `<div style="font-size:10px; color:rgba(0,0,0,0.5); font-weight:500; text-transform:uppercase; letter-spacing:0.3px;">${typeLabel}</div>` : ''}
                     `;
                   } else {
                     // For bookings: time, customer, artist, type
@@ -4069,8 +4111,10 @@
         document.getElementById('editEventType').value = data.type || '';
         document.getElementById('editEventDescription').value = data.description || '';
         document.getElementById('editEventDate').value = event.date;
-        document.getElementById('editEventStartTime').value = event.startHour;
-        document.getElementById('editEventEndTime').value = event.endHour;
+        
+        // Set time dropdowns with formatted values
+        document.getElementById('editEventStartTime').value = event.startHour.toString();
+        document.getElementById('editEventEndTime').value = event.endHour.toString();
         
         // Handle artist display (for bookings)
         if (data.artist_id) {
