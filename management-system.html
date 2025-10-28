@@ -938,7 +938,7 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v63</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v64</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -2428,14 +2428,7 @@
     
     
     // Sorting Functions
-    function sortArtists(artists, field, order) {
-      const sorted = [...artists].sort((a, b) => {
-        let aVal, bVal;
-        
-        if (field === 'name') {
-          aVal = (a.name || '').toLowerCase();
-          bVal = (b.name || '').toLowerCase();
-        } else if (field === 'rank') {
+     else if (field === 'rank') {
           const rankOrder = { 'R1': 1, 'R2': 2, 'R3': 3, 'R4': 4, 'R5': 5 };
           aVal = rankOrder[a.rank] || 999;
           bVal = rankOrder[b.rank] || 999;
@@ -3080,6 +3073,22 @@
         document.getElementById('addArtistModal').classList.remove('active');
       });
       
+      
+      // Artist Sort Controls Event Listeners
+      document.getElementById('artistSortBy')?.addEventListener('change', () => {
+        console.log('Sort by changed to:', document.getElementById('artistSortBy').value);
+        loadArtists();
+      });
+      
+      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
+        const currentOrder = this.dataset.order || 'asc';
+        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        this.dataset.order = newOrder;
+        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
+        console.log('Sort order changed to:', newOrder);
+        loadArtists();
+      });
+      
       async function loadArtists() {
         try {
           const { data, error } = await supabase.from('artists').select('*');
@@ -3093,7 +3102,39 @@
           console.log('Artists loaded:', allArtists.length, 'artists');
           
           // Apply sorting
-          const sorted = sortArtists(allArtists, artistSortConfig.field, artistSortConfig.order);
+          // Read sort settings from UI
+          const sortBy = document.getElementById('artistSortBy')?.value || 'name';
+          const sortOrder = document.getElementById('artistSortOrder')?.dataset.order || 'asc';
+          
+          console.log('Sorting artists by:', sortBy, 'order:', sortOrder);
+          
+          // Sort the artists
+          const sorted = [...allArtists].sort((a, b) => {
+            let aVal, bVal;
+            
+            switch(sortBy) {
+              case 'name':
+                aVal = (a.name || '').toLowerCase();
+                bVal = (b.name || '').toLowerCase();
+                break;
+              case 'rank':
+                const rankOrder = { 'R1': 1, 'R2': 2, 'R3': 3, 'R4': 4, 'R5': 5 };
+                aVal = rankOrder[a.rank] || 999;
+                bVal = rankOrder[b.rank] || 999;
+                break;
+              case 'location':
+                aVal = (a.city_location || '').toLowerCase();
+                bVal = (b.city_location || '').toLowerCase();
+                break;
+              default:
+                aVal = (a.name || '').toLowerCase();
+                bVal = (b.name || '').toLowerCase();
+            }
+            
+            if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
+          });
           const tbody = document.getElementById('artistsTableBody');
           
           if (!data || data.length === 0) {
@@ -4268,17 +4309,7 @@
         });
       });
       // Artist Sort Controls
-      document.getElementById('artistSortBy')?.addEventListener('change', () => {
-        loadArtists();
-      });
       
-      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
-        const currentOrder = this.dataset.order || 'asc';
-        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        this.dataset.order = newOrder;
-        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
-        loadArtists();
-      });
       
       
       
@@ -4344,17 +4375,7 @@
         });
       });
       // Artist Sort Controls
-      document.getElementById('artistSortBy')?.addEventListener('change', () => {
-        loadArtists();
-      });
       
-      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
-        const currentOrder = this.dataset.order || 'asc';
-        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        this.dataset.order = newOrder;
-        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
-        loadArtists();
-      });
       
       
       
