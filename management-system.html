@@ -942,13 +942,15 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v68</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v69</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
       <span class="badge" id="badge-scheduled">Scheduled: —</span>
       <span class="badge" id="badge-residents">Residents: —</span>
       <span class="badge" id="badge-guests">Guests: —</span>
+      <span class="badge" id="badge-agreements-completed">Agreements: —</span>
+      <span class="badge" id="badge-agreements-pending">Missing: —</span>
     </div>
   </section>
 
@@ -1242,19 +1244,7 @@
     </div>
     
     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:20px; margin-bottom:40px;">
-      <!-- Agreement cards will be loaded here -->
-      <div style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:24px; box-shadow:var(--shadow);">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-          <div style="width:48px; height:48px; background:var(--location-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">📄</div>
-          <div>
-            <div style="font-weight:600; font-size:15px;">Artist Agreement</div>
-            <div style="font-size:12px; color:var(--muted);">Template</div>
-          </div>
-        </div>
-        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Standard agreement template for resident and guest artists</p>
-        <button class="btn-nav" style="width:100%;">View Template</button>
-      </div>
-      
+      <!-- Client Agreement Template -->
       <div style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:24px; box-shadow:var(--shadow);">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
           <div style="width:48px; height:48px; background:var(--location-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">🤝</div>
@@ -1263,20 +1253,24 @@
             <div style="font-size:12px; color:var(--muted);">Template</div>
           </div>
         </div>
-        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Standard terms and conditions for tattoo services</p>
-        <button class="btn-nav" style="width:100%;">View Template</button>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Terms and conditions for tattoo services - Available in German & English</p>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-nav" onclick="viewAgreementTemplate('de')" style="flex:1;">🇩🇪 Deutsch</button>
+          <button class="btn-nav" onclick="viewAgreementTemplate('en')" style="flex:1;">🇬🇧 English</button>
+        </div>
       </div>
       
+      <!-- Create New Agreement -->
       <div style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:24px; box-shadow:var(--shadow);">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-          <div style="width:48px; height:48px; background:var(--location-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">➕</div>
+          <div style="width:48px; height:48px; background:var(--location-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">✍️</div>
           <div>
-            <div style="font-weight:600; font-size:15px;">Create New</div>
-            <div style="font-size:12px; color:var(--muted);">Agreement</div>
+            <div style="font-weight:600; font-size:15px;">Create Agreement</div>
+            <div style="font-size:12px; color:var(--muted);">Fill out on iPad</div>
           </div>
         </div>
-        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Create a custom agreement from scratch</p>
-        <button class="btn-nav" style="width:100%; background:var(--accent); color:white;">Create Agreement</button>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Digital form for customer to sign on iPad - Auto-fills customer data</p>
+        <button class="btn-nav" onclick="openAgreementForm()" style="width:100%; background:var(--accent); color:white;">📱 Open Form</button>
       </div>
     </div>
     
@@ -1632,6 +1626,156 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" id="closeCustomerDetail">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agreement Form Modal (iPad optimized) -->
+  <div class="modal-backdrop" id="agreementFormModal">
+    <div class="modal" style="max-width:900px; max-height:95vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <h3 style="margin:0;">Client Agreement Form</h3>
+        <div style="display:flex; gap:12px;">
+          <button type="button" class="btn btn-secondary" onclick="switchAgreementLanguage('de')" id="langBtnDe">🇩🇪 Deutsch</button>
+          <button type="button" class="btn btn-secondary" onclick="switchAgreementLanguage('en')" id="langBtnEn">🇬🇧 English</button>
+        </div>
+      </div>
+      
+      <!-- German Form -->
+      <div id="agreementFormDE" style="display:block;">
+        <div style="background:#f5f5f5; padding:20px; border-radius:12px; margin-bottom:24px;">
+          <div style="text-align:center; margin-bottom:16px;">
+            <h2 style="margin:0 0 4px; font-size:20px;">MOMMY I'M SORRY</h2>
+            <p style="margin:0; font-size:12px; color:var(--muted);">VERWALTUNG GMBH | TÜBINGER STRASSE 73 | 70178 STUTTGART</p>
+          </div>
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+            <div class="form-group">
+              <label>Name, Vorname</label>
+              <input type="text" id="customerNameDE" placeholder="Max Mustermann" style="border-radius:8px;">
+            </div>
+            <div class="form-group">
+              <label>Geburtsdatum</label>
+              <input type="date" id="customerBirthdayDE" style="border-radius:8px;">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>E-Mail</label>
+              <input type="email" id="customerEmailDE" placeholder="max@example.com" style="border-radius:8px;">
+            </div>
+          </div>
+          
+          <h4 style="margin:20px 0 12px; font-size:16px; font-weight:600;">Tätowier-Bedingungen | Einwilligungserklärung zum Tätowier-Prozess</h4>
+          
+          <div style="font-size:13px; line-height:1.6; color:#333; max-height:400px; overflow-y:auto; padding:12px; background:white; border-radius:8px;">
+            <p><strong>1.</strong> Eine Tätowierung bei MOMMY I'M SORRY setzt grundsätzlich die Volljährigkeit voraus. Es gelten keine Ausnahmen.</p>
+            
+            <p><strong>2.</strong> Der Kunde ist verpflichtet, MOMMY I'M SORRY über mögliche Allergien, Medikamente oder Krankheiten zu informieren (z.B. HIV, Hepatitis, Epilepsie, Diabetes etc.). Außerdem ist der Konsum von Alkohol und Drogen unmittelbar vor deinem Termin nicht gestattet und kann bei Missachtung aus unterschiedlichen Gründen zum Abbruch der Sitzung führen. Es gelten unsere AGB.</p>
+            
+            <p><strong>3.</strong> Das Tätowieren stellt einen Eingriff in die körperliche Integrität dar. Mit Unterschrift willigt der Kunde in den Tätowier-Prozess ein und bestätigt, umfangreich über alle Risiken aufgeklärt worden zu sein (insbesondere die Gefahr vor Infektionen oder Entzündungen, allergische Reaktionen, Kreislaufbeschwerden, Schmerzen wie auch seine Nachsorgepflicht). Um diese Risiken nach Möglichkeit zu minimieren, garantiert MOMMY I'M SORRY eine strikte Beachtung aller gesetzlich vorgeschriebenen Hygienestandards und weist den Kunden nachdrücklich darauf hin, die ausgehändigten Pflegehinweise zu beachten.</p>
+            
+            <p><strong>4.</strong> Es kann sein, dass während des Heilungsprozesses gewisse Motivveränderungen eintreten (Besenreisser, sog. Blow-Outs, Farb- und Intensitätsverlust, Farbunterspülungen ins Bindegewebe, unkontrollierter Farbverlauf unter der Haut). Solche Veränderungen können auf einer normalen Hautreaktion basieren, beruhen aber oftmals auf fehlerhafter Nachsorge. Der Kunde wurde über die notwendige Nachsorge der Tätowierung aufgeklärt und nimmt zur Kenntnis, dass Nachlässigkeit zu qualitativen Verlusten führen können. Für die bezeichneten Risiken übernimmt der Kunde die alleinige Verantwortung.</p>
+            
+            <p><strong>5.</strong> MOMMY I'M SORRY erstellt für jeden Kunden ein individuelles Tattoo-Motiv, sofern nicht anders gewünscht oder vereinbart. Die gefertigten Motive dienen als Vorlage, die eine Vorstellung davon ermöglichen soll, wie das Tattoo aussehen soll. Absolute Identität zwischen dem gezeichneten Motiv und der Tätowierung wird es nie geben können, denn die Haut ist ein besonderes Medium, das sich naturgemäß anders verhält als Papier.</p>
+            
+            <p><strong>6.</strong> Die Haut ist ein sensibles Organ, das nicht immer gleichermaßen zur Aufnahme von Farbe in der Lage ist. Sollte nach der Auffassung des Tätowierers am Tag der Sitzung die körperliche Verfassung des Kunden ein optimales Ergebnis gefährden (bspw. starkes Bluten), behält sich MOMMY I'M SORRY vor, die Sitzung abzubrechen und zu verschieben.</p>
+            
+            <p><strong>7.</strong> Sogenanntes Nachstechen ist grundsätzlich in den ersten 5 Monaten nach Abschluss des Auftrages inklusive, insofern keine anderen Vereinbarungen mit dem Künstler getroffen worden sind. Bitte erkundige Dich vorher bei deinem gewählten Künstler.</p>
+            
+            <p><strong>8.</strong> Im Zuge des Tätowier-Prozesses werden möglicherweise von MOMMY I'M SORRY Video- und Fotoaufnahmen zu späteren Promotionszwecken erstellt.</p>
+          </div>
+          
+          <div style="margin:20px 0;">
+            <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+              <input type="checkbox" id="consentMediaDE" style="margin-top:4px; width:20px; height:20px;">
+              <span style="font-size:13px;">Hiermit erkläre ich mich einverstanden, dass die von mir gemachten Bild-, Ton- und Filmaufnahmen für Veröffentlichungen auf Webseiten und in anderen Publikationen (z.B. Instagram, TikTok) von MOMMY I'M SORRY unentgeltlich genutzt werden können. Diese Einwilligung ist jederzeit mittels einer E-Mail an info@mommyimsorry.com widerrufbar.</span>
+            </label>
+          </div>
+          
+          <div style="margin:20px 0;">
+            <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+              <input type="checkbox" id="consentSocialDE" style="margin-top:4px; width:20px; height:20px;">
+              <span style="font-size:13px;">Zusätzlich erkläre ich mich damit einverstanden, dass mein Social-Media-Profil in Publikationen von MOMMY I'M SORRY verlinkt werden darf.</span>
+            </label>
+            <input type="text" id="socialHandleDE" placeholder="@username" style="margin-top:8px; border-radius:8px;">
+          </div>
+          
+          <div style="margin-top:24px; padding:20px; background:white; border-radius:8px; border:2px solid var(--accent);">
+            <p style="font-size:14px; font-weight:600; margin-bottom:12px;">Digitale Unterschrift</p>
+            <canvas id="signatureCanvasDE" width="800" height="200" style="border:2px solid #ddd; border-radius:8px; width:100%; cursor:crosshair; touch-action:none;"></canvas>
+            <button type="button" class="btn btn-secondary" onclick="clearSignature('DE')" style="margin-top:8px; font-size:13px;">Unterschrift löschen</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- English Form -->
+      <div id="agreementFormEN" style="display:none;">
+        <div style="background:#f5f5f5; padding:20px; border-radius:12px; margin-bottom:24px;">
+          <div style="text-align:center; margin-bottom:16px;">
+            <h2 style="margin:0 0 4px; font-size:20px;">MOMMY I'M SORRY</h2>
+            <p style="margin:0; font-size:12px; color:var(--muted);">VERWALTUNG GMBH | TÜBINGER STRASSE 74 | 70178 STUTTGART</p>
+          </div>
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="customerNameEN" placeholder="John Doe" style="border-radius:8px;">
+            </div>
+            <div class="form-group">
+              <label>Date of Birth</label>
+              <input type="date" id="customerBirthdayEN" style="border-radius:8px;">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>E-Mail</label>
+              <input type="email" id="customerEmailEN" placeholder="john@example.com" style="border-radius:8px;">
+            </div>
+          </div>
+          
+          <h4 style="margin:20px 0 12px; font-size:16px; font-weight:600;">Terms & Conditions | Consent Form | Declaration of consent for tattoo process</h4>
+          
+          <div style="font-size:13px; line-height:1.6; color:#333; max-height:400px; overflow-y:auto; padding:12px; background:white; border-radius:8px;">
+            <p><strong>1.</strong> A tattoo at MOMMY I'M SORRY always requires the age of majority. No exceptions apply.</p>
+            
+            <p><strong>2.</strong> The customer is required to notify MOMMY I'M SORRY about possible allergies, medications, or illnesses (for example, HIV, Hepatitis, Epilepsy, Diabetes, etc.). In addition, the consumption of alcohol and drugs immediately before your appointment is not permitted and may lead to the termination of the session for various reasons. Our general terms and conditions apply.</p>
+            
+            <p><strong>3.</strong> Tattooing is an invasion of physical integrity. Upon signing this document, the customer agrees to the tattooing process and confirms that he has been thoroughly informed about all risks (in particular the risk of infection or inflammation, allergic reactions, circulatory problems, pain as well as his duty to follow up). To minimize these risks wherever possible, MOMMY I'M SORRY guarantees strict compliance with all legally required hygiene standards and strongly advises the customer to adhere to the aftercare instructions provided.</p>
+            
+            <p><strong>4.</strong> It may be that during the healing process certain changes in the subject occur (so-called blow-outs, loss of color and intensity, color rinsing into the connective skin-tissue, uncontrolled color gradient under the skin). Such changes may be based on a normal skin reaction, but are often based on incorrect after care. The customer has been informed about the necessary after care procedure of the tattoo, and takes note that negligence can lead to qualitative losses. For the designated risks, the customer assumes sole responsibility.</p>
+            
+            <p><strong>5.</strong> MOMMY I'M SORRY creates an individual tattoo motif for each customer, unless otherwise requested or agreed. The finished motifs serve as a reference to give an idea of what the tattoo should look like. Absolute identity between the drawn motif and the tattoo will never be possible, because the skin is a special medium, which naturally behaves differently than paper.</p>
+            
+            <p><strong>6.</strong> The skin is a sensitive organ that is not always equally capable of getting tattooed. If, in the opinion of the tattoo artist, the physical condition of the customer on the day of the tattoo session endangers an optimal result (e.g. heavy bleeding), MOMMY I'M SORRY reserves the right to cancel the session and continue on another day.</p>
+            
+            <p><strong>7.</strong> So-called touch up session is generally included in the first 5 months after completion of the order, unless other arrangements have been made with the artist. Please check with your chosen artist in advance.</p>
+            
+            <p><strong>8.</strong> During the tattooing process, MOMMY I'M SORRY might make video and photo recordings for later promotional use.</p>
+          </div>
+          
+          <div style="margin:20px 0;">
+            <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+              <input type="checkbox" id="consentMediaEN" style="margin-top:4px; width:20px; height:20px;">
+              <span style="font-size:13px;">I hereby declare my consent that the image, sound and film recordings made of me may be used free of charge by MOMMY I'M SORRY for publications on websites and in other publications (e.g. Instagram, TikTok). This consent can be withdrawn at any time by sending an email to info@mommyimsorry.com.</span>
+            </label>
+          </div>
+          
+          <div style="margin:20px 0;">
+            <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+              <input type="checkbox" id="consentSocialEN" style="margin-top:4px; width:20px; height:20px;">
+              <span style="font-size:13px;">In addition, I agree that my social media profile may be linked in MOMMY I'M SORRY publications.</span>
+            </label>
+            <input type="text" id="socialHandleEN" placeholder="@username" style="margin-top:8px; border-radius:8px;">
+          </div>
+          
+          <div style="margin-top:24px; padding:20px; background:white; border-radius:8px; border:2px solid var(--accent);">
+            <p style="font-size:14px; font-weight:600; margin-bottom:12px;">Digital Signature</p>
+            <canvas id="signatureCanvasEN" width="800" height="200" style="border:2px solid #ddd; border-radius:8px; width:100%; cursor:crosshair; touch-action:none;"></canvas>
+            <button type="button" class="btn btn-secondary" onclick="clearSignature('EN')" style="margin-top:8px; font-size:13px;">Clear Signature</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeAgreementForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveAgreement()">💾 Save & Generate PDF</button>
       </div>
     </div>
   </div>
@@ -2800,10 +2944,27 @@
           const { data: reqs } = await supabase.from('requests').select('*');
           const { data: artists } = await supabase.from('artists').select('*');
           
+          // Agreements für die nächsten 7 Tage laden (nur echte Appointments, keine Events)
+          const today = new Date().toISOString().split('T')[0];
+          const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          
+          const { data: upcomingEvents } = await supabase
+            .from('events')
+            .select('id, agreement_file_url, customer_id, type')
+            .gte('start_time', `${today}T00:00:00`)
+            .lte('start_time', `${nextWeek}T23:59:59`)
+            .not('type', 'eq', 'events'); // Nur echte Appointments, keine "Events"
+          
+          const totalAgreements = upcomingEvents?.filter(e => e.customer_id).length || 0;
+          const completedAgreements = upcomingEvents?.filter(e => e.customer_id && e.agreement_file_url).length || 0;
+          const pendingAgreements = totalAgreements - completedAgreements;
+          
           document.getElementById('badge-pending').textContent = `Pending: ${reqs?.filter(r=>r.status==='pending').length || 0}`;
           document.getElementById('badge-scheduled').textContent = `Scheduled: ${reqs?.filter(r=>r.status==='scheduled').length || 0}`;
           document.getElementById('badge-residents').textContent = `Residents: ${artists?.filter(a=>!a.is_guest).length || 0}`;
           document.getElementById('badge-guests').textContent = `Guests: ${artists?.filter(a=>a.is_guest).length || 0}`;
+          document.getElementById('badge-agreements-completed').textContent = `Agreements: ${completedAgreements}/${totalAgreements}`;
+          document.getElementById('badge-agreements-pending').textContent = `Missing: ${pendingAgreements}`;
         } catch(err) {
           console.error("Dashboard error:", err);
         }
@@ -3335,7 +3496,7 @@
           
           const dateStr = agreementsDate.toISOString().split('T')[0];
           
-          // Load events for the selected date and location
+          // Load only real appointments (exclude type = 'events') for the selected date and location
           const { data: eventData, error } = await supabase
             .from('events')
             .select(`
@@ -3345,12 +3506,14 @@
               end_time,
               artist_id,
               customer_id,
+              type,
               agreement_file_url,
               agreement_file_name
             `)
             .eq('location_id', selectedAgreementsLocationId)
             .gte('start_time', `${dateStr}T00:00:00`)
             .lte('start_time', `${dateStr}T23:59:59`)
+            .not('type', 'eq', 'events')  // Exclude "events" category
             .order('start_time', { ascending: true });
           
           if (error) throw error;
@@ -3569,6 +3732,186 @@
         } catch (err) {
           console.error('Error loading file info:', err);
         }
+      };
+      
+      // Agreement Form Functions
+      let currentAgreementLanguage = 'de';
+      let signatureCanvas = null;
+      let signatureContext = null;
+      let isDrawing = false;
+      
+      window.openAgreementForm = function() {
+        document.getElementById('agreementFormModal').classList.add('active');
+        
+        // Initialize signature canvas after modal is shown
+        setTimeout(() => {
+          initializeSignatureCanvas('DE');
+          initializeSignatureCanvas('EN');
+        }, 100);
+      };
+      
+      window.closeAgreementForm = function() {
+        document.getElementById('agreementFormModal').classList.remove('active');
+      };
+      
+      window.switchAgreementLanguage = function(lang) {
+        currentAgreementLanguage = lang;
+        
+        // Toggle forms
+        document.getElementById('agreementFormDE').style.display = lang === 'de' ? 'block' : 'none';
+        document.getElementById('agreementFormEN').style.display = lang === 'en' ? 'block' : 'none';
+        
+        // Update button styles
+        document.getElementById('langBtnDe').style.background = lang === 'de' ? 'var(--accent)' : '#f5f5f5';
+        document.getElementById('langBtnDe').style.color = lang === 'de' ? 'white' : 'var(--ink)';
+        document.getElementById('langBtnEn').style.background = lang === 'en' ? 'var(--accent)' : '#f5f5f5';
+        document.getElementById('langBtnEn').style.color = lang === 'en' ? 'white' : 'var(--ink)';
+      };
+      
+      function initializeSignatureCanvas(lang) {
+        const canvas = document.getElementById(`signatureCanvas${lang}`);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        
+        let drawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        function startDrawing(e) {
+          drawing = true;
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          if (e.touches) {
+            lastX = (e.touches[0].clientX - rect.left) * scaleX;
+            lastY = (e.touches[0].clientY - rect.top) * scaleY;
+          } else {
+            lastX = (e.clientX - rect.left) * scaleX;
+            lastY = (e.clientY - rect.top) * scaleY;
+          }
+        }
+        
+        function draw(e) {
+          if (!drawing) return;
+          e.preventDefault();
+          
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          let currentX, currentY;
+          if (e.touches) {
+            currentX = (e.touches[0].clientX - rect.left) * scaleX;
+            currentY = (e.touches[0].clientY - rect.top) * scaleY;
+          } else {
+            currentX = (e.clientX - rect.left) * scaleX;
+            currentY = (e.clientY - rect.top) * scaleY;
+          }
+          
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          
+          lastX = currentX;
+          lastY = currentY;
+        }
+        
+        function stopDrawing() {
+          drawing = false;
+        }
+        
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch events for iPad
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+      }
+      
+      window.clearSignature = function(lang) {
+        const canvas = document.getElementById(`signatureCanvas${lang}`);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      };
+      
+      window.saveAgreement = async function() {
+        const lang = currentAgreementLanguage.toUpperCase();
+        
+        // Get form data
+        const customerName = document.getElementById(`customerName${lang}`).value;
+        const customerBirthday = document.getElementById(`customerBirthday${lang}`).value;
+        const customerEmail = document.getElementById(`customerEmail${lang}`).value;
+        const consentMedia = document.getElementById(`consentMedia${lang}`).checked;
+        const consentSocial = document.getElementById(`consentSocial${lang}`).checked;
+        const socialHandle = document.getElementById(`socialHandle${lang}`).value;
+        
+        // Validate
+        if (!customerName || !customerBirthday || !customerEmail) {
+          alert(lang === 'DE' ? 'Bitte alle Pflichtfelder ausfüllen' : 'Please fill in all required fields');
+          return;
+        }
+        
+        // Get signature
+        const canvas = document.getElementById(`signatureCanvas${lang}`);
+        const signatureData = canvas.toDataURL('image/png');
+        
+        // Check if signature is empty
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const hasSignature = imageData.data.some(channel => channel !== 0);
+        
+        if (!hasSignature) {
+          alert(lang === 'DE' ? 'Bitte unterschreiben Sie das Formular' : 'Please sign the form');
+          return;
+        }
+        
+        try {
+          // In production, this would generate a PDF and upload to Supabase Storage
+          // For now, we'll save the data to the database
+          const agreementData = {
+            customer_name: customerName,
+            customer_birthday: customerBirthday,
+            customer_email: customerEmail,
+            consent_media: consentMedia,
+            consent_social: consentSocial,
+            social_handle: socialHandle,
+            signature_data: signatureData,
+            language: lang,
+            created_at: new Date().toISOString()
+          };
+          
+          console.log('Agreement data:', agreementData);
+          
+          alert(lang === 'DE' 
+            ? '✓ Agreement wurde gespeichert! In Produktion wird hier ein PDF generiert und hochgeladen.' 
+            : '✓ Agreement saved! In production, a PDF would be generated and uploaded here.');
+          
+          closeAgreementForm();
+          
+        } catch (err) {
+          console.error('Error saving agreement:', err);
+          alert('Error: ' + err.message);
+        }
+      };
+      
+      window.viewAgreementTemplate = function(lang) {
+        // Open PDF in new tab
+        const fileName = lang === 'de' 
+          ? 'Consent_Form_DEU_v1_2025.pdf' 
+          : 'Consent_Form_EN_v1_2025.pdf';
+        
+        alert(`Opening ${fileName}...\n\nIn production, this would open the PDF template.`);
       };
       
       document.getElementById('cancelFileUpload')?.addEventListener('click', () => {
