@@ -6181,11 +6181,8 @@
     <div class="agreement-form-container">
       <div id="agreementFormContent">
         <div class="agreement-header">
-          <div class="agreement-logo">
-            <div class="agreement-logo-icon">≠</div>
-            <div class="agreement-logo-text">MOMMY I'M SORRY</div>
-          </div>
-          <button class="agreement-close-btn" onclick="closeAgreementFormOverlay()">✕ Close</button>
+          <div></div>
+          <button class="agreement-close-btn" onclick="closeAgreementWithPassword()">✕ Close</button>
         </div>
         
         <h1 class="agreement-title">Tätowier-Bedingungen | Einwilligungserklärung</h1>
@@ -6253,8 +6250,9 @@
             
             <div class="agreement-field">
               <label class="agreement-label">Ihre Unterschrift *</label>
-              <div class="agreement-signature-box">
-                <input type="text" id="signatureDE" placeholder="Vollständigen Namen hier eingeben" required>
+              <div class="agreement-signature-box" style="padding: 0; position: relative;">
+                <canvas id="signatureCanvasDE" width="800" height="120" style="border: none; cursor: crosshair; display: block; width: 100%;"></canvas>
+                <button type="button" onclick="clearSignature('DE')" style="position: absolute; top: 8px; right: 8px; padding: 6px 12px; background: #ff3b30; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Löschen</button>
               </div>
               <p class="agreement-date-info">Datum: <span id="currentDateDE"></span></p>
             </div>
@@ -6319,8 +6317,9 @@
             
             <div class="agreement-field">
               <label class="agreement-label">Your Signature *</label>
-              <div class="agreement-signature-box">
-                <input type="text" id="signatureEN" placeholder="Type your full name here" required>
+              <div class="agreement-signature-box" style="padding: 0; position: relative;">
+                <canvas id="signatureCanvasEN" width="800" height="120" style="border: none; cursor: crosshair; display: block; width: 100%;"></canvas>
+                <button type="button" onclick="clearSignature('EN')" style="position: absolute; top: 8px; right: 8px; padding: 6px 12px; background: #ff3b30; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer;">Clear</button>
               </div>
               <p class="agreement-date-info">Date: <span id="currentDateEN"></span></p>
             </div>
@@ -6344,13 +6343,126 @@
           Bitte geben Sie diesen Code am Empfang ein.<br>
           Please enter this code at the reception.
         </p>
-        <button class="agreement-close-final-btn" onclick="closeAgreementFormOverlay()">Schließen | Close</button>
+        <button class="agreement-close-final-btn" onclick="closeAgreementWithPassword()">Schließen | Close</button>
       </div>
     </div>
   </div>
 
   <script>
     let currentLanguage = 'DE';
+    let canvasDE, canvasEN, ctxDE, ctxEN;
+    let isDrawingDE = false, isDrawingEN = false;
+    let signatureDataDE = '', signatureDataEN = '';
+    
+    // Initialize signature canvases
+    function initSignatureCanvas(lang) {
+      const canvas = document.getElementById('signatureCanvas' + lang);
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size to match display size
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      
+      // Configure drawing style
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (lang === 'DE') {
+        canvasDE = canvas;
+        ctxDE = ctx;
+      } else {
+        canvasEN = canvas;
+        ctxEN = ctx;
+      }
+      
+      // Add event listeners
+      canvas.addEventListener('mousedown', (e) => startDrawing(e, lang));
+      canvas.addEventListener('mousemove', (e) => draw(e, lang));
+      canvas.addEventListener('mouseup', () => stopDrawing(lang));
+      canvas.addEventListener('mouseout', () => stopDrawing(lang));
+      
+      // Touch events for mobile
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+          clientX: touch.clientX,
+          clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+      });
+      
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+          clientX: touch.clientX,
+          clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+      });
+      
+      canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        const mouseEvent = new MouseEvent('mouseup', {});
+        canvas.dispatchEvent(mouseEvent);
+      });
+    }
+    
+    function startDrawing(e, lang) {
+      const canvas = lang === 'DE' ? canvasDE : canvasEN;
+      const ctx = lang === 'DE' ? ctxDE : ctxEN;
+      const rect = canvas.getBoundingClientRect();
+      
+      if (lang === 'DE') {
+        isDrawingDE = true;
+      } else {
+        isDrawingEN = true;
+      }
+      
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+    
+    function draw(e, lang) {
+      const isDrawing = lang === 'DE' ? isDrawingDE : isDrawingEN;
+      if (!isDrawing) return;
+      
+      const canvas = lang === 'DE' ? canvasDE : canvasEN;
+      const ctx = lang === 'DE' ? ctxDE : ctxEN;
+      const rect = canvas.getBoundingClientRect();
+      
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+    }
+    
+    function stopDrawing(lang) {
+      if (lang === 'DE') {
+        isDrawingDE = false;
+        signatureDataDE = canvasDE.toDataURL();
+      } else {
+        isDrawingEN = false;
+        signatureDataEN = canvasEN.toDataURL();
+      }
+    }
+    
+    window.clearSignature = function(lang) {
+      const canvas = lang === 'DE' ? canvasDE : canvasEN;
+      const ctx = lang === 'DE' ? ctxDE : ctxEN;
+      const rect = canvas.getBoundingClientRect();
+      
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      
+      if (lang === 'DE') {
+        signatureDataDE = '';
+      } else {
+        signatureDataEN = '';
+      }
+    };
     
     // Set current dates
     const today = new Date().toLocaleDateString('de-DE', {
@@ -6364,6 +6476,33 @@
       month: 'long',
       day: 'numeric'
     });
+    
+    // Initialize canvases when overlay opens
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.target.classList.contains('active')) {
+          setTimeout(() => {
+            initSignatureCanvas('DE');
+            initSignatureCanvas('EN');
+          }, 100);
+        }
+      });
+    });
+    
+    const overlay = document.getElementById('agreementFormOverlay');
+    if (overlay) {
+      observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    // Password protected close function
+    window.closeAgreementWithPassword = function() {
+      const password = prompt('Bitte Passwort eingeben um zu schließen:\nPlease enter password to close:');
+      if (password === 'admin1234') {
+        closeAgreementFormOverlay();
+      } else if (password !== null) {
+        alert('Falsches Passwort!\nIncorrect password!');
+      }
+    };
     
     // Language switch function
     window.switchLanguage = function(lang) {
@@ -6399,6 +6538,16 @@
     
     async function submitAgreementForm(lang) {
       const submitBtn = document.querySelector('.agreement-submit-btn');
+      
+      // Check if signature exists
+      const signatureData = lang === 'DE' ? signatureDataDE : signatureDataEN;
+      if (!signatureData) {
+        alert(lang === 'DE' 
+          ? 'Bitte unterschreiben Sie das Formular!' 
+          : 'Please sign the form!');
+        return;
+      }
+      
       submitBtn.disabled = true;
       submitBtn.textContent = lang === 'DE' ? 'Wird gesendet...' : 'Submitting...';
       
@@ -6413,7 +6562,7 @@
           email: document.getElementById('email' + lang).value,
           consent_media: document.getElementById('consentTerms' + lang).checked,
           social_handle: document.getElementById('socialHandle' + lang).value,
-          signature: document.getElementById('signature' + lang).value,
+          signature_data: signatureData,
           signed_at: new Date().toISOString()
         };
         
