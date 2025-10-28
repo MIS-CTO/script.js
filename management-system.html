@@ -938,7 +938,7 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v64</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v66</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -4946,7 +4946,23 @@
         renderCalendar();
       });
       
-      document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
+
+      // Artist Sort Event Listeners
+      document.getElementById('artistSortBy')?.addEventListener('change', () => {
+        console.log('Sort by changed');
+        loadArtists();
+      });
+      
+      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
+        const currentOrder = this.dataset.order || 'asc';
+        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        this.dataset.order = newOrder;
+        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
+        console.log('Sort order changed to:', newOrder);
+        loadArtists();
+      });
+      
+            document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
         dienstplanDate.setMonth(dienstplanDate.getMonth() - 1);
         renderDienstplan();
       });
