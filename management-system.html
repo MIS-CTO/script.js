@@ -938,7 +938,7 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v67</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v68</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -2428,7 +2428,14 @@
     
     
     // Sorting Functions
-     else if (field === 'rank') {
+    function sortArtists(artists, field, order) {
+      const sorted = [...artists].sort((a, b) => {
+        let aVal, bVal;
+        
+        if (field === 'name') {
+          aVal = (a.name || '').toLowerCase();
+          bVal = (b.name || '').toLowerCase();
+        } else if (field === 'rank') {
           const rankOrder = { 'R1': 1, 'R2': 2, 'R3': 3, 'R4': 4, 'R5': 5 };
           aVal = rankOrder[a.rank] || 999;
           bVal = rankOrder[b.rank] || 999;
@@ -3073,22 +3080,6 @@
         document.getElementById('addArtistModal').classList.remove('active');
       });
       
-      
-      // Artist Sort Controls Event Listeners
-      document.getElementById('artistSortBy')?.addEventListener('change', () => {
-        console.log('Sort by changed to:', document.getElementById('artistSortBy').value);
-        loadArtists();
-      });
-      
-      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
-        const currentOrder = this.dataset.order || 'asc';
-        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        this.dataset.order = newOrder;
-        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
-        console.log('Sort order changed to:', newOrder);
-        loadArtists();
-      });
-      
       async function loadArtists() {
         try {
           const { data, error } = await supabase.from('artists').select('*');
@@ -3102,39 +3093,7 @@
           console.log('Artists loaded:', allArtists.length, 'artists');
           
           // Apply sorting
-          // Read sort settings from UI
-          const sortBy = document.getElementById('artistSortBy')?.value || 'name';
-          const sortOrder = document.getElementById('artistSortOrder')?.dataset.order || 'asc';
-          
-          console.log('Sorting artists by:', sortBy, 'order:', sortOrder);
-          
-          // Sort the artists
-          const sorted = [...allArtists].sort((a, b) => {
-            let aVal, bVal;
-            
-            switch(sortBy) {
-              case 'name':
-                aVal = (a.name || '').toLowerCase();
-                bVal = (b.name || '').toLowerCase();
-                break;
-              case 'rank':
-                const rankOrder = { 'R1': 1, 'R2': 2, 'R3': 3, 'R4': 4, 'R5': 5 };
-                aVal = rankOrder[a.rank] || 999;
-                bVal = rankOrder[b.rank] || 999;
-                break;
-              case 'location':
-                aVal = (a.city_location || '').toLowerCase();
-                bVal = (b.city_location || '').toLowerCase();
-                break;
-              default:
-                aVal = (a.name || '').toLowerCase();
-                bVal = (b.name || '').toLowerCase();
-            }
-            
-            if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
-            return 0;
-          });
+          const sorted = sortArtists(allArtists, artistSortConfig.field, artistSortConfig.order);
           const tbody = document.getElementById('artistsTableBody');
           
           if (!data || data.length === 0) {
@@ -3872,28 +3831,19 @@
           
           console.log('Update data:', updateData);
           
-          // Update WITHOUT .select() to avoid RLS issues
-          const { error: updateError } = await supabase
+          const { data, error } = await supabase
             .from('customers')
             .update(updateData)
-            .eq('id', currentEditCustomerId);
-          
-          console.log('Update error:', updateError);
-          
-          if (updateError) throw updateError;
-          
-          // Fetch the updated customer separately
-          const { data: updatedCustomer, error: fetchError } = await supabase
-            .from('customers')
-            .select('*')
             .eq('id', currentEditCustomerId)
-            .single();
+            .select();
           
-          console.log('Updated customer:', updatedCustomer);
-          console.log('Fetch error:', fetchError);
+          console.log('Update result:', data, 'Error:', error);
           
-          if (fetchError) {
-            console.warn('Could not fetch updated customer:', fetchError);
+          if (error) throw error;
+          
+          if (!data || data.length === 0) {
+            console.error('WARNING: Update returned no data. Customer ID might be wrong:', currentEditCustomerId);
+            alert('Warning: Customer was updated but could not verify the result. Please refresh the page.');
           }
           
           console.log('Customer updated successfully, reloading list...');
@@ -4309,7 +4259,17 @@
         });
       });
       // Artist Sort Controls
+      document.getElementById('artistSortBy')?.addEventListener('change', () => {
+        loadArtists();
+      });
       
+      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
+        const currentOrder = this.dataset.order || 'asc';
+        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        this.dataset.order = newOrder;
+        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
+        loadArtists();
+      });
       
       
       
@@ -4375,7 +4335,17 @@
         });
       });
       // Artist Sort Controls
+      document.getElementById('artistSortBy')?.addEventListener('change', () => {
+        loadArtists();
+      });
       
+      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
+        const currentOrder = this.dataset.order || 'asc';
+        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        this.dataset.order = newOrder;
+        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
+        loadArtists();
+      });
       
       
       
@@ -5121,52 +5091,6 @@
         });
       });
     }
-  
-      // TEST FUNCTION - Customer Update Debugging
-      document.getElementById('testCustomerUpdateBtn')?.addEventListener('click', async () => {
-        console.log('=== CUSTOMER UPDATE TEST START ===');
-        
-        // Get first customer
-        const { data: customers } = await supabase.from('customers').select('*').limit(1);
-        
-        if (!customers || customers.length === 0) {
-          alert('No customers found. Please add a customer first.');
-          return;
-        }
-        
-        const testCustomer = customers[0];
-        console.log('Test customer:', testCustomer);
-        console.log('Test customer ID:', testCustomer.id);
-        console.log('Current rank:', testCustomer.rank);
-        
-        // Try to update rank
-        const newRank = 'Gold';
-        console.log('Attempting to update rank to:', newRank);
-        
-        const { data: updateResult, error } = await supabase
-          .from('customers')
-          .update({ rank: newRank })
-          .eq('id', testCustomer.id)
-          .select();
-        
-        console.log('Update result:', updateResult);
-        console.log('Update error:', error);
-        
-        if (error) {
-          console.error('UPDATE FAILED:', error);
-          alert('Update failed: ' + error.message);
-        } else if (!updateResult || updateResult.length === 0) {
-          console.error('UPDATE RETURNED EMPTY ARRAY');
-          alert('Update returned no data. Customer ID might be wrong.');
-        } else {
-          console.log('UPDATE SUCCESS:', updateResult[0]);
-          alert('Test successful! Rank updated to: ' + updateResult[0].rank);
-          await loadCustomers();
-        }
-        
-        console.log('=== CUSTOMER UPDATE TEST END ===');
-      });
-
-    </script>
+  </script>
 </body>
 </html>
