@@ -926,13 +926,17 @@
 </head>
 <body>
   <nav>
-    <a id="tab-dashboard" class="active">Dashboard</a>
-    <a id="tab-artists">Artists</a>
-    <a id="tab-customers">Customers</a>
-    <a id="tab-requests">Requests</a>
-    <a id="tab-calendar">Calendar</a>
-    <a id="tab-dienstplan">Dienstplan</a>
-    <a id="tab-analytics">Analytics</a>
+    <a id="tab-dashboard" class="active" href="#dashboard">Dashboard</a>
+    <span style="width: 24px;"></span>
+    <a id="tab-artists" href="#artists">Artists</a>
+    <a id="tab-customers" href="#customers">Customers</a>
+    <a id="tab-requests" href="#requests">Requests</a>
+    <span style="width: 24px;"></span>
+    <a id="tab-calendar" href="#calendar">Calendar</a>
+    <span style="width: 24px;"></span>
+    <a id="tab-dienstplan" href="#dienstplan">Dienstplan</a>
+    <a id="tab-agreements" href="#agreements">Agreements</a>
+    <a id="tab-analytics" href="#analytics">Analytics</a>
   </nav>
 
   <section id="dashboard-section" class="active">
@@ -1229,6 +1233,85 @@
   <section id="analytics-section">
     <h2>Analytics</h2>
     <p style="color:var(--muted);">Coming soon...</p>
+  </section>
+
+  <section id="agreements-section">
+    <h2>Agreements</h2>
+    <div style="margin-bottom:24px;">
+      <p style="color:var(--muted); font-size:14px;">Manage your agreements and contracts</p>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:20px; margin-bottom:40px;">
+      <!-- Agreement cards will be loaded here -->
+      <div style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:24px; box-shadow:var(--shadow);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <div style="width:48px; height:48px; background:var(--location-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">📄</div>
+          <div>
+            <div style="font-weight:600; font-size:15px;">Artist Agreement</div>
+            <div style="font-size:12px; color:var(--muted);">Template</div>
+          </div>
+        </div>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Standard agreement template for resident and guest artists</p>
+        <button class="btn-nav" style="width:100%;">View Template</button>
+      </div>
+      
+      <div style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:24px; box-shadow:var(--shadow);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <div style="width:48px; height:48px; background:var(--location-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">🤝</div>
+          <div>
+            <div style="font-weight:600; font-size:15px;">Client Agreement</div>
+            <div style="font-size:12px; color:var(--muted);">Template</div>
+          </div>
+        </div>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Standard terms and conditions for tattoo services</p>
+        <button class="btn-nav" style="width:100%;">View Template</button>
+      </div>
+      
+      <div style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:24px; box-shadow:var(--shadow);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <div style="width:48px; height:48px; background:var(--location-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">➕</div>
+          <div>
+            <div style="font-weight:600; font-size:15px;">Create New</div>
+            <div style="font-size:12px; color:var(--muted);">Agreement</div>
+          </div>
+        </div>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">Create a custom agreement from scratch</p>
+        <button class="btn-nav" style="width:100%; background:var(--accent); color:white;">Create Agreement</button>
+      </div>
+    </div>
+    
+    <!-- Agreements List Section -->
+    <div style="margin-top:48px;">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:22px; font-weight:600;">Today's Agreements</h2>
+        <div id="agreementsDateDisplay" style="font-weight:600; font-size:22px; color:var(--ink);"></div>
+      </div>
+      
+      <div class="calendar-controls" style="margin-bottom:24px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
+          <label style="font-weight:600; font-size:14px;">Location:</label>
+          <select id="agreementsLocationDropdown" style="min-width:200px;"></select>
+        </div>
+        <button id="agreementsPrevDayBtn" class="btn-nav">‹ Prev</button>
+        <input type="date" id="agreementsDatePickerInput">
+        <button id="agreementsTodayBtn" class="btn-nav">Today</button>
+        <button id="agreementsNextDayBtn" class="btn-nav">Next ›</button>
+      </div>
+      
+      <table id="agreementsTable">
+        <thead>
+          <tr>
+            <th>Customer Name</th>
+            <th>Email</th>
+            <th>Artist</th>
+            <th>Time</th>
+            <th style="text-align:center;">Files</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="agreementsTableBody"></tbody>
+      </table>
+    </div>
   </section>
 
   <!-- Add Artist Modal -->
@@ -1537,6 +1620,40 @@
           <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Customer Detail Modal -->
+  <div class="modal-backdrop" id="customerDetailModal">
+    <div class="modal">
+      <h3>Customer Details</h3>
+      <div id="customerDetailContent" style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Customer details will be loaded here -->
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="closeCustomerDetail">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Upload Modal -->
+  <div class="modal-backdrop" id="fileUploadModal">
+    <div class="modal">
+      <h3>Agreement Files</h3>
+      <div style="margin-bottom:20px;">
+        <div id="existingFiles" style="margin-bottom:16px;">
+          <!-- Existing files will be shown here -->
+        </div>
+        <div style="border:2px dashed rgba(0,0,0,0.2); border-radius:12px; padding:32px; text-align:center; background:rgba(0,0,0,0.02);">
+          <input type="file" id="fileUploadInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="display:none;">
+          <div style="font-size:48px; margin-bottom:12px;">📎</div>
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('fileUploadInput').click()">Choose Files</button>
+          <p style="margin-top:12px; font-size:13px; color:var(--muted);">PDF, DOC, DOCX, JPG, PNG accepted</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="closeFileUpload">Close</button>
+      </div>
     </div>
   </div>
 
@@ -2362,6 +2479,7 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentDate = new Date();
     let dienstplanDate = new Date();
+    let agreementsDate = new Date();
     let events = [];
     let allArtists = [];
     let allTeamMembers = [];
@@ -2372,8 +2490,11 @@
     let currentEditingEvent = null;
     let selectedLocationId = null;
     let selectedDienstplanLocationId = null;
+    let selectedAgreementsLocationId = null;
     let currentLocationName = '';
     let openCategories = new Set();
+    let currentAgreementEventId = null;
+    let agreementFiles = [];
     
     // Category visibility state
     let visibleCategories = {
@@ -2485,7 +2606,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
-      const tabs = document.querySelectorAll("nav a");
+      const tabs = document.querySelectorAll("nav a[id^='tab-']");
       const sections = document.querySelectorAll("section");
 
       await loadInitialData();
@@ -2575,12 +2696,19 @@
           }
           else if (tabName === "calendar") renderCalendar();
           else if (tabName === "dienstplan") renderDienstplan();
+          else if (tabName === "agreements") {
+            updateAgreementsDateDisplay();
+            loadAgreements();
+          }
           else if (tabName === "artists") loadArtists();
           else if (tabName === "customers") loadCustomers();
         }
       }
 
-      tabs.forEach(tab => tab.addEventListener("click", () => showSection(tab)));
+      tabs.forEach(tab => tab.addEventListener("click", (e) => {
+        e.preventDefault();
+        showSection(tab);
+      }));
 
       async function loadInitialData() {
         try {
@@ -2642,6 +2770,21 @@
               console.log('Dienstplan location changed to:', selectedDienstplanLocationId);
               renderDienstplan();
             };
+            
+            // Agreements Location Dropdown
+            selectedAgreementsLocationId = selectedLocationId;
+            const agreementsLocSelect = document.getElementById('agreementsLocationDropdown');
+            if (agreementsLocSelect) {
+              agreementsLocSelect.innerHTML = locations.map(l => 
+                `<option value="${l.id}" ${l.id === selectedAgreementsLocationId ? 'selected' : ''}>${l.name}</option>`
+              ).join('');
+              
+              agreementsLocSelect.onchange = (e) => {
+                selectedAgreementsLocationId = e.target.value;
+                console.log('Agreements location changed to:', selectedAgreementsLocationId);
+                loadAgreements();
+              };
+            }
           }
           
           await loadEvents();
@@ -3181,6 +3324,285 @@
         this.innerHTML = customerSortConfig.order === 'asc' ? '↑ Ascending' : '↓ Descending';
         loadCustomers();
       });
+
+      // Agreements Functions
+      async function loadAgreements() {
+        try {
+          if (!selectedAgreementsLocationId) {
+            console.log('No location selected for agreements');
+            return;
+          }
+          
+          const dateStr = agreementsDate.toISOString().split('T')[0];
+          
+          // Load events for the selected date and location
+          const { data: eventData, error } = await supabase
+            .from('events')
+            .select(`
+              id,
+              title,
+              start_time,
+              end_time,
+              artist_id,
+              customer_id,
+              agreement_file_url,
+              agreement_file_name
+            `)
+            .eq('location_id', selectedAgreementsLocationId)
+            .gte('start_time', `${dateStr}T00:00:00`)
+            .lte('start_time', `${dateStr}T23:59:59`)
+            .order('start_time', { ascending: true });
+          
+          if (error) throw error;
+          
+          console.log(`Agreements loaded for ${dateStr}:`, eventData?.length);
+          
+          // Get customer and artist details
+          const agreements = await Promise.all((eventData || []).map(async (event) => {
+            let customerName = 'Unknown Customer';
+            let customerEmail = '-';
+            let customerId = null;
+            
+            if (event.customer_id) {
+              const { data: customer } = await supabase
+                .from('customers')
+                .select('id, first_name, last_name, email')
+                .eq('id', event.customer_id)
+                .single();
+              
+              if (customer) {
+                customerName = `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
+                customerEmail = customer.email || '-';
+                customerId = customer.id;
+              }
+            } else {
+              // Try to extract customer name from title
+              customerName = event.title || 'Unknown Customer';
+            }
+            
+            let artistName = '-';
+            if (event.artist_id) {
+              const artist = allArtists.find(a => a.id === event.artist_id);
+              if (artist) {
+                artistName = artist.name;
+              }
+            }
+            
+            const startTime = new Date(event.start_time);
+            const timeStr = startTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            
+            return {
+              id: event.id,
+              customerName,
+              customerEmail,
+              customerId,
+              artistName,
+              time: timeStr,
+              hasFile: !!event.agreement_file_url,
+              fileName: event.agreement_file_name,
+              fileUrl: event.agreement_file_url
+            };
+          }));
+          
+          renderAgreements(agreements);
+        } catch (err) {
+          console.error("Agreements error:", err);
+        }
+      }
+      
+      function renderAgreements(agreements) {
+        const tbody = document.getElementById('agreementsTableBody');
+        
+        if (!agreements || agreements.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No agreements for this date</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = agreements.map(agreement => `
+          <tr style="transition:background 0.15s ease;">
+            <td>
+              <a href="#" onclick="showCustomerDetail('${agreement.customerId}'); return false;" 
+                 style="color:var(--accent); text-decoration:none; font-weight:500;">
+                ${agreement.customerName}
+              </a>
+            </td>
+            <td>${agreement.customerEmail}</td>
+            <td>${agreement.artistName}</td>
+            <td style="font-weight:500;">${agreement.time}</td>
+            <td style="text-align:center;">
+              <button class="btn-nav" onclick="openFileUpload('${agreement.id}')" 
+                      style="padding:6px 12px; font-size:13px;">
+                ${agreement.hasFile ? '📎 View Files' : '📎 Upload'}
+              </button>
+            </td>
+            <td style="text-align:center;">
+              ${agreement.hasFile 
+                ? '<span style="color:#34c759; font-size:20px; font-weight:600;">✓</span>' 
+                : '<span style="color:#ff3b30; font-size:20px; font-weight:600;">✕</span>'}
+            </td>
+          </tr>
+        `).join('');
+      }
+      
+      function updateAgreementsDateDisplay() {
+        const dateDisplayEl = document.getElementById('agreementsDateDisplay');
+        const datePickerEl = document.getElementById('agreementsDatePickerInput');
+        
+        if (datePickerEl) {
+          datePickerEl.value = agreementsDate.toISOString().split('T')[0];
+        }
+        
+        if (dateDisplayEl) {
+          const day = agreementsDate.getDate();
+          const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 
+                              'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+          const month = monthNames[agreementsDate.getMonth()];
+          const year = agreementsDate.getFullYear();
+          const weekdayShort = agreementsDate.toLocaleDateString('de-DE', { weekday: 'short' });
+          dateDisplayEl.textContent = `${weekdayShort} ${day}. ${month} ${year}`;
+        }
+      }
+      
+      // Agreements Date Navigation
+      document.getElementById('agreementsPrevDayBtn')?.addEventListener('click', () => {
+        agreementsDate.setDate(agreementsDate.getDate() - 1);
+        updateAgreementsDateDisplay();
+        loadAgreements();
+      });
+      
+      document.getElementById('agreementsNextDayBtn')?.addEventListener('click', () => {
+        agreementsDate.setDate(agreementsDate.getDate() + 1);
+        updateAgreementsDateDisplay();
+        loadAgreements();
+      });
+      
+      document.getElementById('agreementsTodayBtn')?.addEventListener('click', () => {
+        agreementsDate = new Date();
+        updateAgreementsDateDisplay();
+        loadAgreements();
+      });
+      
+      document.getElementById('agreementsDatePickerInput')?.addEventListener('change', (e) => {
+        agreementsDate = new Date(e.target.value + 'T12:00:00');
+        updateAgreementsDateDisplay();
+        loadAgreements();
+      });
+      
+      // Customer Detail Modal
+      window.showCustomerDetail = async function(customerId) {
+        if (!customerId) return;
+        
+        try {
+          const { data: customer, error } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', customerId)
+            .single();
+          
+          if (error) throw error;
+          if (!customer) return;
+          
+          const content = document.getElementById('customerDetailContent');
+          content.innerHTML = `
+            <div class="detail-item">
+              <div class="detail-label">Name</div>
+              <div class="detail-value">${customer.first_name || ''} ${customer.last_name || ''}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Email</div>
+              <div class="detail-value">${customer.email || '-'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Phone</div>
+              <div class="detail-value">${customer.phone || '-'}</div>
+            </div>
+            ${customer.rank ? `
+              <div class="detail-item">
+                <div class="detail-label">Rank</div>
+                <div class="detail-value"><span class="customer-rank ${customer.rank.toLowerCase()}">${customer.rank}</span></div>
+              </div>
+            ` : ''}
+            <div class="detail-item">
+              <div class="detail-label">Customer Since</div>
+              <div class="detail-value">${new Date(customer.created_at).toLocaleDateString('de-DE')}</div>
+            </div>
+          `;
+          
+          document.getElementById('customerDetailModal').classList.add('active');
+        } catch (err) {
+          console.error('Error loading customer:', err);
+          alert('Error loading customer details');
+        }
+      };
+      
+      document.getElementById('closeCustomerDetail')?.addEventListener('click', () => {
+        document.getElementById('customerDetailModal').classList.remove('active');
+      });
+      
+      // File Upload Modal
+      window.openFileUpload = async function(eventId) {
+        currentAgreementEventId = eventId;
+        
+        try {
+          const { data: event, error } = await supabase
+            .from('events')
+            .select('title, agreement_file_url, agreement_file_name')
+            .eq('id', eventId)
+            .single();
+          
+          if (error) throw error;
+          
+          // Show existing files if any
+          const existingSection = document.getElementById('existingFiles');
+          if (event.agreement_file_url) {
+            existingSection.innerHTML = `
+              <div style="background:var(--location-light); padding:12px; border-radius:8px; margin-bottom:12px;">
+                <div style="font-size:13px; font-weight:600; color:var(--location-dark); margin-bottom:4px;">Current File:</div>
+                <div style="font-size:14px; color:var(--ink);">${event.agreement_file_name || 'agreement.pdf'}</div>
+              </div>
+            `;
+          } else {
+            existingSection.innerHTML = '<div style="color:var(--muted); font-size:13px; margin-bottom:12px;">No files uploaded yet</div>';
+          }
+          
+          document.getElementById('fileUploadModal').classList.add('active');
+        } catch (err) {
+          console.error('Error loading file info:', err);
+        }
+      };
+      
+      document.getElementById('cancelFileUpload')?.addEventListener('click', () => {
+        document.getElementById('fileUploadModal').classList.remove('active');
+        document.getElementById('fileUploadInput').value = '';
+      });
+      
+      document.getElementById('fileUploadInput')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+          // In a real implementation, upload to Supabase Storage
+          // For now, we'll just store the filename
+          const { error } = await supabase
+            .from('events')
+            .update({
+              agreement_file_name: file.name,
+              agreement_file_url: `uploads/${file.name}` // Placeholder
+            })
+            .eq('id', currentAgreementEventId);
+          
+          if (error) throw error;
+          
+          alert('File uploaded successfully!');
+          document.getElementById('fileUploadModal').classList.remove('active');
+          document.getElementById('fileUploadInput').value = '';
+          loadAgreements();
+        } catch (err) {
+          console.error('Error uploading file:', err);
+          alert('Error uploading file: ' + err.message);
+        }
+      });
+
 
       async function loadEvents() {
         try {
