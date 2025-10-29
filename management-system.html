@@ -2,8 +2,8 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Management System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Management System v71</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -940,9 +940,7 @@
       height: 100%;
       background: #ffffff;
       z-index: 10000;
-      overflow-y: auto;
-      /* iOS specific - prevent pull to refresh and bounce */
-      overscroll-behavior: contain;
+      overflow-y: scroll;
       -webkit-overflow-scrolling: touch;
     }
     
@@ -1047,7 +1045,7 @@
     .agreement-label {
       display: block;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 400;
       margin-bottom: 6px;
       color: #000000;
       text-transform: uppercase;
@@ -1096,6 +1094,11 @@
       font-size: 14px;
       line-height: 1.5;
       cursor: pointer;
+      font-weight: 300;
+    }
+    
+    .agreement-checkbox-group label strong {
+      font-weight: 400;
     }
     
     .agreement-terms-box {
@@ -1268,7 +1271,7 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v70</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v71</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -6294,7 +6297,7 @@
       <div id="agreementFormContent">
         <div class="agreement-header">
           <div></div>
-          <button class="agreement-close-btn" onclick="closeAgreementWithPassword()">✕ Close</button>
+          <button class="agreement-close-btn" onclick="exitAgreementKiosk()">Verlassen | Exit</button>
         </div>
         
         <h1 class="agreement-title">Tätowier-Bedingungen | Einwilligungserklärung</h1>
@@ -6302,8 +6305,8 @@
         
         <!-- Language Toggle -->
         <div style="margin-bottom: 32px; display: flex; gap: 12px;">
-          <button id="langBtnDE" onclick="switchLanguage('DE')" style="flex: 1; padding: 12px; border: 2px solid #000; background: #000; color: #fff; font-weight: 600; border-radius: 4px; cursor: pointer; transition: all 0.2s;">🇩🇪 Deutsch</button>
-          <button id="langBtnEN" onclick="switchLanguage('EN')" style="flex: 1; padding: 12px; border: 2px solid #000; background: #fff; color: #000; font-weight: 600; border-radius: 4px; cursor: pointer; transition: all 0.2s;">🇬🇧 English</button>
+          <button id="langBtnDE" onclick="switchLanguage('DE')" style="flex: 1; padding: 8px; border: 2px solid #000; background: #000; color: #fff; font-weight: 500; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 12px;">🇩🇪 Deutsch</button>
+          <button id="langBtnEN" onclick="switchLanguage('EN')" style="flex: 1; padding: 8px; border: 2px solid #000; background: #fff; color: #000; font-weight: 500; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 12px;">🇬🇧 English</button>
         </div>
         
         <form id="agreementFormDE" style="display: block;">
@@ -6314,17 +6317,17 @@
             <div class="agreement-row">
               <div class="agreement-field">
                 <label class="agreement-label">Name, Vorname *</label>
-                <input type="text" class="agreement-input" id="fullNameDE" required>
+                <input type="text" class="agreement-input" id="fullNameDE" inputmode="text" autocomplete="name" required>
               </div>
               <div class="agreement-field">
                 <label class="agreement-label">Geburtsdatum *</label>
-                <input type="date" class="agreement-input" id="dobDE" required>
+                <input type="date" class="agreement-input" id="dobDE" autocomplete="bday" required>
               </div>
             </div>
             
             <div class="agreement-field">
               <label class="agreement-label">E-Mail *</label>
-              <input type="email" class="agreement-input" id="emailDE" required>
+              <input type="email" class="agreement-input" id="emailDE" inputmode="email" autocomplete="email" required>
             </div>
           </div>
           
@@ -6352,7 +6355,7 @@
             
             <div class="agreement-field" style="margin-top: 20px;">
               <label class="agreement-label">Social-Media-Handle (Optional)</label>
-              <input type="text" class="agreement-input" id="socialHandleDE" placeholder="@username">
+              <input type="text" class="agreement-input" id="socialHandleDE" placeholder="@username" inputmode="text">
             </div>
           </div>
           
@@ -6381,17 +6384,17 @@
             <div class="agreement-row">
               <div class="agreement-field">
                 <label class="agreement-label">Full Name *</label>
-                <input type="text" class="agreement-input" id="fullNameEN" required>
+                <input type="text" class="agreement-input" id="fullNameEN" inputmode="text" autocomplete="name" required>
               </div>
               <div class="agreement-field">
                 <label class="agreement-label">Date of Birth *</label>
-                <input type="date" class="agreement-input" id="dobEN" required>
+                <input type="date" class="agreement-input" id="dobEN" autocomplete="bday" required>
               </div>
             </div>
             
             <div class="agreement-field">
               <label class="agreement-label">E-Mail *</label>
-              <input type="email" class="agreement-input" id="emailEN" required>
+              <input type="email" class="agreement-input" id="emailEN" inputmode="email" autocomplete="email" required>
             </div>
           </div>
           
@@ -6419,7 +6422,7 @@
             
             <div class="agreement-field" style="margin-top: 20px;">
               <label class="agreement-label">Social Media Handle (Optional)</label>
-              <input type="text" class="agreement-input" id="socialHandleEN" placeholder="@username">
+              <input type="text" class="agreement-input" id="socialHandleEN" placeholder="@username" inputmode="text">
             </div>
           </div>
           
@@ -6455,7 +6458,7 @@
           Bitte geben Sie diesen Code am Empfang ein.<br>
           Please enter this code at the reception.
         </p>
-        <button class="agreement-close-final-btn" onclick="closeAgreementWithPassword()">Schließen | Close</button>
+        <button class="agreement-close-final-btn" onclick="nextAgreementCustomer()">Nächster Kunde | Next Customer</button>
       </div>
     </div>
   </div>
@@ -6616,6 +6619,24 @@
       }
     };
     
+    window.exitAgreementKiosk = function() {
+      const password = prompt('Bitte Passwort eingeben um zu verlassen:\nPlease enter password to exit:');
+      if (password === 'admin1234') {
+        closeAgreementFormOverlay();
+      } else if (password !== null) {
+        alert('Falsches Passwort!\nIncorrect password!');
+      }
+    };
+    
+    window.nextAgreementCustomer = function() {
+      // Reset form
+      document.getElementById('agreementFormContent').style.display = 'block';
+      document.getElementById('agreementSuccessMessage').classList.remove('active');
+      document.getElementById('agreementFormDE').reset();
+      document.getElementById('agreementFormEN').reset();
+      switchLanguage('DE');
+    };
+    
     // Language switch function
     window.switchLanguage = function(lang) {
       currentLanguage = lang;
@@ -6703,4 +6724,4 @@
     }
   </script>
 </body>
-</html>
+</html><!-- VERSION: v71 -->
