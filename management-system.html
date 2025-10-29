@@ -2,8 +2,15 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Management System</title>
+  
+  <!-- iOS Web App Configuration -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Agreement Form">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>✍️</text></svg>">
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -934,16 +941,35 @@
       background: #ffffff;
       z-index: 10000;
       overflow-y: auto;
+      /* iOS specific - prevent pull to refresh and bounce */
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
     
     .agreement-form-overlay.active {
       display: block;
     }
     
+    /* Kiosk Mode - Hide when overlay is active in standalone mode */
+    @media all and (display-mode: standalone) {
+      body.kiosk-mode {
+        overflow: hidden;
+      }
+      
+      body.kiosk-mode nav {
+        display: none !important;
+      }
+      
+      body.kiosk-mode section:not(.active) {
+        display: none !important;
+      }
+    }
+    
     .agreement-form-container {
       max-width: 900px;
       margin: 0 auto;
       padding: 40px 20px;
+      padding-bottom: env(safe-area-inset-bottom, 40px);
     }
     
     .agreement-header {
@@ -1251,6 +1277,30 @@
       <span class="badge" id="badge-guests">Guests: —</span>
       <span class="badge" id="badge-agreements-completed">Agreements: —</span>
       <span class="badge" id="badge-agreements-pending">Missing: —</span>
+    </div>
+    
+    <!-- Agreement Form Quick Access -->
+    <div style="margin-top: 32px; padding: 24px; background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.06);">
+      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+        <div style="width: 56px; height: 56px; background: var(--location-primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px;">
+          ✍️
+        </div>
+        <div style="flex: 1;">
+          <h3 style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">Customer Agreement Form</h3>
+          <p style="margin: 0; color: var(--muted); font-size: 14px;">Open consent form for iPad signature collection</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <button onclick="openAgreementFormForEvent(null)" class="btn-nav" style="flex: 1; background: var(--accent); color: white; padding: 12px 24px; font-size: 15px; font-weight: 600;">
+          📱 Open Form
+        </button>
+        <button onclick="copyAgreementLink()" class="btn-nav" style="padding: 12px 24px; font-size: 15px;">
+          🔗 Copy Link
+        </button>
+      </div>
+      <div id="linkCopiedMessage" style="display: none; margin-top: 12px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; color: #155724; font-size: 13px; text-align: center;">
+        ✓ Link copied to clipboard! Add to iPad home screen for kiosk mode.
+      </div>
     </div>
   </section>
 
@@ -4047,6 +4097,12 @@
           overlay.dataset.eventId = eventId;
           overlay.classList.add('active');
           document.body.style.overflow = 'hidden';
+          
+          // Enable kiosk mode if in standalone (PWA) mode
+          if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+            document.body.classList.add('kiosk-mode');
+            enableKioskMode();
+          }
         }
       };
       
@@ -4055,8 +4111,64 @@
         if (overlay) {
           overlay.classList.remove('active');
           document.body.style.overflow = '';
+          document.body.classList.remove('kiosk-mode');
+          disableKioskMode();
         }
       };
+      
+      // Copy agreement form link to clipboard
+      window.copyAgreementLink = function() {
+        const url = window.location.origin + window.location.pathname + '?mode=kiosk';
+        
+        navigator.clipboard.writeText(url).then(() => {
+          const message = document.getElementById('linkCopiedMessage');
+          message.style.display = 'block';
+          setTimeout(() => {
+            message.style.display = 'none';
+          }, 5000);
+        }).catch(err => {
+          alert('Link: ' + url + '\n\nManually copy this link and add to iPad home screen.');
+        });
+      };
+      
+      // Kiosk Mode Functions
+      function enableKioskMode() {
+        // Prevent back navigation
+        history.pushState(null, null, location.href);
+        window.onpopstate = function() {
+          history.go(1);
+        };
+        
+        // Prevent right-click
+        document.addEventListener('contextmenu', preventContextMenu);
+        
+        // Prevent text selection
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+      }
+      
+      function disableKioskMode() {
+        window.onpopstate = null;
+        document.removeEventListener('contextmenu', preventContextMenu);
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+      }
+      
+      function preventContextMenu(e) {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Check if opened in kiosk mode from URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('mode') === 'kiosk' && (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches)) {
+        // Auto-open form in kiosk mode
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(() => {
+            openAgreementFormForEvent(null);
+          }, 500);
+        });
+      }
       
       window.openAgreementForm = function() {
         document.getElementById('agreementFormModal').classList.add('active');
