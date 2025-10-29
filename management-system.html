@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v73</title>
+  <title>Management System v74</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1271,7 +1271,7 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v73</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v74</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -4043,6 +4043,12 @@
             artistSelectEN.innerHTML = '<option value="">-- Please select --</option>' + artistOptions;
           }
           
+          // Initialize signature canvases
+          setTimeout(() => {
+            initSignatureCanvas('DE');
+            initSignatureCanvas('EN');
+          }, 100);
+          
           // Enable kiosk mode if in standalone (PWA) mode
           if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
             document.body.classList.add('kiosk-mode');
@@ -6597,6 +6603,12 @@
       clearSignature('DE');
       clearSignature('EN');
       
+      // Reinitialize canvases
+      setTimeout(() => {
+        initSignatureCanvas('DE');
+        initSignatureCanvas('EN');
+      }, 100);
+      
       // Re-enable submit buttons
       const submitBtns = document.querySelectorAll('.agreement-submit-btn');
       submitBtns.forEach(btn => {
@@ -6686,8 +6698,11 @@
         document.getElementById('agreementFormContent').style.display = 'none';
         document.getElementById('agreementSuccessMessage').classList.add('active');
         
-        // Reload agreements list in background
+        // Reload agreements list in background (always load today's date)
         if (typeof loadAgreements === 'function') {
+          // Set agreementsDate to today before loading
+          agreementsDate = new Date();
+          updateAgreementsDateDisplay();
           loadAgreements();
         }
         
@@ -6702,4 +6717,4 @@
     }
   </script>
 </body>
-</html><!-- VERSION: v73 -->
+</html><!-- VERSION: v74 -->
