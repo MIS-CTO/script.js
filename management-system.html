@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v71</title>
+  <title>Management System v73</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1271,7 +1271,7 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v71</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v73</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -1635,10 +1635,6 @@
       </div>
       
       <div class="calendar-controls" style="margin-bottom:24px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
-          <label style="font-weight:600; font-size:14px;">Location:</label>
-          <select id="agreementsLocationDropdown" style="min-width:200px;"></select>
-        </div>
         <button id="agreementsPrevDayBtn" class="btn-nav">‹ Prev</button>
         <input type="date" id="agreementsDatePickerInput">
         <button id="agreementsTodayBtn" class="btn-nav">Today</button>
@@ -1652,8 +1648,7 @@
             <th>Email</th>
             <th>Artist</th>
             <th>Time</th>
-            <th style="text-align:center;">Files</th>
-            <th style="text-align:right;">Actions</th>
+            <th style="text-align:center;">Signed</th>
           </tr>
         </thead>
         <tbody id="agreementsTableBody"></tbody>
@@ -3268,20 +3263,6 @@
               renderDienstplan();
             };
             
-            // Agreements Location Dropdown
-            selectedAgreementsLocationId = selectedLocationId;
-            const agreementsLocSelect = document.getElementById('agreementsLocationDropdown');
-            if (agreementsLocSelect) {
-              agreementsLocSelect.innerHTML = locations.map(l => 
-                `<option value="${l.id}" ${l.id === selectedAgreementsLocationId ? 'selected' : ''}>${l.name}</option>`
-              ).join('');
-              
-              agreementsLocSelect.onchange = (e) => {
-                selectedAgreementsLocationId = e.target.value;
-                console.log('Agreements location changed to:', selectedAgreementsLocationId);
-                loadAgreements();
-              };
-            }
           }
           
           await loadEvents();
@@ -3842,83 +3823,43 @@
       // Agreements Functions
       async function loadAgreements() {
         try {
-          if (!selectedAgreementsLocationId) {
-            console.log('No location selected for agreements');
-            return;
-          }
-          
           const dateStr = agreementsDate.toISOString().split('T')[0];
           
-          // Load only real appointments (exclude type = 'events') for the selected date and location
-          const { data: eventData, error } = await supabase
-            .from('events')
-            .select(`
-              id,
-              title,
-              start_time,
-              end_time,
-              artist_id,
-              customer_id,
-              type,
-              agreement_file_url,
-              agreement_file_name
-            `)
-            .eq('location_id', selectedAgreementsLocationId)
-            .gte('start_time', `${dateStr}T00:00:00`)
-            .lte('start_time', `${dateStr}T23:59:59`)
-            .not('type', 'eq', 'events')  // Exclude "events" category
-            .order('start_time', { ascending: true });
+          // Load agreements from agreements table for the selected date
+          const { data: agreementData, error } = await supabase
+            .from('agreements')
+            .select('*')
+            .gte('signed_at', `${dateStr}T00:00:00`)
+            .lte('signed_at', `${dateStr}T23:59:59`)
+            .order('signed_at', { ascending: false });  // Newest first
           
           if (error) throw error;
           
-          console.log(`Agreements loaded for ${dateStr}:`, eventData?.length);
+          console.log(`Agreements loaded for ${dateStr}:`, agreementData?.length);
           
-          // Get customer and artist details
-          const agreements = await Promise.all((eventData || []).map(async (event) => {
-            let customerName = 'Unknown Customer';
-            let customerEmail = '-';
-            let customerId = null;
-            
-            if (event.customer_id) {
-              const { data: customer } = await supabase
-                .from('customers')
-                .select('id, first_name, last_name, email')
-                .eq('id', event.customer_id)
-                .single();
-              
-              if (customer) {
-                customerName = `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
-                customerEmail = customer.email || '-';
-                customerId = customer.id;
-              }
-            } else {
-              // Try to extract customer name from title
-              customerName = event.title || 'Unknown Customer';
-            }
-            
+          // Get artist details
+          const agreements = (agreementData || []).map((agreement) => {
             let artistName = '-';
-            if (event.artist_id) {
-              const artist = allArtists.find(a => a.id === event.artist_id);
+            if (agreement.artist_id) {
+              const artist = allArtists.find(a => a.id === agreement.artist_id);
               if (artist) {
                 artistName = artist.name;
               }
             }
             
-            const startTime = new Date(event.start_time);
-            const timeStr = startTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const signedTime = new Date(agreement.signed_at);
+            const timeStr = signedTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
             
             return {
-              id: event.id,
-              customerName,
-              customerEmail,
-              customerId,
+              id: agreement.id,
+              customerName: agreement.full_name || 'Unknown',
+              customerEmail: agreement.email || '-',
               artistName,
               time: timeStr,
-              hasFile: !!event.agreement_file_url,
-              fileName: event.agreement_file_name,
-              fileUrl: event.agreement_file_url
+              language: agreement.language,
+              signatureData: agreement.signature_data
             };
-          }));
+          });
           
           renderAgreements(agreements);
         } catch (err) {
@@ -3930,29 +3871,20 @@
         const tbody = document.getElementById('agreementsTableBody');
         
         if (!agreements || agreements.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">No agreements for this date</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted);">No agreements for this date</td></tr>';
           return;
         }
         
         tbody.innerHTML = agreements.map(agreement => `
           <tr style="transition:background 0.15s ease;">
             <td>
-              <a href="#" onclick="showCustomerDetail('${agreement.customerId}'); return false;" 
-                 style="color:var(--accent); text-decoration:none; font-weight:500;">
-                ${agreement.customerName}
-              </a>
+              <span style="font-weight:500;">${agreement.customerName}</span>
             </td>
             <td>${agreement.customerEmail}</td>
             <td>${agreement.artistName}</td>
             <td style="font-weight:500;">${agreement.time}</td>
             <td style="text-align:center;">
-              <button class="btn-nav" onclick="openAgreementFormForEvent('${agreement.id}')" 
-                      style="padding:6px 16px; font-size:13px; background:var(--accent); color:white;">
-                📝 Open Form
-              </button>
-            </td>
-            <td style="text-align:center;">
-              ${agreement.hasFile 
+              ${agreement.signatureData 
                 ? '<span style="color:#34c759; font-size:20px; font-weight:600;">✓</span>' 
                 : '<span style="color:#ff3b30; font-size:20px; font-weight:600;">✕</span>'}
             </td>
@@ -4100,6 +4032,16 @@
           overlay.dataset.eventId = eventId;
           overlay.classList.add('active');
           document.body.style.overflow = 'hidden';
+          
+          // Populate artist dropdowns
+          const artistSelectDE = document.getElementById('artistDE');
+          const artistSelectEN = document.getElementById('artistEN');
+          
+          if (artistSelectDE && artistSelectEN && allArtists) {
+            const artistOptions = allArtists.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            artistSelectDE.innerHTML = '<option value="">-- Bitte wählen --</option>' + artistOptions;
+            artistSelectEN.innerHTML = '<option value="">-- Please select --</option>' + artistOptions;
+          }
           
           // Enable kiosk mode if in standalone (PWA) mode
           if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
@@ -6329,6 +6271,13 @@
               <label class="agreement-label">E-Mail *</label>
               <input type="email" class="agreement-input" id="emailDE" inputmode="email" autocomplete="email" required>
             </div>
+            
+            <div class="agreement-field">
+              <label class="agreement-label">Artist *</label>
+              <select class="agreement-input" id="artistDE" required style="border-radius:4px;">
+                <option value="">-- Bitte wählen --</option>
+              </select>
+            </div>
           </div>
           
           <!-- Terms & Conditions -->
@@ -6395,6 +6344,13 @@
             <div class="agreement-field">
               <label class="agreement-label">E-Mail *</label>
               <input type="email" class="agreement-input" id="emailEN" inputmode="email" autocomplete="email" required>
+            </div>
+            
+            <div class="agreement-field">
+              <label class="agreement-label">Artist *</label>
+              <select class="agreement-input" id="artistEN" required style="border-radius:4px;">
+                <option value="">-- Please select --</option>
+              </select>
             </div>
           </div>
           
@@ -6629,11 +6585,28 @@
     };
     
     window.nextAgreementCustomer = function() {
-      // Reset form
+      // Hide success, show form
       document.getElementById('agreementFormContent').style.display = 'block';
       document.getElementById('agreementSuccessMessage').classList.remove('active');
+      
+      // Reset forms
       document.getElementById('agreementFormDE').reset();
       document.getElementById('agreementFormEN').reset();
+      
+      // Clear signatures
+      clearSignature('DE');
+      clearSignature('EN');
+      
+      // Re-enable submit buttons
+      const submitBtns = document.querySelectorAll('.agreement-submit-btn');
+      submitBtns.forEach(btn => {
+        btn.disabled = false;
+        btn.textContent = btn.closest('#agreementFormDE') 
+          ? 'Einwilligungserklärung absenden' 
+          : 'Submit Consent Form';
+      });
+      
+      // Switch back to German
       switchLanguage('DE');
     };
     
@@ -6685,14 +6658,14 @@
       submitBtn.textContent = lang === 'DE' ? 'Wird gesendet...' : 'Submitting...';
       
       try {
-        const eventId = document.getElementById('agreementFormOverlay').dataset.eventId;
+        const artistId = document.getElementById('artist' + lang).value;
         
         const formData = {
-          event_id: eventId,
           language: lang,
           full_name: document.getElementById('fullName' + lang).value,
           date_of_birth: document.getElementById('dob' + lang).value,
           email: document.getElementById('email' + lang).value,
+          artist_id: artistId,
           consent_media: document.getElementById('consentTerms' + lang).checked,
           social_handle: document.getElementById('socialHandle' + lang).value,
           signature_data: signatureData,
@@ -6709,9 +6682,14 @@
         const code = Math.floor(1000 + Math.random() * 9000);
         document.getElementById('successCode').textContent = code;
         
-        // Show success message
+        // Show success message (stay in overlay)
         document.getElementById('agreementFormContent').style.display = 'none';
         document.getElementById('agreementSuccessMessage').classList.add('active');
+        
+        // Reload agreements list in background
+        if (typeof loadAgreements === 'function') {
+          loadAgreements();
+        }
         
       } catch(err) {
         console.error('Submission error:', err);
@@ -6724,4 +6702,4 @@
     }
   </script>
 </body>
-</html><!-- VERSION: v71 -->
+</html><!-- VERSION: v73 -->
