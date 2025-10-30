@@ -3705,7 +3705,7 @@
       async function loadAgreements() {
         try {
           const dateStr = agreementsDate.toISOString().split('T')[0];
-          
+
           // Load agreements from agreements table for the selected date
           const { data: agreementData, error } = await supabase
             .from('agreements')
@@ -3713,11 +3713,19 @@
             .gte('signed_at', `${dateStr}T00:00:00`)
             .lte('signed_at', `${dateStr}T23:59:59`)
             .order('signed_at', { ascending: false });  // Newest first
-          
-          if (error) throw error;
-          
+
+          if (error) {
+            // Check if table doesn't exist (404)
+            if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('does not exist')) {
+              console.log('Agreements table not yet created - showing empty state');
+              renderAgreements([]);
+              return;
+            }
+            throw error;
+          }
+
           console.log(`Agreements loaded for ${dateStr}:`, agreementData?.length);
-          
+
           // Get artist details
           const agreements = (agreementData || []).map((agreement) => {
             let artistName = '-';
@@ -3727,10 +3735,10 @@
                 artistName = artist.name;
               }
             }
-            
+
             const signedTime = new Date(agreement.signed_at);
             const timeStr = signedTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            
+
             return {
               id: agreement.id,
               customerName: agreement.full_name || 'Unknown',
@@ -3741,10 +3749,11 @@
               signatureData: agreement.signature_data
             };
           });
-          
+
           renderAgreements(agreements);
         } catch (err) {
-          console.error("Agreements error:", err);
+          console.log("Agreements table not available:", err.message);
+          renderAgreements([]);
         }
       }
       
