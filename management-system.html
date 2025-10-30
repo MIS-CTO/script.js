@@ -2682,6 +2682,49 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";
     
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ============================================
+    // PERMISSION HELPER FUNCTIONS
+    // ============================================
+
+    // Permission check function
+    async function userHasPermission(permission) {
+      try {
+        const { data, error } = await supabase.rpc('user_has_permission', {
+          p_permission: permission
+        });
+
+        if (error) {
+          console.error('Permission check error:', error);
+          return false;
+        }
+
+        return data === true;
+      } catch (err) {
+        console.error('Permission check failed:', err);
+        return false;
+      }
+    }
+
+    // Get current user role
+    async function getCurrentUserRole() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return 'guest';
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        return profile?.role || 'user';
+      } catch (err) {
+        console.error('Error getting user role:', err);
+        return 'guest';
+      }
+    }
+
     let currentDate = new Date();
     let dienstplanDate = new Date();
     let agreementsDate = new Date();
@@ -2751,8 +2794,113 @@
       return locationColors.default;
     }
 
-    
-    
+    function getCurrentLocationName() {
+      const select = document.querySelector('#dienstplanLocationDropdown option:checked');
+      return select ? select.textContent : '';
+    }
+
+    // ============================================
+    // UI PERMISSIONS INITIALIZATION
+    // ============================================
+
+    async function initializePermissions() {
+      try {
+        // Check if user is logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user && !localStorage.getItem('hasSkippedLogin')) {
+          // No user and hasn't skipped - hide all create/manage buttons
+          console.log('No user logged in - hiding management buttons');
+          hideManagementButtons();
+          return;
+        }
+
+        // Check specific permissions
+        const canCreateBooking = await userHasPermission('calendar.create_booking');
+        const canCreateEvent = await userHasPermission('calendar.create_event');
+        const canManageArtists = await userHasPermission('artists.manage');
+        const canManageCustomers = await userHasPermission('customers.manage');
+        const canManageRequests = await userHasPermission('requests.manage');
+        const canManageDienstplan = await userHasPermission('dienstplan.manage');
+
+        console.log('Permissions loaded:', {
+          canCreateBooking,
+          canCreateEvent,
+          canManageArtists,
+          canManageCustomers,
+          canManageRequests,
+          canManageDienstplan
+        });
+
+        // Hide/show buttons based on permissions
+        if (!canCreateBooking) {
+          const createBookingBtns = document.querySelectorAll('[onclick*="createBooking"]');
+          createBookingBtns.forEach(btn => btn.style.display = 'none');
+        }
+
+        if (!canCreateEvent) {
+          const createEventBtns = document.querySelectorAll('[onclick*="createEvent"]');
+          createEventBtns.forEach(btn => btn.style.display = 'none');
+        }
+
+        if (!canManageArtists) {
+          const artistBtns = document.querySelectorAll('#addArtistBtn, [onclick*="addArtist"], [onclick*="editArtist"], [onclick*="deleteArtist"]');
+          artistBtns.forEach(btn => btn.style.display = 'none');
+        }
+
+        if (!canManageCustomers) {
+          const customerBtns = document.querySelectorAll('#addCustomerBtn, [onclick*="addCustomer"], [onclick*="editCustomer"], [onclick*="deleteCustomer"]');
+          customerBtns.forEach(btn => btn.style.display = 'none');
+        }
+
+        if (!canManageRequests) {
+          const requestBtns = document.querySelectorAll('[onclick*="assignRequest"], [onclick*="scheduleAppointment"]');
+          requestBtns.forEach(btn => btn.style.display = 'none');
+        }
+
+        if (!canManageDienstplan) {
+          // Make dienstplan cells read-only
+          const dienstplanCells = document.querySelectorAll('.dp-cell');
+          dienstplanCells.forEach(cell => {
+            cell.style.cursor = 'not-allowed';
+            cell.style.pointerEvents = 'none';
+          });
+        }
+      } catch (err) {
+        console.error('Error initializing permissions:', err);
+      }
+    }
+
+    function hideManagementButtons() {
+      const selectors = [
+        '[onclick*="createBooking"]',
+        '[onclick*="createEvent"]',
+        '#addArtistBtn',
+        '[onclick*="addArtist"]',
+        '[onclick*="editArtist"]',
+        '[onclick*="deleteArtist"]',
+        '#addCustomerBtn',
+        '[onclick*="addCustomer"]',
+        '[onclick*="editCustomer"]',
+        '[onclick*="deleteCustomer"]',
+        '[onclick*="assignRequest"]',
+        '[onclick*="scheduleAppointment"]'
+      ];
+
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => el.style.display = 'none');
+      });
+
+      // Make dienstplan read-only
+      const dienstplanCells = document.querySelectorAll('.dp-cell');
+      dienstplanCells.forEach(cell => {
+        cell.style.cursor = 'not-allowed';
+        cell.style.pointerEvents = 'none';
+      });
+    }
+
+
+
     // Sorting Functions
     function sortArtists(artists, field, order) {
       const sorted = [...artists].sort((a, b) => {
@@ -2815,6 +2963,7 @@
       const sections = document.querySelectorAll("section");
 
       await loadInitialData();
+      await initializePermissions();
 
       // Request tabs initialization function
       function initRequestTabs() {
@@ -2921,8 +3070,12 @@
           allArtists = artists || [];
           console.log('Artists loaded:', allArtists.length);
           
-          // Load team members
-          const { data: teamMembers } = await supabase.from('team_members').select('*').order('category', { ascending: true }).order('name', { ascending: true });
+          // Load team members from dienstplan_resources
+          const { data: teamMembers } = await supabase
+            .from('dienstplan_resources')
+            .select('*')
+            .order('sort_order', { ascending: true })
+            .order('name', { ascending: true });
           allTeamMembers = teamMembers || [];
           console.log('Team members loaded:', allTeamMembers.length);
           
@@ -3269,7 +3422,16 @@
       // Request Tab Switching is handled in initRequestTabs()
       
       // Assign Request
-      window.assignRequest = function() {
+      window.assignRequest = async function() {
+        // Load booking team members from new view
+        const { data: bookingTeam } = await supabase
+          .from('booking_team_members')
+          .select('*');
+
+        const teamMemberSelect = document.getElementById('assignTeamMember');
+        teamMemberSelect.innerHTML = '<option value="">-- Select Team Member --</option>' +
+          (bookingTeam || []).map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
         document.getElementById('assignModal').classList.add('active');
       };
       
@@ -3279,20 +3441,28 @@
       
       document.getElementById('assignForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const teamMember = document.getElementById('assignTeamMember').value;
-        
+
+        const userId = document.getElementById('assignTeamMember').value;
+
+        // Get username for display
+        const { data: user } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', userId)
+          .single();
+
         try {
           const { error } = await supabase
             .from('requests')
             .update({
               status: 'pending',
-              assigned_to: teamMember
+              assigned_to_user_id: userId,
+              assigned_to: user?.username || 'Unknown' // For display purposes
             })
             .eq('id', selectedRequestId);
-          
+
           if (error) throw error;
-          
+
           document.getElementById('assignModal').classList.remove('active');
           document.getElementById('assignForm').reset();
           await loadRequests();
@@ -5531,17 +5701,32 @@
       const colors = getLocationColors(locationData);
       
       const daysInMonth = new Date(dienstplanDate.getFullYear(), dienstplanDate.getMonth() + 1, 0).getDate();
-      
+
+      // Filter by selected location if applicable
+      let filteredMembers = allTeamMembers;
+      if (selectedDienstplanLocationId) {
+        filteredMembers = allTeamMembers.filter(m =>
+          // Show all non-artist roles
+          m.category !== 'Resident Artists' ||
+          // OR show artists only if they match the location
+          (m.category === 'Resident Artists' && m.city_location === getCurrentLocationName())
+        );
+      }
+
       // Group team members by category
       const categories = [];
       const categoryNames = ['Geschäftsführung', 'Management', 'Booking Team', 'Mediadepartment', 'Resident Artists', 'Guest Artists', 'Azubis', 'Andere'];
       
       categoryNames.forEach(categoryName => {
-        const members = allTeamMembers.filter(m => m.category === categoryName && m.active);
+        const members = filteredMembers.filter(m => m.category === categoryName && m.active);
         if (members.length > 0 || categoryName === 'Resident Artists' || categoryName === 'Guest Artists') {
           // For Artist categories, use artists instead
           if (categoryName === 'Resident Artists') {
-            const residentArtists = allArtists.filter(a => !a.is_guest && a.active);
+            let residentArtists = allArtists.filter(a => !a.is_guest && a.active);
+            // Filter by location if selected
+            if (selectedDienstplanLocationId) {
+              residentArtists = residentArtists.filter(a => a.city_location === getCurrentLocationName());
+            }
             if (residentArtists.length > 0) {
               categories.push({
                 name: categoryName,
