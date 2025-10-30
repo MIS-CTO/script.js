@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v74</title>
+  <title>Management System v75</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1271,7 +1271,7 @@
   <section id="dashboard-section" class="active">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v74</span>
+      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v75</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -6433,14 +6433,21 @@
     
     // Initialize signature canvases
     function initSignatureCanvas(lang) {
+      console.log('Initializing canvas for:', lang);
       const canvas = document.getElementById('signatureCanvas' + lang);
+      
+      if (!canvas) {
+        console.error('Canvas not found for language:', lang);
+        return;
+      }
+      
       const ctx = canvas.getContext('2d');
       
       // Set canvas size to match display size
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      canvas.width = rect.width * 2;
+      canvas.height = 240;
+      ctx.scale(2, 2);
       
       // Configure drawing style
       ctx.strokeStyle = '#000000';
@@ -6456,38 +6463,56 @@
         ctxEN = ctx;
       }
       
+      console.log('Canvas initialized:', lang, canvas.width, canvas.height);
+      
+      // Remove old listeners
+      const newCanvas = canvas.cloneNode(true);
+      canvas.parentNode.replaceChild(newCanvas, canvas);
+      const finalCanvas = document.getElementById('signatureCanvas' + lang);
+      
       // Add event listeners
-      canvas.addEventListener('mousedown', (e) => startDrawing(e, lang));
-      canvas.addEventListener('mousemove', (e) => draw(e, lang));
-      canvas.addEventListener('mouseup', () => stopDrawing(lang));
-      canvas.addEventListener('mouseout', () => stopDrawing(lang));
+      finalCanvas.addEventListener('mousedown', (e) => startDrawing(e, lang));
+      finalCanvas.addEventListener('mousemove', (e) => draw(e, lang));
+      finalCanvas.addEventListener('mouseup', () => stopDrawing(lang));
+      finalCanvas.addEventListener('mouseout', () => stopDrawing(lang));
       
       // Touch events for mobile
-      canvas.addEventListener('touchstart', (e) => {
+      finalCanvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-          clientX: touch.clientX,
-          clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
+        const rect = finalCanvas.getBoundingClientRect();
+        startDrawing({ clientX: touch.clientX, clientY: touch.clientY }, lang);
       });
       
-      canvas.addEventListener('touchmove', (e) => {
+      finalCanvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-          clientX: touch.clientX,
-          clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
+        draw({ clientX: touch.clientX, clientY: touch.clientY }, lang);
       });
       
-      canvas.addEventListener('touchend', (e) => {
+      finalCanvas.addEventListener('touchend', (e) => {
         e.preventDefault();
-        const mouseEvent = new MouseEvent('mouseup', {});
-        canvas.dispatchEvent(mouseEvent);
+        stopDrawing(lang);
       });
+      
+      // Update references
+      if (lang === 'DE') {
+        canvasDE = finalCanvas;
+        ctxDE = finalCanvas.getContext('2d');
+        ctxDE.scale(2, 2);
+        ctxDE.strokeStyle = '#000000';
+        ctxDE.lineWidth = 2;
+        ctxDE.lineCap = 'round';
+        ctxDE.lineJoin = 'round';
+      } else {
+        canvasEN = finalCanvas;
+        ctxEN = finalCanvas.getContext('2d');
+        ctxEN.scale(2, 2);
+        ctxEN.strokeStyle = '#000000';
+        ctxEN.lineWidth = 2;
+        ctxEN.lineCap = 'round';
+        ctxEN.lineJoin = 'round';
+      }
     }
     
     function startDrawing(e, lang) {
@@ -6501,8 +6526,12 @@
         isDrawingEN = true;
       }
       
+      console.log('Start drawing:', lang);
+      
       ctx.beginPath();
-      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+      const x = (e.clientX - rect.left);
+      const y = (e.clientY - rect.top);
+      ctx.moveTo(x, y);
     }
     
     function draw(e, lang) {
@@ -6513,7 +6542,9 @@
       const ctx = lang === 'DE' ? ctxDE : ctxEN;
       const rect = canvas.getBoundingClientRect();
       
-      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      const x = (e.clientX - rect.left);
+      const y = (e.clientY - rect.top);
+      ctx.lineTo(x, y);
       ctx.stroke();
     }
     
@@ -6521,9 +6552,11 @@
       if (lang === 'DE') {
         isDrawingDE = false;
         signatureDataDE = canvasDE.toDataURL();
+        console.log('Signature saved for DE');
       } else {
         isDrawingEN = false;
         signatureDataEN = canvasEN.toDataURL();
+        console.log('Signature saved for EN');
       }
     }
     
@@ -6655,10 +6688,13 @@
     });
     
     async function submitAgreementForm(lang) {
+      console.log('Submit started for language:', lang);
       const submitBtn = document.querySelector('.agreement-submit-btn');
       
       // Check if signature exists
       const signatureData = lang === 'DE' ? signatureDataDE : signatureDataEN;
+      console.log('Signature data exists:', !!signatureData);
+      
       if (!signatureData) {
         alert(lang === 'DE' 
           ? 'Bitte unterschreiben Sie das Formular!' 
@@ -6684,22 +6720,28 @@
           signed_at: new Date().toISOString()
         };
         
+        console.log('Submitting form data:', { ...formData, signature_data: 'DATA_EXISTS' });
+        
         const { error } = await supabase
           .from('agreements')
           .insert(formData);
         
         if (error) throw error;
         
+        console.log('Form submitted successfully');
+        
         // Generate random 4-digit code
         const code = Math.floor(1000 + Math.random() * 9000);
         document.getElementById('successCode').textContent = code;
         
         // Show success message (stay in overlay)
+        console.log('Showing success message');
         document.getElementById('agreementFormContent').style.display = 'none';
         document.getElementById('agreementSuccessMessage').classList.add('active');
         
         // Reload agreements list in background (always load today's date)
         if (typeof loadAgreements === 'function') {
+          console.log('Reloading agreements list');
           // Set agreementsDate to today before loading
           agreementsDate = new Date();
           updateAgreementsDateDisplay();
@@ -6717,4 +6759,4 @@
     }
   </script>
 </body>
-</html><!-- VERSION: v74 -->
+</html><!-- VERSION: v75 -->
