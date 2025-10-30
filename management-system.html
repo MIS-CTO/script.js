@@ -1166,7 +1166,7 @@
     <a id="tab-analytics" href="#analytics">Analytics</a>
 
     <!-- Profile Button -->
-    <button class="profile-button" id="profileButton" onclick="openLoginModal()">
+    <button class="profile-button" id="profileButton">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
         <circle cx="12" cy="7" r="4"></circle>
@@ -5935,36 +5935,41 @@
     // ============================================
 
     let currentUser = null;
-    let isPasswordVisible = false;
 
     // Check for saved session on page load
     async function initAuth() {
-      const rememberMe = localStorage.getItem('rememberMe') === 'true';
-      const savedUserId = localStorage.getItem('userId');
+      try {
+        const rememberMe = localStorage.getItem('rememberMe') === 'true';
+        const savedUsername = localStorage.getItem('username');
 
-      if (rememberMe && savedUserId) {
-        try {
+        if (rememberMe && savedUsername) {
+          // Verify user still exists
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', savedUserId)
+            .eq('username', savedUsername)
             .single();
 
           if (!error && profile) {
             currentUser = profile;
             updateUIForUser(profile);
+            await initializePermissions();
             return;
+          } else {
+            // Clear invalid session
+            localStorage.removeItem('rememberMe');
+            localStorage.removeItem('username');
           }
-        } catch (err) {
-          console.error('Session restore failed:', err);
         }
-      }
 
-      // Show login modal on first visit
-      if (!localStorage.getItem('hasSkippedLogin')) {
-        setTimeout(() => {
-          document.getElementById('loginBackdrop').classList.add('active');
-        }, 500);
+        // Show login modal on first visit
+        if (!localStorage.getItem('hasSkippedLogin')) {
+          setTimeout(() => {
+            document.getElementById('loginBackdrop').classList.add('active');
+          }, 500);
+        }
+      } catch (err) {
+        console.error('Init auth failed:', err);
       }
     }
 
@@ -5982,100 +5987,86 @@
       }
 
       try {
-        // First, try to sign in with Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: username.includes('@') ? username : `${username}@temp.local`,
-          password: password
-        });
-
-        if (authError) {
-          alert('Anmeldung fehlgeschlagen: ' + authError.message);
-          return;
-        }
-
-        // Get profile data
-        const { data: profile, error: profileError } = await supabase
+        // Query user by username
+        const { data: profiles, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', authData.user.id)
-          .single();
+          .eq('username', username);
 
-        if (profileError || !profile) {
-          alert('Profil konnte nicht geladen werden');
+        if (error) {
+          console.error('Database error:', error);
+          alert('Datenbankfehler: ' + error.message);
           return;
         }
 
-        currentUser = profile;
-
-        // Save session if remember me is checked
-        if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-          localStorage.setItem('userId', profile.id);
-        } else {
-          localStorage.removeItem('rememberMe');
-          localStorage.removeItem('userId');
+        if (!profiles || profiles.length === 0) {
+          alert('Benutzername nicht gefunden');
+          return;
         }
 
+        const profile = profiles[0];
+
+        // Check password
+        if (profile.password_hash !== password) {
+          alert('Falsches Passwort');
+          return;
+        }
+
+        // Login successful
+        currentUser = profile;
+
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+          localStorage.setItem('username', username);
+        }
+
+        // Update UI
         updateUIForUser(profile);
         closeLoginModal();
 
-        // Show success message
-        setTimeout(() => {
-          alert(`Willkommen zurück, ${profile.username}!`);
-        }, 300);
+        alert(`Willkommen zurück, ${profile.username}!`);
+
+        // Reload data
+        await initializePermissions();
+        await loadEvents();
+        renderCalendar();
 
       } catch (err) {
-        console.error('Login error:', err);
+        console.error('Login failed:', err);
         alert('Ein Fehler ist aufgetreten: ' + err.message);
       }
     }
 
-    // Update UI when user logs in
-    function updateUIForUser(user) {
+    // Update UI for logged-in user
+    function updateUIForUser(profile) {
       const profileButton = document.getElementById('profileButton');
       const profileButtonText = document.getElementById('profileButtonText');
 
-      // Update profile button
-      profileButtonText.textContent = user.username;
+      profileButtonText.textContent = profile.username;
 
-      // Add avatar if exists
-      const existingAvatar = profileButton.querySelector('.profile-avatar');
-      if (existingAvatar) {
-        existingAvatar.remove();
+      if (profile.avatar_url) {
+        let avatarImg = profileButton.querySelector('.profile-avatar');
+        if (!avatarImg) {
+          avatarImg = document.createElement('img');
+          avatarImg.className = 'profile-avatar';
+          profileButton.insertBefore(avatarImg, profileButtonText);
+        }
+        avatarImg.src = profile.avatar_url;
       }
 
-      if (user.avatar_url) {
-        const avatar = document.createElement('img');
-        avatar.src = user.avatar_url;
-        avatar.className = 'profile-avatar';
-        avatar.alt = user.username;
-        profileButton.insertBefore(avatar, profileButtonText);
-      }
-
-      // Update dashboard welcome
+      // Show welcome message
       const dashboardWelcome = document.getElementById('dashboardWelcome');
       const dashboardWelcomeText = document.getElementById('dashboardWelcomeText');
       const dashboardAvatar = document.getElementById('dashboardAvatar');
 
-      dashboardWelcome.style.display = 'flex';
-      dashboardWelcomeText.textContent = `Willkommen ${user.username}`;
+      if (dashboardWelcome) {
+        dashboardWelcome.style.display = 'flex';
+        dashboardWelcomeText.textContent = `Willkommen ${profile.username}`;
 
-      if (user.avatar_url) {
-        dashboardAvatar.src = user.avatar_url;
+        if (profile.avatar_url && dashboardAvatar) {
+          dashboardAvatar.src = profile.avatar_url;
+        }
       }
-    }
-
-    // Open login modal
-    function openLoginModal() {
-      if (currentUser) {
-        // Show profile view
-        showProfileView();
-      } else {
-        // Show login form
-        document.getElementById('loginFormView').style.display = 'block';
-        document.getElementById('profileView').style.display = 'none';
-      }
-      document.getElementById('loginBackdrop').classList.add('active');
     }
 
     // Close login modal
@@ -6083,117 +6074,19 @@
       document.getElementById('loginBackdrop').classList.remove('active');
     }
 
-    // Skip login (for testing)
+    // Skip login
     function skipLogin() {
       localStorage.setItem('hasSkippedLogin', 'true');
       closeLoginModal();
     }
 
-    // Show profile view
-    function showProfileView() {
-      if (!currentUser) return;
-
-      document.getElementById('loginFormView').style.display = 'none';
-      document.getElementById('profileView').style.display = 'block';
-
-      // Populate profile data
-      document.getElementById('profileName').textContent = currentUser.username;
-      document.getElementById('profileUsernameValue').textContent = currentUser.username;
-      document.getElementById('profileRoleValue').textContent = currentUser.role.toUpperCase();
-
-      const avatarLarge = document.getElementById('profileAvatarLarge');
-      if (currentUser.avatar_url) {
-        avatarLarge.src = currentUser.avatar_url;
-      } else {
-        avatarLarge.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23ddd'/%3E%3Ctext x='50' y='65' text-anchor='middle' font-size='40' fill='%23666'%3E👤%3C/text%3E%3C/svg%3E";
-      }
-    }
-
-    // Toggle password visibility
-    function togglePassword() {
-      const passwordValue = document.getElementById('profilePasswordValue');
-      const toggleBtn = document.querySelector('.password-toggle button');
-
-      if (isPasswordVisible) {
-        passwordValue.textContent = '••••••••';
-        toggleBtn.textContent = 'Anzeigen';
-      } else {
-        passwordValue.textContent = '••••••••'; // Can't actually show real password for security
-        toggleBtn.textContent = 'Verbergen';
-      }
-      isPasswordVisible = !isPasswordVisible;
-    }
-
-    // Upload avatar
-    async function uploadAvatar() {
-      if (!currentUser) {
-        alert('Bitte melde dich an');
-        return;
-      }
-
-      const fileInput = document.getElementById('avatarUpload');
-      const file = fileInput.files[0];
-
-      if (!file) {
-        alert('Bitte wähle ein Bild aus');
-        return;
-      }
-
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Datei ist zu groß. Maximal 2MB erlaubt.');
-        return;
-      }
-
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${currentUser.id}/avatar.${fileExt}`;
-
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: true
-          });
-
-        if (uploadError) throw uploadError;
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-
-        const avatarUrl = urlData.publicUrl;
-
-        // Update profile in database
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ avatar_url: avatarUrl })
-          .eq('id', currentUser.id);
-
-        if (updateError) throw updateError;
-
-        // Update current user object
-        currentUser.avatar_url = avatarUrl;
-
-        // Update UI
-        updateUIForUser(currentUser);
-        showProfileView();
-
-        alert('Profilbild erfolgreich hochgeladen!');
-
-      } catch (err) {
-        console.error('Upload error:', err);
-        alert('Fehler beim Hochladen: ' + err.message);
-      }
-    }
-
     // Logout
-    function logout() {
+    async function logout() {
       if (confirm('Möchtest du dich wirklich abmelden?')) {
         currentUser = null;
         localStorage.removeItem('rememberMe');
-        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        localStorage.removeItem('hasSkippedLogin');
 
         // Reset UI
         document.getElementById('profileButtonText').textContent = 'Login';
@@ -6202,32 +6095,57 @@
           existingAvatar.remove();
         }
 
-        document.getElementById('dashboardWelcome').style.display = 'none';
-
-        // Sign out from Supabase
-        supabase.auth.signOut();
-
-        closeLoginModal();
+        const dashboardWelcome = document.getElementById('dashboardWelcome');
+        if (dashboardWelcome) {
+          dashboardWelcome.style.display = 'none';
+        }
 
         alert('Du wurdest abgemeldet');
+
+        // Show login modal again
+        setTimeout(() => {
+          document.getElementById('loginBackdrop').classList.add('active');
+        }, 100);
       }
     }
 
-    // Attach login form handler
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-
-    // Close modal when clicking outside
-    document.getElementById('loginBackdrop').addEventListener('click', (e) => {
-      if (e.target.id === 'loginBackdrop') {
-        // Don't allow closing if not logged in and hasn't skipped
-        if (currentUser || localStorage.getItem('hasSkippedLogin')) {
-          closeLoginModal();
-        }
+    // Profile button click handler
+    function toggleProfileMenu() {
+      if (currentUser) {
+        // Open profile modal
+        document.getElementById('profileModal')?.classList.add('active');
+      } else {
+        // Show login modal
+        document.getElementById('loginBackdrop').classList.add('active');
       }
-    });
+    }
 
-    // Initialize auth on page load
-    window.addEventListener('DOMContentLoaded', initAuth);
+    // Attach event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      // Login form
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+      }
+
+      // Close modal when clicking outside
+      document.getElementById('loginBackdrop')?.addEventListener('click', (e) => {
+        if (e.target.id === 'loginBackdrop') {
+          if (currentUser || localStorage.getItem('hasSkippedLogin')) {
+            closeLoginModal();
+          }
+        }
+      });
+
+      // Profile button
+      const profileButton = document.getElementById('profileButton');
+      if (profileButton) {
+        profileButton.addEventListener('click', toggleProfileMenu);
+      }
+
+      // Initialize auth
+      initAuth();
+    });
   </script>
 
 </body>
