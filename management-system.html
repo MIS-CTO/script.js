@@ -5915,6 +5915,17 @@
             <div class="profile-info-value" id="profilePasswordValue">••••••••</div>
             <button type="button" onclick="togglePassword()">Anzeigen</button>
           </div>
+          <button type="button" class="btn btn-secondary" onclick="showPasswordChangeForm()" style="width: 100%; margin-top: 8px;">Passwort ändern</button>
+        </div>
+
+        <div id="passwordChangeForm" class="profile-info-group" style="display: none;">
+          <label>Neues Passwort</label>
+          <input type="password" id="newPassword" placeholder="Neues Passwort" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <input type="password" id="confirmPassword" placeholder="Passwort bestätigen" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-primary" onclick="changePassword()" style="flex: 1;">Speichern</button>
+            <button type="button" class="btn btn-secondary" onclick="hidePasswordChangeForm()" style="flex: 1;">Abbrechen</button>
+          </div>
         </div>
 
         <div class="profile-info-group">
@@ -6143,6 +6154,13 @@
     // Close login modal
     function closeLoginModal() {
       document.getElementById('loginBackdrop').classList.remove('active');
+
+      // Reset to login view and hide password change form
+      setTimeout(() => {
+        document.getElementById('loginFormView').style.display = 'block';
+        document.getElementById('profileView').style.display = 'none';
+        hidePasswordChangeForm();
+      }, 300); // Wait for backdrop animation to finish
     }
 
     // Skip login
@@ -6190,11 +6208,201 @@
     // Profile button click handler
     function toggleProfileMenu() {
       if (currentUser) {
-        // Open profile modal
-        document.getElementById('profileModal')?.classList.add('active');
+        // Show profile view in login backdrop
+        showProfileView();
       } else {
         // Show login modal
         document.getElementById('loginBackdrop').classList.add('active');
+        document.getElementById('loginFormView').style.display = 'block';
+        document.getElementById('profileView').style.display = 'none';
+      }
+    }
+
+    // Show profile view with user data
+    function showProfileView() {
+      console.log('📋 Opening profile view for:', currentUser.username);
+
+      // Switch to profile view
+      document.getElementById('loginFormView').style.display = 'none';
+      document.getElementById('profileView').style.display = 'block';
+      document.getElementById('loginBackdrop').classList.add('active');
+
+      // Update profile view with current user data
+      document.getElementById('profileName').textContent = currentUser.username;
+      document.getElementById('profileUsernameValue').textContent = currentUser.username;
+      document.getElementById('profileRoleValue').textContent = (currentUser.role || 'user').toUpperCase();
+
+      // Update avatar if exists
+      const avatarLarge = document.getElementById('profileAvatarLarge');
+      if (currentUser.avatar_url) {
+        avatarLarge.src = currentUser.avatar_url;
+        avatarLarge.style.display = 'block';
+      } else {
+        avatarLarge.style.display = 'none';
+      }
+
+      // Reset password display and hide change form
+      document.getElementById('profilePasswordValue').textContent = '••••••••';
+      hidePasswordChangeForm();
+    }
+
+    // Toggle password visibility
+    function togglePassword() {
+      const passwordValue = document.getElementById('profilePasswordValue');
+      const toggleBtn = event.target;
+
+      if (passwordValue.textContent === '••••••••') {
+        // Show password
+        passwordValue.textContent = currentUser.password_hash || 'Nicht gesetzt';
+        toggleBtn.textContent = 'Verbergen';
+      } else {
+        // Hide password
+        passwordValue.textContent = '••••••••';
+        toggleBtn.textContent = 'Anzeigen';
+      }
+    }
+
+    // Upload avatar
+    async function uploadAvatar() {
+      const fileInput = document.getElementById('avatarUpload');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('Bitte wähle ein Bild aus');
+        return;
+      }
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Die Datei ist zu groß. Maximal 5MB erlaubt.');
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Bitte wähle eine Bilddatei aus');
+        return;
+      }
+
+      try {
+        console.log('📤 Uploading avatar for:', currentUser.username);
+
+        // Generate unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('profiles')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error('❌ Upload error:', uploadError);
+          alert('Fehler beim Hochladen: ' + uploadError.message);
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('profiles')
+          .getPublicUrl(filePath);
+
+        console.log('✅ Avatar uploaded:', publicUrl);
+
+        // Update profile in database
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', currentUser.id);
+
+        if (updateError) {
+          console.error('❌ Database update error:', updateError);
+          alert('Fehler beim Speichern: ' + updateError.message);
+          return;
+        }
+
+        // Update current user object
+        currentUser.avatar_url = publicUrl;
+
+        // Update UI
+        updateUIForUser(currentUser);
+        document.getElementById('profileAvatarLarge').src = publicUrl;
+        document.getElementById('profileAvatarLarge').style.display = 'block';
+
+        alert('✅ Profilbild erfolgreich hochgeladen!');
+        console.log('✅ Profile updated successfully');
+
+      } catch (err) {
+        console.error('💥 Avatar upload failed:', err);
+        alert('Ein Fehler ist aufgetreten: ' + err.message);
+      }
+    }
+
+    // Show password change form
+    function showPasswordChangeForm() {
+      document.getElementById('passwordChangeForm').style.display = 'block';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    }
+
+    // Hide password change form
+    function hidePasswordChangeForm() {
+      document.getElementById('passwordChangeForm').style.display = 'none';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    }
+
+    // Change password
+    async function changePassword() {
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Validation
+      if (!newPassword || !confirmPassword) {
+        alert('Bitte fülle beide Felder aus');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        alert('Das Passwort muss mindestens 6 Zeichen lang sein');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert('Die Passwörter stimmen nicht überein');
+        return;
+      }
+
+      try {
+        console.log('🔑 Changing password for:', currentUser.username);
+
+        // Update password in database
+        const { error } = await supabase
+          .from('profiles')
+          .update({ password_hash: newPassword })
+          .eq('id', currentUser.id);
+
+        if (error) {
+          console.error('❌ Password update error:', error);
+          alert('Fehler beim Ändern des Passworts: ' + error.message);
+          return;
+        }
+
+        // Update current user object
+        currentUser.password_hash = newPassword;
+
+        // Hide form and show success message
+        hidePasswordChangeForm();
+        alert('✅ Passwort erfolgreich geändert!');
+        console.log('✅ Password changed successfully');
+
+      } catch (err) {
+        console.error('💥 Password change failed:', err);
+        alert('Ein Fehler ist aufgetreten: ' + err.message);
       }
     }
 
