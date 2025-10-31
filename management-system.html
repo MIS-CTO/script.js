@@ -5948,37 +5948,49 @@
     // Check for saved session on page load
     async function initAuth() {
       try {
+        console.log('🔄 Initializing authentication...');
         const rememberMe = localStorage.getItem('rememberMe') === 'true';
         const savedUsername = localStorage.getItem('username');
 
         if (rememberMe && savedUsername) {
-          // Verify user still exists
-          const { data: profile, error } = await supabase
+          console.log('🔑 Found saved session for:', savedUsername);
+
+          // Verify user still exists (case-insensitive)
+          const { data: profiles, error } = await supabase
             .from('profiles')
             .select('*')
-            .eq('username', savedUsername)
-            .single();
+            .ilike('username', savedUsername);
 
-          if (!error && profile) {
+          if (error) {
+            console.error('❌ Database error during session restore:', error);
+            localStorage.removeItem('rememberMe');
+            localStorage.removeItem('username');
+            localStorage.removeItem('userRole');
+          } else if (profiles && profiles.length > 0) {
+            const profile = profiles[0];
+            console.log('✅ Session restored successfully for:', profile.username);
             currentUser = profile;
+            localStorage.setItem('userRole', profile.role || 'user');
             updateUIForUser(profile);
             await initializePermissions();
             return;
           } else {
-            // Clear invalid session
+            console.log('⚠️ Saved user not found - clearing session');
             localStorage.removeItem('rememberMe');
             localStorage.removeItem('username');
+            localStorage.removeItem('userRole');
           }
         }
 
         // Show login modal on first visit
         if (!localStorage.getItem('hasSkippedLogin')) {
+          console.log('📋 No session found - showing login modal');
           setTimeout(() => {
             document.getElementById('loginBackdrop').classList.add('active');
           }, 500);
         }
       } catch (err) {
-        console.error('Init auth failed:', err);
+        console.error('💥 Init auth failed:', err);
       }
     }
 
@@ -5995,38 +6007,67 @@
         return;
       }
 
+      // Visual feedback
+      const submitButton = e.target.querySelector('button[type="submit"]');
+      const originalText = submitButton.textContent;
+      submitButton.textContent = 'Anmelden...';
+      submitButton.disabled = true;
+
       try {
-        // Query user by username
+        console.log('🔐 Login attempt for:', username);
+
+        // Query user by username (case-insensitive)
         const { data: profiles, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('username', username);
+          .ilike('username', username);
 
         if (error) {
-          console.error('Database error:', error);
+          console.error('❌ Database error:', error);
           alert('Datenbankfehler: ' + error.message);
+          submitButton.textContent = originalText;
+          submitButton.disabled = false;
           return;
         }
 
         if (!profiles || profiles.length === 0) {
+          console.log('⚠️ User not found:', username);
           alert('Benutzername nicht gefunden');
+          submitButton.textContent = originalText;
+          submitButton.disabled = false;
           return;
         }
 
         const profile = profiles[0];
+        console.log('👤 Found user:', profile.username, '| Role:', profile.role);
+
+        // Check if password_hash exists
+        if (!profile.password_hash) {
+          console.error('❌ No password set for user:', username);
+          alert('Kein Passwort für diesen Benutzer gesetzt. Bitte kontaktiere einen Administrator.');
+          submitButton.textContent = originalText;
+          submitButton.disabled = false;
+          return;
+        }
 
         // Check password
         if (profile.password_hash !== password) {
+          console.log('❌ Wrong password for:', username);
           alert('Falsches Passwort');
+          submitButton.textContent = originalText;
+          submitButton.disabled = false;
           return;
         }
 
         // Login successful
+        console.log('✅ Login successful for:', profile.username);
         currentUser = profile;
 
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
-          localStorage.setItem('username', username);
+          localStorage.setItem('username', profile.username);
+          localStorage.setItem('userRole', profile.role || 'user');
+          console.log('💾 Session saved to localStorage');
         }
 
         // Update UI
@@ -6040,14 +6081,22 @@
         await loadEvents();
         renderCalendar();
 
+        // Reset button state
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+
       } catch (err) {
-        console.error('Login failed:', err);
+        console.error('💥 Login failed:', err);
         alert('Ein Fehler ist aufgetreten: ' + err.message);
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
       }
     }
 
     // Update UI for logged-in user
     function updateUIForUser(profile) {
+      console.log('🎨 Updating UI for user:', profile.username);
+
       const profileButton = document.getElementById('profileButton');
       const profileButtonText = document.getElementById('profileButtonText');
 
@@ -6076,6 +6125,19 @@
           dashboardAvatar.src = profile.avatar_url;
         }
       }
+
+      // Update profile modal fields
+      const profileUsername = document.getElementById('profileUsername');
+      const profileEmail = document.getElementById('profileEmail');
+      const profileRole = document.getElementById('profileRole');
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+
+      if (profileUsername) profileUsername.value = profile.username || '';
+      if (profileEmail) profileEmail.value = profile.email || '';
+      if (profileRole) profileRole.value = profile.role || 'user';
+      if (profileAvatarPreview && profile.avatar_url) {
+        profileAvatarPreview.src = profile.avatar_url;
+      }
     }
 
     // Close login modal
@@ -6092,10 +6154,15 @@
     // Logout
     async function logout() {
       if (confirm('Möchtest du dich wirklich abmelden?')) {
+        console.log('🚪 Logging out user:', currentUser?.username);
+
         currentUser = null;
         localStorage.removeItem('rememberMe');
         localStorage.removeItem('username');
+        localStorage.removeItem('userRole');
         localStorage.removeItem('hasSkippedLogin');
+
+        console.log('🗑️ Session data cleared');
 
         // Reset UI
         document.getElementById('profileButtonText').textContent = 'Login';
@@ -6115,6 +6182,8 @@
         setTimeout(() => {
           document.getElementById('loginBackdrop').classList.add('active');
         }, 100);
+
+        console.log('✅ Logout complete');
       }
     }
 
@@ -6128,6 +6197,103 @@
         document.getElementById('loginBackdrop').classList.add('active');
       }
     }
+
+    // ============================================
+    // DEBUG HELPER FUNCTIONS
+    // ============================================
+
+    // Test database connection
+    async function testDatabaseConnection() {
+      console.log('🔌 Testing database connection...');
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('count')
+          .limit(1);
+
+        if (error) {
+          console.error('❌ Database connection failed:', error);
+          return false;
+        }
+
+        console.log('✅ Database connection successful');
+        return true;
+      } catch (err) {
+        console.error('💥 Database connection test failed:', err);
+        return false;
+      }
+    }
+
+    // List all users in profiles table
+    async function debugListUsers() {
+      console.log('📋 Fetching all users from profiles table...');
+      try {
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, username, role, email, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('❌ Error fetching users:', error);
+          return;
+        }
+
+        console.log('✅ Found', profiles.length, 'users:');
+        console.table(profiles);
+        return profiles;
+      } catch (err) {
+        console.error('💥 Failed to list users:', err);
+      }
+    }
+
+    // Test login with username/password
+    async function debugTestLogin(username, password) {
+      console.log('🧪 Testing login for:', username);
+      try {
+        // Query user by username (case-insensitive)
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .ilike('username', username);
+
+        if (error) {
+          console.error('❌ Database error:', error);
+          return false;
+        }
+
+        if (!profiles || profiles.length === 0) {
+          console.log('⚠️ User not found:', username);
+          return false;
+        }
+
+        const profile = profiles[0];
+        console.log('👤 Found user:', profile.username);
+        console.log('🔑 Has password_hash:', !!profile.password_hash);
+        console.log('🎭 Role:', profile.role);
+
+        if (!profile.password_hash) {
+          console.error('❌ No password set for user');
+          return false;
+        }
+
+        const passwordMatch = profile.password_hash === password;
+        if (passwordMatch) {
+          console.log('✅ Password matches!');
+        } else {
+          console.log('❌ Password does not match');
+        }
+
+        return passwordMatch;
+      } catch (err) {
+        console.error('💥 Debug login test failed:', err);
+        return false;
+      }
+    }
+
+    // Make debug functions available globally
+    window.testDatabaseConnection = testDatabaseConnection;
+    window.debugListUsers = debugListUsers;
+    window.debugTestLogin = debugTestLogin;
 
     // Attach event listeners
     document.addEventListener('DOMContentLoaded', function() {
