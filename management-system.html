@@ -1186,6 +1186,152 @@
       color: white;
       box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
     }
+
+    /* Artist Rank Badges */
+    .rank-badge.rank-R1 {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R2 {
+      background: #FED7AA;
+      color: #9A3412;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R3 {
+      background: #FEF3C7;
+      color: #92400E;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R4 {
+      background: #D1FAE5;
+      color: #065F46;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R5 {
+      background: #DBEAFE;
+      color: #1E40AF;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Artist Type Badges */
+    .type-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .type-badge.guest {
+      background: #E0E7FF;
+      color: #3730A3;
+    }
+
+    .type-badge.resident {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.active {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .status-badge.inactive {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    /* Location Badge */
+    .location-badge {
+      background: var(--location-light);
+      color: var(--location-primary);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Blacklist Badge */
+    .blacklist-badge {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin-left: 8px;
+      font-weight: 600;
+    }
+
+    /* Pagination */
+    .pagination-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 24px;
+    }
+
+    .btn-pagination {
+      padding: 8px 16px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-pagination:hover {
+      background: var(--location-light);
+      border-color: var(--location-primary);
+    }
+
+    .btn-pagination.active {
+      background: var(--location-primary);
+      color: white;
+      border-color: var(--location-primary);
+      font-weight: 600;
+    }
+
+    .pagination-dots {
+      color: var(--muted);
+      padding: 0 8px;
+    }
+
+    /* Filter Select Focus Styles */
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -1447,7 +1593,54 @@
         <span>Add Artist</span>
       </button>
     </div>
-    
+
+    <!-- Filter Row -->
+    <div class="filter-section" style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:20px; margin-bottom:24px; box-shadow:var(--shadow);">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:12px; align-items:center; margin-bottom:16px;">
+
+        <!-- Location Filter -->
+        <select id="artistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">📍 Alle Locations</option>
+          <option value="NULL">⚠️ Ohne Location</option>
+          <!-- Locations werden dynamisch geladen -->
+        </select>
+
+        <!-- Rank Filter -->
+        <select id="artistRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">🏆 Alle Ranks</option>
+          <option value="R1">R1</option>
+          <option value="R2">R2</option>
+          <option value="R3">R3</option>
+          <option value="R4">R4</option>
+          <option value="R5">R5</option>
+        </select>
+
+        <!-- Type Filter -->
+        <select id="artistTypeFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">👥 Alle Types</option>
+          <option value="resident">Resident Artist</option>
+          <option value="guest">Guest Artist</option>
+        </select>
+
+        <!-- Status Filter -->
+        <select id="artistStatusFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">✅ Alle Status</option>
+          <option value="active">Aktiv</option>
+          <option value="inactive">Inaktiv</option>
+        </select>
+
+        <!-- Clear Filters Button -->
+        <button class="btn-secondary" onclick="clearArtistFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap;">
+          🔄 Filter zurücksetzen
+        </button>
+      </div>
+
+      <!-- Results Count -->
+      <div style="font-size:14px; color:var(--muted);">
+        <span id="artistsResultCount" style="font-weight:600; color:var(--ink);">0</span> Artists gefunden
+      </div>
+    </div>
+
     <table id="artistsTable">
       <thead>
         <tr>
@@ -1497,7 +1690,49 @@
         <span>Add Customer</span>
       </button>
     </div>
-    
+
+    <!-- Filter Row -->
+    <div class="filter-section" style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:20px; margin-bottom:24px; box-shadow:var(--shadow);">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; align-items:center; margin-bottom:16px;">
+
+        <!-- Rank Filter -->
+        <select id="customerRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">🏆 Alle Ranks</option>
+          <option value="Bronze">🥉 Bronze</option>
+          <option value="Silver">🥈 Silver</option>
+          <option value="Gold">🥇 Gold</option>
+          <option value="Platinum">💎 Platinum</option>
+        </select>
+
+        <!-- Blacklist Filter -->
+        <select id="customerBlacklistFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">👥 Alle Customers</option>
+          <option value="false">✅ Nicht Blacklisted</option>
+          <option value="true">🚫 Blacklisted</option>
+        </select>
+
+        <!-- Total Bookings Filter -->
+        <select id="customerBookingsFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">📊 Alle Bookings</option>
+          <option value="0">0 Bookings</option>
+          <option value="1-2">1-2 Bookings</option>
+          <option value="3-5">3-5 Bookings</option>
+          <option value="6-10">6-10 Bookings</option>
+          <option value="11+">11+ Bookings</option>
+        </select>
+
+        <!-- Clear Filters Button -->
+        <button class="btn-secondary" onclick="clearCustomerFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap;">
+          🔄 Filter zurücksetzen
+        </button>
+      </div>
+
+      <!-- Results Count -->
+      <div style="font-size:14px; color:var(--muted);">
+        <span id="customersResultCount" style="font-weight:600; color:var(--ink);">0</span> Customers gefunden
+      </div>
+    </div>
+
     <table id="customersTable">
       <thead>
         <tr>
