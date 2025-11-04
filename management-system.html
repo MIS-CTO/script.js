@@ -1186,6 +1186,152 @@
       color: white;
       box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
     }
+
+    /* Artist Rank Badges */
+    .rank-badge.rank-R1 {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R2 {
+      background: #FED7AA;
+      color: #9A3412;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R3 {
+      background: #FEF3C7;
+      color: #92400E;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R4 {
+      background: #D1FAE5;
+      color: #065F46;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .rank-badge.rank-R5 {
+      background: #DBEAFE;
+      color: #1E40AF;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Artist Type Badges */
+    .type-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .type-badge.guest {
+      background: #E0E7FF;
+      color: #3730A3;
+    }
+
+    .type-badge.resident {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.active {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .status-badge.inactive {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    /* Location Badge */
+    .location-badge {
+      background: var(--location-light);
+      color: var(--location-primary);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Blacklist Badge */
+    .blacklist-badge {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin-left: 8px;
+      font-weight: 600;
+    }
+
+    /* Pagination */
+    .pagination-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 24px;
+    }
+
+    .btn-pagination {
+      padding: 8px 16px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-pagination:hover {
+      background: var(--location-light);
+      border-color: var(--location-primary);
+    }
+
+    .btn-pagination.active {
+      background: var(--location-primary);
+      color: white;
+      border-color: var(--location-primary);
+      font-weight: 600;
+    }
+
+    .pagination-dots {
+      color: var(--muted);
+      padding: 0 8px;
+    }
+
+    /* Filter Select Focus Styles */
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -1447,7 +1593,54 @@
         <span>Add Artist</span>
       </button>
     </div>
-    
+
+    <!-- Filter Row -->
+    <div class="filter-section" style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:20px; margin-bottom:24px; box-shadow:var(--shadow);">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:12px; align-items:center; margin-bottom:16px;">
+
+        <!-- Location Filter -->
+        <select id="artistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">📍 Alle Locations</option>
+          <option value="NULL">⚠️ Ohne Location</option>
+          <!-- Locations werden dynamisch geladen -->
+        </select>
+
+        <!-- Rank Filter -->
+        <select id="artistRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">🏆 Alle Ranks</option>
+          <option value="R1">R1</option>
+          <option value="R2">R2</option>
+          <option value="R3">R3</option>
+          <option value="R4">R4</option>
+          <option value="R5">R5</option>
+        </select>
+
+        <!-- Type Filter -->
+        <select id="artistTypeFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">👥 Alle Types</option>
+          <option value="resident">Resident Artist</option>
+          <option value="guest">Guest Artist</option>
+        </select>
+
+        <!-- Status Filter -->
+        <select id="artistStatusFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">✅ Alle Status</option>
+          <option value="active">Aktiv</option>
+          <option value="inactive">Inaktiv</option>
+        </select>
+
+        <!-- Clear Filters Button -->
+        <button class="btn-secondary" onclick="clearArtistFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap;">
+          🔄 Filter zurücksetzen
+        </button>
+      </div>
+
+      <!-- Results Count -->
+      <div style="font-size:14px; color:var(--muted);">
+        <span id="artistsResultCount" style="font-weight:600; color:var(--ink);">0</span> Artists gefunden
+      </div>
+    </div>
+
     <table id="artistsTable">
       <thead>
         <tr>
@@ -1497,7 +1690,49 @@
         <span>Add Customer</span>
       </button>
     </div>
-    
+
+    <!-- Filter Row -->
+    <div class="filter-section" style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:20px; margin-bottom:24px; box-shadow:var(--shadow);">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; align-items:center; margin-bottom:16px;">
+
+        <!-- Rank Filter -->
+        <select id="customerRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">🏆 Alle Ranks</option>
+          <option value="Bronze">🥉 Bronze</option>
+          <option value="Silver">🥈 Silver</option>
+          <option value="Gold">🥇 Gold</option>
+          <option value="Platinum">💎 Platinum</option>
+        </select>
+
+        <!-- Blacklist Filter -->
+        <select id="customerBlacklistFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">👥 Alle Customers</option>
+          <option value="false">✅ Nicht Blacklisted</option>
+          <option value="true">🚫 Blacklisted</option>
+        </select>
+
+        <!-- Total Bookings Filter -->
+        <select id="customerBookingsFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
+          <option value="">📊 Alle Bookings</option>
+          <option value="0">0 Bookings</option>
+          <option value="1-2">1-2 Bookings</option>
+          <option value="3-5">3-5 Bookings</option>
+          <option value="6-10">6-10 Bookings</option>
+          <option value="11+">11+ Bookings</option>
+        </select>
+
+        <!-- Clear Filters Button -->
+        <button class="btn-secondary" onclick="clearCustomerFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap;">
+          🔄 Filter zurücksetzen
+        </button>
+      </div>
+
+      <!-- Results Count -->
+      <div style="font-size:14px; color:var(--muted);">
+        <span id="customersResultCount" style="font-weight:600; color:var(--ink);">0</span> Customers gefunden
+      </div>
+    </div>
+
     <table id="customersTable">
       <thead>
         <tr>
@@ -3163,7 +3398,21 @@
               console.log('Dienstplan location changed to:', selectedDienstplanLocationId);
               renderDienstplan();
             };
-            
+
+            // Artist Location Filter Dropdown
+            const artistLocFilter = document.getElementById('artistLocationFilter');
+            if (artistLocFilter) {
+              // Keep existing options (Alle Locations, Ohne Location) and add dynamic locations
+              const locationOptions = locations.map(l =>
+                `<option value="${l.id}">${l.name}</option>`
+              ).join('');
+              artistLocFilter.innerHTML = `
+                <option value="">📍 Alle Locations</option>
+                <option value="NULL">⚠️ Ohne Location</option>
+                ${locationOptions}
+              `;
+            }
+
           }
           
           await loadEvents();
@@ -3804,94 +4053,404 @@
         document.getElementById('addArtistModal').classList.remove('active');
       });
       
-      async function loadArtists() {
+      // ============================================
+      // ARTISTS FILTER FUNCTIONALITY
+      // ============================================
+
+      let artistsCache = [];
+      let artistsFiltered = [];
+      let currentArtistsPage = 1;
+      const artistsPageSize = 50;
+
+      async function loadArtists(page = 1) {
+        console.log('👤 Loading artists (page ' + page + ')...');
+
         try {
-          const { data, error } = await supabase.from('artists').select('*');
-          
-          if (error) {
-            console.error('Error loading artists:', error);
-            return;
+          // Load from cache or database
+          if (artistsCache.length === 0) {
+            const { data, error } = await supabase
+              .from('artists')
+              .select(`
+                *,
+                location:locations(id, name, city)
+              `)
+              .order('name');
+
+            if (error) throw error;
+
+            artistsCache = data || [];
+            console.log('✅ Loaded', artistsCache.length, 'artists into cache');
           }
-          
-          allArtists = data || [];
-          console.log('Artists loaded:', allArtists.length, 'artists');
-          
+
+          // Apply filters
+          applyArtistFilters();
+
           // Apply sorting
-          const sorted = sortArtists(allArtists, artistSortConfig.field, artistSortConfig.order);
+          const sorted = sortArtists(artistsFiltered, artistSortConfig.field, artistSortConfig.order);
+
+          // Pagination
+          const startIndex = (page - 1) * artistsPageSize;
+          const endIndex = startIndex + artistsPageSize;
+          const paginatedArtists = sorted.slice(startIndex, endIndex);
+
+          // Render table
+          renderArtistsTable(paginatedArtists);
+
+          // Update results count
+          document.getElementById('artistsResultCount').textContent = artistsFiltered.length;
+
+          // Render pagination
+          renderArtistsPagination(page);
+
+          currentArtistsPage = page;
+
+        } catch (error) {
+          console.error('❌ Failed to load artists:', error);
           const tbody = document.getElementById('artistsTableBody');
-          
-          if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No artists yet. Add one using the button above!</td></tr>';
-            return;
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#E53935;">Fehler beim Laden der Artists: ' + error.message + '</td></tr>';
           }
-          
-          tbody.innerHTML = sorted.map(artist => `
-            <tr>
-              <td>${artist.name || '-'}</td>
-              <td>${artist.instagram ? `<span style="color:var(--muted); font-size:13px;">@${artist.instagram}</span>` : '-'}</td>
-              <td><span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
-              <td>${artist.city_location ? `<span class="artist-location">${artist.city_location}</span>` : '-'}</td>
-              <td>${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : '-'}</td>
-              <td>${artist.active ? '<span style="color:#34c759; font-weight:500;">Active</span>' : '<span style="color:#ff3b30; font-weight:500;">Inactive</span>'}</td>
-              <td style="text-align:right;">
-                <button class="btn btn-secondary" onclick="editArtist('${artist.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
-                <button class="btn btn-danger" onclick="deleteArtist('${artist.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
-              </td>
-            </tr>
-          `).join('');
-        } catch(err) {
-          console.error("Artists error:", err);
         }
+      }
+
+      // Apply Artist Filters
+      function applyArtistFilters() {
+        const searchTerm = document.getElementById('artistSearchInput')?.value.toLowerCase().trim() || '';
+        const locationFilter = document.getElementById('artistLocationFilter')?.value || '';
+        const rankFilter = document.getElementById('artistRankFilter')?.value || '';
+        const typeFilter = document.getElementById('artistTypeFilter')?.value || '';
+        const statusFilter = document.getElementById('artistStatusFilter')?.value || '';
+
+        artistsFiltered = artistsCache.filter(artist => {
+          // Search filter (Name, Email, Instagram)
+          if (searchTerm) {
+            const matchesSearch =
+              (artist.name && artist.name.toLowerCase().includes(searchTerm)) ||
+              (artist.email && artist.email.toLowerCase().includes(searchTerm)) ||
+              (artist.instagram && artist.instagram.toLowerCase().includes(searchTerm));
+
+            if (!matchesSearch) return false;
+          }
+
+          // Location filter
+          if (locationFilter) {
+            if (locationFilter === 'NULL') {
+              if (artist.location_id !== null) return false;
+            } else {
+              if (artist.location_id !== locationFilter) return false;
+            }
+          }
+
+          // Rank filter
+          if (rankFilter) {
+            if (artist.rank !== rankFilter) return false;
+          }
+
+          // Type filter (Guest/Resident)
+          if (typeFilter) {
+            const isGuest = artist.is_guest === true;
+            if (typeFilter === 'guest' && !isGuest) return false;
+            if (typeFilter === 'resident' && isGuest) return false;
+          }
+
+          // Status filter (Active/Inactive)
+          if (statusFilter) {
+            const isActive = artist.active === true;
+            if (statusFilter === 'active' && !isActive) return false;
+            if (statusFilter === 'inactive' && isActive) return false;
+          }
+
+          return true;
+        });
+
+        console.log('🔍 Filtered:', artistsFiltered.length, 'of', artistsCache.length, 'artists');
+      }
+
+      // Filter Artists (debounced for search input)
+      let filterArtistsTimeout;
+      function filterArtists() {
+        clearTimeout(filterArtistsTimeout);
+        filterArtistsTimeout = setTimeout(() => {
+          loadArtists(1); // Reset to page 1 when filtering
+        }, 300);
+      }
+
+      // Clear Artist Filters
+      function clearArtistFilters() {
+        document.getElementById('artistSearchInput').value = '';
+        document.getElementById('artistLocationFilter').value = '';
+        document.getElementById('artistRankFilter').value = '';
+        document.getElementById('artistTypeFilter').value = '';
+        document.getElementById('artistStatusFilter').value = '';
+
+        loadArtists(1);
+      }
+
+      // Render Artists Table
+      function renderArtistsTable(artists) {
+        const tbody = document.getElementById('artistsTableBody');
+        if (!tbody) return;
+
+        if (artists.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">Keine Artists gefunden. Versuche andere Filter-Einstellungen.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = artists.map(artist => `
+          <tr>
+            <td>${artist.name || '-'}</td>
+            <td>${artist.instagram ? `<span style="color:var(--muted); font-size:13px;">@${artist.instagram}</span>` : '-'}</td>
+            <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? '👥 Guest' : '🏠 Resident'}</span></td>
+            <td>${artist.location ? `<span class="location-badge">${artist.location.name}</span>` : '<span style="color:#E53935;">⚠️ Keine</span>'}</td>
+            <td><span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span></td>
+            <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span></td>
+            <td style="text-align:right;">
+              <button class="btn btn-secondary" onclick="editArtist('${artist.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
+              <button class="btn btn-danger" onclick="deleteArtist('${artist.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Render Artists Pagination
+      function renderArtistsPagination(currentPage) {
+        const totalPages = Math.ceil(artistsFiltered.length / artistsPageSize);
+        const container = document.getElementById('artistsTableBody')?.parentElement?.parentElement;
+
+        if (!container) return;
+
+        // Remove old pagination if exists
+        let paginationEl = container.querySelector('.pagination-controls');
+        if (paginationEl) paginationEl.remove();
+
+        if (totalPages <= 1) return;
+
+        let html = '<div class="pagination-controls">';
+
+        // Previous
+        if (currentPage > 1) {
+          html += `<button class="btn-pagination" onclick="loadArtists(${currentPage - 1})">◀ Zurück</button>`;
+        }
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `<button class="btn-pagination ${i === currentPage ? 'active' : ''}" onclick="loadArtists(${i})">${i}</button>`;
+          } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += '<span class="pagination-dots">...</span>';
+          }
+        }
+
+        // Next
+        if (currentPage < totalPages) {
+          html += `<button class="btn-pagination" onclick="loadArtists(${currentPage + 1})">Weiter ▶</button>`;
+        }
+
+        html += '</div>';
+        container.insertAdjacentHTML('beforeend', html);
       }
 
       let allCustomers = [];
       
-      async function loadCustomers(searchTerm = '') {
+      // Customers Cache & Pagination
+      let customersCache = [];
+      let customersFiltered = [];
+      let currentCustomersPage = 1;
+      const customersPageSize = 50;
+
+      async function loadCustomers(page = 1) {
+        console.log('👥 Loading customers (page ' + page + ')...');
+
         try {
-          const { data: customers } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
-          
-          allCustomers = customers || [];
-          
-          // Filter customers if search term provided
-          let filteredCustomers = allCustomers;
-          if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            filteredCustomers = allCustomers.filter(customer => 
-              (customer.first_name?.toLowerCase().includes(term)) ||
-              (customer.last_name?.toLowerCase().includes(term)) ||
-              (customer.email?.toLowerCase().includes(term)) ||
-              (customer.phone?.toLowerCase().includes(term))
-            );
+          // Load from cache or database
+          if (customersCache.length === 0) {
+            const { data, error } = await supabase
+              .from('customers')
+              .select('*')
+              .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            customersCache = data || [];
+            allCustomers = customersCache; // Keep for compatibility
+            console.log('✅ Loaded', customersCache.length, 'customers into cache');
           }
-          
+
+          // Apply filters
+          applyCustomerFilters();
+
+          // Apply sorting
+          const sorted = sortCustomers(customersFiltered, customerSortConfig.field, customerSortConfig.order);
+
+          // Pagination
+          const startIndex = (page - 1) * customersPageSize;
+          const endIndex = startIndex + customersPageSize;
+          const paginatedCustomers = sorted.slice(startIndex, endIndex);
+
+          // Render table
+          renderCustomersTable(paginatedCustomers);
+
+          // Update results count
+          document.getElementById('customersResultCount').textContent = customersFiltered.length;
+
+          // Render pagination
+          renderCustomersPagination(page);
+
+          currentCustomersPage = page;
+
+        } catch (error) {
+          console.error('❌ Failed to load customers:', error);
           const tbody = document.getElementById('customersTableBody');
-          
-          if (filteredCustomers.length === 0) {
-            if (searchTerm) {
-              tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No customers found matching your search</td></tr>';
-            } else {
-              tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No customers yet</td></tr>';
-            }
-            return;
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#E53935;">Fehler beim Laden der Customers: ' + error.message + '</td></tr>';
           }
-          
-          tbody.innerHTML = filteredCustomers.map(customer => `
+        }
+      }
+
+      // Apply Customer Filters
+      function applyCustomerFilters() {
+        const searchTerm = document.getElementById('customerSearchInput')?.value.toLowerCase().trim() || '';
+        const rankFilter = document.getElementById('customerRankFilter')?.value || '';
+        const blacklistFilter = document.getElementById('customerBlacklistFilter')?.value || '';
+        const bookingsFilter = document.getElementById('customerBookingsFilter')?.value || '';
+
+        customersFiltered = customersCache.filter(customer => {
+          // Search filter (Name, Email, Phone, Instagram)
+          if (searchTerm) {
+            const matchesSearch =
+              (customer.first_name && customer.first_name.toLowerCase().includes(searchTerm)) ||
+              (customer.last_name && customer.last_name.toLowerCase().includes(searchTerm)) ||
+              (customer.email && customer.email.toLowerCase().includes(searchTerm)) ||
+              (customer.phone && customer.phone.toLowerCase().includes(searchTerm)) ||
+              (customer.instagram && customer.instagram.toLowerCase().includes(searchTerm));
+
+            if (!matchesSearch) return false;
+          }
+
+          // Rank filter
+          if (rankFilter) {
+            if (customer.rank !== rankFilter) return false;
+          }
+
+          // Blacklist filter
+          if (blacklistFilter) {
+            const isBlacklisted = customer.blacklisted === true;
+            if (blacklistFilter === 'true' && !isBlacklisted) return false;
+            if (blacklistFilter === 'false' && isBlacklisted) return false;
+          }
+
+          // Bookings range filter
+          if (bookingsFilter) {
+            const bookingsCount = customer.total_bookings || 0;
+            if (bookingsFilter === '0' && bookingsCount !== 0) return false;
+            if (bookingsFilter === '1-2' && (bookingsCount < 1 || bookingsCount > 2)) return false;
+            if (bookingsFilter === '3-5' && (bookingsCount < 3 || bookingsCount > 5)) return false;
+            if (bookingsFilter === '6-10' && (bookingsCount < 6 || bookingsCount > 10)) return false;
+            if (bookingsFilter === '11+' && bookingsCount < 11) return false;
+          }
+
+          return true;
+        });
+
+        console.log('🔍 Filtered:', customersFiltered.length, 'of', customersCache.length, 'customers');
+      }
+
+      // Filter Customers with Debouncing
+      let filterCustomersTimeout;
+      function filterCustomers() {
+        clearTimeout(filterCustomersTimeout);
+        filterCustomersTimeout = setTimeout(() => {
+          loadCustomers(1); // Reset to page 1 when filtering
+        }, 300);
+      }
+
+      // Clear Customer Filters
+      function clearCustomerFilters() {
+        document.getElementById('customerSearchInput').value = '';
+        document.getElementById('customerRankFilter').value = '';
+        document.getElementById('customerBlacklistFilter').value = '';
+        document.getElementById('customerBookingsFilter').value = '';
+        loadCustomers(1);
+      }
+
+      // Render Customers Table
+      function renderCustomersTable(customers) {
+        const tbody = document.getElementById('customersTableBody');
+
+        if (!tbody) {
+          console.error('❌ customersTableBody not found');
+          return;
+        }
+
+        if (customers.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">Keine Customers gefunden</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = customers.map(customer => {
+          // Rank badge
+          const rankBadge = customer.rank
+            ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}">${customer.rank}</span>`
+            : '-';
+
+          // Blacklist badge
+          const blacklistBadge = customer.blacklisted
+            ? '<span style="background:#FEE2E2; color:#991B1B; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600;">🚫 Blacklisted</span>'
+            : '';
+
+          return `
             <tr>
               <td>${customer.first_name || '-'}</td>
               <td>${customer.last_name || '-'}</td>
               <td>${customer.email || '-'}</td>
               <td>${customer.phone || '-'}</td>
-              <td>${customer.rank ? `<span class="customer-rank ${customer.rank.toLowerCase()}">${customer.rank}</span>` : '-'}</td>
+              <td>${rankBadge} ${blacklistBadge}</td>
               <td style="font-size:13px; color:var(--muted);">${new Date(customer.created_at).toLocaleDateString()}</td>
               <td style="text-align:right;">
                 <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
                 <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
               </td>
             </tr>
-          `).join('');
-        } catch(err) {
-          console.error("Customers error:", err);
+          `;
+        }).join('');
+      }
+
+      // Render Customers Pagination
+      function renderCustomersPagination(currentPage) {
+        const totalPages = Math.ceil(customersFiltered.length / customersPageSize);
+        const container = document.getElementById('customersTableBody')?.parentElement?.parentElement;
+
+        if (!container) return;
+
+        // Remove old pagination if exists
+        let paginationEl = container.querySelector('.pagination-controls');
+        if (paginationEl) paginationEl.remove();
+
+        if (totalPages <= 1) return;
+
+        let html = '<div class="pagination-controls">';
+
+        // Previous
+        if (currentPage > 1) {
+          html += `<button class="btn-pagination" onclick="loadCustomers(${currentPage - 1})">◀ Zurück</button>`;
         }
+
+        // Page numbers with ellipsis
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `<button class="btn-pagination ${i === currentPage ? 'active' : ''}" onclick="loadCustomers(${i})">${i}</button>`;
+          } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += '<span class="pagination-dots">...</span>';
+          }
+        }
+
+        // Next
+        if (currentPage < totalPages) {
+          html += `<button class="btn-pagination" onclick="loadCustomers(${currentPage + 1})">Weiter ▶</button>`;
+        }
+
+        html += '</div>';
+        container.insertAdjacentHTML('beforeend', html);
       }      
       // Customer Sort Controls
       document.getElementById('customerSortBy')?.addEventListener('change', (e) => {
@@ -4626,22 +5185,18 @@
         }
       });
       
-      // Artist Search Filter
-      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const artistItems = document.querySelectorAll('.artist-item');
-        
-        artistItems.forEach(item => {
-          const artistName = item.querySelector('.artist-name')?.textContent.toLowerCase() || '';
-          const artistInstagram = item.querySelector('.artist-instagram')?.textContent.toLowerCase() || '';
-          
-          if (artistName.includes(searchTerm) || artistInstagram.includes(searchTerm)) {
-            item.style.display = 'flex';
-          } else {
-            item.style.display = 'none';
-          }
-        });
-      });
+      // Artist Filter Event Listeners
+      document.getElementById('artistSearchInput')?.addEventListener('input', filterArtists);
+      document.getElementById('artistLocationFilter')?.addEventListener('change', filterArtists);
+      document.getElementById('artistRankFilter')?.addEventListener('change', filterArtists);
+      document.getElementById('artistTypeFilter')?.addEventListener('change', filterArtists);
+      document.getElementById('artistStatusFilter')?.addEventListener('change', filterArtists);
+
+      // Customer Filter Event Listeners
+      document.getElementById('customerSearchInput')?.addEventListener('input', filterCustomers);
+      document.getElementById('customerRankFilter')?.addEventListener('change', filterCustomers);
+      document.getElementById('customerBlacklistFilter')?.addEventListener('change', filterCustomers);
+      document.getElementById('customerBookingsFilter')?.addEventListener('change', filterCustomers);
       
       // Edit Artist Functions
       window.editArtist = async function(artistId) {
@@ -5161,159 +5716,8 @@
           alert('Error creating booking: ' + err.message);
         }
       });
-      
-      // Customer Search
-      document.getElementById('customerSearchInput')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.trim();
-        loadCustomers(searchTerm);
-      });
-      
-      // Artist Search
-      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        if (!searchTerm) {
-          loadArtists();
-          return;
-        }
-        
-        // Filter artists by search term
-        const filtered = allArtists.filter(artist => {
-          const name = (artist.name || '').toLowerCase();
-          const instagram = (artist.instagram || '').toLowerCase();
-          return name.includes(searchTerm) || instagram.includes(searchTerm);
-        });
-        
-        // Apply sorting to filtered results
-        const sorted = sortArtists(filtered, artistSortConfig.field, artistSortConfig.order);
-        
-        const tbody = document.getElementById('artistsTableBody');
-        if (!tbody) return;
-        
-        if (sorted.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No artists found matching your search</td></tr>';
-          return;
-        }
-        
-        tbody.innerHTML = sorted.map(artist => `
-          <tr>
-            <td style="font-weight:500;">${artist.name}</td>
-            <td>${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color:var(--accent); text-decoration:none;">@${artist.instagram.replace('@', '')}</a>` : '-'}</td>
-            <td><span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
-            <td>${artist.city_location || '-'}</td>
-            <td>${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : '-'}</td>
-            <td>${artist.active ? '<span style="color:#34c759; font-weight:600;">Active</span>' : '<span style="color:#ff3b30; font-weight:600;">Inactive</span>'}</td>
-            <td style="text-align:right;">
-              <button class="btn-icon" onclick="editArtist('${artist.id}')" title="Edit">✏️</button>
-              <button class="btn-icon" onclick="deleteArtist('${artist.id}')" title="Delete">🗑️</button>
-            </td>
-          </tr>
-        `).join('');
-      });
-      // Artist Search
-      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        const rows = document.querySelectorAll('#artistsTableBody tr');
-        
-        rows.forEach(row => {
-          const text = row.textContent.toLowerCase();
-          if (text.includes(searchTerm)) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
-          }
-        });
-      });
-      // Artist Sort Controls
-      document.getElementById('artistSortBy')?.addEventListener('change', () => {
-        loadArtists();
-      });
-      
-      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
-        const currentOrder = this.dataset.order || 'asc';
-        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        this.dataset.order = newOrder;
-        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
-        loadArtists();
-      });
-      
-      
-      
-      // Customer Search
-      document.getElementById('customerSearchInput')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.trim();
-        loadCustomers(searchTerm);
-      });
-      
-      // Artist Search
-      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        if (!searchTerm) {
-          loadArtists();
-          return;
-        }
-        
-        // Filter artists by search term
-        const filtered = allArtists.filter(artist => {
-          const name = (artist.name || '').toLowerCase();
-          const instagram = (artist.instagram || '').toLowerCase();
-          return name.includes(searchTerm) || instagram.includes(searchTerm);
-        });
-        
-        // Apply sorting to filtered results
-        const sorted = sortArtists(filtered, artistSortConfig.field, artistSortConfig.order);
-        
-        const tbody = document.getElementById('artistsTableBody');
-        if (!tbody) return;
-        
-        if (sorted.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">No artists found matching your search</td></tr>';
-          return;
-        }
-        
-        tbody.innerHTML = sorted.map(artist => `
-          <tr>
-            <td style="font-weight:500;">${artist.name}</td>
-            <td>${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color:var(--accent); text-decoration:none;">@${artist.instagram.replace('@', '')}</a>` : '-'}</td>
-            <td><span class="artist-badge ${artist.is_guest ? 'guest' : ''}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
-            <td>${artist.city_location || '-'}</td>
-            <td>${artist.rank ? `<span class="artist-rank">${artist.rank}</span>` : '-'}</td>
-            <td>${artist.active ? '<span style="color:#34c759; font-weight:600;">Active</span>' : '<span style="color:#ff3b30; font-weight:600;">Inactive</span>'}</td>
-            <td style="text-align:right;">
-              <button class="btn-icon" onclick="editArtist('${artist.id}')" title="Edit">✏️</button>
-              <button class="btn-icon" onclick="deleteArtist('${artist.id}')" title="Delete">🗑️</button>
-            </td>
-          </tr>
-        `).join('');
-      });
-      // Artist Search
-      document.getElementById('artistSearchInput')?.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        const rows = document.querySelectorAll('#artistsTableBody tr');
-        
-        rows.forEach(row => {
-          const text = row.textContent.toLowerCase();
-          if (text.includes(searchTerm)) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
-          }
-        });
-      });
-      // Artist Sort Controls
-      document.getElementById('artistSortBy')?.addEventListener('change', () => {
-        loadArtists();
-      });
-      
-      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
-        const currentOrder = this.dataset.order || 'asc';
-        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-        this.dataset.order = newOrder;
-        this.textContent = newOrder === 'asc' ? '↑ Ascending' : '↓ Descending';
-        loadArtists();
-      });
-      
-      
-      
+
+
       // Edit Event Modal Functions
       window.openEditEventModal = async function(eventId) {
         const event = events.find(e => e.id === eventId);
