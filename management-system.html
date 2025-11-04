@@ -1149,6 +1149,43 @@
       opacity: 0.9;
       font-size: 14px;
     }
+
+    /* Customer Rank Badges */
+    .rank-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .rank-badge.rank-platinum {
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      color: #1d1d1f;
+      box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+    }
+
+    .rank-badge.rank-gold {
+      background: #FF8C00;
+      color: white;
+      box-shadow: 0 2px 4px rgba(255, 140, 0, 0.3);
+    }
+
+    .rank-badge.rank-silver {
+      background: #C0C0C0;
+      color: #1d1d1f;
+      box-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);
+    }
+
+    .rank-badge.rank-bronze {
+      background: #CD7F32;
+      color: white;
+      box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -3175,27 +3212,47 @@
       
       async function loadRequests() {
         try {
+          console.log('📋 Loading requests for status:', currentRequestStatus);
+
           const { data, error } = await supabase
             .from('requests')
-            .select('*')
+            .select(`
+              *,
+              customer:customers(id, first_name, last_name, email, phone, rank, instagram),
+              artist:artists(id, name, email, instagram),
+              location:locations(id, name, city)
+            `)
             .order('created_at', { ascending: false });
-          
+
           if (error) throw error;
-          
+
           allRequests = data || [];
-          
+          console.log('✅ Loaded', allRequests.length, 'requests');
+
           // Filter by status
           let filteredRequests = allRequests;
           if (currentRequestStatus === 'my-requests') {
-            filteredRequests = allRequests.filter(r => r.assigned_to === currentUser);
+            // Filter by assigned user
+            filteredRequests = allRequests.filter(r =>
+              r.assigned_to_user_id === currentUser?.id ||
+              r.assigned_to === currentUser?.username
+            );
           } else if (currentRequestStatus !== 'all') {
             filteredRequests = allRequests.filter(r => r.status === currentRequestStatus);
           }
-          
+
+          console.log('📊 Filtered to', filteredRequests.length, 'requests for status:', currentRequestStatus);
           renderRequestsList(filteredRequests);
           updateRequestBadges();
         } catch(err) {
-          console.error("Requests error:", err);
+          console.error("❌ Requests error:", err);
+          document.getElementById('requestsList').innerHTML = `
+            <div style="text-align:center; padding:40px; color:#E53935;">
+              <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+              <div style="font-size:16px; font-weight:600; margin-bottom:8px;">Fehler beim Laden</div>
+              <div style="font-size:14px; color:var(--muted);">${err.message}</div>
+            </div>
+          `;
         }
       }
       
@@ -3243,16 +3300,41 @@
           'canceled': 'Canceled'
         };
         
-        listEl.innerHTML = requests.map(req => `
-          <div class="request-item ${req.status === 'open_request' ? 'new-status' : ''}" data-id="${req.id}">
-            <div class="request-header">
-              <div class="request-id">#${req.id.substring(0, 8).toUpperCase()}</div>
-              <div class="request-badge ${req.status}">${statusNames[req.status] || req.status}</div>
+        listEl.innerHTML = requests.map(req => {
+          // Get customer name from relation or fallback to request fields
+          const customerName = req.customer
+            ? `${req.customer.first_name || ''} ${req.customer.last_name || ''}`.trim()
+            : `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
+
+          // Customer rank badge
+          const rankBadge = req.customer?.rank
+            ? `<span class="rank-badge rank-${req.customer.rank.toLowerCase()}">${req.customer.rank}</span>`
+            : '';
+
+          // Location badge
+          const locationBadge = req.location?.name
+            ? `<span style="font-size:11px; color:var(--muted);">📍 ${req.location.name}</span>`
+            : '';
+
+          // Request number or ID
+          const requestNumber = req.request_number || `#${req.id.substring(0, 8).toUpperCase()}`;
+
+          return `
+            <div class="request-item ${req.status === 'open_request' ? 'new-status' : ''}" data-id="${req.id}">
+              <div class="request-header">
+                <div class="request-id">${requestNumber}</div>
+                <div class="request-badge ${req.status}">${statusNames[req.status] || req.status}</div>
+              </div>
+              <div class="request-name">
+                ${customerName}
+                ${rankBadge}
+              </div>
+              ${req.placement ? `<div style="font-size:12px; color:var(--muted); margin-top:4px;">📍 ${req.placement}</div>` : ''}
+              ${locationBadge ? `<div style="margin-top:4px;">${locationBadge}</div>` : ''}
+              <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
             </div>
-            <div class="request-name">${req.first_name || ''} ${req.last_name || ''}</div>
-            <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
         
         // Add click handlers with toggle functionality
         document.querySelectorAll('.request-item').forEach(item => {
@@ -3288,9 +3370,11 @@
       function showRequestDetail(requestId) {
         const request = allRequests.find(r => r.id === requestId);
         if (!request) return;
-        
+
+        console.log('📋 Showing request detail:', request);
+
         const detailEl = document.getElementById('requestDetail');
-        
+
         // Status display names
         const statusNames = {
           'open_request': 'New',
@@ -3299,7 +3383,27 @@
           'finished': 'Finished',
           'canceled': 'Canceled'
         };
-        
+
+        // Get customer data (from relation or fallback to request fields)
+        const customer = request.customer || {
+          first_name: request.first_name,
+          last_name: request.last_name,
+          email: request.email,
+          phone: request.customer_phone,
+          rank: null,
+          instagram: null
+        };
+
+        const customerName = `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unbekannt';
+
+        // Rank badge styling
+        const rankBadgeStyle = customer.rank ? {
+          'Platinum': 'background:#FFD700; color:#1d1d1f;',
+          'Gold': 'background:#FF8C00; color:white;',
+          'Silver': 'background:#C0C0C0; color:#1d1d1f;',
+          'Bronze': 'background:#CD7F32; color:white;'
+        }[customer.rank] || '' : '';
+
         let actions = '';
         if (request.status === 'open_request') {
           actions = `<button class="btn btn-primary" onclick="assignRequest()">Assign to Team Member</button>`;
@@ -3308,30 +3412,61 @@
         } else if (request.status === 'scheduled') {
           actions = `<button class="btn btn-danger" onclick="cancelAppointment()">Cancel Appointment</button>`;
         }
-        
+
         detailEl.innerHTML = `
+          <div style="margin-bottom:24px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <h2 style="margin:0; font-size:24px; font-weight:600;">
+                ${request.request_number || `#${request.id.substring(0, 8).toUpperCase()}`}
+              </h2>
+              <span class="request-badge ${request.status}" style="font-size:13px; padding:6px 16px;">
+                ${statusNames[request.status] || request.status}
+              </span>
+            </div>
+            ${request.location ? `
+              <div style="color:var(--muted); font-size:14px;">
+                📍 ${request.location.name}${request.location.city ? ` (${request.location.city})` : ''}
+              </div>
+            ` : ''}
+          </div>
+
           <div class="detail-section">
             <h3>Customer Information</h3>
             <div class="detail-grid">
               <div class="detail-item">
                 <div class="detail-label">Name</div>
-                <div class="detail-value">${request.first_name || ''} ${request.last_name || ''}</div>
+                <div class="detail-value">
+                  ${customerName}
+                  ${customer.rank ? `
+                    <span style="display:inline-block; margin-left:8px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; ${rankBadgeStyle}">
+                      ${customer.rank}
+                    </span>
+                  ` : ''}
+                </div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Email</div>
-                <div class="detail-value">${request.email || '-'}</div>
+                <div class="detail-value">
+                  ${customer.email ? `<a href="mailto:${customer.email}" style="color:var(--accent);">${customer.email}</a>` : '-'}
+                </div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Phone</div>
-                <div class="detail-value">${request.customer_phone || '-'}</div>
+                <div class="detail-value">
+                  ${customer.phone ? `<a href="tel:${customer.phone}" style="color:var(--accent);">${customer.phone}</a>` : '-'}
+                </div>
               </div>
-              <div class="detail-item">
-                <div class="detail-label">Status</div>
-                <div class="detail-value"><span class="request-badge ${request.status}">${statusNames[request.status] || request.status}</span></div>
-              </div>
+              ${customer.instagram ? `
+                <div class="detail-item">
+                  <div class="detail-label">Instagram</div>
+                  <div class="detail-value">
+                    <a href="https://instagram.com/${customer.instagram}" target="_blank" style="color:var(--accent);">@${customer.instagram}</a>
+                  </div>
+                </div>
+              ` : ''}
             </div>
           </div>
-          
+
           <div class="detail-section">
             <h3>Request Details</h3>
             <div class="detail-grid">
@@ -3348,52 +3483,100 @@
                 <div class="detail-value">${request.style || '-'}</div>
               </div>
               <div class="detail-item">
-                <div class="detail-label">Preferred Artist</div>
-                <div class="detail-value">${request.preferred_artist || 'Any'}</div>
+                <div class="detail-label">Booking Type</div>
+                <div class="detail-value">${request.booking_type || '-'}</div>
               </div>
+              ${request.origin ? `
+                <div class="detail-item">
+                  <div class="detail-label">Origin</div>
+                  <div class="detail-value">${request.origin}</div>
+                </div>
+              ` : ''}
+              ${request.preferred_artist ? `
+                <div class="detail-item">
+                  <div class="detail-label">Preferred Artist</div>
+                  <div class="detail-value">${request.preferred_artist}</div>
+                </div>
+              ` : ''}
             </div>
             ${request.description ? `
               <div class="detail-item" style="margin-top:16px;">
                 <div class="detail-label">Description</div>
-                <div class="detail-value">${request.description}</div>
+                <div class="detail-value" style="white-space:pre-wrap;">${request.description}</div>
               </div>
             ` : ''}
           </div>
-          
-          ${request.assigned_to ? `
+
+          ${request.artist || request.assigned_to ? `
             <div class="detail-section">
               <h3>Assignment</h3>
-              <div class="detail-item">
-                <div class="detail-label">Assigned To</div>
-                <div class="detail-value">${request.assigned_to}</div>
-              </div>
-            </div>
-          ` : ''}
-          
-          ${request.scheduled_date ? `
-            <div class="detail-section">
-              <h3>Appointment</h3>
               <div class="detail-grid">
-                <div class="detail-item">
-                  <div class="detail-label">Artist</div>
-                  <div class="detail-value">${request.artist_name || '-'}</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">Date</div>
-                  <div class="detail-value">${new Date(request.scheduled_date).toLocaleDateString('de-DE')}</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">Start Time</div>
-                  <div class="detail-value">${request.start_time || '-'}</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">End Time</div>
-                  <div class="detail-value">${request.end_time || '-'}</div>
-                </div>
+                ${request.artist ? `
+                  <div class="detail-item">
+                    <div class="detail-label">Artist</div>
+                    <div class="detail-value">
+                      ${request.artist.name}
+                      ${request.artist.email ? `<br/><small style="color:var(--muted);">${request.artist.email}</small>` : ''}
+                      ${request.artist.instagram ? `<br/><a href="https://instagram.com/${request.artist.instagram}" target="_blank" style="color:var(--accent); font-size:13px;">@${request.artist.instagram}</a>` : ''}
+                    </div>
+                  </div>
+                ` : request.assigned_to ? `
+                  <div class="detail-item">
+                    <div class="detail-label">Assigned To</div>
+                    <div class="detail-value">${request.assigned_to}</div>
+                  </div>
+                ` : ''}
               </div>
             </div>
           ` : ''}
-          
+
+          ${request.scheduled_date || request.payment_status ? `
+            <div class="detail-section">
+              <h3>Appointment & Payment</h3>
+              <div class="detail-grid">
+                ${request.scheduled_date ? `
+                  <div class="detail-item">
+                    <div class="detail-label">Scheduled Date</div>
+                    <div class="detail-value">${new Date(request.scheduled_date).toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                  </div>
+                ` : ''}
+                ${request.start_time ? `
+                  <div class="detail-item">
+                    <div class="detail-label">Start Time</div>
+                    <div class="detail-value">${request.start_time}</div>
+                  </div>
+                ` : ''}
+                ${request.end_time ? `
+                  <div class="detail-item">
+                    <div class="detail-label">End Time</div>
+                    <div class="detail-value">${request.end_time}</div>
+                  </div>
+                ` : ''}
+                ${request.payment_status ? `
+                  <div class="detail-item">
+                    <div class="detail-label">Payment Status</div>
+                    <div class="detail-value">
+                      <span style="padding:4px 12px; border-radius:999px; font-size:12px; font-weight:500; ${
+                        request.payment_status === 'fully_paid' ? 'background:#D1FAE5; color:#065F46;' :
+                        request.payment_status === 'deposit_paid' ? 'background:#DBEAFE; color:#1E40AF;' :
+                        request.payment_status === 'refunded' ? 'background:#FEE2E2; color:#991B1B;' :
+                        'background:#FEF3C7; color:#92400E;'
+                      }">
+                        ${request.payment_status}
+                      </span>
+                    </div>
+                  </div>
+                ` : ''}
+                ${request.total_amount ? `
+                  <div class="detail-item">
+                    <div class="detail-label">Total Amount</div>
+                    <div class="detail-value">${request.total_amount}€</div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
+
           ${request.cancel_reason ? `
             <div class="detail-section">
               <h3>Cancellation</h3>
@@ -3403,7 +3586,29 @@
               </div>
             </div>
           ` : ''}
-          
+
+          ${request.notes ? `
+            <div class="detail-section">
+              <h3>Notes</h3>
+              <div class="detail-value" style="white-space:pre-wrap;">${request.notes}</div>
+            </div>
+          ` : ''}
+
+          <div class="detail-section">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Created At</div>
+                <div class="detail-value">${new Date(request.created_at).toLocaleString('de-DE')}</div>
+              </div>
+              ${request.updated_at && request.updated_at !== request.created_at ? `
+                <div class="detail-item">
+                  <div class="detail-label">Updated At</div>
+                  <div class="detail-value">${new Date(request.updated_at).toLocaleString('de-DE')}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
           ${actions ? `<div class="action-buttons">${actions}</div>` : ''}
         `;
       }
