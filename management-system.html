@@ -3925,8 +3925,8 @@
       let allRequests = [];
       let currentRequestStatus = 'open_request';
       let selectedRequestId = null;
-      let currentUser = null; // null = not logged in, 'member1'/'member2'/'member3' = logged in
-      
+      // currentUser is declared globally outside this scope
+
       async function loadRequests() {
         try {
           console.log('📋 Loading requests for status:', currentRequestStatus);
@@ -4148,24 +4148,26 @@
         }[customer.rank] || '' : '';
 
         let actions = '';
-        if (request.status === 'open_request') {
-          actions = `<button class="btn" onclick="assignRequest()" style="background:var(--ink); color:white; border:none;">Assign to Team Member</button>`;
-        } else if (request.status === 'pending') {
-          actions = `
-            <div style="display:flex; gap:8px;">
-              <button class="btn" onclick="scheduleAppointment()" style="background:var(--ink); color:white; border:none; flex:1;">Schedule Appointment</button>
-              <button class="btn" onclick="editRequest('${request.id}')" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1;">Edit Request</button>
-            </div>
-          `;
-        } else if (request.status === 'scheduled') {
-          actions = `
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn" onclick="editAppointment()" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">Edit Appointment</button>
-              <button class="btn" onclick="resetAppointment()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">Reset</button>
-              <button class="btn" onclick="cancelAppointmentRequest()" style="background:#ff9500; color:white; border:none; flex:1; min-width:140px;">Cancel</button>
-              <button class="btn" onclick="deleteRequest()" style="background:#dc3545; color:white; border:none; flex:1; min-width:140px;">Delete</button>
-            </div>
-          `;
+
+        // Show Edit button only in "My Requests" tab
+        if (currentRequestStatus === 'my-requests') {
+          actions = `<button class="btn" onclick="editRequest('${request.id}')" style="background:var(--ink); color:white; border:none;">Edit Request</button>`;
+        } else {
+          // Show status-based actions for other tabs
+          if (request.status === 'open_request') {
+            actions = `<button class="btn" onclick="assignRequest()" style="background:var(--ink); color:white; border:none;">Assign to Team Member</button>`;
+          } else if (request.status === 'pending') {
+            actions = `<button class="btn" onclick="scheduleAppointment()" style="background:var(--ink); color:white; border:none;">Schedule Appointment</button>`;
+          } else if (request.status === 'scheduled') {
+            actions = `
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn" onclick="editAppointment()" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">Edit Appointment</button>
+                <button class="btn" onclick="resetAppointment()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">Reset</button>
+                <button class="btn" onclick="cancelAppointmentRequest()" style="background:#ff9500; color:white; border:none; flex:1; min-width:140px;">Cancel</button>
+                <button class="btn" onclick="deleteRequest()" style="background:#dc3545; color:white; border:none; flex:1; min-width:140px;">Delete</button>
+              </div>
+            `;
+          }
         }
 
         detailEl.innerHTML = `
@@ -4428,11 +4430,11 @@
       
       // Assign Request
       window.assignRequest = async function() {
-        // Load all users with 'booking team' role from profiles
+        // Load all users with 'Booking Team' role from profiles
         const { data: bookingTeam } = await supabase
           .from('profiles')
           .select('id, username')
-          .eq('role', 'booking team');
+          .eq('role', 'Booking Team');
 
         const teamMemberSelect = document.getElementById('assignTeamMember');
         teamMemberSelect.innerHTML = '<option value="">-- Select Team Member --</option>' +
@@ -5915,7 +5917,10 @@
           setInterval(updateCurrentTimeIndicator, 60000);
         }
       }
-      
+
+      // Make renderCalendar globally available
+      window.renderCalendar = renderCalendar;
+
       function addCurrentTimeIndicator() {
         const now = new Date();
         const currentHour = now.getHours() + now.getMinutes() / 60;
