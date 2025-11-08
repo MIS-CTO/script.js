@@ -4047,12 +4047,12 @@
 
         let actions = '';
         if (request.status === 'open_request') {
-          actions = `<button class="btn btn-primary" onclick="assignRequest()">Assign to Team Member</button>`;
+          actions = `<button class="btn" onclick="assignRequest()" style="background:var(--ink); color:white; border:none;">Assign to Team Member</button>`;
         } else if (request.status === 'pending') {
           actions = `
-            <div style="display:flex; gap:12px;">
-              <button class="btn btn-success" onclick="scheduleAppointment()">Schedule Appointment</button>
-              <button class="btn btn-secondary" onclick="editRequest('${request.id}')" style="background:#6c757d; color:white;">Edit Request</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn" onclick="scheduleAppointment()" style="background:var(--ink); color:white; border:none; flex:1;">Schedule Appointment</button>
+              <button class="btn" onclick="editRequest('${request.id}')" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1;">Edit Request</button>
             </div>
           `;
         } else if (request.status === 'scheduled') {
@@ -4087,9 +4087,13 @@
             <h3>Customer Information</h3>
             <div class="detail-grid">
               <div class="detail-item">
-                <div class="detail-label">Name</div>
+                <div class="detail-label">Vorname</div>
+                <div class="detail-value">${customer.first_name || '-'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Nachname</div>
                 <div class="detail-value">
-                  ${customerName}
+                  ${customer.last_name || '-'}
                   ${customer.rank ? `
                     <span style="display:inline-block; margin-left:8px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; ${rankBadgeStyle}">
                       ${customer.rank}
