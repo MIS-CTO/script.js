@@ -2139,30 +2139,132 @@
 
   <!-- Edit Request Modal -->
   <div class="modal-backdrop" id="editRequestModal">
-    <div class="modal">
+    <div class="modal" style="max-width:700px; max-height:90vh; overflow-y:auto;">
       <h3 style="color:var(--ink); font-weight:500;">Edit Request</h3>
-      <p style="margin-bottom:20px; color:var(--muted); font-size:14px;">
-        What would you like to do with this request?
-      </p>
-      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
-        <button
-          class="btn"
-          onclick="resetRequestToOpen()"
-          style="padding:14px; font-size:14px; display:flex; align-items:center; gap:12px; justify-content:center; background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">
-          <span style="font-size:18px;">🔄</span>
-          <span>Reset to Open Request</span>
-        </button>
-        <button
-          class="btn"
-          onclick="deleteRequestPermanently()"
-          style="padding:14px; font-size:14px; display:flex; align-items:center; gap:12px; justify-content:center; background:#dc3545; color:white; border:none;">
-          <span style="font-size:18px;">🗑️</span>
-          <span>Delete Permanently</span>
-        </button>
-      </div>
-      <div class="modal-actions" style="gap:8px;">
-        <button type="button" class="btn btn-secondary" id="cancelEditRequest" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">Cancel</button>
-      </div>
+      <form class="modal-form" id="editRequestForm" style="max-height:calc(90vh - 150px); overflow-y:auto;">
+
+        <!-- Customer Information -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Customer Information</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Vorname</label>
+            <input type="text" id="editFirstName" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Nachname</label>
+            <input type="text" id="editLastName" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Email</label>
+            <input type="email" id="editEmail" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Phone</label>
+            <input type="tel" id="editPhone" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Instagram</label>
+            <input type="text" id="editInstagram" placeholder="@username">
+          </div>
+        </div>
+
+        <!-- Request Details -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Request Details</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Priority</label>
+            <select id="editPriority">
+              <option value="">-- Select Priority --</option>
+              <option value="low">Low 💤</option>
+              <option value="normal">Normal ✓</option>
+              <option value="high">High ⚡</option>
+              <option value="urgent">Urgent 🔥</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Placement</label>
+            <input type="text" id="editPlacement">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Size</label>
+            <input type="text" id="editSize">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Style</label>
+            <input type="text" id="editStyle">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Colorway</label>
+            <input type="text" id="editColorway">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Description</label>
+            <textarea id="editDescription" rows="4"></textarea>
+          </div>
+        </div>
+
+        <!-- Artist Assignment -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Artist Assignment</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Search Artist</label>
+            <input type="text" id="editArtistSearch" placeholder="Type to search artists...">
+            <div id="editArtistSearchResults" style="display:none; max-height:200px; overflow-y:auto; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-top:8px; background:white;"></div>
+            <input type="hidden" id="editArtistId">
+            <div id="editSelectedArtist" style="margin-top:8px; font-size:13px; color:var(--muted);"></div>
+          </div>
+        </div>
+
+        <!-- Appointment Details -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Appointment Details</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Date</label>
+            <input type="date" id="editScheduledDate">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Start Time</label>
+            <input type="time" id="editStartTime">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">End Time</label>
+            <input type="time" id="editEndTime">
+          </div>
+        </div>
+
+        <!-- Status Management -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Status Management</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Status</label>
+            <select id="editStatus">
+              <option value="open_request">New Request</option>
+              <option value="pending">Pending</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="finished">Finished</option>
+              <option value="canceled">Canceled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="margin-bottom:24px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Quick Actions</h4>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn" onclick="resetRequestToOpen()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">
+              🔄 Reset to Open
+            </button>
+            <button type="button" class="btn" onclick="deleteRequestPermanently()" style="background:#dc3545; color:white; border:none;">
+              🗑️ Delete Permanently
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="gap:8px;">
+          <button type="button" class="btn btn-secondary" id="cancelEditRequest" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">Cancel</button>
+          <button type="submit" class="btn" style="background:var(--ink); color:white; border:none;">Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -4326,14 +4428,15 @@
       
       // Assign Request
       window.assignRequest = async function() {
-        // Load booking team members from new view
+        // Load all users with 'booking team' role from profiles
         const { data: bookingTeam } = await supabase
-          .from('booking_team_members')
-          .select('*');
+          .from('profiles')
+          .select('id, username')
+          .eq('role', 'booking team');
 
         const teamMemberSelect = document.getElementById('assignTeamMember');
         teamMemberSelect.innerHTML = '<option value="">-- Select Team Member --</option>' +
-          (bookingTeam || []).map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+          (bookingTeam || []).map(m => `<option value="${m.id}">${m.username}</option>`).join('');
 
         document.getElementById('assignModal').classList.add('active');
       };
@@ -4469,14 +4572,147 @@
       // Edit Request Functions
       let editingRequestId = null;
 
-      window.editRequest = function(requestId) {
+      window.editRequest = async function(requestId) {
         editingRequestId = requestId;
+
+        // Find the request
+        const request = allRequests.find(r => r.id === requestId);
+        if (!request) {
+          alert('Request not found');
+          return;
+        }
+
+        // Populate the form with current data
+        document.getElementById('editFirstName').value = request.first_name || '';
+        document.getElementById('editLastName').value = request.last_name || '';
+        document.getElementById('editEmail').value = request.email || '';
+        document.getElementById('editPhone').value = request.customer_phone || '';
+        document.getElementById('editInstagram').value = request.instagram || '';
+        document.getElementById('editPriority').value = request.priority || '';
+        document.getElementById('editPlacement').value = request.placement || '';
+        document.getElementById('editSize').value = request.size || '';
+        document.getElementById('editStyle').value = request.style || '';
+        document.getElementById('editColorway').value = request.colorway || '';
+        document.getElementById('editDescription').value = request.description || '';
+        document.getElementById('editScheduledDate').value = request.scheduled_date || '';
+        document.getElementById('editStartTime').value = request.start_time || '';
+        document.getElementById('editEndTime').value = request.end_time || '';
+        document.getElementById('editStatus').value = request.status || 'open_request';
+
+        // Set artist if assigned
+        if (request.artist_id) {
+          document.getElementById('editArtistId').value = request.artist_id;
+          const artist = allArtists.find(a => a.id === request.artist_id);
+          if (artist) {
+            document.getElementById('editSelectedArtist').textContent = `Selected: ${artist.name}`;
+          }
+        } else {
+          document.getElementById('editArtistId').value = '';
+          document.getElementById('editSelectedArtist').textContent = '';
+        }
+
         document.getElementById('editRequestModal').classList.add('active');
+      };
+
+      // Artist search functionality for edit form
+      const editArtistSearch = document.getElementById('editArtistSearch');
+      const editArtistSearchResults = document.getElementById('editArtistSearchResults');
+
+      if (editArtistSearch) {
+        editArtistSearch.addEventListener('input', async (e) => {
+          const query = e.target.value.trim().toLowerCase();
+
+          if (query.length < 2) {
+            editArtistSearchResults.style.display = 'none';
+            return;
+          }
+
+          // Filter artists
+          const filteredArtists = allArtists.filter(artist =>
+            artist.name.toLowerCase().includes(query)
+          );
+
+          if (filteredArtists.length === 0) {
+            editArtistSearchResults.innerHTML = '<div style="padding:12px; color:var(--muted); font-size:13px;">No artists found</div>';
+            editArtistSearchResults.style.display = 'block';
+            return;
+          }
+
+          editArtistSearchResults.innerHTML = filteredArtists.map(artist => `
+            <div
+              onclick="selectEditArtist('${artist.id}', '${artist.name.replace(/'/g, "\\'")}')"
+              style="padding:12px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.05); transition:background 0.2s;"
+              onmouseover="this.style.background='rgba(0,0,0,0.03)'"
+              onmouseout="this.style.background='white'">
+              <div style="font-weight:500; font-size:14px;">${artist.name}</div>
+              ${artist.specialty ? `<div style="font-size:12px; color:var(--muted); margin-top:2px;">${artist.specialty}</div>` : ''}
+            </div>
+          `).join('');
+
+          editArtistSearchResults.style.display = 'block';
+        });
+      }
+
+      // Select artist from search results
+      window.selectEditArtist = function(artistId, artistName) {
+        document.getElementById('editArtistId').value = artistId;
+        document.getElementById('editArtistSearch').value = artistName;
+        document.getElementById('editSelectedArtist').textContent = `Selected: ${artistName}`;
+        document.getElementById('editArtistSearchResults').style.display = 'none';
       };
 
       document.getElementById('cancelEditRequest')?.addEventListener('click', () => {
         document.getElementById('editRequestModal').classList.remove('active');
         editingRequestId = null;
+      });
+
+      // Submit handler for edit request form
+      document.getElementById('editRequestForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!editingRequestId) return;
+
+        try {
+          const updateData = {
+            first_name: document.getElementById('editFirstName').value,
+            last_name: document.getElementById('editLastName').value,
+            email: document.getElementById('editEmail').value,
+            customer_phone: document.getElementById('editPhone').value,
+            instagram: document.getElementById('editInstagram').value,
+            priority: document.getElementById('editPriority').value,
+            placement: document.getElementById('editPlacement').value,
+            size: document.getElementById('editSize').value,
+            style: document.getElementById('editStyle').value,
+            colorway: document.getElementById('editColorway').value,
+            description: document.getElementById('editDescription').value,
+            scheduled_date: document.getElementById('editScheduledDate').value || null,
+            start_time: document.getElementById('editStartTime').value || null,
+            end_time: document.getElementById('editEndTime').value || null,
+            status: document.getElementById('editStatus').value,
+            artist_id: document.getElementById('editArtistId').value || null
+          };
+
+          const { error } = await supabase
+            .from('requests')
+            .update(updateData)
+            .eq('id', editingRequestId);
+
+          if (error) throw error;
+
+          document.getElementById('editRequestModal').classList.remove('active');
+          await loadRequests();
+
+          // Reload detail view if still showing this request
+          if (selectedRequestId === editingRequestId) {
+            showRequestDetail(selectedRequestId);
+          }
+
+          alert('✅ Request updated successfully!');
+          editingRequestId = null;
+        } catch (err) {
+          console.error('Error updating request:', err);
+          alert('❌ Error updating request: ' + err.message);
+        }
       });
 
       window.resetRequestToOpen = async function() {
@@ -5448,7 +5684,10 @@
           events = [];
         }
       }
-      
+
+      // Make loadEvents globally available
+      window.loadEvents = loadEvents;
+
       // Find available slot for a given date, category, start and end hour
       function findAvailableSlot(date, category, startHour, endHour) {
         // Get all events for this date and category
