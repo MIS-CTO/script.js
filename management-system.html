@@ -2136,6 +2136,35 @@
     </div>
   </div>
 
+  <!-- Edit Request Modal -->
+  <div class="modal-backdrop" id="editRequestModal">
+    <div class="modal">
+      <h3>Edit Request</h3>
+      <p style="margin-bottom:20px; color:var(--muted); font-size:15px;">
+        What would you like to do with this request?
+      </p>
+      <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px;">
+        <button
+          class="btn btn-primary"
+          onclick="resetRequestToOpen()"
+          style="padding:16px; font-size:15px; display:flex; align-items:center; gap:12px; justify-content:center;">
+          <span style="font-size:20px;">🔄</span>
+          <span>Reset to Open Request</span>
+        </button>
+        <button
+          class="btn btn-danger"
+          onclick="deleteRequestPermanently()"
+          style="padding:16px; font-size:15px; display:flex; align-items:center; gap:12px; justify-content:center;">
+          <span style="font-size:20px;">🗑️</span>
+          <span>Delete Permanently</span>
+        </button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="cancelEditRequest">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Cancel Appointment Modal -->
   <div class="modal-backdrop" id="cancelModal">
     <div class="modal">
@@ -3943,7 +3972,12 @@
         if (request.status === 'open_request') {
           actions = `<button class="btn btn-primary" onclick="assignRequest()">Assign to Team Member</button>`;
         } else if (request.status === 'pending') {
-          actions = `<button class="btn btn-success" onclick="scheduleAppointment()">Schedule Appointment</button>`;
+          actions = `
+            <div style="display:flex; gap:12px;">
+              <button class="btn btn-success" onclick="scheduleAppointment()">Schedule Appointment</button>
+              <button class="btn btn-secondary" onclick="editRequest('${request.id}')" style="background:#6c757d; color:white;">Edit Request</button>
+            </div>
+          `;
         } else if (request.status === 'scheduled') {
           actions = `<button class="btn btn-danger" onclick="cancelAppointment()">Cancel Appointment</button>`;
         }
@@ -4343,7 +4377,104 @@
           alert('Error canceling appointment: ' + err.message);
         }
       });
-      
+
+      // Edit Request Functions
+      let editingRequestId = null;
+
+      window.editRequest = function(requestId) {
+        editingRequestId = requestId;
+        document.getElementById('editRequestModal').classList.add('active');
+      };
+
+      document.getElementById('cancelEditRequest')?.addEventListener('click', () => {
+        document.getElementById('editRequestModal').classList.remove('active');
+        editingRequestId = null;
+      });
+
+      window.resetRequestToOpen = async function() {
+        if (!editingRequestId) return;
+
+        // Confirmation dialog
+        const confirmed = confirm('Are you sure you want to reset this request to "Open Request" status?\n\nThis will remove any assignment and scheduling information.');
+
+        if (!confirmed) return;
+
+        try {
+          const { error } = await supabase
+            .from('requests')
+            .update({
+              status: 'open_request',
+              assigned_to: null,
+              assigned_to_user_id: null,
+              artist_id: null,
+              scheduled_date: null,
+              start_time: null,
+              end_time: null
+            })
+            .eq('id', editingRequestId);
+
+          if (error) throw error;
+
+          document.getElementById('editRequestModal').classList.remove('active');
+          await loadRequests();
+
+          // Close detail view or reload it
+          selectedRequestId = null;
+          closeRequestDetail();
+
+          alert('✅ Request has been reset to Open Request status');
+          editingRequestId = null;
+        } catch (err) {
+          console.error('Error resetting request:', err);
+          alert('❌ Error resetting request: ' + err.message);
+        }
+      };
+
+      window.deleteRequestPermanently = async function() {
+        if (!editingRequestId) return;
+
+        // First confirmation
+        const confirmed1 = confirm('⚠️ WARNING: Are you sure you want to DELETE this request permanently?\n\nThis action CANNOT be undone and will remove the request from ALL databases!');
+
+        if (!confirmed1) return;
+
+        // Second confirmation
+        const confirmed2 = confirm('⚠️ FINAL WARNING: This will permanently delete the request and ALL associated data.\n\nType "DELETE" in the next dialog to confirm.');
+
+        if (!confirmed2) return;
+
+        // Third confirmation with text input
+        const deleteConfirmation = prompt('Type "DELETE" to confirm permanent deletion:');
+
+        if (deleteConfirmation !== 'DELETE') {
+          alert('❌ Deletion cancelled. You must type "DELETE" exactly to confirm.');
+          return;
+        }
+
+        try {
+          // Delete from requests table
+          const { error } = await supabase
+            .from('requests')
+            .delete()
+            .eq('id', editingRequestId);
+
+          if (error) throw error;
+
+          document.getElementById('editRequestModal').classList.remove('active');
+          await loadRequests();
+
+          // Close detail view
+          selectedRequestId = null;
+          closeRequestDetail();
+
+          alert('✅ Request has been permanently deleted from all databases');
+          editingRequestId = null;
+        } catch (err) {
+          console.error('Error deleting request:', err);
+          alert('❌ Error deleting request: ' + err.message);
+        }
+      };
+
       // Auto-move scheduled to finished (check every minute)
       setInterval(async () => {
         const now = new Date();
