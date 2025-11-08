@@ -1466,8 +1466,10 @@
     <a id="tab-dienstplan" href="#dienstplan">Dienstplan</a>
     <a id="tab-agreements" href="#agreements">Agreements</a>
     <a id="tab-analytics" href="#analytics">Analytics</a>
+    <span style="width: 24px;"></span>
+    <a id="tab-profile" href="#profile">Profile</a>
 
-    <!-- Profile Button -->
+    <!-- Profile Button (Hidden when logged in) -->
     <button class="profile-button" id="profileButton">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -1920,6 +1922,125 @@
         </thead>
         <tbody id="agreementsTableBody"></tbody>
       </table>
+    </div>
+  </section>
+
+  <section id="profile-section">
+    <div style="max-width: 800px; margin: 0 auto;">
+      <h2 style="margin-bottom: 32px;">Profil</h2>
+
+      <!-- Profile Header -->
+      <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 48px; padding: 32px; background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <img id="profilePageAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23ddd'/%3E%3Ctext x='50' y='65' text-anchor='middle' font-size='40' fill='%23666'%3E👤%3C/text%3E%3C/svg%3E" alt="Profilbild" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #f5f5f7; margin-bottom: 20px;">
+        <h2 id="profilePageName" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 600;">Username</h2>
+        <span id="profilePageRoleBadge" class="profile-role-badge" style="font-size: 13px; padding: 6px 16px; border-radius: 999px; background: #f5f5f7; color: var(--ink); font-weight: 600;">USER</span>
+      </div>
+
+      <!-- Profile Information Cards -->
+      <div style="display: grid; gap: 24px;">
+
+        <!-- Account Info Card -->
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">Account Information</h3>
+
+          <div style="display: grid; gap: 16px;">
+            <div>
+              <label style="font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px;">Benutzername</label>
+              <div id="profilePageUsername" style="font-size: 15px; font-weight: 500;">—</div>
+            </div>
+
+            <div>
+              <label style="font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px;">Rolle</label>
+              <div id="profilePageRoleText" style="font-size: 15px; font-weight: 500;">—</div>
+            </div>
+
+            <div>
+              <label style="font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px;">Passwort</label>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <span id="profilePagePassword">••••••••</span>
+                <button type="button" class="btn btn-secondary" onclick="showPasswordChangeFormPage()" style="font-size: 13px; padding: 6px 12px;">Ändern</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Change Form (Hidden by default) -->
+          <div id="profilePagePasswordChangeForm" style="display: none; margin-top: 24px; padding-top: 24px; border-top: 1px solid #eee;">
+            <h4 style="margin: 0 0 16px 0; font-size: 16px;">Passwort ändern</h4>
+            <div style="display: grid; gap: 12px;">
+              <div>
+                <label style="font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px;">Neues Passwort</label>
+                <input type="password" id="profilePageNewPassword" style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;">
+              </div>
+              <div>
+                <label style="font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px;">Passwort bestätigen</label>
+                <input type="password" id="profilePageConfirmPassword" style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;">
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button type="button" class="btn btn-secondary" onclick="hidePasswordChangeFormPage()" style="flex: 1;">Abbrechen</button>
+                <button type="button" class="btn btn-primary" onclick="changePasswordPage()" style="flex: 1;">Speichern</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Avatar Card -->
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">Profilbild</h3>
+
+          <!-- Current Avatar Preview -->
+          <div id="profilePageCurrentAvatarPreview" style="text-align: center; margin-bottom: 24px;">
+            <img id="profilePageCurrentAvatarImg" src="" alt="Aktuelles Profilbild" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f5f5f7;">
+          </div>
+
+          <!-- Drag & Drop Zone -->
+          <div
+            id="profilePageAvatarDropZone"
+            style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 40px 20px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.3s; margin-bottom: 20px;"
+            ondragover="handleProfileDragOver(event)"
+            ondragleave="handleProfileDragLeave(event)"
+            ondrop="handleProfileDrop(event)"
+            onclick="document.getElementById('profilePageAvatarFileInput').click()">
+            <div style="font-size: 48px; margin-bottom: 12px;">📸</div>
+            <div style="font-size: 16px; font-weight: 500; color: var(--ink); margin-bottom: 8px;">
+              Bild hier ablegen oder klicken
+            </div>
+            <div style="font-size: 13px; color: var(--muted);">
+              PNG, JPG oder GIF (max. 5MB)
+            </div>
+          </div>
+
+          <!-- Hidden File Input -->
+          <input
+            type="file"
+            id="profilePageAvatarFileInput"
+            accept="image/*"
+            style="display: none;"
+            onchange="handleProfileFileSelect(event)">
+
+          <!-- Preview Selected Image -->
+          <div id="profilePageAvatarPreviewContainer" style="display: none; margin-bottom: 20px; text-align: center;">
+            <div style="font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 12px;">Vorschau:</div>
+            <img id="profilePageAvatarPreview" src="" alt="Vorschau" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent);">
+            <div id="profilePageAvatarFileName" style="font-size: 13px; color: var(--muted); margin-top: 8px;"></div>
+          </div>
+
+          <!-- Upload Progress -->
+          <div id="profilePageUploadProgress" style="display: none; margin-bottom: 20px;">
+            <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Uploading...</div>
+            <div style="background: #e5e7eb; border-radius: 999px; height: 8px; overflow: hidden;">
+              <div id="profilePageUploadProgressBar" style="background: var(--accent); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" id="profilePageUploadAvatarBtn" onclick="uploadAvatarFromProfilePage()" disabled style="width: 100%; opacity: 0.5;">Hochladen</button>
+        </div>
+
+        <!-- Logout Button -->
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <button type="button" class="btn btn-danger" onclick="logout()" style="width: 100%;">Abmelden</button>
+        </div>
+
+      </div>
     </div>
   </section>
 
@@ -3794,6 +3915,7 @@
           }
           else if (tabName === "artists") loadArtists();
           else if (tabName === "customers") loadCustomers();
+          else if (tabName === "profile") loadProfilePage();
         }
       }
 
@@ -7803,8 +7925,12 @@
     // Profile button click handler
     function toggleProfileMenu() {
       if (currentUser) {
-        // Show profile view in login backdrop
-        showProfileView();
+        // Navigate to profile section
+        const profileTab = document.getElementById('tab-profile');
+        if (profileTab) {
+          profileTab.click();
+          loadProfilePage();
+        }
       } else {
         // Show login modal
         document.getElementById('loginBackdrop').classList.add('active');
@@ -7882,15 +8008,14 @@
       try {
         console.log('📤 Uploading avatar for:', currentUser.username);
 
-        // Generate unique filename
+        // Generate unique filename (without subdirectory to avoid RLS issues)
         const fileExt = file.name.split('.').pop();
         const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
 
-        // Upload to Supabase Storage
+        // Upload to Supabase Storage (root of bucket to avoid RLS policy issues)
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, file, {
+          .upload(fileName, file, {
             cacheControl: '3600',
             upsert: true
           });
@@ -7904,7 +8029,7 @@
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
         console.log('✅ Avatar uploaded:', publicUrl);
 
@@ -8065,17 +8190,16 @@
 
         console.log('📤 Uploading avatar for:', currentUser.username);
 
-        // Generate unique filename
+        // Generate unique filename (without subdirectory to avoid RLS issues)
         const fileExt = selectedAvatarFile.name.split('.').pop();
         const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
 
         progressBar.style.width = '50%';
 
-        // Upload to Supabase Storage
+        // Upload to Supabase Storage (root of bucket to avoid RLS policy issues)
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, selectedAvatarFile, {
+          .upload(fileName, selectedAvatarFile, {
             cacheControl: '3600',
             upsert: true
           });
@@ -8094,7 +8218,7 @@
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
         console.log('✅ Avatar uploaded:', publicUrl);
 
@@ -8139,6 +8263,280 @@
         progressDiv.style.display = 'none';
         uploadBtn.disabled = false;
         uploadBtn.style.opacity = '1';
+      }
+    }
+
+    // ============================================
+    // PROFILE PAGE FUNCTIONS
+    // ============================================
+
+    let selectedProfileAvatarFile = null;
+
+    // Load profile page
+    function loadProfilePage() {
+      if (!currentUser) {
+        alert('Bitte melden Sie sich zuerst an');
+        return;
+      }
+
+      // Update profile information
+      document.getElementById('profilePageName').textContent = currentUser.username;
+      document.getElementById('profilePageUsername').textContent = currentUser.username;
+      document.getElementById('profilePageRoleText').textContent = (currentUser.role || 'user').toUpperCase();
+      document.getElementById('profilePageRoleBadge').textContent = (currentUser.role || 'user').toUpperCase();
+
+      // Update avatar
+      const profilePageAvatar = document.getElementById('profilePageAvatar');
+      const profilePageCurrentAvatarImg = document.getElementById('profilePageCurrentAvatarImg');
+
+      if (currentUser.avatar_url) {
+        profilePageAvatar.src = currentUser.avatar_url;
+        profilePageCurrentAvatarImg.src = currentUser.avatar_url;
+        document.getElementById('profilePageCurrentAvatarPreview').style.display = 'block';
+      } else {
+        document.getElementById('profilePageCurrentAvatarPreview').style.display = 'none';
+      }
+
+      // Reset upload form
+      selectedProfileAvatarFile = null;
+      document.getElementById('profilePageAvatarFileInput').value = '';
+      document.getElementById('profilePageAvatarPreviewContainer').style.display = 'none';
+      document.getElementById('profilePageUploadProgress').style.display = 'none';
+      document.getElementById('profilePageUploadAvatarBtn').disabled = true;
+      document.getElementById('profilePageUploadAvatarBtn').style.opacity = '0.5';
+    }
+
+    // Handle drag over for profile page
+    function handleProfileDragOver(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropZone = document.getElementById('profilePageAvatarDropZone');
+      dropZone.style.borderColor = 'var(--accent)';
+      dropZone.style.background = '#e0f2fe';
+    }
+
+    // Handle drag leave for profile page
+    function handleProfileDragLeave(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropZone = document.getElementById('profilePageAvatarDropZone');
+      dropZone.style.borderColor = '#d1d5db';
+      dropZone.style.background = '#f9fafb';
+    }
+
+    // Handle drop for profile page
+    function handleProfileDrop(event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const dropZone = document.getElementById('profilePageAvatarDropZone');
+      dropZone.style.borderColor = '#d1d5db';
+      dropZone.style.background = '#f9fafb';
+
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        processProfileAvatarFile(files[0]);
+      }
+    }
+
+    // Handle file select for profile page
+    function handleProfileFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        processProfileAvatarFile(file);
+      }
+    }
+
+    // Process selected file for profile page
+    function processProfileAvatarFile(file) {
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Bitte wähle eine Bilddatei aus (PNG, JPG, GIF)');
+        return;
+      }
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Die Datei ist zu groß. Maximal 5MB erlaubt.');
+        return;
+      }
+
+      selectedProfileAvatarFile = file;
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('profilePageAvatarPreview').src = e.target.result;
+        document.getElementById('profilePageAvatarFileName').textContent = file.name;
+        document.getElementById('profilePageAvatarPreviewContainer').style.display = 'block';
+
+        // Enable upload button
+        document.getElementById('profilePageUploadAvatarBtn').disabled = false;
+        document.getElementById('profilePageUploadAvatarBtn').style.opacity = '1';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Upload avatar from profile page
+    async function uploadAvatarFromProfilePage() {
+      if (!selectedProfileAvatarFile) {
+        alert('Bitte wähle ein Bild aus');
+        return;
+      }
+
+      const uploadBtn = document.getElementById('profilePageUploadAvatarBtn');
+      const progressDiv = document.getElementById('profilePageUploadProgress');
+      const progressBar = document.getElementById('profilePageUploadProgressBar');
+
+      try {
+        // Disable button and show progress
+        uploadBtn.disabled = true;
+        uploadBtn.style.opacity = '0.5';
+        progressDiv.style.display = 'block';
+        progressBar.style.width = '30%';
+
+        console.log('📤 Uploading avatar for:', currentUser.username);
+
+        // Generate unique filename (without subdirectory to avoid RLS issues)
+        const fileExt = selectedProfileAvatarFile.name.split('.').pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+
+        progressBar.style.width = '50%';
+
+        // Upload to Supabase Storage (root of bucket to avoid RLS policy issues)
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, selectedProfileAvatarFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error('❌ Upload error:', uploadError);
+          alert('Fehler beim Hochladen: ' + uploadError.message);
+          progressDiv.style.display = 'none';
+          uploadBtn.disabled = false;
+          uploadBtn.style.opacity = '1';
+          return;
+        }
+
+        progressBar.style.width = '70%';
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        console.log('✅ Avatar uploaded:', publicUrl);
+
+        progressBar.style.width = '90%';
+
+        // Update profile in database
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', currentUser.id);
+
+        if (updateError) {
+          console.error('❌ Database update error:', updateError);
+          alert('Fehler beim Speichern: ' + updateError.message);
+          progressDiv.style.display = 'none';
+          uploadBtn.disabled = false;
+          uploadBtn.style.opacity = '1';
+          return;
+        }
+
+        progressBar.style.width = '100%';
+
+        // Update current user object
+        currentUser.avatar_url = publicUrl;
+
+        // Update UI
+        updateUIForUser(currentUser);
+        document.getElementById('profilePageAvatar').src = publicUrl;
+        document.getElementById('profilePageCurrentAvatarImg').src = publicUrl;
+        document.getElementById('profilePageCurrentAvatarPreview').style.display = 'block';
+
+        // Reset form
+        setTimeout(() => {
+          selectedProfileAvatarFile = null;
+          document.getElementById('profilePageAvatarFileInput').value = '';
+          document.getElementById('profilePageAvatarPreviewContainer').style.display = 'none';
+          progressDiv.style.display = 'none';
+          uploadBtn.disabled = true;
+          uploadBtn.style.opacity = '0.5';
+          alert('✅ Profilbild erfolgreich hochgeladen!');
+        }, 500);
+
+        console.log('✅ Profile updated successfully');
+
+      } catch (err) {
+        console.error('💥 Avatar upload failed:', err);
+        alert('Ein Fehler ist aufgetreten: ' + err.message);
+        progressDiv.style.display = 'none';
+        uploadBtn.disabled = false;
+        uploadBtn.style.opacity = '1';
+      }
+    }
+
+    // Show password change form for profile page
+    function showPasswordChangeFormPage() {
+      document.getElementById('profilePagePasswordChangeForm').style.display = 'block';
+    }
+
+    // Hide password change form for profile page
+    function hidePasswordChangeFormPage() {
+      document.getElementById('profilePagePasswordChangeForm').style.display = 'none';
+      document.getElementById('profilePageNewPassword').value = '';
+      document.getElementById('profilePageConfirmPassword').value = '';
+    }
+
+    // Change password from profile page
+    async function changePasswordPage() {
+      const newPassword = document.getElementById('profilePageNewPassword').value;
+      const confirmPassword = document.getElementById('profilePageConfirmPassword').value;
+
+      // Validation
+      if (!newPassword || !confirmPassword) {
+        alert('Bitte fülle beide Felder aus');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        alert('Das Passwort muss mindestens 6 Zeichen lang sein');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert('Die Passwörter stimmen nicht überein');
+        return;
+      }
+
+      try {
+        console.log('🔑 Changing password for:', currentUser.username);
+
+        // Hash password using bcrypt
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password in database
+        const { error } = await supabase
+          .from('profiles')
+          .update({ password_hash: hashedPassword })
+          .eq('id', currentUser.id);
+
+        if (error) {
+          console.error('❌ Password update error:', error);
+          alert('Fehler beim Ändern des Passworts: ' + error.message);
+          return;
+        }
+
+        console.log('✅ Password changed successfully');
+        alert('✅ Passwort erfolgreich geändert!');
+        hidePasswordChangeFormPage();
+
+      } catch (err) {
+        console.error('💥 Password change failed:', err);
+        alert('Ein Fehler ist aufgetreten: ' + err.message);
       }
     }
 
