@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v75</title>
+  <title>Management System v76</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1489,7 +1489,7 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v75</span>
+      <span id="versionBadge" style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v76</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -7310,6 +7310,8 @@
           .select('*')
           .ilike('username', username);
 
+        console.log('📊 Query result:', { profiles, error, count: profiles?.length });
+
         if (error) {
           console.error('❌ Database error:', error);
           alert('Datenbankfehler: ' + error.message);
@@ -7320,6 +7322,9 @@
 
         if (!profiles || profiles.length === 0) {
           console.log('⚠️ User not found:', username);
+          // Try to see all profiles for debugging (remove in production)
+          const { data: allProfiles } = await supabase.from('profiles').select('username');
+          console.log('📋 Available usernames:', allProfiles?.map(p => p.username));
           alert('Benutzername nicht gefunden');
           submitButton.textContent = originalText;
           submitButton.disabled = false;
@@ -7828,4 +7833,4 @@
   </div>
 
 </body>
-</html><!-- VERSION: v75 -->
+</html><!-- VERSION: v76 -->
