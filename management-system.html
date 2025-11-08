@@ -832,6 +832,124 @@
     .request-badge.scheduled { background:#28a745; color:white; }
     .request-badge.finished { background:#6c757d; color:white; }
     .request-badge.canceled { background:#dc3545; color:white; }
+
+    /* Priority Badges */
+    .priority-badge {
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:4px 10px;
+      border-radius:12px;
+      font-size:10px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+    .priority-badge.urgent {
+      background:#FEE2E2;
+      color:#991B1B;
+    }
+    .priority-badge.high {
+      background:#FED7AA;
+      color:#9A3412;
+    }
+    .priority-badge.normal {
+      background:#D1FAE5;
+      color:#065F46;
+    }
+    .priority-badge.low {
+      background:#F3F4F6;
+      color:#6B7280;
+    }
+
+    /* Reference Images */
+    .reference-images {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .reference-image-thumb {
+      width:80px;
+      height:80px;
+      border-radius:8px;
+      overflow:hidden;
+      cursor:pointer;
+      border:2px solid rgba(0,0,0,0.06);
+      transition:all 0.2s;
+    }
+    .reference-image-thumb:hover {
+      transform:scale(1.05);
+      border-color:var(--accent);
+      box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    }
+    .reference-image-thumb img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+
+    /* Image Modal */
+    .image-modal {
+      display:none;
+      position:fixed;
+      z-index:10000;
+      left:0;
+      top:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.9);
+      align-items:center;
+      justify-content:center;
+    }
+    .image-modal.active {
+      display:flex;
+    }
+    .image-modal img {
+      max-width:90%;
+      max-height:90%;
+      border-radius:12px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    }
+    .image-modal-close {
+      position:absolute;
+      top:20px;
+      right:20px;
+      font-size:40px;
+      color:white;
+      cursor:pointer;
+      background:rgba(0,0,0,0.5);
+      width:50px;
+      height:50px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:background 0.2s;
+    }
+    .image-modal-close:hover {
+      background:rgba(0,0,0,0.8);
+    }
+
+    /* Artist Preference List */
+    .artist-preference-list {
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:8px;
+    }
+    .artist-preference-item {
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:4px 10px;
+      background:rgba(0,113,227,0.1);
+      color:var(--accent);
+      border-radius:12px;
+      font-size:12px;
+      font-weight:600;
+    }
+
     .request-name {
       font-size:15px;
       font-weight:600;
@@ -1398,7 +1516,22 @@
       <button class="request-tab" data-status="finished" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Finished</button>
       <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
     </div>
-    
+
+    <!-- Refresh Controls -->
+    <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-bottom:16px;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer;">
+        <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
+        <span>Auto-Refresh (30s)</span>
+      </label>
+      <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit;">
+        <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        <span id="refreshBtnText">Neue Requests laden</span>
+      </button>
+    </div>
+
     <!-- Two Column Layout -->
     <div style="display:grid; grid-template-columns:350px 1fr; gap:24px; height:calc(100vh - 250px);">
       <!-- Request List -->
@@ -3304,6 +3437,132 @@
         });
       }
 
+      // Refresh Requests Functionality
+      let autoRefreshInterval = null;
+      let isRefreshing = false;
+
+      async function refreshRequests() {
+        if (isRefreshing) return;
+
+        isRefreshing = true;
+        const refreshBtn = document.getElementById('refreshRequestsBtn');
+        const refreshIcon = document.getElementById('refreshIcon');
+        const refreshText = document.getElementById('refreshBtnText');
+
+        // Add loading state
+        if (refreshBtn) {
+          refreshBtn.disabled = true;
+          refreshBtn.style.opacity = '0.7';
+          refreshBtn.style.cursor = 'not-allowed';
+        }
+        if (refreshIcon) {
+          refreshIcon.style.transform = 'rotate(360deg)';
+        }
+        if (refreshText) {
+          refreshText.textContent = 'Lädt...';
+        }
+
+        try {
+          const beforeCount = allRequests.length;
+          await loadRequests();
+          const afterCount = allRequests.length;
+          const newRequestsCount = afterCount - beforeCount;
+
+          // Show success notification
+          if (refreshText) {
+            refreshText.textContent = `✓ ${allRequests.length} Requests geladen`;
+          }
+
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            if (refreshText) refreshText.textContent = 'Neue Requests laden';
+            if (refreshBtn) {
+              refreshBtn.disabled = false;
+              refreshBtn.style.opacity = '1';
+              refreshBtn.style.cursor = 'pointer';
+            }
+            if (refreshIcon) {
+              refreshIcon.style.transform = 'rotate(0deg)';
+            }
+          }, 2000);
+
+          console.log(`✅ Refreshed: ${allRequests.length} total requests${newRequestsCount > 0 ? ` (+${newRequestsCount} new)` : ''}`);
+        } catch (error) {
+          console.error('❌ Refresh failed:', error);
+          if (refreshText) refreshText.textContent = '❌ Fehler';
+
+          setTimeout(() => {
+            if (refreshText) refreshText.textContent = 'Neue Requests laden';
+            if (refreshBtn) {
+              refreshBtn.disabled = false;
+              refreshBtn.style.opacity = '1';
+              refreshBtn.style.cursor = 'pointer';
+            }
+            if (refreshIcon) {
+              refreshIcon.style.transform = 'rotate(0deg)';
+            }
+          }, 2000);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+
+      // Auto-Refresh Functionality
+      function startAutoRefresh() {
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+
+        autoRefreshInterval = setInterval(() => {
+          // Only refresh if no modal is open and we're on the requests section
+          const isModalOpen = document.querySelector('.modal.active') ||
+                              document.getElementById('requestDetail').querySelector('h2');
+          const isRequestsSection = document.getElementById('requests-section').classList.contains('active');
+
+          if (!isModalOpen && isRequestsSection && !isRefreshing) {
+            console.log('🔄 Auto-refreshing requests...');
+            refreshRequests();
+          }
+        }, 30000); // 30 seconds
+
+        console.log('✅ Auto-refresh enabled (30s interval)');
+      }
+
+      function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+          clearInterval(autoRefreshInterval);
+          autoRefreshInterval = null;
+          console.log('❌ Auto-refresh disabled');
+        }
+      }
+
+      // Initialize Refresh Button
+      document.getElementById('refreshRequestsBtn')?.addEventListener('click', refreshRequests);
+
+      // Initialize Auto-Refresh Toggle
+      document.getElementById('autoRefreshToggle')?.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          startAutoRefresh();
+        } else {
+          stopAutoRefresh();
+        }
+      });
+
+      // Image Modal Functions
+      window.openImageModal = function(imageUrl) {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        if (modal && modalImg) {
+          modalImg.src = imageUrl;
+          modal.classList.add('active');
+        }
+      };
+
+      window.closeImageModal = function() {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+          modal.classList.remove('active');
+        }
+      };
+
       function showSection(tab) {
         tabs.forEach(x => x.classList.remove("active"));
         sections.forEach(s => s.classList.remove("active"));
@@ -3568,18 +3827,45 @@
           // Request number or ID
           const requestNumber = req.request_number || `#${req.id.substring(0, 8).toUpperCase()}`;
 
+          // Priority badge
+          const priorityBadge = req.priority && req.priority !== 'normal'
+            ? `<span class="priority-badge ${req.priority}">
+                ${req.priority === 'urgent' ? '🔥' : req.priority === 'high' ? '⚡' : req.priority === 'low' ? '💤' : ''}
+                ${req.priority.toUpperCase()}
+              </span>`
+            : '';
+
+          // Instagram badge (from customer relation or request field)
+          const instagram = req.customer?.instagram || req.instagram;
+          const instagramBadge = instagram
+            ? `<span style="font-size:11px; color:var(--muted);">📷 @${instagram.replace('@', '')}</span>`
+            : '';
+
+          // Reference images indicator
+          const hasImages = req.reference_images && req.reference_images.length > 0;
+          const imagesBadge = hasImages
+            ? `<span style="font-size:11px; color:var(--accent);">🖼️ ${req.reference_images.length} ${req.reference_images.length === 1 ? 'Bild' : 'Bilder'}</span>`
+            : '';
+
           return `
             <div class="request-item ${req.status === 'open_request' ? 'new-status' : ''}" data-id="${req.id}">
               <div class="request-header">
                 <div class="request-id">${requestNumber}</div>
-                <div class="request-badge ${req.status}">${statusNames[req.status] || req.status}</div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  ${priorityBadge}
+                  <div class="request-badge ${req.status}">${statusNames[req.status] || req.status}</div>
+                </div>
               </div>
               <div class="request-name">
                 ${customerName}
                 ${rankBadge}
               </div>
               ${req.placement ? `<div style="font-size:12px; color:var(--muted); margin-top:4px;">📍 ${req.placement}</div>` : ''}
-              ${locationBadge ? `<div style="margin-top:4px;">${locationBadge}</div>` : ''}
+              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+                ${locationBadge}
+                ${instagramBadge}
+                ${imagesBadge}
+              </div>
               <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
             </div>
           `;
@@ -3719,6 +4005,17 @@
           <div class="detail-section">
             <h3>Request Details</h3>
             <div class="detail-grid">
+              ${request.priority ? `
+                <div class="detail-item">
+                  <div class="detail-label">Priority</div>
+                  <div class="detail-value">
+                    <span class="priority-badge ${request.priority}">
+                      ${request.priority === 'urgent' ? '🔥' : request.priority === 'high' ? '⚡' : request.priority === 'normal' ? '✓' : '💤'}
+                      ${request.priority.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              ` : ''}
               <div class="detail-item">
                 <div class="detail-label">Placement</div>
                 <div class="detail-value">${request.placement || '-'}</div>
@@ -3731,6 +4028,12 @@
                 <div class="detail-label">Style</div>
                 <div class="detail-value">${request.style || '-'}</div>
               </div>
+              ${request.colorway ? `
+                <div class="detail-item">
+                  <div class="detail-label">Colorway</div>
+                  <div class="detail-value">${request.colorway}</div>
+                </div>
+              ` : ''}
               <div class="detail-item">
                 <div class="detail-label">Booking Type</div>
                 <div class="detail-value">${request.booking_type || '-'}</div>
@@ -3741,17 +4044,43 @@
                   <div class="detail-value">${request.origin}</div>
                 </div>
               ` : ''}
-              ${request.preferred_artist ? `
-                <div class="detail-item">
-                  <div class="detail-label">Preferred Artist</div>
-                  <div class="detail-value">${request.preferred_artist}</div>
-                </div>
-              ` : ''}
             </div>
+
+            ${request.artist_preference ? `
+              <div class="detail-item" style="margin-top:16px;">
+                <div class="detail-label">Artist Preference</div>
+                <div class="detail-value">
+                  <div class="artist-preference-list">
+                    ${request.artist_preference.split(',').map(artistCode => {
+                      const artist = allArtists.find(a => a.id === artistCode.trim() || a.name === artistCode.trim() || a.rank === artistCode.trim());
+                      return `<span class="artist-preference-item">
+                        ${artist ? artist.name : artistCode.trim()}
+                      </span>`;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
             ${request.description ? `
               <div class="detail-item" style="margin-top:16px;">
                 <div class="detail-label">Description</div>
                 <div class="detail-value" style="white-space:pre-wrap;">${request.description}</div>
+              </div>
+            ` : ''}
+
+            ${request.reference_images && request.reference_images.length > 0 ? `
+              <div class="detail-item" style="margin-top:16px;">
+                <div class="detail-label">Reference Images (${request.reference_images.length})</div>
+                <div class="detail-value">
+                  <div class="reference-images">
+                    ${request.reference_images.map((img, idx) => `
+                      <div class="reference-image-thumb" onclick="openImageModal('${img}')">
+                        <img src="${img}" alt="Reference ${idx + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
               </div>
             ` : ''}
           </div>
@@ -7139,6 +7468,12 @@
       initAuth();
     });
   </script>
+
+  <!-- Image Modal for Reference Images -->
+  <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <span class="image-modal-close">&times;</span>
+    <img id="modalImage" src="" alt="Reference Image">
+  </div>
 
 </body>
 </html><!-- VERSION: v75 -->
