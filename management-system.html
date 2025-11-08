@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📊</text></svg>">
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <style>
     :root {
       --bg:#fafafa; --ink:#1d1d1f; --muted:#86868b; --panel:rgba(255,255,255,0.8); --stroke:rgba(0,0,0,0.06);
@@ -7337,8 +7338,21 @@
           return;
         }
 
-        // Check password
-        if (profile.password_hash !== password) {
+        // Check password using bcrypt for hashed passwords
+        let passwordMatch = false;
+
+        // Check if password_hash looks like a bcrypt hash (starts with $2a$, $2b$, $2y$)
+        if (profile.password_hash.startsWith('$2')) {
+          // Use bcrypt to compare
+          console.log('🔐 Comparing password using bcrypt...');
+          passwordMatch = await bcrypt.compare(password, profile.password_hash);
+        } else {
+          // Direct comparison for plain-text passwords (development/testing only)
+          console.log('⚠️ Using direct password comparison (not recommended for production)');
+          passwordMatch = profile.password_hash === password;
+        }
+
+        if (!passwordMatch) {
           console.log('❌ Wrong password for:', username);
           alert('Falsches Passwort');
           submitButton.textContent = originalText;
