@@ -3915,10 +3915,8 @@
         };
         
         listEl.innerHTML = requests.map(req => {
-          // Get customer name from relation or fallback to request fields
-          const customerName = req.customer
-            ? `${req.customer.first_name || ''} ${req.customer.last_name || ''}`.trim()
-            : `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
+          // Get customer name directly from requests table (first_name, last_name columns)
+          const customerName = `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
 
           // Customer rank badge
           const rankBadge = req.customer?.rank
@@ -4025,14 +4023,15 @@
           'canceled': 'Canceled'
         };
 
-        // Get customer data (from relation or fallback to request fields)
-        const customer = request.customer || {
+        // Get customer data directly from requests table (first_name, last_name, email, customer_phone columns)
+        // Use customer relation only for rank and instagram
+        const customer = {
           first_name: request.first_name,
           last_name: request.last_name,
           email: request.email,
           phone: request.customer_phone,
-          rank: null,
-          instagram: null
+          rank: request.customer?.rank || null,
+          instagram: request.customer?.instagram || request.instagram || null
         };
 
         const customerName = `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unbekannt';
