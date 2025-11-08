@@ -7458,14 +7458,70 @@
 
         <div class="profile-info-group">
           <label>Profilbild</label>
-          <input type="file" id="avatarUpload" accept="image/*" style="margin-bottom: 12px;">
-          <button type="button" class="btn btn-primary" onclick="uploadAvatar()" style="width: 100%;">Profilbild hochladen</button>
+          <button type="button" class="btn btn-primary" onclick="openAvatarUploadModal()" style="width: 100%;">Profilbild editieren</button>
         </div>
 
         <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #eee; display: flex; gap: 12px;">
           <button type="button" class="btn btn-secondary" onclick="closeLoginModal()" style="flex: 1;">Schließen</button>
           <button type="button" class="btn btn-danger" onclick="logout()" style="flex: 1;">Abmelden</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Avatar Upload Modal -->
+  <div class="modal-backdrop" id="avatarUploadModal">
+    <div class="modal" style="max-width: 500px;">
+      <h3 style="color:var(--ink); font-weight:500; margin-bottom:20px;">Profilbild editieren</h3>
+
+      <!-- Current Avatar Preview -->
+      <div id="currentAvatarPreview" style="text-align:center; margin-bottom:24px;">
+        <img id="currentAvatarImg" src="" alt="Aktuelles Profilbild" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #f5f5f7;">
+      </div>
+
+      <!-- Drag & Drop Zone -->
+      <div
+        id="avatarDropZone"
+        style="border:2px dashed #d1d5db; border-radius:12px; padding:40px 20px; text-align:center; background:#f9fafb; cursor:pointer; transition:all 0.3s; margin-bottom:20px;"
+        ondragover="handleDragOver(event)"
+        ondragleave="handleDragLeave(event)"
+        ondrop="handleDrop(event)"
+        onclick="document.getElementById('avatarFileInput').click()">
+        <div style="font-size:48px; margin-bottom:12px;">📸</div>
+        <div style="font-size:16px; font-weight:500; color:var(--ink); margin-bottom:8px;">
+          Bild hier ablegen oder klicken
+        </div>
+        <div style="font-size:13px; color:var(--muted);">
+          PNG, JPG oder GIF (max. 5MB)
+        </div>
+      </div>
+
+      <!-- Hidden File Input -->
+      <input
+        type="file"
+        id="avatarFileInput"
+        accept="image/*"
+        style="display:none;"
+        onchange="handleFileSelect(event)">
+
+      <!-- Preview Selected Image -->
+      <div id="avatarPreviewContainer" style="display:none; margin-bottom:20px; text-align:center;">
+        <div style="font-size:14px; font-weight:500; color:var(--ink); margin-bottom:12px;">Vorschau:</div>
+        <img id="avatarPreview" src="" alt="Vorschau" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid var(--accent);">
+        <div id="avatarFileName" style="font-size:13px; color:var(--muted); margin-top:8px;"></div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div id="uploadProgress" style="display:none; margin-bottom:20px;">
+        <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Uploading...</div>
+        <div style="background:#e5e7eb; border-radius:999px; height:8px; overflow:hidden;">
+          <div id="uploadProgressBar" style="background:var(--accent); height:100%; width:0%; transition:width 0.3s;"></div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="gap:8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeAvatarUploadModal()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1;">Abbrechen</button>
+        <button type="button" class="btn" id="uploadAvatarBtn" onclick="uploadAvatarFromModal()" disabled style="background:var(--ink); color:white; border:none; flex:1; opacity:0.5;">Hochladen</button>
       </div>
     </div>
   </div>
@@ -7833,7 +7889,7 @@
 
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('profiles')
+          .from('avatars')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: true
@@ -7847,7 +7903,7 @@
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
-          .from('profiles')
+          .from('avatars')
           .getPublicUrl(filePath);
 
         console.log('✅ Avatar uploaded:', publicUrl);
@@ -7878,6 +7934,211 @@
       } catch (err) {
         console.error('💥 Avatar upload failed:', err);
         alert('Ein Fehler ist aufgetreten: ' + err.message);
+      }
+    }
+
+    // ============================================
+    // AVATAR UPLOAD MODAL FUNCTIONS
+    // ============================================
+
+    let selectedAvatarFile = null;
+
+    // Open Avatar Upload Modal
+    function openAvatarUploadModal() {
+      // Show current avatar if exists
+      const currentAvatarImg = document.getElementById('currentAvatarImg');
+      const currentAvatarPreview = document.getElementById('currentAvatarPreview');
+
+      if (currentUser && currentUser.avatar_url) {
+        currentAvatarImg.src = currentUser.avatar_url;
+        currentAvatarPreview.style.display = 'block';
+      } else {
+        currentAvatarPreview.style.display = 'none';
+      }
+
+      // Reset form
+      selectedAvatarFile = null;
+      document.getElementById('avatarFileInput').value = '';
+      document.getElementById('avatarPreviewContainer').style.display = 'none';
+      document.getElementById('uploadProgress').style.display = 'none';
+      document.getElementById('uploadAvatarBtn').disabled = true;
+      document.getElementById('uploadAvatarBtn').style.opacity = '0.5';
+
+      // Show modal
+      document.getElementById('avatarUploadModal').classList.add('active');
+    }
+
+    // Close Avatar Upload Modal
+    function closeAvatarUploadModal() {
+      document.getElementById('avatarUploadModal').classList.remove('active');
+      selectedAvatarFile = null;
+    }
+
+    // Handle drag over
+    function handleDragOver(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropZone = document.getElementById('avatarDropZone');
+      dropZone.style.borderColor = 'var(--accent)';
+      dropZone.style.background = '#e0f2fe';
+    }
+
+    // Handle drag leave
+    function handleDragLeave(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropZone = document.getElementById('avatarDropZone');
+      dropZone.style.borderColor = '#d1d5db';
+      dropZone.style.background = '#f9fafb';
+    }
+
+    // Handle drop
+    function handleDrop(event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const dropZone = document.getElementById('avatarDropZone');
+      dropZone.style.borderColor = '#d1d5db';
+      dropZone.style.background = '#f9fafb';
+
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        processAvatarFile(files[0]);
+      }
+    }
+
+    // Handle file select
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        processAvatarFile(file);
+      }
+    }
+
+    // Process selected file
+    function processAvatarFile(file) {
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Bitte wähle eine Bilddatei aus (PNG, JPG, GIF)');
+        return;
+      }
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Die Datei ist zu groß. Maximal 5MB erlaubt.');
+        return;
+      }
+
+      selectedAvatarFile = file;
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('avatarPreview').src = e.target.result;
+        document.getElementById('avatarFileName').textContent = file.name;
+        document.getElementById('avatarPreviewContainer').style.display = 'block';
+
+        // Enable upload button
+        document.getElementById('uploadAvatarBtn').disabled = false;
+        document.getElementById('uploadAvatarBtn').style.opacity = '1';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Upload avatar from modal
+    async function uploadAvatarFromModal() {
+      if (!selectedAvatarFile) {
+        alert('Bitte wähle ein Bild aus');
+        return;
+      }
+
+      const uploadBtn = document.getElementById('uploadAvatarBtn');
+      const progressDiv = document.getElementById('uploadProgress');
+      const progressBar = document.getElementById('uploadProgressBar');
+
+      try {
+        // Disable button and show progress
+        uploadBtn.disabled = true;
+        uploadBtn.style.opacity = '0.5';
+        progressDiv.style.display = 'block';
+        progressBar.style.width = '30%';
+
+        console.log('📤 Uploading avatar for:', currentUser.username);
+
+        // Generate unique filename
+        const fileExt = selectedAvatarFile.name.split('.').pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        progressBar.style.width = '50%';
+
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, selectedAvatarFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error('❌ Upload error:', uploadError);
+          alert('Fehler beim Hochladen: ' + uploadError.message);
+          progressDiv.style.display = 'none';
+          uploadBtn.disabled = false;
+          uploadBtn.style.opacity = '1';
+          return;
+        }
+
+        progressBar.style.width = '70%';
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        console.log('✅ Avatar uploaded:', publicUrl);
+
+        progressBar.style.width = '90%';
+
+        // Update profile in database
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', currentUser.id);
+
+        if (updateError) {
+          console.error('❌ Database update error:', updateError);
+          alert('Fehler beim Speichern: ' + updateError.message);
+          progressDiv.style.display = 'none';
+          uploadBtn.disabled = false;
+          uploadBtn.style.opacity = '1';
+          return;
+        }
+
+        progressBar.style.width = '100%';
+
+        // Update current user object
+        currentUser.avatar_url = publicUrl;
+
+        // Update UI
+        updateUIForUser(currentUser);
+        document.getElementById('profileAvatarLarge').src = publicUrl;
+        document.getElementById('profileAvatarLarge').style.display = 'block';
+
+        // Close modal after short delay
+        setTimeout(() => {
+          closeAvatarUploadModal();
+          alert('✅ Profilbild erfolgreich hochgeladen!');
+        }, 500);
+
+        console.log('✅ Profile updated successfully');
+
+      } catch (err) {
+        console.error('💥 Avatar upload failed:', err);
+        alert('Ein Fehler ist aufgetreten: ' + err.message);
+        progressDiv.style.display = 'none';
+        uploadBtn.disabled = false;
+        uploadBtn.style.opacity = '1';
       }
     }
 
