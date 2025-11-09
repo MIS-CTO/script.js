@@ -7532,7 +7532,6 @@
           </div>
           <div class="login-actions">
             <button type="submit" class="btn btn-primary" style="width: 100%;">Anmelden</button>
-            <button type="button" class="btn" onclick="testDatabaseConnection()" style="width: 100%; background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); margin-top:8px;">🔍 Test: DB-Verbindung prüfen</button>
             <button type="button" class="btn skip-button" onclick="skipLogin()">Testing: Anmeldung überspringen</button>
           </div>
         </form>
@@ -7666,7 +7665,7 @@
           // Verify user still exists (case-insensitive)
           const { data: profiles, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, username, email, role, password_hash, avatar_url')
             .ilike('username', savedUsername);
 
           if (error) {
@@ -7785,7 +7784,7 @@
         // Query user by username (case-insensitive)
         const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, username, email, role, password_hash, avatar_url')
           .ilike('username', username);
 
         console.log('📊 Query result:', { profiles, error, count: profiles?.length });
@@ -7880,20 +7879,32 @@
     // Update UI for logged-in user
     function updateUIForUser(profile) {
       console.log('🎨 Updating UI for user:', profile.username);
+      console.log('🖼️ Avatar URL:', profile.avatar_url || 'No avatar URL found');
 
       const profileButton = document.getElementById('profileButton');
       const profileButtonText = document.getElementById('profileButtonText');
 
       profileButtonText.textContent = profile.username;
 
+      // Update profile button avatar
       if (profile.avatar_url) {
         let avatarImg = profileButton.querySelector('.profile-avatar');
         if (!avatarImg) {
           avatarImg = document.createElement('img');
           avatarImg.className = 'profile-avatar';
+          avatarImg.onerror = function() {
+            console.error('❌ Failed to load profile button avatar:', profile.avatar_url);
+          };
           profileButton.insertBefore(avatarImg, profileButtonText);
         }
         avatarImg.src = profile.avatar_url;
+        console.log('✅ Profile button avatar updated:', profile.avatar_url);
+      } else {
+        // Remove avatar if not present
+        const existingAvatar = profileButton.querySelector('.profile-avatar');
+        if (existingAvatar) {
+          existingAvatar.remove();
+        }
       }
 
       // Show welcome message
@@ -7907,6 +7918,10 @@
 
         if (profile.avatar_url && dashboardAvatar) {
           dashboardAvatar.src = profile.avatar_url;
+          dashboardAvatar.onerror = function() {
+            console.error('❌ Failed to load dashboard avatar:', profile.avatar_url);
+          };
+          console.log('✅ Dashboard avatar updated:', profile.avatar_url);
         }
       }
 
@@ -8006,6 +8021,7 @@
     // Show profile view with user data
     function showProfileView() {
       console.log('📋 Opening profile view for:', currentUser.username);
+      console.log('🖼️ Profile avatar URL:', currentUser.avatar_url || 'No avatar URL');
 
       // Switch to profile view
       document.getElementById('loginFormView').style.display = 'none';
@@ -8022,6 +8038,11 @@
       if (currentUser.avatar_url) {
         avatarLarge.src = currentUser.avatar_url;
         avatarLarge.style.display = 'block';
+        avatarLarge.onerror = function() {
+          console.error('❌ Failed to load large profile avatar:', currentUser.avatar_url);
+          avatarLarge.style.display = 'none';
+        };
+        console.log('✅ Large profile avatar set:', currentUser.avatar_url);
       } else {
         avatarLarge.style.display = 'none';
       }
