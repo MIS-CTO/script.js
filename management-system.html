@@ -1469,7 +1469,7 @@
 
     <!-- Profile Button -->
     <button class="profile-button" id="profileButton">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg id="profileButtonIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
         <circle cx="12" cy="7" r="4"></circle>
       </svg>
@@ -7658,11 +7658,25 @@
         console.log('🔄 Initializing authentication...');
         const rememberMe = localStorage.getItem('rememberMe') === 'true';
         const savedUsername = localStorage.getItem('username');
+        const savedAvatarUrl = localStorage.getItem('avatarUrl');
 
         if (rememberMe && savedUsername) {
           console.log('🔑 Found saved session for:', savedUsername);
 
-          // Verify user still exists (case-insensitive)
+          // Create temporary profile object with cached avatar for immediate display
+          const tempProfile = {
+            username: savedUsername,
+            role: localStorage.getItem('userRole') || 'user',
+            avatar_url: savedAvatarUrl
+          };
+
+          // Show avatar immediately from localStorage for faster UX
+          if (savedAvatarUrl) {
+            console.log('⚡ Loading cached avatar immediately:', savedAvatarUrl);
+            updateUIForUser(tempProfile);
+          }
+
+          // Verify user still exists and get fresh data (case-insensitive)
           const { data: profiles, error } = await supabase
             .from('profiles')
             .select('id, username, email, role, password_hash, avatar_url')
@@ -7673,11 +7687,21 @@
             localStorage.removeItem('rememberMe');
             localStorage.removeItem('username');
             localStorage.removeItem('userRole');
+            localStorage.removeItem('avatarUrl');
           } else if (profiles && profiles.length > 0) {
             const profile = profiles[0];
             console.log('✅ Session restored successfully for:', profile.username);
             currentUser = profile;
             localStorage.setItem('userRole', profile.role || 'user');
+
+            // Update localStorage with fresh avatar URL from database
+            if (profile.avatar_url) {
+              localStorage.setItem('avatarUrl', profile.avatar_url);
+            } else {
+              localStorage.removeItem('avatarUrl');
+            }
+
+            // Refresh UI with complete profile data
             updateUIForUser(profile);
             await initializePermissions();
             return;
@@ -7686,6 +7710,7 @@
             localStorage.removeItem('rememberMe');
             localStorage.removeItem('username');
             localStorage.removeItem('userRole');
+            localStorage.removeItem('avatarUrl');
           }
         }
 
@@ -7850,7 +7875,12 @@
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('username', profile.username);
           localStorage.setItem('userRole', profile.role || 'user');
-          console.log('💾 Session saved to localStorage');
+          if (profile.avatar_url) {
+            localStorage.setItem('avatarUrl', profile.avatar_url);
+            console.log('💾 Session saved to localStorage (including avatar)');
+          } else {
+            console.log('💾 Session saved to localStorage');
+          }
         }
 
         // Update UI
@@ -7883,6 +7913,7 @@
 
       const profileButton = document.getElementById('profileButton');
       const profileButtonText = document.getElementById('profileButtonText');
+      const profileButtonIcon = document.getElementById('profileButtonIcon');
 
       profileButtonText.textContent = profile.username;
 
@@ -7898,12 +7929,23 @@
           profileButton.insertBefore(avatarImg, profileButtonText);
         }
         avatarImg.src = profile.avatar_url;
+
+        // Hide default SVG icon when avatar is present
+        if (profileButtonIcon) {
+          profileButtonIcon.style.display = 'none';
+        }
+
         console.log('✅ Profile button avatar updated:', profile.avatar_url);
       } else {
-        // Remove avatar if not present
+        // Remove avatar if not present and show default icon
         const existingAvatar = profileButton.querySelector('.profile-avatar');
         if (existingAvatar) {
           existingAvatar.remove();
+        }
+
+        // Show default SVG icon
+        if (profileButtonIcon) {
+          profileButtonIcon.style.display = 'block';
         }
       }
 
@@ -7966,15 +8008,22 @@
         localStorage.removeItem('rememberMe');
         localStorage.removeItem('username');
         localStorage.removeItem('userRole');
+        localStorage.removeItem('avatarUrl');
         localStorage.removeItem('hasSkippedLogin');
 
-        console.log('🗑️ Session data cleared');
+        console.log('🗑️ Session data cleared (including avatar)');
 
         // Reset UI
         document.getElementById('profileButtonText').textContent = 'Login';
         const existingAvatar = document.getElementById('profileButton').querySelector('.profile-avatar');
         if (existingAvatar) {
           existingAvatar.remove();
+        }
+
+        // Show default SVG icon again
+        const profileButtonIcon = document.getElementById('profileButtonIcon');
+        if (profileButtonIcon) {
+          profileButtonIcon.style.display = 'block';
         }
 
         const dashboardWelcome = document.getElementById('dashboardWelcome');
@@ -8329,6 +8378,10 @@
         // Update current user object
         currentUser.avatar_url = publicUrl;
 
+        // Save avatar URL to localStorage for persistence
+        localStorage.setItem('avatarUrl', publicUrl);
+        console.log('💾 Avatar URL saved to localStorage');
+
         // Update UI
         updateUIForUser(currentUser);
         document.getElementById('profileAvatarLarge').src = publicUrl;
@@ -8535,6 +8588,10 @@
 
         // Update current user object
         currentUser.avatar_url = publicUrl;
+
+        // Save avatar URL to localStorage for persistence
+        localStorage.setItem('avatarUrl', publicUrl);
+        console.log('💾 Avatar URL saved to localStorage');
 
         // Update UI
         updateUIForUser(currentUser);
