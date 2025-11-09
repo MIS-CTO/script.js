@@ -1466,10 +1466,8 @@
     <a id="tab-dienstplan" href="#dienstplan">Dienstplan</a>
     <a id="tab-agreements" href="#agreements">Agreements</a>
     <a id="tab-analytics" href="#analytics">Analytics</a>
-    <span style="width: 24px;"></span>
-    <a id="tab-profile" href="#profile">Profile</a>
 
-    <!-- Profile Button (Hidden when logged in) -->
+    <!-- Profile Button -->
     <button class="profile-button" id="profileButton">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -3915,7 +3913,6 @@
           }
           else if (tabName === "artists") loadArtists();
           else if (tabName === "customers") loadCustomers();
-          else if (tabName === "profile") loadProfilePage();
         }
       }
 
@@ -7925,10 +7922,18 @@
     // Profile button click handler
     function toggleProfileMenu() {
       if (currentUser) {
-        // Navigate to profile section
-        const profileTab = document.getElementById('tab-profile');
-        if (profileTab) {
-          profileTab.click();
+        // Navigate to profile section (full-page view)
+        const tabs = document.querySelectorAll("nav a[id^='tab-']");
+        const sections = document.querySelectorAll("section");
+
+        // Deactivate all tabs and sections
+        tabs.forEach(t => t.classList.remove("active"));
+        sections.forEach(s => s.classList.remove("active"));
+
+        // Activate profile section
+        const profileSection = document.getElementById('profile-section');
+        if (profileSection) {
+          profileSection.classList.add('active');
           loadProfilePage();
         }
       } else {
