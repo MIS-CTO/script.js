@@ -16,18 +16,20 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     /* ========================================
-       macOS Design System - CSS Variables
+       macOS Light Mode Frosted Glass - CSS Variables
        ======================================== */
     :root {
-      /* System Colors - Light Mode */
-      --macos-bg: #fafafa;
-      --macos-panel: rgba(255, 255, 255, 0.8);
-      --macos-elevated: rgba(255, 255, 255, 0.95);
+      /* Backgrounds - Light Mode Frosted Glass */
+      --macos-bg: #f5f5f7;
+      --macos-panel: rgba(255, 255, 255, 0.7);
+      --macos-elevated: rgba(255, 255, 255, 0.85);
+      --macos-nav-bg: rgba(251, 251, 253, 0.72);
 
-      /* Text Colors */
+      /* Text Colors - Always Dark in Light Mode */
       --macos-text-primary: #1d1d1f;
       --macos-text-secondary: #86868b;
-      --macos-text-tertiary: rgba(60, 60, 67, 0.6);
+      --macos-text-tertiary: #a1a1a6;
+      --macos-placeholder: #86868b;
 
       /* Accent Colors */
       --macos-accent-blue: #0071e3;
@@ -36,24 +38,25 @@
       --macos-accent-orange: #ff9500;
       --macos-accent-purple: #5856d6;
 
-      /* System Fills */
+      /* System Fills - Light Mode */
       --macos-fill-primary: rgba(120, 120, 128, 0.20);
       --macos-fill-secondary: rgba(120, 120, 128, 0.16);
-      --macos-fill-tertiary: rgba(118, 118, 128, 0.12);
-      --macos-fill-quaternary: rgba(116, 116, 128, 0.08);
+      --macos-fill-tertiary: rgba(120, 120, 128, 0.12);
+      --macos-fill-quaternary: rgba(120, 120, 128, 0.08);
 
-      /* Strokes */
-      --macos-stroke-primary: rgba(0, 0, 0, 0.06);
+      /* Strokes - Enhanced for Light Mode */
+      --macos-stroke-primary: rgba(0, 0, 0, 0.08);
       --macos-stroke-secondary: rgba(0, 0, 0, 0.04);
 
-      /* Shadows */
+      /* Shadows - Subtle for Light Backgrounds */
       --macos-shadow-small: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-      --macos-shadow-medium: 0 2px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-      --macos-shadow-large: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      --macos-shadow-medium: 0 3px 12px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+      --macos-shadow-large: 0 10px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
 
-      /* Vibrancy & Blur */
-      --macos-blur: saturate(180%) blur(20px);
-      --macos-panel-backdrop: rgba(255, 255, 255, 0.72);
+      /* Frosted Glass Blur Effects */
+      --macos-blur-strong: saturate(180%) blur(20px);
+      --macos-blur-medium: saturate(160%) blur(15px);
+      --macos-blur-light: saturate(140%) blur(10px);
 
       /* Border Radius System */
       --radius-sm: 4px;
@@ -90,19 +93,42 @@
       --shadow: var(--macos-shadow-medium);
     }
 
-    /* Dark Mode Support (future enhancement) */
+    /* FORCE LIGHT MODE EVERYWHERE - Disable Dark Mode */
     @media (prefers-color-scheme: dark) {
       :root {
-        --macos-bg: #1c1c1e;
-        --macos-panel: rgba(28, 28, 30, 0.8);
-        --macos-elevated: rgba(44, 44, 46, 0.95);
-        --macos-text-primary: #f5f5f7;
-        --macos-text-secondary: #98989d;
-        --macos-text-tertiary: rgba(235, 235, 245, 0.6);
-        --macos-stroke-primary: rgba(255, 255, 255, 0.08);
-        --macos-stroke-secondary: rgba(255, 255, 255, 0.04);
-        --macos-panel-backdrop: rgba(28, 28, 30, 0.72);
+        /* Override dark mode - keep everything light */
+        --macos-bg: #f5f5f7 !important;
+        --macos-panel: rgba(255, 255, 255, 0.7) !important;
+        --macos-elevated: rgba(255, 255, 255, 0.85) !important;
+        --macos-nav-bg: rgba(251, 251, 253, 0.72) !important;
+        --macos-text-primary: #1d1d1f !important;
+        --macos-text-secondary: #86868b !important;
+        --macos-text-tertiary: #a1a1a6 !important;
+        --macos-stroke-primary: rgba(0, 0, 0, 0.08) !important;
+        --macos-stroke-secondary: rgba(0, 0, 0, 0.04) !important;
       }
+    }
+
+    /* ========================================
+       Force Light Mode on All Elements
+       ======================================== */
+    * {
+      color-scheme: light !important;
+    }
+
+    html, body {
+      background: var(--macos-bg) !important;
+      color: var(--macos-text-primary) !important;
+      color-scheme: light !important;
+    }
+
+    /* Emergency override for any dark backgrounds */
+    [style*="background: rgb(28"],
+    [style*="background: #1"],
+    [style*="background: #2"],
+    [style*="background: #3"] {
+      background: var(--macos-panel) !important;
+      color: var(--macos-text-primary) !important;
     }
     /* ========================================
        macOS Typography System
@@ -192,7 +218,7 @@
       letter-spacing: 0.0013em;
     }
     /* ========================================
-       Navigation Bar - macOS Style
+       Navigation Bar - Frosted Glass
        ======================================== */
     nav {
       position: sticky;
@@ -201,22 +227,22 @@
       display: flex;
       gap: 18px;
       align-items: center;
-      background: var(--macos-panel-backdrop);
-      backdrop-filter: var(--macos-blur);
-      -webkit-backdrop-filter: var(--macos-blur);
+      background: var(--macos-nav-bg) !important;
+      backdrop-filter: var(--macos-blur-strong);
+      -webkit-backdrop-filter: var(--macos-blur-strong);
       padding: 12px 24px;
       border-bottom: 1px solid var(--macos-stroke-primary);
       height: 52px;
     }
 
     nav a {
-      color: var(--macos-text-primary);
+      color: var(--macos-text-primary) !important;
       text-decoration: none;
       font-weight: 500;
       font-size: 13px;
       padding: 6px 8px;
       border-bottom: 2px solid transparent;
-      opacity: 0.8;
+      opacity: 0.75;
       cursor: pointer;
       transition: opacity 0.2s ease, border-color 0.2s ease;
       letter-spacing: -0.008em;
@@ -231,19 +257,51 @@
       opacity: 1;
       font-weight: 600;
     }
-    section { display:none; padding:24px 5vw; max-width:100%; margin:0 auto; }
-    section.active { display:block; }
-    h2 { margin:0 0 12px; font-size:22px; font-weight:600; letter-spacing:-0.022em; }
+    /* ========================================
+       Sections & Content Areas - Light Mode
+       ======================================== */
+    section {
+      display: none;
+      padding: 24px 5vw;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    section.active {
+      display: block;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.022em;
+      color: var(--macos-text-primary) !important;
+    }
+
+    /* ========================================
+       Badges - Light with Colored Accents
+       ======================================== */
     .badge {
-      background:rgba(255,255,255,0.95);
-      border:1px solid rgba(0,0,0,0.04);
-      border-radius:18px;
-      padding:6px 14px;
-      font-size:13px;
-      box-shadow:0 1px 3px rgba(0,0,0,0.06);
-      display:inline-block;
-      margin-right:8px;
-      margin-bottom:8px;
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: 12px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--macos-text-primary) !important;
+      box-shadow: var(--macos-shadow-small);
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Badge variants */
+    .badge-resident,
+    .badge-active {
+      background: rgba(52, 199, 89, 0.15) !important;
+      color: #1d6b2e !important;
+      border-color: rgba(52, 199, 89, 0.3);
     }
     .calendar-controls {
       display:flex; gap:12px; margin-bottom:16px; align-items:center; flex-wrap:wrap;
@@ -330,7 +388,7 @@
     }
 
     /* ========================================
-       Form Inputs - macOS Style
+       Form Inputs - Frosted Glass
        ======================================== */
     input[type="text"],
     input[type="email"],
@@ -347,8 +405,8 @@
       border-radius: var(--radius-md);
       font-size: 13px;
       font-family: inherit;
-      background: var(--macos-elevated);
-      color: var(--macos-text-primary);
+      background: var(--macos-elevated) !important;
+      color: var(--macos-text-primary) !important;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
       letter-spacing: -0.008em;
     }
@@ -363,15 +421,19 @@
 
     input::placeholder,
     textarea::placeholder {
-      color: var(--macos-text-tertiary);
+      color: var(--macos-placeholder) !important;
+      opacity: 1 !important;
     }
 
-    /* Special border-radius for certain inputs that should stay pill-shaped */
+    /* Search bars - White with dark text */
     input[type="search"] {
+      background: var(--macos-elevated) !important;
+      border: 1px solid var(--macos-stroke-primary);
+      color: var(--macos-text-primary) !important;
       border-radius: var(--radius-pill);
     }
     /* ========================================
-       Tables - macOS Style
+       Tables - Frosted Glass
        ======================================== */
     table {
       width: 100%;
@@ -380,11 +442,13 @@
       border-radius: var(--radius-lg);
       overflow: hidden;
       background: var(--macos-elevated);
+      backdrop-filter: var(--macos-blur-medium);
+      -webkit-backdrop-filter: var(--macos-blur-medium);
       box-shadow: var(--macos-shadow-medium);
     }
 
     thead {
-      background: var(--macos-fill-quaternary);
+      background: #f5f5f7 !important;
     }
 
     th {
@@ -392,9 +456,9 @@
       padding: 10px 16px;
       border-bottom: 1px solid var(--macos-stroke-primary);
       font-weight: 600;
-      font-size: 12px;
-      color: var(--macos-text-secondary);
-      letter-spacing: 0.0017em;
+      font-size: 11px;
+      color: #6e6e73 !important;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
     }
 
@@ -403,23 +467,29 @@
       padding: 12px 16px;
       border-bottom: 1px solid var(--macos-stroke-secondary);
       font-size: 13px;
-      color: var(--macos-text-primary);
+      color: var(--macos-text-primary) !important;
+      background: rgba(255, 255, 255, 0.6);
     }
 
     tbody tr:last-child td {
       border-bottom: none;
     }
 
-    tbody tr:hover {
-      background: var(--macos-fill-quaternary);
+    tbody tr:hover td {
+      background: rgba(0, 0, 0, 0.02);
     }
+    /* ========================================
+       Calendar Container - Frosted Glass
+       ======================================== */
     .calendar-container {
-      background:rgba(255,255,255,0.95);
-      border:1px solid rgba(0,0,0,0.06);
-      border-radius:12px;
-      box-shadow:var(--shadow);
-      overflow:auto;
-      width:100%;
+      background: var(--macos-panel) !important;
+      backdrop-filter: var(--macos-blur-medium);
+      -webkit-backdrop-filter: var(--macos-blur-medium);
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--macos-shadow-medium);
+      overflow: auto;
+      width: 100%;
     }
     .calendar-grid {
       display:grid; grid-template-columns:120px repeat(22, 1fr); min-width:100%;
@@ -593,13 +663,17 @@
       border-left-color:#757575;
     }
     
-    /* Dienstplan Styles */
+    /* ========================================
+       Dienstplan Grid - Frosted Glass
+       ======================================== */
     .dienstplan-grid {
-      background:rgba(255,255,255,0.95);
-      border:1px solid rgba(0,0,0,0.06);
-      border-radius:12px;
-      box-shadow:var(--shadow);
-      overflow:auto;
+      background: var(--macos-panel) !important;
+      backdrop-filter: var(--macos-blur-medium);
+      -webkit-backdrop-filter: var(--macos-blur-medium);
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--macos-shadow-medium);
+      overflow: auto;
     }
     
     .category-section {
@@ -825,7 +899,7 @@
     }
     
     /* ========================================
-       Modals & Dialogs - macOS Style
+       Modals & Dialogs - Frosted Glass Overlay
        ======================================== */
     .modal-backdrop {
       position: fixed;
@@ -850,7 +924,9 @@
     }
 
     .modal {
-      background: var(--macos-elevated);
+      background: rgba(255, 255, 255, 0.95) !important;
+      backdrop-filter: var(--macos-blur-strong);
+      -webkit-backdrop-filter: var(--macos-blur-strong);
       border-radius: var(--radius-xl);
       padding: var(--space-xl);
       max-width: 600px;
@@ -867,7 +943,7 @@
     }
 
     .modal h3 {
-      color: var(--macos-text-primary);
+      color: var(--macos-text-primary) !important;
       font-weight: 600;
       font-size: 17px;
       letter-spacing: -0.018em;
@@ -1806,7 +1882,9 @@
       box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
     }
 
-    /* Analytics Charts */
+    /* ========================================
+       Analytics Charts - Frosted Glass
+       ======================================== */
     .charts-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1815,18 +1893,20 @@
     }
 
     .chart-card {
-      background: var(--panel);
-      border-radius: var(--radius);
+      background: var(--macos-panel) !important;
+      backdrop-filter: var(--macos-blur-medium);
+      -webkit-backdrop-filter: var(--macos-blur-medium);
+      border-radius: var(--radius-xl);
       padding: 24px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--stroke);
+      box-shadow: var(--macos-shadow-medium);
+      border: 1px solid var(--macos-stroke-primary);
     }
 
     .chart-card h3 {
       margin: 0 0 16px 0;
       font-size: 18px;
       font-weight: 600;
-      color: var(--ink);
+      color: var(--macos-text-primary) !important;
     }
 
     /* Time Range Tabs */
