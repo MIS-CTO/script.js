@@ -3573,13 +3573,22 @@
           return;
         }
 
-        // Check specific permissions
-        const canCreateBooking = await userHasPermission('calendar.create_booking');
-        const canCreateEvent = await userHasPermission('calendar.create_event');
-        const canManageArtists = await userHasPermission('artists.manage');
-        const canManageCustomers = await userHasPermission('customers.manage');
-        const canManageRequests = await userHasPermission('requests.manage');
-        const canManageDienstplan = await userHasPermission('dienstplan.manage');
+        // Check all permissions in parallel for faster load
+        const [
+          canCreateBooking,
+          canCreateEvent,
+          canManageArtists,
+          canManageCustomers,
+          canManageRequests,
+          canManageDienstplan
+        ] = await Promise.all([
+          userHasPermission('calendar.create_booking'),
+          userHasPermission('calendar.create_event'),
+          userHasPermission('artists.manage'),
+          userHasPermission('customers.manage'),
+          userHasPermission('requests.manage'),
+          userHasPermission('dienstplan.manage')
+        ]);
 
         console.log('Permissions loaded:', {
           canCreateBooking,
@@ -3721,8 +3730,11 @@
       const tabs = document.querySelectorAll("nav a[id^='tab-']");
       const sections = document.querySelectorAll("section");
 
-      await loadInitialData();
-      await initializePermissions();
+      // Load data and permissions in parallel for faster initial load
+      await Promise.all([
+        loadInitialData(),
+        initializePermissions()
+      ]);
 
       // Request tabs initialization function
       function initRequestTabs() {
@@ -3951,20 +3963,24 @@
 
       async function loadInitialData() {
         try {
-          const { data: artists } = await supabase.from('artists').select('*');
+          // Load all data in parallel for faster initial load
+          const [
+            { data: artists },
+            { data: teamMembers },
+            { data: locations }
+          ] = await Promise.all([
+            supabase.from('artists').select('*'),
+            supabase.from('dienstplan_resources')
+              .select('*')
+              .order('sort_order', { ascending: true })
+              .order('name', { ascending: true }),
+            supabase.from('locations').select('*').order('name', { ascending: true })
+          ]);
+
           allArtists = artists || [];
-          console.log('Artists loaded:', allArtists.length);
-          
-          // Load team members from dienstplan_resources
-          const { data: teamMembers } = await supabase
-            .from('dienstplan_resources')
-            .select('*')
-            .order('sort_order', { ascending: true })
-            .order('name', { ascending: true });
           allTeamMembers = teamMembers || [];
+          console.log('Artists loaded:', allArtists.length);
           console.log('Team members loaded:', allTeamMembers.length);
-          
-          const { data: locations } = await supabase.from('locations').select('*').order('name', { ascending: true });
           console.log('Locations loaded:', locations?.length);
           
           if (locations && locations.length > 0) {
@@ -4029,9 +4045,12 @@
             }
 
           }
-          
-          await loadEvents();
-          await loadDashboard();
+
+          // Load events and dashboard in parallel
+          await Promise.all([
+            loadEvents(),
+            loadDashboard()
+          ]);
         } catch(err) {
           console.error("Load error:", err);
           alert("Error loading data: " + err.message);
@@ -4040,19 +4059,25 @@
 
       async function loadDashboard() {
         try {
-          const { data: reqs } = await supabase.from('requests').select('*');
-          const { data: artists } = await supabase.from('artists').select('*');
-          
           // Agreements für die nächsten 7 Tage laden (nur echte Appointments, keine Events)
           const today = new Date().toISOString().split('T')[0];
           const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-          
-          const { data: upcomingEvents } = await supabase
-            .from('events')
-            .select('id, agreement_file_url, customer_id, type')
-            .gte('start_time', `${today}T00:00:00`)
-            .lte('start_time', `${nextWeek}T23:59:59`)
-            .not('type', 'eq', 'events'); // Nur echte Appointments, keine "Events"
+
+          // Load all dashboard data in parallel
+          const [
+            { data: reqs },
+            { data: artists },
+            { data: upcomingEvents }
+          ] = await Promise.all([
+            supabase.from('requests').select('*'),
+            supabase.from('artists').select('*'),
+            supabase
+              .from('events')
+              .select('id, agreement_file_url, customer_id, type')
+              .gte('start_time', `${today}T00:00:00`)
+              .lte('start_time', `${nextWeek}T23:59:59`)
+              .not('type', 'eq', 'events') // Nur echte Appointments, keine "Events"
+          ]);
           
           const totalAgreements = upcomingEvents?.filter(e => e.customer_id).length || 0;
           const completedAgreements = upcomingEvents?.filter(e => e.customer_id && e.agreement_file_url).length || 0;
