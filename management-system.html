@@ -4761,6 +4761,7 @@
 
       window.editRequest = async function(requestId) {
         editingRequestId = requestId;
+        selectedRequestId = requestId;
 
         // Find the request
         const request = allRequests.find(r => r.id === requestId);
@@ -4769,36 +4770,396 @@
           return;
         }
 
-        // Populate the form with current data
-        document.getElementById('editFirstName').value = request.first_name || '';
-        document.getElementById('editLastName').value = request.last_name || '';
-        document.getElementById('editEmail').value = request.email || '';
-        document.getElementById('editPhone').value = request.customer_phone || '';
-        document.getElementById('editInstagram').value = request.instagram || '';
-        document.getElementById('editPriority').value = request.priority || '';
-        document.getElementById('editPlacement').value = request.placement || '';
-        document.getElementById('editSize').value = request.size || '';
-        document.getElementById('editStyle').value = request.style || '';
-        document.getElementById('editColorway').value = request.colorway || '';
-        document.getElementById('editDescription').value = request.description || '';
-        document.getElementById('editScheduledDate').value = request.scheduled_date || '';
-        document.getElementById('editStartTime').value = request.start_time || '';
-        document.getElementById('editEndTime').value = request.end_time || '';
-        document.getElementById('editStatus').value = request.status || 'open_request';
+        console.log('✏️ Editing request in full frame:', request);
 
-        // Set artist if assigned
-        if (request.artist_id) {
-          document.getElementById('editArtistId').value = request.artist_id;
-          const artist = allArtists.find(a => a.id === request.artist_id);
-          if (artist) {
-            document.getElementById('editSelectedArtist').textContent = `Selected: ${artist.name}`;
-          }
-        } else {
-          document.getElementById('editArtistId').value = '';
-          document.getElementById('editSelectedArtist').textContent = '';
+        const detailEl = document.getElementById('requestDetail');
+
+        // Status display names
+        const statusNames = {
+          'open_request': 'New',
+          'pending': 'Pending',
+          'scheduled': 'Scheduled',
+          'finished': 'Finished',
+          'canceled': 'Canceled'
+        };
+
+        // Get customer data
+        const customer = {
+          first_name: request.first_name,
+          last_name: request.last_name,
+          email: request.email,
+          phone: request.customer_phone,
+          rank: request.customer?.rank || null,
+          instagram: request.customer?.instagram || request.instagram || null
+        };
+
+        // Rank badge styling
+        const rankBadgeStyle = customer.rank ? {
+          'Platinum': 'background:#FFD700; color:#1d1d1f;',
+          'Gold': 'background:#FF8C00; color:white;',
+          'Silver': 'background:#C0C0C0; color:#1d1d1f;',
+          'Bronze': 'background:#CD7F32; color:white;'
+        }[customer.rank] || '' : '';
+
+        detailEl.innerHTML = `
+          <form id="fullFrameEditForm" style="height:100%; display:flex; flex-direction:column;">
+            <div style="flex:1; overflow-y:auto;">
+              <div style="margin-bottom:24px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                  <h2 style="margin:0; font-size:24px; font-weight:600;">
+                    Edit Request: ${request.request_number || `#${request.id.substring(0, 8).toUpperCase()}`}
+                  </h2>
+                  <span class="request-badge ${request.status}" style="font-size:13px; padding:6px 16px;">
+                    ${statusNames[request.status] || request.status}
+                  </span>
+                </div>
+                ${request.location ? `
+                  <div style="color:var(--muted); font-size:14px;">
+                    📍 ${request.location.name}${request.location.city ? ` (${request.location.city})` : ''}
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Customer Information -->
+              <div class="detail-section">
+                <h3>Customer Information</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <div class="detail-label">Vorname</div>
+                    <input type="text" id="fullEditFirstName" value="${request.first_name || ''}" required
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Nachname
+                      ${customer.rank ? `
+                        <span style="display:inline-block; margin-left:8px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; ${rankBadgeStyle}">
+                          ${customer.rank}
+                        </span>
+                      ` : ''}
+                    </div>
+                    <input type="text" id="fullEditLastName" value="${request.last_name || ''}" required
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Email</div>
+                    <input type="email" id="fullEditEmail" value="${request.email || ''}" required
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Phone</div>
+                    <input type="tel" id="fullEditPhone" value="${request.customer_phone || ''}" required
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Instagram</div>
+                    <input type="text" id="fullEditInstagram" value="${request.instagram || ''}" placeholder="@username"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Request Details -->
+              <div class="detail-section">
+                <h3>Request Details</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <div class="detail-label">Priority</div>
+                    <select id="fullEditPriority" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                      <option value="">-- Select Priority --</option>
+                      <option value="low" ${request.priority === 'low' ? 'selected' : ''}>Low 💤</option>
+                      <option value="normal" ${request.priority === 'normal' ? 'selected' : ''}>Normal ✓</option>
+                      <option value="high" ${request.priority === 'high' ? 'selected' : ''}>High ⚡</option>
+                      <option value="urgent" ${request.priority === 'urgent' ? 'selected' : ''}>Urgent 🔥</option>
+                    </select>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Placement</div>
+                    <input type="text" id="fullEditPlacement" value="${request.placement || ''}"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Size</div>
+                    <input type="text" id="fullEditSize" value="${request.size || ''}"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Style</div>
+                    <input type="text" id="fullEditStyle" value="${request.style || ''}"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Colorway</div>
+                    <input type="text" id="fullEditColorway" value="${request.colorway || ''}"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item" style="grid-column:1/-1;">
+                    <div class="detail-label">Description</div>
+                    <textarea id="fullEditDescription" rows="4"
+                              style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; resize:vertical;">${request.description || ''}</textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Artist Assignment -->
+              <div class="detail-section">
+                <h3>Artist Assignment</h3>
+                <div class="detail-item">
+                  <div class="detail-label">Search Artist</div>
+                  <input type="text" id="fullEditArtistSearch" placeholder="Type to search artists..."
+                         style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  <div id="fullEditArtistSearchResults" style="display:none; max-height:200px; overflow-y:auto; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-top:8px; background:white;"></div>
+                  <input type="hidden" id="fullEditArtistId" value="${request.artist_id || ''}">
+                  <div id="fullEditSelectedArtist" style="margin-top:8px; font-size:13px; color:var(--muted);">
+                    ${request.artist ? `Selected: ${request.artist.name}` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Appointment Details -->
+              <div class="detail-section">
+                <h3>Appointment Details</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <div class="detail-label">Date</div>
+                    <input type="date" id="fullEditScheduledDate" value="${request.scheduled_date || ''}"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Start Time</div>
+                    <input type="time" id="fullEditStartTime" value="${request.start_time || ''}"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">End Time</div>
+                    <input type="time" id="fullEditEndTime" value="${request.end_time || ''}"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Management -->
+              <div class="detail-section">
+                <h3>Status Management</h3>
+                <div class="detail-item">
+                  <div class="detail-label">Status</div>
+                  <select id="fullEditStatus" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                    <option value="open_request" ${request.status === 'open_request' ? 'selected' : ''}>New Request</option>
+                    <option value="pending" ${request.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="scheduled" ${request.status === 'scheduled' ? 'selected' : ''}>Scheduled</option>
+                    <option value="finished" ${request.status === 'finished' ? 'selected' : ''}>Finished</option>
+                    <option value="canceled" ${request.status === 'canceled' ? 'selected' : ''}>Canceled</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons (Fixed Footer) -->
+            <div style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1); background:rgba(255,255,255,0.95);">
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                <button type="submit" class="btn" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">
+                  💾 Save Changes
+                </button>
+                <button type="button" class="btn" onclick="scheduleFromEdit()" style="background:#007AFF; color:white; border:none; flex:1; min-width:140px;">
+                  📅 Schedule
+                </button>
+                <button type="button" class="btn" onclick="cancelFullFrameEdit()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">
+                  ✕ Cancel
+                </button>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn" onclick="resetRequestToOpenFullFrame()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">
+                  🔄 Reset to Open
+                </button>
+                <button type="button" class="btn" onclick="deleteRequestPermanentlyFullFrame()" style="background:#dc3545; color:white; border:none; flex:1; min-width:140px;">
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          </form>
+        `;
+
+        // Setup artist search for full frame edit
+        const fullEditArtistSearch = document.getElementById('fullEditArtistSearch');
+        const fullEditArtistSearchResults = document.getElementById('fullEditArtistSearchResults');
+
+        if (fullEditArtistSearch) {
+          fullEditArtistSearch.addEventListener('input', async (e) => {
+            const query = e.target.value.trim().toLowerCase();
+
+            if (query.length < 2) {
+              fullEditArtistSearchResults.style.display = 'none';
+              return;
+            }
+
+            const filteredArtists = allArtists.filter(artist =>
+              artist.name.toLowerCase().includes(query)
+            );
+
+            if (filteredArtists.length === 0) {
+              fullEditArtistSearchResults.innerHTML = '<div style="padding:12px; color:var(--muted); font-size:13px;">No artists found</div>';
+              fullEditArtistSearchResults.style.display = 'block';
+              return;
+            }
+
+            fullEditArtistSearchResults.innerHTML = filteredArtists.map(artist => `
+              <div
+                onclick="selectFullEditArtist('${artist.id}', '${artist.name.replace(/'/g, "\\'")}')"
+                style="padding:12px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.05); transition:background 0.2s;"
+                onmouseover="this.style.background='rgba(0,0,0,0.03)'"
+                onmouseout="this.style.background='white'">
+                <div style="font-weight:500; font-size:14px;">${artist.name}</div>
+                ${artist.specialty ? `<div style="font-size:12px; color:var(--muted); margin-top:2px;">${artist.specialty}</div>` : ''}
+              </div>
+            `).join('');
+
+            fullEditArtistSearchResults.style.display = 'block';
+          });
         }
 
-        document.getElementById('editRequestModal').classList.add('active');
+        // Setup form submission
+        document.getElementById('fullFrameEditForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await saveFullFrameEdit();
+        });
+      };
+
+      // Helper functions for full frame edit
+      window.selectFullEditArtist = function(artistId, artistName) {
+        document.getElementById('fullEditArtistId').value = artistId;
+        document.getElementById('fullEditArtistSearch').value = artistName;
+        document.getElementById('fullEditSelectedArtist').textContent = `Selected: ${artistName}`;
+        document.getElementById('fullEditArtistSearchResults').style.display = 'none';
+      };
+
+      window.saveFullFrameEdit = async function() {
+        if (!editingRequestId) return;
+
+        try {
+          const updateData = {
+            first_name: document.getElementById('fullEditFirstName').value,
+            last_name: document.getElementById('fullEditLastName').value,
+            email: document.getElementById('fullEditEmail').value,
+            customer_phone: document.getElementById('fullEditPhone').value,
+            instagram: document.getElementById('fullEditInstagram').value,
+            priority: document.getElementById('fullEditPriority').value,
+            placement: document.getElementById('fullEditPlacement').value,
+            size: document.getElementById('fullEditSize').value,
+            style: document.getElementById('fullEditStyle').value,
+            colorway: document.getElementById('fullEditColorway').value,
+            description: document.getElementById('fullEditDescription').value,
+            scheduled_date: document.getElementById('fullEditScheduledDate').value || null,
+            start_time: document.getElementById('fullEditStartTime').value || null,
+            end_time: document.getElementById('fullEditEndTime').value || null,
+            status: document.getElementById('fullEditStatus').value,
+            artist_id: document.getElementById('fullEditArtistId').value || null
+          };
+
+          const { error } = await supabase
+            .from('requests')
+            .update(updateData)
+            .eq('id', editingRequestId);
+
+          if (error) throw error;
+
+          await loadRequests();
+          showRequestDetail(editingRequestId);
+
+          alert('✅ Request updated successfully!');
+          editingRequestId = null;
+        } catch (err) {
+          console.error('Error updating request:', err);
+          alert('❌ Error updating request: ' + err.message);
+        }
+      };
+
+      window.cancelFullFrameEdit = function() {
+        if (editingRequestId) {
+          showRequestDetail(editingRequestId);
+          editingRequestId = null;
+        } else {
+          closeRequestDetail();
+        }
+      };
+
+      window.scheduleFromEdit = async function() {
+        if (!editingRequestId) return;
+
+        // First save current changes
+        const confirmed = confirm('Do you want to save your changes before scheduling?');
+        if (confirmed) {
+          await saveFullFrameEdit();
+        }
+
+        // Open schedule modal
+        selectedRequestId = editingRequestId;
+        await scheduleAppointment();
+      };
+
+      window.resetRequestToOpenFullFrame = async function() {
+        if (!editingRequestId) return;
+
+        const confirmed = confirm('Are you sure you want to reset this request to "Open Request" status?\n\nThis will remove any assignment and scheduling information.');
+        if (!confirmed) return;
+
+        try {
+          const { error } = await supabase
+            .from('requests')
+            .update({
+              status: 'open_request',
+              assigned_to: null,
+              assigned_to_user_id: null,
+              artist_id: null,
+              scheduled_date: null,
+              start_time: null,
+              end_time: null
+            })
+            .eq('id', editingRequestId);
+
+          if (error) throw error;
+
+          await loadRequests();
+          showRequestDetail(editingRequestId);
+
+          alert('✅ Request has been reset to Open Request status');
+          editingRequestId = null;
+        } catch (err) {
+          console.error('Error resetting request:', err);
+          alert('❌ Error resetting request: ' + err.message);
+        }
+      };
+
+      window.deleteRequestPermanentlyFullFrame = async function() {
+        if (!editingRequestId) return;
+
+        const confirmed1 = confirm('⚠️ WARNING: Are you sure you want to DELETE this request permanently?\n\nThis action CANNOT be undone and will remove the request from ALL databases!');
+        if (!confirmed1) return;
+
+        const confirmed2 = confirm('⚠️ FINAL WARNING: This will permanently delete the request and ALL associated data.\n\nType "DELETE" in the next dialog to confirm.');
+        if (!confirmed2) return;
+
+        const deleteConfirmation = prompt('Type "DELETE" to confirm permanent deletion:');
+        if (deleteConfirmation !== 'DELETE') {
+          alert('Deletion cancelled - confirmation text did not match.');
+          return;
+        }
+
+        try {
+          const { error } = await supabase
+            .from('requests')
+            .delete()
+            .eq('id', editingRequestId);
+
+          if (error) throw error;
+
+          await loadRequests();
+          closeRequestDetail();
+
+          alert('✅ Request has been permanently deleted');
+          editingRequestId = null;
+        } catch (err) {
+          console.error('Error deleting request:', err);
+          alert('❌ Error deleting request: ' + err.message);
+        }
       };
 
       // Artist search functionality for edit form
