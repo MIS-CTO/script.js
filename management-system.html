@@ -7532,6 +7532,7 @@
           </div>
           <div class="login-actions">
             <button type="submit" class="btn btn-primary" style="width: 100%;">Anmelden</button>
+            <button type="button" class="btn" onclick="testDatabaseConnection()" style="width: 100%; background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); margin-top:8px;">🔍 Test: DB-Verbindung prüfen</button>
             <button type="button" class="btn skip-button" onclick="skipLogin()">Testing: Anmeldung überspringen</button>
           </div>
         </form>
@@ -7698,6 +7699,64 @@
         }
       } catch (err) {
         console.error('💥 Init auth failed:', err);
+      }
+    }
+
+    // Test Database Connection (for debugging)
+    async function testDatabaseConnection() {
+      console.log('🧪 Testing database connection to profiles table...');
+
+      try {
+        // Test 1: Select all profiles
+        const { data: allProfiles, error: error1 } = await supabase
+          .from('profiles')
+          .select('*');
+
+        console.log('✅ Test 1 - All profiles:', allProfiles);
+        console.log('❌ Error 1:', error1);
+
+        // Test 2: Select specific username
+        const { data: fayProfile, error: error2 } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', 'Fay');
+
+        console.log('✅ Test 2 - Fay (exact match):', fayProfile);
+        console.log('❌ Error 2:', error2);
+
+        // Test 3: Select with ilike
+        const { data: fayProfileIlike, error: error3 } = await supabase
+          .from('profiles')
+          .select('*')
+          .ilike('username', 'Fay');
+
+        console.log('✅ Test 3 - Fay (ilike):', fayProfileIlike);
+        console.log('❌ Error 3:', error3);
+
+        // Display results
+        let message = '📊 Database Test Results:\n\n';
+        message += `Total profiles: ${allProfiles?.length || 0}\n`;
+        message += `Fay found (exact): ${fayProfile?.length || 0}\n`;
+        message += `Fay found (ilike): ${fayProfileIlike?.length || 0}\n\n`;
+
+        if (allProfiles && allProfiles.length > 0) {
+          message += 'Available usernames:\n';
+          message += allProfiles.map(p => `- ${p.username}`).join('\n');
+        }
+
+        if (error1 || error2 || error3) {
+          message += '\n\n⚠️ ERRORS DETECTED:\n';
+          if (error1) message += `Error 1: ${error1.message}\n`;
+          if (error2) message += `Error 2: ${error2.message}\n`;
+          if (error3) message += `Error 3: ${error3.message}\n`;
+        }
+
+        alert(message);
+        console.log('📋 Full test results:', { allProfiles, fayProfile, fayProfileIlike });
+
+      } catch (err) {
+        console.error('💥 Database test failed:', err);
+        alert('Database test failed: ' + err.message);
       }
     }
 
