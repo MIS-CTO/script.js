@@ -15,40 +15,222 @@
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+    /* ========================================
+       macOS Design System - CSS Variables
+       ======================================== */
     :root {
-      --bg:#fafafa; --ink:#1d1d1f; --muted:#86868b; --panel:rgba(255,255,255,0.8); --stroke:rgba(0,0,0,0.06);
-      --brand:#1d1d1f; --brand-ink:#ffffff; --accent:#0071e3; --radius:12px;
-      --shadow:0 2px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-      --location-primary:#43A047;
-      --location-light:#E8F5E9;
-      --location-dark:#2E7D32;
-      --location-accent:#66BB6A;
+      /* System Colors - Light Mode */
+      --macos-bg: #fafafa;
+      --macos-panel: rgba(255, 255, 255, 0.8);
+      --macos-elevated: rgba(255, 255, 255, 0.95);
+
+      /* Text Colors */
+      --macos-text-primary: #1d1d1f;
+      --macos-text-secondary: #86868b;
+      --macos-text-tertiary: rgba(60, 60, 67, 0.6);
+
+      /* Accent Colors */
+      --macos-accent-blue: #0071e3;
+      --macos-accent-green: #34c759;
+      --macos-accent-red: #ff3b30;
+      --macos-accent-orange: #ff9500;
+      --macos-accent-purple: #5856d6;
+
+      /* System Fills */
+      --macos-fill-primary: rgba(120, 120, 128, 0.20);
+      --macos-fill-secondary: rgba(120, 120, 128, 0.16);
+      --macos-fill-tertiary: rgba(118, 118, 128, 0.12);
+      --macos-fill-quaternary: rgba(116, 116, 128, 0.08);
+
+      /* Strokes */
+      --macos-stroke-primary: rgba(0, 0, 0, 0.06);
+      --macos-stroke-secondary: rgba(0, 0, 0, 0.04);
+
+      /* Shadows */
+      --macos-shadow-small: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --macos-shadow-medium: 0 2px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      --macos-shadow-large: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+
+      /* Vibrancy & Blur */
+      --macos-blur: saturate(180%) blur(20px);
+      --macos-panel-backdrop: rgba(255, 255, 255, 0.72);
+
+      /* Border Radius System */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 10px;
+      --radius-xl: 12px;
+      --radius-pill: 999px;
+
+      /* Spacing System (8pt grid) */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 12px;
+      --space-lg: 16px;
+      --space-xl: 24px;
+      --space-2xl: 32px;
+      --space-3xl: 48px;
+
+      /* Location Colors (preserved) */
+      --location-primary: #43A047;
+      --location-light: #E8F5E9;
+      --location-dark: #2E7D32;
+      --location-accent: #66BB6A;
+
+      /* Legacy aliases for compatibility */
+      --bg: var(--macos-bg);
+      --ink: var(--macos-text-primary);
+      --muted: var(--macos-text-secondary);
+      --panel: var(--macos-panel);
+      --stroke: var(--macos-stroke-primary);
+      --brand: var(--macos-text-primary);
+      --brand-ink: #ffffff;
+      --accent: var(--macos-accent-blue);
+      --radius: var(--radius-xl);
+      --shadow: var(--macos-shadow-medium);
     }
-    * { box-sizing:border-box; }
+
+    /* Dark Mode Support (future enhancement) */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --macos-bg: #1c1c1e;
+        --macos-panel: rgba(28, 28, 30, 0.8);
+        --macos-elevated: rgba(44, 44, 46, 0.95);
+        --macos-text-primary: #f5f5f7;
+        --macos-text-secondary: #98989d;
+        --macos-text-tertiary: rgba(235, 235, 245, 0.6);
+        --macos-stroke-primary: rgba(255, 255, 255, 0.08);
+        --macos-stroke-secondary: rgba(255, 255, 255, 0.04);
+        --macos-panel-backdrop: rgba(28, 28, 30, 0.72);
+      }
+    }
+    /* ========================================
+       macOS Typography System
+       ======================================== */
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
-      background:#fafafa;
-      color:var(--ink); margin:0; font-size:15px; line-height:1.47059;
-      -webkit-font-smoothing:antialiased;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--macos-bg);
+      color: var(--macos-text-primary);
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.47;
+      font-weight: 400;
+      letter-spacing: -0.008em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
+
+    /* Typography Styles */
+    h1, .text-title-1 {
+      font-size: 22px;
+      line-height: 1.27;
+      font-weight: 600;
+      letter-spacing: -0.022em;
+      color: var(--macos-text-primary);
+    }
+
+    h2, .text-title-2 {
+      font-size: 17px;
+      line-height: 1.29;
+      font-weight: 600;
+      letter-spacing: -0.018em;
+      color: var(--macos-text-primary);
+    }
+
+    h3, .text-title-3 {
+      font-size: 15px;
+      line-height: 1.33;
+      font-weight: 600;
+      letter-spacing: -0.014em;
+      color: var(--macos-text-primary);
+    }
+
+    .text-headline {
+      font-size: 13px;
+      line-height: 1.38;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .text-body {
+      font-size: 13px;
+      line-height: 1.47;
+      font-weight: 400;
+      letter-spacing: -0.008em;
+    }
+
+    .text-callout {
+      font-size: 12px;
+      line-height: 1.42;
+      font-weight: 400;
+      letter-spacing: -0.006em;
+    }
+
+    .text-subheadline {
+      font-size: 11px;
+      line-height: 1.36;
+      font-weight: 400;
+      letter-spacing: 0.0017em;
+    }
+
+    .text-footnote, .text-caption-1 {
+      font-size: 10px;
+      line-height: 1.40;
+      font-weight: 400;
+      letter-spacing: 0em;
+    }
+
+    .text-caption-2 {
+      font-size: 9px;
+      line-height: 1.33;
+      font-weight: 400;
+      letter-spacing: 0.0013em;
+    }
+    /* ========================================
+       Navigation Bar - macOS Style
+       ======================================== */
     nav {
-      position:sticky; top:0; z-index:50; display:flex; gap:18px; align-items:center;
-      background:rgba(255,255,255,0.72); backdrop-filter:saturate(180%) blur(20px);
-      padding:12px 28px; border-bottom:1px solid rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      background: var(--macos-panel-backdrop);
+      backdrop-filter: var(--macos-blur);
+      -webkit-backdrop-filter: var(--macos-blur);
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--macos-stroke-primary);
+      height: 52px;
     }
+
     nav a {
-      color:var(--ink);
-      text-decoration:none;
-      font-weight:500;
-      font-size:14px;
-      padding:6px 4px;
-      border-bottom:2px solid transparent;
-      opacity:0.85;
-      cursor:pointer;
-      transition:opacity 0.2s ease, border-color 0.2s ease;
+      color: var(--macos-text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13px;
+      padding: 6px 8px;
+      border-bottom: 2px solid transparent;
+      opacity: 0.8;
+      cursor: pointer;
+      transition: opacity 0.2s ease, border-color 0.2s ease;
+      letter-spacing: -0.008em;
     }
-    nav a:hover { opacity:1; }
-    nav a.active { border-color:var(--ink); opacity:1; }
+
+    nav a:hover {
+      opacity: 1;
+    }
+
+    nav a.active {
+      border-color: var(--macos-text-primary);
+      opacity: 1;
+      font-weight: 600;
+    }
     section { display:none; padding:24px 5vw; max-width:100%; margin:0 auto; }
     section.active { display:block; }
     h2 { margin:0 0 12px; font-size:22px; font-weight:600; letter-spacing:-0.022em; }
@@ -66,43 +248,171 @@
     .calendar-controls {
       display:flex; gap:12px; margin-bottom:16px; align-items:center; flex-wrap:wrap;
     }
+    /* ========================================
+       Buttons - macOS Style
+       ======================================== */
+    .btn, .btn-primary {
+      background: var(--macos-accent-blue);
+      color: #ffffff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      letter-spacing: -0.008em;
+      box-shadow: var(--macos-shadow-small);
+      font-family: inherit;
+    }
+
+    .btn-primary:hover, .btn:hover {
+      background: #0077ed;
+      transform: translateY(-0.5px);
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+    }
+
+    .btn-primary:active, .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: var(--macos-fill-quaternary);
+      color: var(--macos-text-primary);
+      border: 1px solid var(--macos-stroke-primary);
+      padding: 8px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      letter-spacing: -0.008em;
+      font-family: inherit;
+    }
+
+    .btn-secondary:hover {
+      background: var(--macos-fill-tertiary);
+    }
+
     .btn-nav {
-      background:#e0e0e5;
-      color:#1d1d1f;
-      border:none;
-      padding:9px 16px;
-      border-radius:999px;
-      font-weight:400;
-      cursor:pointer;
-      font-size:14px;
-      transition:background 0.2s ease;
+      background: var(--macos-fill-tertiary);
+      color: var(--macos-text-primary);
+      border: none;
+      padding: 7px 16px;
+      border-radius: var(--radius-pill);
+      font-weight: 500;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      letter-spacing: -0.008em;
+      font-family: inherit;
     }
-    .btn-nav:hover { background:#d2d2d7; }
-    input, select, textarea {
-      padding:9px 12px;
-      border:1px solid rgba(0,0,0,0.1);
-      border-radius:999px;
-      font-size:14px;
-      font-family:inherit;
-      background:rgba(255,255,255,0.95);
-      transition:border-color 0.2s ease;
+
+    .btn-nav:hover {
+      background: var(--macos-fill-secondary);
     }
-    input:focus, select:focus, textarea:focus {
-      outline:none;
-      border-color:var(--accent);
+
+    .btn-danger {
+      background: var(--macos-accent-red);
+      color: #ffffff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      font-family: inherit;
     }
+
+    .btn-danger:hover {
+      background: #ff453a;
+    }
+
+    /* ========================================
+       Form Inputs - macOS Style
+       ======================================== */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+      padding: 8px 12px;
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--macos-elevated);
+      color: var(--macos-text-primary);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      letter-spacing: -0.008em;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--macos-accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--macos-text-tertiary);
+    }
+
+    /* Special border-radius for certain inputs that should stay pill-shaped */
+    input[type="search"] {
+      border-radius: var(--radius-pill);
+    }
+    /* ========================================
+       Tables - macOS Style
+       ======================================== */
     table {
-      width:100%;
-      border-collapse:collapse;
-      border:1px solid rgba(0,0,0,0.06);
-      border-radius:12px;
-      overflow:hidden;
-      background:rgba(255,255,255,0.95);
-      box-shadow:var(--shadow);
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--macos-elevated);
+      box-shadow: var(--macos-shadow-medium);
     }
-    thead { background:var(--panel); }
-    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--stroke); }
-    tbody tr:last-child td { border-bottom:none; }
+
+    thead {
+      background: var(--macos-fill-quaternary);
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--macos-stroke-primary);
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--macos-text-secondary);
+      letter-spacing: 0.0017em;
+      text-transform: uppercase;
+    }
+
+    td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--macos-stroke-secondary);
+      font-size: 13px;
+      color: var(--macos-text-primary);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--macos-fill-quaternary);
+    }
     .calendar-container {
       background:rgba(255,255,255,0.95);
       border:1px solid rgba(0,0,0,0.06);
@@ -514,65 +824,80 @@
       border-radius: 50%;
     }
     
-    /* Modal Styles */
+    /* ========================================
+       Modals & Dialogs - macOS Style
+       ======================================== */
     .modal-backdrop {
-      display:none;
-      position:fixed;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      background:rgba(0,0,0,0.5);
-      backdrop-filter:blur(4px);
-      z-index:1000;
-      align-items:center;
-      justify-content:center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .modal-backdrop.active {
-      display:flex;
+      display: flex;
+      opacity: 1;
     }
-    
+
     .modal {
-      background:white;
-      border-radius:12px;
-      box-shadow:0 8px 32px rgba(0,0,0,0.2);
-      padding:24px;
-      max-width:600px;
-      width:90%;
-      max-height:85vh;
-      overflow-y:auto;
+      background: var(--macos-elevated);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      max-width: 600px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: var(--macos-shadow-large);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
+    .modal-backdrop.active .modal {
+      transform: scale(1);
+    }
+
     .modal h3 {
-      margin:0 0 20px;
-      font-size:20px;
-      font-weight:600;
+      color: var(--macos-text-primary);
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: -0.018em;
+      margin: 0 0 var(--space-lg);
     }
-    
+
     .modal-form {
-      display:flex;
-      flex-direction:column;
-      gap:12px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
     }
-    
+
     .form-group {
-      display:flex;
-      flex-direction:column;
-      gap:6px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
     }
-    
+
     .form-group label {
-      font-size:13px;
-      font-weight:500;
-      color:var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--macos-text-secondary);
+      letter-spacing: -0.008em;
     }
-    
+
     .modal-actions {
-      display:flex;
-      gap:12px;
-      justify-content:flex-end;
-      margin-top:20px;
+      display: flex;
+      gap: var(--space-md);
+      justify-content: flex-end;
+      margin-top: var(--space-xl);
     }
     
     .btn {
