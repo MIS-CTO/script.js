@@ -4202,10 +4202,12 @@
             : '';
 
           // Artist preference tags
-          const artistPreferenceTags = req.artist_preference
-            ? req.artist_preference.split(',').map(name =>
-                `<span class="artist-tag-small">${name.trim()}</span>`
-              ).join('')
+          const artistPreferenceTags = req.artist_preference && req.artist_preference.trim()
+            ? req.artist_preference.split(',')
+                .map(name => name.trim())
+                .filter(name => name.length > 0)
+                .map(name => `<span class="artist-tag-small">${name}</span>`)
+                .join('')
             : '';
 
           return `
@@ -4431,14 +4433,16 @@
               ` : ''}
             </div>
 
-            ${request.artist_preference ? `
+            ${request.artist_preference && request.artist_preference.trim() ? `
               <div class="detail-item" style="margin-top:16px;">
                 <div class="detail-label">Artist Präferenz</div>
                 <div class="detail-value">
                   <div class="artist-preference-tags">
-                    ${request.artist_preference.split(',').map(artistName =>
-                      `<span class="artist-tag">${artistName.trim()}</span>`
-                    ).join('')}
+                    ${request.artist_preference.split(',')
+                      .map(name => name.trim())
+                      .filter(name => name.length > 0)
+                      .map(name => `<span class="artist-tag">${name}</span>`)
+                      .join('')}
                   </div>
                 </div>
               </div>
