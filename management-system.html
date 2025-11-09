@@ -1469,7 +1469,7 @@
 
     <!-- Profile Button -->
     <button class="profile-button" id="profileButton">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg id="profileButtonIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
         <circle cx="12" cy="7" r="4"></circle>
       </svg>
@@ -7883,6 +7883,7 @@
 
       const profileButton = document.getElementById('profileButton');
       const profileButtonText = document.getElementById('profileButtonText');
+      const profileButtonIcon = document.getElementById('profileButtonIcon');
 
       profileButtonText.textContent = profile.username;
 
@@ -7898,12 +7899,23 @@
           profileButton.insertBefore(avatarImg, profileButtonText);
         }
         avatarImg.src = profile.avatar_url;
+
+        // Hide default SVG icon when avatar is present
+        if (profileButtonIcon) {
+          profileButtonIcon.style.display = 'none';
+        }
+
         console.log('✅ Profile button avatar updated:', profile.avatar_url);
       } else {
-        // Remove avatar if not present
+        // Remove avatar if not present and show default icon
         const existingAvatar = profileButton.querySelector('.profile-avatar');
         if (existingAvatar) {
           existingAvatar.remove();
+        }
+
+        // Show default SVG icon
+        if (profileButtonIcon) {
+          profileButtonIcon.style.display = 'block';
         }
       }
 
@@ -7975,6 +7987,12 @@
         const existingAvatar = document.getElementById('profileButton').querySelector('.profile-avatar');
         if (existingAvatar) {
           existingAvatar.remove();
+        }
+
+        // Show default SVG icon again
+        const profileButtonIcon = document.getElementById('profileButtonIcon');
+        if (profileButtonIcon) {
+          profileButtonIcon.style.display = 'block';
         }
 
         const dashboardWelcome = document.getElementById('dashboardWelcome');
