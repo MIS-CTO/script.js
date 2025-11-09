@@ -13,6 +13,7 @@
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --bg:#fafafa; --ink:#1d1d1f; --muted:#86868b; --panel:rgba(255,255,255,0.8); --stroke:rgba(0,0,0,0.06);
@@ -1479,6 +1480,99 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
     }
+
+    /* Analytics Charts */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .chart-card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--stroke);
+    }
+
+    .chart-card h3 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    /* Time Range Tabs */
+    .time-range-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .time-tab {
+      padding: 8px 16px;
+      border: 1px solid var(--stroke);
+      background: transparent;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .time-tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .time-tab:hover:not(.active) {
+      background: rgba(0, 113, 227, 0.06);
+    }
+
+    /* Analytics Filters */
+    .analytics-filters {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    .analytics-filters select {
+      min-width: 200px;
+    }
+
+    /* Responsive Charts */
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .time-range-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .time-tab {
+        white-space: nowrap;
+      }
+
+      .analytics-filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .analytics-filters select {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1913,7 +2007,40 @@
 
   <section id="analytics-section">
     <h2>Analytics</h2>
-    <p style="color:var(--muted);">Coming soon...</p>
+
+    <!-- Filters -->
+    <div class="analytics-filters">
+      <select id="analyticsLocationFilter" class="filter-select">
+        <option value="">All Locations</option>
+        <!-- Will be populated dynamically -->
+      </select>
+    </div>
+
+    <!-- Chart Grid -->
+    <div class="charts-grid">
+
+      <!-- Pie Chart Card -->
+      <div class="chart-card">
+        <h3>Booking Sources</h3>
+        <canvas id="bookingOriginsPie"></canvas>
+      </div>
+
+      <!-- Line Chart Card -->
+      <div class="chart-card">
+        <h3>Bookings Over Time</h3>
+
+        <!-- Time Range Tabs -->
+        <div class="time-range-tabs">
+          <button class="time-tab active" data-range="weekly">Weekly</button>
+          <button class="time-tab" data-range="monthly">Monthly</button>
+          <button class="time-tab" data-range="yearly">Yearly</button>
+          <button class="time-tab" data-range="all">All-Time</button>
+        </div>
+
+        <canvas id="bookingsTimeline"></canvas>
+      </div>
+
+    </div>
   </section>
 
   <section id="agreements-section">
@@ -9256,6 +9383,339 @@
     window.debugListUsers = debugListUsers;
     window.debugTestLogin = debugTestLogin;
 
+    // ========================================
+    // ANALYTICS SECTION
+    // ========================================
+
+    let originsPieChart = null;
+    let timelineChart = null;
+    let currentTimeRange = 'weekly';
+    let analyticsData = [];
+
+    // Load analytics data from Supabase
+    async function loadAnalyticsData(locationFilter = null) {
+      try {
+        console.log('📊 Loading analytics data...');
+        let query = supabase
+          .from('requests')
+          .select('origin, status, created_at, location_id')
+          .neq('status', 'canceled'); // Exclude canceled requests
+
+        if (locationFilter) {
+          query = query.eq('location_id', locationFilter);
+          console.log('🏢 Filtering by location:', locationFilter);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        console.log(`✅ Loaded ${data.length} requests for analytics`);
+        return data;
+      } catch (err) {
+        console.error('❌ Analytics data load failed:', err);
+        alert('Failed to load analytics data: ' + err.message);
+        return [];
+      }
+    }
+
+    // Render Pie Chart for Booking Origins
+    async function renderOriginsPieChart(data) {
+      console.log('📊 Rendering origins pie chart with', data.length, 'requests');
+
+      // Count origins
+      const originCounts = {
+        'booking_form': 0,
+        'whatsapp': 0,
+        'instagram': 0,
+        'email': 0,
+        'walk_in': 0,
+        'self_booking': 0
+      };
+
+      data.forEach(req => {
+        if (req.origin && originCounts.hasOwnProperty(req.origin)) {
+          originCounts[req.origin]++;
+        }
+      });
+
+      console.log('📈 Origin counts:', originCounts);
+
+      // Labels and colors
+      const labels = [
+        'Booking Form',
+        'WhatsApp',
+        'Instagram',
+        'E-Mail',
+        'Walk-In',
+        'Self-Booking'
+      ];
+
+      const colors = [
+        '#0071e3', // Accent (Booking Form)
+        '#25D366', // WhatsApp Green
+        '#E1306C', // Instagram Pink
+        '#EA4335', // Email Red
+        '#7B1FA2', // Walk-In Purple
+        '#00897B'  // Self-Booking Teal
+      ];
+
+      const chartData = {
+        labels: labels,
+        datasets: [{
+          data: Object.values(originCounts),
+          backgroundColor: colors,
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      };
+
+      // Destroy existing chart
+      if (originsPieChart) {
+        originsPieChart.destroy();
+      }
+
+      const ctx = document.getElementById('bookingOriginsPie');
+      if (!ctx) {
+        console.error('❌ Canvas element not found: bookingOriginsPie');
+        return;
+      }
+
+      originsPieChart = new Chart(ctx.getContext('2d'), {
+        type: 'pie',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 12,
+                font: {
+                  size: 12,
+                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      console.log('✅ Pie chart rendered successfully');
+    }
+
+    // Group data by time range
+    function groupDataByTimeRange(data, range) {
+      const now = new Date();
+      const groups = {};
+
+      data.forEach(req => {
+        const date = new Date(req.created_at);
+        let key;
+
+        switch(range) {
+          case 'weekly':
+            // Last 7 days
+            if (date >= new Date(now - 7 * 24 * 60 * 60 * 1000)) {
+              key = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+            }
+            break;
+
+          case 'monthly':
+            // Last month
+            if (date >= new Date(now - 30 * 24 * 60 * 60 * 1000)) {
+              key = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+            }
+            break;
+
+          case 'yearly':
+            // Last year, grouped by month
+            if (date >= new Date(now - 365 * 24 * 60 * 60 * 1000)) {
+              key = date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+            }
+            break;
+
+          case 'all':
+            // All time, grouped by month
+            key = date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+            break;
+        }
+
+        if (key) {
+          groups[key] = (groups[key] || 0) + 1;
+        }
+      });
+
+      // Sort keys chronologically
+      const sortedKeys = Object.keys(groups).sort((a, b) => {
+        const parseDate = (str) => {
+          if (str.includes('.')) {
+            // Format: "09.11"
+            const [day, month] = str.split('.');
+            return new Date(now.getFullYear(), parseInt(month) - 1, parseInt(day));
+          } else {
+            // Format: "Nov 2025"
+            return new Date(str);
+          }
+        };
+        return parseDate(a) - parseDate(b);
+      });
+
+      return {
+        labels: sortedKeys,
+        values: sortedKeys.map(k => groups[k])
+      };
+    }
+
+    // Render Line Chart for Bookings Timeline
+    async function renderBookingsTimeline(data, timeRange = 'weekly') {
+      console.log('📊 Rendering timeline chart for range:', timeRange);
+
+      currentTimeRange = timeRange;
+
+      // Group data by time range
+      const groupedData = groupDataByTimeRange(data, timeRange);
+
+      console.log('📈 Timeline data points:', groupedData.labels.length);
+
+      const chartData = {
+        labels: groupedData.labels,
+        datasets: [{
+          label: 'Bookings',
+          data: groupedData.values,
+          borderColor: '#0071e3',
+          backgroundColor: 'rgba(0,113,227,0.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#0071e3',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      };
+
+      // Destroy existing chart
+      if (timelineChart) {
+        timelineChart.destroy();
+      }
+
+      const ctx = document.getElementById('bookingsTimeline');
+      if (!ctx) {
+        console.error('❌ Canvas element not found: bookingsTimeline');
+        return;
+      }
+
+      timelineChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(29,29,31,0.95)',
+              padding: 12,
+              cornerRadius: 8,
+              titleFont: {
+                size: 13,
+                weight: '600'
+              },
+              bodyFont: {
+                size: 12
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+                font: {
+                  size: 11
+                }
+              },
+              grid: {
+                color: 'rgba(0,0,0,0.06)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 11
+                },
+                maxRotation: 45,
+                minRotation: 0
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+
+      console.log('✅ Timeline chart rendered successfully');
+    }
+
+    // Initialize analytics with data
+    async function initAnalytics() {
+      console.log('🎯 Initializing analytics...');
+
+      // Load location filter dropdown
+      await loadAnalyticsLocationFilter();
+
+      // Load and render initial charts
+      const locationFilter = document.getElementById('analyticsLocationFilter')?.value || null;
+      analyticsData = await loadAnalyticsData(locationFilter);
+      await renderOriginsPieChart(analyticsData);
+      await renderBookingsTimeline(analyticsData, currentTimeRange);
+
+      console.log('✅ Analytics initialized');
+    }
+
+    // Load locations for filter dropdown
+    async function loadAnalyticsLocationFilter() {
+      try {
+        const { data: locations, error } = await supabase
+          .from('locations')
+          .select('id, name')
+          .order('name');
+
+        if (error) throw error;
+
+        const filterSelect = document.getElementById('analyticsLocationFilter');
+        if (!filterSelect) return;
+
+        filterSelect.innerHTML = '<option value="">All Locations</option>';
+        locations.forEach(loc => {
+          const option = document.createElement('option');
+          option.value = loc.id;
+          option.textContent = loc.name;
+          filterSelect.appendChild(option);
+        });
+
+        console.log('✅ Analytics location filter loaded with', locations.length, 'locations');
+      } catch (err) {
+        console.error('❌ Failed to load locations for analytics filter:', err);
+      }
+    }
+
     // Attach event listeners
     document.addEventListener('DOMContentLoaded', function() {
       // Login form
@@ -9277,6 +9737,52 @@
       const profileButton = document.getElementById('profileButton');
       if (profileButton) {
         profileButton.addEventListener('click', toggleProfileMenu);
+      }
+
+      // Analytics Tab Click - Initialize charts when Analytics tab is clicked
+      const analyticsTab = document.getElementById('tab-analytics');
+      if (analyticsTab) {
+        analyticsTab.addEventListener('click', async function() {
+          console.log('📊 Analytics tab clicked');
+          // Small delay to ensure section is visible before rendering charts
+          setTimeout(async () => {
+            await initAnalytics();
+          }, 100);
+        });
+      }
+
+      // Time Range Tab Switching
+      const timeTabs = document.querySelectorAll('.time-tab');
+      timeTabs.forEach(tab => {
+        tab.addEventListener('click', async function() {
+          console.log('🕒 Time range changed to:', this.dataset.range);
+
+          // Update active state
+          timeTabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+
+          // Get selected range
+          const range = this.dataset.range;
+
+          // Reload chart with current data
+          await renderBookingsTimeline(analyticsData, range);
+        });
+      });
+
+      // Location Filter Change
+      const analyticsLocationFilter = document.getElementById('analyticsLocationFilter');
+      if (analyticsLocationFilter) {
+        analyticsLocationFilter.addEventListener('change', async function() {
+          const locationId = this.value || null;
+          console.log('🏢 Analytics location filter changed:', locationId || 'All Locations');
+
+          // Reload data with new filter
+          analyticsData = await loadAnalyticsData(locationId);
+
+          // Re-render both charts
+          await renderOriginsPieChart(analyticsData);
+          await renderBookingsTimeline(analyticsData, currentTimeRange);
+        });
       }
 
       // Initialize auth
