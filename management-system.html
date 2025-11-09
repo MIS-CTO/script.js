@@ -951,6 +951,34 @@
       font-weight:600;
     }
 
+    /* Artist Preference Tags */
+    .artist-preference-tags {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:4px;
+    }
+    .artist-tag {
+      display:inline-block;
+      padding:6px 12px;
+      background:#f3f4f6;
+      border:1px solid #d1d5db;
+      border-radius:6px;
+      font-size:13px;
+      font-weight:600;
+      color:#374151;
+    }
+    .artist-tag-small {
+      display:inline-block;
+      padding:4px 10px;
+      background:#f3f4f6;
+      border:1px solid #d1d5db;
+      border-radius:6px;
+      font-size:11px;
+      font-weight:600;
+      color:#374151;
+    }
+
     .request-name {
       font-size:15px;
       font-weight:600;
@@ -4173,6 +4201,13 @@
             ? `<span style="font-size:11px; color:var(--accent);">🖼️ ${req.reference_images.length} ${req.reference_images.length === 1 ? 'Bild' : 'Bilder'}</span>`
             : '';
 
+          // Artist preference tags
+          const artistPreferenceTags = req.artist_preference
+            ? req.artist_preference.split(',').map(name =>
+                `<span class="artist-tag-small">${name.trim()}</span>`
+              ).join('')
+            : '';
+
           return `
             <div class="request-item ${req.status === 'open_request' ? 'new-status' : ''}" data-id="${req.id}">
               <div class="request-header">
@@ -4192,6 +4227,11 @@
                 ${instagramBadge}
                 ${imagesBadge}
               </div>
+              ${artistPreferenceTags ? `
+                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+                  ${artistPreferenceTags}
+                </div>
+              ` : ''}
               <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
             </div>
           `;
@@ -4393,15 +4433,12 @@
 
             ${request.artist_preference ? `
               <div class="detail-item" style="margin-top:16px;">
-                <div class="detail-label">Artist Preference</div>
+                <div class="detail-label">Artist Präferenz</div>
                 <div class="detail-value">
-                  <div class="artist-preference-list">
-                    ${request.artist_preference.split(',').map(artistCode => {
-                      const artist = allArtists.find(a => a.id === artistCode.trim() || a.name === artistCode.trim() || a.rank === artistCode.trim());
-                      return `<span class="artist-preference-item">
-                        ${artist ? artist.name : artistCode.trim()}
-                      </span>`;
-                    }).join('')}
+                  <div class="artist-preference-tags">
+                    ${request.artist_preference.split(',').map(artistName =>
+                      `<span class="artist-tag">${artistName.trim()}</span>`
+                    ).join('')}
                   </div>
                 </div>
               </div>
