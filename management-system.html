@@ -7699,23 +7699,9 @@
         console.log('🔄 Initializing authentication...');
         const rememberMe = localStorage.getItem('rememberMe') === 'true';
         const savedUsername = localStorage.getItem('username');
-        const savedAvatarUrl = localStorage.getItem('avatarUrl');
 
         if (rememberMe && savedUsername) {
           console.log('🔑 Found saved session for:', savedUsername);
-
-          // Create temporary profile object with cached avatar for immediate display
-          const tempProfile = {
-            username: savedUsername,
-            role: localStorage.getItem('userRole') || 'user',
-            avatar_url: savedAvatarUrl
-          };
-
-          // Show avatar immediately from localStorage for faster UX
-          if (savedAvatarUrl) {
-            console.log('⚡ Loading cached avatar immediately:', savedAvatarUrl);
-            updateUIForUser(tempProfile);
-          }
 
           // Verify user still exists and get fresh data (case-insensitive)
           const { data: profiles, error } = await supabase
@@ -7742,7 +7728,7 @@
               localStorage.removeItem('avatarUrl');
             }
 
-            // Refresh UI with complete profile data
+            // Update UI with complete profile data
             updateUIForUser(profile);
             await initializePermissions();
             return;
