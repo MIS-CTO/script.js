@@ -2483,6 +2483,7 @@
           <th>Last Name</th>
           <th>Email</th>
           <th>Phone</th>
+          <th>Instagram</th>
           <th>Rank</th>
           <th>Created</th>
           <th style="text-align:right;">Actions</th>
@@ -3230,7 +3231,11 @@
         <div class="form-group">
           <label>Phone</label>
           <input type="tel" id="addCustomerPhone">
-        </div>        </div>
+        </div>
+        <div class="form-group">
+          <label>Instagram</label>
+          <input type="text" id="addCustomerInstagram" placeholder="@username">
+        </div>
         <div class="form-group">
           <label>Rank</label>
           <select id="addCustomerRank">
@@ -3240,6 +3245,7 @@
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
           </select>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="cancelAddCustomer">Cancel</button>
           <button type="submit" class="btn btn-primary">Add Customer</button>
@@ -3268,6 +3274,10 @@
         <div class="form-group">
           <label>Phone</label>
           <input type="tel" id="editCustomerPhone">
+        </div>
+        <div class="form-group">
+          <label>Instagram</label>
+          <input type="text" id="editCustomerInstagram" placeholder="@username">
         </div>
         <div class="form-group">
           <label>Rank</label>
@@ -6819,7 +6829,7 @@
         }
 
         if (customers.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">Keine Customers gefunden</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--muted);">Keine Customers gefunden</td></tr>';
           return;
         }
 
@@ -6834,12 +6844,18 @@
             ? '<span style="background:#FEE2E2; color:#991B1B; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600;">🚫 Blacklisted</span>'
             : '';
 
+          // Instagram link
+          const instagramDisplay = customer.instagram
+            ? `<a href="https://instagram.com/${customer.instagram.replace('@', '')}" target="_blank" style="color:var(--accent);">@${customer.instagram.replace('@', '')}</a>`
+            : '-';
+
           return `
             <tr>
               <td>${customer.first_name || '-'}</td>
               <td>${customer.last_name || '-'}</td>
               <td>${customer.email || '-'}</td>
               <td>${customer.phone || '-'}</td>
+              <td>${instagramDisplay}</td>
               <td>${rankBadge} ${blacklistBadge}</td>
               <td style="font-size:13px; color:var(--muted);">${new Date(customer.created_at).toLocaleDateString()}</td>
               <td style="text-align:right;">
@@ -7573,33 +7589,36 @@
       // Submit Add Customer Form
       document.getElementById('addCustomerForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const firstName = document.getElementById('addCustomerFirstName').value.trim();
         const lastName = document.getElementById('addCustomerLastName').value.trim();
         const email = document.getElementById('addCustomerEmail').value.trim();
         const phone = document.getElementById('addCustomerPhone').value.trim();
-        
+        const instagram = document.getElementById('addCustomerInstagram').value.trim();
+        const rank = document.getElementById('addCustomerRank').value;
+
         if (!firstName || !lastName || !email) {
           return alert('Please fill in first name, last name, and email');
         }
-        
+
         try {
           const { error } = await supabase.from('customers').insert({
             first_name: firstName,
             last_name: lastName,
             email,
             phone: phone || null,
+            instagram: instagram || null,
             rank: rank || null
           });
-          
+
           if (error) throw error;
-          
+
           document.getElementById('addCustomerModal').classList.remove('active');
           document.getElementById('addCustomerForm').reset();
           await loadCustomers();
-          alert('Customer added successfully!');
+          alert('✅ Customer added successfully!');
         } catch(err) {
-          alert('Error: ' + err.message);
+          alert('❌ Error: ' + err.message);
         }
       });
       
@@ -7727,6 +7746,7 @@
           document.getElementById('editCustomerLastName').value = data.last_name || '';
           document.getElementById('editCustomerEmail').value = data.email || '';
           document.getElementById('editCustomerPhone').value = data.phone || '';
+          document.getElementById('editCustomerInstagram').value = data.instagram || '';
           document.getElementById('editCustomerRank').value = data.rank || '';
           
           console.log('Rank field set to:', document.getElementById('editCustomerRank').value);
@@ -7749,21 +7769,23 @@
         const lastName = document.getElementById('editCustomerLastName').value.trim();
         const email = document.getElementById('editCustomerEmail').value.trim();
         const phone = document.getElementById('editCustomerPhone').value.trim();
+        const instagram = document.getElementById('editCustomerInstagram').value.trim();
         const rank = document.getElementById('editCustomerRank').value;
-        
+
         if (!firstName || !lastName || !email) {
           return alert('First name, last name, and email are required');
         }
-        
+
         try {
           console.log('Updating customer with rank:', rank);
           console.log('Customer ID to update:', currentEditCustomerId);
-          
+
           const updateData = {
             first_name: firstName,
             last_name: lastName,
             email,
             phone: phone || null,
+            instagram: instagram || null,
             rank: rank || null
           };
           
