@@ -2323,18 +2323,7 @@
 
   <section id="artists-section">
     <h2>Artists</h2>
-    
-    <!-- Sort Controls -->
-    <div class="sort-controls">
-      <label style="font-weight:600; font-size:14px;">Sort by:</label>
-      <select id="artistSortBy" class="btn-nav" style="padding:8px 16px;">
-        <option value="name">Name</option>
-        <option value="rank">Rank</option>
-        <option value="location">Location</option>
-      </select>
-      <button id="artistSortOrder" class="btn-nav" data-order="asc">↑ Ascending</button>
-    </div>
-    
+
     <!-- Search Bar and Add Button Row -->
     <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
       <div style="position:relative; flex:1; min-width:300px; max-width:500px;">
@@ -2416,18 +2405,7 @@
 
   <section id="customers-section">
     <h2>Customers</h2>
-    
-    <!-- Sort Controls -->
-    <div class="sort-controls">
-      <label style="font-weight:600; font-size:14px;">Sort by:</label>
-      <select id="customerSortBy" class="btn-nav" style="padding:8px 16px;">
-        <option value="name">Name</option>
-        <option value="rank">Rank</option>
-        <option value="created">Created Date</option>
-      </select>
-      <button id="customerSortOrder" class="btn-nav" data-order="desc">↓ Descending</button>
-    </div>
-    
+
     <!-- Search Bar and Add Button Row -->
     <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
       <div style="position:relative; flex:1; min-width:300px; max-width:500px;">
@@ -6742,19 +6720,7 @@
 
         html += '</div>';
         container.insertAdjacentHTML('beforeend', html);
-      }      
-      // Customer Sort Controls
-      document.getElementById('customerSortBy')?.addEventListener('change', (e) => {
-        customerSortConfig.field = e.target.value;
-        loadCustomers();
-      });
-      
-      document.getElementById('customerSortOrder')?.addEventListener('click', function() {
-        customerSortConfig.order = customerSortConfig.order === 'asc' ? 'desc' : 'asc';
-        this.dataset.order = customerSortConfig.order;
-        this.innerHTML = customerSortConfig.order === 'asc' ? '↑ Ascending' : '↓ Descending';
-        loadCustomers();
-      });
+      }
 
       // Agreements Functions
       async function loadAgreements() {
@@ -7419,19 +7385,7 @@
           document.getElementById('addArtistModal').classList.remove('active');
           document.getElementById('addArtistForm').reset();
           await loadInitialData();
-          await loadArtists();      
-      // Artist Sort Controls
-      document.getElementById('artistSortBy')?.addEventListener('change', (e) => {
-        artistSortConfig.field = e.target.value;
-        loadArtists();
-      });
-      
-      document.getElementById('artistSortOrder')?.addEventListener('click', function() {
-        artistSortConfig.order = artistSortConfig.order === 'asc' ? 'desc' : 'asc';
-        this.dataset.order = artistSortConfig.order;
-        this.innerHTML = artistSortConfig.order === 'asc' ? '↑ Ascending' : '↓ Descending';
-        loadArtists();
-      });
+          await loadArtists();
           alert('Artist added successfully!');
         } catch(err) {
           alert('Error: ' + err.message);
