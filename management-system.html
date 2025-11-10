@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v76</title>
+  <title>Management System v77</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1292,6 +1292,102 @@
       object-fit:cover;
     }
 
+    /* Image Upload Area */
+    .image-upload-area {
+      border:2px dashed rgba(0,0,0,0.15);
+      border-radius:12px;
+      padding:32px;
+      text-align:center;
+      background:rgba(0,113,227,0.03);
+      transition:all 0.3s;
+      cursor:pointer;
+      margin-top:12px;
+    }
+    .image-upload-area:hover {
+      border-color:var(--accent);
+      background:rgba(0,113,227,0.08);
+    }
+    .image-upload-area.drag-over {
+      border-color:var(--accent);
+      background:rgba(0,113,227,0.15);
+      transform:scale(1.02);
+    }
+    .image-upload-icon {
+      font-size:48px;
+      margin-bottom:12px;
+      opacity:0.6;
+    }
+    .image-upload-text {
+      font-size:14px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .image-upload-hint {
+      font-size:12px;
+      color:var(--muted);
+      opacity:0.7;
+    }
+
+    /* Editable Reference Images */
+    .reference-images-editable {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .reference-image-editable {
+      position:relative;
+      width:120px;
+      height:120px;
+      border-radius:12px;
+      overflow:hidden;
+      border:2px solid rgba(0,0,0,0.1);
+      transition:all 0.2s;
+    }
+    .reference-image-editable:hover {
+      border-color:var(--accent);
+      box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    }
+    .reference-image-editable img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    .reference-image-delete {
+      position:absolute;
+      top:6px;
+      right:6px;
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      background:rgba(220,53,69,0.95);
+      color:white;
+      border:none;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:16px;
+      font-weight:bold;
+      opacity:0;
+      transition:all 0.2s;
+      backdrop-filter:blur(10px);
+    }
+    .reference-image-editable:hover .reference-image-delete {
+      opacity:1;
+    }
+    .reference-image-delete:hover {
+      background:rgba(220,53,69,1);
+      transform:scale(1.1);
+    }
+
+    /* No Data Placeholder */
+    .no-data-placeholder {
+      color:#9ca3af;
+      font-size:13px;
+      font-style:italic;
+    }
+
     /* Image Modal */
     .image-modal {
       display:none;
@@ -2016,7 +2112,7 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span id="versionBadge" style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v76</span>
+      <span id="versionBadge" style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v77</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -4910,12 +5006,12 @@
             <div class="detail-grid">
               <div class="detail-item">
                 <div class="detail-label">Vorname</div>
-                <div class="detail-value">${customer.first_name || '-'}</div>
+                <div class="detail-value">${customer.first_name || '<span class="no-data-placeholder">No entry data</span>'}</div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Nachname</div>
                 <div class="detail-value">
-                  ${customer.last_name || '-'}
+                  ${customer.last_name || '<span class="no-data-placeholder">No entry data</span>'}
                   ${customer.rank ? `
                     <span style="display:inline-block; margin-left:8px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:600; ${rankBadgeStyle}">
                       ${customer.rank}
@@ -4926,74 +5022,68 @@
               <div class="detail-item">
                 <div class="detail-label">Email</div>
                 <div class="detail-value">
-                  ${customer.email ? `<a href="mailto:${customer.email}" style="color:var(--accent);">${customer.email}</a>` : '-'}
+                  ${customer.email ? `<a href="mailto:${customer.email}" style="color:var(--accent);">${customer.email}</a>` : '<span class="no-data-placeholder">No entry data</span>'}
                 </div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Phone</div>
                 <div class="detail-value">
-                  ${customer.phone ? `<a href="tel:${customer.phone}" style="color:var(--accent);">${customer.phone}</a>` : '-'}
+                  ${customer.phone ? `<a href="tel:${customer.phone}" style="color:var(--accent);">${customer.phone}</a>` : '<span class="no-data-placeholder">No entry data</span>'}
                 </div>
               </div>
-              ${customer.instagram ? `
-                <div class="detail-item">
-                  <div class="detail-label">Instagram</div>
-                  <div class="detail-value">
-                    <a href="https://instagram.com/${customer.instagram}" target="_blank" style="color:var(--accent);">@${customer.instagram}</a>
-                  </div>
+              <div class="detail-item">
+                <div class="detail-label">Instagram</div>
+                <div class="detail-value">
+                  ${customer.instagram ? `<a href="https://instagram.com/${customer.instagram}" target="_blank" style="color:var(--accent);">@${customer.instagram}</a>` : '<span class="no-data-placeholder">No entry data</span>'}
                 </div>
-              ` : ''}
+              </div>
             </div>
           </div>
 
           <div class="detail-section">
             <h3>Request Details</h3>
             <div class="detail-grid">
-              ${request.priority ? `
-                <div class="detail-item">
-                  <div class="detail-label">Priority</div>
-                  <div class="detail-value">
+              <div class="detail-item">
+                <div class="detail-label">Priority</div>
+                <div class="detail-value">
+                  ${request.priority ? `
                     <span class="priority-badge ${request.priority}">
                       ${request.priority === 'urgent' ? '🔥' : request.priority === 'high' ? '⚡' : request.priority === 'normal' ? '✓' : '💤'}
                       ${request.priority.toUpperCase()}
                     </span>
-                  </div>
+                  ` : '<span class="no-data-placeholder">No entry data</span>'}
                 </div>
-              ` : ''}
+              </div>
               <div class="detail-item">
                 <div class="detail-label">Placement</div>
-                <div class="detail-value">${request.placement || '-'}</div>
+                <div class="detail-value">${request.placement || '<span class="no-data-placeholder">No entry data</span>'}</div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Size</div>
-                <div class="detail-value">${request.size || '-'}</div>
+                <div class="detail-value">${request.size || '<span class="no-data-placeholder">No entry data</span>'}</div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Style</div>
-                <div class="detail-value">${request.style || '-'}</div>
+                <div class="detail-value">${request.style || '<span class="no-data-placeholder">No entry data</span>'}</div>
               </div>
-              ${request.colorway ? `
-                <div class="detail-item">
-                  <div class="detail-label">Colorway</div>
-                  <div class="detail-value">${request.colorway}</div>
-                </div>
-              ` : ''}
+              <div class="detail-item">
+                <div class="detail-label">Colorway</div>
+                <div class="detail-value">${request.colorway || '<span class="no-data-placeholder">No entry data</span>'}</div>
+              </div>
               <div class="detail-item">
                 <div class="detail-label">Booking Type</div>
-                <div class="detail-value">${request.booking_type || '-'}</div>
+                <div class="detail-value">${request.booking_type || '<span class="no-data-placeholder">No entry data</span>'}</div>
               </div>
-              ${request.origin ? `
-                <div class="detail-item">
-                  <div class="detail-label">Origin</div>
-                  <div class="detail-value">${request.origin}</div>
-                </div>
-              ` : ''}
+              <div class="detail-item">
+                <div class="detail-label">Origin</div>
+                <div class="detail-value">${request.origin || '<span class="no-data-placeholder">No entry data</span>'}</div>
+              </div>
             </div>
 
-            ${request.artist_preference && request.artist_preference.trim() ? `
-              <div class="detail-item" style="margin-top:16px;">
-                <div class="detail-label">Artist Präferenz</div>
-                <div class="detail-value">
+            <div class="detail-item" style="margin-top:16px;">
+              <div class="detail-label">Artist Präferenz</div>
+              <div class="detail-value">
+                ${request.artist_preference && request.artist_preference.trim() ? `
                   <div class="artist-preference-tags">
                     ${request.artist_preference.split(',')
                       .map(name => name.trim())
@@ -5001,21 +5091,19 @@
                       .map(name => `<span class="artist-tag">${name}</span>`)
                       .join('')}
                   </div>
-                </div>
+                ` : '<span class="no-data-placeholder">No entry data</span>'}
               </div>
-            ` : ''}
+            </div>
 
-            ${request.description ? `
-              <div class="detail-item" style="margin-top:16px;">
-                <div class="detail-label">Description</div>
-                <div class="detail-value" style="white-space:pre-wrap;">${request.description}</div>
-              </div>
-            ` : ''}
+            <div class="detail-item" style="margin-top:16px;">
+              <div class="detail-label">Description</div>
+              <div class="detail-value" style="white-space:pre-wrap;">${request.description || '<span class="no-data-placeholder">No entry data</span>'}</div>
+            </div>
 
-            ${request.reference_images && request.reference_images.length > 0 ? `
-              <div class="detail-item" style="margin-top:16px;">
-                <div class="detail-label">Reference Images (${request.reference_images.length})</div>
-                <div class="detail-value">
+            <div class="detail-item" style="margin-top:16px;">
+              <div class="detail-label">Reference Images${request.reference_images && request.reference_images.length > 0 ? ` (${request.reference_images.length})` : ''}</div>
+              <div class="detail-value">
+                ${request.reference_images && request.reference_images.length > 0 ? `
                   <div class="reference-images">
                     ${request.reference_images.map((img, idx) => `
                       <div class="reference-image-thumb" onclick="openImageModal('${img}')">
@@ -5023,9 +5111,9 @@
                       </div>
                     `).join('')}
                   </div>
-                </div>
+                ` : '<span class="no-data-placeholder">No entry data</span>'}
               </div>
-            ` : ''}
+            </div>
           </div>
 
           ${request.artist || request.assigned_to ? `
@@ -5406,29 +5494,60 @@
                   </div>
                   <div class="detail-item">
                     <div class="detail-label">Placement</div>
-                    <input type="text" id="fullEditPlacement" value="${request.placement || ''}"
+                    <input type="text" id="fullEditPlacement" value="${request.placement || ''}" placeholder="No entry data"
                            style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
                   </div>
                   <div class="detail-item">
                     <div class="detail-label">Size</div>
-                    <input type="text" id="fullEditSize" value="${request.size || ''}"
+                    <input type="text" id="fullEditSize" value="${request.size || ''}" placeholder="No entry data"
                            style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
                   </div>
                   <div class="detail-item">
                     <div class="detail-label">Style</div>
-                    <input type="text" id="fullEditStyle" value="${request.style || ''}"
+                    <input type="text" id="fullEditStyle" value="${request.style || ''}" placeholder="No entry data"
                            style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
                   </div>
                   <div class="detail-item">
                     <div class="detail-label">Colorway</div>
-                    <input type="text" id="fullEditColorway" value="${request.colorway || ''}"
+                    <input type="text" id="fullEditColorway" value="${request.colorway || ''}" placeholder="No entry data"
                            style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
                   </div>
                   <div class="detail-item" style="grid-column:1/-1;">
                     <div class="detail-label">Description</div>
-                    <textarea id="fullEditDescription" rows="4"
+                    <textarea id="fullEditDescription" rows="4" placeholder="No entry data"
                               style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; resize:vertical;">${request.description || ''}</textarea>
                   </div>
+                </div>
+              </div>
+
+              <!-- Reference Images -->
+              <div class="detail-section">
+                <h3>Reference Images</h3>
+                <div id="existingReferenceImages" class="reference-images-editable">
+                  ${request.reference_images && request.reference_images.length > 0
+                    ? request.reference_images.map((img, idx) => `
+                      <div class="reference-image-editable" data-image-url="${img}">
+                        <img src="${img}" alt="Reference ${idx + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                        <button type="button" class="reference-image-delete" onclick="deleteReferenceImage('${img}')" title="Delete image">×</button>
+                      </div>
+                    `).join('')
+                    : '<div class="no-data-placeholder">No reference images</div>'
+                  }
+                </div>
+
+                <input type="file" id="imageUploadInput" accept="image/jpeg,image/jpg,image/png,image/webp" multiple style="display:none;">
+
+                <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageUploadInput').click()">
+                  <div class="image-upload-icon">📸</div>
+                  <div class="image-upload-text"><strong>Click to upload</strong> or drag and drop</div>
+                  <div class="image-upload-hint">JPG, PNG, WebP (Max 5MB per file)</div>
+                </div>
+
+                <div id="uploadProgress" style="display:none; margin-top:12px;">
+                  <div style="background:rgba(0,0,0,0.05); border-radius:8px; height:8px; overflow:hidden;">
+                    <div id="uploadProgressBar" style="background:var(--accent); height:100%; width:0%; transition:width 0.3s;"></div>
+                  </div>
+                  <div id="uploadProgressText" style="font-size:12px; color:var(--muted); margin-top:6px; text-align:center;"></div>
                 </div>
               </div>
 
@@ -5553,6 +5672,41 @@
           e.preventDefault();
           await saveFullFrameEdit();
         });
+
+        // Setup image upload handlers
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imageUploadInput = document.getElementById('imageUploadInput');
+
+        // Drag and drop handlers
+        imageUploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          imageUploadArea.classList.add('drag-over');
+        });
+
+        imageUploadArea.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          imageUploadArea.classList.remove('drag-over');
+        });
+
+        imageUploadArea.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          imageUploadArea.classList.remove('drag-over');
+          const files = Array.from(e.dataTransfer.files).filter(file =>
+            file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)
+          );
+          if (files.length > 0) {
+            await uploadReferenceImages(files);
+          }
+        });
+
+        // File input handler
+        imageUploadInput.addEventListener('change', async (e) => {
+          const files = Array.from(e.target.files);
+          if (files.length > 0) {
+            await uploadReferenceImages(files);
+          }
+          imageUploadInput.value = ''; // Reset input
+        });
       };
 
       // Helper functions for full frame edit
@@ -5561,6 +5715,159 @@
         document.getElementById('fullEditArtistSearch').value = artistName;
         document.getElementById('fullEditSelectedArtist').textContent = `Selected: ${artistName}`;
         document.getElementById('fullEditArtistSearchResults').style.display = 'none';
+      };
+
+      // Upload reference images
+      window.uploadReferenceImages = async function(files) {
+        if (!editingRequestId) return;
+
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const validFiles = files.filter(file => {
+          if (file.size > maxSize) {
+            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+            return false;
+          }
+          return true;
+        });
+
+        if (validFiles.length === 0) return;
+
+        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadProgressBar = document.getElementById('uploadProgressBar');
+        const uploadProgressText = document.getElementById('uploadProgressText');
+
+        try {
+          uploadProgress.style.display = 'block';
+          uploadProgressText.textContent = 'Uploading...';
+
+          const request = allRequests.find(r => r.id === editingRequestId);
+          const currentImages = request?.reference_images || [];
+          const newImageUrls = [];
+
+          for (let i = 0; i < validFiles.length; i++) {
+            const file = validFiles[i];
+            const progress = ((i + 1) / validFiles.length) * 100;
+            uploadProgressBar.style.width = `${progress * 0.8}%`; // Reserve 20% for DB update
+            uploadProgressText.textContent = `Uploading ${i + 1} of ${validFiles.length}...`;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${editingRequestId}_${Date.now()}_${i}.${fileExt}`;
+
+            // Upload to Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('request-images')
+              .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+              });
+
+            if (uploadError) throw uploadError;
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('request-images')
+              .getPublicUrl(fileName);
+
+            newImageUrls.push(publicUrl);
+          }
+
+          // Update database with new images
+          uploadProgressBar.style.width = '90%';
+          uploadProgressText.textContent = 'Saving...';
+
+          const updatedImages = [...currentImages, ...newImageUrls];
+
+          const { error: updateError } = await supabase
+            .from('requests')
+            .update({ reference_images: updatedImages })
+            .eq('id', editingRequestId);
+
+          if (updateError) throw updateError;
+
+          uploadProgressBar.style.width = '100%';
+          uploadProgressText.textContent = 'Upload complete!';
+
+          // Reload the request
+          await loadRequests();
+          const updatedRequest = allRequests.find(r => r.id === editingRequestId);
+
+          // Update the image display
+          const existingReferenceImages = document.getElementById('existingReferenceImages');
+          if (updatedRequest.reference_images && updatedRequest.reference_images.length > 0) {
+            existingReferenceImages.innerHTML = updatedRequest.reference_images.map((img, idx) => `
+              <div class="reference-image-editable" data-image-url="${img}">
+                <img src="${img}" alt="Reference ${idx + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                <button type="button" class="reference-image-delete" onclick="deleteReferenceImage('${img}')" title="Delete image">×</button>
+              </div>
+            `).join('');
+          }
+
+          setTimeout(() => {
+            uploadProgress.style.display = 'none';
+            uploadProgressBar.style.width = '0%';
+          }, 2000);
+
+        } catch (err) {
+          console.error('Error uploading images:', err);
+          alert('❌ Error uploading images: ' + err.message);
+          uploadProgress.style.display = 'none';
+          uploadProgressBar.style.width = '0%';
+        }
+      };
+
+      // Delete reference image
+      window.deleteReferenceImage = async function(imageUrl) {
+        if (!editingRequestId) return;
+
+        const confirmed = confirm('Are you sure you want to delete this image?');
+        if (!confirmed) return;
+
+        try {
+          const request = allRequests.find(r => r.id === editingRequestId);
+          const currentImages = request?.reference_images || [];
+          const updatedImages = currentImages.filter(img => img !== imageUrl);
+
+          // Update database
+          const { error: updateError } = await supabase
+            .from('requests')
+            .update({ reference_images: updatedImages })
+            .eq('id', editingRequestId);
+
+          if (updateError) throw updateError;
+
+          // Extract filename from URL and delete from storage
+          const urlParts = imageUrl.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+
+          const { error: deleteError } = await supabase.storage
+            .from('request-images')
+            .remove([fileName]);
+
+          if (deleteError) {
+            console.warn('Warning: Could not delete file from storage:', deleteError);
+          }
+
+          // Reload the request
+          await loadRequests();
+          const updatedRequest = allRequests.find(r => r.id === editingRequestId);
+
+          // Update the image display
+          const existingReferenceImages = document.getElementById('existingReferenceImages');
+          if (updatedRequest.reference_images && updatedRequest.reference_images.length > 0) {
+            existingReferenceImages.innerHTML = updatedRequest.reference_images.map((img, idx) => `
+              <div class="reference-image-editable" data-image-url="${img}">
+                <img src="${img}" alt="Reference ${idx + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                <button type="button" class="reference-image-delete" onclick="deleteReferenceImage('${img}')" title="Delete image">×</button>
+              </div>
+            `).join('');
+          } else {
+            existingReferenceImages.innerHTML = '<div class="no-data-placeholder">No reference images</div>';
+          }
+
+        } catch (err) {
+          console.error('Error deleting image:', err);
+          alert('❌ Error deleting image: ' + err.message);
+        }
       };
 
       window.saveFullFrameEdit = async function() {
@@ -10202,4 +10509,4 @@
   </div>
 
 </body>
-</html><!-- VERSION: v76 -->
+</html><!-- VERSION: v77 -->
