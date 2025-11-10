@@ -2141,6 +2141,14 @@
       <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
     </div>
 
+    <!-- Create Request Button (Only visible in New Requests tab) -->
+    <div id="createRequestBtnContainer" style="display:flex; justify-content:flex-start; margin-bottom:16px;">
+      <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Create Request</span>
+      </button>
+    </div>
+
     <!-- Refresh Controls -->
     <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-bottom:16px;">
       <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer;">
@@ -3016,6 +3024,92 @@
         <div class="modal-actions" style="gap:8px;">
           <button type="button" class="btn btn-secondary" id="cancelEditRequest" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">Cancel</button>
           <button type="submit" class="btn" style="background:var(--ink); color:white; border:none;">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Request Modal -->
+  <div class="modal-backdrop" id="createRequestModal">
+    <div class="modal" style="max-width:700px; max-height:90vh; overflow-y:auto;">
+      <h3 style="color:var(--ink); font-weight:500;">Create New Request</h3>
+      <form class="modal-form" id="createRequestForm" style="max-height:calc(90vh - 150px); overflow-y:auto;">
+
+        <!-- Customer Information -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Customer Information</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Vorname</label>
+            <input type="text" id="createFirstName" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Nachname</label>
+            <input type="text" id="createLastName" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Email</label>
+            <input type="email" id="createEmail" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Phone</label>
+            <input type="tel" id="createPhone" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Instagram</label>
+            <input type="text" id="createInstagram" placeholder="@username">
+          </div>
+        </div>
+
+        <!-- Request Details -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Request Details</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Priority</label>
+            <select id="createPriority">
+              <option value="">-- Select Priority --</option>
+              <option value="low">Low 💤</option>
+              <option value="normal" selected>Normal ✓</option>
+              <option value="high">High ⚡</option>
+              <option value="urgent">Urgent 🔥</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Placement</label>
+            <input type="text" id="createPlacement" placeholder="e.g., Arm, Leg, Back">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Size</label>
+            <input type="text" id="createSize" placeholder="e.g., 10x10 cm">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Style</label>
+            <input type="text" id="createStyle" placeholder="e.g., Traditional, Realism">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Colorway</label>
+            <input type="text" id="createColorway" placeholder="e.g., Black & Grey, Full Color">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Description</label>
+            <textarea id="createDescription" rows="4" placeholder="Describe the tattoo idea..."></textarea>
+          </div>
+        </div>
+
+        <!-- Location Selection -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Location</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Select Location</label>
+            <select id="createLocation" required>
+              <option value="">-- Select Location --</option>
+              <!-- Locations will be loaded dynamically -->
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="gap:8px;">
+          <button type="button" class="btn btn-secondary" id="cancelCreateRequest" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">Cancel</button>
+          <button type="submit" class="btn" style="background:var(--ink); color:white; border:none;">Create Request</button>
         </div>
       </form>
     </div>
@@ -4401,11 +4495,21 @@
             this.style.color = '#1d1d1f';
             
             updateRequestsIndicator(this);
-            
+
+            // Show/hide Create Request button based on tab
+            const createRequestBtnContainer = document.getElementById('createRequestBtnContainer');
+            if (createRequestBtnContainer) {
+              if (this.dataset.status === 'open_request') {
+                createRequestBtnContainer.style.display = 'flex';
+              } else {
+                createRequestBtnContainer.style.display = 'none';
+              }
+            }
+
             // Close detail view when switching tabs
             selectedRequestId = null;
             closeRequestDetail();
-            
+
             loadRequests();
           });
         });
@@ -6077,6 +6181,69 @@
         } catch (err) {
           console.error('Error updating request:', err);
           alert('❌ Error updating request: ' + err.message);
+        }
+      });
+
+      // Create Request Button - Opens Create Request Modal
+      document.getElementById('createRequestBtn')?.addEventListener('click', () => {
+        // Load locations into dropdown
+        const locationSelect = document.getElementById('createLocation');
+        if (locationSelect && allLocations) {
+          locationSelect.innerHTML = '<option value="">-- Select Location --</option>';
+          allLocations.forEach(location => {
+            const option = document.createElement('option');
+            option.value = location.id;
+            option.textContent = `${location.name}${location.city ? ` (${location.city})` : ''}`;
+            locationSelect.appendChild(option);
+          });
+        }
+        document.getElementById('createRequestModal').classList.add('active');
+      });
+
+      // Cancel Create Request
+      document.getElementById('cancelCreateRequest')?.addEventListener('click', () => {
+        document.getElementById('createRequestModal').classList.remove('active');
+        document.getElementById('createRequestForm').reset();
+      });
+
+      // Submit handler for create request form
+      document.getElementById('createRequestForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        try {
+          const requestData = {
+            first_name: document.getElementById('createFirstName').value,
+            last_name: document.getElementById('createLastName').value,
+            email: document.getElementById('createEmail').value,
+            customer_phone: document.getElementById('createPhone').value,
+            instagram: document.getElementById('createInstagram').value || null,
+            priority: document.getElementById('createPriority').value || 'normal',
+            placement: document.getElementById('createPlacement').value || null,
+            size: document.getElementById('createSize').value || null,
+            style: document.getElementById('createStyle').value || null,
+            colorway: document.getElementById('createColorway').value || null,
+            description: document.getElementById('createDescription').value || null,
+            location_id: document.getElementById('createLocation').value,
+            status: 'open_request',
+            origin: 'manual',
+            booking_type: 'request'
+          };
+
+          const { data, error } = await supabase
+            .from('requests')
+            .insert([requestData])
+            .select();
+
+          if (error) throw error;
+
+          document.getElementById('createRequestModal').classList.remove('active');
+          document.getElementById('createRequestForm').reset();
+          await loadRequests();
+
+          alert('✅ Request created successfully!');
+        } catch (err) {
+          console.error('Error creating request:', err);
+          alert('❌ Error creating request: ' + err.message);
         }
       });
 
