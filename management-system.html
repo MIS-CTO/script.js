@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v78</title>
+  <title>Management System v79</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3853,17 +3853,22 @@
 
   <script>
     /* ============================================
-       TATTOO STUDIO MANAGEMENT SYSTEM v78
+       TATTOO STUDIO MANAGEMENT SYSTEM v79
        ============================================
+
+       FIXES IN v79:
+       ✅ Fixed: Customers and Artists Create/Edit/Delete buttons now visible with anon key
+       ✅ Changed: Anonymous users (using anon key) now see all management buttons by default
+       ✅ Updated: initializePermissions() - removed hideManagementButtons() call for anonymous users
+       ✅ Updated: Version number from v78 to v79
 
        FIXES IN v78:
        ✅ Fixed: allLocations undefined error - declared globally and populated in loadInitialData()
        ✅ Fixed: Duplicate DOM IDs - removed duplicate editEventModal blocks (lines 3478-3625, 3734-3880)
        ✅ Fixed: Event listener issues - verified proper optional chaining usage
        ✅ Verified: Chart.js memory management properly implemented (destroy before recreate)
-       ✅ Updated: Version number from v77 to v78
 
-       All console errors resolved. System ready for deployment.
+       All management buttons now work correctly with Supabase anon key.
        ============================================ */
 
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
@@ -3996,11 +4001,15 @@
       try {
         // Check if user is logged in
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user && !localStorage.getItem('hasSkippedLogin')) {
-          // No user and hasn't skipped - hide all create/manage buttons
-          console.log('No user logged in - hiding management buttons');
-          hideManagementButtons();
-          return;
+
+        // ✅ CHANGED: Always show buttons by default (anon key allows public access)
+        // Only hide if explicitly no permission when logged in
+        console.log('User login status:', user ? 'Logged in' : 'Anonymous (using anon key)');
+
+        // If no user logged in, show all buttons (anon key provides access)
+        if (!user) {
+          console.log('✅ Anonymous access - all buttons visible with anon key');
+          return; // Exit early - keep all buttons visible
         }
 
         // Check all permissions in parallel for faster load
