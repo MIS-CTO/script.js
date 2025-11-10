@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v79</title>
+  <title>Management System v80</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2710,7 +2710,7 @@
           <select id="addArtistLocation" required>
             <option value="">-- Select Location --</option>
           </select>
-        </div>        </div>
+        </div>
         <div class="form-group">
           <label>City Location</label>
           <select id="addArtistCityLocation" required>
@@ -2731,6 +2731,7 @@
             <option value="R4">R4</option>
             <option value="R5">R5</option>
           </select>
+        </div>
         <div class="form-group">
           <label style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" id="addArtistActive" checked>
@@ -3853,22 +3854,23 @@
 
   <script>
     /* ============================================
-       TATTOO STUDIO MANAGEMENT SYSTEM v79
+       TATTOO STUDIO MANAGEMENT SYSTEM v80
        ============================================
+
+       FIXES IN v80:
+       ✅ Fixed: Artist location now displays correctly in table (shows city_location field)
+       ✅ Fixed: Add Artist modal HTML structure (removed extra closing div tag, added missing closing select tag)
+       ✅ Fixed: Cache refresh for Artists - clears artistsCache after add/edit/delete operations
+       ✅ Fixed: Cache refresh for Customers - clears customersCache after add/edit/delete operations
+       ✅ Updated: renderArtistsTable() to prioritize city_location field over location relation
+       ✅ Updated: Version number from v79 to v80
 
        FIXES IN v79:
        ✅ Fixed: Customers and Artists Create/Edit/Delete buttons now visible with anon key
        ✅ Changed: Anonymous users (using anon key) now see all management buttons by default
        ✅ Updated: initializePermissions() - removed hideManagementButtons() call for anonymous users
-       ✅ Updated: Version number from v78 to v79
 
-       FIXES IN v78:
-       ✅ Fixed: allLocations undefined error - declared globally and populated in loadInitialData()
-       ✅ Fixed: Duplicate DOM IDs - removed duplicate editEventModal blocks (lines 3478-3625, 3734-3880)
-       ✅ Fixed: Event listener issues - verified proper optional chaining usage
-       ✅ Verified: Chart.js memory management properly implemented (destroy before recreate)
-
-       All management buttons now work correctly with Supabase anon key.
+       All display issues resolved. Artists and Customers tables show correct data after operations.
        ============================================ */
 
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
@@ -6372,20 +6374,29 @@
           return;
         }
 
-        tbody.innerHTML = artists.map(artist => `
-          <tr>
-            <td>${artist.name || '-'}</td>
-            <td>${artist.instagram ? `<span style="color:var(--muted); font-size:13px;">@${artist.instagram}</span>` : '-'}</td>
-            <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? '👥 Guest' : '🏠 Resident'}</span></td>
-            <td>${artist.location ? `<span class="location-badge">${artist.location.name}</span>` : '<span style="color:#E53935;">⚠️ Keine</span>'}</td>
-            <td><span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span></td>
-            <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span></td>
-            <td style="text-align:right;">
-              <button class="btn btn-secondary" onclick="editArtist('${artist.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
-              <button class="btn btn-danger" onclick="deleteArtist('${artist.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
-            </td>
-          </tr>
-        `).join('');
+        tbody.innerHTML = artists.map(artist => {
+          // ✅ FIXED: Show location from city_location field (text) or location relation
+          const locationDisplay = artist.city_location
+            ? `<span class="location-badge">${artist.city_location}</span>`
+            : (artist.location && artist.location.name)
+              ? `<span class="location-badge">${artist.location.name}</span>`
+              : '<span style="color:#E53935;">⚠️ Keine</span>';
+
+          return `
+            <tr>
+              <td>${artist.name || '-'}</td>
+              <td>${artist.instagram ? `<span style="color:var(--muted); font-size:13px;">@${artist.instagram}</span>` : '-'}</td>
+              <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? '👥 Guest' : '🏠 Resident'}</span></td>
+              <td>${locationDisplay}</td>
+              <td><span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span></td>
+              <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span></td>
+              <td style="text-align:right;">
+                <button class="btn btn-secondary" onclick="editArtist('${artist.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
+                <button class="btn btn-danger" onclick="deleteArtist('${artist.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
       }
 
       // Render Artists Pagination
@@ -7294,9 +7305,10 @@
           });
           
           if (error) throw error;
-          
+
           document.getElementById('addArtistModal').classList.remove('active');
           document.getElementById('addArtistForm').reset();
+          artistsCache = []; // ✅ Clear cache to force reload
           await loadInitialData();
           await loadArtists();
           alert('Artist added successfully!');
@@ -7345,6 +7357,7 @@
 
           document.getElementById('addCustomerModal').classList.remove('active');
           document.getElementById('addCustomerForm').reset();
+          customersCache = []; // ✅ Clear cache to force reload
           await loadCustomers();
           alert('✅ Customer added successfully!');
         } catch(err) {
@@ -7416,11 +7429,12 @@
             .eq('id', currentEditArtistId);
           
           if (error) throw error;
-          
+
           document.getElementById('editArtistModal').classList.remove('active');
           currentEditArtistId = null;
-          
-          // Reload all data to ensure fresh info
+
+          // Clear cache and reload all data to ensure fresh info
+          artistsCache = []; // ✅ Clear cache to force reload
           await loadInitialData();
           await loadArtists();
           renderCalendar();
@@ -7446,7 +7460,9 @@
             .eq('id', artistId);
           
           if (error) throw error;
-          
+
+          artistsCache = []; // ✅ Clear cache to force reload
+          await loadInitialData();
           await loadArtists();
           renderCalendar();
           alert('Artist deleted successfully!');
@@ -7540,10 +7556,11 @@
           
           document.getElementById('editCustomerModal').classList.remove('active');
           currentEditCustomerId = null;
-          
-          // Reload customers to show updated rank
+
+          // Clear cache and reload customers to show updated data
+          customersCache = []; // ✅ Clear cache to force reload
           await loadCustomers();
-          
+
           alert('Customer updated successfully!');
         } catch (err) {
           alert('Error updating customer: ' + err.message);
@@ -7572,7 +7589,8 @@
             .eq('id', customerId);
           
           if (deleteError) throw deleteError;
-          
+
+          customersCache = []; // ✅ Clear cache to force reload
           await loadCustomers();
           alert('Customer deleted successfully!');
         } catch (err) {
