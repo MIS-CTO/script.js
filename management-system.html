@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v80</title>
+  <title>Management System v81</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2126,7 +2126,27 @@
 
   <section id="requests-section">
     <h2>Request Management</h2>
-    
+
+    <!-- Location Filter Buttons -->
+    <div style="position:relative; background:#e8e8ed; border-radius:28px; padding:6px; margin-bottom:16px; display:inline-flex; gap:0;">
+      <div id="requestsLocationIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:white; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 3px 8px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
+      <button class="request-location-tab active" data-location="all" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+        Alle Locations
+      </button>
+      <button class="request-location-tab" data-location="mommy" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+        Mommy I'm Sorry
+      </button>
+      <button class="request-location-tab" data-location="gon" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+        GON
+      </button>
+      <button class="request-location-tab" data-location="muttersohne" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+        Muttersöhne
+      </button>
+      <button class="request-location-tab" data-location="pardon" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+        Pardon Paris
+      </button>
+    </div>
+
     <!-- Sub Navigation -->
     <div style="position:relative; background:#e8e8ed; border-radius:28px; padding:6px; margin-bottom:24px; display:inline-flex; gap:0;">
       <div id="requestsIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:white; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 3px 8px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
@@ -3871,23 +3891,23 @@
 
   <script>
     /* ============================================
-       TATTOO STUDIO MANAGEMENT SYSTEM v80
+       TATTOO STUDIO MANAGEMENT SYSTEM v81
        ============================================
+
+       FIXES IN v81:
+       ✅ Added: 4 Location filter buttons in Request Tab (Alle, Mommy, GON, Muttersöhne, Pardon Paris)
+       ✅ Added: Location filtering logic for requests (filters by location.name)
+       ✅ Added: initRequestLocationTabs() function with animated indicator
+       ✅ Added: currentRequestLocation state variable
+       ✅ Updated: loadRequests() to filter by both status and location
+       ✅ Updated: Version number from v80 to v81
 
        FIXES IN v80:
        ✅ Fixed: Artist location now displays correctly in table (shows city_location field)
        ✅ Fixed: Add Artist modal HTML structure (removed extra closing div tag, added missing closing select tag)
-       ✅ Fixed: Cache refresh for Artists - clears artistsCache after add/edit/delete operations
-       ✅ Fixed: Cache refresh for Customers - clears customersCache after add/edit/delete operations
-       ✅ Updated: renderArtistsTable() to prioritize city_location field over location relation
-       ✅ Updated: Version number from v79 to v80
+       ✅ Fixed: Cache refresh for Artists and Customers after add/edit/delete operations
 
-       FIXES IN v79:
-       ✅ Fixed: Customers and Artists Create/Edit/Delete buttons now visible with anon key
-       ✅ Changed: Anonymous users (using anon key) now see all management buttons by default
-       ✅ Updated: initializePermissions() - removed hideManagementButtons() call for anonymous users
-
-       All display issues resolved. Artists and Customers tables show correct data after operations.
+       Request Management now supports location-based filtering for better organization.
        ============================================ */
 
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
@@ -4273,6 +4293,75 @@
         });
       }
 
+      // ✅ NEW: Request Location tabs initialization function
+      function initRequestLocationTabs() {
+        const locationTabs = document.querySelectorAll('.request-location-tab');
+        const locationIndicator = document.getElementById('requestsLocationIndicator');
+
+        console.log('Init Request Location tabs found:', locationTabs.length);
+        console.log('Init Location Indicator element:', locationIndicator);
+
+        if (!locationIndicator || locationTabs.length === 0) {
+          console.error('Missing location indicator or tabs');
+          return;
+        }
+
+        function updateLocationIndicator(tab) {
+          if (!locationIndicator || !tab) return;
+
+          const tabRect = tab.getBoundingClientRect();
+          const containerRect = tab.parentElement.getBoundingClientRect();
+          const left = tabRect.left - containerRect.left;
+          const width = tabRect.width;
+
+          console.log('Updating location indicator - Left:', left, 'Width:', width);
+
+          locationIndicator.style.width = `${width}px`;
+          locationIndicator.style.transform = `translateX(${left}px)`;
+        }
+
+        // Initialize indicator position
+        setTimeout(() => {
+          const activeTab = document.querySelector('.request-location-tab.active');
+          if (activeTab) {
+            console.log('Initializing location indicator for active tab');
+            updateLocationIndicator(activeTab);
+          }
+        }, 50);
+
+        // Add click listeners
+        locationTabs.forEach((tab, index) => {
+          console.log('Adding click listener to location tab', index, tab.textContent);
+
+          // Remove old listeners by cloning
+          const newTab = tab.cloneNode(true);
+          tab.parentNode.replaceChild(newTab, tab);
+
+          newTab.addEventListener('click', function(e) {
+            console.log('Location tab clicked:', this.textContent, 'Location:', this.dataset.location);
+
+            // Update current location
+            currentRequestLocation = this.dataset.location;
+            console.log('Updated currentRequestLocation to:', currentRequestLocation);
+
+            document.querySelectorAll('.request-location-tab').forEach(t => {
+              t.classList.remove('active');
+              t.style.color = '#86868b';
+            });
+            this.classList.add('active');
+            this.style.color = '#1d1d1f';
+
+            updateLocationIndicator(this);
+
+            // Close detail view when switching location
+            selectedRequestId = null;
+            closeRequestDetail();
+
+            loadRequests();
+          });
+        });
+      }
+
       // Refresh Requests Functionality
       let autoRefreshInterval = null;
       let isRefreshing = false;
@@ -4412,6 +4501,7 @@
           else if (tabName === "requests") {
             loadRequests();
             initRequestTabs();
+            initRequestLocationTabs(); // ✅ NEW: Initialize location filter tabs
           }
           else if (tabName === "calendar") renderCalendar();
           else if (tabName === "dienstplan") renderDienstplan();
@@ -4565,12 +4655,13 @@
 
       let allRequests = [];
       let currentRequestStatus = 'open_request';
+      let currentRequestLocation = 'all'; // ✅ NEW: Track selected location filter
       let selectedRequestId = null;
       // currentUser is declared globally outside this scope
 
       async function loadRequests() {
         try {
-          console.log('📋 Loading requests for status:', currentRequestStatus);
+          console.log('📋 Loading requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
 
           const { data, error } = await supabase
             .from('requests')
@@ -4599,7 +4690,25 @@
             filteredRequests = allRequests.filter(r => r.status === currentRequestStatus);
           }
 
-          console.log('📊 Filtered to', filteredRequests.length, 'requests for status:', currentRequestStatus);
+          // ✅ NEW: Filter by location
+          if (currentRequestLocation !== 'all') {
+            filteredRequests = filteredRequests.filter(r => {
+              const locationName = (r.location?.name || '').toLowerCase();
+
+              if (currentRequestLocation === 'mommy') {
+                return locationName.includes('mommy');
+              } else if (currentRequestLocation === 'gon') {
+                return locationName.includes('gon');
+              } else if (currentRequestLocation === 'muttersohne') {
+                return locationName.includes('muttersöhne') || locationName.includes('muttersohne');
+              } else if (currentRequestLocation === 'pardon') {
+                return locationName.includes('pardon');
+              }
+              return true;
+            });
+          }
+
+          console.log('📊 Filtered to', filteredRequests.length, 'requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
           renderRequestsList(filteredRequests);
           updateRequestBadges();
         } catch(err) {
