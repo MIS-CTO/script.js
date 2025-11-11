@@ -6512,12 +6512,23 @@
         }
       }
 
+      // Make loadCustomers globally accessible for pagination onclick handlers
+      window.loadCustomers = loadCustomers;
+
       // Apply Customer Filters
       function applyCustomerFilters() {
         const searchTerm = document.getElementById('customerSearchInput')?.value.toLowerCase().trim() || '';
         const rankFilter = document.getElementById('customerRankFilter')?.value || '';
         const blacklistFilter = document.getElementById('customerBlacklistFilter')?.value || '';
         const bookingsFilter = document.getElementById('customerBookingsFilter')?.value || '';
+
+        console.log('🔍 [Filter Debug] Starting filter with', customersCache.length, 'total customers');
+        console.log('🔍 [Filter Debug] Search term:', searchTerm ? `"${searchTerm}"` : '(none)');
+        console.log('🔍 [Filter Debug] Rank filter:', rankFilter || '(none)');
+        console.log('🔍 [Filter Debug] Blacklist filter:', blacklistFilter || '(none)');
+        console.log('🔍 [Filter Debug] Bookings filter:', bookingsFilter || '(none)');
+
+        let filteredBySearch = customersCache;
 
         customersFiltered = customersCache.filter(customer => {
           // Search filter (Name, Email, Phone, Instagram)
@@ -6557,7 +6568,11 @@
           return true;
         });
 
-        console.log('🔍 Filtered:', customersFiltered.length, 'of', customersCache.length, 'customers');
+        console.log('✅ [Filter Debug] Final filtered count:', customersFiltered.length, 'of', customersCache.length, 'customers');
+
+        if (searchTerm && customersFiltered.length === 0) {
+          console.warn('⚠️ [Filter Debug] Search returned 0 results. Check if search term exists in any customer fields.');
+        }
       }
 
       // Filter Customers with Debouncing
