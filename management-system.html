@@ -2801,6 +2801,23 @@
     </div>
   </div>
 
+  <!-- View Artist Profile Modal -->
+  <div class="modal-backdrop" id="viewArtistProfileModal">
+    <div class="modal" style="max-width:700px; max-height:90vh; overflow-y:auto;">
+      <h3 style="color:var(--macos-text-primary); font-weight:500; margin-bottom:24px;">Artist Profile</h3>
+      <div id="viewArtistProfileContent" style="padding:0;">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+      <div class="modal-actions" style="display:flex; justify-content:space-between; margin-top:24px; gap:8px;">
+        <button type="button" class="btn btn-danger" id="deleteArtistFromProfileBtn" style="margin-right:auto;">Delete</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-secondary" onclick="closeViewProfile()">Close</button>
+          <button type="button" class="btn btn-primary" id="editArtistFromProfileBtn">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Assign Team Member Modal -->
   <div class="modal-backdrop" id="assignModal">
     <div class="modal">
@@ -6391,8 +6408,7 @@
               <td><span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span></td>
               <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span></td>
               <td style="text-align:right;">
-                <button class="btn btn-secondary" onclick="editArtist('${artist.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
-                <button class="btn btn-danger" onclick="deleteArtist('${artist.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
+                <button class="btn btn-primary" onclick="viewArtistProfile('${artist.id}')" style="padding:6px 16px; font-size:13px;">View Profile</button>
               </td>
             </tr>
           `;
@@ -7448,17 +7464,17 @@
       window.deleteArtist = async function(artistId) {
         const artist = allArtists.find(a => a.id === artistId);
         if (!artist) return;
-        
+
         if (!confirm(`Are you sure you want to delete "${artist.name}"? This action cannot be undone.`)) {
           return;
         }
-        
+
         try {
           const { error } = await supabase
             .from('artists')
             .delete()
             .eq('id', artistId);
-          
+
           if (error) throw error;
 
           artistsCache = []; // ✅ Clear cache to force reload
@@ -7469,6 +7485,158 @@
         } catch (err) {
           alert('Error deleting artist: ' + err.message);
         }
+      };
+
+      // View Artist Profile Functions
+      window.viewArtistProfile = function(artistId) {
+        const artist = allArtists.find(a => a.id === artistId);
+        if (!artist) {
+          alert('❌ Artist not found');
+          return;
+        }
+
+        // Populate modal with artist data
+        const content = document.getElementById('viewArtistProfileContent');
+
+        // Format Instagram handle
+        const instagramDisplay = artist.instagram
+          ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color:var(--location-primary); text-decoration:none;">@${artist.instagram.replace('@', '')}</a>`
+          : '<span style="color:var(--muted);">-</span>';
+
+        // Format location
+        const locationDisplay = artist.city_location
+          ? `<span class="location-badge">${artist.city_location}</span>`
+          : (artist.location && artist.location.name)
+            ? `<span class="location-badge">${artist.location.name}</span>`
+            : '<span style="color:var(--muted);">-</span>';
+
+        // Format type badge
+        const typeDisplay = `<span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? '👥 Guest' : '🏠 Resident'}</span>`;
+
+        // Format rank badge
+        const rankDisplay = `<span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span>`;
+
+        // Format status badge
+        const statusDisplay = `<span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span>`;
+
+        content.innerHTML = `
+          <div style="display:grid; gap:20px;">
+            <div>
+              <h2 style="font-size:24px; font-weight:600; color:var(--macos-text-primary); margin:0 0 8px 0;">${artist.name || '-'}</h2>
+            </div>
+
+            <div style="display:grid; gap:16px;">
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Instagram:</span>
+                <span style="font-size:14px;">${instagramDisplay}</span>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Type:</span>
+                <div>${typeDisplay}</div>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Location:</span>
+                <div>${locationDisplay}</div>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Rank:</span>
+                <div>${rankDisplay}</div>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Status:</span>
+                <div>${statusDisplay}</div>
+              </div>
+
+              ${artist.email ? `
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Email:</span>
+                <span style="font-size:14px; color:var(--macos-text-primary);">${artist.email}</span>
+              </div>
+              ` : ''}
+
+              ${artist.phone ? `
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Phone:</span>
+                <span style="font-size:14px; color:var(--macos-text-primary);">${artist.phone}</span>
+              </div>
+              ` : ''}
+
+              ${artist.bio ? `
+              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
+                <span style="color:var(--muted); font-size:13px; font-weight:500;">Bio:</span>
+                <span style="font-size:14px; color:var(--macos-text-primary); line-height:1.6;">${artist.bio}</span>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        // Update modal title
+        document.querySelector('#viewArtistProfileModal h3').textContent = `Artist Profile - ${artist.name}`;
+
+        // Set up button event listeners
+        document.getElementById('deleteArtistFromProfileBtn').onclick = () => deleteArtistFromProfile(artistId);
+        document.getElementById('editArtistFromProfileBtn').onclick = () => editArtistFromProfile(artistId);
+
+        // Show modal
+        document.getElementById('viewArtistProfileModal').classList.add('active');
+      };
+
+      window.closeViewProfile = function() {
+        document.getElementById('viewArtistProfileModal').classList.remove('active');
+        // Clear content
+        document.getElementById('viewArtistProfileContent').innerHTML = '';
+        document.querySelector('#viewArtistProfileModal h3').textContent = 'Artist Profile';
+      };
+
+      window.deleteArtistFromProfile = async function(artistId) {
+        const artist = allArtists.find(a => a.id === artistId);
+        if (!artist) {
+          alert('❌ Artist not found');
+          return;
+        }
+
+        // First confirmation
+        if (!confirm(`Are you sure you want to delete ${artist.name}? This action cannot be undone.`)) {
+          return;
+        }
+
+        // Second confirmation
+        if (!confirm(`⚠️ FINAL WARNING: This will permanently delete the artist. Click OK to confirm.`)) {
+          return;
+        }
+
+        try {
+          const { error } = await supabase
+            .from('artists')
+            .delete()
+            .eq('id', artistId);
+
+          if (error) throw error;
+
+          // Close modal
+          closeViewProfile();
+
+          // Clear cache and reload
+          artistsCache = [];
+          await loadInitialData();
+          await loadArtists();
+          renderCalendar();
+          alert('Artist deleted successfully!');
+        } catch (err) {
+          alert('Error deleting artist: ' + err.message);
+        }
+      };
+
+      window.editArtistFromProfile = function(artistId) {
+        // Close view profile modal
+        closeViewProfile();
+        // Open edit modal
+        editArtist(artistId);
       };
       
       // Edit Customer Functions
