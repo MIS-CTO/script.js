@@ -3336,15 +3336,72 @@
     </div>
   </div>
 
-  <!-- Customer Detail Modal -->
-  <div class="modal-backdrop" id="customerDetailModal">
-    <div class="modal">
-      <h3>Customer Details</h3>
-      <div id="customerDetailContent" style="display:flex; flex-direction:column; gap:16px;">
-        <!-- Customer details will be loaded here -->
+  <!-- Customer Profile Modal -->
+  <div class="modal-backdrop" id="customerProfileModal">
+    <div class="modal" style="max-width:900px; max-height:90vh; overflow-y:auto;">
+      <div class="profile-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid rgba(0,0,0,0.1);">
+        <div>
+          <h3 id="customerProfileName" style="margin:0 0 8px 0; color:var(--macos-text-primary); font-weight:600; font-size:24px;">Customer Profile</h3>
+          <div id="customerProfileRankBadge"></div>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="closeCustomerProfile()" style="padding:8px 16px;">Close</button>
       </div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" id="closeCustomerDetail">Close</button>
+
+      <!-- Customer Details Section (Editable) -->
+      <div class="profile-section" style="margin-bottom:32px;">
+        <h4 style="font-size:17px; font-weight:600; color:var(--macos-text-primary); margin-bottom:16px;">Customer Details</h4>
+        <form id="customerDetailsForm" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; padding:20px; background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:12px; border:1px solid rgba(0,0,0,0.1);">
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">First Name</label>
+            <input type="text" id="profileCustomerFirstName" required style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Last Name</label>
+            <input type="text" id="profileCustomerLastName" required style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Email</label>
+            <input type="email" id="profileCustomerEmail" required style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Phone</label>
+            <input type="tel" id="profileCustomerPhone" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Instagram</label>
+            <input type="text" id="profileCustomerInstagram" placeholder="@username" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Rank</label>
+            <select id="profileCustomerRank" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
+              <option value="">-- No Rank --</option>
+              <option value="Bronze">Bronze</option>
+              <option value="Silver">Silver</option>
+              <option value="Gold">Gold</option>
+              <option value="Platinum">Platinum</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1; display:flex; gap:12px; margin-top:8px;">
+            <button type="button" class="btn btn-primary" onclick="saveCustomerDetails()" style="padding:8px 16px;">Save Changes</button>
+            <button type="button" class="btn btn-danger" onclick="deleteCustomerFromProfile()" style="padding:8px 16px;">Delete Customer</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Requests Section -->
+      <div class="profile-section" style="margin-bottom:32px;">
+        <h4 style="font-size:17px; font-weight:600; color:var(--macos-text-primary); margin-bottom:16px;">Requests</h4>
+        <div id="customerRequestsList" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Requests will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Appointments Section -->
+      <div class="profile-section">
+        <h4 style="font-size:17px; font-weight:600; color:var(--macos-text-primary); margin-bottom:16px;">Appointments (Projects)</h4>
+        <div id="customerAppointmentsList" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Appointments will be loaded here -->
+        </div>
       </div>
     </div>
   </div>
@@ -6045,7 +6102,14 @@
             showRequestDetail(selectedRequestId);
           }
 
-          alert('✅ Request updated successfully!');
+          // Show appropriate success message
+          if (updateData.status === 'scheduled') {
+            alert('✅ Request scheduled successfully!\n\n📅 An appointment has been automatically created in the appointments table.');
+            console.log('✅ Request scheduled - Appointment auto-created by SQL trigger');
+          } else {
+            alert('✅ Request updated successfully!');
+          }
+
           editingRequestId = null;
         } catch (err) {
           console.error('Error updating request:', err);
@@ -6766,8 +6830,7 @@
               <td>${rankBadge} ${blacklistBadge}</td>
               <td style="font-size:13px; color:var(--muted);">${new Date(customer.created_at).toLocaleDateString()}</td>
               <td style="text-align:right;">
-                <button class="btn btn-secondary" onclick="editCustomer('${customer.id}')" style="padding:6px 12px; font-size:13px; margin-right:4px;">Edit</button>
-                <button class="btn btn-danger" onclick="deleteCustomer('${customer.id}')" style="padding:6px 12px; font-size:13px;">Delete</button>
+                <button class="btn btn-primary" onclick="openCustomerProfile('${customer.id}')" style="padding:6px 16px; font-size:13px;">View Profile</button>
               </td>
             </tr>
           `;
@@ -7638,12 +7701,16 @@
       };
 
       // View Artist Profile Functions
-      window.viewArtistProfile = function(artistId) {
+      window.viewArtistProfile = async function(artistId) {
         const artist = allArtists.find(a => a.id === artistId);
         if (!artist) {
           alert('❌ Artist not found');
           return;
         }
+
+        // Show modal immediately with loading state
+        document.getElementById('viewArtistProfileModal').classList.add('active');
+        document.querySelector('#viewArtistProfileModal h3').textContent = `Artist Profile - ${artist.name}`;
 
         // Populate modal with artist data
         const content = document.getElementById('viewArtistProfileContent');
@@ -7722,19 +7789,127 @@
               </div>
               ` : ''}
             </div>
+
+            <!-- Projects Section -->
+            <div style="margin-top:32px; padding-top:24px; border-top:1px solid rgba(0,0,0,0.1);">
+              <h4 style="font-size:17px; font-weight:600; color:var(--macos-text-primary); margin-bottom:16px;">Completed Projects</h4>
+              <div id="artistProjectsList" style="display:flex; flex-direction:column; gap:12px;">
+                <div style="padding:20px; text-align:center; color:var(--macos-text-secondary);">Loading projects...</div>
+              </div>
+            </div>
           </div>
         `;
-
-        // Update modal title
-        document.querySelector('#viewArtistProfileModal h3').textContent = `Artist Profile - ${artist.name}`;
 
         // Set up button event listeners
         document.getElementById('deleteArtistFromProfileBtn').onclick = () => deleteArtistFromProfile(artistId);
         document.getElementById('editArtistFromProfileBtn').onclick = () => editArtistFromProfile(artistId);
 
-        // Show modal
-        document.getElementById('viewArtistProfileModal').classList.add('active');
+        // Load artist projects asynchronously
+        try {
+          console.log('🔍 Loading projects for artist:', artistId);
+
+          const { data: projects, error } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              customer:customers(first_name, last_name, email, instagram),
+              location:locations(name, city)
+            `)
+            .eq('artist_id', artistId)
+            .not('artist_id', 'is', null)
+            .order('start_time', { ascending: false });
+
+          if (error) {
+            console.error('Error loading artist projects:', error);
+            document.getElementById('artistProjectsList').innerHTML =
+              '<div style="padding:20px; text-align:center; color:var(--macos-accent-red);">Error loading projects</div>';
+            return;
+          }
+
+          console.log('✅ Projects loaded:', projects?.length || 0);
+          renderArtistProjectsSection(projects || []);
+
+        } catch (err) {
+          console.error('❌ Error loading artist projects:', err);
+          document.getElementById('artistProjectsList').innerHTML =
+            '<div style="padding:20px; text-align:center; color:var(--macos-accent-red);">Error loading projects</div>';
+        }
       };
+
+      function renderArtistProjectsSection(projects) {
+        const container = document.getElementById('artistProjectsList');
+
+        if (!container) {
+          console.error('❌ artistProjectsList container not found');
+          return;
+        }
+
+        if (!projects || projects.length === 0) {
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--macos-text-secondary); background:rgba(0,0,0,0.02); border-radius:8px;">No projects found</div>';
+          return;
+        }
+
+        container.innerHTML = projects.map(project => {
+          // Status badge styling
+          const statusColors = {
+            'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
+            'completed': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+            'cancelled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+          };
+          const statusStyle = statusColors[project.status] || statusColors['scheduled'];
+
+          // Payment badge styling
+          const paymentColors = {
+            'paid': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+            'unpaid': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' },
+            'partial': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' }
+          };
+          const paymentStyle = paymentColors[project.payment_state] || paymentColors['unpaid'];
+
+          // Customer info
+          const customerName = project.customer
+            ? `${project.customer.first_name || ''} ${project.customer.last_name || ''}`.trim()
+            : 'Unknown Customer';
+
+          const customerInstagram = project.customer?.instagram
+            ? `<a href="https://instagram.com/${project.customer.instagram.replace('@', '')}" target="_blank" style="color:var(--macos-accent-blue); text-decoration:none;">@${project.customer.instagram.replace('@', '')}</a>`
+            : '';
+
+          // Location info
+          const locationInfo = project.location
+            ? `${project.location.name} - ${project.location.city}`
+            : 'No location';
+
+          // Booking type badge
+          const bookingTypeBadge = project.booking_type
+            ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${project.booking_type.replace('_', ' ')}</span>`
+            : '';
+
+          return `
+            <div class="project-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
+              <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
+                <div>
+                  <span style="font-size:15px; font-weight:600; color:var(--macos-text-primary);">${new Date(project.start_time).toLocaleString()}</span>
+                  <div style="margin-top:4px;">${bookingTypeBadge}</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${project.status}</span>
+                  <span style="background:${paymentStyle.bg}; color:${paymentStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${project.payment_state || 'unpaid'}</span>
+                </div>
+              </div>
+              <div style="font-size:14px; color:var(--macos-text-primary); margin-bottom:8px; font-weight:500;">
+                ${customerName} ${customerInstagram}
+              </div>
+              <div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:8px;">
+                <strong>Location:</strong> ${locationInfo}
+              </div>
+              ${project.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${project.placement}</div>` : ''}
+              ${project.size || project.style ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;">${project.size ? `<strong>Size:</strong> ${project.size}` : ''} ${project.size && project.style ? '|' : ''} ${project.style ? `<strong>Style:</strong> ${project.style}` : ''}</div>` : ''}
+              ${project.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${project.description.substring(0, 150)}${project.description.length > 150 ? '...' : ''}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
 
       window.closeViewProfile = function() {
         document.getElementById('viewArtistProfileModal').classList.remove('active');
@@ -7893,19 +8068,19 @@
             .select('first_name, last_name')
             .eq('id', customerId)
             .single();
-          
+
           if (error) throw error;
           if (!data) return;
-          
+
           if (!confirm(`Are you sure you want to delete "${data.first_name} ${data.last_name}"? This action cannot be undone.`)) {
             return;
           }
-          
+
           const { error: deleteError } = await supabase
             .from('customers')
             .delete()
             .eq('id', customerId);
-          
+
           if (deleteError) throw deleteError;
 
           customersCache = []; // ✅ Clear cache to force reload
@@ -7914,6 +8089,339 @@
         } catch (err) {
           alert('Error deleting customer: ' + err.message);
         }
+      };
+
+      // Customer Profile Functions
+      let currentCustomerProfileId = null;
+
+      window.openCustomerProfile = async function(customerId) {
+        console.log('🔍 Opening customer profile for:', customerId);
+        currentCustomerProfileId = customerId;
+
+        try {
+          // Show loading state
+          document.getElementById('customerProfileModal').classList.add('active');
+          document.getElementById('customerProfileName').textContent = 'Loading...';
+
+          // 1. Fetch customer data
+          const { data: customer, error: customerError } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', customerId)
+            .single();
+
+          if (customerError) throw customerError;
+          if (!customer) {
+            alert('Customer not found');
+            closeCustomerProfile();
+            return;
+          }
+
+          console.log('✅ Customer loaded:', customer);
+
+          // 2. Fetch customer's requests
+          const { data: requests, error: requestsError } = await supabase
+            .from('requests')
+            .select('*')
+            .eq('customer_id', customerId)
+            .order('created_at', { ascending: false });
+
+          if (requestsError) {
+            console.error('Error loading requests:', requestsError);
+          }
+
+          console.log('✅ Requests loaded:', requests?.length || 0);
+
+          // 3. Fetch customer's appointments
+          const { data: appointments, error: appointmentsError } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              artist:artists(name, instagram),
+              location:locations(name, city)
+            `)
+            .eq('customer_id', customerId)
+            .order('start_time', { ascending: false });
+
+          if (appointmentsError) {
+            console.error('Error loading appointments:', appointmentsError);
+          }
+
+          console.log('✅ Appointments loaded:', appointments?.length || 0);
+
+          // 4. Render the profile
+          renderCustomerProfile(customer, requests || [], appointments || []);
+
+        } catch (err) {
+          console.error('❌ Error loading customer profile:', err);
+          alert('Error loading customer profile: ' + err.message);
+          closeCustomerProfile();
+        }
+      };
+
+      function renderCustomerProfile(customer, requests, appointments) {
+        // Update header
+        document.getElementById('customerProfileName').textContent =
+          `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unnamed Customer';
+
+        // Render rank badge
+        const rankBadge = customer.rank
+          ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${customer.rank}</span>`
+          : '';
+        document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
+
+        // Fill form fields
+        document.getElementById('profileCustomerFirstName').value = customer.first_name || '';
+        document.getElementById('profileCustomerLastName').value = customer.last_name || '';
+        document.getElementById('profileCustomerEmail').value = customer.email || '';
+        document.getElementById('profileCustomerPhone').value = customer.phone || '';
+        document.getElementById('profileCustomerInstagram').value = customer.instagram || '';
+        document.getElementById('profileCustomerRank').value = customer.rank || '';
+
+        // Render requests section
+        renderCustomerRequestsSection(requests);
+
+        // Render appointments section
+        renderCustomerAppointmentsSection(appointments);
+      }
+
+      function renderCustomerRequestsSection(requests) {
+        const container = document.getElementById('customerRequestsList');
+
+        if (!requests || requests.length === 0) {
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--macos-text-secondary); background:rgba(0,0,0,0.02); border-radius:8px;">No requests found</div>';
+          return;
+        }
+
+        container.innerHTML = requests.map(request => {
+          // Status badge styling
+          const statusColors = {
+            'open_request': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' },
+            'pending': { bg: 'rgba(255, 204, 0, 0.1)', color: '#ffcc00' },
+            'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
+            'finished': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+            'canceled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+          };
+          const statusStyle = statusColors[request.status] || statusColors['open_request'];
+
+          // Booking type badge
+          const bookingTypeBadge = request.booking_type
+            ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${request.booking_type.replace('_', ' ')}</span>`
+            : '';
+
+          return `
+            <div class="request-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
+              <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
+                <div>
+                  <span style="font-size:12px; color:var(--macos-text-secondary);">Request #${request.id.substring(0, 8)}</span>
+                  <div style="margin-top:4px;">${bookingTypeBadge}</div>
+                </div>
+                <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${request.status.replace('_', ' ')}</span>
+              </div>
+              <div style="font-size:13px; color:var(--macos-text-secondary); margin-bottom:8px;">
+                Created: ${new Date(request.created_at).toLocaleDateString()}
+                ${request.scheduled_date ? `• Scheduled: ${new Date(request.scheduled_date).toLocaleDateString()}` : ''}
+              </div>
+              ${request.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${request.placement}</div>` : ''}
+              ${request.size ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${request.size}</div>` : ''}
+              ${request.style ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Style:</strong> ${request.style}</div>` : ''}
+              ${request.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${request.description.substring(0, 150)}${request.description.length > 150 ? '...' : ''}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderCustomerAppointmentsSection(appointments) {
+        const container = document.getElementById('customerAppointmentsList');
+
+        if (!appointments || appointments.length === 0) {
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--macos-text-secondary); background:rgba(0,0,0,0.02); border-radius:8px;">No appointments found</div>';
+          return;
+        }
+
+        container.innerHTML = appointments.map(appointment => {
+          // Status badge styling
+          const statusColors = {
+            'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
+            'completed': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+            'cancelled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+          };
+          const statusStyle = statusColors[appointment.status] || statusColors['scheduled'];
+
+          // Payment badge styling
+          const paymentColors = {
+            'paid': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+            'unpaid': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' },
+            'partial': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' }
+          };
+          const paymentStyle = paymentColors[appointment.payment_state] || paymentColors['unpaid'];
+
+          // Artist info
+          const artistInfo = appointment.artist
+            ? `${appointment.artist.name}${appointment.artist.instagram ? ` (@${appointment.artist.instagram})` : ''}`
+            : 'Unassigned';
+
+          // Location info
+          const locationInfo = appointment.location
+            ? `${appointment.location.name} - ${appointment.location.city}`
+            : 'No location';
+
+          // Booking type badge
+          const bookingTypeBadge = appointment.booking_type
+            ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.booking_type.replace('_', ' ')}</span>`
+            : '';
+
+          return `
+            <div class="project-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
+              <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
+                <div>
+                  <span style="font-size:15px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start_time).toLocaleString()}</span>
+                  <div style="margin-top:4px;">${bookingTypeBadge}</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.status}</span>
+                  <span style="background:${paymentStyle.bg}; color:${paymentStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.payment_state || 'unpaid'}</span>
+                </div>
+              </div>
+              <div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:8px;">
+                <strong>Artist:</strong> ${artistInfo}
+              </div>
+              <div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:8px;">
+                <strong>Location:</strong> ${locationInfo}
+              </div>
+              ${appointment.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${appointment.placement}</div>` : ''}
+              ${appointment.size ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${appointment.size} ${appointment.style ? `| <strong>Style:</strong> ${appointment.style}` : ''}</div>` : ''}
+              ${appointment.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${appointment.description.substring(0, 150)}${appointment.description.length > 150 ? '...' : ''}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      window.saveCustomerDetails = async function() {
+        if (!currentCustomerProfileId) {
+          alert('Error: No customer selected');
+          return;
+        }
+
+        const firstName = document.getElementById('profileCustomerFirstName').value.trim();
+        const lastName = document.getElementById('profileCustomerLastName').value.trim();
+        const email = document.getElementById('profileCustomerEmail').value.trim();
+        const phone = document.getElementById('profileCustomerPhone').value.trim();
+        const instagram = document.getElementById('profileCustomerInstagram').value.trim();
+        const rank = document.getElementById('profileCustomerRank').value;
+
+        if (!firstName || !lastName || !email) {
+          alert('First name, last name, and email are required');
+          return;
+        }
+
+        try {
+          console.log('💾 Saving customer details...');
+
+          const updateData = {
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone: phone || null,
+            instagram: instagram || null,
+            rank: rank || null
+          };
+
+          const { data, error } = await supabase
+            .from('customers')
+            .update(updateData)
+            .eq('id', currentCustomerProfileId)
+            .select();
+
+          if (error) throw error;
+
+          console.log('✅ Customer updated successfully');
+
+          // Clear cache and reload
+          customersCache = [];
+          await loadCustomers();
+
+          // Re-fetch customer data to update the modal
+          const { data: updatedCustomer } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', currentCustomerProfileId)
+            .single();
+
+          if (updatedCustomer) {
+            // Update the display
+            document.getElementById('customerProfileName').textContent =
+              `${updatedCustomer.first_name || ''} ${updatedCustomer.last_name || ''}`.trim();
+
+            const rankBadge = updatedCustomer.rank
+              ? `<span class="rank-badge rank-${updatedCustomer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${updatedCustomer.rank}</span>`
+              : '';
+            document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
+          }
+
+          alert('✅ Customer details saved successfully!');
+
+        } catch (err) {
+          console.error('❌ Error saving customer details:', err);
+          alert('Error saving customer details: ' + err.message);
+        }
+      };
+
+      window.deleteCustomerFromProfile = async function() {
+        if (!currentCustomerProfileId) {
+          alert('Error: No customer selected');
+          return;
+        }
+
+        try {
+          const { data: customer } = await supabase
+            .from('customers')
+            .select('first_name, last_name')
+            .eq('id', currentCustomerProfileId)
+            .single();
+
+          if (!customer) {
+            alert('Customer not found');
+            return;
+          }
+
+          if (!confirm(`⚠️ Are you sure you want to delete "${customer.first_name} ${customer.last_name}"?\n\nThis will also delete all their requests and appointments. This action cannot be undone.`)) {
+            return;
+          }
+
+          if (!confirm(`🚨 FINAL WARNING: This will permanently delete the customer and all related data. Click OK to confirm.`)) {
+            return;
+          }
+
+          console.log('🗑️ Deleting customer...');
+
+          const { error } = await supabase
+            .from('customers')
+            .delete()
+            .eq('id', currentCustomerProfileId);
+
+          if (error) throw error;
+
+          console.log('✅ Customer deleted successfully');
+
+          // Close modal
+          closeCustomerProfile();
+
+          // Clear cache and reload
+          customersCache = [];
+          await loadCustomers();
+
+          alert('✅ Customer deleted successfully!');
+
+        } catch (err) {
+          console.error('❌ Error deleting customer:', err);
+          alert('Error deleting customer: ' + err.message);
+        }
+      };
+
+      window.closeCustomerProfile = function() {
+        document.getElementById('customerProfileModal').classList.remove('active');
+        currentCustomerProfileId = null;
       };
       
       // Close modals on backdrop click
