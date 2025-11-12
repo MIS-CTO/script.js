@@ -6469,16 +6469,40 @@
         try {
           // Load from cache or database
           if (customersCache.length === 0) {
-            const { data, error } = await supabase
-              .from('customers')
-              .select('*')
-              .order('created_at', { ascending: false });
+            console.log('🔄 Loading ALL customers from Supabase in batches...');
 
-            if (error) throw error;
+            let allData = [];
+            let from = 0;
+            const batchSize = 1000;
+            let hasMore = true;
 
-            customersCache = data || [];
+            // Load all customers in batches of 1000
+            while (hasMore) {
+              const { data, error, count } = await supabase
+                .from('customers')
+                .select('*', { count: 'exact' })
+                .order('created_at', { ascending: false })
+                .range(from, from + batchSize - 1);
+
+              if (error) throw error;
+
+              if (data && data.length > 0) {
+                allData = allData.concat(data);
+                console.log(`📦 Loaded batch: ${from + 1} to ${from + data.length} (Total so far: ${allData.length})`);
+                from += batchSize;
+
+                // Check if we got less than batch size, meaning we're done
+                if (data.length < batchSize) {
+                  hasMore = false;
+                }
+              } else {
+                hasMore = false;
+              }
+            }
+
+            customersCache = allData;
             allCustomers = customersCache; // Keep for compatibility
-            console.log('✅ Loaded', customersCache.length, 'customers into cache');
+            console.log('✅ Loaded ALL', customersCache.length, 'customers into cache');
           }
 
           // Apply filters
