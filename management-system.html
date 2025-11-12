@@ -10819,12 +10819,41 @@
     let originsPieChart = null;
     let timelineChart = null;
     let currentTimeRange = 'weekly';
-    let analyticsData = [];
+    let appointmentsData = []; // For timeline chart
+    let requestsData = []; // For origin chart
 
     // Load analytics data from Supabase
-    async function loadAnalyticsData(locationFilter = null) {
+    // Load appointments data for Timeline Chart (uses start_time)
+    async function loadAppointmentsData(locationFilter = null) {
       try {
-        console.log('📊 Loading analytics data...');
+        console.log('📊 Loading appointments data for timeline...');
+        let query = supabase
+          .from('appointments')
+          .select('booking_type, status, start_time, location_id')
+          .in('status', ['scheduled', 'finished']) // Only confirmed appointments
+          .order('start_time', { ascending: true });
+
+        if (locationFilter) {
+          query = query.eq('location_id', locationFilter);
+          console.log('🏢 Filtering appointments by location:', locationFilter);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        console.log(`✅ Loaded ${data.length} appointments for timeline`);
+        return data;
+      } catch (err) {
+        console.error('❌ Appointments data load failed:', err);
+        alert('Failed to load appointments data: ' + err.message);
+        return [];
+      }
+    }
+
+    // Load requests data for Origin Pie Chart (uses created_at and origin)
+    async function loadRequestsData(locationFilter = null) {
+      try {
+        console.log('📊 Loading requests data for origin chart...');
         let query = supabase
           .from('requests')
           .select('origin, status, created_at, location_id')
@@ -10832,17 +10861,17 @@
 
         if (locationFilter) {
           query = query.eq('location_id', locationFilter);
-          console.log('🏢 Filtering by location:', locationFilter);
+          console.log('🏢 Filtering requests by location:', locationFilter);
         }
 
         const { data, error } = await query;
         if (error) throw error;
 
-        console.log(`✅ Loaded ${data.length} requests for analytics`);
+        console.log(`✅ Loaded ${data.length} requests for origin chart`);
         return data;
       } catch (err) {
-        console.error('❌ Analytics data load failed:', err);
-        alert('Failed to load analytics data: ' + err.message);
+        console.error('❌ Requests data load failed:', err);
+        alert('Failed to load requests data: ' + err.message);
         return [];
       }
     }
@@ -10944,13 +10973,16 @@
       console.log('✅ Pie chart rendered successfully');
     }
 
-    // Group data by time range
+    // Group appointments data by time range (uses start_time)
     function groupDataByTimeRange(data, range) {
       const now = new Date();
       const groups = {};
 
-      data.forEach(req => {
-        const date = new Date(req.created_at);
+      console.log('📅 Grouping', data.length, 'appointments by range:', range);
+
+      data.forEach(appointment => {
+        // Use start_time instead of created_at for appointments
+        const date = new Date(appointment.start_time);
         let key;
 
         switch(range) {
@@ -11000,6 +11032,8 @@
         };
         return parseDate(a) - parseDate(b);
       });
+
+      console.log('✅ Grouped into', sortedKeys.length, 'time buckets');
 
       return {
         labels: sortedKeys,
@@ -11111,9 +11145,14 @@
 
       // Load and render initial charts
       const locationFilter = document.getElementById('analyticsLocationFilter')?.value || null;
-      analyticsData = await loadAnalyticsData(locationFilter);
-      await renderOriginsPieChart(analyticsData);
-      await renderBookingsTimeline(analyticsData, currentTimeRange);
+
+      // Load requests data for Origin Chart
+      requestsData = await loadRequestsData(locationFilter);
+      await renderOriginsPieChart(requestsData);
+
+      // Load appointments data for Timeline Chart
+      appointmentsData = await loadAppointmentsData(locationFilter);
+      await renderBookingsTimeline(appointmentsData, currentTimeRange);
 
       console.log('✅ Analytics initialized');
     }
@@ -11193,8 +11232,8 @@
           // Get selected range
           const range = this.dataset.range;
 
-          // Reload chart with current data
-          await renderBookingsTimeline(analyticsData, range);
+          // Reload timeline chart with appointments data
+          await renderBookingsTimeline(appointmentsData, range);
         });
       });
 
@@ -11205,12 +11244,13 @@
           const locationId = this.value || null;
           console.log('🏢 Analytics location filter changed:', locationId || 'All Locations');
 
-          // Reload data with new filter
-          analyticsData = await loadAnalyticsData(locationId);
+          // Reload requests data for Origin Chart
+          requestsData = await loadRequestsData(locationId);
+          await renderOriginsPieChart(requestsData);
 
-          // Re-render both charts
-          await renderOriginsPieChart(analyticsData);
-          await renderBookingsTimeline(analyticsData, currentTimeRange);
+          // Reload appointments data for Timeline Chart
+          appointmentsData = await loadAppointmentsData(locationId);
+          await renderBookingsTimeline(appointmentsData, currentTimeRange);
         });
       }
 
