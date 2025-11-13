@@ -10870,14 +10870,13 @@
         // SIMPLIFIED: Load ALL appointments without status filter
         // This ensures we get data even if status values don't match expectations
         // IMPORTANT: Supabase has a default limit of 1000 rows - we need to set a higher limit!
-        console.log('🚨 APPOINTMENTS QUERY VERSION: 2025-11-13-v5 WITH EXPLICIT LIMIT - loading ALL records');
+        console.log('🚨 APPOINTMENTS QUERY VERSION: 2025-11-13-v6 LIMIT AT END - loading ALL records');
         console.log('⏳ Fetching all appointments from Supabase...');
         let query = supabase
           .from('appointments')
           .select('booking_type, status, created_at, location_id, id')
           .not('created_at', 'is', null)  // Only get appointments with created_at
-          .order('created_at', { ascending: true })  // Load OLDEST first to get 2024 AND 2025 data
-          .limit(50000);  // Explicit high limit to override Supabase's default 1000 limit
+          .order('created_at', { ascending: true });  // Load OLDEST first to get 2024 AND 2025 data
 
         // Don't apply location filter if it's an empty string or invalid
         if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
@@ -10886,6 +10885,10 @@
         } else {
           console.log('🌍 Loading ALL appointments (no location filter)');
         }
+
+        // Apply limit at the very end after all filters
+        query = query.limit(50000);
+        console.log('🔢 Applied limit: 50000 records');
 
         const { data, error } = await query;
 
@@ -10984,18 +10987,21 @@
           console.error('❌ Count error:', countError);
         }
 
-        console.log('🚨 REQUESTS ORIGIN QUERY VERSION: 2025-11-13-v5 WITH EXPLICIT LIMIT - loading ALL records');
+        console.log('🚨 REQUESTS ORIGIN QUERY VERSION: 2025-11-13-v6 LIMIT AT END - loading ALL records');
         console.log('⏳ Analyzing all requests for origin chart...');
         let query = supabase
           .from('requests')
           .select('origin, status, created_at, location_id')
-          .neq('status', 'canceled')  // Exclude canceled requests
-          .limit(50000);  // Explicit high limit to override Supabase's default 1000 limit
+          .neq('status', 'canceled');  // Exclude canceled requests
 
         if (locationFilter) {
           query = query.eq('location_id', locationFilter);
           console.log('🏢 Filtering requests by location:', locationFilter);
         }
+
+        // Apply limit at the very end after all filters
+        query = query.limit(50000);
+        console.log('🔢 Applied limit: 50000 records');
 
         const { data, error } = await query;
 
@@ -11046,12 +11052,11 @@
           console.error('❌ Count error:', countError);
         }
 
-        console.log('🚨 ALL REQUESTS COUNT QUERY VERSION: 2025-11-13-v5 WITH EXPLICIT LIMIT - loading ALL records');
+        console.log('🚨 ALL REQUESTS COUNT QUERY VERSION: 2025-11-13-v6 LIMIT AT END - loading ALL records');
         console.log('⏳ Processing all requests for count display...');
         let query = supabase
           .from('requests')
-          .select('id, status, created_at, location_id')
-          .limit(50000);  // Explicit high limit to override Supabase's default 1000 limit
+          .select('id, status, created_at, location_id');
 
         if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
           query = query.eq('location_id', locationFilter);
@@ -11059,6 +11064,10 @@
         } else {
           console.log('🌍 Loading ALL requests (no location filter)');
         }
+
+        // Apply limit at the very end after all filters
+        query = query.limit(50000);
+        console.log('🔢 Applied limit: 50000 records');
 
         const { data, error } = await query;
 
@@ -11760,4 +11769,4 @@
   </div>
 
 </body>
-</html><!-- VERSION: v77 -->
+</html><!-- VERSION: v78 - Fixed .limit(50000) placement -->
