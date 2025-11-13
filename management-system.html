@@ -10823,25 +10823,48 @@
     let requestsData = []; // For origin chart
 
     // Load analytics data from Supabase
-    // Load appointments data for Timeline Chart (uses start_time)
+    // Load appointments data for Timeline Chart (uses created_at)
     async function loadAppointmentsData(locationFilter = null) {
       try {
         console.log('📊 Loading appointments data for timeline...');
         console.log('📊 Location filter:', locationFilter || 'None');
+        console.log('📊 Current user:', currentUser ? currentUser.username : 'Not logged in');
+
+        // First, try to count total appointments to check if we have access
+        console.log('🔍 Checking table access...');
+        const { count, error: countError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true });
+
+        console.log('📊 Total appointments in table (accessible):', count);
+        if (countError) {
+          console.error('❌ Count error:', countError);
+        }
 
         // SIMPLIFIED: Load ALL appointments without status filter
         // This ensures we get data even if status values don't match expectations
         let query = supabase
           .from('appointments')
-          .select('booking_type, status, created_at, location_id')
-          .order('created_at', { ascending: true });
+          .select('booking_type, status, created_at, location_id, id')
+          .not('created_at', 'is', null);  // Only get appointments with created_at
 
-        if (locationFilter) {
+        // Don't apply location filter if it's an empty string or invalid
+        if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
           query = query.eq('location_id', locationFilter);
           console.log('🏢 Filtering appointments by location:', locationFilter);
+        } else {
+          console.log('🌍 Loading ALL appointments (no location filter)');
         }
 
+        query = query.order('created_at', { ascending: true });
+
         const { data, error } = await query;
+
+        console.log('🔍 Query response:', {
+          dataLength: data?.length,
+          error: error,
+          hasData: !!data
+        });
 
         if (error) {
           console.error('❌ Supabase error:', error);
