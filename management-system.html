@@ -11140,23 +11140,40 @@
     async function renderOriginsPieChart(data) {
       console.log('📊 Rendering origins pie chart with', data.length, 'requests');
 
-      // Count origins
+      // Count origins - including unknown ones
       const originCounts = {
         'booking_form': 0,
         'whatsapp': 0,
         'instagram': 0,
         'email': 0,
         'walk_in': 0,
-        'self_booking': 0
+        'self_booking': 0,
+        'other': 0  // For unknown/unmapped origins
       };
 
+      // Track unknown origins for debugging
+      const unknownOrigins = new Set();
+
       data.forEach(req => {
-        if (req.origin && originCounts.hasOwnProperty(req.origin)) {
-          originCounts[req.origin]++;
+        if (req.origin) {
+          if (originCounts.hasOwnProperty(req.origin)) {
+            originCounts[req.origin]++;
+          } else {
+            // Count as 'other' and track the unknown value
+            originCounts['other']++;
+            unknownOrigins.add(req.origin);
+          }
+        } else {
+          // Requests without origin value
+          originCounts['other']++;
         }
       });
 
       console.log('📈 Origin counts:', originCounts);
+      if (unknownOrigins.size > 0) {
+        console.warn('⚠️ Unknown origin values found:', Array.from(unknownOrigins));
+        console.warn('⚠️ These are counted as "Other". Consider adding them to the chart.');
+      }
 
       // Labels and colors
       const labels = [
@@ -11165,7 +11182,8 @@
         'Instagram',
         'E-Mail',
         'Walk-In',
-        'Self-Booking'
+        'Self-Booking',
+        'Other'
       ];
 
       const colors = [
@@ -11174,14 +11192,30 @@
         '#E1306C', // Instagram Pink
         '#EA4335', // Email Red
         '#7B1FA2', // Walk-In Purple
-        '#00897B'  // Self-Booking Teal
+        '#00897B', // Self-Booking Teal
+        '#9E9E9E'  // Other Gray
       ];
 
-      const chartData = {
-        labels: labels,
+      // Filter out categories with 0 count for cleaner chart
+      const chartLabels = [];
+      const chartData = [];
+      const chartColors = [];
+
+      labels.forEach((label, index) => {
+        const key = Object.keys(originCounts)[index];
+        const count = originCounts[key];
+        if (count > 0) {
+          chartLabels.push(label);
+          chartData.push(count);
+          chartColors.push(colors[index]);
+        }
+      });
+
+      const chartDataConfig = {
+        labels: chartLabels,
         datasets: [{
-          data: Object.values(originCounts),
-          backgroundColor: colors,
+          data: chartData,
+          backgroundColor: chartColors,
           borderWidth: 2,
           borderColor: '#fff'
         }]
@@ -11200,7 +11234,7 @@
 
       originsPieChart = new Chart(ctx.getContext('2d'), {
         type: 'pie',
-        data: chartData,
+        data: chartDataConfig,
         options: {
           responsive: true,
           maintainAspectRatio: true,
@@ -11231,6 +11265,8 @@
       });
 
       console.log('✅ Pie chart rendered successfully');
+      console.log(`📊 Total requests in chart: ${data.length}`);
+      console.log(`📊 Displayed categories: ${chartLabels.length} (excluding empty)`);
     }
 
     // Render Requests Count Display
@@ -11810,4 +11846,4 @@
   </div>
 
 </body>
-</html><!-- VERSION: v79 - Implemented pagination to load ALL data in 1000-row batches -->
+</html><!-- VERSION: v80 - Improved Booking Sources to handle unknown origin values -->
