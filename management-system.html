@@ -11140,6 +11140,14 @@
     async function renderOriginsPieChart(data) {
       console.log('📊 Rendering origins pie chart with', data.length, 'requests');
 
+      // DEBUG: Show sample of actual origin values from database
+      console.log('🔍 DEBUG: Sample origin values from database (first 20):');
+      const sampleOrigins = data.slice(0, 20).map(req => req.origin);
+      console.log(sampleOrigins);
+      console.log('🔍 DEBUG: Unique origin values in entire dataset:');
+      const uniqueOrigins = [...new Set(data.map(req => req.origin))];
+      console.log(uniqueOrigins);
+
       // Count origins - including unknown ones
       const originCounts = {
         'booking_form': 0,
@@ -11166,13 +11174,15 @@
         } else {
           // Requests without origin value
           originCounts['other']++;
+          unknownOrigins.add('(null or undefined)');
         }
       });
 
       console.log('📈 Origin counts:', originCounts);
       if (unknownOrigins.size > 0) {
         console.warn('⚠️ Unknown origin values found:', Array.from(unknownOrigins));
-        console.warn('⚠️ These are counted as "Other". Consider adding them to the chart.');
+        console.warn('⚠️ These values do NOT match the expected format in code!');
+        console.warn('⚠️ Expected: booking_form, whatsapp, instagram, email, walk_in, self_booking');
       }
 
       // Labels and colors
@@ -11846,4 +11856,4 @@
   </div>
 
 </body>
-</html><!-- VERSION: v80 - Improved Booking Sources to handle unknown origin values -->
+</html><!-- VERSION: v80-debug - Added debug logging for origin values -->
