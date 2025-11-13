@@ -2558,6 +2558,15 @@
         </div>
       </div>
 
+      <!-- Appointments Count Card -->
+      <div class="chart-card">
+        <h3>Total Appointments</h3>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
+          <div style="font-size: 64px; font-weight: 700; color: var(--success);" id="appointmentsCount">0</div>
+          <div style="font-size: 18px; color: var(--muted); margin-top: 8px;">Total Scheduled Appointments</div>
+        </div>
+      </div>
+
       <!-- Appointment Status Pie Chart Card -->
       <div class="chart-card">
         <h3>Appointment Status Breakdown</h3>
@@ -11205,6 +11214,37 @@
       console.log('✅ Requests count rendered successfully');
     }
 
+    // Render Appointments Count Display
+    async function renderAppointmentsCount(data) {
+      console.log('📊 Rendering appointments count with', data.length, 'appointments');
+
+      const countElement = document.getElementById('appointmentsCount');
+      if (!countElement) {
+        console.error('❌ Count element not found: appointmentsCount');
+        return;
+      }
+
+      // Animate the count
+      const targetCount = data.length;
+      let currentCount = 0;
+      const duration = 1000; // 1 second
+      const steps = 30;
+      const increment = targetCount / steps;
+      const stepDuration = duration / steps;
+
+      const counter = setInterval(() => {
+        currentCount += increment;
+        if (currentCount >= targetCount) {
+          countElement.textContent = targetCount.toLocaleString('de-DE');
+          clearInterval(counter);
+        } else {
+          countElement.textContent = Math.floor(currentCount).toLocaleString('de-DE');
+        }
+      }, stepDuration);
+
+      console.log('✅ Appointments count rendered successfully');
+    }
+
     // Render Pie Chart for Appointment Status
     async function renderAppointmentStatusPieChart(data) {
       console.log('📊 Rendering appointment status pie chart with', data.length, 'appointments');
@@ -11600,6 +11640,7 @@
       appointmentsData = await loadAppointmentsData(locationFilter);
       await renderBookingsTimeline(appointmentsData, currentTimeRange);
       await renderAppointmentStatusPieChart(appointmentsData);
+      await renderAppointmentsCount(appointmentsData);
 
       console.log('✅ Analytics initialized');
     }
@@ -11703,6 +11744,7 @@
           appointmentsData = await loadAppointmentsData(locationId);
           await renderBookingsTimeline(appointmentsData, currentTimeRange);
           await renderAppointmentStatusPieChart(appointmentsData);
+          await renderAppointmentsCount(appointmentsData);
         });
       }
 
