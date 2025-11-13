@@ -11140,7 +11140,45 @@
     async function renderOriginsPieChart(data) {
       console.log('📊 Rendering origins pie chart with', data.length, 'requests');
 
-      // Count origins - including unknown ones
+      // Mapping from database values to chart categories
+      // Database has: Contactform, Instagram, Website, WhatsApp (with capitals)
+      const originMapping = {
+        // Contactform variations
+        'Contactform': 'booking_form',
+        'contactform': 'booking_form',
+        'booking_form': 'booking_form',
+        'Booking Form': 'booking_form',
+
+        // WhatsApp variations
+        'WhatsApp': 'whatsapp',
+        'whatsapp': 'whatsapp',
+        'Whatsapp': 'whatsapp',
+
+        // Instagram variations
+        'Instagram': 'instagram',
+        'instagram': 'instagram',
+
+        // Email variations
+        'Email': 'email',
+        'email': 'email',
+        'E-Mail': 'email',
+
+        // Walk-In variations
+        'Walk-In': 'walk_in',
+        'walk_in': 'walk_in',
+        'Walk In': 'walk_in',
+
+        // Self-Booking variations
+        'Self-Booking': 'self_booking',
+        'self_booking': 'self_booking',
+        'Self Booking': 'self_booking',
+
+        // Website
+        'Website': 'website',
+        'website': 'website'
+      };
+
+      // Count origins
       const originCounts = {
         'booking_form': 0,
         'whatsapp': 0,
@@ -11148,7 +11186,8 @@
         'email': 0,
         'walk_in': 0,
         'self_booking': 0,
-        'other': 0  // For unknown/unmapped origins
+        'website': 0,
+        'other': 0
       };
 
       // Track unknown origins for debugging
@@ -11156,10 +11195,13 @@
 
       data.forEach(req => {
         if (req.origin) {
-          if (originCounts.hasOwnProperty(req.origin)) {
-            originCounts[req.origin]++;
+          // Map the database value to a chart category
+          const mappedOrigin = originMapping[req.origin];
+
+          if (mappedOrigin) {
+            originCounts[mappedOrigin]++;
           } else {
-            // Count as 'other' and track the unknown value
+            // Unknown origin value
             originCounts['other']++;
             unknownOrigins.add(req.origin);
           }
@@ -11172,27 +11214,29 @@
       console.log('📈 Origin counts:', originCounts);
       if (unknownOrigins.size > 0) {
         console.warn('⚠️ Unknown origin values found:', Array.from(unknownOrigins));
-        console.warn('⚠️ These are counted as "Other". Consider adding them to the chart.');
+        console.warn('⚠️ Add these to originMapping if they should be tracked');
       }
 
       // Labels and colors
       const labels = [
-        'Booking Form',
+        'Contactform',
         'WhatsApp',
         'Instagram',
         'E-Mail',
         'Walk-In',
         'Self-Booking',
+        'Website',
         'Other'
       ];
 
       const colors = [
-        '#0071e3', // Accent (Booking Form)
+        '#0071e3', // Accent (Contactform/Booking Form)
         '#25D366', // WhatsApp Green
         '#E1306C', // Instagram Pink
         '#EA4335', // Email Red
         '#7B1FA2', // Walk-In Purple
         '#00897B', // Self-Booking Teal
+        '#FF9800', // Website Orange
         '#9E9E9E'  // Other Gray
       ];
 
@@ -11846,4 +11890,4 @@
   </div>
 
 </body>
-</html><!-- VERSION: v80 - Improved Booking Sources to handle unknown origin values -->
+</html><!-- VERSION: v80 - Fixed origin mapping to match actual database values -->
