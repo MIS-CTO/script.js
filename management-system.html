@@ -10865,7 +10865,7 @@
           .from('appointments')
           .select('booking_type, status, created_at, location_id, id')
           .not('created_at', 'is', null)  // Only get appointments with created_at
-          .order('created_at', { ascending: false })
+          .order('created_at', { ascending: true })  // Load OLDEST first to get 2024 AND 2025 data
           .limit(20000);  // Load up to 20,000 appointments (more than the 13,689 we have)
 
         // Don't apply location filter if it's an empty string or invalid
@@ -10889,7 +10889,7 @@
           throw error;
         }
 
-        console.log(`✅ Loaded ${data?.length || 0} total appointments`);
+        console.log(`📊 Loaded ${data?.length || 0} of ${count || 'unknown'} appointments`);
 
         // If no data at all, return empty array
         if (!data || data.length === 0) {
@@ -10958,10 +10958,21 @@
         console.log('📊 Loading requests data for origin chart...');
         console.log('📊 Location filter:', locationFilter || 'None');
 
+        // First, count total requests
+        const { count, error: countError } = await supabase
+          .from('requests')
+          .select('*', { count: 'exact', head: true });
+
+        console.log('📊 Total requests in table:', count);
+        if (countError) {
+          console.error('❌ Count error:', countError);
+        }
+
         let query = supabase
           .from('requests')
           .select('origin, status, created_at, location_id')
-          .neq('status', 'canceled'); // Exclude canceled requests
+          .neq('status', 'canceled')  // Exclude canceled requests
+          .limit(40000);  // Load up to 40,000 requests (more than the 35,147 we have)
 
         if (locationFilter) {
           query = query.eq('location_id', locationFilter);
@@ -10975,7 +10986,7 @@
           throw error;
         }
 
-        console.log(`✅ Loaded ${data?.length || 0} requests for origin chart`);
+        console.log(`📊 Loaded ${data?.length || 0} of ${count || 'unknown'} requests for origin chart`);
 
         // If no data, log warning but don't throw error
         if (!data || data.length === 0) {
@@ -11002,10 +11013,20 @@
         console.log('📊 Loading ALL requests data for count...');
         console.log('📊 Location filter:', locationFilter || 'None');
 
+        // First, count total requests
+        const { count, error: countError } = await supabase
+          .from('requests')
+          .select('*', { count: 'exact', head: true });
+
+        console.log('📊 Total requests in table:', count);
+        if (countError) {
+          console.error('❌ Count error:', countError);
+        }
+
         let query = supabase
           .from('requests')
           .select('id, status, created_at, location_id')
-          .limit(20000); // Load up to 20,000 requests
+          .limit(40000); // Load up to 40,000 requests (more than the 35,147 we have)
 
         if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
           query = query.eq('location_id', locationFilter);
@@ -11021,7 +11042,7 @@
           throw error;
         }
 
-        console.log(`✅ Loaded ${data?.length || 0} total requests (including canceled)`);
+        console.log(`📊 Loaded ${data?.length || 0} of ${count || 'unknown'} total requests (including canceled)`);
 
         if (!data || data.length === 0) {
           console.warn('⚠️ No requests found in database');
