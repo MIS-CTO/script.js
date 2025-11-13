@@ -10861,13 +10861,14 @@
         // SIMPLIFIED: Load ALL appointments without status filter
         // This ensures we get data even if status values don't match expectations
         // IMPORTANT: Supabase has a default limit of 1000 rows - we need to set a higher limit!
-        console.log('🚨 APPOINTMENTS QUERY VERSION: 2025-11-13-v3 with limit(20000)');
+        console.log('🚨 APPOINTMENTS QUERY VERSION: 2025-11-13-v4 NO LIMIT - loading ALL records');
+        console.log('⏳ Fetching all appointments from Supabase...');
         let query = supabase
           .from('appointments')
           .select('booking_type, status, created_at, location_id, id')
           .not('created_at', 'is', null)  // Only get appointments with created_at
-          .order('created_at', { ascending: true })  // Load OLDEST first to get 2024 AND 2025 data
-          .limit(20000);  // Load up to 20,000 appointments (more than the 13,689 we have)
+          .order('created_at', { ascending: true });  // Load OLDEST first to get 2024 AND 2025 data
+          // NO .limit() - fetch ALL records!
 
         // Don't apply location filter if it's an empty string or invalid
         if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
@@ -10890,7 +10891,12 @@
           throw error;
         }
 
-        console.log(`📊 Loaded ${data?.length || 0} of ${count || 'unknown'} appointments`);
+        console.log(`✅ Successfully loaded ${data?.length || 0} of ${count || 'unknown'} appointments`);
+        if (data?.length < count) {
+          console.warn(`⚠️ WARNING: Only loaded ${data.length} out of ${count} appointments! Some data is missing!`);
+        } else {
+          console.log(`🎉 SUCCESS: All ${data.length} appointments loaded!`);
+        }
 
         // If no data at all, return empty array
         if (!data || data.length === 0) {
@@ -10969,12 +10975,13 @@
           console.error('❌ Count error:', countError);
         }
 
-        console.log('🚨 REQUESTS ORIGIN QUERY VERSION: 2025-11-13-v3 with limit(40000)');
+        console.log('🚨 REQUESTS ORIGIN QUERY VERSION: 2025-11-13-v4 NO LIMIT - loading ALL records');
+        console.log('⏳ Analyzing all requests for origin chart...');
         let query = supabase
           .from('requests')
           .select('origin, status, created_at, location_id')
-          .neq('status', 'canceled')  // Exclude canceled requests
-          .limit(40000);  // Load up to 40,000 requests (more than the 35,147 we have)
+          .neq('status', 'canceled');  // Exclude canceled requests
+          // NO .limit() - fetch ALL records!
 
         if (locationFilter) {
           query = query.eq('location_id', locationFilter);
@@ -10988,7 +10995,12 @@
           throw error;
         }
 
-        console.log(`📊 Loaded ${data?.length || 0} of ${count || 'unknown'} requests for origin chart`);
+        console.log(`✅ Successfully loaded ${data?.length || 0} of ${count || 'unknown'} requests for origin chart`);
+        if (data?.length < count) {
+          console.warn(`⚠️ WARNING: Only loaded ${data.length} out of ${count} requests! Some data is missing!`);
+        } else {
+          console.log(`🎉 SUCCESS: All ${data.length} requests loaded for origin analysis!`);
+        }
 
         // If no data, log warning but don't throw error
         if (!data || data.length === 0) {
@@ -11025,11 +11037,12 @@
           console.error('❌ Count error:', countError);
         }
 
-        console.log('🚨 ALL REQUESTS COUNT QUERY VERSION: 2025-11-13-v3 with limit(40000)');
+        console.log('🚨 ALL REQUESTS COUNT QUERY VERSION: 2025-11-13-v4 NO LIMIT - loading ALL records');
+        console.log('⏳ Processing all requests for count display...');
         let query = supabase
           .from('requests')
-          .select('id, status, created_at, location_id')
-          .limit(40000); // Load up to 40,000 requests (more than the 35,147 we have)
+          .select('id, status, created_at, location_id');
+          // NO .limit() - fetch ALL records!
 
         if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
           query = query.eq('location_id', locationFilter);
@@ -11045,7 +11058,12 @@
           throw error;
         }
 
-        console.log(`📊 Loaded ${data?.length || 0} of ${count || 'unknown'} total requests (including canceled)`);
+        console.log(`✅ Successfully loaded ${data?.length || 0} of ${count || 'unknown'} total requests (including canceled)`);
+        if (data?.length < count) {
+          console.warn(`⚠️ WARNING: Only loaded ${data.length} out of ${count} total requests! Some data is missing!`);
+        } else {
+          console.log(`🎉 SUCCESS: All ${data.length} requests loaded for count display!`);
+        }
 
         if (!data || data.length === 0) {
           console.warn('⚠️ No requests found in database');
