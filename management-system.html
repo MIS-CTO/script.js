@@ -10833,8 +10833,8 @@
         // This ensures we get data even if status values don't match expectations
         let query = supabase
           .from('appointments')
-          .select('booking_type, status, start_time, location_id')
-          .order('start_time', { ascending: true });
+          .select('booking_type, status, created_at, location_id')
+          .order('created_at', { ascending: true });
 
         if (locationFilter) {
           query = query.eq('location_id', locationFilter);
@@ -11045,8 +11045,8 @@
       console.log('📅 Grouping', data.length, 'appointments by range:', range);
 
       data.forEach(appointment => {
-        // Use start_time instead of created_at for appointments
-        const date = new Date(appointment.start_time);
+        // Use created_at to track when bookings were made
+        const date = new Date(appointment.created_at);
         let key;
 
         switch(range) {
