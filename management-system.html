@@ -2629,7 +2629,15 @@
 
       <!-- Revenue Analytics Card -->
       <div class="chart-card">
-        <h3>Umsatz-Übersicht</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;">Umsatz-Übersicht</h3>
+          <select id="revenueTimeFilter" class="filter-select" style="width: auto;">
+            <option value="week">Diese Woche</option>
+            <option value="month" selected>Dieser Monat</option>
+            <option value="year">Dieses Jahr</option>
+            <option value="all">Gesamt</option>
+          </select>
+        </div>
         <div style="display: flex; flex-direction: column; gap: 24px; padding: 20px;">
           <!-- Total Revenue -->
           <div style="text-align: center;">
@@ -2661,7 +2669,15 @@
 
       <!-- Revenue Timeline Card -->
       <div class="chart-card">
-        <h3>Umsatz im Zeitverlauf</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;">Umsatz im Zeitverlauf</h3>
+          <select id="revenueTimelineFilter" class="filter-select" style="width: auto;">
+            <option value="week">Diese Woche</option>
+            <option value="month" selected>Dieser Monat</option>
+            <option value="year">Dieses Jahr</option>
+            <option value="all">Gesamt</option>
+          </select>
+        </div>
         <canvas id="revenueTimeline"></canvas>
       </div>
 
@@ -11900,6 +11916,46 @@
       });
     }
 
+    // Filter projects by revenue time range (separate from global filter)
+    function filterProjectsByRevenueDateRange(projects, rangeType) {
+      const now = new Date();
+      let startDate = null;
+
+      switch(rangeType) {
+        case 'week': {
+          // Start of current week (Monday)
+          const day = now.getDay();
+          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+          startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        }
+        case 'month': {
+          // Start of current month
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        }
+        case 'year': {
+          // Start of current year
+          startDate = new Date(now.getFullYear(), 0, 1);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        }
+        case 'all':
+        default:
+          // No filtering, return all projects
+          return projects;
+      }
+
+      // Filter projects by created_at date
+      return projects.filter(project => {
+        if (!project.created_at) return false;
+        const projectDate = new Date(project.created_at);
+        return projectDate >= startDate;
+      });
+    }
+
     // ========================================
     // REVENUE ANALYTICS FUNCTIONS
     // ========================================
@@ -12829,7 +12885,8 @@
 
       // Load projects data for Revenue Analytics
       projectsData = await loadProjectsData(locationFilter);
-      const filteredProjects = filterByDateRange(projectsData, 'created_at');
+      // Apply default revenue time filter (month)
+      const filteredProjects = filterProjectsByRevenueDateRange(projectsData, 'month');
       await renderRevenueStats(filteredProjects);
       await renderRevenueTimeline(filteredProjects);
 
@@ -13324,7 +13381,10 @@
 
           // Reload projects data for Revenue Analytics
           projectsData = await loadProjectsData(locationId);
-          const filteredProjects = filterByDateRange(projectsData, 'created_at');
+          // Apply revenue-specific time filter if set
+          const revenueTimeFilter = document.getElementById('revenueTimeFilter');
+          const revenueFilterValue = revenueTimeFilter?.value || 'month';
+          const filteredProjects = filterProjectsByRevenueDateRange(projectsData, revenueFilterValue);
           await renderRevenueStats(filteredProjects);
           await renderRevenueTimeline(filteredProjects);
 
@@ -13401,6 +13461,54 @@
 
         analyticsStartDate.addEventListener('change', applyCustomDateRange);
         analyticsEndDate.addEventListener('change', applyCustomDateRange);
+      }
+
+      // ========================================
+      // REVENUE TIME FILTERS
+      // ========================================
+
+      // Revenue Time Filter Change (for Umsatz-Übersicht)
+      const revenueTimeFilter = document.getElementById('revenueTimeFilter');
+      if (revenueTimeFilter) {
+        revenueTimeFilter.addEventListener('change', async function() {
+          console.log('💰 Revenue time filter changed:', this.value);
+
+          // Filter projects by selected time range
+          const filteredProjects = filterProjectsByRevenueDateRange(projectsData, this.value);
+          console.log(`💰 Filtered projects: ${filteredProjects.length} of ${projectsData.length}`);
+
+          // Re-render only revenue stats
+          await renderRevenueStats(filteredProjects);
+
+          // Also update the timeline filter to match
+          const revenueTimelineFilter = document.getElementById('revenueTimelineFilter');
+          if (revenueTimelineFilter && revenueTimelineFilter.value !== this.value) {
+            revenueTimelineFilter.value = this.value;
+            await renderRevenueTimeline(filteredProjects);
+          }
+        });
+      }
+
+      // Revenue Timeline Filter Change (for Umsatz im Zeitverlauf)
+      const revenueTimelineFilter = document.getElementById('revenueTimelineFilter');
+      if (revenueTimelineFilter) {
+        revenueTimelineFilter.addEventListener('change', async function() {
+          console.log('📊 Revenue timeline filter changed:', this.value);
+
+          // Filter projects by selected time range
+          const filteredProjects = filterProjectsByRevenueDateRange(projectsData, this.value);
+          console.log(`📊 Filtered projects: ${filteredProjects.length} of ${projectsData.length}`);
+
+          // Re-render only revenue timeline
+          await renderRevenueTimeline(filteredProjects);
+
+          // Also update the stats filter to match
+          const revenueTimeFilter = document.getElementById('revenueTimeFilter');
+          if (revenueTimeFilter && revenueTimeFilter.value !== this.value) {
+            revenueTimeFilter.value = this.value;
+            await renderRevenueStats(filteredProjects);
+          }
+        });
       }
 
       // ========================================
