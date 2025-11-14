@@ -9161,26 +9161,41 @@
                     const isHalfHour = (index % 2) === 1;
                     const typeAttr = cell.event.type ? `data-type="${cell.event.type}"` : '';
 
-                    // Format start time
+                    // Format start and end time
                     const startHour = Math.floor(cell.event.startHour);
                     const startMin = Math.round((cell.event.startHour % 1) * 60);
-                    const timeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+                    const endHour = Math.floor(cell.event.endHour);
+                    const endMin = Math.round((cell.event.endHour % 1) * 60);
+                    const startTimeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+                    const endTimeStr = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+                    const timeStr = `${startTimeStr} - ${endTimeStr}`;
 
                     // Type label mapping
                     const typeLabels = {
-                      'consultation': 'Consultation',
-                      'new_tattoo': 'New Tattoo',
-                      'continuing_tattoo': 'Continuing',
-                      'touch_up': 'Touch Up',
+                      'consultation': 'Beratung',
+                      'new_tattoo': 'Neustechen',
+                      'continuing_tattoo': 'Weiterstechen',
+                      'touch_up': 'Nachstechen',
                       'selfbooking': 'Selfbooking',
                       'wannado': 'WannaDo',
-                      'internal': 'Internal',
-                      'move': 'Move',
-                      'reserved': 'Reserved',
+                      'internal': 'Intern',
+                      'move': 'Verschiebung',
+                      'reserved': 'Reserviert',
                       'no_show': 'No Show'
                     };
 
                     const typeLabel = cell.event.type ? typeLabels[cell.event.type] || cell.event.type : '';
+
+                    // Payment status text labels
+                    const paymentLabels = {
+                      'unpaid': 'Unbezahlt',
+                      'deposit_paid': 'Anzahlung erhalten',
+                      'fully_paid': 'Vollständig bezahlt',
+                      'refunded': 'Rückerstattet'
+                    };
+                    const paymentLabel = cell.event.isAppointment && cell.event.paymentStatus
+                      ? paymentLabels[cell.event.paymentStatus] || paymentLabels['unpaid']
+                      : '';
 
                     // Build content based on category
                     let content = '';
@@ -9191,36 +9206,23 @@
                         : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.title}</div>`;
 
                       content = `
-                        <div style="font-weight:600; font-size:13px; margin-bottom:2px;">${timeStr}</div>
+                        <div style="font-weight:600; font-size:12px; margin-bottom:3px;">${timeStr}</div>
                         ${titleContent}
                         ${typeLabel ? `<div style="font-size:10px; color:rgba(0,0,0,0.5); font-weight:500; text-transform:uppercase; letter-spacing:0.3px;">${typeLabel}</div>` : ''}
                       `;
                     } else {
-                      // For bookings: time, customer, type, payment status
+                      // For bookings: time range, customer name, booking type, payment status
                       const customerContent = cell.event.customerName && cell.event.customerId
-                        ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${cell.event.customerName}</div>`
+                        ? `<div style="font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${cell.event.customerName}</div>`
                         : cell.event.customerName
-                          ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.customerName}</div>`
+                          ? `<div style="font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.customerName}</div>`
                           : '';
 
-                      // Payment status badge for appointments
-                      const paymentBadges = {
-                        'unpaid': '<span style="font-size:14px; opacity:0.5;" title="Unpaid">💳</span>',
-                        'deposit_paid': '<span style="font-size:14px;" title="Deposit Paid">💰</span>',
-                        'fully_paid': '<span style="font-size:14px;" title="Fully Paid">✅</span>',
-                        'refunded': '<span style="font-size:14px;" title="Refunded">↩️</span>'
-                      };
-                      const paymentBadge = cell.event.isAppointment && cell.event.paymentStatus
-                        ? paymentBadges[cell.event.paymentStatus] || paymentBadges['unpaid']
-                        : '';
-
                       content = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                          <span style="font-weight:600; font-size:13px;">${timeStr}</span>
-                          ${paymentBadge}
-                        </div>
+                        <div style="font-weight:600; font-size:11px; margin-bottom:3px; color:rgba(0,0,0,0.7);">${timeStr}</div>
                         ${customerContent}
-                        ${typeLabel ? `<div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; opacity:0.8;">${typeLabel}</div>` : ''}
+                        ${typeLabel ? `<div style="font-size:10px; font-weight:500; margin-bottom:2px; opacity:0.8;">${typeLabel}</div>` : ''}
+                        ${paymentLabel ? `<div style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; color:rgba(0,0,0,0.6);">${paymentLabel}</div>` : ''}
                       `;
                     }
 
