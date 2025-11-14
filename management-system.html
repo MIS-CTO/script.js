@@ -3044,7 +3044,7 @@
             <tfoot>
               <tr class="total-row">
                 <td><strong>Gesamt</strong></td>
-                <td style="text-align: right;"><strong id="revenueTotal Projects">0</strong></td>
+                <td style="text-align: right;"><strong id="revenueTotalProjects">0</strong></td>
                 <td style="text-align: right;"><strong id="revenueTotalAmount">0,00 €</strong></td>
                 <td style="text-align: right;"><strong id="revenueAvgAmount">0,00 €</strong></td>
                 <td style="text-align: right;"><strong>100%</strong></td>
@@ -12877,124 +12877,128 @@
       }
 
       // Analytics Tab Click - Initialize charts when Analytics tab is clicked
-      const analyticsTab = document.getElementById('tab-analytics');
-      if (analyticsTab) {
-        analyticsTab.addEventListener('click', async function() {
-          console.log('📊 Analytics tab clicked');
-          // Small delay to ensure section is visible before rendering charts
-          setTimeout(async () => {
-            await initAnalytics();
-          }, 100);
-        });
-      }
+      // OLD ANALYTICS CODE - DISABLED (replaced by new comprehensive analytics dashboard)
+      // const analyticsTab = document.getElementById('tab-analytics');
+      // if (analyticsTab) {
+      //   analyticsTab.addEventListener('click', async function() {
+      //     console.log('📊 Analytics tab clicked');
+      //     // Small delay to ensure section is visible before rendering charts
+      //     setTimeout(async () => {
+      //       await initAnalytics();
+      //     }, 100);
+      //   });
+      // }
 
+      // OLD ANALYTICS CODE - DISABLED (replaced by new comprehensive analytics dashboard)
       // Time Range Tab Switching
-      const timeTabs = document.querySelectorAll('.time-tab');
-      timeTabs.forEach(tab => {
-        tab.addEventListener('click', async function() {
-          console.log('🕒 Time range changed to:', this.dataset.range);
+      // const timeTabs = document.querySelectorAll('.time-tab');
+      // timeTabs.forEach(tab => {
+      //   tab.addEventListener('click', async function() {
+      //     console.log('🕒 Time range changed to:', this.dataset.range);
 
-          // Update active state
-          timeTabs.forEach(t => t.classList.remove('active'));
-          this.classList.add('active');
+      //     // Update active state
+      //     timeTabs.forEach(t => t.classList.remove('active'));
+      //     this.classList.add('active');
 
-          // Get selected range
-          const range = this.dataset.range;
+      //     // Get selected range
+      //     const range = this.dataset.range;
 
-          // Reload timeline chart with appointments data
-          await renderBookingsTimeline(appointmentsData, range);
-        });
-      });
+      //     // Reload timeline chart with appointments data
+      //     await renderBookingsTimeline(appointmentsData, range);
+      //   });
+      // });
 
+      // OLD ANALYTICS CODE - DISABLED (replaced by new comprehensive analytics dashboard)
       // Location Filter Change
-      const analyticsLocationFilter = document.getElementById('analyticsLocationFilter');
-      if (analyticsLocationFilter) {
-        analyticsLocationFilter.addEventListener('change', async function() {
-          const locationId = this.value || null;
-          console.log('🏢 Analytics location filter changed:', locationId || 'All Locations');
+      // const analyticsLocationFilter = document.getElementById('analyticsLocationFilter');
+      // if (analyticsLocationFilter) {
+      //   analyticsLocationFilter.addEventListener('change', async function() {
+      //     const locationId = this.value || null;
+      //     console.log('🏢 Analytics location filter changed:', locationId || 'All Locations');
 
-          // Reload requests data for Origin Chart
-          requestsData = await loadRequestsData(locationId);
-          const filteredRequests = filterByDateRange(requestsData, 'created_at');
-          await renderOriginsPieChart(filteredRequests);
+      //     // Reload requests data for Origin Chart
+      //     requestsData = await loadRequestsData(locationId);
+      //     const filteredRequests = filterByDateRange(requestsData, 'created_at');
+      //     await renderOriginsPieChart(filteredRequests);
 
-          // Reload ALL requests data for Count Display (including canceled)
-          allRequestsData = await loadAllRequestsData(locationId);
-          const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
-          await renderRequestsCount(filteredAllRequests);
+      //     // Reload ALL requests data for Count Display (including canceled)
+      //     allRequestsData = await loadAllRequestsData(locationId);
+      //     const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
+      //     await renderRequestsCount(filteredAllRequests);
 
-          // Reload appointments data for Timeline Chart
-          appointmentsData = await loadAppointmentsData(locationId);
-          const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-          await renderBookingsTimeline(filteredAppointments, currentTimeRange);
-          await renderAppointmentStatusPieChart(filteredAppointments);
-          await renderAppointmentsCount(filteredAppointments);
+      //     // Reload appointments data for Timeline Chart
+      //     appointmentsData = await loadAppointmentsData(locationId);
+      //     const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+      //     await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+      //     await renderAppointmentStatusPieChart(filteredAppointments);
+      //     await renderAppointmentsCount(filteredAppointments);
 
-          // Reload projects data for Revenue Analytics
-          projectsData = await loadProjectsData(locationId);
-          const filteredProjects = filterByDateRange(projectsData, 'created_at');
-          await renderRevenueStats(filteredProjects);
-          await renderRevenueTimeline(filteredProjects);
-        });
-      }
+      //     // Reload projects data for Revenue Analytics
+      //     projectsData = await loadProjectsData(locationId);
+      //     const filteredProjects = filterByDateRange(projectsData, 'created_at');
+      //     await renderRevenueStats(filteredProjects);
+      //     await renderRevenueTimeline(filteredProjects);
+      //   });
+      // }
 
+      // OLD ANALYTICS CODE - DISABLED (replaced by new comprehensive analytics dashboard)
       // Date Range Filter Change
-      const analyticsDateRangeFilter = document.getElementById('analyticsDateRangeFilter');
-      if (analyticsDateRangeFilter) {
-        analyticsDateRangeFilter.addEventListener('change', async function() {
-          console.log('📅 Date range filter changed:', this.value);
+      // const analyticsDateRangeFilter = document.getElementById('analyticsDateRangeFilter');
+      // if (analyticsDateRangeFilter) {
+      //   analyticsDateRangeFilter.addEventListener('change', async function() {
+      //     console.log('📅 Date range filter changed:', this.value);
 
-          // Re-render all charts with filtered data
-          const filteredRequests = filterByDateRange(requestsData, 'created_at');
-          await renderOriginsPieChart(filteredRequests);
+      //     // Re-render all charts with filtered data
+      //     const filteredRequests = filterByDateRange(requestsData, 'created_at');
+      //     await renderOriginsPieChart(filteredRequests);
 
-          const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
-          await renderRequestsCount(filteredAllRequests);
+      //     const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
+      //     await renderRequestsCount(filteredAllRequests);
 
-          const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-          await renderBookingsTimeline(filteredAppointments, currentTimeRange);
-          await renderAppointmentStatusPieChart(filteredAppointments);
-          await renderAppointmentsCount(filteredAppointments);
+      //     const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+      //     await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+      //     await renderAppointmentStatusPieChart(filteredAppointments);
+      //     await renderAppointmentsCount(filteredAppointments);
 
-          const filteredProjects = filterByDateRange(projectsData, 'created_at');
-          await renderRevenueStats(filteredProjects);
-          await renderRevenueTimeline(filteredProjects);
-        });
-      }
+      //     const filteredProjects = filterByDateRange(projectsData, 'created_at');
+      //     await renderRevenueStats(filteredProjects);
+      //     await renderRevenueTimeline(filteredProjects);
+      //   });
+      // }
 
       // Custom Date Range Inputs
-      const analyticsStartDate = document.getElementById('analyticsStartDate');
-      const analyticsEndDate = document.getElementById('analyticsEndDate');
+      // const analyticsStartDate = document.getElementById('analyticsStartDate');
+      // const analyticsEndDate = document.getElementById('analyticsEndDate');
 
-      if (analyticsStartDate && analyticsEndDate) {
-        const applyCustomDateRange = async function() {
-          const startVal = analyticsStartDate.value;
-          const endVal = analyticsEndDate.value;
+      // if (analyticsStartDate && analyticsEndDate) {
+      //   const applyCustomDateRange = async function() {
+      //     const startVal = analyticsStartDate.value;
+      //     const endVal = analyticsEndDate.value;
 
-          if (startVal && endVal) {
-            console.log('📅 Custom date range applied:', startVal, 'to', endVal);
+      //     if (startVal && endVal) {
+      //       console.log('📅 Custom date range applied:', startVal, 'to', endVal);
 
-            // Re-render all charts with filtered data
-            const filteredRequests = filterByDateRange(requestsData, 'created_at');
-            await renderOriginsPieChart(filteredRequests);
+      //       // Re-render all charts with filtered data
+      //       const filteredRequests = filterByDateRange(requestsData, 'created_at');
+      //       await renderOriginsPieChart(filteredRequests);
 
-            const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
-            await renderRequestsCount(filteredAllRequests);
+      //       const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
+      //       await renderRequestsCount(filteredAllRequests);
 
-            const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-            await renderBookingsTimeline(filteredAppointments, currentTimeRange);
-            await renderAppointmentStatusPieChart(filteredAppointments);
-            await renderAppointmentsCount(filteredAppointments);
+      //       const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+      //       await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+      //       await renderAppointmentStatusPieChart(filteredAppointments);
+      //       await renderAppointmentsCount(filteredAppointments);
 
-            const filteredProjects = filterByDateRange(projectsData, 'created_at');
-            await renderRevenueStats(filteredProjects);
-            await renderRevenueTimeline(filteredProjects);
-          }
-        };
+      //       const filteredProjects = filterByDateRange(projectsData, 'created_at');
+      //       await renderRevenueStats(filteredProjects);
+      //       await renderRevenueTimeline(filteredProjects);
+      //     }
+      //   };
 
-        analyticsStartDate.addEventListener('change', applyCustomDateRange);
-        analyticsEndDate.addEventListener('change', applyCustomDateRange);
-      }
+      //   analyticsStartDate.addEventListener('change', applyCustomDateRange);
+      //   analyticsEndDate.addEventListener('change', applyCustomDateRange);
+      // }
 
       // ========================================
       // PAYMENT WORKFLOW EVENT LISTENERS
