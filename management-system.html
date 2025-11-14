@@ -11929,15 +11929,14 @@
 
             let query = supabase
               .from('projects')
-              .select('id, price, payment_state, created_at')
+              .select('id, price, payment_state, created_at, location_id')
               .order('created_at', { ascending: false });
 
-            // Note: location_id column does not exist in projects table
-            // Location filtering removed to avoid 400 errors
-            // if (locationFilter) {
-            //   query = query.eq('location_id', locationFilter);
-            //   console.log(`   🏢 Filtering by location: ${locationFilter}`);
-            // }
+            // Location filtering now available (location_id column exists)
+            if (locationFilter) {
+              query = query.eq('location_id', locationFilter);
+              console.log(`   🏢 Filtering by location: ${locationFilter}`);
+            }
 
             // Apply range AFTER building base query to avoid 400 errors
             query = query.range(offset, offset + batchSize - 1);
@@ -11949,7 +11948,7 @@
             // OPTION B: Use limit() instead of range()
             let query = supabase
               .from('projects')
-              .select('id, price, payment_state, created_at')
+              .select('id, price, payment_state, created_at, location_id')
               .order('created_at', { ascending: false })
               .limit(batchSize);
 
