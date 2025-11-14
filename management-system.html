@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v83</title>
+  <title>Management System v84</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11085,7 +11085,7 @@
 
           let query = supabase
             .from('appointments')
-            .select('booking_type, status, created_at, location_id, id')
+            .select('booking_type, state, created_at, location_id, id')
             .not('created_at', 'is', null)  // Only get appointments with created_at
             .order('created_at', { ascending: true })  // Load OLDEST first to get 2024 AND 2025 data
             .range(from, from + batchSize - 1);  // Paginate with range
@@ -11141,22 +11141,22 @@
           console.log(`📅 Newest appointment: ${maxDate.toLocaleDateString('de-DE')}`);
         }
 
-        // Analyze status distribution
-        const statusCounts = {};
+        // Analyze state distribution
+        const stateCounts = {};
         allData.forEach(apt => {
-          const status = apt.status || 'null';
-          statusCounts[status] = (statusCounts[status] || 0) + 1;
+          const state = apt.state || 'null';
+          stateCounts[state] = (stateCounts[state] || 0) + 1;
         });
-        console.log('📊 Status distribution:', statusCounts);
+        console.log('📊 State distribution:', stateCounts);
 
-        // Filter for relevant statuses (if they exist)
-        // Accept: scheduled, finished, completed, confirmed, or any status that's not cancelled
+        // Filter for relevant states (if they exist)
+        // Accept: scheduled, finished, completed, confirmed, or any state that's not cancelled
         const filteredData = allData.filter(apt => {
-          const status = apt.status?.toLowerCase();
-          return status &&
-                 status !== 'cancelled' &&
-                 status !== 'canceled' &&
-                 status !== 'rejected';
+          const state = apt.state?.toLowerCase();
+          return state &&
+                 state !== 'cancelled' &&
+                 state !== 'canceled' &&
+                 state !== 'rejected';
         });
 
         console.log(`✅ ${filteredData.length} appointments after filtering (excluding cancelled/rejected)`);
@@ -11582,7 +11582,7 @@
     async function renderAppointmentStatusPieChart(data) {
       console.log('📊 Rendering appointment status pie chart with', data.length, 'appointments');
 
-      // Count statuses
+      // Count states (using appointments.state column)
       const statusCounts = {
         'canceled': 0,
         'open': 0,
@@ -11590,17 +11590,17 @@
       };
 
       data.forEach(apt => {
-        const status = apt.status?.toLowerCase() || 'unknown';
-        if (status === 'canceled' || status === 'cancelled') {
+        const state = apt.state?.toLowerCase() || 'unknown';
+        if (state === 'canceled' || state === 'cancelled') {
           statusCounts.canceled++;
-        } else if (status === 'open') {
+        } else if (state === 'open') {
           statusCounts.open++;
         } else {
           statusCounts.other++;
         }
       });
 
-      console.log('📈 Status counts:', statusCounts);
+      console.log('📈 State counts:', statusCounts);
 
       // Labels and colors
       const labels = ['Canceled', 'Open', 'Other'];
