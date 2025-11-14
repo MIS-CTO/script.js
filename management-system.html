@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v82</title>
+  <title>Management System v83</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12343,12 +12343,170 @@
       };
 
       /**
+       * Generate unique project_number
+       * Format: P + YYYY + MM + sequence (e.g., P202511057)
+       */
+      async function generateProjectNumber() {
+        try {
+          const now = new Date();
+          const year = now.getFullYear(); // 2025
+          const month = String(now.getMonth() + 1).padStart(2, '0'); // 11
+          const prefix = `P${year}${month}`; // P202511
+
+          console.log('🔢 Generating project_number with prefix:', prefix);
+
+          // Find highest number for this month
+          const { data, error } = await supabase
+            .from('projects')
+            .select('project_number')
+            .like('project_number', `${prefix}%`)
+            .order('project_number', { ascending: false })
+            .limit(1);
+
+          if (error) {
+            console.error('❌ Error fetching project numbers:', error);
+            throw error;
+          }
+
+          let nextNumber = 1;
+          if (data && data.length > 0) {
+            const lastNumber = data[0].project_number; // e.g., "P202511057"
+            const lastSequence = parseInt(lastNumber.slice(-3)); // 057 → 57
+            nextNumber = lastSequence + 1; // 58
+            console.log('📊 Last project_number:', lastNumber, '→ Next sequence:', nextNumber);
+          } else {
+            console.log('📊 No existing projects for this month, starting at 001');
+          }
+
+          const sequence = String(nextNumber).padStart(3, '0'); // "058"
+          const projectNumber = `${prefix}${sequence}`; // "P202511058"
+
+          console.log('✅ Generated project_number:', projectNumber);
+          return projectNumber;
+
+        } catch (error) {
+          console.error('❌ Failed to generate project_number:', error);
+          throw error;
+        }
+      }
+
+      /**
+       * Create new Project in projects table
+       */
+      async function createProject(requestData, projectNumber, totalPrice, stripePaymentLink) {
+        try {
+          console.log('📦 Creating new project:', projectNumber);
+
+          const projectData = {
+            project_number: projectNumber,
+            customer_email: requestData.customer?.email || requestData.email,
+            title: `Tattoo - ${requestData.placement || 'Custom Design'}`,
+            description: requestData.description || null,
+            bodypart: requestData.placement || null,
+            tattoosize: requestData.size || null,
+            style: requestData.style || null,
+            model: requestData.colorway || null,
+            work_process: null,
+            state: 'pending',
+            price: totalPrice,
+            payment_state: 'awaiting_payment',
+            payment_notice: null,
+            payment_intent: stripePaymentLink,
+            deposit_expired: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            deleted_at: null
+          };
+
+          const { data, error } = await supabase
+            .from('projects')
+            .insert(projectData)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('❌ Error creating project:', error);
+            throw error;
+          }
+
+          console.log('✅ Project created successfully:', data);
+          return data;
+
+        } catch (error) {
+          console.error('❌ Failed to create project:', error);
+          throw error;
+        }
+      }
+
+      /**
+       * Create new Appointment in appointments table
+       */
+      async function createAppointment(requestData, projectId, projectNumber) {
+        try {
+          console.log('📅 Creating new appointment for project:', projectNumber);
+
+          // Parse scheduled date and times
+          const scheduledDate = requestData.scheduled_date ? new Date(requestData.scheduled_date) : new Date();
+          const startTime = requestData.start_time || '10:00';
+          const endTime = requestData.end_time || '12:00';
+
+          // Combine date and time
+          const [startHour, startMin] = startTime.split(':');
+          const startDateTime = new Date(scheduledDate);
+          startDateTime.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
+
+          const [endHour, endMin] = endTime.split(':');
+          const endDateTime = new Date(scheduledDate);
+          endDateTime.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
+
+          const appointmentData = {
+            artist_email: requestData.artist?.email || null,
+            customer_email: requestData.customer?.email || requestData.email,
+            project_id: projectId,
+            project_number: projectNumber,
+            creator_email: currentUser?.email || null,
+            wannado_id: null,
+            state: 'scheduled',
+            work_process: null,
+            start: startDateTime.toISOString(),
+            end: endDateTime.toISOString(),
+            notice: requestData.notes || null,
+            notification_24h_send: false,
+            notification_2h_after_send: false,
+            notification_1month_after_send: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            deleted_at: null
+          };
+
+          const { data, error } = await supabase
+            .from('appointments')
+            .insert(appointmentData)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('❌ Error creating appointment:', error);
+            throw error;
+          }
+
+          console.log('✅ Appointment created successfully:', data);
+          return data;
+
+        } catch (error) {
+          console.error('❌ Failed to create appointment:', error);
+          throw error;
+        }
+      }
+
+      /**
        * Execute Complete Payment Workflow
-       * Orchestrates: Stripe Payment Link → Database Update → Email Sending → Logging
+       * NEW: Creates project + appointment, updates request with project_number
+       * Orchestrates: Project Creation → Appointment Creation → Stripe Payment Link → Email → Logging
        */
       window.executePaymentWorkflow = async function() {
         console.log('🚀 ========================================');
-        console.log('🚀 STARTING PAYMENT WORKFLOW');
+        console.log('🚀 STARTING PAYMENT WORKFLOW (3-TABLE ARCHITECTURE)');
         console.log('🚀 ========================================');
 
         if (!currentPaymentRequest) {
@@ -12371,11 +12529,22 @@
         document.getElementById('paymentWorkflowLoading').style.display = 'flex';
         document.getElementById('sendPaymentLinkBtn').disabled = true;
 
+        let projectNumber = null;
+        let newProject = null;
+        let newAppointment = null;
+
         try {
           // ========================================
-          // STEP 1: Create Stripe Payment Link
+          // STEP 1: Generate project_number
           // ========================================
-          console.log('\\n💳 STEP 1: Creating Stripe Payment Link...');
+          console.log('\\n🔢 STEP 1: Generating project_number...');
+          projectNumber = await generateProjectNumber();
+          console.log('✅ project_number generated:', projectNumber);
+
+          // ========================================
+          // STEP 2: Create Stripe Payment Link
+          // ========================================
+          console.log('\\n💳 STEP 2: Creating Stripe Payment Link...');
           const paymentLink = await createStripePaymentLink(currentPaymentRequest, totalPrice);
 
           if (!paymentLink || !paymentLink.url) {
@@ -12387,14 +12556,36 @@
           console.log('🆔 Payment Link ID:', paymentLink.id);
 
           // ========================================
-          // STEP 2: Update Request in Database
+          // STEP 3: Create Project in projects table
           // ========================================
-          console.log('\\n💾 STEP 2: Updating request in database...');
+          console.log('\\n📦 STEP 3: Creating project in projects table...');
+          newProject = await createProject(
+            currentPaymentRequest,
+            projectNumber,
+            totalPrice,
+            paymentLink.url
+          );
+          console.log('✅ Project created with ID:', newProject.id);
+
+          // ========================================
+          // STEP 4: Create Appointment in appointments table
+          // ========================================
+          console.log('\\n📅 STEP 4: Creating appointment in appointments table...');
+          newAppointment = await createAppointment(
+            currentPaymentRequest,
+            newProject.id,
+            projectNumber
+          );
+          console.log('✅ Appointment created with ID:', newAppointment.id);
+
+          // ========================================
+          // STEP 5: Update Request with project_number
+          // ========================================
+          console.log('\\n💾 STEP 5: Updating request with project_number...');
           const { error: updateError } = await supabase
             .from('requests')
             .update({
-              total_price: totalPrice,
-              deposit_amount: depositAmount,
+              project_number: projectNumber,
               stripe_payment_link: paymentLink.url,
               payment_link_sent_at: new Date().toISOString(),
               booking_team_member_name: currentUser?.username || 'System'
@@ -12402,18 +12593,19 @@
             .eq('id', currentPaymentRequest.id);
 
           if (updateError) {
-            console.error('❌ Database update error:', updateError);
+            console.error('❌ Request update error:', updateError);
             throw updateError;
           }
 
-          console.log('✅ Request updated in database');
+          console.log('✅ Request updated with project_number:', projectNumber);
 
           // ========================================
-          // STEP 3: Log Payment Link Creation
+          // STEP 6: Log Payment Link Creation
           // ========================================
-          console.log('\\n📝 STEP 3: Logging payment action...');
+          console.log('\\n📝 STEP 6: Logging payment action...');
           await logPaymentAction(
             currentPaymentRequest.id,
+            newProject.id,
             'payment_link_created',
             paymentLink.url,
             totalPrice,
@@ -12423,9 +12615,9 @@
           console.log('✅ Payment action logged');
 
           // ========================================
-          // STEP 4: Send Confirmation Email
+          // STEP 7: Send Confirmation Email
           // ========================================
-          console.log('\\n📧 STEP 4: Sending confirmation email...');
+          console.log('\\n📧 STEP 7: Sending confirmation email...');
           const customerEmail = currentPaymentRequest.customer?.email || currentPaymentRequest.email;
           console.log('📬 Sending to:', customerEmail);
 
@@ -12433,7 +12625,8 @@
             currentPaymentRequest,
             paymentLink.url,
             totalPrice,
-            depositAmount
+            depositAmount,
+            projectNumber
           );
 
           if (!emailResult.success) {
@@ -12444,9 +12637,9 @@
           console.log('📧 Message ID:', emailResult.messageId);
 
           // ========================================
-          // STEP 5: Update Email Sent Flag
+          // STEP 8: Update Email Sent Flag
           // ========================================
-          console.log('\\n🏁 STEP 5: Updating email confirmation flag...');
+          console.log('\\n🏁 STEP 8: Updating email confirmation flag...');
           await supabase
             .from('requests')
             .update({ payment_confirmation_email_sent: true })
@@ -12455,11 +12648,12 @@
           console.log('✅ Email confirmation flag updated');
 
           // ========================================
-          // STEP 6: Log Email Sending
+          // STEP 9: Log Email Sending
           // ========================================
-          console.log('\\n📝 STEP 6: Logging email action...');
+          console.log('\\n📝 STEP 9: Logging email action...');
           await logPaymentAction(
             currentPaymentRequest.id,
+            newProject.id,
             'email_sent',
             paymentLink.url,
             totalPrice,
@@ -12475,9 +12669,15 @@
           console.log('\\n🎉 ========================================');
           console.log('🎉 PAYMENT WORKFLOW COMPLETED SUCCESSFULLY!');
           console.log('🎉 ========================================');
+          console.log('📊 Summary:');
+          console.log('   - project_number:', projectNumber);
+          console.log('   - Project ID:', newProject.id);
+          console.log('   - Appointment ID:', newAppointment.id);
+          console.log('   - Request ID:', currentPaymentRequest.id);
 
           alert(
             '✅ Zahlungsabwicklung erfolgreich abgeschlossen!\\n\\n' +
+            `🆔 Project Number: ${projectNumber}\\n` +
             `💳 Payment Link erstellt\\n` +
             `📧 Email versendet an: ${customerEmail}\\n` +
             `💶 Gesamtpreis: €${totalPrice.toFixed(2)}\\n` +
@@ -12497,10 +12697,12 @@
           console.error('❌ PAYMENT WORKFLOW FAILED');
           console.error('❌ ========================================');
           console.error('Error:', error);
+          console.error('Stack:', error.stack);
 
-          // Log error
+          // Log error (use project ID if it was created)
           await logPaymentAction(
             currentPaymentRequest.id,
+            newProject?.id || null,
             'workflow_failed',
             null,
             totalPrice,
@@ -12513,6 +12715,7 @@
           alert(
             '❌ Fehler bei der Zahlungsabwicklung\\n\\n' +
             'Details: ' + error.message + '\\n\\n' +
+            (projectNumber ? `Project Number: ${projectNumber}\\n` : '') +
             'Bitte überprüfe:\\n' +
             '• API Keys korrekt eingetragen?\\n' +
             '• Stripe im Test Mode?\\n' +
@@ -12588,8 +12791,9 @@
 
       /**
        * Send Payment Confirmation Email via Resend
+       * Updated to use project_number instead of request_number
        */
-      async function sendPaymentConfirmationEmail(requestData, paymentLink, totalPrice, depositAmount) {
+      async function sendPaymentConfirmationEmail(requestData, paymentLink, totalPrice, depositAmount, projectNumber) {
         console.log('📧 Preparing email...');
 
         const customer = requestData.customer;
@@ -12605,11 +12809,13 @@
               day: 'numeric'
             })
           : '[Datum folgt]';
-        const requestNumber = requestData.request_number || requestData.id.substring(0, 8).toUpperCase();
+        // Use projectNumber for bank transfer reference
+        const referenceNumber = projectNumber || requestData.id.substring(0, 8).toUpperCase();
         const bookingMemberName = currentUser?.username || 'dem Team';
 
         console.log('📝 Email Recipients:', customerEmail);
         console.log('📝 From:', EMAIL_FROM);
+        console.log('📝 Reference Number (project_number):', referenceNumber);
 
         // Complete Email HTML Template
         const emailHTML = `
@@ -12781,7 +12987,7 @@
           <strong>*Für Option 1:</strong> Bitte überweise die Terminkaution (<strong>€${depositAmount.toFixed(2)}</strong>) innerhalb von 2 Tagen und sende einen Screenshot zur Bestätigung. 😊
         </p>
         <p style="background: rgba(255,193,7,0.2); padding: 12px; border-radius: 8px; margin: 16px 0; font-size: 14px;">
-          <strong>WICHTIG:</strong> Als Verwendungszweck bitte nur "<strong>${requestNumber}</strong>" angeben, damit die Zahlung korrekt zugeordnet wird.
+          <strong>WICHTIG:</strong> Als Verwendungszweck bitte nur "<strong>${referenceNumber}</strong>" angeben, damit die Zahlung korrekt zugeordnet wird.
         </p>
 
         <h3 style="margin: 24px 0 16px 0; font-size: 18px;">Bankverbindung:</h3>
@@ -12905,32 +13111,43 @@
 
       /**
        * Log Payment Action to payment_logs table
+       * Updated to include project_id for linking to projects table
        */
-      async function logPaymentAction(requestId, actionType, stripeLink, totalAmount, depositAmount, status, emailSentTo = null, errorMessage = null) {
+      async function logPaymentAction(requestId, projectId, actionType, stripeLink, totalAmount, depositAmount, status, emailSentTo = null, errorMessage = null) {
         try {
           console.log('📝 Logging action:', actionType, 'with status:', status);
+          console.log('📝 Request ID:', requestId, '| Project ID:', projectId);
+
+          const logData = {
+            request_id: requestId,
+            action_type: actionType,
+            stripe_payment_link: stripeLink,
+            email_sent_to: emailSentTo,
+            total_amount: totalAmount,
+            deposit_amount: depositAmount,
+            status: status,
+            error_message: errorMessage,
+            created_by: currentUser?.id || null
+          };
+
+          // Add project_id if provided (column may not exist in older schemas)
+          if (projectId) {
+            logData.project_id = projectId;
+          }
 
           const { error } = await supabase
             .from('payment_logs')
-            .insert({
-              request_id: requestId,
-              action_type: actionType,
-              stripe_payment_link: stripeLink,
-              email_sent_to: emailSentTo,
-              total_amount: totalAmount,
-              deposit_amount: depositAmount,
-              status: status,
-              error_message: errorMessage,
-              created_by: currentUser?.id || null
-            });
+            .insert(logData);
 
           if (error) {
             console.error('⚠️ Failed to log payment action:', error);
+            // Don't throw - logging failure shouldn't break the workflow
           } else {
             console.log('✅ Payment action logged successfully');
           }
         } catch (err) {
           console.error('⚠️ Error logging payment action:', err);
+          // Don't throw - logging failure shouldn't break the workflow
         }
       }
 
