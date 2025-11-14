@@ -1388,6 +1388,231 @@
       font-style:italic;
     }
 
+    /* ========================================
+       Project Grouping Styles
+       ======================================== */
+
+    /* Project Group Container */
+    .project-group {
+      margin-bottom: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      transition: all 0.2s ease;
+    }
+
+    .project-group:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Project Header */
+    .project-header {
+      padding: 16px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .project-header:hover {
+      background: linear-gradient(135deg, #eef1f5 0%, #f9fafb 100%);
+    }
+
+    .project-info {
+      flex: 1;
+    }
+
+    .project-info h4 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1d1d1f;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .customer-name {
+      font-size: 14px;
+      color: var(--macos-text-primary);
+      font-weight: 500;
+      margin-right: 12px;
+    }
+
+    .project-stats {
+      display: inline-flex;
+      gap: 12px;
+      font-size: 13px;
+      color: #86868b;
+      flex-wrap: wrap;
+    }
+
+    .project-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 12px;
+    }
+
+    .project-status.completed {
+      background: #d1f4e0;
+      color: #0d6832;
+    }
+
+    .project-status.in-progress {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .project-status.requested {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Project Details */
+    .project-details {
+      padding: 16px;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      background: #fafafa;
+      display: none;
+    }
+
+    .project-details.expanded {
+      display: block;
+    }
+
+    .requests-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .requests-section h5 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+    }
+
+    /* Expand Button */
+    .expand-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #86868b;
+      cursor: pointer;
+      transition: transform 0.2s;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .expand-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .expand-btn.expanded {
+      transform: rotate(180deg);
+    }
+
+    /* Project Group Header (for tables) */
+    .project-group-header {
+      background: rgba(0, 113, 227, 0.05);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .project-group-header:hover {
+      background: rgba(0, 113, 227, 0.1);
+    }
+
+    .project-group-header td {
+      padding: 12px 16px !important;
+    }
+
+    .project-group-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .project-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #0071e3;
+      color: white;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 12px;
+    }
+
+    .group-count {
+      color: #86868b;
+      font-size: 13px;
+    }
+
+    .expand-icon {
+      margin-left: auto;
+      font-size: 14px;
+      color: #86868b;
+      transition: transform 0.2s;
+    }
+
+    .expand-icon.expanded {
+      transform: rotate(90deg);
+    }
+
+    .project-detail-row {
+      background: white;
+      display: none;
+    }
+
+    .project-detail-row.visible {
+      display: table-row;
+    }
+
+    /* View Mode Toggle */
+    .view-mode-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 10px;
+      width: fit-content;
+    }
+
+    .toggle-btn {
+      padding: 8px 16px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      font-weight: 500;
+      color: var(--macos-text-primary);
+    }
+
+    .toggle-btn:hover {
+      background: #f5f5f7;
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+
+    .toggle-btn.active {
+      background: #0071e3;
+      color: white;
+      border-color: #0071e3;
+      box-shadow: 0 2px 4px rgba(0, 113, 227, 0.2);
+    }
+
     /* Image Modal */
     .image-modal {
       display:none;
@@ -4986,10 +5211,12 @@
           // Load all dashboard data in parallel
           const [
             { data: reqs },
+            { data: appointments },
             { data: artists },
             { data: upcomingEvents }
           ] = await Promise.all([
             supabase.from('requests').select('*'),
+            supabase.from('appointments').select('project_number, status'),
             supabase.from('artists').select('*'),
             supabase
               .from('events')
@@ -4998,17 +5225,47 @@
               .lte('start_time', `${nextWeek}T23:59:59`)
               .not('type', 'eq', 'events') // Nur echte Appointments, keine "Events"
           ]);
-          
+
+          // Calculate unique projects from requests and appointments
+          const uniqueProjectNumbers = new Set([
+            ...(reqs?.filter(r => r.project_number).map(r => r.project_number) || []),
+            ...(appointments?.filter(a => a.project_number).map(a => a.project_number) || [])
+          ]);
+
+          // Count projects by status
+          const projectsByStatus = {};
+          uniqueProjectNumbers.forEach(projectNum => {
+            const projectRequests = reqs?.filter(r => r.project_number === projectNum) || [];
+            const projectAppointments = appointments?.filter(a => a.project_number === projectNum) || [];
+
+            // Determine project status
+            let status = 'requested';
+            if (projectAppointments.some(a => a.status === 'completed')) {
+              status = 'completed';
+            } else if (projectAppointments.some(a => a.status === 'scheduled')) {
+              status = 'in_progress';
+            }
+
+            projectsByStatus[status] = (projectsByStatus[status] || 0) + 1;
+          });
+
+          const totalProjects = uniqueProjectNumbers.size;
+          const activeProjects = projectsByStatus['in_progress'] || 0;
+          const completedProjects = projectsByStatus['completed'] || 0;
+
           const totalAgreements = upcomingEvents?.filter(e => e.customer_id).length || 0;
           const completedAgreements = upcomingEvents?.filter(e => e.customer_id && e.agreement_file_url).length || 0;
           const pendingAgreements = totalAgreements - completedAgreements;
-          
-          document.getElementById('badge-pending').textContent = `Pending: ${reqs?.filter(r=>r.status==='pending').length || 0}`;
-          document.getElementById('badge-scheduled').textContent = `Scheduled: ${reqs?.filter(r=>r.status==='scheduled').length || 0}`;
+
+          // Update badges with project-based stats
+          document.getElementById('badge-pending').textContent = `Total Projects: ${totalProjects}`;
+          document.getElementById('badge-scheduled').textContent = `Active Projects: ${activeProjects}`;
           document.getElementById('badge-residents').textContent = `Residents: ${artists?.filter(a=>!a.is_guest).length || 0}`;
           document.getElementById('badge-guests').textContent = `Guests: ${artists?.filter(a=>a.is_guest).length || 0}`;
           document.getElementById('badge-agreements-completed').textContent = `Agreements: ${completedAgreements}/${totalAgreements}`;
           document.getElementById('badge-agreements-pending').textContent = `Missing: ${pendingAgreements}`;
+
+          console.log('📊 Dashboard - Total Projects:', totalProjects, '| Active:', activeProjects, '| Completed:', completedProjects);
         } catch(err) {
           console.error("Dashboard error:", err);
         }
@@ -8183,7 +8440,7 @@
         }
       };
 
-      function renderArtistProjectsSection(projects) {
+      function renderArtistProjectsSection(appointments) {
         const container = document.getElementById('artistProjectsList');
 
         if (!container) {
@@ -8191,29 +8448,58 @@
           return;
         }
 
-        if (!projects || projects.length === 0) {
-          container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--macos-text-secondary); background:rgba(0,0,0,0.02); border-radius:8px;">No projects found</div>';
+        if (!appointments || appointments.length === 0) {
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--macos-text-secondary); background:rgba(0,0,0,0.02); border-radius:8px;">No appointments found</div>';
           return;
         }
 
-        container.innerHTML = projects.map(project => {
-          // Status badge styling
-          const statusColors = {
-            'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
-            'completed': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
-            'cancelled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
-          };
-          const statusStyle = statusColors[project.status] || statusColors['scheduled'];
+        // Group appointments by project_number
+        const projectGroups = {};
 
-          // Payment badge styling
-          const paymentColors = {
-            'paid': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
-            'unpaid': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' },
-            'partial': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' }
-          };
-          const paymentStyle = paymentColors[project.payment_state] || paymentColors['unpaid'];
+        appointments.forEach(appointment => {
+          const projectNum = appointment.project_number || `ungrouped-${appointment.id}`;
+          if (!projectGroups[projectNum]) {
+            projectGroups[projectNum] = {
+              project_number: projectNum,
+              appointments: [],
+              customer: appointment.customer,
+              customer_id: appointment.customer_id
+            };
+          }
+          projectGroups[projectNum].appointments.push(appointment);
+        });
 
-          // Customer info
+        console.log('📊 Grouped into', Object.keys(projectGroups).length, 'projects');
+
+        // Calculate project statistics
+        Object.values(projectGroups).forEach(project => {
+          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+
+          project.totalAppointments = project.appointments.length;
+          project.firstAppointment = project.appointments[0];
+          project.lastAppointment = project.appointments[project.appointments.length - 1];
+
+          // Determine project status
+          if (project.appointments.every(a => a.status === 'completed')) {
+            project.status = 'Completed';
+          } else if (project.appointments.some(a => a.status === 'scheduled')) {
+            project.status = 'In Progress';
+          } else if (project.appointments.some(a => a.status === 'cancelled')) {
+            project.status = 'Cancelled';
+          } else {
+            project.status = 'Scheduled';
+          }
+
+          // Calculate total revenue
+          project.totalRevenue = project.appointments.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+        });
+
+        // Render grouped projects
+        const sortedProjects = Object.values(projectGroups).sort((a, b) =>
+          new Date(b.firstAppointment.start_time) - new Date(a.firstAppointment.start_time)
+        );
+
+        container.innerHTML = sortedProjects.map(project => {
           const customerName = project.customer
             ? `${project.customer.first_name || ''} ${project.customer.last_name || ''}`.trim()
             : 'Unknown Customer';
@@ -8222,41 +8508,97 @@
             ? `<a href="https://instagram.com/${project.customer.instagram.replace('@', '')}" target="_blank" style="color:var(--macos-accent-blue); text-decoration:none;">@${project.customer.instagram.replace('@', '')}</a>`
             : '';
 
-          // Location info
-          const locationInfo = project.location
-            ? `${project.location.name} - ${project.location.city}`
-            : 'No location';
+          // Date range
+          const startDate = new Date(project.firstAppointment.start_time).toLocaleDateString('de-DE');
+          const endDate = new Date(project.lastAppointment.start_time).toLocaleDateString('de-DE');
+          const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
 
-          // Booking type badge
-          const bookingTypeBadge = project.booking_type
-            ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${project.booking_type.replace('_', ' ')}</span>`
-            : '';
+          // Project status styling
+          const statusClass = project.status.toLowerCase().replace(' ', '-');
 
           return `
-            <div class="project-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
-              <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
-                <div>
-                  <span style="font-size:15px; font-weight:600; color:var(--macos-text-primary);">${new Date(project.start_time).toLocaleString()}</span>
-                  <div style="margin-top:4px;">${bookingTypeBadge}</div>
+            <div class="project-group">
+              <div class="project-header" onclick="toggleProjectDetails(this)">
+                <div class="project-info">
+                  <h4>
+                    ${project.project_number.startsWith('ungrouped') ? 'No Project #' : project.project_number}
+                  </h4>
+                  <div>
+                    <span class="customer-name">${customerName} ${customerInstagram}</span>
+                    <span class="project-stats">
+                      ${project.totalAppointments} Appointment${project.totalAppointments > 1 ? 's' : ''} • ${dateRange}
+                    </span>
+                    <span class="project-status ${statusClass}">${project.status}</span>
+                  </div>
                 </div>
-                <div style="display:flex; gap:8px;">
-                  <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${project.status}</span>
-                  <span style="background:${paymentStyle.bg}; color:${paymentStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${project.payment_state || 'unpaid'}</span>
-                </div>
+                <button class="expand-btn">▼</button>
               </div>
-              <div style="font-size:14px; color:var(--macos-text-primary); margin-bottom:8px; font-weight:500;">
-                ${customerName} ${customerInstagram}
+
+              <div class="project-details">
+                ${project.appointments.map(appointment => {
+                  const statusColors = {
+                    'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
+                    'completed': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+                    'cancelled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+                  };
+                  const statusStyle = statusColors[appointment.status] || statusColors['scheduled'];
+
+                  const paymentColors = {
+                    'paid': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+                    'unpaid': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' },
+                    'partial': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' }
+                  };
+                  const paymentStyle = paymentColors[appointment.payment_state] || paymentColors['unpaid'];
+
+                  const locationInfo = appointment.location
+                    ? `${appointment.location.name} - ${appointment.location.city}`
+                    : 'No location';
+
+                  const bookingTypeBadge = appointment.booking_type
+                    ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.booking_type.replace('_', ' ')}</span>`
+                    : '';
+
+                  return `
+                    <div class="project-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08);">
+                      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
+                        <div>
+                          <span style="font-size:14px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start_time).toLocaleString('de-DE')}</span>
+                          <div style="margin-top:4px;">${bookingTypeBadge}</div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                          <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">${appointment.status}</span>
+                          <span style="background:${paymentStyle.bg}; color:${paymentStyle.color}; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">${appointment.payment_state || 'unpaid'}</span>
+                        </div>
+                      </div>
+                      <div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:6px;">
+                        <strong>Location:</strong> ${locationInfo}
+                      </div>
+                      ${appointment.placement ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${appointment.placement}</div>` : ''}
+                      ${appointment.size || appointment.style ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;">${appointment.size ? `<strong>Size:</strong> ${appointment.size}` : ''} ${appointment.size && appointment.style ? '|' : ''} ${appointment.style ? `<strong>Style:</strong> ${appointment.style}` : ''}</div>` : ''}
+                      ${appointment.description ? `<div style="font-size:12px; color:var(--macos-text-secondary); margin-top:6px; line-height:1.4;">${appointment.description.substring(0, 100)}${appointment.description.length > 100 ? '...' : ''}</div>` : ''}
+                    </div>
+                  `;
+                }).join('')}
               </div>
-              <div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:8px;">
-                <strong>Location:</strong> ${locationInfo}
-              </div>
-              ${project.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${project.placement}</div>` : ''}
-              ${project.size || project.style ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;">${project.size ? `<strong>Size:</strong> ${project.size}` : ''} ${project.size && project.style ? '|' : ''} ${project.style ? `<strong>Style:</strong> ${project.style}` : ''}</div>` : ''}
-              ${project.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${project.description.substring(0, 150)}${project.description.length > 150 ? '...' : ''}</div>` : ''}
             </div>
           `;
         }).join('');
       }
+
+      // Toggle project details function
+      window.toggleProjectDetails = function(headerElement) {
+        const projectGroup = headerElement.closest('.project-group');
+        const detailsDiv = projectGroup.querySelector('.project-details');
+        const expandBtn = projectGroup.querySelector('.expand-btn');
+
+        if (detailsDiv.classList.contains('expanded')) {
+          detailsDiv.classList.remove('expanded');
+          expandBtn.classList.remove('expanded');
+        } else {
+          detailsDiv.classList.add('expanded');
+          expandBtn.classList.add('expanded');
+        }
+      };
 
       window.closeViewProfile = function() {
         document.getElementById('viewArtistProfileModal').classList.remove('active');
@@ -8540,39 +8882,117 @@
           return;
         }
 
-        container.innerHTML = requests.map(request => {
-          // Status badge styling
-          const statusColors = {
-            'open_request': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' },
-            'pending': { bg: 'rgba(255, 204, 0, 0.1)', color: '#ffcc00' },
-            'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
-            'finished': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
-            'canceled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
-          };
-          const statusStyle = statusColors[request.status] || statusColors['open_request'];
+        // Group requests by project_number
+        const projectGroups = {};
 
-          // Booking type badge
-          const bookingTypeBadge = request.booking_type
-            ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${request.booking_type.replace('_', ' ')}</span>`
-            : '';
+        requests.forEach(request => {
+          const projectNum = request.project_number || `ungrouped-req-${request.id}`;
+          if (!projectGroups[projectNum]) {
+            projectGroups[projectNum] = {
+              project_number: projectNum,
+              requests: []
+            };
+          }
+          projectGroups[projectNum].requests.push(request);
+        });
+
+        console.log('📊 Customer requests grouped into', Object.keys(projectGroups).length, 'projects');
+
+        const sortedProjects = Object.values(projectGroups).sort((a, b) =>
+          new Date(b.requests[0].created_at) - new Date(a.requests[0].created_at)
+        );
+
+        container.innerHTML = sortedProjects.map(project => {
+          // If only one request and no project number, show it directly
+          if (project.requests.length === 1 && project.project_number.startsWith('ungrouped')) {
+            const request = project.requests[0];
+            const statusColors = {
+              'open_request': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' },
+              'pending': { bg: 'rgba(255, 204, 0, 0.1)', color: '#ffcc00' },
+              'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
+              'finished': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+              'canceled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+            };
+            const statusStyle = statusColors[request.status] || statusColors['open_request'];
+
+            const bookingTypeBadge = request.booking_type
+              ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${request.booking_type.replace('_', ' ')}</span>`
+              : '';
+
+            return `
+              <div class="request-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
+                  <div>
+                    <span style="font-size:12px; color:var(--macos-text-secondary);">Request #${request.id.substring(0, 8)}</span>
+                    <div style="margin-top:4px;">${bookingTypeBadge}</div>
+                  </div>
+                  <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${request.status.replace('_', ' ')}</span>
+                </div>
+                <div style="font-size:13px; color:var(--macos-text-secondary); margin-bottom:8px;">
+                  Created: ${new Date(request.created_at).toLocaleDateString()}
+                  ${request.scheduled_date ? `• Scheduled: ${new Date(request.scheduled_date).toLocaleDateString()}` : ''}
+                </div>
+                ${request.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${request.placement}</div>` : ''}
+                ${request.size ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${request.size}</div>` : ''}
+                ${request.style ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Style:</strong> ${request.style}</div>` : ''}
+                ${request.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${request.description.substring(0, 150)}${request.description.length > 150 ? '...' : ''}</div>` : ''}
+              </div>
+            `;
+          }
+
+          // Multiple requests in same project - show as grouped
+          const firstRequest = project.requests[0];
+          const lastRequest = project.requests[project.requests.length - 1];
 
           return `
-            <div class="request-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
-              <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
-                <div>
-                  <span style="font-size:12px; color:var(--macos-text-secondary);">Request #${request.id.substring(0, 8)}</span>
-                  <div style="margin-top:4px;">${bookingTypeBadge}</div>
+            <div class="project-group">
+              <div class="project-header" onclick="toggleProjectDetails(this)">
+                <div class="project-info">
+                  <h4>${project.project_number}</h4>
+                  <div>
+                    <span class="project-stats">
+                      ${project.requests.length} Request${project.requests.length > 1 ? 's' : ''} •
+                      ${new Date(firstRequest.created_at).toLocaleDateString('de-DE')}
+                    </span>
+                  </div>
                 </div>
-                <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${request.status.replace('_', ' ')}</span>
+                <button class="expand-btn">▼</button>
               </div>
-              <div style="font-size:13px; color:var(--macos-text-secondary); margin-bottom:8px;">
-                Created: ${new Date(request.created_at).toLocaleDateString()}
-                ${request.scheduled_date ? `• Scheduled: ${new Date(request.scheduled_date).toLocaleDateString()}` : ''}
+
+              <div class="project-details">
+                ${project.requests.map(request => {
+                  const statusColors = {
+                    'open_request': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' },
+                    'pending': { bg: 'rgba(255, 204, 0, 0.1)', color: '#ffcc00' },
+                    'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
+                    'finished': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+                    'canceled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+                  };
+                  const statusStyle = statusColors[request.status] || statusColors['open_request'];
+
+                  const bookingTypeBadge = request.booking_type
+                    ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${request.booking_type.replace('_', ' ')}</span>`
+                    : '';
+
+                  return `
+                    <div class="request-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08);">
+                      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
+                        <div>
+                          <span style="font-size:12px; color:var(--macos-text-secondary);">Request #${request.id.substring(0, 8)}</span>
+                          <div style="margin-top:4px;">${bookingTypeBadge}</div>
+                        </div>
+                        <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">${request.status.replace('_', ' ')}</span>
+                      </div>
+                      <div style="font-size:12px; color:var(--macos-text-secondary); margin-bottom:6px;">
+                        Created: ${new Date(request.created_at).toLocaleDateString()}
+                      </div>
+                      ${request.placement ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${request.placement}</div>` : ''}
+                      ${request.size ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${request.size}</div>` : ''}
+                      ${request.style ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Style:</strong> ${request.style}</div>` : ''}
+                    </div>
+                  `;
+                }).join('')}
               </div>
-              ${request.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${request.placement}</div>` : ''}
-              ${request.size ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${request.size}</div>` : ''}
-              ${request.style ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Style:</strong> ${request.style}</div>` : ''}
-              ${request.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${request.description.substring(0, 150)}${request.description.length > 150 ? '...' : ''}</div>` : ''}
             </div>
           `;
         }).join('');
@@ -8586,59 +9006,118 @@
           return;
         }
 
-        container.innerHTML = appointments.map(appointment => {
-          // Status badge styling
-          const statusColors = {
-            'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
-            'completed': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
-            'cancelled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
-          };
-          const statusStyle = statusColors[appointment.status] || statusColors['scheduled'];
+        // Group appointments by project_number
+        const projectGroups = {};
 
-          // Payment badge styling
-          const paymentColors = {
-            'paid': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
-            'unpaid': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' },
-            'partial': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' }
-          };
-          const paymentStyle = paymentColors[appointment.payment_state] || paymentColors['unpaid'];
+        appointments.forEach(appointment => {
+          const projectNum = appointment.project_number || `ungrouped-apt-${appointment.id}`;
+          if (!projectGroups[projectNum]) {
+            projectGroups[projectNum] = {
+              project_number: projectNum,
+              appointments: [],
+              artist: appointment.artist
+            };
+          }
+          projectGroups[projectNum].appointments.push(appointment);
+        });
 
-          // Artist info
-          const artistInfo = appointment.artist
-            ? `${appointment.artist.name}${appointment.artist.instagram ? ` (@${appointment.artist.instagram})` : ''}`
-            : 'Unassigned';
+        console.log('📊 Customer appointments grouped into', Object.keys(projectGroups).length, 'projects');
 
-          // Location info
-          const locationInfo = appointment.location
-            ? `${appointment.location.name} - ${appointment.location.city}`
-            : 'No location';
+        // Calculate project statistics
+        Object.values(projectGroups).forEach(project => {
+          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+          project.totalAppointments = project.appointments.length;
+          project.firstAppointment = project.appointments[0];
+          project.lastAppointment = project.appointments[project.appointments.length - 1];
 
-          // Booking type badge
-          const bookingTypeBadge = appointment.booking_type
-            ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.booking_type.replace('_', ' ')}</span>`
+          // Determine project status
+          if (project.appointments.every(a => a.status === 'completed')) {
+            project.status = 'Completed';
+          } else if (project.appointments.some(a => a.status === 'scheduled')) {
+            project.status = 'In Progress';
+          } else {
+            project.status = 'Scheduled';
+          }
+        });
+
+        const sortedProjects = Object.values(projectGroups).sort((a, b) =>
+          new Date(b.firstAppointment.start_time) - new Date(a.firstAppointment.start_time)
+        );
+
+        container.innerHTML = sortedProjects.map(project => {
+          const artistName = project.artist ? project.artist.name : 'Unassigned';
+          const artistInstagram = project.artist?.instagram
+            ? ` (@${project.artist.instagram})`
             : '';
 
+          const startDate = new Date(project.firstAppointment.start_time).toLocaleDateString('de-DE');
+          const endDate = new Date(project.lastAppointment.start_time).toLocaleDateString('de-DE');
+          const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
+
+          const statusClass = project.status.toLowerCase().replace(' ', '-');
+
           return `
-            <div class="project-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
-              <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
-                <div>
-                  <span style="font-size:15px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start_time).toLocaleString()}</span>
-                  <div style="margin-top:4px;">${bookingTypeBadge}</div>
+            <div class="project-group">
+              <div class="project-header" onclick="toggleProjectDetails(this)">
+                <div class="project-info">
+                  <h4>${project.project_number.startsWith('ungrouped') ? 'No Project #' : project.project_number}</h4>
+                  <div>
+                    <span class="customer-name">${artistName}${artistInstagram}</span>
+                    <span class="project-stats">
+                      ${project.totalAppointments} Appointment${project.totalAppointments > 1 ? 's' : ''} • ${dateRange}
+                    </span>
+                    <span class="project-status ${statusClass}">${project.status}</span>
+                  </div>
                 </div>
-                <div style="display:flex; gap:8px;">
-                  <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.status}</span>
-                  <span style="background:${paymentStyle.bg}; color:${paymentStyle.color}; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.payment_state || 'unpaid'}</span>
-                </div>
+                <button class="expand-btn">▼</button>
               </div>
-              <div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:8px;">
-                <strong>Artist:</strong> ${artistInfo}
+
+              <div class="project-details">
+                ${project.appointments.map(appointment => {
+                  const statusColors = {
+                    'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
+                    'completed': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+                    'cancelled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+                  };
+                  const statusStyle = statusColors[appointment.status] || statusColors['scheduled'];
+
+                  const paymentColors = {
+                    'paid': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
+                    'unpaid': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' },
+                    'partial': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' }
+                  };
+                  const paymentStyle = paymentColors[appointment.payment_state] || paymentColors['unpaid'];
+
+                  const locationInfo = appointment.location
+                    ? `${appointment.location.name} - ${appointment.location.city}`
+                    : 'No location';
+
+                  const bookingTypeBadge = appointment.booking_type
+                    ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.booking_type.replace('_', ' ')}</span>`
+                    : '';
+
+                  return `
+                    <div class="project-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08);">
+                      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
+                        <div>
+                          <span style="font-size:14px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start_time).toLocaleString('de-DE')}</span>
+                          <div style="margin-top:4px;">${bookingTypeBadge}</div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                          <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">${appointment.status}</span>
+                          <span style="background:${paymentStyle.bg}; color:${paymentStyle.color}; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">${appointment.payment_state || 'unpaid'}</span>
+                        </div>
+                      </div>
+                      <div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:6px;">
+                        <strong>Location:</strong> ${locationInfo}
+                      </div>
+                      ${appointment.placement ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${appointment.placement}</div>` : ''}
+                      ${appointment.size || appointment.style ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;">${appointment.size ? `<strong>Size:</strong> ${appointment.size}` : ''} ${appointment.size && appointment.style ? '|' : ''} ${appointment.style ? `<strong>Style:</strong> ${appointment.style}` : ''}</div>` : ''}
+                      ${appointment.description ? `<div style="font-size:12px; color:var(--macos-text-secondary); margin-top:6px; line-height:1.4;">${appointment.description.substring(0, 100)}${appointment.description.length > 100 ? '...' : ''}</div>` : ''}
+                    </div>
+                  `;
+                }).join('')}
               </div>
-              <div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:8px;">
-                <strong>Location:</strong> ${locationInfo}
-              </div>
-              ${appointment.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${appointment.placement}</div>` : ''}
-              ${appointment.size ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${appointment.size} ${appointment.style ? `| <strong>Style:</strong> ${appointment.style}` : ''}</div>` : ''}
-              ${appointment.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${appointment.description.substring(0, 150)}${appointment.description.length > 150 ? '...' : ''}</div>` : ''}
             </div>
           `;
         }).join('');
