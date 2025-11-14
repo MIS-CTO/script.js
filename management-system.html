@@ -8602,7 +8602,7 @@
             `)
             .eq('artist_id', artistId)
             .not('artist_id', 'is', null)
-            .order('start_time', { ascending: false });
+            .order('start', { ascending: false });
 
           if (error) {
             console.error('Error loading artist projects:', error);
@@ -8663,9 +8663,9 @@
 
         // Calculate date ranges for each project
         Object.values(projectGroups).forEach(project => {
-          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
-          project.first_appointment = project.appointments[0]?.start_time;
-          project.last_appointment = project.appointments[project.appointments.length - 1]?.start_time;
+          project.appointments.sort((a, b) => new Date(a.start) - new Date(b.start));
+          project.first_appointment = project.appointments[0]?.start;
+          project.last_appointment = project.appointments[project.appointments.length - 1]?.start;
         });
 
         console.log('📊 Grouped into', Object.keys(projectGroups).length, 'projects');
@@ -8707,7 +8707,7 @@
                   return `
                     <div class="appointment-item">
                       <div class="appointment-date">
-                        ${formatProjectDateTime(appointment.start_time)}
+                        ${formatProjectDateTime(appointment.start)}
                       </div>
                       <div class="appointment-info">
                         <span class="booking-type">${appointment.booking_type || 'Appointment'}</span>
@@ -8993,7 +8993,7 @@
               location:locations(name, city)
             `)
             .eq('customer_id', customerId)
-            .order('start_time', { ascending: false });
+            .order('start', { ascending: false });
 
           if (appointmentsError) {
             console.error('Error loading appointments:', appointmentsError);
@@ -9056,8 +9056,8 @@
 
         const projectsArray = Object.values(projects)
           .sort((a, b) => {
-            const aDate = a.appointments[0]?.start_time || '2000-01-01';
-            const bDate = b.appointments[0]?.start_time || '2000-01-01';
+            const aDate = a.appointments[0]?.start || '2000-01-01';
+            const bDate = b.appointments[0]?.start || '2000-01-01';
             return new Date(bDate) - new Date(aDate);
           });
 
@@ -9087,8 +9087,8 @@
               </div>
               ${project.appointments.length > 0 ? `
                 <div class="project-timeline-dates">
-                  ${formatProjectDate(project.appointments[0].start_time)}
-                  ${project.appointments.length > 1 ? '→ ' + formatProjectDate(project.appointments[project.appointments.length - 1].start_time) : ''}
+                  ${formatProjectDate(project.appointments[0].start)}
+                  ${project.appointments.length > 1 ? '→ ' + formatProjectDate(project.appointments[project.appointments.length - 1].start) : ''}
                 </div>
               ` : ''}
             </div>
@@ -9142,7 +9142,7 @@
           }
 
           // Sort appointments by date
-          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+          project.appointments.sort((a, b) => new Date(a.start) - new Date(b.start));
         });
 
         return projects;
@@ -9299,7 +9299,7 @@
 
         // Calculate project statistics
         Object.values(projectGroups).forEach(project => {
-          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+          project.appointments.sort((a, b) => new Date(a.start) - new Date(b.start));
           project.totalAppointments = project.appointments.length;
           project.firstAppointment = project.appointments[0];
           project.lastAppointment = project.appointments[project.appointments.length - 1];
@@ -9315,7 +9315,7 @@
         });
 
         const sortedProjects = Object.values(projectGroups).sort((a, b) =>
-          new Date(b.firstAppointment.start_time) - new Date(a.firstAppointment.start_time)
+          new Date(b.firstAppointment.start) - new Date(a.firstAppointment.start)
         );
 
         container.innerHTML = sortedProjects.map(project => {
@@ -9324,8 +9324,8 @@
             ? ` (@${project.artist.instagram})`
             : '';
 
-          const startDate = new Date(project.firstAppointment.start_time).toLocaleDateString('de-DE');
-          const endDate = new Date(project.lastAppointment.start_time).toLocaleDateString('de-DE');
+          const startDate = new Date(project.firstAppointment.start).toLocaleDateString('de-DE');
+          const endDate = new Date(project.lastAppointment.start).toLocaleDateString('de-DE');
           const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
 
           const statusClass = project.status.toLowerCase().replace(' ', '-');
@@ -9374,7 +9374,7 @@
                     <div class="project-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08);">
                       <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
                         <div>
-                          <span style="font-size:14px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start_time).toLocaleString('de-DE')}</span>
+                          <span style="font-size:14px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start).toLocaleString('de-DE')}</span>
                           <div style="margin-top:4px;">${bookingTypeBadge}</div>
                         </div>
                         <div style="display:flex; gap:6px;">
