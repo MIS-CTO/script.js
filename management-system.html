@@ -11911,6 +11911,47 @@
         console.log('💰 Location filter:', locationFilter);
         console.log('💰 QUERY VERSION: 2025-11-14-v3 - GESAMT UMSATZ FIX');
 
+        // 🔍 DEBUG: Check if projects table has ANY data at all
+        console.log('🔍 DEBUG: Checking projects table status...');
+        const { count: totalCount, error: countError } = await supabase
+          .from('projects')
+          .select('*', { count: 'exact', head: true });
+
+        if (countError) {
+          console.error('❌ DEBUG: Count query failed:', countError);
+          console.error('   This might indicate RLS is blocking access or table does not exist');
+        } else {
+          console.log(`🔍 DEBUG: Total projects in table (COUNT): ${totalCount}`);
+          if (totalCount === 0) {
+            console.warn('⚠️ DEBUG: Projects table is EMPTY! No data to load.');
+            console.warn('   Possible reasons:');
+            console.warn('   1. No projects have been created yet');
+            console.warn('   2. Data was not migrated from another system');
+            console.warn('   3. Projects are stored in a different table');
+            return [];
+          }
+        }
+
+        // 🔍 DEBUG: Try to fetch first record without range() to test RLS
+        console.log('🔍 DEBUG: Attempting to fetch first record...');
+        const { data: testData, error: testError } = await supabase
+          .from('projects')
+          .select('id, price, payment_state, created_at, location_id')
+          .limit(1);
+
+        if (testError) {
+          console.error('❌ DEBUG: Test query failed:', testError);
+          console.error('   This indicates RLS or permissions issue');
+        } else {
+          console.log(`🔍 DEBUG: Test query returned ${testData?.length || 0} records`);
+          if (testData && testData.length > 0) {
+            console.log('🔍 DEBUG: Sample record:', testData[0]);
+          } else {
+            console.warn('⚠️ DEBUG: Test query succeeded but returned 0 records');
+            console.warn('   This is very strange - table has count but no records accessible');
+          }
+        }
+
         let allProjects = [];
         let offset = 0;
         const batchSize = 1000;
