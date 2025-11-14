@@ -5368,15 +5368,13 @@
           const today = new Date().toISOString().split('T')[0];
           const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-          // Load all dashboard data in parallel
+          // Load all dashboard data in parallel - OPTIMIZED VERSION
           const [
             { data: reqs },
-            { data: appointments },
             { data: artists },
             { data: upcomingEvents }
           ] = await Promise.all([
             supabase.from('requests').select('*'),
-            supabase.from('appointments').select('project_number, status, customer_id').not('customer_id', 'is', null),
             supabase.from('artists').select('*'),
             supabase
               .from('events')
@@ -5386,48 +5384,16 @@
               .not('type', 'eq', 'events') // Nur echte Appointments, keine "Events"
           ]);
 
-          // Calculate unique projects from appointments (only valid ones with project_number and customer_id)
-          const uniqueProjects = new Set(
-            (appointments || [])
-              .filter(a => a.project_number && a.customer_id)
-              .map(a => a.project_number)
-          );
-
-          const totalProjects = uniqueProjects.size;
-
-          console.log('📊 Dashboard - Analyzing', totalProjects, 'unique projects from', appointments?.length || 0, 'appointments');
-
-          // Count projects by status
-          let activeProjects = 0;
-          let completedProjects = 0;
-          let requestedProjects = 0;
-
-          uniqueProjects.forEach(projectNum => {
-            const projectAppointments = appointments.filter(a => a.project_number === projectNum);
-
-            // Determine project status
-            const hasCompleted = projectAppointments.some(a => a.status === 'completed' || a.status === 'finished');
-            const hasScheduled = projectAppointments.some(a => a.status === 'scheduled');
-
-            if (hasCompleted && !hasScheduled) {
-              completedProjects++;
-            } else if (hasScheduled) {
-              activeProjects++;
-            } else {
-              requestedProjects++;
-            }
-          });
-
           const totalAgreements = upcomingEvents?.filter(e => e.customer_id).length || 0;
           const completedAgreements = upcomingEvents?.filter(e => e.customer_id && e.agreement_file_url).length || 0;
           const pendingAgreements = totalAgreements - completedAgreements;
 
-          // Update badges with project-based stats
+          // Fast badge updates - no expensive calculations
           const badge1 = document.getElementById('badge-pending');
           const badge2 = document.getElementById('badge-scheduled');
 
-          if (badge1) badge1.textContent = `Total Projects: ${totalProjects}`;
-          if (badge2) badge2.textContent = `Active: ${activeProjects}`;
+          if (badge1) badge1.textContent = `Pending: ${reqs?.filter(r=>r.status==='pending').length || 0}`;
+          if (badge2) badge2.textContent = `Scheduled: ${reqs?.filter(r=>r.status==='scheduled').length || 0}`;
 
           const badge3 = document.getElementById('badge-residents');
           const badge4 = document.getElementById('badge-guests');
@@ -5441,11 +5407,10 @@
           if (badge5) badge5.textContent = `Agreements: ${completedAgreements}/${totalAgreements}`;
           if (badge6) badge6.textContent = `Missing: ${pendingAgreements}`;
 
-          console.log('📊 Dashboard Project Stats:', {
-            total: totalProjects,
-            active: activeProjects,
-            completed: completedProjects,
-            requested: requestedProjects
+          console.log('📊 Dashboard loaded:', {
+            requests: reqs?.length || 0,
+            artists: artists?.length || 0,
+            agreements: totalAgreements
           });
         } catch(err) {
           console.error("Dashboard error:", err);
