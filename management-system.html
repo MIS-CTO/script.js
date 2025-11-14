@@ -2730,11 +2730,11 @@
 
       <!-- Artist Distribution Card -->
       <div class="chart-card">
-        <h3>Anfragen nach Artist</h3>
+        <h3>Appointments nach Resident Artist</h3>
         <canvas id="artistDistributionChart"></canvas>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px;">
           <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
-            <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Anfragen</div>
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Total Appointments</div>
             <div style="font-size: 16px; font-weight: 600;" id="artistTotalRequests">0</div>
           </div>
           <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
@@ -2753,7 +2753,7 @@
       </div>
 
       <!-- Revenue by Payment Status Card (Full Width) -->
-      <div class="chart-card" style="grid-column: 1 / -1;">
+      <div class="chart-card" style="grid-column: 1 / -1; width: 100%;">
         <h3>Umsatz nach Zahlungsstatus</h3>
 
         <!-- Revenue Summary Cards -->
@@ -13010,15 +13010,17 @@
     async function loadRequestStatus(requests) {
       try {
         const statusLabels = {
-          'open': 'Open',
-          'appointment_created': 'Appointment created',
-          'canceled': 'Canceled'
+          'open_request': 'Open Request',
+          'pending': 'Pending',
+          'scheduled': 'Scheduled',
+          'finished': 'Finished'
         };
 
         const statusColors = {
-          'open': '#FFB800',
-          'appointment_created': '#34c759',
-          'canceled': '#ff3b30'
+          'open_request': '#FFB800',
+          'pending': '#FF9500',
+          'scheduled': '#34c759',
+          'finished': '#0071e3'
         };
 
         // Aggregate by status
@@ -13109,39 +13111,62 @@
       }
     }
 
-    // Load Artist Distribution (appointments.artist_email)
+    // Load Artist Distribution (appointments by resident artists only)
     let artistDistributionChartInstance = null;
     async function loadArtistDistribution(appointments) {
       try {
+        console.log('🎨 Loading artist distribution from appointments...');
+
+        // Load appointments with artist data (only resident artists: is_guest = false)
+        const { data: appointmentsWithArtist, error } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            artist_email,
+            state,
+            artist:artists!appointments_artist_email_fkey (
+              email,
+              is_guest,
+              name
+            )
+          `)
+          .eq('artist:artists.is_guest', false);  // Only resident artists
+
+        if (error) {
+          console.error('❌ Error loading appointments with artists:', error);
+          throw error;
+        }
+
+        console.log(`🎨 Loaded ${appointmentsWithArtist?.length || 0} appointments from resident artists`);
+
         // Aggregate by artist
         const artistCounts = {};
         let completedCount = 0;
         let anyCount = 0;
 
-        appointments.forEach(apt => {
-          const email = apt.artist_email || 'Beliebig';
-          artistCounts[email] = (artistCounts[email] || 0) + 1;
+        appointmentsWithArtist?.forEach(apt => {
+          const artistName = apt.artist?.name || apt.artist_email?.split('@')[0] || 'Unknown';
+          artistCounts[artistName] = (artistCounts[artistName] || 0) + 1;
 
           if (apt.state === 'Zugesagt' || apt.state === 'completed' || apt.state === 'done') {
             completedCount++;
           }
 
-          if (!apt.artist_email || email === 'Beliebig') {
+          if (!apt.artist_email) {
             anyCount++;
           }
         });
 
-        const total = appointments.length;
+        const total = appointmentsWithArtist?.length || 0;
         const notCompleted = total - completedCount;
 
-        // Group small artists (< 10 requests)
+        // Group small artists (< 10 appointments)
         const threshold = 10;
         const filteredArtists = {};
         let otherCount = 0;
 
-        Object.entries(artistCounts).forEach(([email, count]) => {
-          if (count >= threshold || email === 'Beliebig') {
-            const name = email === 'Beliebig' ? 'Beliebig' : email.split('@')[0];
+        Object.entries(artistCounts).forEach(([name, count]) => {
+          if (count >= threshold) {
             filteredArtists[name.charAt(0).toUpperCase() + name.slice(1)] = count;
           } else {
             otherCount += count;
@@ -13149,8 +13174,11 @@
         });
 
         if (otherCount > 0) {
-          filteredArtists['Sonstige (< 10 Anfragen)'] = otherCount;
+          filteredArtists['Sonstige (< 10 Appointments)'] = otherCount;
         }
+
+        console.log('🎨 Artist counts:', artistCounts);
+        console.log('🎨 Filtered artists (>= 10):', filteredArtists);
 
         // Sort by count
         const sorted = Object.entries(filteredArtists).sort((a, b) => b[1] - a[1]);
