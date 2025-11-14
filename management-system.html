@@ -2616,7 +2616,9 @@
           <button class="time-tab" data-range="all">All-Time</button>
         </div>
 
-        <canvas id="bookingsTimeline"></canvas>
+        <div style="position: relative; height: 400px; margin-top: 16px;">
+          <canvas id="bookingsTimeline"></canvas>
+        </div>
       </div>
 
       <!-- Combined Requests & Appointments Count Card -->
@@ -2703,7 +2705,9 @@
             <option value="all">Gesamt</option>
           </select>
         </div>
-        <canvas id="revenueTimeline"></canvas>
+        <div style="position: relative; height: 400px;">
+          <canvas id="revenueTimeline"></canvas>
+        </div>
       </div>
 
       <!-- NEW ANALYTICS COMPONENTS -->
@@ -11731,11 +11735,10 @@
       labels.forEach((label, index) => {
         const key = Object.keys(originCounts)[index];
         const count = originCounts[key];
-        if (count > 0) {
-          chartLabels.push(label);
-          chartData.push(count);
-          chartColors.push(colors[index]);
-        }
+        // Always show all categories, even with 0 count
+        chartLabels.push(label);
+        chartData.push(count);
+        chartColors.push(colors[index]);
       });
 
       const chartDataConfig = {
@@ -12518,7 +12521,7 @@
         data: chartData,
         options: {
           responsive: true,
-          maintainAspectRatio: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               display: false
@@ -12809,7 +12812,7 @@
         data: chartData,
         options: {
           responsive: true,
-          maintainAspectRatio: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               display: false
