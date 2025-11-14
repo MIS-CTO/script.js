@@ -4718,6 +4718,8 @@
     let dienstplanDate = new Date();
     let agreementsDate = new Date();
     let events = [];
+    let loadedDateRangeStart = null;
+    let loadedDateRangeEnd = null;
     let allArtists = [];
     let allTeamMembers = [];
     let allLocations = []; // FIXED: Declare allLocations globally to prevent undefined errors
@@ -7892,11 +7894,28 @@
             return hours + minutes / 60;
           };
 
-          // 1. Load events from events table
+          // Calculate date range: ±2 weeks from current date for better performance
+          const startDate = new Date(currentDate);
+          startDate.setDate(startDate.getDate() - 14);
+          const endDate = new Date(currentDate);
+          endDate.setDate(endDate.getDate() + 14);
+
+          const startDateStr = startDate.toISOString().split('T')[0];
+          const endDateStr = endDate.toISOString().split('T')[0];
+
+          // Store the loaded date range for future reference
+          loadedDateRangeStart = new Date(startDateStr);
+          loadedDateRangeEnd = new Date(endDateStr);
+
+          console.log(`Loading events for date range: ${startDateStr} to ${endDateStr}`);
+
+          // 1. Load events from events table with date range filter
           const { data: eventsData, error: eventsError } = await supabase
             .from('events')
             .select('*')
-            .eq('location_id', selectedLocationId);
+            .eq('location_id', selectedLocationId)
+            .gte('start_time', startDateStr)
+            .lte('start_time', endDateStr + 'T23:59:59');
 
           if (eventsError) throw eventsError;
 
@@ -7937,25 +7956,52 @@
             };
           });
 
-          // 2. Load appointments from appointments table with customer and artist info
-          const { data: appointmentsData, error: appointmentsError } = await supabase
-            .from('appointments')
-            .select(`
-              *,
-              customer:customers(first_name, last_name),
-              artist:artists(id, name, is_guest)
-            `)
-            .eq('location_id', selectedLocationId)
-            .not('start', 'is', null)
-            .not('end', 'is', null);
+          // 2. Load appointments from appointments table with date range filter and batch loading
+          let allAppointmentsData = [];
+          let hasMore = true;
+          let page = 0;
+          const pageSize = 1000;
 
-          if (appointmentsError) {
-            console.error('Error loading appointments:', appointmentsError);
+          while (hasMore) {
+            const { data: appointmentsBatch, error: appointmentsError } = await supabase
+              .from('appointments')
+              .select(`
+                *,
+                customer:customers(first_name, last_name),
+                artist:artists(id, name, is_guest)
+              `)
+              .eq('location_id', selectedLocationId)
+              .gte('start', startDateStr)
+              .lte('start', endDateStr + 'T23:59:59')
+              .not('start', 'is', null)
+              .not('end', 'is', null)
+              .order('start', { ascending: true })
+              .range(page * pageSize, (page + 1) * pageSize - 1);
+
+            if (appointmentsError) {
+              console.error('Error loading appointments batch:', appointmentsError);
+              hasMore = false;
+              break;
+            }
+
+            if (appointmentsBatch && appointmentsBatch.length > 0) {
+              allAppointmentsData = [...allAppointmentsData, ...appointmentsBatch];
+              console.log(`Loaded batch ${page + 1}: ${appointmentsBatch.length} appointments`);
+
+              // If we got less than pageSize, we've reached the end
+              if (appointmentsBatch.length < pageSize) {
+                hasMore = false;
+              } else {
+                page++;
+              }
+            } else {
+              hasMore = false;
+            }
           }
 
-          console.log(`Appointments loaded for location ${selectedLocationId}:`, appointmentsData?.length || 0);
+          console.log(`Total appointments loaded for location ${selectedLocationId}:`, allAppointmentsData.length);
 
-          const processedAppointments = (appointmentsData || []).map(apt => {
+          const processedAppointments = (allAppointmentsData || []).map(apt => {
             const artist = apt.artist || allArtists.find(a => a.email === apt.artist_email);
 
             const startHour = parseLocalTime(apt.start);
@@ -8006,7 +8052,8 @@
 
           const infoDiv = document.getElementById('locationInfo');
           if (infoDiv) {
-            infoDiv.textContent = `📍 Showing ${events.length} item${events.length !== 1 ? 's' : ''} for ${locationData?.name || 'this location'} (${processedEvents.length} events, ${processedAppointments.length} appointments)`;
+            const dateRangeText = `${startDateStr} to ${endDateStr}`;
+            infoDiv.textContent = `📍 ${locationData?.name || 'Location'} • ${events.length} item${events.length !== 1 ? 's' : ''} (${processedEvents.length} events, ${processedAppointments.length} appointments) • Date range: ${dateRangeText}`;
           }
 
           console.log('Processed calendar items:', events);
@@ -8018,6 +8065,32 @@
 
       // Make loadEvents globally available
       window.loadEvents = loadEvents;
+
+      // Helper function to check if current date is outside loaded range
+      function isDateOutsideLoadedRange() {
+        if (!loadedDateRangeStart || !loadedDateRangeEnd) {
+          return true; // No data loaded yet
+        }
+
+        const currentDateOnly = new Date(currentDate);
+        currentDateOnly.setHours(0, 0, 0, 0);
+
+        return currentDateOnly < loadedDateRangeStart || currentDateOnly > loadedDateRangeEnd;
+      }
+
+      // Smart function to change date and reload if necessary
+      async function changeDateAndReloadIfNeeded(newDate) {
+        const oldDate = new Date(currentDate);
+        currentDate = newDate;
+
+        // Check if we need to reload events
+        if (isDateOutsideLoadedRange()) {
+          console.log('Date is outside loaded range, reloading events...');
+          await loadEvents();
+        }
+
+        renderCalendar();
+      }
 
       // Find available slot for a given date, category, start and end hour
       function findAvailableSlot(date, category, startHour, endHour) {
@@ -8316,24 +8389,24 @@
         calendarGrid.appendChild(indicator);
       }
 
-      document.getElementById('prevDayBtn').addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() - 1);
-        renderCalendar();
+      document.getElementById('prevDayBtn').addEventListener('click', async () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() - 1);
+        await changeDateAndReloadIfNeeded(newDate);
       });
 
-      document.getElementById('nextDayBtn').addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() + 1);
-        renderCalendar();
+      document.getElementById('nextDayBtn').addEventListener('click', async () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() + 1);
+        await changeDateAndReloadIfNeeded(newDate);
       });
 
-      document.getElementById('todayBtn').addEventListener('click', () => {
-        currentDate = new Date();
-        renderCalendar();
+      document.getElementById('todayBtn').addEventListener('click', async () => {
+        await changeDateAndReloadIfNeeded(new Date());
       });
 
-      document.getElementById('datePickerInput').addEventListener('change', (e) => {
-        currentDate = new Date(e.target.value);
-        renderCalendar();
+      document.getElementById('datePickerInput').addEventListener('change', async (e) => {
+        await changeDateAndReloadIfNeeded(new Date(e.target.value));
       });
       
       // Add Artist Button - Opens Add Artist Modal
