@@ -1613,6 +1613,166 @@
       box-shadow: 0 2px 4px rgba(0, 113, 227, 0.2);
     }
 
+    /* Customer Project Timeline Styles */
+    .customer-project-card {
+      position: relative;
+      padding: 16px;
+      padding-left: 24px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+
+    .customer-project-card:hover {
+      border-color: rgba(0, 113, 227, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .project-status-indicator {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .customer-project-card.completed .project-status-indicator {
+      background: #34c759;
+    }
+
+    .customer-project-card.in_progress .project-status-indicator {
+      background: #ff9500;
+    }
+
+    .customer-project-card.requested .project-status-indicator {
+      background: #007aff;
+    }
+
+    .project-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .project-number-small {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0071e3;
+      font-family: 'Helvetica Neue', -apple-system, sans-serif;
+    }
+
+    .project-status-badge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .status-completed {
+      background: #d1f4e0;
+      color: #0d6832;
+    }
+
+    .status-in_progress {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-requested {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .project-artist {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1d1d1f;
+      margin-bottom: 6px;
+    }
+
+    .project-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #86868b;
+      margin-bottom: 6px;
+    }
+
+    .project-timeline-dates {
+      font-size: 12px;
+      color: #86868b;
+    }
+
+    /* Appointment Item Styles */
+    .appointment-item {
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .appointment-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .appointment-date {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 6px;
+      font-family: 'Helvetica Neue', -apple-system, sans-serif;
+    }
+
+    .appointment-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .booking-type {
+      font-size: 13px;
+      color: #86868b;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-scheduled, .status-badge.status-scheduled {
+      background: #d1f4e0;
+      color: #0d6832;
+    }
+
+    .status-finished, .status-badge.status-finished, .status-badge.status-completed {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .status-canceled, .status-badge.status-canceled, .status-badge.status-cancelled {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .appointment-notes {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #6e6e73;
+      font-style: italic;
+    }
+
     /* Image Modal */
     .image-modal {
       display:none;
@@ -5216,7 +5376,7 @@
             { data: upcomingEvents }
           ] = await Promise.all([
             supabase.from('requests').select('*'),
-            supabase.from('appointments').select('project_number, status'),
+            supabase.from('appointments').select('project_number, status, customer_id').not('customer_id', 'is', null),
             supabase.from('artists').select('*'),
             supabase
               .from('events')
@@ -5226,46 +5386,67 @@
               .not('type', 'eq', 'events') // Nur echte Appointments, keine "Events"
           ]);
 
-          // Calculate unique projects from requests and appointments
-          const uniqueProjectNumbers = new Set([
-            ...(reqs?.filter(r => r.project_number).map(r => r.project_number) || []),
-            ...(appointments?.filter(a => a.project_number).map(a => a.project_number) || [])
-          ]);
+          // Calculate unique projects from appointments (only valid ones with project_number and customer_id)
+          const uniqueProjects = new Set(
+            (appointments || [])
+              .filter(a => a.project_number && a.customer_id)
+              .map(a => a.project_number)
+          );
+
+          const totalProjects = uniqueProjects.size;
+
+          console.log('📊 Dashboard - Analyzing', totalProjects, 'unique projects from', appointments?.length || 0, 'appointments');
 
           // Count projects by status
-          const projectsByStatus = {};
-          uniqueProjectNumbers.forEach(projectNum => {
-            const projectRequests = reqs?.filter(r => r.project_number === projectNum) || [];
-            const projectAppointments = appointments?.filter(a => a.project_number === projectNum) || [];
+          let activeProjects = 0;
+          let completedProjects = 0;
+          let requestedProjects = 0;
+
+          uniqueProjects.forEach(projectNum => {
+            const projectAppointments = appointments.filter(a => a.project_number === projectNum);
 
             // Determine project status
-            let status = 'requested';
-            if (projectAppointments.some(a => a.status === 'completed')) {
-              status = 'completed';
-            } else if (projectAppointments.some(a => a.status === 'scheduled')) {
-              status = 'in_progress';
+            const hasCompleted = projectAppointments.some(a => a.status === 'completed' || a.status === 'finished');
+            const hasScheduled = projectAppointments.some(a => a.status === 'scheduled');
+
+            if (hasCompleted && !hasScheduled) {
+              completedProjects++;
+            } else if (hasScheduled) {
+              activeProjects++;
+            } else {
+              requestedProjects++;
             }
-
-            projectsByStatus[status] = (projectsByStatus[status] || 0) + 1;
           });
-
-          const totalProjects = uniqueProjectNumbers.size;
-          const activeProjects = projectsByStatus['in_progress'] || 0;
-          const completedProjects = projectsByStatus['completed'] || 0;
 
           const totalAgreements = upcomingEvents?.filter(e => e.customer_id).length || 0;
           const completedAgreements = upcomingEvents?.filter(e => e.customer_id && e.agreement_file_url).length || 0;
           const pendingAgreements = totalAgreements - completedAgreements;
 
           // Update badges with project-based stats
-          document.getElementById('badge-pending').textContent = `Total Projects: ${totalProjects}`;
-          document.getElementById('badge-scheduled').textContent = `Active Projects: ${activeProjects}`;
-          document.getElementById('badge-residents').textContent = `Residents: ${artists?.filter(a=>!a.is_guest).length || 0}`;
-          document.getElementById('badge-guests').textContent = `Guests: ${artists?.filter(a=>a.is_guest).length || 0}`;
-          document.getElementById('badge-agreements-completed').textContent = `Agreements: ${completedAgreements}/${totalAgreements}`;
-          document.getElementById('badge-agreements-pending').textContent = `Missing: ${pendingAgreements}`;
+          const badge1 = document.getElementById('badge-pending');
+          const badge2 = document.getElementById('badge-scheduled');
 
-          console.log('📊 Dashboard - Total Projects:', totalProjects, '| Active:', activeProjects, '| Completed:', completedProjects);
+          if (badge1) badge1.textContent = `Total Projects: ${totalProjects}`;
+          if (badge2) badge2.textContent = `Active: ${activeProjects}`;
+
+          const badge3 = document.getElementById('badge-residents');
+          const badge4 = document.getElementById('badge-guests');
+
+          if (badge3) badge3.textContent = `Residents: ${artists?.filter(a=>!a.is_guest).length || 0}`;
+          if (badge4) badge4.textContent = `Guests: ${artists?.filter(a=>a.is_guest).length || 0}`;
+
+          const badge5 = document.getElementById('badge-agreements-completed');
+          const badge6 = document.getElementById('badge-agreements-pending');
+
+          if (badge5) badge5.textContent = `Agreements: ${completedAgreements}/${totalAgreements}`;
+          if (badge6) badge6.textContent = `Missing: ${pendingAgreements}`;
+
+          console.log('📊 Dashboard Project Stats:', {
+            total: totalProjects,
+            active: activeProjects,
+            completed: completedProjects,
+            requested: requestedProjects
+          });
         } catch(err) {
           console.error("Dashboard error:", err);
         }
@@ -8457,125 +8638,83 @@
         const projectGroups = {};
 
         appointments.forEach(appointment => {
-          const projectNum = appointment.project_number || `ungrouped-${appointment.id}`;
+          const projectNum = appointment.project_number || `no-project`;
+
           if (!projectGroups[projectNum]) {
             projectGroups[projectNum] = {
               project_number: projectNum,
               appointments: [],
-              customer: appointment.customer,
-              customer_id: appointment.customer_id
+              customer_name: null,
+              customer_email: null,
+              first_appointment: null,
+              last_appointment: null
             };
           }
+
           projectGroups[projectNum].appointments.push(appointment);
+
+          // Set customer info (all appointments in project have same customer)
+          if (appointment.customer) {
+            projectGroups[projectNum].customer_name =
+              `${appointment.customer.first_name || ''} ${appointment.customer.last_name || ''}`.trim();
+            projectGroups[projectNum].customer_email = appointment.customer.email;
+          }
+        });
+
+        // Calculate date ranges for each project
+        Object.values(projectGroups).forEach(project => {
+          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+          project.first_appointment = project.appointments[0]?.start_time;
+          project.last_appointment = project.appointments[project.appointments.length - 1]?.start_time;
         });
 
         console.log('📊 Grouped into', Object.keys(projectGroups).length, 'projects');
 
-        // Calculate project statistics
-        Object.values(projectGroups).forEach(project => {
-          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        // Convert to array and sort by most recent
+        const projects = Object.values(projectGroups)
+          .sort((a, b) => new Date(b.last_appointment) - new Date(a.last_appointment));
 
-          project.totalAppointments = project.appointments.length;
-          project.firstAppointment = project.appointments[0];
-          project.lastAppointment = project.appointments[project.appointments.length - 1];
-
-          // Determine project status
-          if (project.appointments.every(a => a.status === 'completed')) {
-            project.status = 'Completed';
-          } else if (project.appointments.some(a => a.status === 'scheduled')) {
-            project.status = 'In Progress';
-          } else if (project.appointments.some(a => a.status === 'cancelled')) {
-            project.status = 'Cancelled';
-          } else {
-            project.status = 'Scheduled';
-          }
-
-          // Calculate total revenue
-          project.totalRevenue = project.appointments.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
-        });
-
-        // Render grouped projects
-        const sortedProjects = Object.values(projectGroups).sort((a, b) =>
-          new Date(b.firstAppointment.start_time) - new Date(a.firstAppointment.start_time)
-        );
-
-        container.innerHTML = sortedProjects.map(project => {
-          const customerName = project.customer
-            ? `${project.customer.first_name || ''} ${project.customer.last_name || ''}`.trim()
-            : 'Unknown Customer';
-
-          const customerInstagram = project.customer?.instagram
-            ? `<a href="https://instagram.com/${project.customer.instagram.replace('@', '')}" target="_blank" style="color:var(--macos-accent-blue); text-decoration:none;">@${project.customer.instagram.replace('@', '')}</a>`
-            : '';
-
-          // Date range
-          const startDate = new Date(project.firstAppointment.start_time).toLocaleDateString('de-DE');
-          const endDate = new Date(project.lastAppointment.start_time).toLocaleDateString('de-DE');
-          const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
-
-          // Project status styling
-          const statusClass = project.status.toLowerCase().replace(' ', '-');
+        // Render project cards
+        container.innerHTML = projects.map((project, index) => {
+          const projectId = project.project_number.replace(/[^a-zA-Z0-9]/g, '-');
 
           return `
-            <div class="project-group">
-              <div class="project-header" onclick="toggleProjectDetails(this)">
+            <div class="project-card" data-project-number="${project.project_number}">
+              <div class="project-header" onclick="toggleArtistProjectDetails('${projectId}')">
                 <div class="project-info">
-                  <h4>
-                    ${project.project_number.startsWith('ungrouped') ? 'No Project #' : project.project_number}
-                  </h4>
-                  <div>
-                    <span class="customer-name">${customerName} ${customerInstagram}</span>
-                    <span class="project-stats">
-                      ${project.totalAppointments} Appointment${project.totalAppointments > 1 ? 's' : ''} • ${dateRange}
+                  <div class="project-title">
+                    <span class="project-badge">${project.project_number === 'no-project' ? 'Ungrouped' : project.project_number}</span>
+                    <span class="customer-name">${project.customer_name || project.customer_email || 'Unknown Customer'}</span>
+                  </div>
+                  <div class="project-meta">
+                    <span class="appointment-count">${project.appointments.length} ${project.appointments.length === 1 ? 'session' : 'sessions'}</span>
+                    <span class="date-range">
+                      ${formatProjectDate(project.first_appointment)}
+                      ${project.appointments.length > 1 ? ' → ' + formatProjectDate(project.last_appointment) : ''}
                     </span>
-                    <span class="project-status ${statusClass}">${project.status}</span>
                   </div>
                 </div>
-                <button class="expand-btn">▼</button>
+                <button class="expand-btn" aria-label="Toggle details">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
               </div>
 
-              <div class="project-details">
+              <div class="project-details" id="project-details-${projectId}" style="display: none;">
                 ${project.appointments.map(appointment => {
-                  const statusColors = {
-                    'scheduled': { bg: 'rgba(0, 113, 227, 0.1)', color: '#0071e3' },
-                    'completed': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
-                    'cancelled': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
-                  };
-                  const statusStyle = statusColors[appointment.status] || statusColors['scheduled'];
-
-                  const paymentColors = {
-                    'paid': { bg: 'rgba(52, 199, 89, 0.1)', color: '#34c759' },
-                    'unpaid': { bg: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' },
-                    'partial': { bg: 'rgba(255, 149, 0, 0.1)', color: '#ff9500' }
-                  };
-                  const paymentStyle = paymentColors[appointment.payment_state] || paymentColors['unpaid'];
-
-                  const locationInfo = appointment.location
-                    ? `${appointment.location.name} - ${appointment.location.city}`
-                    : 'No location';
-
-                  const bookingTypeBadge = appointment.booking_type
-                    ? `<span style="background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; text-transform:uppercase;">${appointment.booking_type.replace('_', ' ')}</span>`
-                    : '';
-
+                  const statusClass = appointment.status ? `status-${appointment.status}` : '';
                   return `
-                    <div class="project-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08);">
-                      <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
-                        <div>
-                          <span style="font-size:14px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start_time).toLocaleString('de-DE')}</span>
-                          <div style="margin-top:4px;">${bookingTypeBadge}</div>
-                        </div>
-                        <div style="display:flex; gap:6px;">
-                          <span style="background:${statusStyle.bg}; color:${statusStyle.color}; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">${appointment.status}</span>
-                          <span style="background:${paymentStyle.bg}; color:${paymentStyle.color}; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:600; text-transform:uppercase;">${appointment.payment_state || 'unpaid'}</span>
-                        </div>
+                    <div class="appointment-item">
+                      <div class="appointment-date">
+                        ${formatProjectDateTime(appointment.start_time)}
                       </div>
-                      <div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:6px;">
-                        <strong>Location:</strong> ${locationInfo}
+                      <div class="appointment-info">
+                        <span class="booking-type">${appointment.booking_type || 'Appointment'}</span>
+                        ${appointment.status ? `<span class="status-badge ${statusClass}">${appointment.status}</span>` : ''}
                       </div>
-                      ${appointment.placement ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${appointment.placement}</div>` : ''}
-                      ${appointment.size || appointment.style ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;">${appointment.size ? `<strong>Size:</strong> ${appointment.size}` : ''} ${appointment.size && appointment.style ? '|' : ''} ${appointment.style ? `<strong>Style:</strong> ${appointment.style}` : ''}</div>` : ''}
-                      ${appointment.description ? `<div style="font-size:12px; color:var(--macos-text-secondary); margin-top:6px; line-height:1.4;">${appointment.description.substring(0, 100)}${appointment.description.length > 100 ? '...' : ''}</div>` : ''}
+                      ${appointment.notes ? `<div class="appointment-notes">${appointment.notes}</div>` : ''}
+                      ${appointment.placement ? `<div class="appointment-notes">📍 ${appointment.placement}</div>` : ''}
                     </div>
                   `;
                 }).join('')}
@@ -8585,20 +8724,44 @@
         }).join('');
       }
 
-      // Toggle project details function
-      window.toggleProjectDetails = function(headerElement) {
-        const projectGroup = headerElement.closest('.project-group');
-        const detailsDiv = projectGroup.querySelector('.project-details');
-        const expandBtn = projectGroup.querySelector('.expand-btn');
+      // Toggle function for artist project details
+      window.toggleArtistProjectDetails = function(projectId) {
+        const detailsEl = document.getElementById(`project-details-${projectId}`);
+        const card = document.querySelector(`[data-project-number]`);
 
-        if (detailsDiv.classList.contains('expanded')) {
-          detailsDiv.classList.remove('expanded');
-          expandBtn.classList.remove('expanded');
-        } else {
-          detailsDiv.classList.add('expanded');
-          expandBtn.classList.add('expanded');
+        if (!detailsEl) return;
+
+        const isVisible = detailsEl.style.display !== 'none';
+
+        // Toggle visibility
+        detailsEl.style.display = isVisible ? 'none' : 'block';
+
+        // Rotate expand button
+        const expandBtn = detailsEl.previousElementSibling?.querySelector('.expand-btn svg');
+        if (expandBtn) {
+          expandBtn.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
         }
       };
+
+      // Helper function for project dates
+      function formatProjectDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      // Helper function for project date-time
+      function formatProjectDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('de-DE', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
 
       window.closeViewProfile = function() {
         document.getElementById('viewArtistProfileModal').classList.remove('active');
@@ -8867,11 +9030,122 @@
         document.getElementById('profileCustomerInstagram').value = customer.instagram || '';
         document.getElementById('profileCustomerRank').value = customer.rank || '';
 
+        // Render project timeline (NEW: combines requests and appointments)
+        renderCustomerProjectsTimeline(requests, appointments);
+
         // Render requests section
         renderCustomerRequestsSection(requests);
 
         // Render appointments section
         renderCustomerAppointmentsSection(appointments);
+      }
+
+      // NEW: Customer Project Timeline
+      function renderCustomerProjectsTimeline(requests, appointments) {
+        const container = document.getElementById('customerProjectsTimeline');
+
+        if (!container) {
+          console.log('⚠️ customerProjectsTimeline container not found - add to HTML');
+          return;
+        }
+
+        // Group by project_number
+        const projects = groupCustomerProjects(requests, appointments);
+
+        console.log('📦 Customer has', Object.keys(projects).length, 'projects');
+
+        const projectsArray = Object.values(projects)
+          .sort((a, b) => {
+            const aDate = a.appointments[0]?.start_time || '2000-01-01';
+            const bDate = b.appointments[0]?.start_time || '2000-01-01';
+            return new Date(bDate) - new Date(aDate);
+          });
+
+        if (projectsArray.length === 0) {
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted);">No projects yet</div>';
+          return;
+        }
+
+        container.innerHTML = projectsArray.map(project => `
+          <div class="customer-project-card ${project.status}">
+            <div class="project-status-indicator"></div>
+            <div class="project-content">
+              <div class="project-header-row">
+                <span class="project-number-small">${project.project_number}</span>
+                <span class="project-status-badge status-${project.status}">
+                  ${project.status === 'completed' ? '✅ Completed' :
+                    project.status === 'in_progress' ? '🔄 In Progress' :
+                    project.status === 'requested' ? '📋 Requested' : '❓ Unknown'}
+                </span>
+              </div>
+              <div class="project-artist">
+                with ${project.artist_name || 'Artist TBD'}
+              </div>
+              <div class="project-stats">
+                <span>${project.appointments.length} appointments</span>
+                ${project.requests.length > 0 ? `<span>•</span><span>${project.requests.length} requests</span>` : ''}
+              </div>
+              ${project.appointments.length > 0 ? `
+                <div class="project-timeline-dates">
+                  ${formatProjectDate(project.appointments[0].start_time)}
+                  ${project.appointments.length > 1 ? '→ ' + formatProjectDate(project.appointments[project.appointments.length - 1].start_time) : ''}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function groupCustomerProjects(requests, appointments) {
+        const projects = {};
+
+        // Group appointments
+        appointments.forEach(appointment => {
+          const projectNumber = appointment.project_number || 'no-project';
+
+          if (!projects[projectNumber]) {
+            projects[projectNumber] = {
+              project_number: projectNumber,
+              requests: [],
+              appointments: [],
+              artist_name: null,
+              status: 'unknown'
+            };
+          }
+
+          projects[projectNumber].appointments.push(appointment);
+          if (appointment.artist) {
+            projects[projectNumber].artist_name = appointment.artist.name;
+          }
+        });
+
+        // Add requests if they have project_number
+        requests.forEach(request => {
+          if (request.project_number && projects[request.project_number]) {
+            projects[request.project_number].requests.push(request);
+          }
+        });
+
+        // Calculate project status
+        Object.values(projects).forEach(project => {
+          const hasFinished = project.appointments.some(a => a.status === 'finished' || a.status === 'completed');
+          const hasScheduled = project.appointments.some(a => a.status === 'scheduled');
+
+          if (hasFinished && !hasScheduled) {
+            project.status = 'completed';
+          } else if (hasScheduled) {
+            project.status = 'in_progress';
+          } else if (project.requests.length > 0) {
+            project.status = 'requested';
+          } else {
+            project.status = 'unknown';
+          }
+
+          // Sort appointments by date
+          project.appointments.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        });
+
+        return projects;
       }
 
       function renderCustomerRequestsSection(requests) {
