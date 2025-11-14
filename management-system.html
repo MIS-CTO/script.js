@@ -4047,19 +4047,30 @@
         </form>
       </div>
 
-      <!-- Requests Section -->
+      <!-- Requests & Appointments Section with Toggle -->
       <div class="profile-section" style="margin-bottom:32px;">
-        <h4 style="font-size:17px; font-weight:600; color:var(--macos-text-primary); margin-bottom:16px;">Requests</h4>
-        <div id="customerRequestsList" style="display:flex; flex-direction:column; gap:12px;">
-          <!-- Requests will be loaded here -->
+        <!-- Toggle Buttons -->
+        <div style="display:flex; gap:8px; margin-bottom:16px; background:rgba(0,0,0,0.05); border-radius:10px; padding:4px;">
+          <button id="showRequestsBtn" class="view-toggle-btn active" onclick="toggleCustomerView('requests')" style="flex:1; padding:10px 20px; border:none; background:rgba(255,255,255,0.9); border-radius:8px; font-size:14px; font-weight:600; color:var(--macos-text-primary); cursor:pointer; transition:all 0.2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            Requests
+          </button>
+          <button id="showAppointmentsBtn" class="view-toggle-btn" onclick="toggleCustomerView('appointments')" style="flex:1; padding:10px 20px; border:none; background:transparent; border-radius:8px; font-size:14px; font-weight:600; color:var(--macos-text-secondary); cursor:pointer; transition:all 0.2s ease;">
+            Appointments
+          </button>
         </div>
-      </div>
 
-      <!-- Appointments Section -->
-      <div class="profile-section">
-        <h4 style="font-size:17px; font-weight:600; color:var(--macos-text-primary); margin-bottom:16px;">Appointments (Projects)</h4>
-        <div id="customerAppointmentsList" style="display:flex; flex-direction:column; gap:12px;">
-          <!-- Appointments will be loaded here -->
+        <!-- Requests Content -->
+        <div id="customerRequestsView" class="customer-view-content" style="display:block;">
+          <div id="customerRequestsList" style="display:flex; flex-direction:column; gap:12px;">
+            <!-- Requests will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Appointments Content -->
+        <div id="customerAppointmentsView" class="customer-view-content" style="display:none;">
+          <div id="customerAppointmentsList" style="display:flex; flex-direction:column; gap:12px;">
+            <!-- Appointments will be loaded here -->
+          </div>
         </div>
       </div>
     </div>
@@ -7873,29 +7884,30 @@
             events = [];
             return;
           }
-          
-          const { data, error } = await supabase
+
+          // Parse time without timezone conversion
+          const parseLocalTime = (timeStr) => {
+            const [datePart, timePart] = timeStr.split('T');
+            const [hours, minutes] = timePart.split(':').map(Number);
+            return hours + minutes / 60;
+          };
+
+          // 1. Load events from events table
+          const { data: eventsData, error: eventsError } = await supabase
             .from('events')
             .select('*')
             .eq('location_id', selectedLocationId);
-          
-          if (error) throw error;
-          
-          console.log(`Events loaded for location ${selectedLocationId}:`, data?.length);
-          
-          events = (data || []).map(e => {
+
+          if (eventsError) throw eventsError;
+
+          console.log(`Events loaded for location ${selectedLocationId}:`, eventsData?.length || 0);
+
+          const processedEvents = (eventsData || []).map(e => {
             const artist = allArtists.find(a => a.id === e.artist_id);
-            
-            // Parse time without timezone conversion
-            const parseLocalTime = (timeStr) => {
-              const [datePart, timePart] = timeStr.split('T');
-              const [hours, minutes] = timePart.split(':').map(Number);
-              return hours + minutes / 60;
-            };
-            
+
             const startHour = parseLocalTime(e.start_time);
             const endHour = parseLocalTime(e.end_time);
-            
+
             // Determine category:
             // - If no artist_id, it's an 'events' category event
             // - If artist exists and is guest, it's 'guest'
@@ -7904,7 +7916,7 @@
             if (e.artist_id && artist) {
               category = artist.is_guest ? 'guest' : 'resident';
             }
-            
+
             return {
               id: e.id,
               date: e.start_time.split('T')[0],
@@ -7921,20 +7933,77 @@
               endTimeRaw: e.end_time
             };
           });
-          
+
+          // 2. Load appointments from appointments table with customer and artist info
+          const { data: appointmentsData, error: appointmentsError } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              customer:customers(first_name, last_name),
+              artist:artists(id, name, is_guest)
+            `)
+            .eq('location_id', selectedLocationId)
+            .not('start', 'is', null)
+            .not('end', 'is', null);
+
+          if (appointmentsError) {
+            console.error('Error loading appointments:', appointmentsError);
+          }
+
+          console.log(`Appointments loaded for location ${selectedLocationId}:`, appointmentsData?.length || 0);
+
+          const processedAppointments = (appointmentsData || []).map(apt => {
+            const artist = apt.artist || allArtists.find(a => a.email === apt.artist_email);
+
+            const startHour = parseLocalTime(apt.start);
+            const endHour = parseLocalTime(apt.end);
+
+            // Determine category based on artist
+            let category = 'resident'; // Default to resident
+            if (artist && artist.is_guest) {
+              category = 'guest';
+            }
+
+            // Build customer name
+            const customerName = apt.customer
+              ? `${apt.customer.first_name || ''} ${apt.customer.last_name || ''}`.trim()
+              : null;
+
+            return {
+              id: apt.id,
+              date: apt.start.split('T')[0],
+              category: category,
+              slot: apt.slot || 1,
+              title: customerName || 'Customer',
+              type: apt.booking_type || null,
+              artistName: artist?.name || null,
+              customerName: customerName,
+              attendanceRequired: false,
+              startHour: startHour,
+              endHour: endHour,
+              startTimeRaw: apt.start,
+              endTimeRaw: apt.end
+            };
+          });
+
+          // 3. Combine events and appointments
+          events = [...processedEvents, ...processedAppointments];
+
+          console.log(`Total items in calendar: ${events.length} (${processedEvents.length} events + ${processedAppointments.length} appointments)`);
+
           // Update Location Info
           const { data: locationData } = await supabase
             .from('locations')
             .select('name')
             .eq('id', selectedLocationId)
             .single();
-          
+
           const infoDiv = document.getElementById('locationInfo');
           if (infoDiv) {
-            infoDiv.textContent = `📍 Showing ${events.length} appointment${events.length !== 1 ? 's' : ''} for ${locationData?.name || 'this location'}`;
+            infoDiv.textContent = `📍 Showing ${events.length} item${events.length !== 1 ? 's' : ''} for ${locationData?.name || 'this location'} (${processedEvents.length} events, ${processedAppointments.length} appointments)`;
           }
-          
-          console.log('Processed events:', events);
+
+          console.log('Processed calendar items:', events);
         } catch(err) {
           console.error("Events error:", err);
           events = [];
@@ -9488,7 +9557,41 @@
         document.getElementById('customerProfileModal').classList.remove('active');
         currentCustomerProfileId = null;
       };
-      
+
+      // Toggle between Requests and Appointments view in Customer Profile
+      window.toggleCustomerView = function(view) {
+        const requestsBtn = document.getElementById('showRequestsBtn');
+        const appointmentsBtn = document.getElementById('showAppointmentsBtn');
+        const requestsView = document.getElementById('customerRequestsView');
+        const appointmentsView = document.getElementById('customerAppointmentsView');
+
+        if (view === 'requests') {
+          // Show Requests
+          requestsView.style.display = 'block';
+          appointmentsView.style.display = 'none';
+
+          // Update button styles
+          requestsBtn.style.background = 'rgba(255,255,255,0.9)';
+          requestsBtn.style.color = 'var(--macos-text-primary)';
+          requestsBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          appointmentsBtn.style.background = 'transparent';
+          appointmentsBtn.style.color = 'var(--macos-text-secondary)';
+          appointmentsBtn.style.boxShadow = 'none';
+        } else if (view === 'appointments') {
+          // Show Appointments
+          requestsView.style.display = 'none';
+          appointmentsView.style.display = 'block';
+
+          // Update button styles
+          appointmentsBtn.style.background = 'rgba(255,255,255,0.9)';
+          appointmentsBtn.style.color = 'var(--macos-text-primary)';
+          appointmentsBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          requestsBtn.style.background = 'transparent';
+          requestsBtn.style.color = 'var(--macos-text-secondary)';
+          requestsBtn.style.boxShadow = 'none';
+        }
+      };
+
       // Close modals on backdrop click
       document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
         backdrop.addEventListener('click', (e) => {
