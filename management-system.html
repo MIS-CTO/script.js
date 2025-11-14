@@ -2510,6 +2510,187 @@
         width: 100%;
       }
     }
+
+    /* ========================================
+       PROJECT DASHBOARD STYLES
+       ======================================== */
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .kpi-card {
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+
+    .kpi-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .kpi-card.active {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);
+      border-color: #ff9500;
+    }
+
+    .kpi-card.completed {
+      background: linear-gradient(135deg, #d1f4e0 0%, #ffffff 100%);
+      border-color: #34c759;
+    }
+
+    .kpi-card.revenue {
+      background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+      border-color: #0071e3;
+    }
+
+    .kpi-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .kpi-content {
+      flex: 1;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1d1d1f;
+      font-family: 'Helvetica Neue', sans-serif;
+      line-height: 1.2;
+    }
+
+    .kpi-label {
+      font-size: 13px;
+      color: #86868b;
+      margin-top: 4px;
+    }
+
+    /* Performance Table */
+    .performance-table-wrapper {
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .performance-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .performance-table thead {
+      background: #f5f7fa;
+    }
+
+    .performance-table th {
+      padding: 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1d1d1f;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .performance-table td {
+      padding: 16px;
+      font-size: 14px;
+      color: #1d1d1f;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .performance-table tbody tr:hover {
+      background: #fafafa;
+    }
+
+    .performance-table .artist-name,
+    .performance-table .customer-name {
+      font-weight: 600;
+    }
+
+    .performance-table .revenue {
+      font-weight: 600;
+      color: #34c759;
+    }
+
+    .badge-success {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #d1f4e0;
+      color: #0d6832;
+    }
+
+    .badge-warning {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    /* Charts Container */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .chart-card {
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 350px;
+    }
+
+    .chart-card canvas {
+      max-height: 300px;
+    }
+
+    .stats-summary {
+      background: linear-gradient(135deg, #0071e3 0%, #0056b3 100%);
+      color: white;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stats-summary h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .dashboard-section {
+      margin-bottom: 48px;
+    }
+
+    .dashboard-section h2 {
+      margin-bottom: 24px;
+      font-size: 24px;
+      font-weight: 600;
+      color: #1d1d1f;
+    }
   </style>
 </head>
 <body>
@@ -2557,6 +2738,40 @@
       <span class="badge" id="badge-guests">Guests: —</span>
       <span class="badge" id="badge-agreements-completed">Agreements: —</span>
       <span class="badge" id="badge-agreements-pending">Missing: —</span>
+    </div>
+
+    <!-- PROJECT OVERVIEW DASHBOARD -->
+    <div class="dashboard-section">
+      <h2>📊 Project Overview</h2>
+      <div id="projectKPIs"></div>
+    </div>
+
+    <!-- ANALYTICS CHARTS -->
+    <div class="dashboard-section">
+      <h2>📈 Analytics</h2>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <canvas id="projectsTimelineChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <canvas id="revenueByMonthChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <canvas id="topArtistsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTIST PERFORMANCE REPORT -->
+    <div class="dashboard-section">
+      <h2>🎨 Artist Performance</h2>
+      <div id="artistPerformanceTable"></div>
+    </div>
+
+    <!-- MULTI-PROJECT CUSTOMERS -->
+    <div class="dashboard-section">
+      <h2>👥 VIP Customers</h2>
+      <div id="multiProjectCustomersTable"></div>
     </div>
   </section>
 
@@ -5426,9 +5641,645 @@
             artists: artists?.length || 0,
             agreements: totalAgreements
           });
+
+          // ✅ Load project-based analytics
+          await loadProjectDashboard();
+          await loadArtistPerformanceReport();
+          await loadMultiProjectCustomerReport();
         } catch(err) {
           console.error("Dashboard error:", err);
         }
+      }
+
+      // ========================================
+      // PROJECT DASHBOARD FUNCTIONS
+      // ========================================
+
+      async function loadProjectDashboard() {
+        console.log('📊 Loading Project Dashboard...');
+
+        try {
+          // Fetch all appointments with project info
+          const { data: appointments, error } = await supabase
+            .from('appointments')
+            .select(`
+              id,
+              project_number,
+              customer_id,
+              artist_id,
+              status,
+              start,
+              payment_status,
+              payment_amount,
+              deposit_amount,
+              total_amount,
+              first_name,
+              last_name
+            `)
+            .not('project_number', 'is', null)
+            .not('customer_id', 'is', null);
+
+          if (error) throw error;
+
+          console.log('📦 Loaded appointments for projects:', appointments?.length || 0);
+
+          // Calculate project metrics
+          const metrics = calculateProjectMetrics(appointments || []);
+
+          // Update dashboard UI
+          updateProjectDashboardUI(metrics);
+
+          // Load charts
+          loadProjectCharts(appointments || []);
+
+        } catch (error) {
+          console.error('Error loading project dashboard:', error);
+        }
+      }
+
+      function calculateProjectMetrics(appointments) {
+        // Group by project_number
+        const projects = {};
+
+        appointments.forEach(apt => {
+          const pNum = apt.project_number;
+
+          if (!projects[pNum]) {
+            projects[pNum] = {
+              project_number: pNum,
+              appointments: [],
+              total_revenue: 0,
+              has_completed: false,
+              is_active: false,
+              customer_name: null
+            };
+          }
+
+          projects[pNum].appointments.push(apt);
+
+          // Calculate revenue
+          if (apt.payment_amount) {
+            projects[pNum].total_revenue += parseFloat(apt.payment_amount) || 0;
+          }
+          if (apt.total_amount && !apt.payment_amount) {
+            projects[pNum].total_revenue += parseFloat(apt.total_amount) || 0;
+          }
+
+          // Check status
+          if (apt.status === 'finished') {
+            projects[pNum].has_completed = true;
+          }
+          if (apt.status === 'scheduled') {
+            projects[pNum].is_active = true;
+          }
+
+          // Customer name
+          if (apt.first_name || apt.last_name) {
+            projects[pNum].customer_name = `${apt.first_name || ''} ${apt.last_name || ''}`.trim();
+          }
+        });
+
+        const projectsArray = Object.values(projects);
+
+        // Calculate metrics
+        const totalProjects = projectsArray.length;
+        const activeProjects = projectsArray.filter(p => p.is_active).length;
+        const completedProjects = projectsArray.filter(p =>
+          p.appointments.every(a => a.status === 'finished')
+        ).length;
+
+        const totalRevenue = projectsArray.reduce((sum, p) => sum + p.total_revenue, 0);
+        const avgAppointmentsPerProject = appointments.length / (totalProjects || 1);
+        const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
+
+        return {
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          totalRevenue,
+          avgAppointmentsPerProject,
+          completionRate,
+          projectsArray
+        };
+      }
+
+      function updateProjectDashboardUI(metrics) {
+        const kpiContainer = document.getElementById('projectKPIs');
+
+        if (!kpiContainer) {
+          console.warn('Project KPI container not found');
+          return;
+        }
+
+        kpiContainer.innerHTML = `
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon">📦</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.totalProjects.toLocaleString()}</div>
+                <div class="kpi-label">Total Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card active">
+              <div class="kpi-icon">🔄</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.activeProjects.toLocaleString()}</div>
+                <div class="kpi-label">Active Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card completed">
+              <div class="kpi-icon">✅</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.completedProjects.toLocaleString()}</div>
+                <div class="kpi-label">Completed Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card revenue">
+              <div class="kpi-icon">💰</div>
+              <div class="kpi-content">
+                <div class="kpi-value">€${metrics.totalRevenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</div>
+                <div class="kpi-label">Total Revenue</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">📊</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.avgAppointmentsPerProject.toFixed(1)}</div>
+                <div class="kpi-label">Avg Sessions/Project</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">✨</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.completionRate.toFixed(1)}%</div>
+                <div class="kpi-label">Completion Rate</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function loadProjectCharts(appointments) {
+        // Projects over time
+        loadProjectsTimelineChart(appointments);
+
+        // Revenue by month
+        loadRevenueByMonthChart(appointments);
+
+        // Top artists by projects
+        loadTopArtistsChart(appointments);
+      }
+
+      function loadProjectsTimelineChart(appointments) {
+        const chartCanvas = document.getElementById('projectsTimelineChart');
+        if (!chartCanvas) return;
+
+        // Group projects by month
+        const projectsByMonth = {};
+        const processedProjects = new Set();
+
+        appointments.forEach(apt => {
+          if (!apt.start || !apt.project_number) return;
+          if (processedProjects.has(apt.project_number)) return;
+
+          const date = new Date(apt.start);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+          projectsByMonth[monthKey] = (projectsByMonth[monthKey] || 0) + 1;
+          processedProjects.add(apt.project_number);
+        });
+
+        // Sort by date
+        const sortedMonths = Object.keys(projectsByMonth).sort();
+        const counts = sortedMonths.map(m => projectsByMonth[m]);
+
+        // Create chart
+        new Chart(chartCanvas, {
+          type: 'line',
+          data: {
+            labels: sortedMonths.map(m => {
+              const [year, month] = m.split('-');
+              return new Date(year, month - 1).toLocaleDateString('de-DE', {
+                month: 'short',
+                year: 'numeric'
+              });
+            }),
+            datasets: [{
+              label: 'New Projects',
+              data: counts,
+              borderColor: '#0071e3',
+              backgroundColor: 'rgba(0, 113, 227, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              title: {
+                display: true,
+                text: 'Projects Started Over Time',
+                font: {
+                  size: 16,
+                  weight: '600',
+                  family: "'Helvetica Neue', sans-serif"
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 100
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function loadRevenueByMonthChart(appointments) {
+        const chartCanvas = document.getElementById('revenueByMonthChart');
+        if (!chartCanvas) return;
+
+        // Group revenue by month
+        const revenueByMonth = {};
+
+        appointments.forEach(apt => {
+          if (!apt.start) return;
+
+          const date = new Date(apt.start);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+          const revenue = parseFloat(apt.payment_amount || apt.total_amount || 0);
+          revenueByMonth[monthKey] = (revenueByMonth[monthKey] || 0) + revenue;
+        });
+
+        // Sort by date
+        const sortedMonths = Object.keys(revenueByMonth).sort();
+        const revenues = sortedMonths.map(m => revenueByMonth[m]);
+
+        // Create chart
+        new Chart(chartCanvas, {
+          type: 'bar',
+          data: {
+            labels: sortedMonths.map(m => {
+              const [year, month] = m.split('-');
+              return new Date(year, month - 1).toLocaleDateString('de-DE', {
+                month: 'short',
+                year: 'numeric'
+              });
+            }),
+            datasets: [{
+              label: 'Revenue (€)',
+              data: revenues,
+              backgroundColor: '#34c759',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              title: {
+                display: true,
+                text: 'Revenue by Month',
+                font: {
+                  size: 16,
+                  weight: '600',
+                  family: "'Helvetica Neue', sans-serif"
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '€' + value.toLocaleString('de-DE');
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function loadTopArtistsChart(appointments) {
+        const chartCanvas = document.getElementById('topArtistsChart');
+        if (!chartCanvas) return;
+
+        // Count unique projects per artist
+        const artistProjects = {};
+        const processedProjects = new Set();
+
+        appointments.forEach(apt => {
+          if (!apt.artist_id || !apt.project_number) return;
+
+          const key = `${apt.artist_id}-${apt.project_number}`;
+          if (processedProjects.has(key)) return;
+
+          artistProjects[apt.artist_id] = (artistProjects[apt.artist_id] || 0) + 1;
+          processedProjects.add(key);
+        });
+
+        // Sort and get top 10
+        const sorted = Object.entries(artistProjects)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10);
+
+        if (sorted.length === 0) {
+          chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+          return;
+        }
+
+        // Fetch artist names
+        fetchArtistNames(sorted.map(([id]) => id)).then(artistNames => {
+          const labels = sorted.map(([id]) => artistNames[id] || 'Unknown');
+          const counts = sorted.map(([, count]) => count);
+
+          new Chart(chartCanvas, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Projects',
+                data: counts,
+                backgroundColor: '#ff9500',
+                borderRadius: 6
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              indexAxis: 'y',
+              plugins: {
+                legend: {
+                  display: false
+                },
+                title: {
+                  display: true,
+                  text: 'Top Artists by Projects',
+                  font: {
+                    size: 16,
+                    weight: '600',
+                    family: "'Helvetica Neue', sans-serif"
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+        });
+      }
+
+      async function fetchArtistNames(artistIds) {
+        if (!artistIds || artistIds.length === 0) return {};
+
+        const { data: artists } = await supabase
+          .from('artists')
+          .select('id, name')
+          .in('id', artistIds);
+
+        const nameMap = {};
+        (artists || []).forEach(artist => {
+          nameMap[artist.id] = artist.name;
+        });
+
+        return nameMap;
+      }
+
+      async function loadArtistPerformanceReport() {
+        console.log('📊 Loading Artist Performance Report...');
+
+        try {
+          const { data: appointments, error } = await supabase
+            .from('appointments')
+            .select(`
+              *
+            `)
+            .not('project_number', 'is', null);
+
+          if (error) {
+            console.error('Error:', error);
+            return;
+          }
+
+          // Fetch all artists for name mapping
+          const { data: artists } = await supabase
+            .from('artists')
+            .select('id, name, email');
+
+          const artistMap = {};
+          (artists || []).forEach(artist => {
+            artistMap[artist.id] = artist;
+          });
+
+          // Group by artist
+          const artistStats = {};
+
+          (appointments || []).forEach(apt => {
+            const artistId = apt.artist_id;
+            if (!artistId) return;
+
+            // Initialize
+            if (!artistStats[artistId]) {
+              artistStats[artistId] = {
+                artist_name: artistMap[artistId]?.name || 'Unknown',
+                total_appointments: 0,
+                unique_projects: new Set(),
+                total_revenue: 0,
+                completed_projects: new Set(),
+                active_projects: new Set()
+              };
+            }
+
+            const stats = artistStats[artistId];
+            stats.total_appointments++;
+            stats.unique_projects.add(apt.project_number);
+
+            // Revenue
+            const revenue = parseFloat(apt.payment_amount || apt.total_amount || 0);
+            stats.total_revenue += revenue;
+
+            // Project status
+            if (apt.status === 'finished') {
+              stats.completed_projects.add(apt.project_number);
+            } else if (apt.status === 'scheduled') {
+              stats.active_projects.add(apt.project_number);
+            }
+          });
+
+          // Convert to array and calculate final metrics
+          const artistsArray = Object.values(artistStats).map(stats => ({
+            artist_name: stats.artist_name,
+            total_projects: stats.unique_projects.size,
+            total_appointments: stats.total_appointments,
+            total_revenue: stats.total_revenue,
+            completed_projects: stats.completed_projects.size,
+            active_projects: stats.active_projects.size,
+            avg_revenue_per_project: stats.total_revenue / (stats.unique_projects.size || 1),
+            completion_rate: stats.unique_projects.size > 0 ? (stats.completed_projects.size / stats.unique_projects.size) * 100 : 0
+          }));
+
+          // Sort by total revenue
+          artistsArray.sort((a, b) => b.total_revenue - a.total_revenue);
+
+          // Render table
+          renderArtistPerformanceTable(artistsArray);
+        } catch (error) {
+          console.error('Error loading artist performance report:', error);
+        }
+      }
+
+      function renderArtistPerformanceTable(artists) {
+        const container = document.getElementById('artistPerformanceTable');
+        if (!container) return;
+
+        if (artists.length === 0) {
+          container.innerHTML = '<p style="color: #86868b; text-align: center;">No artist data available</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="performance-table-wrapper">
+            <table class="performance-table">
+              <thead>
+                <tr>
+                  <th>Artist</th>
+                  <th>Projects</th>
+                  <th>Appointments</th>
+                  <th>Revenue</th>
+                  <th>Avg/Project</th>
+                  <th>Completed</th>
+                  <th>Active</th>
+                  <th>Completion %</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${artists.map(artist => `
+                  <tr>
+                    <td class="artist-name">${artist.artist_name}</td>
+                    <td>${artist.total_projects}</td>
+                    <td>${artist.total_appointments}</td>
+                    <td class="revenue">€${artist.total_revenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</td>
+                    <td>€${artist.avg_revenue_per_project.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</td>
+                    <td><span class="badge-success">${artist.completed_projects}</span></td>
+                    <td><span class="badge-warning">${artist.active_projects}</span></td>
+                    <td>${artist.completion_rate.toFixed(1)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      async function loadMultiProjectCustomerReport() {
+        console.log('👥 Loading Multi-Project Customer Report...');
+
+        try {
+          const { data: appointments } = await supabase
+            .from('appointments')
+            .select('*')
+            .not('project_number', 'is', null)
+            .not('customer_id', 'is', null);
+
+          // Group by customer
+          const customerStats = {};
+
+          (appointments || []).forEach(apt => {
+            const customerId = apt.customer_id;
+            const customerKey = apt.customer_email || customerId;
+
+            if (!customerStats[customerKey]) {
+              customerStats[customerKey] = {
+                customer_name: `${apt.first_name || ''} ${apt.last_name || ''}`.trim() || 'Unknown',
+                customer_email: apt.customer_email,
+                projects: new Set(),
+                total_appointments: 0,
+                total_spent: 0
+              };
+            }
+
+            customerStats[customerKey].projects.add(apt.project_number);
+            customerStats[customerKey].total_appointments++;
+            customerStats[customerKey].total_spent += parseFloat(apt.payment_amount || apt.total_amount || 0);
+          });
+
+          // Filter multi-project customers
+          const multiProjectCustomers = Object.values(customerStats)
+            .filter(c => c.projects.size > 1)
+            .map(c => ({
+              ...c,
+              projects: c.projects.size
+            }))
+            .sort((a, b) => b.projects - a.projects);
+
+          console.log('Found', multiProjectCustomers.length, 'multi-project customers');
+
+          renderMultiProjectCustomerTable(multiProjectCustomers);
+        } catch (error) {
+          console.error('Error loading multi-project customer report:', error);
+        }
+      }
+
+      function renderMultiProjectCustomerTable(customers) {
+        const container = document.getElementById('multiProjectCustomersTable');
+        if (!container) return;
+
+        if (customers.length === 0) {
+          container.innerHTML = '<p style="color: #86868b; text-align: center;">No multi-project customers found</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="stats-summary">
+            <h3>🌟 VIP Customers: ${customers.length} customers with multiple projects</h3>
+          </div>
+          <div class="performance-table-wrapper">
+            <table class="performance-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Projects</th>
+                  <th>Total Appointments</th>
+                  <th>Total Spent</th>
+                  <th>Avg per Project</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${customers.map(customer => `
+                  <tr>
+                    <td class="customer-name">${customer.customer_name}</td>
+                    <td>${customer.customer_email || '-'}</td>
+                    <td><strong>${customer.projects}</strong></td>
+                    <td>${customer.total_appointments}</td>
+                    <td class="revenue">€${customer.total_spent.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</td>
+                    <td>€${(customer.total_spent / customer.projects).toLocaleString('de-DE', { maximumFractionDigits: 0 })}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
       }
 
       let allRequests = [];
