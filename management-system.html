@@ -7925,12 +7925,15 @@
               title: e.title || artist?.name || 'Event',
               type: e.type || null,
               artistName: artist?.name || null,
+              artistId: artist?.id || e.artist_id || null,
               customerName: e.title || null,
+              customerId: null, // Events don't have customers
               attendanceRequired: e.attendance_required || false,
               startHour: startHour,
               endHour: endHour,
               startTimeRaw: e.start_time,
-              endTimeRaw: e.end_time
+              endTimeRaw: e.end_time,
+              isAppointment: false // Flag to distinguish from appointments table entries
             };
           });
 
@@ -7977,12 +7980,15 @@
               title: customerName || 'Customer',
               type: apt.booking_type || null,
               artistName: artist?.name || null,
+              artistId: artist?.id || apt.artist_id || null,
               customerName: customerName,
+              customerId: apt.customer_id || null,
               attendanceRequired: false,
               startHour: startHour,
               endHour: endHour,
               startTimeRaw: apt.start,
-              endTimeRaw: apt.end
+              endTimeRaw: apt.end,
+              isAppointment: true // Flag to distinguish from events table entries
             };
           });
 
@@ -8192,17 +8198,36 @@
                   let content = '';
                   if (cat === 'events') {
                     // For events: time, title, and type
+                    // If artist exists, make title clickable
+                    const titleContent = cell.event.artistId
+                      ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.title}</div>`
+                      : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.title}</div>`;
+
                     content = `
                       <div style="font-weight:600; font-size:13px; margin-bottom:2px;">${timeStr}</div>
-                      <div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.title}</div>
+                      ${titleContent}
                       ${typeLabel ? `<div style="font-size:10px; color:rgba(0,0,0,0.5); font-weight:500; text-transform:uppercase; letter-spacing:0.3px;">${typeLabel}</div>` : ''}
                     `;
                   } else {
                     // For bookings: time, customer, artist, type
+                    // Make customer name clickable if customerId exists
+                    const customerContent = cell.event.customerName && cell.event.customerId
+                      ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${cell.event.customerName}</div>`
+                      : cell.event.customerName
+                        ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.customerName}</div>`
+                        : '';
+
+                    // Make artist name clickable if artistId exists
+                    const artistContent = cell.event.artistName && cell.event.artistId
+                      ? `<div style="font-size:11px; color:rgba(0,0,0,0.65); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.artistName}</div>`
+                      : cell.event.artistName
+                        ? `<div style="font-size:11px; color:rgba(0,0,0,0.65); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.artistName}</div>`
+                        : '';
+
                     content = `
                       <div style="font-weight:600; font-size:13px; margin-bottom:3px;">${timeStr}</div>
-                      ${cell.event.customerName ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.customerName}</div>` : ''}
-                      ${cell.event.artistName ? `<div style="font-size:11px; color:rgba(0,0,0,0.65); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.artistName}</div>` : ''}
+                      ${customerContent}
+                      ${artistContent}
                       ${typeLabel ? `<div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; opacity:0.8;">${typeLabel}</div>` : ''}
                     `;
                   }
@@ -8739,7 +8764,7 @@
                 ${project.appointments.map(appointment => {
                   const statusClass = appointment.status ? `status-${appointment.status}` : '';
                   return `
-                    <div class="appointment-item">
+                    <div class="appointment-item" style="cursor:pointer; transition:all 0.2s;" onclick="openAppointmentFromProfile('${appointment.id}')" onmouseover="this.style.backgroundColor='rgba(0,0,0,0.03)'" onmouseout="this.style.backgroundColor=''">
                       <div class="appointment-date">
                         ${formatProjectDateTime(appointment.start)}
                       </div>
@@ -9228,7 +9253,7 @@
               : '';
 
             return `
-              <div class="request-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease;">
+              <div class="request-card" style="background:rgba(255,255,255,0.7); backdrop-filter:saturate(180%) blur(20px); border-radius:8px; padding:16px; border:1px solid rgba(0,0,0,0.1); transition:all 0.2s ease; cursor:pointer;" onclick="editRequest('${request.id}')" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
                 <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
                   <div>
                     <span style="font-size:12px; color:var(--macos-text-secondary);">Request #${request.id.substring(0, 8)}</span>
@@ -9283,7 +9308,7 @@
                     : '';
 
                   return `
-                    <div class="request-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08);">
+                    <div class="request-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08); cursor:pointer; transition:all 0.2s;" onclick="editRequest('${request.id}')" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
                       <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
                         <div>
                           <span style="font-size:12px; color:var(--macos-text-secondary);">Request #${request.id.substring(0, 8)}</span>
@@ -9405,7 +9430,7 @@
                     : '';
 
                   return `
-                    <div class="project-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08);">
+                    <div class="project-card" style="background:rgba(255,255,255,0.9); border-radius:8px; padding:14px; margin-bottom:8px; border:1px solid rgba(0,0,0,0.08); cursor:pointer; transition:all 0.2s;" onclick="openAppointmentFromProfile('${appointment.id}')" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
                       <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
                         <div>
                           <span style="font-size:14px; font-weight:600; color:var(--macos-text-primary);">${new Date(appointment.start).toLocaleString('de-DE')}</span>
@@ -10126,30 +10151,101 @@
           console.error('Event not found:', eventId);
           return;
         }
-        
-        // Load full event data from Supabase to get all fields
-        const { data: fullEvent, error } = await supabase
-          .from('events')
-          .select('*')
-          .eq('id', eventId)
-          .single();
-        
-        if (error) {
-          console.error('Error loading event:', error);
-          alert('Error loading event details');
-          return;
-        }
-        
-        // Check if this is a booking (has artist_id) or an event
-        if (fullEvent.artist_id) {
-          // This is a booking - open booking modal
-          openEditBookingModal(eventId, fullEvent, event);
+
+        // Check if this is an appointment (from appointments table) or event (from events table)
+        if (event.isAppointment) {
+          // Load from appointments table
+          const { data: fullAppointment, error } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              customer:customers(id, first_name, last_name, email, instagram),
+              artist:artists(id, name, instagram, is_guest),
+              location:locations(name, city)
+            `)
+            .eq('id', eventId)
+            .single();
+
+          if (error) {
+            console.error('Error loading appointment:', error);
+            alert('Error loading appointment details');
+            return;
+          }
+
+          // Open appointment modal (we'll use booking modal for appointments)
+          openEditBookingModal(eventId, fullAppointment, event);
         } else {
-          // This is an event - open event modal
-          openEditEventModalInternal(eventId, fullEvent, event);
+          // Load from events table
+          const { data: fullEvent, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .single();
+
+          if (error) {
+            console.error('Error loading event:', error);
+            alert('Error loading event details');
+            return;
+          }
+
+          // Check if this is a booking (has artist_id) or an event
+          if (fullEvent.artist_id) {
+            // This is a booking - open booking modal
+            openEditBookingModal(eventId, fullEvent, event);
+          } else {
+            // This is an event - open event modal
+            openEditEventModalInternal(eventId, fullEvent, event);
+          }
         }
       };
-      
+
+      // Helper function to open appointment directly from profile view
+      window.openAppointmentFromProfile = async function(appointmentId) {
+        try {
+          // Load appointment from appointments table
+          const { data: fullAppointment, error } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              customer:customers(id, first_name, last_name, email, instagram),
+              artist:artists(id, name, instagram, is_guest),
+              location:locations(name, city)
+            `)
+            .eq('id', appointmentId)
+            .single();
+
+          if (error) {
+            console.error('Error loading appointment:', error);
+            alert('Error loading appointment details');
+            return;
+          }
+
+          // Create a minimal event object for compatibility
+          const startHour = parseLocalTime(fullAppointment.start);
+          const endHour = parseLocalTime(fullAppointment.end);
+          const event = {
+            id: appointmentId,
+            date: fullAppointment.start.split('T')[0],
+            startHour: startHour,
+            endHour: endHour,
+            isAppointment: true
+          };
+
+          // Open appointment modal
+          openEditBookingModal(appointmentId, fullAppointment, event);
+        } catch (err) {
+          console.error('Error opening appointment:', err);
+          alert('Error opening appointment: ' + err.message);
+        }
+      };
+
+      // Helper function to parse local time from ISO string
+      const parseLocalTime = (timeStr) => {
+        const [datePart, timePart] = timeStr.split('T');
+        const [hours, minutes] = timePart.split(':').map(Number);
+        return hours + minutes / 60;
+      };
+
       // Internal function to open event modal
       function openEditEventModalInternal(eventId, fullEvent, event) {
         // Populate form fields
