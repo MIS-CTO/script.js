@@ -2005,6 +2005,22 @@
       color: var(--macos-text-primary) !important;
     }
 
+    /* Pie Charts - Smaller Size (max 20vw) */
+    .chart-card canvas {
+      max-width: 20vw;
+      max-height: 20vw;
+      margin: 0 auto;
+      display: block;
+    }
+
+    /* Timeline and Bar Charts - Keep Full Width */
+    #bookingsTimeline,
+    #revenueTimeline,
+    #revenueByStatusChart {
+      max-width: 100% !important;
+      max-height: 400px !important;
+    }
+
     /* Time Range Tabs */
     .time-range-tabs {
       display: flex;
@@ -3345,6 +3361,18 @@
         <!-- Request Details -->
         <div style="margin-bottom:24px;">
           <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Request Details</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Booking Source</label>
+            <select id="createOrigin" required>
+              <option value="">-- Select Booking Source --</option>
+              <option value="Booking form">Booking form</option>
+              <option value="Whatsapp">Whatsapp</option>
+              <option value="Phone">Phone</option>
+              <option value="E-mail">E-mail</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Walk in">Walk in</option>
+            </select>
+          </div>
           <div class="form-group">
             <label style="font-size:13px; color:var(--muted);">Priority</label>
             <select id="createPriority">
@@ -6473,7 +6501,7 @@
             description: document.getElementById('createDescription').value || null,
             location_id: document.getElementById('createLocation').value,
             status: 'open_request',
-            origin: 'manual',
+            origin: document.getElementById('createOrigin').value,
             booking_type: 'request'
           };
 
@@ -11581,11 +11609,12 @@
       // Mapping from database values to chart categories
       // Database has: Contactform, Instagram, Website, WhatsApp (with capitals)
       const originMapping = {
-        // Contactform variations
+        // Booking form variations
         'Contactform': 'booking_form',
         'contactform': 'booking_form',
         'booking_form': 'booking_form',
         'Booking Form': 'booking_form',
+        'Booking form': 'booking_form',
 
         // WhatsApp variations
         'WhatsApp': 'whatsapp',
@@ -11600,11 +11629,18 @@
         'Email': 'email',
         'email': 'email',
         'E-Mail': 'email',
+        'E-mail': 'email',
+
+        // Phone variations
+        'Phone': 'phone',
+        'phone': 'phone',
+        'Telefon': 'phone',
 
         // Walk-In variations
         'Walk-In': 'walk_in',
         'walk_in': 'walk_in',
         'Walk In': 'walk_in',
+        'Walk in': 'walk_in',
 
         // Self-Booking variations
         'Self-Booking': 'self_booking',
@@ -11620,8 +11656,9 @@
       const originCounts = {
         'booking_form': 0,
         'whatsapp': 0,
-        'instagram': 0,
+        'phone': 0,
         'email': 0,
+        'instagram': 0,
         'walk_in': 0,
         'self_booking': 0,
         'website': 0,
@@ -11661,12 +11698,13 @@
         console.warn('⚠️ Add these to originMapping if they should be tracked');
       }
 
-      // Labels and colors
+      // Labels and colors (order must match originCounts)
       const labels = [
-        'Contactform',
+        'Booking form',
         'WhatsApp',
-        'Instagram',
+        'Phone',
         'E-Mail',
+        'Instagram',
         'Walk-In',
         'Self-Booking',
         'Website',
@@ -11674,10 +11712,11 @@
       ];
 
       const colors = [
-        '#0071e3', // Accent (Contactform/Booking Form)
+        '#0071e3', // Accent (Booking Form)
         '#25D366', // WhatsApp Green
-        '#E1306C', // Instagram Pink
+        '#34C759', // Phone Green (iOS)
         '#EA4335', // Email Red
+        '#E1306C', // Instagram Pink
         '#7B1FA2', // Walk-In Purple
         '#00897B', // Self-Booking Teal
         '#FF9800', // Website Orange
