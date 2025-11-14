@@ -9045,12 +9045,12 @@
       function renderCalendar() {
         const dateStr = currentDate.toISOString().split('T')[0];
         document.getElementById('datePickerInput').value = dateStr;
-        
+
         // Update date display (z.B. "Mo. 20. Oktober 2025")
         const dateDisplayTop = document.getElementById('currentDateDisplayTop');
         if (dateDisplayTop) {
           const day = currentDate.getDate();
-          const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 
+          const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
                               'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
           const month = monthNames[currentDate.getMonth()];
           const year = currentDate.getFullYear();
@@ -9058,16 +9058,16 @@
           const formattedDate = `${weekdayShort} ${day}. ${month} ${year}`;
           dateDisplayTop.textContent = formattedDate;
         }
-        
+
         // Check if today
         const today = new Date();
         const isToday = dateStr === today.toISOString().split('T')[0];
-        
+
         const container = document.getElementById('calendarContainer');
         if (!container) return;
 
         let html = '<div class="calendar-grid" style="position:relative;">';
-        
+
         html += '<div class="calendar-header"><div class="slot-header">Slots</div>';
         for (let h = 10; h <= 20; h++) html += `<div class="hour-header" style="grid-column:span 2;">${h}:00</div>`;
         html += '</div>';
@@ -9081,7 +9081,7 @@
 
         categoriesToRender.forEach(({ key, label, visible }) => {
           const cat = key === 'events' ? 'events' : key;
-          
+
           // Always show category header
           html += '<div class="calendar-header"><div class="category-header">' + label + '</div>';
           for (let h = 10; h <= 20; h++) html += '<div class="category-spacer" style="grid-column:span 2;"></div>';
@@ -9089,177 +9089,167 @@
 
           // Only show slots if visible
           if (visible) {
-            // Calculate max slot for this category and date
-            const categoryEvents = events.filter(e => 
+            // Get all events for this category and date
+            const categoryEvents = events.filter(e =>
               e.date === dateStr && e.category === cat
             );
-            
-            // Find highest slot number used
-            const maxUsedSlot = categoryEvents.length > 0 
-              ? Math.max(...categoryEvents.map(e => e.slot || 1))
-              : 0;
-            
-            // Show minimum 5 slots, or more if needed
-            const maxSlot = Math.max(5, maxUsedSlot);
-            
-            for (let slot = 1; slot <= maxSlot; slot++) {
-              // Check if this slot has any events
-              const slotHasEvents = events.some(e =>
-                e.date === dateStr && e.slot === slot && e.category === cat
-              );
 
-              // Find artist name for this slot (use first event's artist in this slot)
-              const slotEvent = events.find(e =>
-                e.date === dateStr && e.slot === slot && e.category === cat
-              );
-              const artistName = slotEvent?.artistName || '';
-              const slotLabel = artistName ? `Slot ${slot} - ${artistName}` : `Slot ${slot}`;
+            console.log(`📅 Rendering ${categoryEvents.length} ${label} for ${dateStr}`);
 
-              const rowClass = slotHasEvents ? '' : 'empty-row';
+            // CRITICAL: Each appointment gets its OWN ROW
+            // Sort by start time
+            const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
-              html += `<div class="slot-row ${rowClass}"><div class="slot-label">${slotLabel}</div>`;
-              
-              // Collect all events for this slot
-              const slotEvents = events.filter(e => 
-                e.date === dateStr && e.slot === slot && e.category === cat
-              );
-              
-              // Create cells and track which are occupied
-              const cells = [];
+            // If no events, show at least one empty slot
+            if (sortedEvents.length === 0) {
+              html += `<div class="slot-row empty-row"><div class="slot-label">Slot 1</div>`;
+
+              // Empty cells
               for (let h = 10; h <= 20; h++) {
-                [0, 0.5].forEach(offset => {
-                  const currentTime = h + offset;
-                  cells.push({
-                    time: currentTime,
-                    occupied: false,
-                    event: null
-                  });
-                });
+                html += `<div class="slot-cell"></div>`;
+                html += `<div class="slot-cell half-hour"></div>`;
               }
-              
-              // Mark cells as occupied by events and create event blocks
-              slotEvents.forEach(evt => {
+
+              html += '</div>';
+            } else {
+              // Render each event in its own row
+              sortedEvents.forEach((evt, index) => {
+                const slotNumber = index + 1;
+                const artistName = evt.artistName || '';
+                const slotLabel = artistName ? `Slot ${slotNumber} - ${artistName}` : `Slot ${slotNumber}`;
+
+                html += `<div class="slot-row"><div class="slot-label">${slotLabel}</div>`;
+
+                // Create cells for time slots 10:00 - 21:00
+                const cells = [];
+                for (let h = 10; h <= 20; h++) {
+                  [0, 0.5].forEach(offset => {
+                    const currentTime = h + offset;
+                    cells.push({
+                      time: currentTime,
+                      isEventStart: false,
+                      span: 0
+                    });
+                  });
+                }
+
+                // Mark where this event starts and its span
                 const startIndex = Math.max(0, Math.floor((evt.startHour - 10) * 2));
                 const endIndex = Math.min(cells.length, Math.floor((evt.endHour - 10) * 2));
                 const span = endIndex - startIndex;
-                
+
                 if (span > 0 && startIndex < cells.length) {
-                  cells[startIndex].event = evt;
+                  cells[startIndex].isEventStart = true;
                   cells[startIndex].span = span;
-                  
-                  // Mark all cells in the span as occupied
-                  for (let i = startIndex; i < endIndex && i < cells.length; i++) {
+                  cells[startIndex].event = evt;
+
+                  // Mark occupied cells
+                  for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
                     cells[i].occupied = true;
                   }
                 }
-              });
-              
-              // Render cells
-              cells.forEach((cell, index) => {
-                if (cell.event) {
-                  // This is the start of an event - create a spanning div
-                  const isHalfHour = (index % 2) === 1;
-                  const typeAttr = cell.event.type ? `data-type="${cell.event.type}"` : '';
-                  
-                  // Format start time
-                  const startHour = Math.floor(cell.event.startHour);
-                  const startMin = Math.round((cell.event.startHour % 1) * 60);
-                  const timeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-                  
-                  // Type label mapping
-                  const typeLabels = {
-                    'consultation': 'Consultation',
-                    'new_tattoo': 'New Tattoo',
-                    'continuing_tattoo': 'Continuing',
-                    'touch_up': 'Touch Up',
-                    'selfbooking': 'Selfbooking',
-                    'wannado': 'WannaDo',
-                    'internal': 'Internal',
-                    'move': 'Move',
-                    'reserved': 'Reserved',
-                    'no_show': 'No Show'
-                  };
-                  
-                  const typeLabel = cell.event.type ? typeLabels[cell.event.type] || cell.event.type : '';
-                  
-                  // Build content based on category
-                  let content = '';
-                  if (cat === 'events') {
-                    // For events: time, title, and type
-                    // If artist exists, make title clickable
-                    const titleContent = cell.event.artistId
-                      ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.title}</div>`
-                      : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.title}</div>`;
 
-                    content = `
-                      <div style="font-weight:600; font-size:13px; margin-bottom:2px;">${timeStr}</div>
-                      ${titleContent}
-                      ${typeLabel ? `<div style="font-size:10px; color:rgba(0,0,0,0.5); font-weight:500; text-transform:uppercase; letter-spacing:0.3px;">${typeLabel}</div>` : ''}
-                    `;
-                  } else {
-                    // For bookings: time, customer, artist, type, payment status
-                    // Make customer name clickable if customerId exists
-                    const customerContent = cell.event.customerName && cell.event.customerId
-                      ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${cell.event.customerName}</div>`
-                      : cell.event.customerName
-                        ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.customerName}</div>`
-                        : '';
-
-                    // Make artist name clickable if artistId exists
-                    const artistContent = cell.event.artistName && cell.event.artistId
-                      ? `<div style="font-size:11px; color:rgba(0,0,0,0.65); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.artistName}</div>`
-                      : cell.event.artistName
-                        ? `<div style="font-size:11px; color:rgba(0,0,0,0.65); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.artistName}</div>`
-                        : '';
-
-                    // Payment status badge for appointments
-                    const paymentBadges = {
-                      'unpaid': '<span style="font-size:14px; opacity:0.5;" title="Unpaid">💳</span>',
-                      'deposit_paid': '<span style="font-size:14px;" title="Deposit Paid">💰</span>',
-                      'fully_paid': '<span style="font-size:14px;" title="Fully Paid">✅</span>',
-                      'refunded': '<span style="font-size:14px;" title="Refunded">↩️</span>'
-                    };
-                    const paymentBadge = cell.event.isAppointment && cell.event.paymentStatus
-                      ? paymentBadges[cell.event.paymentStatus] || paymentBadges['unpaid']
-                      : '';
-
-                    content = `
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                        <span style="font-weight:600; font-size:13px;">${timeStr}</span>
-                        ${paymentBadge}
-                      </div>
-                      ${customerContent}
-                      ${artistContent}
-                      ${typeLabel ? `<div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; opacity:0.8;">${typeLabel}</div>` : ''}
-                    `;
+                // Render cells
+                cells.forEach((cell, index) => {
+                  if (cell.occupied) {
+                    // Skip - covered by span
+                    return;
                   }
-                  
-                  // Add attendance required indicator for events
-                  const attendanceIndicator = (cat === 'events' && cell.event.attendanceRequired) ? 
-                    `<div style="position:absolute; top:8px; right:8px; width:8px; height:8px; background:#ff3b30; border-radius:50%; box-shadow:0 1px 3px rgba(255,59,48,0.4);"></div>` : '';
-                  
-                  html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
-                    <div class="event ${cat}" ${typeAttr} data-event-id="${cell.event.id}" onclick="openEditEventModal('${cell.event.id}')" style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start; overflow:hidden;">
-                      ${content}
-                      ${attendanceIndicator}
-                    </div>
-                  </div>`;
-                } else if (!cell.occupied) {
-                  // This cell is not part of any event - render empty cell
-                  const isHalfHour = (index % 2) === 1;
-                  html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}"></div>`;
-                }
-                // If occupied but not the event start, we skip it (it's covered by the span)
+
+                  if (cell.isEventStart && cell.event) {
+                    // This is the start of an event
+                    const isHalfHour = (index % 2) === 1;
+                    const typeAttr = cell.event.type ? `data-type="${cell.event.type}"` : '';
+
+                    // Format start time
+                    const startHour = Math.floor(cell.event.startHour);
+                    const startMin = Math.round((cell.event.startHour % 1) * 60);
+                    const timeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+
+                    // Type label mapping
+                    const typeLabels = {
+                      'consultation': 'Consultation',
+                      'new_tattoo': 'New Tattoo',
+                      'continuing_tattoo': 'Continuing',
+                      'touch_up': 'Touch Up',
+                      'selfbooking': 'Selfbooking',
+                      'wannado': 'WannaDo',
+                      'internal': 'Internal',
+                      'move': 'Move',
+                      'reserved': 'Reserved',
+                      'no_show': 'No Show'
+                    };
+
+                    const typeLabel = cell.event.type ? typeLabels[cell.event.type] || cell.event.type : '';
+
+                    // Build content based on category
+                    let content = '';
+                    if (cat === 'events') {
+                      // For events: time, title, and type
+                      const titleContent = cell.event.artistId
+                        ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.title}</div>`
+                        : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.title}</div>`;
+
+                      content = `
+                        <div style="font-weight:600; font-size:13px; margin-bottom:2px;">${timeStr}</div>
+                        ${titleContent}
+                        ${typeLabel ? `<div style="font-size:10px; color:rgba(0,0,0,0.5); font-weight:500; text-transform:uppercase; letter-spacing:0.3px;">${typeLabel}</div>` : ''}
+                      `;
+                    } else {
+                      // For bookings: time, customer, type, payment status
+                      const customerContent = cell.event.customerName && cell.event.customerId
+                        ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${cell.event.customerName}</div>`
+                        : cell.event.customerName
+                          ? `<div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.customerName}</div>`
+                          : '';
+
+                      // Payment status badge for appointments
+                      const paymentBadges = {
+                        'unpaid': '<span style="font-size:14px; opacity:0.5;" title="Unpaid">💳</span>',
+                        'deposit_paid': '<span style="font-size:14px;" title="Deposit Paid">💰</span>',
+                        'fully_paid': '<span style="font-size:14px;" title="Fully Paid">✅</span>',
+                        'refunded': '<span style="font-size:14px;" title="Refunded">↩️</span>'
+                      };
+                      const paymentBadge = cell.event.isAppointment && cell.event.paymentStatus
+                        ? paymentBadges[cell.event.paymentStatus] || paymentBadges['unpaid']
+                        : '';
+
+                      content = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                          <span style="font-weight:600; font-size:13px;">${timeStr}</span>
+                          ${paymentBadge}
+                        </div>
+                        ${customerContent}
+                        ${typeLabel ? `<div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; opacity:0.8;">${typeLabel}</div>` : ''}
+                      `;
+                    }
+
+                    // Add attendance required indicator for events
+                    const attendanceIndicator = (cat === 'events' && cell.event.attendanceRequired) ?
+                      `<div style="position:absolute; top:8px; right:8px; width:8px; height:8px; background:#ff3b30; border-radius:50%; box-shadow:0 1px 3px rgba(255,59,48,0.4);"></div>` : '';
+
+                    html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
+                      <div class="event ${cat}" ${typeAttr} data-event-id="${cell.event.id}" onclick="openEditEventModal('${cell.event.id}')" style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start; overflow:hidden;">
+                        ${content}
+                        ${attendanceIndicator}
+                      </div>
+                    </div>`;
+                  } else {
+                    // Empty cell
+                    const isHalfHour = (index % 2) === 1;
+                    html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}"></div>`;
+                  }
+                });
+
+                html += '</div>';
               });
-              
-              html += '</div>';
             }
           }
         });
 
         html += '</div>';
         container.innerHTML = html;
-        
+
         // Add current time indicator if today
         if (isToday) {
           addCurrentTimeIndicator();
