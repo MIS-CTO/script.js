@@ -11886,123 +11886,332 @@
     async function loadProjectsData(locationFilter = null) {
       try {
         console.log('💰 Loading projects data for revenue analytics...');
-        console.log('💰 Location filter:', locationFilter || 'None');
+        console.log('💰 Location filter:', locationFilter);
+        console.log('💰 QUERY VERSION: 2025-11-14-v3 - GESAMT UMSATZ FIX');
 
-        // Count total projects
-        const { count, error: countError } = await supabase
-          .from('projects')
-          .select('*', { count: 'exact', head: true });
-
-        console.log('💰 Total projects in table:', count);
-        if (countError) {
-          console.error('❌ Count error:', countError);
-        }
-
-        // PAGINATED LOADING: Load ALL projects in batches
-        console.log('🚨 PROJECTS QUERY VERSION: 2025-11-14 PAGINATED - loading ALL records in batches');
-        console.log('⏳ Fetching all projects from Supabase using pagination...');
-
-        let allData = [];
-        let from = 0;
+        let allProjects = [];
+        let offset = 0;
         const batchSize = 1000;
-        let hasMore = true;
         let batchNumber = 1;
+        let hasMore = true;
 
         while (hasMore) {
-          console.log(`📦 Loading projects batch ${batchNumber} (records ${from} to ${from + batchSize - 1})...`);
+          console.log(`📦 Loading projects batch ${batchNumber} (records ${offset} to ${offset + batchSize - 1})...`);
 
-          let query = supabase
-            .from('projects')
-            .select('id, price, payment_state, created_at, updated_at')
-            .not('price', 'is', null)  // Only get projects with price
-            .range(from, from + batchSize - 1);
+          try {
+            let query = supabase
+              .from('projects')
+              .select('id, price, payment_state, created_at, location_id')
+              .order('created_at', { ascending: false })
+              .range(offset, offset + batchSize - 1);
 
-          const { data, error } = await query;
+            if (locationFilter) {
+              query = query.eq('location_id', locationFilter);
+              console.log(`   🏢 Filtering by location: ${locationFilter}`);
+            }
 
-          if (error) {
-            console.error('❌ Supabase error on batch', batchNumber, ':', error);
-            throw error;
-          }
+            const { data, error } = await query;
 
-          if (data && data.length > 0) {
-            allData = allData.concat(data);
-            console.log(`✅ Batch ${batchNumber}: Loaded ${data.length} records. Total so far: ${allData.length}`);
-            from += batchSize;
-            hasMore = data.length === batchSize;
-            batchNumber++;
-          } else {
+            if (error) {
+              console.error(`❌ Batch ${batchNumber} error:`, error);
+              console.error('   Error details:', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint
+              });
+              throw error;
+            }
+
+            console.log(`   📊 Batch ${batchNumber} returned ${data?.length || 0} records`);
+
+            if (data && data.length > 0) {
+              if (batchNumber === 1) {
+                console.log('   📝 Sample project (first record):', {
+                  id: data[0].id,
+                  price: data[0].price,
+                  payment_state: data[0].payment_state,
+                  has_price: data[0].price !== null && data[0].price !== undefined,
+                  has_payment_state: !!data[0].payment_state
+                });
+              }
+
+              allProjects = allProjects.concat(data);
+              console.log(`   ✅ Batch ${batchNumber}: Loaded ${data.length} records. Total so far: ${allProjects.length}`);
+            }
+
+            if (!data || data.length < batchSize) {
+              hasMore = false;
+              console.log(`   🏁 Last batch reached (${data?.length || 0} records)`);
+            } else {
+              offset += batchSize;
+              batchNumber++;
+            }
+
+          } catch (batchError) {
+            console.error(`❌ Error in batch ${batchNumber}:`, batchError);
             hasMore = false;
           }
         }
 
-        console.log(`✅ Successfully loaded ${allData.length} of ${count || 'unknown'} projects`);
+        console.log(`\n✅ LOAD COMPLETE: ${allProjects.length} total projects loaded`);
 
-        if (!allData || allData.length === 0) {
-          console.warn('⚠️ No projects found with price data');
-          return [];
+        // Analyze the loaded data
+        if (allProjects.length > 0) {
+          const withPrice = allProjects.filter(p => p.price !== null && p.price !== undefined && p.price > 0);
+          const withPaymentState = allProjects.filter(p => p.payment_state);
+          const komplettBezahlt = allProjects.filter(p =>
+            p.payment_state && p.payment_state.toLowerCase().includes('komplett bezahlt')
+          );
+
+          console.log('📊 Data Analysis:');
+          console.log(`   Total projects: ${allProjects.length}`);
+          console.log(`   With price > 0: ${withPrice.length}`);
+          console.log(`   With payment_state: ${withPaymentState.length}`);
+          console.log(`   "Komplett bezahlt": ${komplettBezahlt.length}`);
+
+          // Calculate GESAMT UMSATZ
+          const gesamtUmsatz = komplettBezahlt.reduce((sum, p) => {
+            const price = parseFloat(p.price) || 0;
+            return sum + price;
+          }, 0);
+
+          console.log(`   💶 GESAMT UMSATZ: ${gesamtUmsatz.toFixed(2)} €`);
+
+          // Payment state distribution
+          const paymentStates = {};
+          allProjects.forEach(p => {
+            const state = p.payment_state || 'NULL';
+            paymentStates[state] = (paymentStates[state] || 0) + 1;
+          });
+          console.log('   💳 Payment states:', paymentStates);
+
+        } else {
+          console.log('⚠️ No projects found');
+          console.log('🔍 Possible reasons:');
+          console.log('   1. Projects table is empty');
+          console.log('   2. RLS (Row Level Security) is blocking access');
+          console.log('   3. Location filter excluded all records');
         }
 
-        return allData;
+        return allProjects;
+
       } catch (err) {
-        console.error('❌ Projects data load failed:', err);
+        console.error('❌ CRITICAL ERROR in loadProjectsData:', err);
+        console.error('   Error details:', {
+          name: err.name,
+          message: err.message,
+          stack: err.stack
+        });
+
         return [];
       }
     }
 
     // Render Revenue Statistics
-    async function renderRevenueStats(data) {
-      console.log('💰 Rendering revenue statistics with', data.length, 'projects');
+    async function renderRevenueStats(projects) {
+      console.log('💰 Rendering revenue statistics with', projects.length, 'projects');
 
-      if (data.length === 0) {
-        document.getElementById('totalRevenue').textContent = '€0';
-        document.getElementById('paidProjects').textContent = '0';
-        document.getElementById('pendingRevenue').textContent = '€0';
-        document.getElementById('avgProjectPrice').textContent = '€0';
-        document.getElementById('totalProjects').textContent = '0';
-        return;
+      // Initialize stats
+      const stats = {
+        'Komplett bezahlt': { count: 0, revenue: 0 },
+        'Offen': { count: 0, revenue: 0 },
+        'Anzahlung bezahlt': { count: 0, revenue: 0 },
+        'Unbekannt': { count: 0, revenue: 0 }
+      };
+
+      // Process each project
+      projects.forEach(project => {
+        const price = parseFloat(project.price) || 0;
+        const paymentState = (project.payment_state || '').trim();
+
+        // Determine category
+        let category = 'Unbekannt';
+
+        const stateLower = paymentState.toLowerCase();
+
+        if (stateLower.includes('komplett bezahlt') || stateLower === 'komplett bezahlt') {
+          category = 'Komplett bezahlt';
+        } else if (stateLower.includes('anzahlung bezahlt') || stateLower === 'anzahlung bezahlt') {
+          category = 'Anzahlung bezahlt';
+        } else if (stateLower.includes('offen') || stateLower === 'offen') {
+          category = 'Offen';
+        }
+
+        if (stats[category]) {
+          stats[category].count++;
+          stats[category].revenue += price;
+        }
+      });
+
+      // Calculate GESAMT UMSATZ (only "Komplett bezahlt")
+      const gesamtUmsatz = stats['Komplett bezahlt'].revenue;
+      const totalCount = Object.values(stats).reduce((sum, s) => sum + s.count, 0);
+
+      console.log('💰 Revenue breakdown:', {
+        'Komplett bezahlt': `${stats['Komplett bezahlt'].revenue.toFixed(2)} € (${stats['Komplett bezahlt'].count} projects)`,
+        'Anzahlung bezahlt': `${stats['Anzahlung bezahlt'].revenue.toFixed(2)} € (${stats['Anzahlung bezahlt'].count} projects)`,
+        'Offen': `${stats['Offen'].revenue.toFixed(2)} € (${stats['Offen'].count} projects)`,
+        'Unbekannt': `${stats['Unbekannt'].revenue.toFixed(2)} € (${stats['Unbekannt'].count} projects)`
+      });
+      console.log(`💰 GESAMT UMSATZ (nur Komplett bezahlt): ${gesamtUmsatz.toFixed(2)} €`);
+
+      // Update DOM - Main totalRevenue shows GESAMT UMSATZ
+      const totalRevenueEl = document.getElementById('totalRevenue');
+      if (totalRevenueEl) {
+        totalRevenueEl.textContent = gesamtUmsatz.toLocaleString('de-DE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' €';
       }
 
-      // Calculate total revenue
-      const totalRevenue = data.reduce((sum, project) => {
-        const price = parseFloat(project.price) || 0;
-        return sum + price;
-      }, 0);
+      // Update DOM - Paid Projects shows "Komplett bezahlt"
+      const paidProjectsEl = document.getElementById('paidProjects');
+      if (paidProjectsEl) {
+        paidProjectsEl.textContent = stats['Komplett bezahlt'].count;
+      }
 
-      // Count paid projects (payment_state is 'paid' or 'completed')
-      const paidProjects = data.filter(p => {
-        const state = p.payment_state?.toLowerCase();
-        return state === 'paid' || state === 'completed' || state === 'success';
+      // Update DOM - Pending Revenue shows "Offen"
+      const pendingRevenueEl = document.getElementById('pendingRevenue');
+      if (pendingRevenueEl) {
+        pendingRevenueEl.textContent = stats['Offen'].revenue.toLocaleString('de-DE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' €';
+      }
+
+      // Update DOM - Average Price
+      const avgProjectPriceEl = document.getElementById('avgProjectPrice');
+      if (avgProjectPriceEl && totalCount > 0) {
+        const totalRevenue = Object.values(stats).reduce((sum, s) => sum + s.revenue, 0);
+        const avgPrice = totalRevenue / totalCount;
+        avgProjectPriceEl.textContent = avgPrice.toLocaleString('de-DE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' €';
+      }
+
+      // Update DOM - Total Projects
+      const totalProjectsEl = document.getElementById('totalProjects');
+      if (totalProjectsEl) {
+        totalProjectsEl.textContent = totalCount;
+      }
+
+      // Update additional elements if they exist
+      const vollbezahltAmount = document.getElementById('vollbezahltAmount');
+      const vollbezahltCount = document.getElementById('vollbezahltCount');
+      if (vollbezahltAmount) {
+        vollbezahltAmount.textContent = stats['Komplett bezahlt'].revenue.toLocaleString('de-DE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' €';
+      }
+      if (vollbezahltCount) {
+        vollbezahltCount.textContent = stats['Komplett bezahlt'].count + ' Projekte';
+      }
+
+      const offenAmount = document.getElementById('offenAmount');
+      const offenCount = document.getElementById('offenCount');
+      if (offenAmount) {
+        offenAmount.textContent = stats['Offen'].revenue.toLocaleString('de-DE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' €';
+      }
+      if (offenCount) {
+        offenCount.textContent = stats['Offen'].count + ' Projekte';
+      }
+
+      const anzahlungAmount = document.getElementById('anzahlungAmount');
+      const anzahlungCount = document.getElementById('anzahlungCount');
+      if (anzahlungAmount) {
+        anzahlungAmount.textContent = stats['Anzahlung bezahlt'].revenue.toLocaleString('de-DE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' €';
+      }
+      if (anzahlungCount) {
+        anzahlungCount.textContent = stats['Anzahlung bezahlt'].count + ' Projekte';
+      }
+
+      const gesamtUmsatzElement = document.getElementById('gesamtUmsatz');
+      if (gesamtUmsatzElement) {
+        gesamtUmsatzElement.textContent = gesamtUmsatz.toLocaleString('de-DE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) + ' €';
+      }
+
+      // Update table rows if they exist
+      updateRevenueTable(stats, gesamtUmsatz);
+
+      console.log('✅ Revenue stats rendered successfully');
+    }
+
+    // Helper function to update the revenue table
+    function updateRevenueTable(stats, gesamtUmsatz) {
+      // Find table rows and update them
+      const rows = document.querySelectorAll('[data-payment-status]');
+
+      rows.forEach(row => {
+        const status = row.getAttribute('data-payment-status');
+
+        if (stats[status]) {
+          const countCell = row.querySelector('.count-cell');
+          const revenueCell = row.querySelector('.revenue-cell');
+          const avgCell = row.querySelector('.avg-cell');
+          const percentCell = row.querySelector('.percent-cell');
+
+          if (countCell) countCell.textContent = stats[status].count;
+          if (revenueCell) {
+            revenueCell.textContent = stats[status].revenue.toLocaleString('de-DE', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }) + ' €';
+          }
+          if (avgCell && stats[status].count > 0) {
+            const avg = stats[status].revenue / stats[status].count;
+            avgCell.textContent = avg.toLocaleString('de-DE', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }) + ' €';
+          }
+          if (percentCell && gesamtUmsatz > 0) {
+            const percent = (stats[status].revenue / gesamtUmsatz * 100).toFixed(1);
+            percentCell.textContent = percent + ' %';
+          }
+        }
       });
 
-      const paidRevenue = paidProjects.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+      // Update GESAMT row
+      const gesamtRow = document.querySelector('[data-payment-status="Gesamt"]');
+      if (gesamtRow) {
+        const totalCount = Object.values(stats).reduce((sum, s) => sum + s.count, 0);
+        const totalRevenue = Object.values(stats).reduce((sum, s) => sum + s.revenue, 0);
 
-      // Calculate pending revenue
-      const pendingProjects = data.filter(p => {
-        const state = p.payment_state?.toLowerCase();
-        return !state || state === 'pending' || state === 'unpaid' || state === 'open';
-      });
+        const countCell = gesamtRow.querySelector('.count-cell');
+        const revenueCell = gesamtRow.querySelector('.revenue-cell');
+        const avgCell = gesamtRow.querySelector('.avg-cell');
+        const percentCell = gesamtRow.querySelector('.percent-cell');
 
-      const pendingRevenue = pendingProjects.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
-
-      // Calculate average
-      const avgPrice = totalRevenue / data.length;
-
-      // Update DOM
-      document.getElementById('totalRevenue').textContent =
-        `€${totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-      document.getElementById('paidProjects').textContent = paidProjects.length.toLocaleString('de-DE');
-      document.getElementById('pendingRevenue').textContent =
-        `€${pendingRevenue.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-      document.getElementById('avgProjectPrice').textContent =
-        `€${avgPrice.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-      document.getElementById('totalProjects').textContent = data.length.toLocaleString('de-DE');
-
-      console.log('✅ Revenue statistics rendered:', {
-        totalRevenue: `€${totalRevenue.toFixed(2)}`,
-        paidProjects: paidProjects.length,
-        pendingRevenue: `€${pendingRevenue.toFixed(2)}`,
-        avgPrice: `€${avgPrice.toFixed(2)}`
-      });
+        if (countCell) countCell.textContent = totalCount;
+        if (revenueCell) {
+          revenueCell.textContent = totalRevenue.toLocaleString('de-DE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }) + ' €';
+        }
+        if (avgCell && totalCount > 0) {
+          const avg = totalRevenue / totalCount;
+          avgCell.textContent = avg.toLocaleString('de-DE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }) + ' €';
+        }
+        if (percentCell) {
+          percentCell.textContent = '100 %';
+        }
+      }
     }
 
     // Render Revenue Timeline Chart
