@@ -2048,6 +2048,41 @@
       min-width: 200px;
     }
 
+    /* Data Tables for Analytics */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-weight: 600;
+      color: var(--macos-text-secondary);
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .data-table td {
+      padding: 8px 12px;
+      color: var(--macos-text-primary);
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .data-table tbody tr:hover {
+      background: rgba(0,0,0,0.02);
+    }
+
+    .data-table tfoot tr {
+      border-top: 2px solid rgba(0,0,0,0.1);
+      background: rgba(0,0,0,0.02);
+    }
+
+    .data-table tfoot td {
+      padding: 12px;
+      border-bottom: none;
+    }
+
     /* Responsive Charts */
     @media (max-width: 1024px) {
       .charts-grid {
@@ -2628,6 +2663,107 @@
       <div class="chart-card">
         <h3>Umsatz im Zeitverlauf</h3>
         <canvas id="revenueTimeline"></canvas>
+      </div>
+
+      <!-- NEW ANALYTICS COMPONENTS -->
+
+      <!-- Request Status Card -->
+      <div class="chart-card">
+        <h3>Status Anfragen (<span id="requestStatusTotal">0</span>)</h3>
+        <canvas id="requestStatusChart"></canvas>
+        <table class="data-table" style="margin-top: 16px;">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th style="text-align: right;">Anzahl</th>
+              <th style="text-align: right;">%</th>
+            </tr>
+          </thead>
+          <tbody id="requestStatusTable"></tbody>
+        </table>
+        <div style="margin-top: 16px; padding: 12px 16px; background: #FFF3E0; border-radius: 8px; font-size: 13px;">
+          ⚠️ <strong>Achtung!</strong><br>
+          Diese Auswertung kann sich jederzeit verändern, da sie sich auf das Datum der Erstellung einer Anfrage beruht!
+        </div>
+      </div>
+
+      <!-- Artist Distribution Card -->
+      <div class="chart-card">
+        <h3>Anfragen nach Artist</h3>
+        <canvas id="artistDistributionChart"></canvas>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px;">
+          <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Anfragen</div>
+            <div style="font-size: 16px; font-weight: 600;" id="artistTotalRequests">0</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Umgesetzte Termine</div>
+            <div style="font-size: 16px; font-weight: 600;" id="artistCompletedAppointments">0 (0%)</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Nicht umgesetzt</div>
+            <div style="font-size: 16px; font-weight: 600;" id="artistNotCompleted">0 (0%)</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Beliebig</div>
+            <div style="font-size: 16px; font-weight: 600;" id="artistAny">0 (0%)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue by Payment Status Card (Full Width) -->
+      <div class="chart-card" style="grid-column: 1 / -1;">
+        <h3>Umsatz nach Zahlungsstatus</h3>
+
+        <!-- Revenue Summary Cards -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+          <div style="background: rgba(52, 199, 89, 0.05); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(52, 199, 89, 0.2);">
+            <div style="font-size: 28px; margin-bottom: 8px;">💰</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Komplett Bezahlt</div>
+            <div style="font-size: 24px; font-weight: 600; margin-bottom: 4px;" id="paidAmount">0,00 €</div>
+            <div style="font-size: 13px; color: var(--muted);" id="paidCount">0 Projekte</div>
+          </div>
+          <div style="background: rgba(255, 149, 0, 0.05); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(255, 149, 0, 0.2);">
+            <div style="font-size: 28px; margin-bottom: 8px;">⏳</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Offen</div>
+            <div style="font-size: 24px; font-weight: 600; margin-bottom: 4px;" id="pendingAmount">0,00 €</div>
+            <div style="font-size: 13px; color: var(--muted);" id="pendingCount">0 Projekte</div>
+          </div>
+          <div style="background: rgba(0, 113, 227, 0.05); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(0, 113, 227, 0.2);">
+            <div style="font-size: 28px; margin-bottom: 8px;">💳</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Anzahlung Bezahlt</div>
+            <div style="font-size: 24px; font-weight: 600; margin-bottom: 4px;" id="partialAmount">0,00 €</div>
+            <div style="font-size: 13px; color: var(--muted);" id="partialCount">0 Projekte</div>
+          </div>
+        </div>
+
+        <!-- Revenue Bar Chart -->
+        <div style="position: relative; height: 300px; margin-bottom: 24px;">
+          <canvas id="revenueByStatusChart"></canvas>
+        </div>
+
+        <!-- Revenue Details Table -->
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Payment Status</th>
+              <th style="text-align: right;">Anzahl Projekte</th>
+              <th style="text-align: right;">Gesamt Umsatz</th>
+              <th style="text-align: right;">Durchschnitt</th>
+              <th style="text-align: right;">% vom Gesamt</th>
+            </tr>
+          </thead>
+          <tbody id="revenueByStatusTable"></tbody>
+          <tfoot>
+            <tr style="border-top: 2px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02);">
+              <td><strong>Gesamt</strong></td>
+              <td style="text-align: right;"><strong id="revenueTotalProjects">0</strong></td>
+              <td style="text-align: right;"><strong id="revenueTotalAmount">0,00 €</strong></td>
+              <td style="text-align: right;"><strong id="revenueAvgAmount">0,00 €</strong></td>
+              <td style="text-align: right;"><strong>100%</strong></td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
 
     </div>
@@ -12399,7 +12535,389 @@
       await renderRevenueStats(filteredProjects);
       await renderRevenueTimeline(filteredProjects);
 
+      // Load NEW analytics components
+      await loadRequestStatus(filteredRequests);
+      await loadArtistDistribution(filteredAppointments);
+      await loadRevenueByPaymentStatus();
+
       console.log('✅ Analytics initialized');
+    }
+
+    // NEW ANALYTICS FUNCTIONS
+
+    // German number formatting utilities
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount || 0);
+    }
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat('de-DE').format(num || 0);
+    }
+
+    // Load Request Status (from requests.status)
+    let requestStatusChartInstance = null;
+    async function loadRequestStatus(requests) {
+      try {
+        const statusLabels = {
+          'open': 'Open',
+          'appointment_created': 'Appointment created',
+          'canceled': 'Canceled'
+        };
+
+        const statusColors = {
+          'open': '#FFB800',
+          'appointment_created': '#34c759',
+          'canceled': '#ff3b30'
+        };
+
+        // Aggregate by status
+        const statusCounts = {};
+        requests.forEach(row => {
+          const status = row.status || 'unknown';
+          const label = statusLabels[status] || status;
+          statusCounts[label] = (statusCounts[label] || 0) + 1;
+        });
+
+        // Sort by count
+        const sorted = Object.entries(statusCounts).sort((a, b) => b[1] - a[1]);
+        const labels = sorted.map(([label]) => label);
+        const values = sorted.map(([, count]) => count);
+        const colors = sorted.map(([label]) => {
+          const statusKey = Object.keys(statusLabels).find(k => statusLabels[k] === label);
+          return statusColors[statusKey] || '#8e8e93';
+        });
+        const total = values.reduce((sum, val) => sum + val, 0);
+
+        // Update total
+        document.getElementById('requestStatusTotal').textContent = total;
+
+        // Render chart
+        const ctx = document.getElementById('requestStatusChart');
+        if (!ctx) return;
+
+        if (requestStatusChartInstance) {
+          requestStatusChartInstance.destroy();
+        }
+
+        requestStatusChartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: colors,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '60%',
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  font: {
+                    family: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                    size: 12
+                  },
+                  padding: 12,
+                  usePointStyle: true
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = context.parsed;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${label}: ${value} (${percentage}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // Render table
+        const tableBody = document.getElementById('requestStatusTable');
+        tableBody.innerHTML = sorted.map(([label, count]) => {
+          const percentage = total > 0 ? (count / total * 100).toFixed(1) : 0;
+          return `
+            <tr>
+              <td>${label}</td>
+              <td style="text-align: right;">${formatNumber(count)}</td>
+              <td style="text-align: right;">${percentage} %</td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Error loading request status:', error);
+      }
+    }
+
+    // Load Artist Distribution (appointments.artist_email)
+    let artistDistributionChartInstance = null;
+    async function loadArtistDistribution(appointments) {
+      try {
+        // Aggregate by artist
+        const artistCounts = {};
+        let completedCount = 0;
+        let anyCount = 0;
+
+        appointments.forEach(apt => {
+          const email = apt.artist_email || 'Beliebig';
+          artistCounts[email] = (artistCounts[email] || 0) + 1;
+
+          if (apt.state === 'Zugesagt' || apt.state === 'completed' || apt.state === 'done') {
+            completedCount++;
+          }
+
+          if (!apt.artist_email || email === 'Beliebig') {
+            anyCount++;
+          }
+        });
+
+        const total = appointments.length;
+        const notCompleted = total - completedCount;
+
+        // Group small artists (< 10 requests)
+        const threshold = 10;
+        const filteredArtists = {};
+        let otherCount = 0;
+
+        Object.entries(artistCounts).forEach(([email, count]) => {
+          if (count >= threshold || email === 'Beliebig') {
+            const name = email === 'Beliebig' ? 'Beliebig' : email.split('@')[0];
+            filteredArtists[name.charAt(0).toUpperCase() + name.slice(1)] = count;
+          } else {
+            otherCount += count;
+          }
+        });
+
+        if (otherCount > 0) {
+          filteredArtists['Sonstige (< 10 Anfragen)'] = otherCount;
+        }
+
+        // Sort by count
+        const sorted = Object.entries(filteredArtists).sort((a, b) => b[1] - a[1]);
+        const labels = sorted.map(([name]) => name);
+        const values = sorted.map(([, count]) => count);
+
+        // Render chart
+        const ctx = document.getElementById('artistDistributionChart');
+        if (!ctx) return;
+
+        if (artistDistributionChartInstance) {
+          artistDistributionChartInstance.destroy();
+        }
+
+        const chartColors = [
+          '#34c759', '#9c27b0', '#e91e63', '#0071e3', '#ff9500',
+          '#5856d6', '#ff2d55', '#30b0c7', '#ff6482', '#64d2ff'
+        ];
+
+        artistDistributionChartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: chartColors.slice(0, labels.length),
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '60%',
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  font: {
+                    family: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
+                    size: 11
+                  },
+                  padding: 10,
+                  usePointStyle: true
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = context.parsed;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return `${label}: ${value} (${percentage}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // Update stats
+        document.getElementById('artistTotalRequests').textContent = formatNumber(total);
+        const completedPercent = total > 0 ? (completedCount / total * 100).toFixed(1) : 0;
+        document.getElementById('artistCompletedAppointments').textContent =
+          `${formatNumber(completedCount)} (${completedPercent} %)`;
+        const notCompletedPercent = total > 0 ? (notCompleted / total * 100).toFixed(1) : 0;
+        document.getElementById('artistNotCompleted').textContent =
+          `${formatNumber(notCompleted)} (${notCompletedPercent} %)`;
+        const anyPercent = total > 0 ? (anyCount / total * 100).toFixed(1) : 0;
+        document.getElementById('artistAny').textContent =
+          `${formatNumber(anyCount)} (${anyPercent} %)`;
+
+      } catch (error) {
+        console.error('Error loading artist distribution:', error);
+      }
+    }
+
+    // Load Revenue by Payment Status (projects.price + payment_state)
+    let revenueByStatusChartInstance = null;
+    async function loadRevenueByPaymentStatus() {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('price, payment_state')
+          .is('deleted_at', null);
+
+        if (error) throw error;
+
+        // Aggregate by payment status
+        const revenueByStatus = {
+          'Komplett bezahlt': { amount: 0, count: 0 },
+          'Anzahlung bezahlt': { amount: 0, count: 0 },
+          'Offen': { amount: 0, count: 0 },
+          'Unbekannt': { amount: 0, count: 0 }
+        };
+
+        data.forEach(project => {
+          const price = parseFloat(project.price) || 0;
+          const state = project.payment_state || 'Unbekannt';
+
+          if (revenueByStatus[state]) {
+            revenueByStatus[state].amount += price;
+            revenueByStatus[state].count += 1;
+          } else {
+            revenueByStatus['Unbekannt'].amount += price;
+            revenueByStatus['Unbekannt'].count += 1;
+          }
+        });
+
+        // Update summary cards
+        document.getElementById('paidAmount').textContent = formatCurrency(revenueByStatus['Komplett bezahlt'].amount);
+        document.getElementById('paidCount').textContent = `${formatNumber(revenueByStatus['Komplett bezahlt'].count)} Projekte`;
+
+        document.getElementById('pendingAmount').textContent = formatCurrency(revenueByStatus['Offen'].amount);
+        document.getElementById('pendingCount').textContent = `${formatNumber(revenueByStatus['Offen'].count)} Projekte`;
+
+        document.getElementById('partialAmount').textContent = formatCurrency(revenueByStatus['Anzahlung bezahlt'].amount);
+        document.getElementById('partialCount').textContent = `${formatNumber(revenueByStatus['Anzahlung bezahlt'].count)} Projekte`;
+
+        // Calculate totals
+        const totalAmount = Object.values(revenueByStatus).reduce((sum, s) => sum + s.amount, 0);
+        const totalCount = Object.values(revenueByStatus).reduce((sum, s) => sum + s.count, 0);
+        const avgAmount = totalCount > 0 ? totalAmount / totalCount : 0;
+
+        // Render bar chart
+        const ctx = document.getElementById('revenueByStatusChart');
+        if (!ctx) return;
+
+        if (revenueByStatusChartInstance) {
+          revenueByStatusChartInstance.destroy();
+        }
+
+        const labels = Object.keys(revenueByStatus);
+        const values = Object.values(revenueByStatus).map(s => s.amount);
+        const colors = [
+          '#34c759',  // Komplett bezahlt - Green
+          '#0071e3',  // Anzahlung bezahlt - Blue
+          '#ff9500',  // Offen - Orange
+          '#86868b'   // Unbekannt - Gray
+        ];
+
+        revenueByStatusChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: colors,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return formatCurrency(context.parsed.x);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return formatCurrency(value);
+                  }
+                },
+                grid: {
+                  color: 'rgba(0, 0, 0, 0.05)'
+                }
+              },
+              y: {
+                grid: {
+                  display: false
+                }
+              }
+            }
+          }
+        });
+
+        // Render table
+        const tableBody = document.getElementById('revenueByStatusTable');
+        tableBody.innerHTML = labels.map(status => {
+          const stats = revenueByStatus[status];
+          const avg = stats.count > 0 ? stats.amount / stats.count : 0;
+          const percent = totalAmount > 0 ? (stats.amount / totalAmount * 100).toFixed(1) : 0;
+          return `
+            <tr>
+              <td>${status}</td>
+              <td style="text-align: right;">${formatNumber(stats.count)}</td>
+              <td style="text-align: right;">${formatCurrency(stats.amount)}</td>
+              <td style="text-align: right;">${formatCurrency(avg)}</td>
+              <td style="text-align: right;">${percent} %</td>
+            </tr>
+          `;
+        }).join('');
+
+        // Update totals
+        document.getElementById('revenueTotalProjects').textContent = formatNumber(totalCount);
+        document.getElementById('revenueTotalAmount').textContent = formatCurrency(totalAmount);
+        document.getElementById('revenueAvgAmount').textContent = formatCurrency(avgAmount);
+
+      } catch (error) {
+        console.error('Error loading revenue by payment status:', error);
+      }
     }
 
     // Load locations for filter dropdown
@@ -12511,6 +13029,11 @@
           const filteredProjects = filterByDateRange(projectsData, 'created_at');
           await renderRevenueStats(filteredProjects);
           await renderRevenueTimeline(filteredProjects);
+
+          // Reload NEW analytics components
+          await loadRequestStatus(filteredRequests);
+          await loadArtistDistribution(filteredAppointments);
+          await loadRevenueByPaymentStatus();
         });
       }
 
@@ -12535,6 +13058,11 @@
           const filteredProjects = filterByDateRange(projectsData, 'created_at');
           await renderRevenueStats(filteredProjects);
           await renderRevenueTimeline(filteredProjects);
+
+          // Reload NEW analytics components
+          await loadRequestStatus(filteredRequests);
+          await loadArtistDistribution(filteredAppointments);
+          await loadRevenueByPaymentStatus();
         });
       }
 
@@ -12565,6 +13093,11 @@
             const filteredProjects = filterByDateRange(projectsData, 'created_at');
             await renderRevenueStats(filteredProjects);
             await renderRevenueTimeline(filteredProjects);
+
+            // Reload NEW analytics components
+            await loadRequestStatus(filteredRequests);
+            await loadArtistDistribution(filteredAppointments);
+            await loadRevenueByPaymentStatus();
           }
         };
 
