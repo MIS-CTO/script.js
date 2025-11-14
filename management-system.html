@@ -2112,7 +2112,7 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
       <h2 style="margin:0;">Dashboard</h2>
-      <span id="versionBadge" style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v77</span>
+      <span id="versionBadge" style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v84</span>
     </div>
     <div>
       <span class="badge" id="badge-pending">Pending: —</span>
@@ -2523,6 +2523,25 @@
         <option value="">All Locations</option>
         <!-- Will be populated dynamically -->
       </select>
+
+      <select id="analyticsDateRangeFilter" class="filter-select">
+        <option value="all">Alle Zeiträume</option>
+        <option value="today">Heute</option>
+        <option value="week">Diese Woche</option>
+        <option value="month" selected>Dieser Monat</option>
+        <option value="quarter">Dieses Quartal</option>
+        <option value="year">Dieses Jahr</option>
+        <option value="last30">Letzte 30 Tage</option>
+        <option value="last90">Letzte 90 Tage</option>
+        <option value="last365">Letztes Jahr</option>
+      </select>
+
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <label style="font-size: 13px; color: var(--muted);">Von:</label>
+        <input type="date" id="analyticsStartDate" class="filter-select" style="min-width: 150px;">
+        <label style="font-size: 13px; color: var(--muted);">Bis:</label>
+        <input type="date" id="analyticsEndDate" class="filter-select" style="min-width: 150px;">
+      </div>
     </div>
 
     <!-- Chart Grid -->
@@ -2571,6 +2590,44 @@
       <div class="chart-card">
         <h3>Appointment Status Breakdown</h3>
         <canvas id="appointmentStatusPie"></canvas>
+      </div>
+
+      <!-- Revenue Analytics Card -->
+      <div class="chart-card">
+        <h3>Umsatz-Übersicht</h3>
+        <div style="display: flex; flex-direction: column; gap: 24px; padding: 20px;">
+          <!-- Total Revenue -->
+          <div style="text-align: center;">
+            <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Gesamtumsatz</div>
+            <div style="font-size: 48px; font-weight: 700; color: var(--accent);" id="totalRevenue">€0</div>
+          </div>
+
+          <!-- Revenue Stats Grid -->
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+            <div style="text-align: center; padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Bezahlte Projekte</div>
+              <div style="font-size: 24px; font-weight: 600; color: #0071e3;" id="paidProjects">0</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(255, 149, 0, 0.05); border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Ausstehend</div>
+              <div style="font-size: 24px; font-weight: 600; color: #ff9500;" id="pendingRevenue">€0</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(52, 199, 89, 0.05); border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Durchschnitt</div>
+              <div style="font-size: 24px; font-weight: 600; color: #34c759;" id="avgProjectPrice">€0</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(142, 142, 147, 0.05); border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Projekte</div>
+              <div style="font-size: 24px; font-weight: 600; color: #8e8e93;" id="totalProjects">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Timeline Card -->
+      <div class="chart-card">
+        <h3>Umsatz im Zeitverlauf</h3>
+        <canvas id="revenueTimeline"></canvas>
       </div>
 
     </div>
@@ -11050,6 +11107,7 @@
     let appointmentsData = []; // For timeline chart
     let requestsData = []; // For origin chart
     let allRequestsData = []; // For requests count (including canceled)
+    let projectsData = []; // For revenue analytics
 
     // Load analytics data from Supabase
     // Load appointments data for Timeline Chart (uses created_at)
@@ -11578,6 +11636,363 @@
       console.log('✅ Appointments count rendered successfully');
     }
 
+    // ========================================
+    // DATE RANGE FILTER FUNCTIONS
+    // ========================================
+
+    // Get date range from filter
+    function getDateRange() {
+      const rangeFilter = document.getElementById('analyticsDateRangeFilter')?.value || 'all';
+      const startDateInput = document.getElementById('analyticsStartDate')?.value;
+      const endDateInput = document.getElementById('analyticsEndDate')?.value;
+
+      const now = new Date();
+      let startDate = null;
+      let endDate = null;
+
+      // If custom dates are set, use them
+      if (startDateInput && endDateInput) {
+        startDate = new Date(startDateInput);
+        endDate = new Date(endDateInput);
+        endDate.setHours(23, 59, 59, 999); // End of day
+        console.log('📅 Using custom date range:', startDate, 'to', endDate);
+        return { startDate, endDate };
+      }
+
+      // Otherwise use predefined ranges
+      switch (rangeFilter) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+          break;
+        case 'week':
+          const dayOfWeek = now.getDay();
+          const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday as first day
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - diff);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'quarter':
+          const currentQuarter = Math.floor(now.getMonth() / 3);
+          startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'last30':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 30);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'last90':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 90);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'last365':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 365);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'all':
+        default:
+          startDate = null;
+          endDate = null;
+          break;
+      }
+
+      if (startDate && endDate) {
+        console.log('📅 Date range:', rangeFilter, '-', startDate.toLocaleDateString('de-DE'), 'to', endDate.toLocaleDateString('de-DE'));
+      } else {
+        console.log('📅 Date range: All time');
+      }
+
+      return { startDate, endDate };
+    }
+
+    // Filter data by date range
+    function filterByDateRange(data, dateField = 'created_at') {
+      const { startDate, endDate } = getDateRange();
+
+      if (!startDate || !endDate) {
+        return data; // No filter, return all data
+      }
+
+      return data.filter(item => {
+        const itemDate = new Date(item[dateField]);
+        if (isNaN(itemDate.getTime())) return false;
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+    }
+
+    // ========================================
+    // REVENUE ANALYTICS FUNCTIONS
+    // ========================================
+
+    // Load projects data for revenue analytics
+    async function loadProjectsData(locationFilter = null) {
+      try {
+        console.log('💰 Loading projects data for revenue analytics...');
+        console.log('💰 Location filter:', locationFilter || 'None');
+
+        // Count total projects
+        const { count, error: countError } = await supabase
+          .from('projects')
+          .select('*', { count: 'exact', head: true });
+
+        console.log('💰 Total projects in table:', count);
+        if (countError) {
+          console.error('❌ Count error:', countError);
+        }
+
+        // PAGINATED LOADING: Load ALL projects in batches
+        console.log('🚨 PROJECTS QUERY VERSION: 2025-11-14 PAGINATED - loading ALL records in batches');
+        console.log('⏳ Fetching all projects from Supabase using pagination...');
+
+        let allData = [];
+        let from = 0;
+        const batchSize = 1000;
+        let hasMore = true;
+        let batchNumber = 1;
+
+        while (hasMore) {
+          console.log(`📦 Loading projects batch ${batchNumber} (records ${from} to ${from + batchSize - 1})...`);
+
+          let query = supabase
+            .from('projects')
+            .select('id, price, payment_state, created_at, updated_at')
+            .not('price', 'is', null)  // Only get projects with price
+            .range(from, from + batchSize - 1);
+
+          const { data, error } = await query;
+
+          if (error) {
+            console.error('❌ Supabase error on batch', batchNumber, ':', error);
+            throw error;
+          }
+
+          if (data && data.length > 0) {
+            allData = allData.concat(data);
+            console.log(`✅ Batch ${batchNumber}: Loaded ${data.length} records. Total so far: ${allData.length}`);
+            from += batchSize;
+            hasMore = data.length === batchSize;
+            batchNumber++;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        console.log(`✅ Successfully loaded ${allData.length} of ${count || 'unknown'} projects`);
+
+        if (!allData || allData.length === 0) {
+          console.warn('⚠️ No projects found with price data');
+          return [];
+        }
+
+        return allData;
+      } catch (err) {
+        console.error('❌ Projects data load failed:', err);
+        return [];
+      }
+    }
+
+    // Render Revenue Statistics
+    async function renderRevenueStats(data) {
+      console.log('💰 Rendering revenue statistics with', data.length, 'projects');
+
+      if (data.length === 0) {
+        document.getElementById('totalRevenue').textContent = '€0';
+        document.getElementById('paidProjects').textContent = '0';
+        document.getElementById('pendingRevenue').textContent = '€0';
+        document.getElementById('avgProjectPrice').textContent = '€0';
+        document.getElementById('totalProjects').textContent = '0';
+        return;
+      }
+
+      // Calculate total revenue
+      const totalRevenue = data.reduce((sum, project) => {
+        const price = parseFloat(project.price) || 0;
+        return sum + price;
+      }, 0);
+
+      // Count paid projects (payment_state is 'paid' or 'completed')
+      const paidProjects = data.filter(p => {
+        const state = p.payment_state?.toLowerCase();
+        return state === 'paid' || state === 'completed' || state === 'success';
+      });
+
+      const paidRevenue = paidProjects.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+
+      // Calculate pending revenue
+      const pendingProjects = data.filter(p => {
+        const state = p.payment_state?.toLowerCase();
+        return !state || state === 'pending' || state === 'unpaid' || state === 'open';
+      });
+
+      const pendingRevenue = pendingProjects.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+
+      // Calculate average
+      const avgPrice = totalRevenue / data.length;
+
+      // Update DOM
+      document.getElementById('totalRevenue').textContent =
+        `€${totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+      document.getElementById('paidProjects').textContent = paidProjects.length.toLocaleString('de-DE');
+      document.getElementById('pendingRevenue').textContent =
+        `€${pendingRevenue.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+      document.getElementById('avgProjectPrice').textContent =
+        `€${avgPrice.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+      document.getElementById('totalProjects').textContent = data.length.toLocaleString('de-DE');
+
+      console.log('✅ Revenue statistics rendered:', {
+        totalRevenue: `€${totalRevenue.toFixed(2)}`,
+        paidProjects: paidProjects.length,
+        pendingRevenue: `€${pendingRevenue.toFixed(2)}`,
+        avgPrice: `€${avgPrice.toFixed(2)}`
+      });
+    }
+
+    // Render Revenue Timeline Chart
+    let revenueTimelineChart = null;
+
+    async function renderRevenueTimeline(data) {
+      console.log('💰 Rendering revenue timeline with', data.length, 'projects');
+
+      if (data.length === 0) {
+        console.warn('⚠️ No data for revenue timeline');
+        return;
+      }
+
+      // Group by month
+      const monthlyRevenue = {};
+
+      data.forEach(project => {
+        const date = new Date(project.created_at);
+        if (isNaN(date.getTime())) return;
+
+        const key = date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+        const price = parseFloat(project.price) || 0;
+
+        if (!monthlyRevenue[key]) {
+          monthlyRevenue[key] = { total: 0, count: 0 };
+        }
+
+        monthlyRevenue[key].total += price;
+        monthlyRevenue[key].count += 1;
+      });
+
+      // Sort by date
+      const sortedKeys = Object.keys(monthlyRevenue).sort((a, b) => {
+        return new Date(a) - new Date(b);
+      });
+
+      // Take last 12 months
+      const last12Months = sortedKeys.slice(-12);
+
+      const chartData = {
+        labels: last12Months,
+        datasets: [{
+          label: 'Umsatz (€)',
+          data: last12Months.map(key => monthlyRevenue[key].total),
+          borderColor: '#0071e3',
+          backgroundColor: 'rgba(0, 113, 227, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#0071e3',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointHoverRadius: 6
+        }]
+      };
+
+      // Destroy existing chart
+      if (revenueTimelineChart) {
+        revenueTimelineChart.destroy();
+      }
+
+      const ctx = document.getElementById('revenueTimeline');
+      if (!ctx) {
+        console.error('❌ Canvas element not found: revenueTimeline');
+        return;
+      }
+
+      revenueTimelineChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.parsed.y;
+                  const key = context.label;
+                  const count = monthlyRevenue[key]?.count || 0;
+                  return [
+                    `Umsatz: €${value.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+                    `Projekte: ${count}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '€' + value.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                },
+                font: {
+                  size: 11,
+                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 11,
+                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+                }
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+
+      console.log('✅ Revenue timeline chart rendered successfully');
+    }
+
     // Render Pie Chart for Appointment Status
     async function renderAppointmentStatusPieChart(data) {
       console.log('📊 Rendering appointment status pie chart with', data.length, 'appointments');
@@ -11963,17 +12378,26 @@
 
       // Load requests data for Origin Chart
       requestsData = await loadRequestsData(locationFilter);
-      await renderOriginsPieChart(requestsData);
+      const filteredRequests = filterByDateRange(requestsData, 'created_at');
+      await renderOriginsPieChart(filteredRequests);
 
       // Load ALL requests data for Count Display (including canceled)
       allRequestsData = await loadAllRequestsData(locationFilter);
-      await renderRequestsCount(allRequestsData);
+      const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
+      await renderRequestsCount(filteredAllRequests);
 
       // Load appointments data for Timeline Chart
       appointmentsData = await loadAppointmentsData(locationFilter);
-      await renderBookingsTimeline(appointmentsData, currentTimeRange);
-      await renderAppointmentStatusPieChart(appointmentsData);
-      await renderAppointmentsCount(appointmentsData);
+      const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+      await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+      await renderAppointmentStatusPieChart(filteredAppointments);
+      await renderAppointmentsCount(filteredAppointments);
+
+      // Load projects data for Revenue Analytics
+      projectsData = await loadProjectsData(locationFilter);
+      const filteredProjects = filterByDateRange(projectsData, 'created_at');
+      await renderRevenueStats(filteredProjects);
+      await renderRevenueTimeline(filteredProjects);
 
       console.log('✅ Analytics initialized');
     }
@@ -12067,18 +12491,85 @@
 
           // Reload requests data for Origin Chart
           requestsData = await loadRequestsData(locationId);
-          await renderOriginsPieChart(requestsData);
+          const filteredRequests = filterByDateRange(requestsData, 'created_at');
+          await renderOriginsPieChart(filteredRequests);
 
           // Reload ALL requests data for Count Display (including canceled)
           allRequestsData = await loadAllRequestsData(locationId);
-          await renderRequestsCount(allRequestsData);
+          const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
+          await renderRequestsCount(filteredAllRequests);
 
           // Reload appointments data for Timeline Chart
           appointmentsData = await loadAppointmentsData(locationId);
-          await renderBookingsTimeline(appointmentsData, currentTimeRange);
-          await renderAppointmentStatusPieChart(appointmentsData);
-          await renderAppointmentsCount(appointmentsData);
+          const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+          await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+          await renderAppointmentStatusPieChart(filteredAppointments);
+          await renderAppointmentsCount(filteredAppointments);
+
+          // Reload projects data for Revenue Analytics
+          projectsData = await loadProjectsData(locationId);
+          const filteredProjects = filterByDateRange(projectsData, 'created_at');
+          await renderRevenueStats(filteredProjects);
+          await renderRevenueTimeline(filteredProjects);
         });
+      }
+
+      // Date Range Filter Change
+      const analyticsDateRangeFilter = document.getElementById('analyticsDateRangeFilter');
+      if (analyticsDateRangeFilter) {
+        analyticsDateRangeFilter.addEventListener('change', async function() {
+          console.log('📅 Date range filter changed:', this.value);
+
+          // Re-render all charts with filtered data
+          const filteredRequests = filterByDateRange(requestsData, 'created_at');
+          await renderOriginsPieChart(filteredRequests);
+
+          const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
+          await renderRequestsCount(filteredAllRequests);
+
+          const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+          await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+          await renderAppointmentStatusPieChart(filteredAppointments);
+          await renderAppointmentsCount(filteredAppointments);
+
+          const filteredProjects = filterByDateRange(projectsData, 'created_at');
+          await renderRevenueStats(filteredProjects);
+          await renderRevenueTimeline(filteredProjects);
+        });
+      }
+
+      // Custom Date Range Inputs
+      const analyticsStartDate = document.getElementById('analyticsStartDate');
+      const analyticsEndDate = document.getElementById('analyticsEndDate');
+
+      if (analyticsStartDate && analyticsEndDate) {
+        const applyCustomDateRange = async function() {
+          const startVal = analyticsStartDate.value;
+          const endVal = analyticsEndDate.value;
+
+          if (startVal && endVal) {
+            console.log('📅 Custom date range applied:', startVal, 'to', endVal);
+
+            // Re-render all charts with filtered data
+            const filteredRequests = filterByDateRange(requestsData, 'created_at');
+            await renderOriginsPieChart(filteredRequests);
+
+            const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
+            await renderRequestsCount(filteredAllRequests);
+
+            const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+            await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+            await renderAppointmentStatusPieChart(filteredAppointments);
+            await renderAppointmentsCount(filteredAppointments);
+
+            const filteredProjects = filterByDateRange(projectsData, 'created_at');
+            await renderRevenueStats(filteredProjects);
+            await renderRevenueTimeline(filteredProjects);
+          }
+        };
+
+        analyticsStartDate.addEventListener('change', applyCustomDateRange);
+        analyticsEndDate.addEventListener('change', applyCustomDateRange);
       }
 
       // ========================================
