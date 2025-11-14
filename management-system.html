@@ -2745,34 +2745,6 @@
       <h2>📊 Project Overview</h2>
       <div id="projectKPIs"></div>
     </div>
-
-    <!-- ANALYTICS CHARTS -->
-    <div class="dashboard-section">
-      <h2>📈 Analytics</h2>
-      <div class="charts-grid">
-        <div class="chart-card">
-          <canvas id="projectsTimelineChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <canvas id="revenueByMonthChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <canvas id="topArtistsChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- ARTIST PERFORMANCE REPORT -->
-    <div class="dashboard-section">
-      <h2>🎨 Artist Performance</h2>
-      <div id="artistPerformanceTable"></div>
-    </div>
-
-    <!-- MULTI-PROJECT CUSTOMERS -->
-    <div class="dashboard-section">
-      <h2>👥 VIP Customers</h2>
-      <div id="multiProjectCustomersTable"></div>
-    </div>
   </section>
 
   <section id="requests-section">
@@ -3412,6 +3384,40 @@
       </div>
 
     </div>
+
+    <!-- PROJECT-BASED ANALYTICS -->
+    <div class="dashboard-section" style="margin-top: 48px;">
+      <h2>📈 Project Analytics</h2>
+
+      <!-- Project KPI Summary -->
+      <div id="analyticsProjectKPIs" class="kpi-grid" style="margin-bottom: 32px;"></div>
+
+      <!-- Project Charts -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <canvas id="projectsTimelineChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <canvas id="revenueByMonthChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <canvas id="topArtistsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTIST PERFORMANCE REPORT -->
+    <div class="dashboard-section" style="margin-top: 32px;">
+      <h2>🎨 Artist Performance</h2>
+      <div id="artistPerformanceTable"></div>
+    </div>
+
+    <!-- MULTI-PROJECT CUSTOMERS (VIP) -->
+    <div class="dashboard-section" style="margin-top: 32px;">
+      <h2>👥 VIP Customers (Multi-Project Customers)</h2>
+      <div id="multiProjectCustomersTable"></div>
+    </div>
+
   </section>
 
   <section id="agreements-section">
@@ -5658,61 +5664,107 @@
             agreements: totalAgreements
           });
 
-          // ✅ Load project-based analytics
-          await loadProjectDashboard();
-          await loadArtistPerformanceReport();
-          await loadMultiProjectCustomerReport();
+          // ✅ Load ONLY Project Overview KPIs for Dashboard
+          await loadProjectOverviewKPIs();
         } catch(err) {
           console.error("Dashboard error:", err);
         }
       }
 
-      // ========================================
-      // PROJECT DASHBOARD FUNCTIONS
-      // ========================================
-
-      async function loadProjectDashboard() {
-        console.log('📊 Loading Project Dashboard...');
+      // ============================================
+      // PROJECT OVERVIEW KPIs (Dashboard only)
+      // ============================================
+      async function loadProjectOverviewKPIs() {
+        console.log('📦 Loading Project Overview KPIs for Dashboard...');
 
         try {
-          // Fetch all appointments with project info
           const { data: appointments, error } = await supabase
             .from('appointments')
             .select(`
               id,
               project_number,
               customer_id,
-              artist_id,
               status,
-              start,
-              payment_status,
               payment_amount,
-              deposit_amount,
-              total_amount,
-              first_name,
-              last_name
+              total_amount
             `)
             .not('project_number', 'is', null)
             .not('customer_id', 'is', null);
 
           if (error) throw error;
 
-          console.log('📦 Loaded appointments for projects:', appointments?.length || 0);
-
-          // Calculate project metrics
+          // Calculate metrics
           const metrics = calculateProjectMetrics(appointments || []);
 
-          // Update dashboard UI
-          updateProjectDashboardUI(metrics);
+          // Update ONLY KPI cards on dashboard
+          const kpiContainer = document.getElementById('projectKPIs');
+          if (kpiContainer) {
+            kpiContainer.innerHTML = `
+              <div class="kpi-grid">
+                <div class="kpi-card">
+                  <div class="kpi-icon">📦</div>
+                  <div class="kpi-content">
+                    <div class="kpi-value">${metrics.totalProjects.toLocaleString()}</div>
+                    <div class="kpi-label">Total Projects</div>
+                  </div>
+                </div>
 
-          // Load charts
-          loadProjectCharts(appointments || []);
+                <div class="kpi-card active">
+                  <div class="kpi-icon">🔄</div>
+                  <div class="kpi-content">
+                    <div class="kpi-value">${metrics.activeProjects.toLocaleString()}</div>
+                    <div class="kpi-label">Active Projects</div>
+                  </div>
+                </div>
 
+                <div class="kpi-card completed">
+                  <div class="kpi-icon">✅</div>
+                  <div class="kpi-content">
+                    <div class="kpi-value">${metrics.completedProjects.toLocaleString()}</div>
+                    <div class="kpi-label">Completed Projects</div>
+                  </div>
+                </div>
+
+                <div class="kpi-card revenue">
+                  <div class="kpi-icon">💰</div>
+                  <div class="kpi-content">
+                    <div class="kpi-value">€${metrics.totalRevenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</div>
+                    <div class="kpi-label">Total Revenue</div>
+                  </div>
+                </div>
+
+                <div class="kpi-card">
+                  <div class="kpi-icon">📊</div>
+                  <div class="kpi-content">
+                    <div class="kpi-value">${metrics.avgAppointmentsPerProject.toFixed(1)}</div>
+                    <div class="kpi-label">Avg Sessions/Project</div>
+                  </div>
+                </div>
+
+                <div class="kpi-card">
+                  <div class="kpi-icon">✨</div>
+                  <div class="kpi-content">
+                    <div class="kpi-value">${metrics.completionRate.toFixed(1)}%</div>
+                    <div class="kpi-label">Completion Rate</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
         } catch (error) {
-          console.error('Error loading project dashboard:', error);
+          console.error('Error loading project overview KPIs:', error);
         }
       }
 
+      // ============================================
+      // PROJECT METRICS CALCULATION
+      // ============================================
+      /**
+       * Calculate project metrics with proper completion logic:
+       * - COMPLETED: ALL appointments are 'finished'
+       * - ACTIVE: At least one appointment is 'scheduled'
+       * - CANCELED: ALL appointments are 'canceled'
+       */
       function calculateProjectMetrics(appointments) {
         // Group by project_number
         const projects = {};
@@ -5725,8 +5777,6 @@
               project_number: pNum,
               appointments: [],
               total_revenue: 0,
-              has_completed: false,
-              is_active: false,
               customer_name: null
             };
           }
@@ -5734,20 +5784,8 @@
           projects[pNum].appointments.push(apt);
 
           // Calculate revenue
-          if (apt.payment_amount) {
-            projects[pNum].total_revenue += parseFloat(apt.payment_amount) || 0;
-          }
-          if (apt.total_amount && !apt.payment_amount) {
-            projects[pNum].total_revenue += parseFloat(apt.total_amount) || 0;
-          }
-
-          // Check status
-          if (apt.status === 'finished') {
-            projects[pNum].has_completed = true;
-          }
-          if (apt.status === 'scheduled') {
-            projects[pNum].is_active = true;
-          }
+          const revenue = parseFloat(apt.payment_amount || apt.total_amount || 0);
+          projects[pNum].total_revenue += revenue;
 
           // Customer name
           if (apt.first_name || apt.last_name) {
@@ -5757,21 +5795,57 @@
 
         const projectsArray = Object.values(projects);
 
-        // Calculate metrics
-        const totalProjects = projectsArray.length;
-        const activeProjects = projectsArray.filter(p => p.is_active).length;
-        const completedProjects = projectsArray.filter(p =>
-          p.appointments.every(a => a.status === 'finished')
-        ).length;
+        // Count projects by status using PROPER completion logic
+        let completedProjects = 0;
+        let activeProjects = 0;
+        let canceledProjects = 0;
 
+        projectsArray.forEach(project => {
+          const statuses = project.appointments.map(a => a.status);
+
+          // Check if ALL appointments are finished
+          const allFinished = statuses.every(s => s === 'finished');
+
+          // Check if has any scheduled
+          const hasScheduled = statuses.some(s => s === 'scheduled');
+
+          // Check if ALL appointments are canceled
+          const allCanceled = statuses.every(s => s === 'canceled');
+
+          if (allFinished) {
+            completedProjects++;
+            project.project_status = 'completed';
+          } else if (allCanceled) {
+            canceledProjects++;
+            project.project_status = 'canceled';
+          } else if (hasScheduled) {
+            activeProjects++;
+            project.project_status = 'active';
+          } else {
+            // Mixed finished/canceled but no scheduled = completed
+            completedProjects++;
+            project.project_status = 'completed';
+          }
+        });
+
+        const totalProjects = projectsArray.length;
         const totalRevenue = projectsArray.reduce((sum, p) => sum + p.total_revenue, 0);
         const avgAppointmentsPerProject = appointments.length / (totalProjects || 1);
         const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
+
+        console.log('📊 Project Metrics:', {
+          totalProjects,
+          completedProjects,
+          activeProjects,
+          canceledProjects,
+          completionRate: completionRate.toFixed(1) + '%'
+        });
 
         return {
           totalProjects,
           activeProjects,
           completedProjects,
+          canceledProjects,
           totalRevenue,
           avgAppointmentsPerProject,
           completionRate,
@@ -5779,76 +5853,22 @@
         };
       }
 
-      function updateProjectDashboardUI(metrics) {
-        const kpiContainer = document.getElementById('projectKPIs');
+      // Helper function to get project status badge
+      function getProjectStatusBadge(appointments) {
+        const statuses = appointments.map(a => a.status);
+        const allFinished = statuses.every(s => s === 'finished');
+        const hasScheduled = statuses.some(s => s === 'scheduled');
+        const allCanceled = statuses.every(s => s === 'canceled');
 
-        if (!kpiContainer) {
-          console.warn('Project KPI container not found');
-          return;
+        if (allFinished) {
+          return '<span class="project-status-badge completed">✅ Completed</span>';
+        } else if (allCanceled) {
+          return '<span class="project-status-badge canceled">❌ Canceled</span>';
+        } else if (hasScheduled) {
+          return '<span class="project-status-badge active">🔄 Active</span>';
+        } else {
+          return '<span class="project-status-badge completed">✅ Completed</span>';
         }
-
-        kpiContainer.innerHTML = `
-          <div class="kpi-grid">
-            <div class="kpi-card">
-              <div class="kpi-icon">📦</div>
-              <div class="kpi-content">
-                <div class="kpi-value">${metrics.totalProjects.toLocaleString()}</div>
-                <div class="kpi-label">Total Projects</div>
-              </div>
-            </div>
-
-            <div class="kpi-card active">
-              <div class="kpi-icon">🔄</div>
-              <div class="kpi-content">
-                <div class="kpi-value">${metrics.activeProjects.toLocaleString()}</div>
-                <div class="kpi-label">Active Projects</div>
-              </div>
-            </div>
-
-            <div class="kpi-card completed">
-              <div class="kpi-icon">✅</div>
-              <div class="kpi-content">
-                <div class="kpi-value">${metrics.completedProjects.toLocaleString()}</div>
-                <div class="kpi-label">Completed Projects</div>
-              </div>
-            </div>
-
-            <div class="kpi-card revenue">
-              <div class="kpi-icon">💰</div>
-              <div class="kpi-content">
-                <div class="kpi-value">€${metrics.totalRevenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</div>
-                <div class="kpi-label">Total Revenue</div>
-              </div>
-            </div>
-
-            <div class="kpi-card">
-              <div class="kpi-icon">📊</div>
-              <div class="kpi-content">
-                <div class="kpi-value">${metrics.avgAppointmentsPerProject.toFixed(1)}</div>
-                <div class="kpi-label">Avg Sessions/Project</div>
-              </div>
-            </div>
-
-            <div class="kpi-card">
-              <div class="kpi-icon">✨</div>
-              <div class="kpi-content">
-                <div class="kpi-value">${metrics.completionRate.toFixed(1)}%</div>
-                <div class="kpi-label">Completion Rate</div>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-
-      function loadProjectCharts(appointments) {
-        // Projects over time
-        loadProjectsTimelineChart(appointments);
-
-        // Revenue by month
-        loadRevenueByMonthChart(appointments);
-
-        // Top artists by projects
-        loadTopArtistsChart(appointments);
       }
 
       function loadProjectsTimelineChart(appointments) {
@@ -15125,7 +15145,112 @@
       await loadArtistDistribution(filteredAppointments);
       await loadRevenueByPaymentStatus();
 
+      // Load Project-Based Analytics (moved from Dashboard)
+      await loadProjectAnalytics();
+
       console.log('✅ Analytics initialized');
+    }
+
+    // ============================================
+    // PROJECT-BASED ANALYTICS (for Analytics Tab)
+    // ============================================
+    async function loadProjectAnalytics() {
+      console.log('📈 Loading Project-Based Analytics...');
+
+      try {
+        // Fetch all appointments with full project info
+        const { data: appointments, error } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            project_number,
+            customer_id,
+            artist_id,
+            status,
+            start,
+            payment_status,
+            payment_amount,
+            deposit_amount,
+            total_amount,
+            first_name,
+            last_name
+          `)
+          .not('project_number', 'is', null)
+          .not('customer_id', 'is', null);
+
+        if (error) throw error;
+
+        console.log('📦 Loaded', appointments?.length || 0, 'appointments for project analytics');
+
+        // Calculate metrics
+        const metrics = calculateProjectMetrics(appointments || []);
+
+        // Update Analytics KPI cards
+        const analyticsKpiContainer = document.getElementById('analyticsProjectKPIs');
+        if (analyticsKpiContainer) {
+          analyticsKpiContainer.innerHTML = `
+            <div class="kpi-card">
+              <div class="kpi-icon">📦</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.totalProjects.toLocaleString()}</div>
+                <div class="kpi-label">Total Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card active">
+              <div class="kpi-icon">🔄</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.activeProjects.toLocaleString()}</div>
+                <div class="kpi-label">Active Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card completed">
+              <div class="kpi-icon">✅</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.completedProjects.toLocaleString()}</div>
+                <div class="kpi-label">Completed Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card revenue">
+              <div class="kpi-icon">💰</div>
+              <div class="kpi-content">
+                <div class="kpi-value">€${metrics.totalRevenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</div>
+                <div class="kpi-label">Total Revenue</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">📊</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.avgAppointmentsPerProject.toFixed(1)}</div>
+                <div class="kpi-label">Avg Sessions/Project</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">✨</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.completionRate.toFixed(1)}%</div>
+                <div class="kpi-label">Completion Rate</div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Load charts
+        loadProjectsTimelineChart(appointments || []);
+        loadRevenueByMonthChart(appointments || []);
+        loadTopArtistsChart(appointments || []);
+
+        // Load tables
+        await loadArtistPerformanceReport();
+        await loadMultiProjectCustomerReport();
+
+      } catch (error) {
+        console.error('Error loading project analytics:', error);
+      }
     }
 
     // NEW ANALYTICS FUNCTIONS
