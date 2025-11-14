@@ -2603,21 +2603,30 @@
         <canvas id="bookingsTimeline"></canvas>
       </div>
 
-      <!-- Requests Count Card -->
+      <!-- Combined Requests & Appointments Count Card -->
       <div class="chart-card">
-        <h3>Total Requests</h3>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
-          <div style="font-size: 64px; font-weight: 700; color: var(--accent);" id="requestsCount">0</div>
-          <div style="font-size: 18px; color: var(--muted); margin-top: 8px;">Total Customer Requests</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0;">Requests & Appointments Overview</h3>
+          <select id="requestsAppointmentsTimeFilter" class="filter-select" style="width: auto;">
+            <option value="week">Weekly</option>
+            <option value="month" selected>Monthly</option>
+            <option value="year">Yearly</option>
+            <option value="all">All Time</option>
+          </select>
         </div>
-      </div>
-
-      <!-- Appointments Count Card -->
-      <div class="chart-card">
-        <h3>Total Appointments</h3>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
-          <div style="font-size: 64px; font-weight: 700; color: var(--success);" id="appointmentsCount">0</div>
-          <div style="font-size: 18px; color: var(--muted); margin-top: 8px;">Total Scheduled Appointments</div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 20px;">
+          <!-- Total Requests -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 113, 227, 0.05); border-radius: 12px;">
+            <div style="font-size: 14px; color: var(--muted); margin-bottom: 8px;">Total Requests</div>
+            <div style="font-size: 56px; font-weight: 700; color: var(--accent);" id="requestsCount">0</div>
+            <div style="font-size: 14px; color: var(--muted); margin-top: 8px;">Customer Requests</div>
+          </div>
+          <!-- Total Appointments -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: rgba(52, 199, 89, 0.05); border-radius: 12px;">
+            <div style="font-size: 14px; color: var(--muted); margin-bottom: 8px;">Total Appointments</div>
+            <div style="font-size: 56px; font-weight: 700; color: var(--success);" id="appointmentsCount">0</div>
+            <div style="font-size: 14px; color: var(--muted); margin-top: 8px;">Scheduled Appointments</div>
+          </div>
         </div>
       </div>
 
@@ -11956,6 +11965,46 @@
       });
     }
 
+    // Filter requests/appointments by time range
+    function filterByTimeRange(data, rangeType) {
+      const now = new Date();
+      let startDate = null;
+
+      switch(rangeType) {
+        case 'week': {
+          // Start of current week (Monday)
+          const day = now.getDay();
+          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+          startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        }
+        case 'month': {
+          // Start of current month
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        }
+        case 'year': {
+          // Start of current year
+          startDate = new Date(now.getFullYear(), 0, 1);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        }
+        case 'all':
+        default:
+          // No filtering, return all data
+          return data;
+      }
+
+      // Filter by created_at date
+      return data.filter(item => {
+        if (!item.created_at) return false;
+        const itemDate = new Date(item.created_at);
+        return itemDate >= startDate;
+      });
+    }
+
     // ========================================
     // REVENUE ANALYTICS FUNCTIONS
     // ========================================
@@ -12873,15 +12922,18 @@
 
       // Load ALL requests data for Count Display (including canceled)
       allRequestsData = await loadAllRequestsData(locationFilter);
-      const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
-      await renderRequestsCount(filteredAllRequests);
+      // Apply default time filter (month) for counts
+      const filteredAllRequestsForCount = filterByTimeRange(allRequestsData, 'month');
+      await renderRequestsCount(filteredAllRequestsForCount);
 
       // Load appointments data for Timeline Chart
       appointmentsData = await loadAppointmentsData(locationFilter);
       const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
       await renderBookingsTimeline(filteredAppointments, currentTimeRange);
       await renderAppointmentStatusPieChart(filteredAppointments);
-      await renderAppointmentsCount(filteredAppointments);
+      // Apply default time filter (month) for counts
+      const filteredAppointmentsForCount = filterByTimeRange(appointmentsData, 'month');
+      await renderAppointmentsCount(filteredAppointmentsForCount);
 
       // Load projects data for Revenue Analytics
       projectsData = await loadProjectsData(locationFilter);
@@ -13369,15 +13421,20 @@
 
           // Reload ALL requests data for Count Display (including canceled)
           allRequestsData = await loadAllRequestsData(locationId);
-          const filteredAllRequests = filterByDateRange(allRequestsData, 'created_at');
-          await renderRequestsCount(filteredAllRequests);
+          // Apply requests/appointments-specific time filter if set
+          const reqAppTimeFilter = document.getElementById('requestsAppointmentsTimeFilter');
+          const reqAppFilterValue = reqAppTimeFilter?.value || 'month';
+          const filteredAllRequestsForCount = filterByTimeRange(allRequestsData, reqAppFilterValue);
+          await renderRequestsCount(filteredAllRequestsForCount);
 
           // Reload appointments data for Timeline Chart
           appointmentsData = await loadAppointmentsData(locationId);
           const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
           await renderBookingsTimeline(filteredAppointments, currentTimeRange);
           await renderAppointmentStatusPieChart(filteredAppointments);
-          await renderAppointmentsCount(filteredAppointments);
+          // Apply requests/appointments-specific time filter for count
+          const filteredAppointmentsForCount = filterByTimeRange(appointmentsData, reqAppFilterValue);
+          await renderAppointmentsCount(filteredAppointmentsForCount);
 
           // Reload projects data for Revenue Analytics
           projectsData = await loadProjectsData(locationId);
@@ -13508,6 +13565,29 @@
             revenueTimeFilter.value = this.value;
             await renderRevenueStats(filteredProjects);
           }
+        });
+      }
+
+      // ========================================
+      // REQUESTS & APPOINTMENTS TIME FILTER
+      // ========================================
+
+      // Requests & Appointments Time Filter Change
+      const requestsAppointmentsTimeFilter = document.getElementById('requestsAppointmentsTimeFilter');
+      if (requestsAppointmentsTimeFilter) {
+        requestsAppointmentsTimeFilter.addEventListener('change', async function() {
+          console.log('📊 Requests & Appointments time filter changed:', this.value);
+
+          // Filter requests and appointments by selected time range
+          const filteredRequests = filterByTimeRange(allRequestsData, this.value);
+          const filteredAppointments = filterByTimeRange(appointmentsData, this.value);
+
+          console.log(`📊 Filtered requests: ${filteredRequests.length} of ${allRequestsData.length}`);
+          console.log(`📊 Filtered appointments: ${filteredAppointments.length} of ${appointmentsData.length}`);
+
+          // Re-render counts
+          await renderRequestsCount(filteredRequests);
+          await renderAppointmentsCount(filteredAppointments);
         });
       }
 
