@@ -11439,6 +11439,22 @@
           console.log(`🎉 SUCCESS: All ${allData.length} requests loaded for origin analysis!`);
         }
 
+        // 🔍 DEBUG: Analyze origin values distribution
+        console.log('🔍 DEBUG: Analyzing origin values in loaded requests...');
+        const originDebug = {};
+        let nullCount = 0;
+        allData.forEach(req => {
+          if (req.origin) {
+            const origin = req.origin.trim();
+            originDebug[origin] = (originDebug[origin] || 0) + 1;
+          } else {
+            nullCount++;
+          }
+        });
+        console.log('🔍 Origin value distribution:', originDebug);
+        console.log('🔍 Requests with NULL/empty origin:', nullCount);
+        console.log('🔍 If most are NULL, check: 1) requests table schema, 2) data migration, 3) Webflow form field mapping');
+
         // If no data, log warning but don't throw error
         if (!allData || allData.length === 0) {
           console.warn('⚠️ No requests found in database');
@@ -11591,16 +11607,19 @@
       const unknownOrigins = new Set();
 
       data.forEach(req => {
-        if (req.origin) {
+        // Trim whitespace and handle null/undefined
+        const rawOrigin = req.origin?.trim();
+
+        if (rawOrigin && rawOrigin !== '') {
           // Map the database value to a chart category
-          const mappedOrigin = originMapping[req.origin];
+          const mappedOrigin = originMapping[rawOrigin];
 
           if (mappedOrigin) {
             originCounts[mappedOrigin]++;
           } else {
             // Unknown origin value
             originCounts['other']++;
-            unknownOrigins.add(req.origin);
+            unknownOrigins.add(rawOrigin);
           }
         } else {
           // Requests without origin value
@@ -11608,7 +11627,10 @@
         }
       });
 
-      console.log('📈 Origin counts:', originCounts);
+      console.log('📊 Origin counts:', originCounts);
+      console.log('📊 Total requests processed:', data.length);
+      console.log('📊 Requests WITH origin:', data.filter(r => r.origin?.trim()).length);
+      console.log('📊 Requests WITHOUT origin:', data.filter(r => !r.origin?.trim()).length);
       if (unknownOrigins.size > 0) {
         console.warn('⚠️ Unknown origin values found:', Array.from(unknownOrigins));
         console.warn('⚠️ Add these to originMapping if they should be tracked');
@@ -11899,18 +11921,47 @@
           console.log(`📦 Loading projects batch ${batchNumber} (records ${offset} to ${offset + batchSize - 1})...`);
 
           try {
+            // 📝 FIX 4: Alternative query strategies if range() still fails:
+            // OPTION A (Current): Apply range() after building base query
+            // OPTION B: Use limit() + offset pagination if range() is broken
+            // OPTION C: Load all data at once and paginate in-memory (last resort)
+            // See implementation notes below if current approach fails
+
             let query = supabase
               .from('projects')
               .select('id, price, payment_state, created_at, location_id')
-              .order('created_at', { ascending: false })
-              .range(offset, offset + batchSize - 1);
+              .order('created_at', { ascending: false });
 
             if (locationFilter) {
               query = query.eq('location_id', locationFilter);
               console.log(`   🏢 Filtering by location: ${locationFilter}`);
             }
 
+            // Apply range AFTER building base query to avoid 400 errors
+            query = query.range(offset, offset + batchSize - 1);
+
             const { data, error } = await query;
+
+            /* ALTERNATIVE APPROACH (Use if range() still fails):
+
+            // OPTION B: Use limit() instead of range()
+            let query = supabase
+              .from('projects')
+              .select('id, price, payment_state, created_at, location_id')
+              .order('created_at', { ascending: false })
+              .limit(batchSize);
+
+            if (locationFilter) {
+              query = query.eq('location_id', locationFilter);
+            }
+
+            // Apply offset separately
+            if (offset > 0) {
+              query = query.range(offset, offset + batchSize - 1);
+            }
+
+            const { data, error } = await query;
+            */
 
             if (error) {
               console.error(`❌ Batch ${batchNumber} error:`, error);
