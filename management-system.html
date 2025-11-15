@@ -8942,6 +8942,7 @@
               customerNotes: apt.customer_notes,
               status: apt.status,
               durationMinutes: apt.duration_minutes,
+              workProcess: apt.work_process || null,
               fullData: apt // Store full appointment data for modal
             };
           });
@@ -9211,18 +9212,25 @@
                         ${typeLabel ? `<div style="font-size:10px; color:rgba(0,0,0,0.5); font-weight:500; text-transform:uppercase; letter-spacing:0.3px;">${typeLabel}</div>` : ''}
                       `;
                     } else {
-                      // For bookings: time range, customer name, booking type, payment status
-                      const customerContent = cell.event.customerName && cell.event.customerId
-                        ? `<div style="font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${cell.event.customerName}</div>`
-                        : cell.event.customerName
-                          ? `<div style="font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.customerName}</div>`
-                          : '';
+                      // For bookings: time + name in one line, then type, payment status, work_process
+                      const customerName = cell.event.customerName || 'Kunde';
+                      const customerLink = cell.event.customerId
+                        ? `<span style="cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${customerName}</span>`
+                        : customerName;
+
+                      // Work process label
+                      const workProcessLabel = cell.event.workProcess
+                        ? `<div style="font-size:9px; margin-top:2px; opacity:0.7; font-style:italic;">${cell.event.workProcess}</div>`
+                        : '';
 
                       content = `
-                        <div style="font-weight:600; font-size:11px; margin-bottom:3px; color:rgba(0,0,0,0.7);">${timeStr}</div>
-                        ${customerContent}
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; gap:6px;">
+                          <span style="font-weight:600; font-size:11px; color:rgba(0,0,0,0.7); white-space:nowrap;">${timeStr}</span>
+                          <span style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:right;">${customerLink}</span>
+                        </div>
                         ${typeLabel ? `<div style="font-size:10px; font-weight:500; margin-bottom:2px; opacity:0.8;">${typeLabel}</div>` : ''}
-                        ${paymentLabel ? `<div style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; color:rgba(0,0,0,0.6);">${paymentLabel}</div>` : ''}
+                        ${paymentLabel ? `<div style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; color:rgba(0,0,0,0.6); margin-bottom:2px;">${paymentLabel}</div>` : ''}
+                        ${workProcessLabel}
                       `;
                     }
 
