@@ -1766,6 +1766,147 @@
       color: #c62828;
     }
 
+    /* ============================================
+       STATE BADGES (DEUTSCH) - Appointment State Management
+       ============================================ */
+    .state-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .state-badge.confirmed {
+      background: #d1f4e0;
+      color: #0d6832;
+    }
+
+    .state-badge.unknown {
+      background: #e0e0e0;
+      color: #666;
+    }
+
+    .state-badge.no-show {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .state-badge.rescheduled {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .state-badge.reserved {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    /* ============================================
+       STATUS BADGES (ENGLISH) - Auto-calculated Status
+       ============================================ */
+    .status-badge.scheduled {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .status-badge.finished {
+      background: #d1f4e0;
+      color: #0d6832;
+    }
+
+    .status-badge.canceled {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .status-badge.no-show {
+      background: #fce4ec;
+      color: #c2185b;
+    }
+
+    .status-badge.reserved {
+      background: #f3e5f5;
+      color: #7b1fa2;
+    }
+
+    .status-badge.unknown {
+      background: #e0e0e0;
+      color: #666;
+    }
+
+    .status-badge.rescheduled {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    /* ============================================
+       PAYMENT BADGES
+       ============================================ */
+    .payment-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .payment-badge.unpaid {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .payment-badge.deposit {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .payment-badge.paid {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .payment-badge.refunded {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* ============================================
+       EDIT STATE MODAL - Interactive State Options
+       ============================================ */
+    .state-options .state-option {
+      display: block;
+      cursor: pointer;
+    }
+
+    .state-options .state-option input[type="radio"] {
+      display: none;
+    }
+
+    .state-options .option-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #fafafa;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .state-options .state-option:hover .option-content {
+      background: #f0f0f0;
+      border-color: #0071e3;
+    }
+
+    .state-options .state-option.selected .option-content,
+    .state-options .state-option input:checked + .option-content {
+      background: #e3f2fd;
+      border-color: #0071e3;
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
+    }
+
     .appointment-notes {
       margin-top: 8px;
       font-size: 13px;
@@ -4581,8 +4722,8 @@
         <!-- Content will be dynamically inserted -->
       </div>
       <div class="modal-actions" style="margin-top:24px; border-top:1px solid rgba(0,0,0,0.1); padding-top:16px;">
-        <button type="button" class="btn btn-secondary" onclick="closeAppointmentDetailsModal()">Close</button>
-        <button type="button" class="btn btn-primary" id="appointmentDetailsEditBtn">Edit Appointment</button>
+        <button type="button" class="btn btn-secondary" onclick="closeAppointmentDetailsModal()">Schließen</button>
+        <button type="button" class="btn btn-primary" id="appointmentDetailsEditBtn">Status ändern</button>
       </div>
     </div>
   </div>
@@ -11147,8 +11288,54 @@
       });
       
       // Show Appointment Details Modal
+      // ============================================
+      // HELPER: State Badge (DEUTSCH)
+      // ============================================
+      window.getStateBadge = function(state) {
+        const badges = {
+          'Zugesagt': '<span class="state-badge confirmed">✅ Zugesagt</span>',
+          'Unbekannt': '<span class="state-badge unknown">❓ Unbekannt</span>',
+          'Ill/No Show': '<span class="state-badge no-show">👻 Ill/No Show</span>',
+          'Verschoben': '<span class="state-badge rescheduled">🔄 Verschoben</span>',
+          'Reserviert': '<span class="state-badge reserved">📌 Reserviert</span>'
+        };
+        return badges[state] || '<span class="state-badge unknown">❓ Unbekannt</span>';
+      };
+
+      // ============================================
+      // HELPER: Status Badge (ENGLISH)
+      // ============================================
+      window.getStatusBadge = function(status) {
+        const badges = {
+          'scheduled': '<span class="status-badge scheduled">📅 Scheduled</span>',
+          'finished': '<span class="status-badge finished">✅ Finished</span>',
+          'canceled': '<span class="status-badge canceled">❌ Canceled</span>',
+          'no_show': '<span class="status-badge no-show">👻 No Show</span>',
+          'reserved': '<span class="status-badge reserved">📌 Reserved</span>',
+          'unknown': '<span class="status-badge unknown">❓ Unknown</span>',
+          'rescheduled': '<span class="status-badge rescheduled">🔄 Rescheduled</span>'
+        };
+        return badges[status] || badges['unknown'];
+      };
+
+      // ============================================
+      // HELPER: Payment Badge
+      // ============================================
+      window.getPaymentStatusBadge = function(paymentStatus) {
+        const badges = {
+          'unpaid': '<span class="payment-badge unpaid">💳 Unbezahlt</span>',
+          'deposit_paid': '<span class="payment-badge deposit">💰 Anzahlung</span>',
+          'fully_paid': '<span class="payment-badge paid">✅ Bezahlt</span>',
+          'refunded': '<span class="payment-badge refunded">↩️ Rückerstattet</span>'
+        };
+        return badges[paymentStatus] || badges['unpaid'];
+      };
+
+      // ============================================
+      // COMPLETE APPOINTMENT DETAILS POPUP
+      // ============================================
       window.showAppointmentDetails = async function(appointmentId) {
-        console.log('📋 Loading appointment details:', appointmentId);
+        console.log('📋 Loading complete appointment details:', appointmentId);
 
         // Fetch complete appointment data
         const { data: appointment, error } = await supabase
@@ -11156,7 +11343,7 @@
           .select(`
             *,
             customer:customers(id, first_name, last_name, email, phone, instagram),
-            artist:artists(id, name, email, instagram),
+            artist:artists(id, name, email, instagram, phone),
             location:locations(id, name, city)
           `)
           .eq('id', appointmentId)
@@ -11177,217 +11364,210 @@
         if (!content || !modal) return;
 
         const customerName = `${appointment.first_name || ''} ${appointment.last_name || ''}`.trim() ||
-                             appointment.customer?.first_name || 'Unknown';
+                             `${appointment.customer?.first_name || ''} ${appointment.customer?.last_name || ''}`.trim() ||
+                             'Unknown Customer';
 
         const artistName = appointment.artist?.name || 'Unknown Artist';
 
-        const startTime = new Date(appointment.start).toLocaleString('de-DE', {
+        // Format dates
+        const startDateTime = appointment.start ? new Date(appointment.start).toLocaleString('de-DE', {
           weekday: 'short',
           year: 'numeric',
           month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
-        });
+        }) : '-';
 
         const endTime = appointment.end ? new Date(appointment.end).toLocaleTimeString('de-DE', {
           hour: '2-digit',
           minute: '2-digit'
         }) : '-';
 
-        const paymentBadges = {
-          'unpaid': '<span style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:600; text-transform:uppercase; background:#fff3cd; color:#856404;">Unpaid 💳</span>',
-          'deposit_paid': '<span style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:600; text-transform:uppercase; background:#d1ecf1; color:#0c5460;">Deposit Paid 💰</span>',
-          'fully_paid': '<span style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:600; text-transform:uppercase; background:#d4edda; color:#155724;">Fully Paid ✅</span>',
-          'refunded': '<span style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:600; text-transform:uppercase; background:#f8d7da; color:#721c24;">Refunded ↩️</span>'
-        };
-
-        const statusBadges = {
-          'scheduled': '<span style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:600; text-transform:uppercase; background:#e3f2fd; color:#1565c0;">Scheduled</span>',
-          'finished': '<span style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:600; text-transform:uppercase; background:#d1f4e0; color:#0d6832;">Finished</span>',
-          'canceled': '<span style="padding:6px 12px; border-radius:12px; font-size:13px; font-weight:600; text-transform:uppercase; background:#ffebee; color:#c62828;">Canceled</span>'
-        };
+        // Get badges
+        const stateBadge = getStateBadge(appointment.state);
+        const statusBadge = getStatusBadge(appointment.status);
+        const paymentBadge = getPaymentStatusBadge(appointment.payment_status);
 
         content.innerHTML = `
-          <!-- Status Section -->
-          <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            ${statusBadges[appointment.status] || statusBadges['scheduled']}
-            ${paymentBadges[appointment.payment_status] || paymentBadges['unpaid']}
-          </div>
-
-          <!-- Customer Information -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h4 style="margin:0 0 12px 0; font-size:16px; font-weight:600; color:#1d1d1f;">👤 Customer Information</h4>
-            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Name</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${customerName}</div>
-              </div>
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Email</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.customer_email || appointment.customer?.email || '-'}</div>
-              </div>
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Phone</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.customer_phone || appointment.customer?.phone || '-'}</div>
-              </div>
-              ${appointment.instagram || appointment.customer?.instagram ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Instagram</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">@${appointment.instagram || appointment.customer?.instagram}</div>
-              </div>
-              ` : ''}
-            </div>
-          </div>
-
-          ${appointment.project_number ? `
-          <!-- Project Information -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h4 style="margin:0 0 12px 0; font-size:16px; font-weight:600; color:#1d1d1f;">📦 Project Information</h4>
-            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Project Number</div>
-                <div style="font-size:15px; color:#0071e3; font-family:monospace; font-weight:600; margin-top:4px;">${appointment.project_number}</div>
-              </div>
-            </div>
-          </div>
-          ` : ''}
-
-          <!-- Appointment Details -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h4 style="margin:0 0 12px 0; font-size:16px; font-weight:600; color:#1d1d1f;">📅 Appointment Details</h4>
-            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Artist</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${artistName}</div>
-              </div>
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Location</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.location?.name || '-'}</div>
-              </div>
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Start</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${startTime}</div>
-              </div>
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">End</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${endTime}</div>
-              </div>
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Booking Type</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.booking_type || '-'}</div>
-              </div>
-              ${appointment.duration_minutes ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Duration</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.duration_minutes} minutes</div>
-              </div>
-              ` : ''}
-            </div>
-          </div>
-
-          ${appointment.placement || appointment.size || appointment.style || appointment.colorway ? `
-          <!-- Tattoo Details -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h4 style="margin:0 0 12px 0; font-size:16px; font-weight:600; color:#1d1d1f;">🎨 Tattoo Details</h4>
-            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">
-              ${appointment.placement ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Placement</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.placement}</div>
-              </div>
-              ` : ''}
-              ${appointment.size ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Size</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.size}</div>
-              </div>
-              ` : ''}
-              ${appointment.style ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Style</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.style}</div>
-              </div>
-              ` : ''}
-              ${appointment.colorway ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Colorway</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">${appointment.colorway}</div>
-              </div>
-              ` : ''}
-            </div>
-          </div>
-          ` : ''}
-
-          <!-- Payment Information -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h4 style="margin:0 0 12px 0; font-size:16px; font-weight:600; color:#1d1d1f;">💰 Payment Information</h4>
-            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Payment Status</div>
-                <div style="font-size:15px; font-weight:600; margin-top:4px; ${appointment.payment_status === 'fully_paid' ? 'color:#34c759;' : appointment.payment_status === 'deposit_paid' ? 'color:#0071e3;' : 'color:#ff9500;'}">${appointment.payment_status || 'unpaid'}</div>
-              </div>
-              ${appointment.price_estimate ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Price Estimate</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">€${parseFloat(appointment.price_estimate).toFixed(2)}</div>
-              </div>
-              ` : ''}
-              ${appointment.deposit_amount ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Deposit</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">€${parseFloat(appointment.deposit_amount).toFixed(2)}</div>
-              </div>
-              ` : ''}
-              ${appointment.payment_amount ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Paid</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">€${parseFloat(appointment.payment_amount).toFixed(2)}</div>
-              </div>
-              ` : ''}
-              ${appointment.total_amount ? `
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Total</div>
-                <div style="font-size:15px; color:#1d1d1f; margin-top:4px;">€${parseFloat(appointment.total_amount).toFixed(2)}</div>
-              </div>
-              ` : ''}
-              ${appointment.stripe_payment_link ? `
-              <div style="grid-column:1/-1;">
-                <div style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Payment Link</div>
-                <a href="${appointment.stripe_payment_link}" target="_blank" style="display:inline-block; padding:8px 16px; background:#0071e3; color:white; text-decoration:none; border-radius:6px; font-size:14px; font-weight:500; transition:all 0.2s;">Open Stripe Payment Link →</a>
-              </div>
-              ` : ''}
-            </div>
-          </div>
-
-          ${appointment.customer_notes || appointment.internal_notes ? `
-          <!-- Notes -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h4 style="margin:0 0 12px 0; font-size:16px; font-weight:600; color:#1d1d1f;">📝 Notes</h4>
-            ${appointment.customer_notes ? `
-            <div style="margin-bottom:12px;">
-              <div style="font-weight:600; font-size:13px; color:#1d1d1f; margin-bottom:6px;">Customer Notes:</div>
-              <p style="font-size:14px; color:#3c3c43; margin:0; line-height:1.5;">${appointment.customer_notes}</p>
-            </div>
-            ` : ''}
-            ${appointment.internal_notes ? `
+          <!-- Header Row -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:2px solid rgba(0,0,0,0.1);">
             <div>
-              <div style="font-weight:600; font-size:13px; color:#1d1d1f; margin-bottom:6px;">Internal Notes:</div>
-              <p style="font-size:14px; color:#3c3c43; margin:0; line-height:1.5;">${appointment.internal_notes}</p>
+              <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:700; color:#1d1d1f;">${appointment.project_number || 'Kein Projekt'}</h3>
+              <span style="font-size:13px; color:#86868b;">📍 ${appointment.location?.name || 'Unknown Location'} ${appointment.location?.city ? '- ' + appointment.location.city : ''}</span>
             </div>
-            ` : ''}
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${stateBadge}
+              ${statusBadge}
+            </div>
           </div>
-          ` : ''}
+
+          <!-- Two Column Layout -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+
+            <!-- LEFT COLUMN -->
+            <div style="display:flex; flex-direction:column; gap:20px;">
+
+              <!-- Customer Information -->
+              <div style="background:#fafafa; padding:16px; border-radius:8px;">
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">👤 Customer Information</h4>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">VORNAME</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.first_name || appointment.customer?.first_name || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">NACHNAME</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.last_name || appointment.customer?.last_name || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">EMAIL</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.customer_email || appointment.customer?.email || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PHONE</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.customer_phone || appointment.customer?.phone || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">INSTAGRAM</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.instagram || appointment.customer?.instagram || 'No entry data'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Request Details -->
+              <div style="background:#fafafa; padding:16px; border-radius:8px;">
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">📋 Request Details</h4>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PLACEMENT</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.placement || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">SIZE</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.size || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">STYLE</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.style || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">COLORWAY</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.colorway || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">BOOKING TYPE</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.booking_type || 'No entry data'}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div style="display:flex; flex-direction:column; gap:20px;">
+
+              <!-- Appointment Details -->
+              <div style="background:#fafafa; padding:16px; border-radius:8px;">
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">📅 Appointment Details</h4>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">ARTIST</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${artistName}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">START</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${startDateTime}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">END</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${endTime}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">CREATOR</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.creator_email || 'No entry data'}</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">WORK PROCESS</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.work_process || 'No entry data'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Information -->
+              <div style="background:#fafafa; padding:16px; border-radius:8px;">
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">💰 Payment Information</h4>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAYMENT STATUS</span>
+                    ${paymentBadge}
+                  </div>
+                  ${appointment.price_estimate ? `
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PRICE ESTIMATE</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">€${parseFloat(appointment.price_estimate).toFixed(2)}</span>
+                  </div>
+                  ` : ''}
+                  ${appointment.deposit_amount ? `
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">DEPOSIT</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">€${parseFloat(appointment.deposit_amount).toFixed(2)}</span>
+                  </div>
+                  ` : ''}
+                  ${appointment.payment_amount ? `
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAID</span>
+                    <span style="font-size:14px; color:#34c759; font-weight:600;">€${parseFloat(appointment.payment_amount).toFixed(2)}</span>
+                  </div>
+                  ` : ''}
+                  ${appointment.total_amount ? `
+                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">TOTAL</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">€${parseFloat(appointment.total_amount).toFixed(2)}</span>
+                  </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              ${appointment.customer_notes || appointment.internal_notes || appointment.description || appointment.notice ? `
+              <!-- Notes & Description -->
+              <div style="background:#fafafa; padding:16px; border-radius:8px;">
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">📝 Notes & Description</h4>
+                ${appointment.description ? `
+                <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
+                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">DESCRIPTION</strong>
+                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.description}</p>
+                </div>
+                ` : ''}
+                ${appointment.notice ? `
+                <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
+                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">NOTICE</strong>
+                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.notice}</p>
+                </div>
+                ` : ''}
+                ${appointment.customer_notes ? `
+                <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
+                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">CUSTOMER NOTES</strong>
+                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.customer_notes}</p>
+                </div>
+                ` : ''}
+                ${appointment.internal_notes ? `
+                <div style="background:white; padding:10px; border-radius:6px;">
+                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">INTERNAL NOTES</strong>
+                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.internal_notes}</p>
+                </div>
+                ` : ''}
+              </div>
+              ` : ''}
+
+            </div>
+
+          </div>
         `;
 
-        // Set up edit button - for now, open the edit event modal
+        // Set up buttons
         document.getElementById('appointmentDetailsEditBtn').onclick = () => {
-          closeAppointmentDetailsModal();
-          // Re-trigger the edit modal for this appointment
-          const event = events.find(e => e.id === appointmentId);
-          if (event) {
-            openEditBookingModal(appointmentId, appointment, event);
-          }
+          editAppointmentState(appointmentId, appointment.state || 'Unbekannt');
         };
 
         modal.classList.add('active');
@@ -11396,6 +11576,155 @@
       // Close Appointment Details Modal
       window.closeAppointmentDetailsModal = function() {
         const modal = document.getElementById('appointmentDetailsModal');
+        if (modal) {
+          modal.classList.remove('active');
+        }
+      };
+
+      // ============================================
+      // EDIT APPOINTMENT STATE MODAL
+      // ============================================
+      window.editAppointmentState = async function(appointmentId, currentState) {
+        console.log('✏️ Edit state for appointment:', appointmentId, 'Current:', currentState);
+
+        // First, close the details modal
+        closeAppointmentDetailsModal();
+
+        // Create or get the edit state modal
+        let modal = document.getElementById('editStateModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'editStateModal';
+          modal.className = 'modal-backdrop';
+          document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+          <div class="modal" style="max-width:500px;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 style="margin:0;">Appointment Status ändern</h3>
+              <button type="button" class="btn btn-icon" onclick="closeEditStateModal()" style="padding:4px 12px; font-size:20px;">×</button>
+            </div>
+
+            <div class="modal-body">
+              <p style="color:#666; font-size:14px; margin:0 0 20px 0;">Wähle den neuen Status für diesen Termin:</p>
+
+              <div class="state-options" style="display:flex; flex-direction:column; gap:12px;">
+                <label class="state-option ${currentState === 'Zugesagt' ? 'selected' : ''}" style="display:block; cursor:pointer;">
+                  <input type="radio" name="state" value="Zugesagt" ${currentState === 'Zugesagt' ? 'checked' : ''} style="display:none;">
+                  <div class="option-content" style="display:flex; align-items:center; gap:12px; padding:16px; background:#fafafa; border:2px solid ${currentState === 'Zugesagt' ? '#0071e3' : '#e0e0e0'}; border-radius:8px; transition:all 0.2s;">
+                    <span style="font-size:24px;">✅</span>
+                    <span style="font-size:15px; font-weight:600; color:#1d1d1f;">Zugesagt</span>
+                  </div>
+                </label>
+
+                <label class="state-option ${currentState === 'Unbekannt' ? 'selected' : ''}" style="display:block; cursor:pointer;">
+                  <input type="radio" name="state" value="Unbekannt" ${currentState === 'Unbekannt' ? 'checked' : ''} style="display:none;">
+                  <div class="option-content" style="display:flex; align-items:center; gap:12px; padding:16px; background:#fafafa; border:2px solid ${currentState === 'Unbekannt' ? '#0071e3' : '#e0e0e0'}; border-radius:8px; transition:all 0.2s;">
+                    <span style="font-size:24px;">❓</span>
+                    <span style="font-size:15px; font-weight:600; color:#1d1d1f;">Unbekannt</span>
+                  </div>
+                </label>
+
+                <label class="state-option ${currentState === 'Ill/No Show' ? 'selected' : ''}" style="display:block; cursor:pointer;">
+                  <input type="radio" name="state" value="Ill/No Show" ${currentState === 'Ill/No Show' ? 'checked' : ''} style="display:none;">
+                  <div class="option-content" style="display:flex; align-items:center; gap:12px; padding:16px; background:#fafafa; border:2px solid ${currentState === 'Ill/No Show' ? '#0071e3' : '#e0e0e0'}; border-radius:8px; transition:all 0.2s;">
+                    <span style="font-size:24px;">👻</span>
+                    <span style="font-size:15px; font-weight:600; color:#1d1d1f;">Didn't Show Up</span>
+                  </div>
+                </label>
+
+                <label class="state-option ${currentState === 'Verschoben' ? 'selected' : ''}" style="display:block; cursor:pointer;">
+                  <input type="radio" name="state" value="Verschoben" ${currentState === 'Verschoben' ? 'checked' : ''} style="display:none;">
+                  <div class="option-content" style="display:flex; align-items:center; gap:12px; padding:16px; background:#fafafa; border:2px solid ${currentState === 'Verschoben' ? '#0071e3' : '#e0e0e0'}; border-radius:8px; transition:all 0.2s;">
+                    <span style="font-size:24px;">🔄</span>
+                    <span style="font-size:15px; font-weight:600; color:#1d1d1f;">Rescheduled</span>
+                  </div>
+                </label>
+
+                <label class="state-option ${currentState === 'Reserviert' ? 'selected' : ''}" style="display:block; cursor:pointer;">
+                  <input type="radio" name="state" value="Reserviert" ${currentState === 'Reserviert' ? 'checked' : ''} style="display:none;">
+                  <div class="option-content" style="display:flex; align-items:center; gap:12px; padding:16px; background:#fafafa; border:2px solid ${currentState === 'Reserviert' ? '#0071e3' : '#e0e0e0'}; border-radius:8px; transition:all 0.2s;">
+                    <span style="font-size:24px;">📌</span>
+                    <span style="font-size:15px; font-weight:600; color:#1d1d1f;">Reserved</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top:24px; display:flex; gap:12px; justify-content:flex-end;">
+              <button type="button" class="btn btn-secondary" onclick="closeEditStateModal()">Abbrechen</button>
+              <button type="button" class="btn btn-primary" onclick="saveAppointmentState('${appointmentId}')">Speichern</button>
+            </div>
+          </div>
+        `;
+
+        // Add click handlers to labels
+        modal.querySelectorAll('.state-option').forEach(option => {
+          option.addEventListener('click', function() {
+            // Remove selected class from all
+            modal.querySelectorAll('.state-option').forEach(opt => {
+              opt.classList.remove('selected');
+              opt.querySelector('.option-content').style.background = '#fafafa';
+              opt.querySelector('.option-content').style.borderColor = '#e0e0e0';
+            });
+            // Add to clicked one
+            this.classList.add('selected');
+            this.querySelector('.option-content').style.background = '#e3f2fd';
+            this.querySelector('.option-content').style.borderColor = '#0071e3';
+            // Check the radio
+            this.querySelector('input[type="radio"]').checked = true;
+          });
+        });
+
+        modal.classList.add('active');
+      };
+
+      window.saveAppointmentState = async function(appointmentId) {
+        const selectedState = document.querySelector('#editStateModal input[name="state"]:checked')?.value;
+
+        if (!selectedState) {
+          alert('Bitte wähle einen Status aus');
+          return;
+        }
+
+        console.log('💾 Saving state:', selectedState, 'for appointment:', appointmentId);
+
+        try {
+          // Update appointment state
+          // SQL trigger will automatically update status based on state + end time
+          const { data, error } = await supabase
+            .from('appointments')
+            .update({
+              state: selectedState,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', appointmentId)
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          console.log('✅ State updated successfully:', data);
+
+          // Close modal
+          closeEditStateModal();
+
+          // Reload calendar
+          await loadInitialData();
+          renderCalendar();
+
+          // Show success message
+          alert('Status erfolgreich aktualisiert!');
+
+        } catch (error) {
+          console.error('❌ Error updating state:', error);
+          alert('Fehler beim Aktualisieren des Status: ' + error.message);
+        }
+      };
+
+      window.closeEditStateModal = function() {
+        const modal = document.getElementById('editStateModal');
         if (modal) {
           modal.classList.remove('active');
         }
