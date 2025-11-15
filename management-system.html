@@ -1766,6 +1766,11 @@
       color: #c62828;
     }
 
+    .status-archived, .status-badge.status-archived {
+      background: rgba(142, 142, 147, 0.1);
+      color: #8E8E93;
+    }
+
     /* ============================================
        STATE BADGES (DEUTSCH) - Appointment State Management
        ============================================ */
@@ -1839,6 +1844,11 @@
     .status-badge.rescheduled {
       background: #fff3cd;
       color: #856404;
+    }
+
+    .status-badge.archived {
+      background: rgba(142, 142, 147, 0.1);
+      color: #8E8E93;
     }
 
     /* ============================================
@@ -2886,6 +2896,19 @@
       <h2>📊 Project Overview</h2>
       <div id="projectKPIs"></div>
     </div>
+
+    <!-- REQUEST & APPOINTMENT ANALYTICS -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+      <!-- Request Status Chart -->
+      <div style="background: rgba(255,255,255,0.95); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.06);">
+        <div id="requestStatusChart"></div>
+      </div>
+
+      <!-- Appointment Status Chart -->
+      <div style="background: rgba(255,255,255,0.95); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.06);">
+        <div id="appointmentStatusChart"></div>
+      </div>
+    </div>
   </section>
 
   <section id="requests-section">
@@ -2923,6 +2946,7 @@
       <button class="request-tab" data-status="scheduled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Scheduled</button>
       <button class="request-tab" data-status="finished" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Finished</button>
       <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
+      <button class="request-tab" data-status="archived" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Archived</button>
     </div>
 
     <!-- Create Request Button (Only visible in New Requests tab) -->
@@ -5754,64 +5778,285 @@
         }
       }
 
+      // ============================================
+      // COMPLETE DASHBOARD STATS FUNCTION
+      // ============================================
       async function loadDashboard() {
+        console.log('📊 Loading Dashboard Statistics...');
+
         try {
-          // Agreements für die nächsten 7 Tage laden (nur echte Appointments, keine Events)
-          const today = new Date().toISOString().split('T')[0];
-          const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          // 1. LOAD ALL REQUESTS WITH STATUS
+          const { data: allRequests, error: reqError } = await supabase
+            .from('requests')
+            .select('status, created_at');
 
-          // Load all dashboard data in parallel - OPTIMIZED VERSION
-          const [
-            { data: reqs },
-            { data: artists },
-            { data: upcomingEvents }
-          ] = await Promise.all([
-            supabase.from('requests').select('*'),
-            supabase.from('artists').select('*'),
-            // Load from appointments table instead of events (events table structure changed)
-            supabase
-              .from('appointments')
-              .select('id, customer_id')
-              .gte('start', `${today}T00:00:00`)
-              .lte('start', `${nextWeek}T23:59:59`)
-          ]);
+          if (reqError) throw reqError;
 
-          // Agreement tracking - appointments don't have agreement_file_url field
-          // Total appointments with customers in the next week
-          const totalAgreements = upcomingEvents?.filter(e => e.customer_id).length || 0;
-          const completedAgreements = 0; // Not tracked in appointments table
-          const pendingAgreements = totalAgreements;
+          console.log('✅ Loaded', allRequests?.length || 0, 'total requests');
 
-          // Fast badge updates - no expensive calculations
+          // 2. COUNT REQUESTS BY STATUS (INCLUDING ARCHIVED)
+          const requestCounts = {
+            open_request: 0,
+            pending: 0,
+            scheduled: 0,
+            finished: 0,
+            canceled: 0,
+            archived: 0  // ← NEW STATUS
+          };
+
+          (allRequests || []).forEach(req => {
+            if (requestCounts.hasOwnProperty(req.status)) {
+              requestCounts[req.status]++;
+            }
+          });
+
+          console.log('📊 Request counts:', requestCounts);
+
+          // 3. LOAD APPOINTMENTS WITH STATUS AND DATES
+          const { data: allAppointments, error: aptError } = await supabase
+            .from('appointments')
+            .select('status, start, end, created_at');
+
+          if (aptError) throw aptError;
+
+          console.log('✅ Loaded', allAppointments?.length || 0, 'total appointments');
+
+          // 4. COUNT APPOINTMENTS BY STATUS
+          const appointmentCounts = {
+            scheduled: 0,
+            finished: 0,
+            canceled: 0,
+            no_show: 0,
+            rescheduled: 0,
+            reserved: 0,
+            unknown: 0
+          };
+
+          // Count today's appointments
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+
+          let todayAppointments = 0;
+
+          (allAppointments || []).forEach(apt => {
+            // Count by status
+            if (appointmentCounts.hasOwnProperty(apt.status)) {
+              appointmentCounts[apt.status]++;
+            }
+
+            // Count today's appointments
+            if (apt.start) {
+              const aptDate = new Date(apt.start);
+              if (aptDate >= today && aptDate < tomorrow) {
+                todayAppointments++;
+              }
+            }
+          });
+
+          console.log('📅 Appointment counts:', appointmentCounts);
+          console.log('📅 Today\'s appointments:', todayAppointments);
+
+          // 5. LOAD CUSTOMERS & ARTISTS COUNTS
+          const { count: customerCount } = await supabase
+            .from('customers')
+            .select('*', { count: 'exact', head: true });
+
+          const { count: artistCount } = await supabase
+            .from('artists')
+            .select('*', { count: 'exact', head: true });
+
+          // 6. UPDATE LEGACY BADGES (keep for compatibility)
           const badge1 = document.getElementById('badge-pending');
           const badge2 = document.getElementById('badge-scheduled');
-
-          if (badge1) badge1.textContent = `Pending: ${reqs?.filter(r=>r.status==='pending').length || 0}`;
-          if (badge2) badge2.textContent = `Scheduled: ${reqs?.filter(r=>r.status==='scheduled').length || 0}`;
-
           const badge3 = document.getElementById('badge-residents');
           const badge4 = document.getElementById('badge-guests');
-
-          if (badge3) badge3.textContent = `Residents: ${artists?.filter(a=>!a.is_guest).length || 0}`;
-          if (badge4) badge4.textContent = `Guests: ${artists?.filter(a=>a.is_guest).length || 0}`;
-
           const badge5 = document.getElementById('badge-agreements-completed');
           const badge6 = document.getElementById('badge-agreements-pending');
 
-          if (badge5) badge5.textContent = `Agreements: ${completedAgreements}/${totalAgreements}`;
-          if (badge6) badge6.textContent = `Missing: ${pendingAgreements}`;
+          if (badge1) badge1.textContent = `Pending: ${requestCounts.pending}`;
+          if (badge2) badge2.textContent = `Scheduled: ${requestCounts.scheduled}`;
+          if (badge3) badge3.textContent = `Residents: ${artistCount || 0}`;
+          if (badge4) badge4.textContent = `Guests: 0`;
+          if (badge5) badge5.textContent = `Open Requests: ${requestCounts.open_request}`;
+          if (badge6) badge6.textContent = `Today's Events: ${todayAppointments}`;
 
-          console.log('📊 Dashboard loaded:', {
-            requests: reqs?.length || 0,
-            artists: artists?.length || 0,
-            agreements: totalAgreements
-          });
+          // 7. UPDATE DASHBOARD CHARTS
+          updateRequestStatusBreakdown(requestCounts, allRequests?.length || 0);
+          updateAppointmentStatusBreakdown(appointmentCounts, allAppointments?.length || 0);
 
-          // ✅ Load ONLY Project Overview KPIs for Dashboard
+          // 8. Load project overview KPIs
           await loadProjectOverviewKPIs();
+
+          console.log('✅ Dashboard statistics loaded successfully');
+
         } catch(err) {
-          console.error("Dashboard error:", err);
+          console.error("❌ Dashboard error:", err);
         }
+      }
+
+      // ============================================
+      // UPDATE REQUEST STATUS BREAKDOWN CHART
+      // ============================================
+      function updateRequestStatusBreakdown(counts, total) {
+        console.log('📊 Updating request status breakdown');
+
+        const container = document.getElementById('requestStatusChart');
+
+        if (!container) {
+          console.warn('⚠️ Request status chart container not found');
+          return;
+        }
+
+        // Calculate percentages
+        const percentages = {
+          open_request: ((counts.open_request / total) * 100).toFixed(1),
+          pending: ((counts.pending / total) * 100).toFixed(1),
+          scheduled: ((counts.scheduled / total) * 100).toFixed(1),
+          finished: ((counts.finished / total) * 100).toFixed(1),
+          canceled: ((counts.canceled / total) * 100).toFixed(1),
+          archived: ((counts.archived / total) * 100).toFixed(1)
+        };
+
+        container.innerHTML = `
+          <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1d1d1f;">
+              Request Status Breakdown
+            </h3>
+            <p style="margin: 0; font-size: 14px; color: #86868b;">
+              ${total.toLocaleString('de-DE')} Total Requests
+            </p>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <!-- Archived Bar (Largest) -->
+            <div style="height: 40px; background: #8E8E93; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
+              <span style="font-size: 13px;">Archived</span>
+              <span style="font-size: 16px;">${counts.archived.toLocaleString('de-DE')}</span>
+            </div>
+
+            <!-- Finished Bar -->
+            <div style="height: 40px; background: #34C759; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
+              <span style="font-size: 13px;">Finished</span>
+              <span style="font-size: 16px;">${counts.finished.toLocaleString('de-DE')}</span>
+            </div>
+
+            <!-- Open Request Bar -->
+            <div style="height: 40px; background: #FFA500; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
+              <span style="font-size: 13px;">Open Request</span>
+              <span style="font-size: 16px;">${counts.open_request.toLocaleString('de-DE')}</span>
+            </div>
+
+            <!-- Scheduled Bar -->
+            <div style="height: 40px; background: #007AFF; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
+              <span style="font-size: 13px;">Scheduled</span>
+              <span style="font-size: 16px;">${counts.scheduled.toLocaleString('de-DE')}</span>
+            </div>
+
+            <!-- Canceled Bar -->
+            <div style="height: 40px; background: #FF3B30; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
+              <span style="font-size: 13px;">Canceled</span>
+              <span style="font-size: 16px;">${counts.canceled.toLocaleString('de-DE')}</span>
+            </div>
+
+            <!-- Pending Bar -->
+            <div style="height: 40px; background: #FFCC00; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
+              <span style="font-size: 13px;">Pending</span>
+              <span style="font-size: 16px;">${counts.pending.toLocaleString('de-DE')}</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <span style="width: 12px; height: 12px; background: #8E8E93; border-radius: 50%;"></span>
+              <span>Archived: ${counts.archived.toLocaleString('de-DE')} (${percentages.archived}%)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <span style="width: 12px; height: 12px; background: #34C759; border-radius: 50%;"></span>
+              <span>Finished: ${counts.finished.toLocaleString('de-DE')} (${percentages.finished}%)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <span style="width: 12px; height: 12px; background: #FFA500; border-radius: 50%;"></span>
+              <span>Open Request: ${counts.open_request.toLocaleString('de-DE')} (${percentages.open_request}%)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <span style="width: 12px; height: 12px; background: #007AFF; border-radius: 50%;"></span>
+              <span>Scheduled: ${counts.scheduled.toLocaleString('de-DE')} (${percentages.scheduled}%)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <span style="width: 12px; height: 12px; background: #FF3B30; border-radius: 50%;"></span>
+              <span>Canceled: ${counts.canceled.toLocaleString('de-DE')} (${percentages.canceled}%)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <span style="width: 12px; height: 12px; background: #FFCC00; border-radius: 50%;"></span>
+              <span>Pending: ${counts.pending.toLocaleString('de-DE')} (${percentages.pending}%)</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // ============================================
+      // UPDATE APPOINTMENT STATUS BREAKDOWN
+      // ============================================
+      function updateAppointmentStatusBreakdown(counts, total) {
+        console.log('📊 Updating appointment status breakdown');
+
+        const container = document.getElementById('appointmentStatusChart');
+
+        if (!container) {
+          console.warn('⚠️ Appointment status chart container not found');
+          return;
+        }
+
+        // Calculate percentages
+        const percentages = {
+          finished: ((counts.finished / total) * 100).toFixed(1),
+          unknown: ((counts.unknown / total) * 100).toFixed(1),
+          scheduled: ((counts.scheduled / total) * 100).toFixed(1),
+          no_show: ((counts.no_show / total) * 100).toFixed(1),
+          rescheduled: ((counts.rescheduled / total) * 100).toFixed(1),
+          canceled: ((counts.canceled / total) * 100).toFixed(1),
+          reserved: ((counts.reserved / total) * 100).toFixed(1)
+        };
+
+        container.innerHTML = `
+          <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1d1d1f;">
+              Appointment Status Breakdown
+            </h3>
+            <p style="margin: 0; font-size: 14px; color: #86868b;">
+              ${total.toLocaleString('de-DE')} Total Appointments
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+            <div style="background: #34C759; padding: 16px; border-radius: 8px; color: white;">
+              <div style="font-size: 24px; font-weight: 700;">${counts.finished.toLocaleString('de-DE')}</div>
+              <div style="font-size: 13px; opacity: 0.9;">Finished (${percentages.finished}%)</div>
+            </div>
+            <div style="background: #8E8E93; padding: 16px; border-radius: 8px; color: white;">
+              <div style="font-size: 24px; font-weight: 700;">${counts.unknown.toLocaleString('de-DE')}</div>
+              <div style="font-size: 13px; opacity: 0.9;">Unknown (${percentages.unknown}%)</div>
+            </div>
+            <div style="background: #007AFF; padding: 16px; border-radius: 8px; color: white;">
+              <div style="font-size: 24px; font-weight: 700;">${counts.scheduled.toLocaleString('de-DE')}</div>
+              <div style="font-size: 13px; opacity: 0.9;">Scheduled (${percentages.scheduled}%)</div>
+            </div>
+            <div style="background: #FF3B30; padding: 16px; border-radius: 8px; color: white;">
+              <div style="font-size: 24px; font-weight: 700;">${counts.no_show.toLocaleString('de-DE')}</div>
+              <div style="font-size: 13px; opacity: 0.9;">No Show (${percentages.no_show}%)</div>
+            </div>
+            <div style="background: #FF9500; padding: 16px; border-radius: 8px; color: white;">
+              <div style="font-size: 24px; font-weight: 700;">${counts.rescheduled.toLocaleString('de-DE')}</div>
+              <div style="font-size: 13px; opacity: 0.9;">Rescheduled (${percentages.rescheduled}%)</div>
+            </div>
+            <div style="background: #FF2D55; padding: 16px; border-radius: 8px; color: white;">
+              <div style="font-size: 24px; font-weight: 700;">${counts.canceled.toLocaleString('de-DE')}</div>
+              <div style="font-size: 13px; opacity: 0.9;">Canceled (${percentages.canceled}%)</div>
+            </div>
+          </div>
+        `;
       }
 
       // ============================================
@@ -6560,8 +6805,10 @@
             emptyMessage = 'Keine abgeschlossenen Requests';
           } else if (currentRequestStatus === 'canceled') {
             emptyMessage = 'Keine stornierten Requests';
+          } else if (currentRequestStatus === 'archived') {
+            emptyMessage = 'Keine archivierten Requests';
           }
-          
+
           listEl.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted);">${emptyMessage}</div>`;
           return;
         }
