@@ -5785,12 +5785,30 @@
         console.log('📊 Loading Dashboard Statistics...');
 
         try {
-          // 1. LOAD ALL REQUESTS WITH STATUS
-          const { data: allRequests, error: reqError } = await supabase
-            .from('requests')
-            .select('status, created_at');
+          // 1. LOAD ALL REQUESTS WITH STATUS (Handle 34K+ rows with pagination)
+          console.log('📥 Loading all requests...');
+          let allRequests = [];
+          let from = 0;
+          const batchSize = 1000;
+          let hasMore = true;
 
-          if (reqError) throw reqError;
+          while (hasMore) {
+            const { data: batch, error: reqError } = await supabase
+              .from('requests')
+              .select('status, created_at')
+              .range(from, from + batchSize - 1);
+
+            if (reqError) throw reqError;
+
+            if (batch && batch.length > 0) {
+              allRequests = allRequests.concat(batch);
+              from += batchSize;
+              hasMore = batch.length === batchSize;
+              console.log(`  ↳ Loaded ${allRequests.length} requests so far...`);
+            } else {
+              hasMore = false;
+            }
+          }
 
           console.log('✅ Loaded', allRequests?.length || 0, 'total requests');
 
@@ -5812,12 +5830,28 @@
 
           console.log('📊 Request counts:', requestCounts);
 
-          // 3. LOAD APPOINTMENTS WITH STATUS AND DATES
-          const { data: allAppointments, error: aptError } = await supabase
-            .from('appointments')
-            .select('status, start, end, created_at');
+          // 3. LOAD ALL APPOINTMENTS WITH STATUS AND DATES (Handle 1K+ rows with pagination)
+          console.log('📥 Loading all appointments...');
+          let allAppointments = [];
+          from = 0;
+          hasMore = true;
 
-          if (aptError) throw aptError;
+          while (hasMore) {
+            const { data: batch, error: aptError } = await supabase
+              .from('appointments')
+              .select('status, start, end, created_at')
+              .range(from, from + batchSize - 1);
+
+            if (aptError) throw aptError;
+
+            if (batch && batch.length > 0) {
+              allAppointments = allAppointments.concat(batch);
+              from += batchSize;
+              hasMore = batch.length === batchSize;
+            } else {
+              hasMore = false;
+            }
+          }
 
           console.log('✅ Loaded', allAppointments?.length || 0, 'total appointments');
 
