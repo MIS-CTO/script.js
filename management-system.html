@@ -2878,9 +2878,87 @@
       font-weight: 600;
       color: #1d1d1f;
     }
+
+    /* Loading Progress Bar */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-line {
+      width: 300px;
+      height: 6px;
+      background: #2a2a2a;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #7c5bff;
+      border-radius: inherit;
+      transition: width 0.15s linear;
+    }
+
+    .progress-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #fff;
+    }
+
+    .progress-percent {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .progress-text {
+      color: #ddd;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
+  <!-- Loading Progress Bar Overlay -->
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-container">
+      <div class="progress-info">
+        <div class="progress-line">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-percent" id="progressPercent">0%</div>
+      </div>
+      <div class="progress-text" id="progressText">Loading data...</div>
+    </div>
+  </div>
+
   <nav>
     <a id="tab-dashboard" class="active" href="#dashboard">Dashboard</a>
     <span style="width: 24px;"></span>
@@ -3414,7 +3492,7 @@
             </div>
 
             <div style="position: relative; width: 100%; height: 400px; margin-top: 16px;">
-              <canvas id="bookingsTimeline"></canvas>
+              <canvas id="bookingsTimeline" style="width: 600px; height: 400px;"></canvas>
             </div>
           </div>
 
@@ -5088,6 +5166,72 @@
     let revenueTimelineChart = null;
     let artistDistributionChartInstance = null;
     let revenueByStatusChartInstance = null;
+
+    // ========================================
+    // LOADING PROGRESS BAR SYSTEM
+    // ========================================
+
+    const ProgressBar = {
+      overlay: null,
+      fill: null,
+      percent: null,
+      text: null,
+      currentProgress: 0,
+
+      init() {
+        this.overlay = document.getElementById('loadingOverlay');
+        this.fill = document.getElementById('progressFill');
+        this.percent = document.getElementById('progressPercent');
+        this.text = document.getElementById('progressText');
+      },
+
+      show(message = 'Loading data...') {
+        if (!this.overlay) this.init();
+        this.currentProgress = 0;
+        this.overlay.classList.remove('hidden');
+        this.updateProgress(0, message);
+      },
+
+      updateProgress(progress, message = null) {
+        if (!this.overlay) this.init();
+        this.currentProgress = Math.min(100, Math.max(0, progress));
+        this.fill.style.width = this.currentProgress + '%';
+        this.percent.textContent = Math.round(this.currentProgress) + '%';
+        if (message) {
+          this.text.textContent = message;
+        }
+      },
+
+      hide() {
+        if (!this.overlay) this.init();
+        this.updateProgress(100, 'Complete!');
+        setTimeout(() => {
+          this.overlay.classList.add('hidden');
+        }, 300);
+      },
+
+      // Simulate progress for async operations
+      simulateProgress(startPercent, endPercent, duration, message) {
+        return new Promise((resolve) => {
+          const start = this.currentProgress || startPercent;
+          const diff = endPercent - start;
+          const steps = 20;
+          const stepDuration = duration / steps;
+          let currentStep = 0;
+
+          const interval = setInterval(() => {
+            currentStep++;
+            const progress = start + (diff * (currentStep / steps));
+            this.updateProgress(progress, message);
+
+            if (currentStep >= steps) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, stepDuration);
+        });
+      }
+    };
 
     // ========================================
     // PAYMENT SYSTEM CONFIGURATION
@@ -16122,11 +16266,16 @@
       console.log('📊 ANALYTICS VERSION: 2025-11-15 - Complete Fix');
 
       try {
+        // Show progress bar
+        ProgressBar.show('Starting to load analytics data...');
+
         // Show loading state
         const analyticsContent = document.getElementById('analyticsContent');
         if (analyticsContent) {
           analyticsContent.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p>Loading analytics data...</p></div>';
         }
+
+        ProgressBar.updateProgress(10, 'Loading requests...');
 
         // Load ALL requests (no pagination limit)
         console.log('📥 Loading all requests for analytics...');
@@ -16149,6 +16298,10 @@
 
           if (requestsBatch && requestsBatch.length > 0) {
             allRequests = [...allRequests, ...requestsBatch];
+            // Update progress during request loading (10% to 35%)
+            const requestProgress = 10 + (25 * Math.min(page / 10, 1));
+            ProgressBar.updateProgress(requestProgress, `Loading requests (${allRequests.length} loaded)...`);
+
             if (page % 5 === 0) { // Log every 5 batches
               console.log(`  ↳ Loaded ${allRequests.length} requests so far...`);
             }
@@ -16164,6 +16317,7 @@
         }
 
         console.log(`✅ Loaded ${allRequests.length} total requests`);
+        ProgressBar.updateProgress(40, `Loaded ${allRequests.length} requests. Loading appointments...`);
 
         // Load ALL appointments (no pagination limit)
         console.log('📥 Loading all appointments for analytics...');
@@ -16185,6 +16339,10 @@
 
           if (appointmentsBatch && appointmentsBatch.length > 0) {
             allAppointments = [...allAppointments, ...appointmentsBatch];
+            // Update progress during appointment loading (40% to 65%)
+            const appointmentProgress = 40 + (25 * Math.min(page / 10, 1));
+            ProgressBar.updateProgress(appointmentProgress, `Loading appointments (${allAppointments.length} loaded)...`);
+
             if (page % 5 === 0) { // Log every 5 batches
               console.log(`  ↳ Loaded ${allAppointments.length} appointments so far...`);
             }
@@ -16200,6 +16358,7 @@
         }
 
         console.log(`✅ Loaded ${allAppointments.length} total appointments`);
+        ProgressBar.updateProgress(70, 'Calculating analytics...');
 
         // Calculate analytics data
         console.log('📊 Calculating analytics...');
@@ -16291,16 +16450,21 @@
         }
 
         // Calculate project metrics
+        ProgressBar.updateProgress(75, 'Calculating metrics...');
         const projectMetrics = window.calculateProjectMetrics(allRequests, allAppointments);
 
         // Render analytics sections
+        ProgressBar.updateProgress(80, 'Rendering charts...');
         console.log('🎨 Rendering analytics sections...');
 
         renderRequestsOverview(filteredRequests, filteredAppointments);
+        ProgressBar.updateProgress(85, 'Rendering status breakdowns...');
         renderRequestStatusBreakdown(allRequests, requestStatusCounts);
         renderAppointmentStatusBreakdown(allAppointments, appointmentStatusCounts);
+        ProgressBar.updateProgress(90, 'Rendering revenue data...');
         renderRevenueOverview(allRequests, allAppointments);
         renderRevenueTimeline(allRequests);
+        ProgressBar.updateProgress(95, 'Finalizing charts...');
         renderAppointmentsByArtist(allAppointments);
         renderRevenueByPaymentStatus(allRequests);
         renderProjectAnalytics(projectMetrics);
@@ -16308,9 +16472,11 @@
         renderVIPCustomers(allRequests);
 
         console.log('✅ Analytics page loaded successfully');
+        ProgressBar.hide();
 
       } catch (error) {
         console.error('❌ Error loading analytics:', error);
+        ProgressBar.hide();
         const analyticsContent = document.getElementById('analyticsContent');
         if (analyticsContent) {
           analyticsContent.innerHTML = `
