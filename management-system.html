@@ -3452,7 +3452,7 @@
       <!-- Request Status Card -->
       <div class="chart-card">
         <h3>Status Anfragen (<span id="requestStatusTotal">0</span>)</h3>
-        <canvas id="requestStatusChart"></canvas>
+        <canvas id="requestStatusChartAnalytics"></canvas>
         <table class="data-table" style="margin-top: 16px;">
           <thead>
             <tr>
@@ -6187,7 +6187,7 @@
        * - ACTIVE: At least one appointment is 'scheduled'
        * - CANCELED: ALL appointments are 'canceled'
        */
-      function calculateProjectMetrics(appointments) {
+      window.calculateProjectMetrics = function calculateProjectMetrics(appointments) {
         // Group by project_number
         const projects = {};
 
@@ -15927,7 +15927,7 @@
         document.getElementById('requestStatusTotal').textContent = total;
 
         // Render chart
-        const ctx = document.getElementById('requestStatusChart');
+        const ctx = document.getElementById('requestStatusChartAnalytics');
         if (!ctx) return;
 
         if (requestStatusChartInstance) {
@@ -16004,42 +16004,51 @@
           .from('appointments')
           .select(`
             id,
+            artist_id,
             artist_email,
-            state,
-            artist:artists!appointments_artist_email_fkey (
+            status,
+            artists!appointments_artist_id_fkey (
+              id,
               email,
               is_guest,
               name
             )
           `)
-          .eq('artist:artists.is_guest', false);  // Only resident artists
+          .not('artist_id', 'is', null);
 
         if (error) {
           console.error('❌ Error loading appointments with artists:', error);
           throw error;
         }
 
-        console.log(`🎨 Loaded ${appointmentsWithArtist?.length || 0} appointments from resident artists`);
+        console.log(`🎨 Loaded ${appointmentsWithArtist?.length || 0} total appointments with artists`);
+
+        // Filter for resident artists only (is_guest = false)
+        const residentAppointments = appointmentsWithArtist?.filter(apt =>
+          apt.artists && !apt.artists.is_guest
+        ) || [];
+
+        console.log(`🎨 Filtered to ${residentAppointments.length} resident artist appointments`);
 
         // Aggregate by artist
         const artistCounts = {};
         let completedCount = 0;
         let anyCount = 0;
 
-        appointmentsWithArtist?.forEach(apt => {
-          const artistName = apt.artist?.name || apt.artist_email?.split('@')[0] || 'Unknown';
+        residentAppointments.forEach(apt => {
+          const artistName = apt.artists?.name || apt.artist_email?.split('@')[0] || 'Unknown';
           artistCounts[artistName] = (artistCounts[artistName] || 0) + 1;
 
-          if (apt.state === 'Zugesagt' || apt.state === 'completed' || apt.state === 'done') {
+          if (apt.status === 'finished') {
             completedCount++;
           }
 
-          if (!apt.artist_email) {
+          if (!apt.artist_email && !apt.artist_id) {
             anyCount++;
           }
         });
 
-        const total = appointmentsWithArtist?.length || 0;
+        const total = residentAppointments.length;
         const notCompleted = total - completedCount;
 
         // Group small artists (< 10 appointments)
