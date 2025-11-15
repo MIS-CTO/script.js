@@ -5017,6 +5017,20 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // ========================================
+    // GLOBAL CHART INSTANCES (Declared early to avoid TDZ errors)
+    // ========================================
+    let requestStatusChartInstance = null;
+    let appointmentStatusChartInstance = null;
+    let projectsTimelineChartInstance = null;
+    let revenueByMonthChartInstance = null;
+    let topArtistsChartInstance = null;
+    let originsPieChart = null;
+    let timelineChart = null;
+    let revenueTimelineChart = null;
+    let artistDistributionChartInstance = null;
+    let revenueByStatusChartInstance = null;
+
+    // ========================================
     // PAYMENT SYSTEM CONFIGURATION
     // ========================================
 
@@ -6000,8 +6014,6 @@
       // ============================================
       // UPDATE REQUEST STATUS BREAKDOWN CHART (PIE)
       // ============================================
-      let requestStatusChartInstance = null;
-
       function updateRequestStatusBreakdown(counts, total) {
         console.log('📊 Updating request status breakdown');
 
@@ -6112,8 +6124,6 @@
       // ============================================
       // UPDATE APPOINTMENT STATUS BREAKDOWN (PIE)
       // ============================================
-      let appointmentStatusChartInstance = null;
-
       function updateAppointmentStatusBreakdown(counts, total) {
         console.log('📊 Updating appointment status breakdown');
 
@@ -6245,7 +6255,7 @@
           if (error) throw error;
 
           // Calculate metrics
-          const metrics = calculateProjectMetrics(appointments || []);
+          const metrics = window.calculateProjectMetrics(appointments || []);
 
           // Update ONLY KPI cards on dashboard
           const kpiContainer = document.getElementById('projectKPIs');
@@ -6325,8 +6335,6 @@
         }
       }
 
-      let projectsTimelineChartInstance = null;
-
       window.loadProjectsTimelineChart = function loadProjectsTimelineChart(appointments) {
         const chartCanvas = document.getElementById('projectsTimelineChart');
         if (!chartCanvas) return;
@@ -6405,8 +6413,6 @@
         });
       }
 
-      let revenueByMonthChartInstance = null;
-
       window.loadRevenueByMonthChart = function loadRevenueByMonthChart(appointments) {
         const chartCanvas = document.getElementById('revenueByMonthChart');
         if (!chartCanvas) return;
@@ -6482,8 +6488,6 @@
           }
         });
       }
-
-      let topArtistsChartInstance = null;
 
       window.loadTopArtistsChart = function loadTopArtistsChart(appointments) {
         const chartCanvas = document.getElementById('topArtistsChart');
@@ -14125,8 +14129,6 @@
     // ANALYTICS SECTION
     // ========================================
 
-    let originsPieChart = null;
-    let timelineChart = null;
     let currentTimeRange = 'weekly';
     let appointmentsData = []; // For timeline chart
     let requestsData = []; // For origin chart
@@ -15282,8 +15284,6 @@
     }
 
     // Render Revenue Timeline Chart
-    let revenueTimelineChart = null;
-
     async function renderRevenueTimeline(data) {
       console.log('💰 Rendering revenue timeline with', data.length, 'projects');
 
@@ -15864,7 +15864,6 @@
     }
 
     // Load Artist Distribution (appointments by resident artists only)
-    let artistDistributionChartInstance = null;
     async function loadArtistDistribution(appointments) {
       try {
         console.log('🎨 Loading artist distribution from appointments...');
@@ -16035,7 +16034,6 @@
     }
 
     // Load Revenue by Payment Status (projects.price + payment_state)
-    let revenueByStatusChartInstance = null;
     async function loadRevenueByPaymentStatus() {
       try {
         const { data, error } = await supabase
