@@ -897,7 +897,43 @@
       background: #ff3b30;
       border-radius: 50%;
     }
-    
+
+    /* ========================================
+       Artist Info Events - Compact & Full Color
+       ======================================== */
+    .artist-info-event {
+      opacity: 1 !important;
+      font-size: 12px !important;
+      padding: 4px 8px !important;
+      min-height: 30px !important;
+      max-height: 30px !important;
+      height: 30px !important;
+      border-left: none !important;
+      font-weight: 600 !important;
+      border-radius: 6px !important;
+      overflow: hidden !important;
+      cursor: pointer !important;
+      transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+    }
+
+    .artist-info-event:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .artist-info-event::before {
+      content: '📌';
+      margin-right: 4px;
+      font-size: 10px;
+    }
+
+    /* Regular calendar items (not artist infos) */
+    .cal-item:not(.artist-info-event) {
+      min-height: 60px;
+      padding: 8px;
+      border-left-width: 4px;
+    }
+
     /* ========================================
        Modals & Dialogs - Frosted Glass Overlay
        ======================================== */
@@ -5110,6 +5146,7 @@
     let allArtists = [];
     let allTeamMembers = [];
     let allLocations = []; // FIXED: Declare allLocations globally to prevent undefined errors
+    let currentTimeIndicatorInterval = null; // FIXED: Track interval to prevent memory leak
 
     // Sorting state
     let artistSortConfig = { field: 'name', order: 'asc' };
@@ -9433,10 +9470,85 @@
             };
           });
 
-          // 3. Combine events and appointments
-          events = [...processedEvents, ...processedAppointments];
+          // 3. Load ARTIST INFOS (internal artist blocks/notes)
+          console.log('📌 Loading artist infos...');
+          let allArtistInfosData = [];
+          page = 0;
+          hasMore = true;
 
-          console.log(`Total items in calendar: ${events.length} (${processedEvents.length} events + ${processedAppointments.length} appointments)`);
+          while (hasMore) {
+            const { data: artistInfosBatch, error: artistInfosError } = await supabase
+              .from('artist_infos')
+              .select(`
+                *,
+                artist:artists(id, name, is_guest, email)
+              `)
+              .eq('location_id', selectedLocationId)
+              .gte('start', startDateStr)
+              .lte('start', endDateStr + 'T23:59:59')
+              .not('start', 'is', null)
+              .not('end', 'is', null)
+              .order('start', { ascending: true })
+              .range(page * pageSize, (page + 1) * pageSize - 1);
+
+            if (artistInfosError) {
+              console.warn('⚠️ Error loading artist infos batch:', artistInfosError);
+              console.warn('   Artist infos table may not exist yet - skipping');
+              hasMore = false;
+              break;
+            }
+
+            if (artistInfosBatch && artistInfosBatch.length > 0) {
+              allArtistInfosData = [...allArtistInfosData, ...artistInfosBatch];
+              console.log(`Loaded artist infos batch ${page + 1}: ${artistInfosBatch.length} items`);
+
+              if (artistInfosBatch.length < pageSize) {
+                hasMore = false;
+              } else {
+                page++;
+              }
+            } else {
+              hasMore = false;
+            }
+          }
+
+          console.log(`✅ Total artist infos loaded:`, allArtistInfosData.length);
+
+          // Process artist infos
+          const processedArtistInfos = (allArtistInfosData || []).map(info => {
+            const artist = info.artist || allArtists.find(a => a.id === info.artist_id);
+
+            const startHour = parseLocalTime(info.start);
+            const endHour = parseLocalTime(info.end);
+
+            return {
+              id: `artist-info-${info.id}`,
+              originalId: info.id,
+              date: info.start.split('T')[0],
+              category: 'artist_info', // Special category for artist infos
+              slot: info.slot || 1,
+              title: info.notice || 'Artist Note',
+              type: 'artist_info',
+              artistName: artist?.name || 'Unknown Artist',
+              artistId: info.artist_id,
+              customerName: null, // Artist infos have no customers
+              customerId: null,
+              attendanceRequired: false,
+              startHour: startHour,
+              endHour: endHour,
+              startTimeRaw: info.start,
+              endTimeRaw: info.end,
+              isAppointment: false,
+              isArtistInfo: true, // Flag for special rendering
+              notice: info.notice,
+              fullData: info
+            };
+          });
+
+          // 4. Combine events, appointments, and artist infos
+          events = [...processedEvents, ...processedAppointments, ...processedArtistInfos];
+
+          console.log(`Total items in calendar: ${events.length} (${processedEvents.length} events + ${processedAppointments.length} appointments + ${processedArtistInfos.length} artist infos)`);
 
           // Update Location Info
           const { data: locationData } = await supabase
@@ -9448,7 +9560,7 @@
           const infoDiv = document.getElementById('locationInfo');
           if (infoDiv) {
             const dateRangeText = `${startDateStr} to ${endDateStr}`;
-            infoDiv.textContent = `📍 ${locationData?.name || 'Location'} • ${events.length} item${events.length !== 1 ? 's' : ''} (${processedEvents.length} events, ${processedAppointments.length} appointments) • Date range: ${dateRangeText}`;
+            infoDiv.textContent = `📍 ${locationData?.name || 'Location'} • ${events.length} item${events.length !== 1 ? 's' : ''} (${processedEvents.length} events, ${processedAppointments.length} appointments, ${processedArtistInfos.length} artist notes) • Date range: ${dateRangeText}`;
           }
 
           console.log('Processed calendar items:', events);
@@ -9460,6 +9572,187 @@
 
       // Make loadEvents globally available
       window.loadEvents = loadEvents;
+
+      // ============================================
+      // CREATE EVENT / BOOKING FUNCTIONS (STUBS)
+      // ============================================
+      // NOTE: These functions are referenced by onclick handlers in the HTML
+      // but their full implementation is not yet complete
+
+      window.createEvent = function createEvent() {
+        console.warn('⚠️ createEvent() called but not fully implemented');
+        alert('Event-Erstellung:\n\nDiese Funktion wird derzeit entwickelt.\n\nBitte verwenden Sie vorerst alternative Methoden zum Erstellen von Events oder kontaktieren Sie den Administrator.');
+        // TODO: Implement full event creation flow
+        // - Show modal with event form
+        // - Collect event details (title, start, end, artist_id, location_id)
+        // - Validate input
+        // - Insert into events table
+        // - Reload calendar
+      };
+
+      window.createBooking = function createBooking() {
+        console.warn('⚠️ createBooking() called but not fully implemented');
+        alert('Booking-Erstellung:\n\nDiese Funktion wird derzeit entwickelt.\n\nBitte verwenden Sie vorerst alternative Methoden zum Erstellen von Bookings oder kontaktieren Sie den Administrator.');
+        // TODO: Implement full booking creation flow
+        // - Show modal with booking form
+        // - Collect booking details (customer, artist, type, start, end, location_id)
+        // - Validate input
+        // - Insert into appointments table
+        // - Reload calendar
+      };
+
+      // ============================================
+      // ARTIST INFO MODAL
+      // ============================================
+      window.openArtistInfoModal = function openArtistInfoModal(infoId, eventData) {
+        console.log('📌 Opening artist info modal:', infoId, eventData);
+
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('artistInfoModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'artistInfoModal';
+          modal.className = 'modal-backdrop';
+          modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+          `;
+          document.body.appendChild(modal);
+
+          // Close on backdrop click
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+              closeArtistInfoModal();
+            }
+          });
+        }
+
+        // Format dates
+        const formatDateTime = (dateStr) => {
+          if (!dateStr) return 'N/A';
+          const date = new Date(dateStr);
+          return date.toLocaleString('de-DE', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        };
+
+        modal.innerHTML = `
+          <div style="background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div style="padding: 24px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                  📌 Artist Note
+                </h2>
+                <button onclick="closeArtistInfoModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #86868b; line-height: 1; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='none'">×</button>
+              </div>
+
+              <div style="background: rgba(0,0,0,0.03); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                <div style="font-size: 14px; color: #86868b; margin-bottom: 4px;">Artist</div>
+                <div style="font-size: 18px; font-weight: 600;">${eventData.artistName || 'Unknown Artist'}</div>
+              </div>
+
+              <div style="background: rgba(0,0,0,0.03); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                <div style="font-size: 14px; color: #86868b; margin-bottom: 4px;">Note</div>
+                <div style="font-size: 16px; white-space: pre-wrap;">${eventData.notice || 'No note'}</div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div style="background: rgba(0,0,0,0.03); padding: 16px; border-radius: 12px;">
+                  <div style="font-size: 14px; color: #86868b; margin-bottom: 4px;">Start</div>
+                  <div style="font-size: 16px; font-weight: 600;">${formatDateTime(eventData.startTimeRaw)}</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.03); padding: 16px; border-radius: 12px;">
+                  <div style="font-size: 14px; color: #86868b; margin-bottom: 4px;">End</div>
+                  <div style="font-size: 16px; font-weight: 600;">${formatDateTime(eventData.endTimeRaw)}</div>
+                </div>
+              </div>
+
+              <div style="padding: 16px; background: rgba(255, 193, 7, 0.1); border-radius: 12px; border-left: 4px solid #FFC107;">
+                <div style="font-size: 13px; color: #856404; font-weight: 500;">
+                  ℹ️ Artist notes are internal blocks for scheduling and do not count in statistics.
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        modal.style.display = 'flex';
+      };
+
+      window.closeArtistInfoModal = function closeArtistInfoModal() {
+        const modal = document.getElementById('artistInfoModal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+      };
+
+      // ============================================
+      // CREATE ARTIST INFO FUNCTION
+      // ============================================
+      window.createArtistInfo = async function createArtistInfo(artistId, start, end, notice) {
+        try {
+          console.log('📌 Creating artist info:', { artistId, start, end, notice });
+
+          if (!artistId || !start || !end) {
+            throw new Error('Artist ID, start, and end times are required');
+          }
+
+          if (!selectedLocationId) {
+            throw new Error('No location selected');
+          }
+
+          const { data: newInfo, error } = await supabase
+            .from('artist_infos')
+            .insert({
+              artist_id: artistId,
+              location_id: selectedLocationId,
+              start: start,
+              end: end,
+              notice: notice || ''
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          console.log('✅ Created artist info:', newInfo);
+          alert('✅ Artist Note erfolgreich erstellt!');
+
+          // Reload calendar events
+          await loadEvents();
+          renderCalendar();
+
+          return newInfo;
+
+        } catch (error) {
+          console.error('❌ Error creating artist info:', error);
+          alert('Fehler beim Erstellen der Artist Note: ' + error.message);
+          throw error;
+        }
+      };
+
+      // Show create artist info modal (stub - to be implemented later)
+      window.showCreateArtistInfoModal = function showCreateArtistInfoModal() {
+        console.warn('⚠️ showCreateArtistInfoModal() called but not fully implemented');
+        alert('Artist Note Erstellung:\n\nDiese Funktion wird derzeit entwickelt.\n\nVerwenden Sie vorerst die API oder kontaktieren Sie den Administrator.');
+        // TODO: Implement full UI modal for creating artist infos
+        // - Show form with artist selector, date/time pickers, notice textarea
+        // - Validate and call createArtistInfo()
+      };
 
       // Helper function to check if current date is outside loaded range
       function isDateOutsideLoadedRange() {
@@ -9563,7 +9856,8 @@
         const categoriesToRender = [
           { key: 'events', label: 'Events', visible: visibleCategories.events },
           { key: 'resident', label: 'Residents', visible: visibleCategories.residents },
-          { key: 'guest', label: 'Guests', visible: visibleCategories.guests }
+          { key: 'guest', label: 'Guests', visible: visibleCategories.guests },
+          { key: 'artist_info', label: 'Artist Notes', visible: true } // Always show artist infos
         ];
 
         categoriesToRender.forEach(({ key, label, visible }) => {
@@ -9686,7 +9980,12 @@
 
                     // Build content based on category
                     let content = '';
-                    if (cat === 'events') {
+                    let isArtistInfoEvent = cell.event.isArtistInfo === true;
+
+                    if (isArtistInfoEvent) {
+                      // Artist Info: Compact display with just notice text
+                      content = `<div style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cell.event.title}</div>`;
+                    } else if (cat === 'events') {
                       // For events: time, title, and type
                       const titleContent = cell.event.artistId
                         ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.title}</div>`
@@ -9724,8 +10023,14 @@
                     const attendanceIndicator = (cat === 'events' && cell.event.attendanceRequired) ?
                       `<div style="position:absolute; top:8px; right:8px; width:8px; height:8px; background:#ff3b30; border-radius:50%; box-shadow:0 1px 3px rgba(255,59,48,0.4);"></div>` : '';
 
+                    // Artist Info: Use special CSS class and click handler
+                    const artistInfoClass = isArtistInfoEvent ? 'artist-info-event' : '';
+                    const clickHandler = isArtistInfoEvent
+                      ? `onclick="openArtistInfoModal('${cell.event.originalId}', ${JSON.stringify(cell.event).replace(/"/g, '&quot;')})"`
+                      : `onclick="openEditEventModal('${cell.event.id}')"`;
+
                     html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
-                      <div class="event ${cat}" ${typeAttr} data-event-id="${cell.event.id}" onclick="openEditEventModal('${cell.event.id}')" style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start; overflow:hidden;">
+                      <div class="event ${cat} ${artistInfoClass}" ${typeAttr} data-event-id="${cell.event.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
                         ${content}
                         ${attendanceIndicator}
                       </div>
@@ -9747,10 +10052,16 @@
         container.innerHTML = html;
 
         // Add current time indicator if today
+        // Clear old interval if exists (prevent memory leak)
+        if (currentTimeIndicatorInterval) {
+          clearInterval(currentTimeIndicatorInterval);
+          currentTimeIndicatorInterval = null;
+        }
+
         if (isToday) {
           addCurrentTimeIndicator();
-          // Update every minute
-          setInterval(updateCurrentTimeIndicator, 60000);
+          // Update every minute and track interval
+          currentTimeIndicatorInterval = setInterval(updateCurrentTimeIndicator, 60000);
         }
       }
 
@@ -14002,10 +14313,13 @@
       try {
         console.log('🔑 Changing password for:', currentUser.username);
 
+        // Hash password using bcrypt
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
         // Update password in database
         const { error } = await supabase
           .from('profiles')
-          .update({ password_hash: newPassword })
+          .update({ password_hash: hashedPassword })
           .eq('id', currentUser.id);
 
         if (error) {
@@ -14015,7 +14329,7 @@
         }
 
         // Update current user object
-        currentUser.password_hash = newPassword;
+        currentUser.password_hash = hashedPassword;
 
         // Hide form and show success message
         hidePasswordChangeForm();
@@ -14886,6 +15200,13 @@
 
     // Load projects data for revenue analytics
     async function loadProjectsData(locationFilter = null) {
+      // DISABLED: projects table does not exist in current schema
+      console.warn('⚠️ loadProjectsData() DISABLED: "projects" table does not exist');
+      console.warn('   Revenue analytics require "projects" table to be created first');
+      console.warn('   This feature will be available once the table is set up');
+      return [];
+
+      /* ORIGINAL CODE - DISABLED UNTIL PROJECTS TABLE EXISTS
       try {
         console.log('💰 Loading projects data for revenue analytics...');
         console.log('💰 Location filter:', locationFilter);
@@ -15075,6 +15396,7 @@
 
         return [];
       }
+      */ // END OF DISABLED CODE
     }
 
     // Render Revenue Statistics
@@ -16035,6 +16357,12 @@
 
     // Load Revenue by Payment Status (projects.price + payment_state)
     async function loadRevenueByPaymentStatus() {
+      // DISABLED: projects table does not exist in current schema
+      console.warn('⚠️ loadRevenueByPaymentStatus() DISABLED: "projects" table does not exist');
+      console.warn('   Revenue by Payment Status requires "projects" table to be created first');
+      return;
+
+      /* ORIGINAL CODE - DISABLED UNTIL PROJECTS TABLE EXISTS
       try {
         const { data, error } = await supabase
           .from('projects')
@@ -16168,6 +16496,7 @@
       } catch (error) {
         console.error('Error loading revenue by payment status:', error);
       }
+      */ // END OF DISABLED CODE
     }
 
     // Load locations for filter dropdown
