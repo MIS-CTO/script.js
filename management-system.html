@@ -6301,9 +6301,17 @@
         }
       }
 
+      let projectsTimelineChartInstance = null;
+
       window.loadProjectsTimelineChart = function loadProjectsTimelineChart(appointments) {
         const chartCanvas = document.getElementById('projectsTimelineChart');
         if (!chartCanvas) return;
+
+        // Destroy existing chart
+        if (projectsTimelineChartInstance) {
+          projectsTimelineChartInstance.destroy();
+          projectsTimelineChartInstance = null;
+        }
 
         // Group projects by month
         const projectsByMonth = {};
@@ -6325,7 +6333,7 @@
         const counts = sortedMonths.map(m => projectsByMonth[m]);
 
         // Create chart
-        new Chart(chartCanvas, {
+        projectsTimelineChartInstance = new Chart(chartCanvas, {
           type: 'line',
           data: {
             labels: sortedMonths.map(m => {
@@ -6373,9 +6381,17 @@
         });
       }
 
+      let revenueByMonthChartInstance = null;
+
       window.loadRevenueByMonthChart = function loadRevenueByMonthChart(appointments) {
         const chartCanvas = document.getElementById('revenueByMonthChart');
         if (!chartCanvas) return;
+
+        // Destroy existing chart
+        if (revenueByMonthChartInstance) {
+          revenueByMonthChartInstance.destroy();
+          revenueByMonthChartInstance = null;
+        }
 
         // Group revenue by month
         const revenueByMonth = {};
@@ -6395,7 +6411,7 @@
         const revenues = sortedMonths.map(m => revenueByMonth[m]);
 
         // Create chart
-        new Chart(chartCanvas, {
+        revenueByMonthChartInstance = new Chart(chartCanvas, {
           type: 'bar',
           data: {
             labels: sortedMonths.map(m => {
@@ -6443,9 +6459,17 @@
         });
       }
 
+      let topArtistsChartInstance = null;
+
       window.loadTopArtistsChart = function loadTopArtistsChart(appointments) {
         const chartCanvas = document.getElementById('topArtistsChart');
         if (!chartCanvas) return;
+
+        // Destroy existing chart
+        if (topArtistsChartInstance) {
+          topArtistsChartInstance.destroy();
+          topArtistsChartInstance = null;
+        }
 
         // Count unique projects per artist
         const artistProjects = {};
@@ -6467,7 +6491,9 @@
           .slice(0, 10);
 
         if (sorted.length === 0) {
-          chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+          if (chartCanvas.getContext) {
+            chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+          }
           return;
         }
 
@@ -6476,7 +6502,7 @@
           const labels = sorted.map(([id]) => artistNames[id] || 'Unknown');
           const counts = sorted.map(([, count]) => count);
 
-          new Chart(chartCanvas, {
+          topArtistsChartInstance = new Chart(chartCanvas, {
             type: 'bar',
             data: {
               labels: labels,
@@ -6531,7 +6557,7 @@
         return nameMap;
       }
 
-      async function loadArtistPerformanceReport() {
+      window.loadArtistPerformanceReport = async function loadArtistPerformanceReport() {
         console.log('📊 Loading Artist Performance Report...');
 
         try {
@@ -6657,7 +6683,7 @@
         `;
       }
 
-      async function loadMultiProjectCustomerReport() {
+      window.loadMultiProjectCustomerReport = async function loadMultiProjectCustomerReport() {
         console.log('👥 Loading Multi-Project Customer Report...');
 
         try {
@@ -15805,116 +15831,12 @@
       return new Intl.NumberFormat('de-DE').format(num || 0);
     }
 
-    // Load Request Status (from requests.status)
-    let requestStatusChartInstance = null;
+    // Load Request Status (DEPRECATED - now handled by Dashboard charts)
     async function loadRequestStatus(requests) {
-      try {
-        const statusLabels = {
-          'open_request': 'Open Request',
-          'pending': 'Pending',
-          'scheduled': 'Scheduled',
-          'finished': 'Finished'
-        };
-
-        const statusColors = {
-          'open_request': '#FFB800',
-          'pending': '#FF9500',
-          'scheduled': '#34c759',
-          'finished': '#0071e3'
-        };
-
-        // Aggregate by status
-        const statusCounts = {};
-        requests.forEach(row => {
-          const status = row.status || 'unknown';
-          const label = statusLabels[status] || status;
-          statusCounts[label] = (statusCounts[label] || 0) + 1;
-        });
-
-        // Sort by count
-        const sorted = Object.entries(statusCounts).sort((a, b) => b[1] - a[1]);
-        const labels = sorted.map(([label]) => label);
-        const values = sorted.map(([, count]) => count);
-        const colors = sorted.map(([label]) => {
-          const statusKey = Object.keys(statusLabels).find(k => statusLabels[k] === label);
-          return statusColors[statusKey] || '#8e8e93';
-        });
-        const total = values.reduce((sum, val) => sum + val, 0);
-
-        // Update total (skip if element doesn't exist)
-        const totalElement = document.getElementById('requestStatusTotal');
-        if (totalElement) {
-          totalElement.textContent = total;
-        }
-
-        // Render chart
-        const ctx = document.getElementById('requestStatusChartAnalytics');
-        if (!ctx) {
-          console.log('⚠️ requestStatusChartAnalytics canvas not found, skipping chart render');
-          return;
-        }
-
-        if (requestStatusChartInstance) {
-          requestStatusChartInstance.destroy();
-        }
-
-        requestStatusChartInstance = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: labels,
-            datasets: [{
-              data: values,
-              backgroundColor: colors,
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            cutout: '60%',
-            plugins: {
-              legend: {
-                position: 'right',
-                labels: {
-                  font: {
-                    family: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-                    size: 12
-                  },
-                  padding: 12,
-                  usePointStyle: true
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const label = context.label || '';
-                    const value = context.parsed;
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1);
-                    return `${label}: ${value} (${percentage}%)`;
-                  }
-                }
-              }
-            }
-          }
-        });
-
-        // Render table
-        const tableBody = document.getElementById('requestStatusTable');
-        tableBody.innerHTML = sorted.map(([label, count]) => {
-          const percentage = total > 0 ? (count / total * 100).toFixed(1) : 0;
-          return `
-            <tr>
-              <td>${label}</td>
-              <td style="text-align: right;">${formatNumber(count)}</td>
-              <td style="text-align: right;">${percentage} %</td>
-            </tr>
-          `;
-        }).join('');
-
-      } catch (error) {
-        console.error('Error loading request status:', error);
-      }
+      // This function is deprecated. Request status is now shown in the Dashboard
+      // with updateRequestStatusBreakdown() as a pie chart in Analytics tab.
+      console.log('ℹ️ loadRequestStatus called (deprecated, request status shown in Analytics tab)');
+      return;
     }
 
     // Load Artist Distribution (appointments by resident artists only)
