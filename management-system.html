@@ -15216,6 +15216,15 @@
 
     // Filter projects by revenue time range (separate from global filter)
     function filterProjectsByRevenueDateRange(projects, rangeType) {
+      // Use cachedProjects if projects parameter is not provided or invalid
+      const projectsToFilter = projects || cachedProjects;
+
+      // Check if projects are loaded
+      if (!projectsToFilter || projectsToFilter.length === 0) {
+        console.warn('⚠️ No projects loaded yet for filtering');
+        return [];
+      }
+
       const now = new Date();
       let startDate = null;
 
@@ -15243,11 +15252,11 @@
         case 'all':
         default:
           // No filtering, return all projects
-          return projects;
+          return projectsToFilter;
       }
 
       // Filter projects by created_at date
-      return projects.filter(project => {
+      return projectsToFilter.filter(project => {
         if (!project.created_at) return false;
         const projectDate = new Date(project.created_at);
         return projectDate >= startDate;
@@ -15298,6 +15307,9 @@
     // REVENUE ANALYTICS FUNCTIONS
     // ========================================
 
+    // Global variable to cache projects for filtering
+    let cachedProjects = [];
+
     // Load projects data for revenue analytics
     async function loadProjectsData(locationFilter = null) {
       console.log('📊 Loading projects data...');
@@ -15321,6 +15333,9 @@
         if (error) throw error;
 
         console.log('✅ Loaded', projects.length, 'projects');
+
+        // IMPORTANT: Store in global variable for filtering
+        cachedProjects = projects;
 
         // Count by state
         const stateCounts = {
@@ -15351,11 +15366,15 @@
         console.log('📊 Project counts by state:', stateCounts);
         console.log('💰 Total revenue:', totalRevenue.toFixed(2), '€');
 
-        // Render projects table
+        // Render projects table (optional)
         renderProjectsTable(projects, stateCounts, totalRevenue, projectsWithPrice);
+
+        // Return data for other functions to use
+        return projects;
 
       } catch (error) {
         console.error('❌ Error loading projects:', error);
+        return [];
       }
     }
 
@@ -15363,7 +15382,8 @@
       const container = document.getElementById('projectsTableContainer');
 
       if (!container) {
-        console.warn('⚠️ Projects table container not found');
+        // Container doesn't exist - this is OK, projects table is optional
+        console.log('ℹ️ Projects table container not found (optional feature)');
         return;
       }
 
