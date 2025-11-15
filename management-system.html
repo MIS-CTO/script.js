@@ -5768,17 +5768,19 @@
           ] = await Promise.all([
             supabase.from('requests').select('*'),
             supabase.from('artists').select('*'),
+            // Load from appointments table instead of events (events table structure changed)
             supabase
-              .from('events')
-              .select('id, agreement_file_url, customer_id, type')
-              .gte('start_time', `${today}T00:00:00`)
-              .lte('start_time', `${nextWeek}T23:59:59`)
-              .not('type', 'eq', 'events') // Nur echte Appointments, keine "Events"
+              .from('appointments')
+              .select('id, customer_id')
+              .gte('start', `${today}T00:00:00`)
+              .lte('start', `${nextWeek}T23:59:59`)
           ]);
 
+          // Agreement tracking - appointments don't have agreement_file_url field
+          // Total appointments with customers in the next week
           const totalAgreements = upcomingEvents?.filter(e => e.customer_id).length || 0;
-          const completedAgreements = upcomingEvents?.filter(e => e.customer_id && e.agreement_file_url).length || 0;
-          const pendingAgreements = totalAgreements - completedAgreements;
+          const completedAgreements = 0; // Not tracked in appointments table
+          const pendingAgreements = totalAgreements;
 
           // Fast badge updates - no expensive calculations
           const badge1 = document.getElementById('badge-pending');
@@ -11502,6 +11504,12 @@
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAYMENT STATUS</span>
                     ${paymentBadge}
                   </div>
+                  ${appointment.price ? `
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PRICE</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:600;">€${parseFloat(appointment.price).toFixed(2)}</span>
+                  </div>
+                  ` : ''}
                   ${appointment.price_estimate ? `
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PRICE ESTIMATE</span>
