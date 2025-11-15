@@ -3475,6 +3475,13 @@
         </div>
       </div>
 
+      <!-- Revenue by Payment Status Chart (New Format) -->
+      <div class="chart-card">
+        <div id="revenueByPaymentStatusChart">
+          <!-- Will be populated dynamically by loadRevenueByPaymentStatus() -->
+        </div>
+      </div>
+
       <!-- Artist Distribution Card -->
       <div class="chart-card">
         <h3>Appointments nach Resident Artist</h3>
@@ -15315,27 +15322,48 @@
       console.log('📊 Loading projects data...');
 
       try {
-        // Load ALL projects (no pagination limit)
-        const { data: projects, error } = await supabase
-          .from('projects')
-          .select(`
-            id,
-            project_number,
-            customer_email,
-            state,
-            price,
-            payment_state,
-            created_at,
-            updated_at,
-            location:locations(name)
-          `);
+        // Load ALL projects with pagination
+        let allProjects = [];
+        let start = 0;
+        const batchSize = 1000;
 
-        if (error) throw error;
+        while (true) {
+          let query = supabase
+            .from('projects')
+            .select(`
+              id,
+              project_number,
+              customer_email,
+              state,
+              price,
+              payment_state,
+              created_at,
+              updated_at,
+              location:locations(name)
+            `)
+            .order('created_at', { ascending: false })
+            .range(start, start + batchSize - 1);
 
-        console.log('✅ Loaded', projects.length, 'projects');
+          if (locationFilter && locationFilter !== 'all' && locationFilter !== null) {
+            query = query.eq('location_id', locationFilter);
+          }
+
+          const { data, error } = await query;
+
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+
+          allProjects = allProjects.concat(data);
+          console.log(`  ↳ Loaded ${allProjects.length} projects so far...`);
+
+          if (data.length < batchSize) break;
+          start += batchSize;
+        }
+
+        console.log(`✅ Loaded ${allProjects.length} total projects`);
 
         // IMPORTANT: Store in global variable for filtering
-        cachedProjects = projects;
+        cachedProjects = allProjects;
 
         // Count by state
         const stateCounts = {
@@ -15348,7 +15376,7 @@
         let totalRevenue = 0;
         let projectsWithPrice = 0;
 
-        projects.forEach(project => {
+        allProjects.forEach(project => {
           // Count by state
           if (stateCounts.hasOwnProperty(project.state)) {
             stateCounts[project.state]++;
@@ -15367,10 +15395,10 @@
         console.log('💰 Total revenue:', totalRevenue.toFixed(2), '€');
 
         // Render projects table (optional)
-        renderProjectsTable(projects, stateCounts, totalRevenue, projectsWithPrice);
+        renderProjectsTable(allProjects, stateCounts, totalRevenue, projectsWithPrice);
 
         // Return data for other functions to use
-        return projects;
+        return allProjects;
 
       } catch (error) {
         console.error('❌ Error loading projects:', error);
@@ -17223,21 +17251,35 @@
       console.log('💰 Loading revenue by payment status...');
 
       try {
-        // Load all projects with price and payment_state
-        const { data: projects, error } = await supabase
-          .from('projects')
-          .select('id, price, payment_state')
-          .not('price', 'is', null);
+        // Load ALL projects with pagination
+        let allProjects = [];
+        let start = 0;
+        const batchSize = 1000;
 
-        if (error) throw error;
+        while (true) {
+          const { data, error } = await supabase
+            .from('projects')
+            .select('id, price, payment_state')
+            .not('price', 'is', null)
+            .range(start, start + batchSize - 1);
 
-        console.log('✅ Loaded', projects.length, 'projects with pricing');
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+
+          allProjects = allProjects.concat(data);
+          console.log(`  ↳ Loaded ${allProjects.length} projects with pricing so far...`);
+
+          if (data.length < batchSize) break;
+          start += batchSize;
+        }
+
+        console.log(`✅ Loaded ${allProjects.length} total projects with pricing`);
 
         // Group by payment_state
         const revenueByStatus = {};
         let totalRevenue = 0;
 
-        projects.forEach(project => {
+        allProjects.forEach(project => {
           const status = project.payment_state || 'Unbekannt';
           const price = parseFloat(project.price) || 0;
 
@@ -17267,7 +17309,7 @@
       const container = document.getElementById('revenueByPaymentStatusChart');
 
       if (!container) {
-        console.warn('⚠️ Revenue chart container not found');
+        console.log('ℹ️ Revenue chart container not found (optional feature)');
         return;
       }
 
