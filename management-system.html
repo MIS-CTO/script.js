@@ -5749,6 +5749,103 @@
       }
 
       // ============================================
+      // PROJECT METRICS CALCULATION (GLOBAL)
+      // ============================================
+      /**
+       * Calculate project metrics with proper completion logic:
+       * - COMPLETED: ALL appointments are 'finished'
+       * - ACTIVE: At least one appointment is 'scheduled'
+       * - CANCELED: ALL appointments are 'canceled'
+       */
+      window.calculateProjectMetrics = function calculateProjectMetrics(appointments) {
+        // Group by project_number
+        const projects = {};
+
+        appointments.forEach(apt => {
+          const pNum = apt.project_number;
+
+          if (!projects[pNum]) {
+            projects[pNum] = {
+              project_number: pNum,
+              appointments: [],
+              total_revenue: 0,
+              customer_name: null
+            };
+          }
+
+          projects[pNum].appointments.push(apt);
+
+          // Calculate revenue
+          const revenue = parseFloat(apt.payment_amount || apt.total_amount || 0);
+          projects[pNum].total_revenue += revenue;
+
+          // Customer name
+          if (apt.first_name || apt.last_name) {
+            projects[pNum].customer_name = `${apt.first_name || ''} ${apt.last_name || ''}`.trim();
+          }
+        });
+
+        const projectsArray = Object.values(projects);
+
+        // Count projects by status using PROPER completion logic
+        let completedProjects = 0;
+        let activeProjects = 0;
+        let canceledProjects = 0;
+
+        projectsArray.forEach(project => {
+          const statuses = project.appointments.map(a => a.status);
+
+          // Check if ALL appointments are finished
+          const allFinished = statuses.every(s => s === 'finished');
+
+          // Check if has any scheduled
+          const hasScheduled = statuses.some(s => s === 'scheduled');
+
+          // Check if ALL appointments are canceled
+          const allCanceled = statuses.every(s => s === 'canceled');
+
+          if (allFinished) {
+            completedProjects++;
+            project.project_status = 'completed';
+          } else if (allCanceled) {
+            canceledProjects++;
+            project.project_status = 'canceled';
+          } else if (hasScheduled) {
+            activeProjects++;
+            project.project_status = 'active';
+          } else {
+            // Mixed finished/canceled but no scheduled = completed
+            completedProjects++;
+            project.project_status = 'completed';
+          }
+        });
+
+        const totalProjects = projectsArray.length;
+        const totalRevenue = projectsArray.reduce((sum, p) => sum + p.total_revenue, 0);
+        const avgAppointmentsPerProject = appointments.length / (totalProjects || 1);
+        const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
+
+        console.log('📊 Project Metrics:', {
+          totalProjects,
+          completedProjects,
+          activeProjects,
+          canceledProjects,
+          completionRate: completionRate.toFixed(1) + '%'
+        });
+
+        return {
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          canceledProjects,
+          totalRevenue,
+          avgAppointmentsPerProject,
+          completionRate,
+          projectsArray
+        };
+      }
+
+      // ============================================
       // COMPLETE DASHBOARD STATS FUNCTION
       // ============================================
       async function loadDashboard() {
@@ -5901,8 +5998,10 @@
       }
 
       // ============================================
-      // UPDATE REQUEST STATUS BREAKDOWN CHART
+      // UPDATE REQUEST STATUS BREAKDOWN CHART (PIE)
       // ============================================
+      let requestStatusChartInstance = null;
+
       function updateRequestStatusBreakdown(counts, total) {
         console.log('📊 Updating request status breakdown');
 
@@ -5913,18 +6012,32 @@
           return;
         }
 
-        // Calculate percentages
-        const percentages = {
-          open_request: ((counts.open_request / total) * 100).toFixed(1),
-          pending: ((counts.pending / total) * 100).toFixed(1),
-          scheduled: ((counts.scheduled / total) * 100).toFixed(1),
-          finished: ((counts.finished / total) * 100).toFixed(1),
-          canceled: ((counts.canceled / total) * 100).toFixed(1),
-          archived: ((counts.archived / total) * 100).toFixed(1)
-        };
+        // Prepare data for pie chart
+        const statusData = [
+          { key: 'archived', label: 'Archived', color: '#8E8E93', count: counts.archived || 0 },
+          { key: 'finished', label: 'Finished', color: '#34C759', count: counts.finished || 0 },
+          { key: 'open_request', label: 'Open Request', color: '#FFA500', count: counts.open_request || 0 },
+          { key: 'scheduled', label: 'Scheduled', color: '#007AFF', count: counts.scheduled || 0 },
+          { key: 'canceled', label: 'Canceled', color: '#FF3B30', count: counts.canceled || 0 },
+          { key: 'pending', label: 'Pending', color: '#FFCC00', count: counts.pending || 0 }
+        ];
+
+        // Filter and sort
+        const filteredData = statusData.filter(s => s.count > 0).sort((a, b) => b.count - a.count);
+
+        // Generate legend
+        const legendItems = filteredData.map(s => {
+          const percentage = ((s.count / total) * 100).toFixed(1);
+          return `
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 4px 0;">
+              <span style="width: 12px; height: 12px; background: ${s.color}; border-radius: 50%; flex-shrink: 0;"></span>
+              <span style="flex: 1;">${s.label}: <strong>${s.count.toLocaleString('de-DE')}</strong> (${percentage}%)</span>
+            </div>
+          `;
+        }).join('');
 
         container.innerHTML = `
-          <div style="margin-bottom: 20px;">
+          <div style="margin-bottom: 16px;">
             <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1d1d1f;">
               Request Status Breakdown
             </h3>
@@ -5933,76 +6046,62 @@
             </p>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-            <!-- Archived Bar (Largest) -->
-            <div style="height: 40px; background: #8E8E93; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
-              <span style="font-size: 13px;">Archived</span>
-              <span style="font-size: 16px;">${counts.archived.toLocaleString('de-DE')}</span>
-            </div>
-
-            <!-- Finished Bar -->
-            <div style="height: 40px; background: #34C759; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
-              <span style="font-size: 13px;">Finished</span>
-              <span style="font-size: 16px;">${counts.finished.toLocaleString('de-DE')}</span>
-            </div>
-
-            <!-- Open Request Bar -->
-            <div style="height: 40px; background: #FFA500; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
-              <span style="font-size: 13px;">Open Request</span>
-              <span style="font-size: 16px;">${counts.open_request.toLocaleString('de-DE')}</span>
-            </div>
-
-            <!-- Scheduled Bar -->
-            <div style="height: 40px; background: #007AFF; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
-              <span style="font-size: 13px;">Scheduled</span>
-              <span style="font-size: 16px;">${counts.scheduled.toLocaleString('de-DE')}</span>
-            </div>
-
-            <!-- Canceled Bar -->
-            <div style="height: 40px; background: #FF3B30; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
-              <span style="font-size: 13px;">Canceled</span>
-              <span style="font-size: 16px;">${counts.canceled.toLocaleString('de-DE')}</span>
-            </div>
-
-            <!-- Pending Bar -->
-            <div style="height: 40px; background: #FFCC00; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: white; font-weight: 600;">
-              <span style="font-size: 13px;">Pending</span>
-              <span style="font-size: 16px;">${counts.pending.toLocaleString('de-DE')}</span>
-            </div>
+          <div style="max-width: 300px; margin: 0 auto 20px;">
+            <canvas id="requestStatusPieCanvas"></canvas>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-              <span style="width: 12px; height: 12px; background: #8E8E93; border-radius: 50%;"></span>
-              <span>Archived: ${counts.archived.toLocaleString('de-DE')} (${percentages.archived}%)</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-              <span style="width: 12px; height: 12px; background: #34C759; border-radius: 50%;"></span>
-              <span>Finished: ${counts.finished.toLocaleString('de-DE')} (${percentages.finished}%)</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-              <span style="width: 12px; height: 12px; background: #FFA500; border-radius: 50%;"></span>
-              <span>Open Request: ${counts.open_request.toLocaleString('de-DE')} (${percentages.open_request}%)</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-              <span style="width: 12px; height: 12px; background: #007AFF; border-radius: 50%;"></span>
-              <span>Scheduled: ${counts.scheduled.toLocaleString('de-DE')} (${percentages.scheduled}%)</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-              <span style="width: 12px; height: 12px; background: #FF3B30; border-radius: 50%;"></span>
-              <span>Canceled: ${counts.canceled.toLocaleString('de-DE')} (${percentages.canceled}%)</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-              <span style="width: 12px; height: 12px; background: #FFCC00; border-radius: 50%;"></span>
-              <span>Pending: ${counts.pending.toLocaleString('de-DE')} (${percentages.pending}%)</span>
-            </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
+            ${legendItems}
           </div>
         `;
+
+        // Create pie chart
+        const canvas = document.getElementById('requestStatusPieCanvas');
+        if (canvas) {
+          if (requestStatusChartInstance) {
+            requestStatusChartInstance.destroy();
+          }
+
+          requestStatusChartInstance = new Chart(canvas, {
+            type: 'pie',
+            data: {
+              labels: filteredData.map(s => s.label),
+              datasets: [{
+                data: filteredData.map(s => s.count),
+                backgroundColor: filteredData.map(s => s.color),
+                borderWidth: 2,
+                borderColor: '#fff'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const label = context.label || '';
+                      const value = context.parsed || 0;
+                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                      return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
       }
 
       // ============================================
-      // UPDATE APPOINTMENT STATUS BREAKDOWN
+      // UPDATE APPOINTMENT STATUS BREAKDOWN (PIE)
       // ============================================
+      let appointmentStatusChartInstance = null;
+
       function updateAppointmentStatusBreakdown(counts, total) {
         console.log('📊 Updating appointment status breakdown');
 
@@ -6013,7 +6112,7 @@
           return;
         }
 
-        // Calculate percentages - only include non-zero counts
+        // Prepare data for pie chart
         const statusData = [
           { key: 'finished', label: 'Finished', color: '#34C759', count: counts.finished || 0 },
           { key: 'scheduled', label: 'Scheduled', color: '#007AFF', count: counts.scheduled || 0 },
@@ -6024,25 +6123,22 @@
           { key: 'unknown', label: 'Unknown', color: '#8E8E93', count: counts.unknown || 0 }
         ];
 
-        // Sort by count descending
-        statusData.sort((a, b) => b.count - a.count);
+        // Filter and sort
+        const filteredData = statusData.filter(s => s.count > 0).sort((a, b) => b.count - a.count);
 
-        // Generate status cards
-        const statusCards = statusData
-          .filter(s => s.count > 0) // Only show non-zero counts
-          .map(s => {
-            const percentage = ((s.count / total) * 100).toFixed(1);
-            return `
-              <div style="background: ${s.color}; padding: 16px; border-radius: 8px; color: white;">
-                <div style="font-size: 24px; font-weight: 700;">${s.count.toLocaleString('de-DE')}</div>
-                <div style="font-size: 13px; opacity: 0.9;">${s.label} (${percentage}%)</div>
-              </div>
-            `;
-          })
-          .join('');
+        // Generate legend
+        const legendItems = filteredData.map(s => {
+          const percentage = ((s.count / total) * 100).toFixed(1);
+          return `
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 4px 0;">
+              <span style="width: 12px; height: 12px; background: ${s.color}; border-radius: 50%; flex-shrink: 0;"></span>
+              <span style="flex: 1;">${s.label}: <strong>${s.count.toLocaleString('de-DE')}</strong> (${percentage}%)</span>
+            </div>
+          `;
+        }).join('');
 
         container.innerHTML = `
-          <div style="margin-bottom: 20px;">
+          <div style="margin-bottom: 16px;">
             <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1d1d1f;">
               Appointment Status Breakdown
             </h3>
@@ -6051,107 +6147,55 @@
             </p>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
-            ${statusCards}
+          <div style="max-width: 300px; margin: 0 auto 20px;">
+            <canvas id="appointmentStatusPieCanvas"></canvas>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
+            ${legendItems}
           </div>
         `;
-      }
 
-      // ============================================
-      // PROJECT METRICS CALCULATION
-      // ============================================
-      /**
-       * Calculate project metrics with proper completion logic:
-       * - COMPLETED: ALL appointments are 'finished'
-       * - ACTIVE: At least one appointment is 'scheduled'
-       * - CANCELED: ALL appointments are 'canceled'
-       */
-      window.calculateProjectMetrics = function calculateProjectMetrics(appointments) {
-        // Group by project_number
-        const projects = {};
-
-        appointments.forEach(apt => {
-          const pNum = apt.project_number;
-
-          if (!projects[pNum]) {
-            projects[pNum] = {
-              project_number: pNum,
-              appointments: [],
-              total_revenue: 0,
-              customer_name: null
-            };
+        // Create pie chart
+        const canvas = document.getElementById('appointmentStatusPieCanvas');
+        if (canvas) {
+          if (appointmentStatusChartInstance) {
+            appointmentStatusChartInstance.destroy();
           }
 
-          projects[pNum].appointments.push(apt);
-
-          // Calculate revenue
-          const revenue = parseFloat(apt.payment_amount || apt.total_amount || 0);
-          projects[pNum].total_revenue += revenue;
-
-          // Customer name
-          if (apt.first_name || apt.last_name) {
-            projects[pNum].customer_name = `${apt.first_name || ''} ${apt.last_name || ''}`.trim();
-          }
-        });
-
-        const projectsArray = Object.values(projects);
-
-        // Count projects by status using PROPER completion logic
-        let completedProjects = 0;
-        let activeProjects = 0;
-        let canceledProjects = 0;
-
-        projectsArray.forEach(project => {
-          const statuses = project.appointments.map(a => a.status);
-
-          // Check if ALL appointments are finished
-          const allFinished = statuses.every(s => s === 'finished');
-
-          // Check if has any scheduled
-          const hasScheduled = statuses.some(s => s === 'scheduled');
-
-          // Check if ALL appointments are canceled
-          const allCanceled = statuses.every(s => s === 'canceled');
-
-          if (allFinished) {
-            completedProjects++;
-            project.project_status = 'completed';
-          } else if (allCanceled) {
-            canceledProjects++;
-            project.project_status = 'canceled';
-          } else if (hasScheduled) {
-            activeProjects++;
-            project.project_status = 'active';
-          } else {
-            // Mixed finished/canceled but no scheduled = completed
-            completedProjects++;
-            project.project_status = 'completed';
-          }
-        });
-
-        const totalProjects = projectsArray.length;
-        const totalRevenue = projectsArray.reduce((sum, p) => sum + p.total_revenue, 0);
-        const avgAppointmentsPerProject = appointments.length / (totalProjects || 1);
-        const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
-
-        console.log('📊 Project Metrics:', {
-          totalProjects,
-          completedProjects,
-          activeProjects,
-          canceledProjects,
-          completionRate: completionRate.toFixed(1) + '%'
-        });
-
-        return {
-          totalProjects,
-          activeProjects,
-          completedProjects,
-          canceledProjects,
-          totalRevenue,
-          avgAppointmentsPerProject,
-          completionRate,
-          projectsArray
-        };
+          appointmentStatusChartInstance = new Chart(canvas, {
+            type: 'pie',
+            data: {
+              labels: filteredData.map(s => s.label),
+              datasets: [{
+                data: filteredData.map(s => s.count),
+                backgroundColor: filteredData.map(s => s.color),
+                borderWidth: 2,
+                borderColor: '#fff'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const label = context.label || '';
+                      const value = context.parsed || 0;
+                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                      return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
       }
 
       // ============================================
@@ -6257,7 +6301,7 @@
         }
       }
 
-      function loadProjectsTimelineChart(appointments) {
+      window.loadProjectsTimelineChart = function loadProjectsTimelineChart(appointments) {
         const chartCanvas = document.getElementById('projectsTimelineChart');
         if (!chartCanvas) return;
 
@@ -6329,7 +6373,7 @@
         });
       }
 
-      function loadRevenueByMonthChart(appointments) {
+      window.loadRevenueByMonthChart = function loadRevenueByMonthChart(appointments) {
         const chartCanvas = document.getElementById('revenueByMonthChart');
         if (!chartCanvas) return;
 
@@ -6399,7 +6443,7 @@
         });
       }
 
-      function loadTopArtistsChart(appointments) {
+      window.loadTopArtistsChart = function loadTopArtistsChart(appointments) {
         const chartCanvas = document.getElementById('topArtistsChart');
         if (!chartCanvas) return;
 
@@ -15797,12 +15841,18 @@
         });
         const total = values.reduce((sum, val) => sum + val, 0);
 
-        // Update total
-        document.getElementById('requestStatusTotal').textContent = total;
+        // Update total (skip if element doesn't exist)
+        const totalElement = document.getElementById('requestStatusTotal');
+        if (totalElement) {
+          totalElement.textContent = total;
+        }
 
         // Render chart
         const ctx = document.getElementById('requestStatusChartAnalytics');
-        if (!ctx) return;
+        if (!ctx) {
+          console.log('⚠️ requestStatusChartAnalytics canvas not found, skipping chart render');
+          return;
+        }
 
         if (requestStatusChartInstance) {
           requestStatusChartInstance.destroy();
@@ -15873,26 +15923,43 @@
       try {
         console.log('🎨 Loading artist distribution from appointments...');
 
-        // Load appointments with artist data (only resident artists: is_guest = false)
-        const { data: appointmentsWithArtist, error } = await supabase
-          .from('appointments')
-          .select(`
-            id,
-            artist_id,
-            artist_email,
-            status,
-            artists!appointments_artist_id_fkey (
-              id,
-              email,
-              is_guest,
-              name
-            )
-          `)
-          .not('artist_id', 'is', null);
+        // Load ALL appointments with artist data (with pagination)
+        let appointmentsWithArtist = [];
+        let from = 0;
+        const batchSize = 1000;
+        let hasMore = true;
 
-        if (error) {
-          console.error('❌ Error loading appointments with artists:', error);
-          throw error;
+        while (hasMore) {
+          const { data: batch, error } = await supabase
+            .from('appointments')
+            .select(`
+              id,
+              artist_id,
+              artist_email,
+              status,
+              artists!appointments_artist_id_fkey (
+                id,
+                email,
+                is_guest,
+                name
+              )
+            `)
+            .not('artist_id', 'is', null)
+            .range(from, from + batchSize - 1);
+
+          if (error) {
+            console.error('❌ Error loading appointments with artists:', error);
+            throw error;
+          }
+
+          if (batch && batch.length > 0) {
+            appointmentsWithArtist = appointmentsWithArtist.concat(batch);
+            from += batchSize;
+            hasMore = batch.length === batchSize;
+            console.log(`  ↳ Loaded ${appointmentsWithArtist.length} appointments with artists so far...`);
+          } else {
+            hasMore = false;
+          }
         }
 
         console.log(`🎨 Loaded ${appointmentsWithArtist?.length || 0} total appointments with artists`);
