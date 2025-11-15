@@ -15300,13 +15300,144 @@
 
     // Load projects data for revenue analytics
     async function loadProjectsData(locationFilter = null) {
-      // DISABLED: projects table does not exist in current schema
-      console.warn('⚠️ loadProjectsData() DISABLED: "projects" table does not exist');
-      console.warn('   Revenue analytics require "projects" table to be created first');
-      console.warn('   This feature will be available once the table is set up');
-      return [];
+      console.log('📊 Loading projects data...');
 
-      // NOTE: Original implementation removed. Will be re-implemented when projects table is created.
+      try {
+        // Load ALL projects (no pagination limit)
+        const { data: projects, error } = await supabase
+          .from('projects')
+          .select(`
+            id,
+            project_number,
+            customer_email,
+            state,
+            price,
+            payment_state,
+            created_at,
+            updated_at,
+            location:locations(name)
+          `);
+
+        if (error) throw error;
+
+        console.log('✅ Loaded', projects.length, 'projects');
+
+        // Count by state
+        const stateCounts = {
+          'Aktiv': 0,
+          'Unbekannt': 0,
+          'Offen': 0,
+          'other': 0
+        };
+
+        let totalRevenue = 0;
+        let projectsWithPrice = 0;
+
+        projects.forEach(project => {
+          // Count by state
+          if (stateCounts.hasOwnProperty(project.state)) {
+            stateCounts[project.state]++;
+          } else {
+            stateCounts['other']++;
+          }
+
+          // Sum revenue
+          if (project.price && project.price > 0) {
+            totalRevenue += parseFloat(project.price);
+            projectsWithPrice++;
+          }
+        });
+
+        console.log('📊 Project counts by state:', stateCounts);
+        console.log('💰 Total revenue:', totalRevenue.toFixed(2), '€');
+
+        // Render projects table
+        renderProjectsTable(projects, stateCounts, totalRevenue, projectsWithPrice);
+
+      } catch (error) {
+        console.error('❌ Error loading projects:', error);
+      }
+    }
+
+    function renderProjectsTable(projects, stateCounts, totalRevenue, projectsWithPrice) {
+      const container = document.getElementById('projectsTableContainer');
+
+      if (!container) {
+        console.warn('⚠️ Projects table container not found');
+        return;
+      }
+
+      const total = projects.length;
+      const avgRevenue = projectsWithPrice > 0 ? (totalRevenue / projectsWithPrice).toFixed(2) : 0;
+
+      container.innerHTML = `
+        <div style="margin-bottom: 24px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 600;">
+            Projects Overview
+          </h3>
+          <p style="margin: 0; font-size: 14px; color: #86868b;">
+            ${total.toLocaleString('de-DE')} Total Projects
+          </p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background: #f5f5f7; padding: 20px; border-radius: 12px;">
+            <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">Total Projects</div>
+            <div style="font-size: 32px; font-weight: 700; color: #1d1d1f;">${total.toLocaleString('de-DE')}</div>
+          </div>
+
+          <div style="background: #f5f5f7; padding: 20px; border-radius: 12px;">
+            <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">Total Revenue</div>
+            <div style="font-size: 32px; font-weight: 700; color: #34C759;">${totalRevenue.toLocaleString('de-DE', {minimumFractionDigits: 2})} €</div>
+          </div>
+
+          <div style="background: #f5f5f7; padding: 20px; border-radius: 12px;">
+            <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">Avg Revenue</div>
+            <div style="font-size: 32px; font-weight: 700; color: #007AFF;">${avgRevenue.toLocaleString('de-DE')} €</div>
+          </div>
+
+          <div style="background: #f5f5f7; padding: 20px; border-radius: 12px;">
+            <div style="font-size: 13px; color: #86868b; margin-bottom: 4px;">Active Projects</div>
+            <div style="font-size: 32px; font-weight: 700; color: #FF9500;">${stateCounts['Aktiv'].toLocaleString('de-DE')}</div>
+          </div>
+        </div>
+
+        <!-- Status Breakdown -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Project Status Breakdown</h4>
+
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px;">
+              <span>Aktiv</span>
+              <span style="font-weight: 600;">${stateCounts['Aktiv'].toLocaleString('de-DE')} (${((stateCounts['Aktiv']/total)*100).toFixed(1)}%)</span>
+            </div>
+            <div style="height: 8px; background: #e5e5e7; border-radius: 4px; overflow: hidden;">
+              <div style="height: 100%; background: #34C759; width: ${(stateCounts['Aktiv']/total)*100}%;"></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px;">
+              <span>Unbekannt</span>
+              <span style="font-weight: 600;">${stateCounts['Unbekannt'].toLocaleString('de-DE')} (${((stateCounts['Unbekannt']/total)*100).toFixed(1)}%)</span>
+            </div>
+            <div style="height: 8px; background: #e5e5e7; border-radius: 4px; overflow: hidden;">
+              <div style="height: 100%; background: #8E8E93; width: ${(stateCounts['Unbekannt']/total)*100}%;"></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px;">
+              <span>Offen</span>
+              <span style="font-weight: 600;">${stateCounts['Offen'].toLocaleString('de-DE')} (${((stateCounts['Offen']/total)*100).toFixed(1)}%)</span>
+            </div>
+            <div style="height: 8px; background: #e5e5e7; border-radius: 4px; overflow: hidden;">
+              <div style="height: 100%; background: #FFA500; width: ${(stateCounts['Offen']/total)*100}%;"></div>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     // Render Revenue Statistics
@@ -17069,146 +17200,103 @@
 
     // Load Revenue by Payment Status (projects.price + payment_state)
     async function loadRevenueByPaymentStatus() {
-      // DISABLED: projects table does not exist in current schema
-      console.warn('⚠️ loadRevenueByPaymentStatus() DISABLED: "projects" table does not exist');
-      console.warn('   Revenue by Payment Status requires "projects" table to be created first');
-      return;
+      console.log('💰 Loading revenue by payment status...');
 
-      /* ORIGINAL CODE - DISABLED UNTIL PROJECTS TABLE EXISTS
       try {
-        const { data, error } = await supabase
+        // Load all projects with price and payment_state
+        const { data: projects, error } = await supabase
           .from('projects')
-          .select('price, payment_state')
-          .is('deleted_at', null);
+          .select('id, price, payment_state')
+          .not('price', 'is', null);
 
         if (error) throw error;
 
-        // Aggregate by payment status
-        const revenueByStatus = {
-          'Komplett bezahlt': { amount: 0, count: 0 },
-          'Anzahlung bezahlt': { amount: 0, count: 0 },
-          'Offen': { amount: 0, count: 0 },
-          'Unbekannt': { amount: 0, count: 0 }
-        };
+        console.log('✅ Loaded', projects.length, 'projects with pricing');
 
-        data.forEach(project => {
+        // Group by payment_state
+        const revenueByStatus = {};
+        let totalRevenue = 0;
+
+        projects.forEach(project => {
+          const status = project.payment_state || 'Unbekannt';
           const price = parseFloat(project.price) || 0;
-          const state = project.payment_state || 'Unbekannt';
 
-          if (revenueByStatus[state]) {
-            revenueByStatus[state].amount += price;
-            revenueByStatus[state].count += 1;
-          } else {
-            revenueByStatus['Unbekannt'].amount += price;
-            revenueByStatus['Unbekannt'].count += 1;
+          if (!revenueByStatus[status]) {
+            revenueByStatus[status] = {
+              count: 0,
+              revenue: 0
+            };
           }
+
+          revenueByStatus[status].count++;
+          revenueByStatus[status].revenue += price;
+          totalRevenue += price;
         });
 
-        // Update summary cards
-        document.getElementById('paidAmount').textContent = formatCurrency(revenueByStatus['Komplett bezahlt'].amount);
-        document.getElementById('paidCount').textContent = `${formatNumber(revenueByStatus['Komplett bezahlt'].count)} Projekte`;
+        console.log('💰 Revenue by payment status:', revenueByStatus);
 
-        document.getElementById('pendingAmount').textContent = formatCurrency(revenueByStatus['Offen'].amount);
-        document.getElementById('pendingCount').textContent = `${formatNumber(revenueByStatus['Offen'].count)} Projekte`;
-
-        document.getElementById('partialAmount').textContent = formatCurrency(revenueByStatus['Anzahlung bezahlt'].amount);
-        document.getElementById('partialCount').textContent = `${formatNumber(revenueByStatus['Anzahlung bezahlt'].count)} Projekte`;
-
-        // Calculate totals
-        const totalAmount = Object.values(revenueByStatus).reduce((sum, s) => sum + s.amount, 0);
-        const totalCount = Object.values(revenueByStatus).reduce((sum, s) => sum + s.count, 0);
-        const avgAmount = totalCount > 0 ? totalAmount / totalCount : 0;
-
-        // Render bar chart
-        const ctx = document.getElementById('revenueByStatusChart');
-        if (!ctx) return;
-
-        if (revenueByStatusChartInstance) {
-          revenueByStatusChartInstance.destroy();
-        }
-
-        const labels = Object.keys(revenueByStatus);
-        const values = Object.values(revenueByStatus).map(s => s.amount);
-        const colors = [
-          '#34c759',  // Komplett bezahlt - Green
-          '#0071e3',  // Anzahlung bezahlt - Blue
-          '#ff9500',  // Offen - Orange
-          '#86868b'   // Unbekannt - Gray
-        ];
-
-        revenueByStatusChartInstance = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              data: values,
-              backgroundColor: colors,
-              borderWidth: 0
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return formatCurrency(context.parsed.x);
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function(value) {
-                    return formatCurrency(value);
-                  }
-                },
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
-                }
-              },
-              y: {
-                grid: {
-                  display: false
-                }
-              }
-            }
-          }
-        });
-
-        // Render table
-        const tableBody = document.getElementById('revenueByStatusTable');
-        tableBody.innerHTML = labels.map(status => {
-          const stats = revenueByStatus[status];
-          const avg = stats.count > 0 ? stats.amount / stats.count : 0;
-          const percent = totalAmount > 0 ? (stats.amount / totalAmount * 100).toFixed(1) : 0;
-          return `
-            <tr>
-              <td>${status}</td>
-              <td style="text-align: right;">${formatNumber(stats.count)}</td>
-              <td style="text-align: right;">${formatCurrency(stats.amount)}</td>
-              <td style="text-align: right;">${formatCurrency(avg)}</td>
-              <td style="text-align: right;">${percent} %</td>
-            </tr>
-          `;
-        }).join('');
-
-        // Update totals
-        document.getElementById('revenueTotalProjects').textContent = formatNumber(totalCount);
-        document.getElementById('revenueTotalAmount').textContent = formatCurrency(totalAmount);
-        document.getElementById('revenueAvgAmount').textContent = formatCurrency(avgAmount);
+        // Render chart
+        renderRevenueByPaymentStatus(revenueByStatus, totalRevenue);
 
       } catch (error) {
-        console.error('Error loading revenue by payment status:', error);
+        console.error('❌ Error loading revenue by payment status:', error);
       }
-      */ // END OF DISABLED CODE
+    }
+
+    function renderRevenueByPaymentStatus(revenueByStatus, totalRevenue) {
+      const container = document.getElementById('revenueByPaymentStatusChart');
+
+      if (!container) {
+        console.warn('⚠️ Revenue chart container not found');
+        return;
+      }
+
+      // Sort by revenue (descending)
+      const sortedStatuses = Object.entries(revenueByStatus)
+        .sort((a, b) => b[1].revenue - a[1].revenue);
+
+      container.innerHTML = `
+        <div style="margin-bottom: 20px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600;">
+            Revenue by Payment Status
+          </h3>
+          <p style="margin: 0; font-size: 14px; color: #86868b;">
+            Total: ${totalRevenue.toLocaleString('de-DE', {minimumFractionDigits: 2})} €
+          </p>
+        </div>
+
+        ${sortedStatuses.map(([status, data]) => {
+          const percentage = ((data.revenue / totalRevenue) * 100).toFixed(1);
+          const color = getPaymentStatusColor(status);
+
+          return `
+            <div style="margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px;">
+                <span style="font-weight: 500;">${status}</span>
+                <span style="font-weight: 600; color: ${color};">
+                  ${data.revenue.toLocaleString('de-DE', {minimumFractionDigits: 2})} €
+                  <span style="color: #86868b;">(${data.count} projects)</span>
+                </span>
+              </div>
+              <div style="height: 32px; background: rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; display: flex; align-items: center; padding: 0 12px;">
+                <div style="height: 20px; background: ${color}; border-radius: 4px; width: ${percentage}%; transition: width 0.3s;"></div>
+                <span style="margin-left: 12px; font-size: 14px; font-weight: 600;">${percentage}%</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
+
+    function getPaymentStatusColor(status) {
+      const colors = {
+        'Offen': '#FFA500',      // Orange
+        'Bezahlt': '#34C759',    // Green
+        'Teilzahlung': '#007AFF', // Blue
+        'Unbekannt': '#8E8E93',  // Gray
+        'Deposit': '#FF9500'     // Amber
+      };
+      return colors[status] || '#8E8E93';
     }
 
     // Load locations for filter dropdown
