@@ -5803,88 +5803,185 @@
       // PROJECT METRICS CALCULATION (GLOBAL)
       // ============================================
       /**
-       * Calculate project metrics with proper completion logic:
-       * - COMPLETED: ALL appointments are 'finished'
-       * - ACTIVE: At least one appointment is 'scheduled'
-       * - CANCELED: ALL appointments are 'canceled'
+       * Calculate project metrics from requests and appointments
+       * Supports both old signature (appointments only) and new signature (requests, appointments)
        */
-      window.calculateProjectMetrics = function calculateProjectMetrics(appointments) {
-        // Group by project_number
-        const projects = {};
+      window.calculateProjectMetrics = function calculateProjectMetrics(requestsOrAppointments, appointments) {
+        console.log('📊 Calculating project metrics...', {
+          arg1Count: requestsOrAppointments?.length || 0,
+          arg2Count: appointments?.length || 0
+        });
 
-        appointments.forEach(apt => {
-          const pNum = apt.project_number;
+        // Support old signature: calculateProjectMetrics(appointments)
+        if (!appointments && Array.isArray(requestsOrAppointments)) {
+          appointments = requestsOrAppointments;
+          requestsOrAppointments = [];
+          console.log('  ↳ Using legacy signature (appointments only)');
+        }
 
-          if (!projects[pNum]) {
-            projects[pNum] = {
-              project_number: pNum,
+        const requests = Array.isArray(requestsOrAppointments) ? requestsOrAppointments : [];
+        appointments = appointments || [];
+
+        if (requests.length === 0 && appointments.length === 0) {
+          console.warn('⚠️ No requests or appointments provided for project metrics');
+          return {
+            totalProjects: 0,
+            activeProjects: 0,
+            completedProjects: 0,
+            canceledProjects: 0,
+            total_projects: 0,
+            active_projects: 0,
+            finished_projects: 0,
+            total_revenue: 0,
+            avg_project_value: 0,
+            projects_with_appointments: 0,
+            avg_appointments_per_project: 0,
+            totalRevenue: 0,
+            avgAppointmentsPerProject: 0,
+            completionRate: 0,
+            projectsArray: []
+          };
+        }
+
+        // Group by project_id
+        const projectsMap = new Map();
+
+        // Process requests
+        requests.forEach(req => {
+          if (!req.project_id) return;
+
+          if (!projectsMap.has(req.project_id)) {
+            projectsMap.set(req.project_id, {
+              project_id: req.project_id,
+              project_number: req.project_number,
+              project_title: req.project_title,
+              customer_email: req.email,
+              customer_id: req.customer_id,
+              customer_name: null,
+              requests: [],
               appointments: [],
+              total_price: 0,
               total_revenue: 0,
-              customer_name: null
-            };
+              status: req.status
+            });
           }
 
-          projects[pNum].appointments.push(apt);
-
-          // Calculate revenue
-          const revenue = parseFloat(apt.payment_amount || apt.total_amount || 0);
-          projects[pNum].total_revenue += revenue;
-
-          // Customer name
-          if (apt.first_name || apt.last_name) {
-            projects[pNum].customer_name = `${apt.first_name || ''} ${apt.last_name || ''}`.trim();
+          const project = projectsMap.get(req.project_id);
+          project.requests.push(req);
+          if (req.total_amount) {
+            project.total_price += parseFloat(req.total_amount) || 0;
+            project.total_revenue += parseFloat(req.total_amount) || 0;
           }
         });
 
-        const projectsArray = Object.values(projects);
+        // Process appointments
+        appointments.forEach(apt => {
+          const projId = apt.project_id || apt.project_number;
+          if (!projId) return;
+
+          if (!projectsMap.has(projId)) {
+            projectsMap.set(projId, {
+              project_id: projId,
+              project_number: apt.project_number,
+              project_title: apt.project_title,
+              customer_email: apt.customer_email,
+              customer_id: apt.customer_id,
+              customer_name: null,
+              requests: [],
+              appointments: [],
+              total_price: 0,
+              total_revenue: 0,
+              status: apt.status
+            });
+          }
+
+          const project = projectsMap.get(projId);
+          project.appointments.push(apt);
+
+          // Customer name
+          if (apt.first_name || apt.last_name) {
+            project.customer_name = `${apt.first_name || ''} ${apt.last_name || ''}`.trim();
+          }
+
+          // Calculate revenue
+          const revenue = parseFloat(apt.payment_amount || apt.price || apt.total_amount || 0);
+          project.total_price += revenue;
+          project.total_revenue += revenue;
+        });
+
+        const projects = Array.from(projectsMap.values());
 
         // Count projects by status using PROPER completion logic
         let completedProjects = 0;
         let activeProjects = 0;
         let canceledProjects = 0;
+        let finishedProjects = 0;
 
-        projectsArray.forEach(project => {
-          const statuses = project.appointments.map(a => a.status);
+        projects.forEach(project => {
+          if (project.appointments.length > 0) {
+            const statuses = project.appointments.map(a => a.status);
 
-          // Check if ALL appointments are finished
-          const allFinished = statuses.every(s => s === 'finished');
+            // Check if ALL appointments are finished
+            const allFinished = statuses.every(s => s === 'finished');
 
-          // Check if has any scheduled
-          const hasScheduled = statuses.some(s => s === 'scheduled');
+            // Check if has any scheduled
+            const hasScheduled = statuses.some(s => s === 'scheduled');
 
-          // Check if ALL appointments are canceled
-          const allCanceled = statuses.every(s => s === 'canceled');
+            // Check if ALL appointments are canceled
+            const allCanceled = statuses.every(s => s === 'canceled');
 
-          if (allFinished) {
-            completedProjects++;
-            project.project_status = 'completed';
-          } else if (allCanceled) {
-            canceledProjects++;
-            project.project_status = 'canceled';
-          } else if (hasScheduled) {
-            activeProjects++;
-            project.project_status = 'active';
+            if (allFinished) {
+              completedProjects++;
+              finishedProjects++;
+              project.project_status = 'completed';
+            } else if (allCanceled) {
+              canceledProjects++;
+              project.project_status = 'canceled';
+            } else if (hasScheduled) {
+              activeProjects++;
+              project.project_status = 'active';
+            } else {
+              // Mixed finished/canceled but no scheduled = completed
+              completedProjects++;
+              finishedProjects++;
+              project.project_status = 'completed';
+            }
           } else {
-            // Mixed finished/canceled but no scheduled = completed
-            completedProjects++;
-            project.project_status = 'completed';
+            // Use request status if no appointments
+            if (['open_request', 'pending', 'scheduled'].includes(project.status)) {
+              activeProjects++;
+              project.project_status = 'active';
+            } else if (project.status === 'finished') {
+              completedProjects++;
+              finishedProjects++;
+              project.project_status = 'completed';
+            } else if (project.status === 'canceled') {
+              canceledProjects++;
+              project.project_status = 'canceled';
+            }
           }
         });
 
-        const totalProjects = projectsArray.length;
-        const totalRevenue = projectsArray.reduce((sum, p) => sum + p.total_revenue, 0);
-        const avgAppointmentsPerProject = appointments.length / (totalProjects || 1);
+        // Calculate metrics
+        const totalProjects = projects.length;
+        const totalRevenue = projects.reduce((sum, p) => sum + p.total_revenue, 0);
+        const avgProjectValue = totalProjects > 0 ? totalRevenue / totalProjects : 0;
+        const projectsWithAppointments = projects.filter(p => p.appointments.length > 0).length;
+        const avgAppointmentsPerProject = totalProjects > 0
+          ? projects.reduce((sum, p) => sum + p.appointments.length, 0) / totalProjects
+          : 0;
         const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
 
-        console.log('📊 Project Metrics:', {
-          totalProjects,
-          completedProjects,
-          activeProjects,
-          canceledProjects,
-          completionRate: completionRate.toFixed(1) + '%'
-        });
-
-        return {
+        const metrics = {
+          // New format
+          total_projects: totalProjects,
+          active_projects: activeProjects,
+          finished_projects: finishedProjects,
+          total_revenue: totalRevenue,
+          avg_project_value: avgProjectValue,
+          projects_with_appointments: projectsWithAppointments,
+          avg_appointments_per_project: avgAppointmentsPerProject,
+          // Legacy format (for backward compatibility)
           totalProjects,
           activeProjects,
           completedProjects,
@@ -5892,8 +5989,11 @@
           totalRevenue,
           avgAppointmentsPerProject,
           completionRate,
-          projectsArray
+          projectsArray: projects
         };
+
+        console.log('✅ Project metrics calculated:', metrics);
+        return metrics;
       }
 
       // ============================================
@@ -15206,197 +15306,7 @@
       console.warn('   This feature will be available once the table is set up');
       return [];
 
-      /* ORIGINAL CODE - DISABLED UNTIL PROJECTS TABLE EXISTS
-      try {
-        console.log('💰 Loading projects data for revenue analytics...');
-        console.log('💰 Location filter:', locationFilter);
-        console.log('💰 QUERY VERSION: 2025-11-14-v3 - GESAMT UMSATZ FIX');
-
-        // 🔍 DEBUG: Check if projects table has ANY data at all
-        console.log('🔍 DEBUG: Checking projects table status...');
-        const { count: totalCount, error: countError } = await supabase
-          .from('projects')
-          .select('*', { count: 'exact', head: true });
-
-        if (countError) {
-          console.error('❌ DEBUG: Count query failed:', countError);
-          console.error('   This might indicate RLS is blocking access or table does not exist');
-        } else {
-          console.log(`🔍 DEBUG: Total projects in table (COUNT): ${totalCount}`);
-          if (totalCount === 0) {
-            console.warn('⚠️ DEBUG: Projects table is EMPTY! No data to load.');
-            console.warn('   Possible reasons:');
-            console.warn('   1. No projects have been created yet');
-            console.warn('   2. Data was not migrated from another system');
-            console.warn('   3. Projects are stored in a different table');
-            return [];
-          }
-        }
-
-        // 🔍 DEBUG: Try to fetch first record without range() to test RLS
-        console.log('🔍 DEBUG: Attempting to fetch first record...');
-        const { data: testData, error: testError } = await supabase
-          .from('projects')
-          .select('id, price, payment_state, created_at, location_id')
-          .limit(1);
-
-        if (testError) {
-          console.error('❌ DEBUG: Test query failed:', testError);
-          console.error('   This indicates RLS or permissions issue');
-        } else {
-          console.log(`🔍 DEBUG: Test query returned ${testData?.length || 0} records`);
-          if (testData && testData.length > 0) {
-            console.log('🔍 DEBUG: Sample record:', testData[0]);
-          } else {
-            console.warn('⚠️ DEBUG: Test query succeeded but returned 0 records');
-            console.warn('   This is very strange - table has count but no records accessible');
-          }
-        }
-
-        let allProjects = [];
-        let offset = 0;
-        const batchSize = 1000;
-        let batchNumber = 1;
-        let hasMore = true;
-
-        while (hasMore) {
-          console.log(`📦 Loading projects batch ${batchNumber} (records ${offset} to ${offset + batchSize - 1})...`);
-
-          try {
-            // 📝 FIX 4: Alternative query strategies if range() still fails:
-            // OPTION A (Current): Apply range() after building base query
-            // OPTION B: Use limit() + offset pagination if range() is broken
-            // OPTION C: Load all data at once and paginate in-memory (last resort)
-            // See implementation notes below if current approach fails
-
-            let query = supabase
-              .from('projects')
-              .select('id, price, payment_state, created_at, location_id')
-              .order('created_at', { ascending: false });
-
-            // Location filtering now available (location_id column exists)
-            if (locationFilter) {
-              query = query.eq('location_id', locationFilter);
-              console.log(`   🏢 Filtering by location: ${locationFilter}`);
-            }
-
-            // Apply range AFTER building base query to avoid 400 errors
-            query = query.range(offset, offset + batchSize - 1);
-
-            const { data, error } = await query;
-
-            /* ALTERNATIVE APPROACH (Use if range() still fails):
-
-            // OPTION B: Use limit() instead of range()
-            let query = supabase
-              .from('projects')
-              .select('id, price, payment_state, created_at, location_id')
-              .order('created_at', { ascending: false })
-              .limit(batchSize);
-
-            // Apply offset separately
-            if (offset > 0) {
-              query = query.range(offset, offset + batchSize - 1);
-            }
-
-            const { data, error } = await query;
-            */
-
-            if (error) {
-              console.error(`❌ Batch ${batchNumber} error:`, error);
-              console.error('   Error details:', {
-                code: error.code,
-                message: error.message,
-                details: error.details,
-                hint: error.hint
-              });
-              throw error;
-            }
-
-            console.log(`   📊 Batch ${batchNumber} returned ${data?.length || 0} records`);
-
-            if (data && data.length > 0) {
-              if (batchNumber === 1) {
-                console.log('   📝 Sample project (first record):', {
-                  id: data[0].id,
-                  price: data[0].price,
-                  payment_state: data[0].payment_state,
-                  has_price: data[0].price !== null && data[0].price !== undefined,
-                  has_payment_state: !!data[0].payment_state
-                });
-              }
-
-              allProjects = allProjects.concat(data);
-              console.log(`   ✅ Batch ${batchNumber}: Loaded ${data.length} records. Total so far: ${allProjects.length}`);
-            }
-
-            if (!data || data.length < batchSize) {
-              hasMore = false;
-              console.log(`   🏁 Last batch reached (${data?.length || 0} records)`);
-            } else {
-              offset += batchSize;
-              batchNumber++;
-            }
-
-          } catch (batchError) {
-            console.error(`❌ Error in batch ${batchNumber}:`, batchError);
-            hasMore = false;
-          }
-        }
-
-        console.log(`\n✅ LOAD COMPLETE: ${allProjects.length} total projects loaded`);
-
-        // Analyze the loaded data
-        if (allProjects.length > 0) {
-          const withPrice = allProjects.filter(p => p.price !== null && p.price !== undefined && p.price > 0);
-          const withPaymentState = allProjects.filter(p => p.payment_state);
-          const komplettBezahlt = allProjects.filter(p =>
-            p.payment_state && p.payment_state.toLowerCase().includes('komplett bezahlt')
-          );
-
-          console.log('📊 Data Analysis:');
-          console.log(`   Total projects: ${allProjects.length}`);
-          console.log(`   With price > 0: ${withPrice.length}`);
-          console.log(`   With payment_state: ${withPaymentState.length}`);
-          console.log(`   "Komplett bezahlt": ${komplettBezahlt.length}`);
-
-          // Calculate GESAMT UMSATZ
-          const gesamtUmsatz = komplettBezahlt.reduce((sum, p) => {
-            const price = parseFloat(p.price) || 0;
-            return sum + price;
-          }, 0);
-
-          console.log(`   💶 GESAMT UMSATZ: ${gesamtUmsatz.toFixed(2)} €`);
-
-          // Payment state distribution
-          const paymentStates = {};
-          allProjects.forEach(p => {
-            const state = p.payment_state || 'NULL';
-            paymentStates[state] = (paymentStates[state] || 0) + 1;
-          });
-          console.log('   💳 Payment states:', paymentStates);
-
-        } else {
-          console.log('⚠️ No projects found');
-          console.log('🔍 Possible reasons:');
-          console.log('   1. Projects table is empty');
-          console.log('   2. RLS (Row Level Security) is blocking access');
-          console.log('   3. Location filter excluded all records');
-        }
-
-        return allProjects;
-
-      } catch (err) {
-        console.error('❌ CRITICAL ERROR in loadProjectsData:', err);
-        console.error('   Error details:', {
-          name: err.name,
-          message: err.message,
-          stack: err.stack
-        });
-
-        return [];
-      }
-      */ // END OF DISABLED CODE
+      // NOTE: Original implementation removed. Will be re-implemented when projects table is created.
     }
 
     // Render Revenue Statistics
@@ -16007,6 +15917,808 @@
         console.error('❌ Supabase connection test failed:', err);
         return false;
       }
+    }
+
+    // ============================================
+    // LOAD ANALYTICS - COMPLETE DATA
+    // ============================================
+    async function loadAnalytics() {
+      console.log('📊 Loading Analytics Page...');
+      console.log('📊 ANALYTICS VERSION: 2025-11-15 - Complete Fix');
+
+      try {
+        // Show loading state
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          analyticsContent.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p>Loading analytics data...</p></div>';
+        }
+
+        // Load ALL requests (no pagination limit)
+        console.log('📥 Loading all requests for analytics...');
+        let allRequests = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data: requestsBatch, error: reqError } = await supabase
+            .from('requests')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+          if (reqError) {
+            console.error('Error loading requests batch:', reqError);
+            break;
+          }
+
+          if (requestsBatch && requestsBatch.length > 0) {
+            allRequests = [...allRequests, ...requestsBatch];
+            if (page % 5 === 0) { // Log every 5 batches
+              console.log(`  ↳ Loaded ${allRequests.length} requests so far...`);
+            }
+
+            if (requestsBatch.length < pageSize) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+
+        console.log(`✅ Loaded ${allRequests.length} total requests`);
+
+        // Load ALL appointments (no pagination limit)
+        console.log('📥 Loading all appointments for analytics...');
+        let allAppointments = [];
+        page = 0;
+        hasMore = true;
+
+        while (hasMore) {
+          const { data: appointmentsBatch, error: aptError } = await supabase
+            .from('appointments')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+          if (aptError) {
+            console.error('Error loading appointments batch:', aptError);
+            break;
+          }
+
+          if (appointmentsBatch && appointmentsBatch.length > 0) {
+            allAppointments = [...allAppointments, ...appointmentsBatch];
+            if (page % 5 === 0) { // Log every 5 batches
+              console.log(`  ↳ Loaded ${allAppointments.length} appointments so far...`);
+            }
+
+            if (appointmentsBatch.length < pageSize) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+
+        console.log(`✅ Loaded ${allAppointments.length} total appointments`);
+
+        // Calculate analytics data
+        console.log('📊 Calculating analytics...');
+
+        // Request status breakdown
+        const requestStatusCounts = {
+          archived: 0,
+          finished: 0,
+          open_request: 0,
+          scheduled: 0,
+          canceled: 0,
+          pending: 0
+        };
+
+        allRequests.forEach(req => {
+          const status = req.status || 'unknown';
+          if (requestStatusCounts.hasOwnProperty(status)) {
+            requestStatusCounts[status]++;
+          } else {
+            requestStatusCounts[status] = 1;
+          }
+        });
+
+        // Appointment status breakdown
+        const appointmentStatusCounts = {
+          finished: 0,
+          scheduled: 0,
+          no_show: 0,
+          rescheduled: 0,
+          canceled: 0,
+          unknown: 0
+        };
+
+        allAppointments.forEach(apt => {
+          const status = apt.status || 'unknown';
+          if (appointmentStatusCounts.hasOwnProperty(status)) {
+            appointmentStatusCounts[status]++;
+          } else {
+            appointmentStatusCounts[status] = 1;
+          }
+        });
+
+        // Filter by current time range (from analytics page filter)
+        const timeRangeFilter = document.getElementById('analyticsTimeRange')?.value || 'all';
+        const locationFilter = document.getElementById('analyticsLocationFilter')?.value || '';
+
+        let filteredRequests = allRequests;
+        let filteredAppointments = allAppointments;
+
+        // Apply location filter
+        if (locationFilter && locationFilter !== '') {
+          filteredRequests = filteredRequests.filter(req => req.location_id === locationFilter);
+          filteredAppointments = filteredAppointments.filter(apt => apt.location_id === locationFilter);
+        }
+
+        // Apply time range filter
+        if (timeRangeFilter !== 'all') {
+          const now = new Date();
+          let startDate = null;
+
+          switch(timeRangeFilter) {
+            case 'week':
+              const day = now.getDay();
+              const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+              startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'month':
+              startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'year':
+              startDate = new Date(now.getFullYear(), 0, 1);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+          }
+
+          if (startDate) {
+            filteredRequests = filteredRequests.filter(req => {
+              const reqDate = new Date(req.created_at);
+              return reqDate >= startDate;
+            });
+
+            filteredAppointments = filteredAppointments.filter(apt => {
+              const aptDate = new Date(apt.created_at);
+              return aptDate >= startDate;
+            });
+          }
+        }
+
+        // Calculate project metrics
+        const projectMetrics = window.calculateProjectMetrics(allRequests, allAppointments);
+
+        // Render analytics sections
+        console.log('🎨 Rendering analytics sections...');
+
+        renderRequestsOverview(filteredRequests, filteredAppointments);
+        renderRequestStatusBreakdown(allRequests, requestStatusCounts);
+        renderAppointmentStatusBreakdown(allAppointments, appointmentStatusCounts);
+        renderRevenueOverview(allRequests, allAppointments);
+        renderRevenueTimeline(allRequests);
+        renderAppointmentsByArtist(allAppointments);
+        renderRevenueByPaymentStatus(allRequests);
+        renderProjectAnalytics(projectMetrics);
+        renderArtistPerformance(allAppointments);
+        renderVIPCustomers(allRequests);
+
+        console.log('✅ Analytics page loaded successfully');
+
+      } catch (error) {
+        console.error('❌ Error loading analytics:', error);
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          analyticsContent.innerHTML = `
+            <div style="text-align:center; padding:40px;">
+              <p style="color:var(--error); font-size:18px; margin-bottom:10px;">⚠️ Error Loading Analytics</p>
+              <p style="color:var(--muted); font-size:14px;">${error.message}</p>
+              <button onclick="loadAnalytics()" style="margin-top:20px; padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer;">
+                Retry
+              </button>
+            </div>
+          `;
+        }
+      }
+    }
+
+    // ============================================
+    // RENDER REQUESTS OVERVIEW
+    // ============================================
+    function renderRequestsOverview(requests, appointments) {
+      const totalRequests = requests.length;
+      const customerRequests = requests.filter(r =>
+        r.booking_type !== 'internal' && r.booking_type !== 'reserved'
+      ).length;
+      const totalAppointments = appointments.length;
+      const scheduledAppointments = appointments.filter(a => a.status === 'scheduled').length;
+
+      const overviewHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:30px;">
+          <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Total Requests</div>
+            <div style="font-size:32px; font-weight:600; color:var(--primary);">${totalRequests.toLocaleString()}</div>
+          </div>
+          <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Customer Requests</div>
+            <div style="font-size:32px; font-weight:600; color:var(--primary);">${customerRequests.toLocaleString()}</div>
+          </div>
+          <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Total Appointments</div>
+            <div style="font-size:32px; font-weight:600; color:var(--success);">${totalAppointments.toLocaleString()}</div>
+          </div>
+          <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Scheduled Appointments</div>
+            <div style="font-size:32px; font-weight:600; color:var(--success);">${scheduledAppointments.toLocaleString()}</div>
+          </div>
+        </div>
+      `;
+
+      // Find or create overview container
+      let container = document.getElementById('requestsOverviewContainer');
+      if (!container) {
+        // Insert at the top of analytics content
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'requestsOverviewContainer';
+          analyticsContent.insertBefore(container, analyticsContent.firstChild);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = overviewHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER REQUEST STATUS BREAKDOWN
+    // ============================================
+    function renderRequestStatusBreakdown(requests, statusCounts) {
+      const total = requests.length;
+
+      const breakdownHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">Request Status Breakdown</h3>
+          <p style="color:var(--muted); margin-bottom:20px;">${total.toLocaleString()} Total Requests</p>
+
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            ${Object.entries(statusCounts).map(([status, count]) => {
+              const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+              const color = getStatusColor(status);
+              return `
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:12px; height:12px; border-radius:50%; background:${color};"></div>
+                  <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                      <span style="font-weight:500; text-transform:capitalize;">${formatStatusName(status)}: ${count.toLocaleString()}</span>
+                      <span style="color:var(--muted);">(${percentage}%)</span>
+                    </div>
+                    <div style="height:8px; background:#f0f0f0; border-radius:4px; overflow:hidden;">
+                      <div style="height:100%; background:${color}; width:${percentage}%;"></div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      let container = document.getElementById('requestStatusBreakdownContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'requestStatusBreakdownContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = breakdownHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER APPOINTMENT STATUS BREAKDOWN
+    // ============================================
+    function renderAppointmentStatusBreakdown(appointments, statusCounts) {
+      const total = appointments.length;
+
+      const breakdownHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">Appointment Status Breakdown</h3>
+          <p style="color:var(--muted); margin-bottom:20px;">${total.toLocaleString()} Total Appointments</p>
+
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            ${Object.entries(statusCounts).map(([status, count]) => {
+              const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+              const color = getStatusColor(status);
+              return `
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:12px; height:12px; border-radius:50%; background:${color};"></div>
+                  <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                      <span style="font-weight:500; text-transform:capitalize;">${formatStatusName(status)}: ${count.toLocaleString()}</span>
+                      <span style="color:var(--muted);">(${percentage}%)</span>
+                    </div>
+                    <div style="height:8px; background:#f0f0f0; border-radius:4px; overflow:hidden;">
+                      <div style="height:100%; background:${color}; width:${percentage}%;"></div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      let container = document.getElementById('appointmentStatusBreakdownContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'appointmentStatusBreakdownContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = breakdownHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER REVENUE OVERVIEW
+    // ============================================
+    function renderRevenueOverview(requests, appointments) {
+      // Calculate revenue from requests
+      const requestsWithPrice = requests.filter(r => r.total_amount && r.payment_status === 'fully_paid');
+      const requestRevenue = requestsWithPrice.reduce((sum, r) => sum + (parseFloat(r.total_amount) || 0), 0);
+
+      // Calculate revenue from appointments
+      const appointmentsWithPrice = appointments.filter(a => a.price && a.payment_status === 'fully_paid');
+      const appointmentRevenue = appointmentsWithPrice.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+
+      const totalRevenue = requestRevenue + appointmentRevenue;
+      const paidProjects = requestsWithPrice.length + appointmentsWithPrice.length;
+
+      const overviewHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">Umsatz-Übersicht</h3>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Gesamtumsatz</div>
+              <div style="font-size:28px; font-weight:600; color:var(--success);">
+                €${totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Bezahlte Projekte</div>
+              <div style="font-size:28px; font-weight:600; color:var(--primary);">
+                ${paidProjects.toLocaleString()}
+              </div>
+            </div>
+
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Ausstehend</div>
+              <div style="font-size:28px; font-weight:600; color:var(--warning);">
+                €${(0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      let container = document.getElementById('revenueOverviewContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'revenueOverviewContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = overviewHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER REVENUE TIMELINE (Placeholder)
+    // ============================================
+    function renderRevenueTimeline(requests) {
+      const timelineHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">Umsatz im Zeitverlauf</h3>
+          <div style="height:300px; display:flex; align-items:center; justify-content:center; background:#f8f9fa; border-radius:8px;">
+            <p style="color:var(--muted);">Chart coming soon - ChartJS integration</p>
+          </div>
+        </div>
+      `;
+
+      let container = document.getElementById('revenueTimelineContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'revenueTimelineContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = timelineHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER APPOINTMENTS BY ARTIST
+    // ============================================
+    function renderAppointmentsByArtist(appointments) {
+      // Group by artist
+      const artistMap = new Map();
+
+      appointments.forEach(apt => {
+        if (!apt.artist_id) return;
+
+        const artistName = apt.artist_name || 'Unknown Artist';
+        if (!artistMap.has(artistName)) {
+          artistMap.set(artistName, {
+            name: artistName,
+            total: 0,
+            finished: 0,
+            scheduled: 0,
+            noShow: 0
+          });
+        }
+
+        const artist = artistMap.get(artistName);
+        artist.total++;
+        if (apt.status === 'finished') artist.finished++;
+        if (apt.status === 'scheduled') artist.scheduled++;
+        if (apt.status === 'no_show') artist.noShow++;
+      });
+
+      const artists = Array.from(artistMap.values())
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10); // Top 10
+
+      const appointmentsHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">Appointments nach Resident Artist</h3>
+
+          <div style="display:flex; gap:30px; margin-bottom:20px;">
+            <div>
+              <div style="font-size:14px; color:var(--muted);">Total Appointments</div>
+              <div style="font-size:24px; font-weight:600;">${appointments.length.toLocaleString()}</div>
+            </div>
+            <div>
+              <div style="font-size:14px; color:var(--muted);">Ungesetzte Termine</div>
+              <div style="font-size:24px; font-weight:600;">
+                ${appointments.filter(a => !a.artist_id).length.toLocaleString()}
+                <span style="font-size:14px; color:var(--muted);">
+                  (${appointments.length > 0 ? ((appointments.filter(a => !a.artist_id).length / appointments.length) * 100).toFixed(0) : 0}%)
+                </span>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:14px; color:var(--muted);">Nicht umgesetzt</div>
+              <div style="font-size:24px; font-weight:600;">0 <span style="font-size:14px; color:var(--muted);">(0%)</span></div>
+            </div>
+            <div>
+              <div style="font-size:14px; color:var(--muted);">Belegbar</div>
+              <div style="font-size:24px; font-weight:600;">0 <span style="font-size:14px; color:var(--muted);">(0%)</span></div>
+            </div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:2px solid #e0e0e0;">
+                <th style="text-align:left; padding:12px 8px; font-weight:600;">Artist</th>
+                <th style="text-align:right; padding:12px 8px; font-weight:600;">Total</th>
+                <th style="text-align:right; padding:12px 8px; font-weight:600;">Finished</th>
+                <th style="text-align:right; padding:12px 8px; font-weight:600;">Scheduled</th>
+                <th style="text-align:right; padding:12px 8px; font-weight:600;">No Show</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${artists.map(artist => `
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                  <td style="padding:12px 8px;">${artist.name}</td>
+                  <td style="text-align:right; padding:12px 8px; font-weight:600;">${artist.total}</td>
+                  <td style="text-align:right; padding:12px 8px;">${artist.finished}</td>
+                  <td style="text-align:right; padding:12px 8px;">${artist.scheduled}</td>
+                  <td style="text-align:right; padding:12px 8px;">${artist.noShow}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      let container = document.getElementById('appointmentsByArtistContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'appointmentsByArtistContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = appointmentsHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER REVENUE BY PAYMENT STATUS
+    // ============================================
+    function renderRevenueByPaymentStatus(requests) {
+      const paymentGroups = {
+        'Komplett bezahlt': { count: 0, revenue: 0 },
+        'Offen': { count: 0, revenue: 0 },
+        'Anzahlung bezahlt': { count: 0, revenue: 0 }
+      };
+
+      requests.forEach(req => {
+        if (!req.total_amount) return;
+
+        const amount = parseFloat(req.total_amount) || 0;
+
+        if (req.payment_status === 'fully_paid') {
+          paymentGroups['Komplett bezahlt'].count++;
+          paymentGroups['Komplett bezahlt'].revenue += amount;
+        } else if (req.payment_status === 'deposit_paid') {
+          paymentGroups['Anzahlung bezahlt'].count++;
+          paymentGroups['Anzahlung bezahlt'].revenue += amount;
+        } else {
+          paymentGroups['Offen'].count++;
+          paymentGroups['Offen'].revenue += amount;
+        }
+      });
+
+      const total = Object.values(paymentGroups).reduce((sum, g) => sum + g.revenue, 0);
+
+      const paymentHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">Umsatz nach Zahlungsstatus</h3>
+
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-bottom:20px;">
+            ${Object.entries(paymentGroups).map(([status, data]) => {
+              const bgColor = status === 'Komplett bezahlt' ? '#d4edda' :
+                             status === 'Anzahlung bezahlt' ? '#fff3cd' : '#f8d7da';
+              return `
+                <div style="text-align:center; padding:20px; background:${bgColor}; border-radius:8px;">
+                  <div style="font-size:14px; margin-bottom:8px;">💰 ${status}</div>
+                  <div style="font-size:24px; font-weight:600; margin-bottom:4px;">
+                    €${data.revenue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div style="font-size:12px; color:var(--muted);">${data.count} Projekte</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:2px solid #e0e0e0;">
+                <th style="text-align:left; padding:12px 8px;">PAYMENT STATUS</th>
+                <th style="text-align:right; padding:12px 8px;">ANZAHL PROJEKTE</th>
+                <th style="text-align:right; padding:12px 8px;">GESAMT UMSATZ</th>
+                <th style="text-align:right; padding:12px 8px;">DURCHSCHNITT</th>
+                <th style="text-align:right; padding:12px 8px;">% VOM GESAMT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(paymentGroups).map(([status, data]) => {
+                const avg = data.count > 0 ? data.revenue / data.count : 0;
+                const percentage = total > 0 ? (data.revenue / total) * 100 : 0;
+                return `
+                  <tr style="border-bottom:1px solid #f0f0f0;">
+                    <td style="padding:12px 8px; font-weight:500;">${status}</td>
+                    <td style="text-align:right; padding:12px 8px;">${data.count}</td>
+                    <td style="text-align:right; padding:12px 8px;">€${data.revenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</td>
+                    <td style="text-align:right; padding:12px 8px;">€${avg.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</td>
+                    <td style="text-align:right; padding:12px 8px;">${percentage.toFixed(0)}%</td>
+                  </tr>
+                `;
+              }).join('')}
+              <tr style="border-top:2px solid #e0e0e0; font-weight:600;">
+                <td style="padding:12px 8px;">Gesamt</td>
+                <td style="text-align:right; padding:12px 8px;">
+                  ${Object.values(paymentGroups).reduce((sum, g) => sum + g.count, 0)}
+                </td>
+                <td style="text-align:right; padding:12px 8px;">
+                  €${total.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                </td>
+                <td style="text-align:right; padding:12px 8px;">
+                  €${(total / Object.values(paymentGroups).reduce((sum, g) => sum + g.count, 0)).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                </td>
+                <td style="text-align:right; padding:12px 8px;">100%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      let container = document.getElementById('revenueByPaymentStatusContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'revenueByPaymentStatusContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = paymentHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER PROJECT ANALYTICS
+    // ============================================
+    function renderProjectAnalytics(metrics) {
+      const analyticsHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">📊 Project Analytics</h3>
+
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px;">
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Total Projects</div>
+              <div style="font-size:28px; font-weight:600;">${metrics.total_projects.toLocaleString()}</div>
+            </div>
+
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Active Projects</div>
+              <div style="font-size:28px; font-weight:600; color:var(--warning);">${metrics.active_projects.toLocaleString()}</div>
+            </div>
+
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Finished Projects</div>
+              <div style="font-size:28px; font-weight:600; color:var(--success);">${metrics.finished_projects.toLocaleString()}</div>
+            </div>
+
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Total Revenue</div>
+              <div style="font-size:24px; font-weight:600; color:var(--success);">
+                €${metrics.total_revenue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Avg Project Value</div>
+              <div style="font-size:24px; font-weight:600;">
+                €${metrics.avg_project_value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+
+            <div style="text-align:center; padding:20px; background:#f8f9fa; border-radius:8px;">
+              <div style="font-size:14px; color:var(--muted); margin-bottom:8px;">Avg Appointments/Project</div>
+              <div style="font-size:24px; font-weight:600;">${metrics.avg_appointments_per_project.toFixed(1)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      let container = document.getElementById('projectAnalyticsContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'projectAnalyticsContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = analyticsHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER ARTIST PERFORMANCE
+    // ============================================
+    function renderArtistPerformance(appointments) {
+      const performanceHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">🎨 Artist Performance</h3>
+          <div style="height:200px; display:flex; align-items:center; justify-content:center; background:#f8f9fa; border-radius:8px;">
+            <p style="color:var(--muted);">Detailed artist performance metrics coming soon</p>
+          </div>
+        </div>
+      `;
+
+      let container = document.getElementById('artistPerformanceContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'artistPerformanceContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = performanceHTML;
+      }
+    }
+
+    // ============================================
+    // RENDER VIP CUSTOMERS
+    // ============================================
+    function renderVIPCustomers(requests) {
+      const vipHTML = `
+        <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
+          <h3 style="margin:0 0 16px 0;">👥 VIP Customers (Multi-Project Customers)</h3>
+          <div style="height:200px; display:flex; align-items:center; justify-content:center; background:#f8f9fa; border-radius:8px;">
+            <p style="color:var(--muted);">VIP customer analysis coming soon</p>
+          </div>
+        </div>
+      `;
+
+      let container = document.getElementById('vipCustomersContainer');
+      if (!container) {
+        const analyticsContent = document.getElementById('analyticsContent');
+        if (analyticsContent) {
+          container = document.createElement('div');
+          container.id = 'vipCustomersContainer';
+          analyticsContent.appendChild(container);
+        }
+      }
+
+      if (container) {
+        container.innerHTML = vipHTML;
+      }
+    }
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    function getStatusColor(status) {
+      const colors = {
+        'archived': '#9E9E9E',
+        'finished': '#4CAF50',
+        'open_request': '#FFC107',
+        'scheduled': '#2196F3',
+        'canceled': '#F44336',
+        'pending': '#FF9800',
+        'no_show': '#E91E63',
+        'rescheduled': '#9C27B0',
+        'unknown': '#757575'
+      };
+      return colors[status] || '#757575';
+    }
+
+    function formatStatusName(status) {
+      const names = {
+        'archived': 'Archived',
+        'finished': 'Finished',
+        'open_request': 'Open Request',
+        'scheduled': 'Scheduled',
+        'canceled': 'Canceled',
+        'pending': 'Pending',
+        'no_show': 'No Show',
+        'rescheduled': 'Rescheduled',
+        'unknown': 'Unknown'
+      };
+      return names[status] || status;
     }
 
     // Initialize analytics with data
