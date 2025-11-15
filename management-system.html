@@ -6047,7 +6047,7 @@
           </div>
 
           <div style="max-width: 300px; margin: 0 auto 20px;">
-            <canvas id="requestStatusPieCanvas"></canvas>
+            <canvas id="requestStatusPieCanvas" width="300" height="300"></canvas>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
@@ -6055,46 +6055,58 @@
           </div>
         `;
 
-        // Create pie chart
-        const canvas = document.getElementById('requestStatusPieCanvas');
-        if (canvas) {
+        // Create pie chart after DOM is ready
+        requestAnimationFrame(() => {
+          const canvas = document.getElementById('requestStatusPieCanvas');
+          if (!canvas) {
+            console.error('❌ Request status pie canvas not found after render');
+            return;
+          }
+
+          console.log('✅ Creating request status pie chart with', filteredData.length, 'segments');
+
           if (requestStatusChartInstance) {
             requestStatusChartInstance.destroy();
           }
 
-          requestStatusChartInstance = new Chart(canvas, {
-            type: 'pie',
-            data: {
-              labels: filteredData.map(s => s.label),
-              datasets: [{
-                data: filteredData.map(s => s.count),
-                backgroundColor: filteredData.map(s => s.color),
-                borderWidth: 2,
-                borderColor: '#fff'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: true,
-              plugins: {
-                legend: {
-                  display: false
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      const label = context.label || '';
-                      const value = context.parsed || 0;
-                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                      return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+          try {
+            requestStatusChartInstance = new Chart(canvas, {
+              type: 'pie',
+              data: {
+                labels: filteredData.map(s => s.label),
+                datasets: [{
+                  data: filteredData.map(s => s.count),
+                  backgroundColor: filteredData.map(s => s.color),
+                  borderWidth: 2,
+                  borderColor: '#fff'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+                      }
                     }
                   }
                 }
               }
-            }
-          });
-        }
+            });
+            console.log('✅ Request status pie chart created successfully');
+          } catch (error) {
+            console.error('❌ Error creating request status pie chart:', error);
+          }
+        });
       }
 
       // ============================================
@@ -6148,7 +6160,7 @@
           </div>
 
           <div style="max-width: 300px; margin: 0 auto 20px;">
-            <canvas id="appointmentStatusPieCanvas"></canvas>
+            <canvas id="appointmentStatusPieCanvas" width="300" height="300"></canvas>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
@@ -6156,46 +6168,58 @@
           </div>
         `;
 
-        // Create pie chart
-        const canvas = document.getElementById('appointmentStatusPieCanvas');
-        if (canvas) {
+        // Create pie chart after DOM is ready
+        requestAnimationFrame(() => {
+          const canvas = document.getElementById('appointmentStatusPieCanvas');
+          if (!canvas) {
+            console.error('❌ Appointment status pie canvas not found after render');
+            return;
+          }
+
+          console.log('✅ Creating appointment status pie chart with', filteredData.length, 'segments');
+
           if (appointmentStatusChartInstance) {
             appointmentStatusChartInstance.destroy();
           }
 
-          appointmentStatusChartInstance = new Chart(canvas, {
-            type: 'pie',
-            data: {
-              labels: filteredData.map(s => s.label),
-              datasets: [{
-                data: filteredData.map(s => s.count),
-                backgroundColor: filteredData.map(s => s.color),
-                borderWidth: 2,
-                borderColor: '#fff'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: true,
-              plugins: {
-                legend: {
-                  display: false
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      const label = context.label || '';
-                      const value = context.parsed || 0;
-                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                      return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+          try {
+            appointmentStatusChartInstance = new Chart(canvas, {
+              type: 'pie',
+              data: {
+                labels: filteredData.map(s => s.label),
+                datasets: [{
+                  data: filteredData.map(s => s.count),
+                  backgroundColor: filteredData.map(s => s.color),
+                  borderWidth: 2,
+                  borderColor: '#fff'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+                      }
                     }
                   }
                 }
               }
-            }
-          });
-        }
+            });
+            console.log('✅ Appointment status pie chart created successfully');
+          } catch (error) {
+            console.error('❌ Error creating appointment status pie chart:', error);
+          }
+        });
       }
 
       // ============================================
