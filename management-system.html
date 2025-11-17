@@ -18206,6 +18206,9 @@
         const artists = artistsResult.data || [];
         const locations = locationsResult.data || [];
 
+        console.log('📍 All locations from database:', locations);
+        console.log('📍 Location names:', locations.map(loc => loc.name));
+
         // Filter locations to only show the 5 specific ones
         const allowedLocationNames = [
           "Mommy I'm Sorry",
@@ -18217,6 +18220,9 @@
         const filteredLocations = locations.filter(loc =>
           allowedLocationNames.includes(loc.name)
         );
+
+        console.log('📍 Filtered locations:', filteredLocations);
+        console.log('📍 Filtered location names:', filteredLocations.map(loc => loc.name));
 
         const modal = document.createElement('div');
         modal.id = 'addSlotModal';
@@ -18243,6 +18249,7 @@
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
+            overflow-x: visible;
             padding: 32px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
           ">
@@ -18286,8 +18293,8 @@
                     margin-top: 4px;
                     max-height: 300px;
                     overflow-y: auto;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                    z-index: 1000;
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+                    z-index: 100000;
                   "
                 ></div>
               </div>
@@ -18482,6 +18489,8 @@
           `).join('');
 
           searchResults.style.display = 'block';
+          console.log('📋 Dropdown display set to:', searchResults.style.display);
+          console.log('📋 Dropdown element:', searchResults);
 
           // Add click handlers to results
           document.querySelectorAll('.artist-search-result').forEach(item => {
