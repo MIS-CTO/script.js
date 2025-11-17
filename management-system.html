@@ -17386,7 +17386,7 @@
         console.log('📦 Loaded', appointments?.length || 0, 'appointments for project analytics');
 
         // Calculate metrics
-        const metrics = calculateProjectMetrics(appointments || []);
+        const metrics = window.calculateProjectMetrics(appointments || []);
 
         // Update Analytics KPI cards
         const analyticsKpiContainer = document.getElementById('analyticsProjectKPIs');
@@ -18209,7 +18209,7 @@
         console.log('📍 All locations from database:', locations);
         console.log('📍 Location names:', locations.map(loc => loc.name));
 
-        // Filter locations to only show the 5 specific ones
+        // Filter locations to only show the 5 specific ones (case-insensitive)
         const allowedLocationNames = [
           "Mommy I'm Sorry",
           "Muttersöhne",
@@ -18217,8 +18217,9 @@
           "Gon",
           "Seventyone"
         ];
+        const allowedLocationNamesLower = allowedLocationNames.map(name => name.toLowerCase());
         const filteredLocations = locations.filter(loc =>
-          allowedLocationNames.includes(loc.name)
+          allowedLocationNamesLower.includes(loc.name.toLowerCase())
         );
 
         console.log('📍 Filtered locations:', filteredLocations);
@@ -18248,11 +18249,16 @@
             width: 100%;
             max-width: 600px;
             max-height: 90vh;
-            overflow-y: auto;
-            overflow-x: visible;
+            overflow: visible;
             padding: 32px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
           ">
+            <div style="
+              max-height: calc(90vh - 64px);
+              overflow-y: auto;
+              margin: 0 -32px;
+              padding: 0 32px;
+            ">
             <h2 style="margin: 0 0 24px 0;">Add Guest Artist Slot</h2>
 
             <form id="addSlotForm">
@@ -18421,6 +18427,7 @@
                 </button>
               </div>
             </form>
+            </div>
           </div>
         `;
 
