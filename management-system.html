@@ -17231,46 +17231,111 @@
     async function initAnalytics() {
       console.log('🎯 Initializing analytics...');
 
-      // Test Supabase connection first
-      await testSupabaseConnection();
+      try {
+        // Show progress bar
+        ProgressBar.show('Starting to load analytics...');
 
-      // Load location filter dropdown
-      await loadAnalyticsLocationFilter();
+        // Test Supabase connection first
+        ProgressBar.updateProgress(5, 'Testing connection...');
+        await testSupabaseConnection();
 
-      // Load and render initial charts
-      const locationFilter = document.getElementById('analyticsLocationFilter')?.value || null;
+        // Load location filter dropdown
+        ProgressBar.updateProgress(10, 'Loading filters...');
+        await loadAnalyticsLocationFilter();
 
-      // Load requests data for Origin Chart
-      requestsData = await loadRequestsData(locationFilter);
-      const filteredRequests = filterByDateRange(requestsData, 'created_at');
-      await renderOriginsPieChart(filteredRequests);
+        // Load and render initial charts
+        const locationFilter = document.getElementById('analyticsLocationFilter')?.value || null;
 
-      // Load ALL requests data for Count Display (including canceled)
-      allRequestsData = await loadAllRequestsData(locationFilter);
-      const filteredAllRequestsForCount = filterByDateRange(allRequestsData, 'created_at');
-      await renderRequestsCount(filteredAllRequestsForCount);
+        // Load requests data for Origin Chart
+        ProgressBar.updateProgress(20, 'Loading requests data...');
+        requestsData = await loadRequestsData(locationFilter);
+        const filteredRequests = filterByDateRange(requestsData, 'created_at');
+        await renderOriginsPieChart(filteredRequests);
 
-      // Load appointments data for Timeline Chart
-      appointmentsData = await loadAppointmentsData(locationFilter);
-      const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-      await renderBookingsTimeline(filteredAppointments, 'monthly');
-      await renderAppointmentsCount(filteredAppointments);
+        // Load ALL requests data for Count Display (including canceled)
+        ProgressBar.updateProgress(30, 'Loading all requests data...');
+        allRequestsData = await loadAllRequestsData(locationFilter);
+        const filteredAllRequestsForCount = filterByDateRange(allRequestsData, 'created_at');
+        await renderRequestsCount(filteredAllRequestsForCount);
 
-      // Load projects data for Revenue Analytics
-      projectsData = await loadProjectsData(locationFilter);
-      const filteredProjects = filterByDateRange(projectsData, 'created_at');
-      await renderRevenueStats(filteredProjects);
-      await renderRevenueTimeline(filteredProjects);
+        // Load appointments data for Timeline Chart
+        ProgressBar.updateProgress(40, 'Loading appointments data...');
+        appointmentsData = await loadAppointmentsData(locationFilter);
+        const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
+        await renderBookingsTimeline(filteredAppointments, 'monthly');
+        await renderAppointmentsCount(filteredAppointments);
 
-      // Load NEW analytics components
-      await loadRequestStatus(filteredRequests);
-      await loadArtistDistribution(filteredAppointments);
-      await loadRevenueByPaymentStatus();
+        // Load projects data for Revenue Analytics
+        ProgressBar.updateProgress(50, 'Loading projects data...');
+        projectsData = await loadProjectsData(locationFilter);
+        const filteredProjects = filterByDateRange(projectsData, 'created_at');
+        await renderRevenueStats(filteredProjects);
+        await renderRevenueTimeline(filteredProjects);
 
-      // Load Project-Based Analytics (moved from Dashboard)
-      await loadProjectAnalytics();
+        // Load NEW analytics components
+        ProgressBar.updateProgress(60, 'Rendering status breakdowns...');
+        await loadRequestStatus(filteredRequests);
+        await loadArtistDistribution(filteredAppointments);
+        await loadRevenueByPaymentStatus();
 
-      console.log('✅ Analytics initialized');
+        // Load Project-Based Analytics (moved from Dashboard)
+        ProgressBar.updateProgress(70, 'Loading project analytics...');
+        await loadProjectAnalytics();
+
+        // Calculate and render Pie Charts for Request and Appointment Status
+        ProgressBar.updateProgress(80, 'Rendering pie charts...');
+
+        // Calculate request status counts
+        const requestStatusCounts = {
+          archived: 0,
+          finished: 0,
+          open_request: 0,
+          scheduled: 0,
+          canceled: 0,
+          pending: 0
+        };
+
+        allRequestsData.forEach(req => {
+          const status = req.status || 'unknown';
+          if (requestStatusCounts.hasOwnProperty(status)) {
+            requestStatusCounts[status]++;
+          } else {
+            requestStatusCounts[status] = 1;
+          }
+        });
+
+        // Calculate appointment status counts
+        const appointmentStatusCounts = {
+          finished: 0,
+          scheduled: 0,
+          no_show: 0,
+          rescheduled: 0,
+          canceled: 0,
+          reserved: 0,
+          unknown: 0
+        };
+
+        appointmentsData.forEach(apt => {
+          const status = apt.status || 'unknown';
+          if (appointmentStatusCounts.hasOwnProperty(status)) {
+            appointmentStatusCounts[status]++;
+          } else {
+            appointmentStatusCounts[status] = 1;
+          }
+        });
+
+        // Render pie charts
+        ProgressBar.updateProgress(90, 'Finalizing charts...');
+        renderRequestStatusBreakdown(allRequestsData, requestStatusCounts);
+        renderAppointmentStatusBreakdown(appointmentsData, appointmentStatusCounts);
+
+        console.log('✅ Analytics initialized');
+        ProgressBar.hide();
+
+      } catch (error) {
+        console.error('❌ Error initializing analytics:', error);
+        ProgressBar.hide();
+      }
     }
 
     // ============================================
