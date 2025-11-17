@@ -4224,10 +4224,12 @@
               <option value="">-- Select Booking Source --</option>
               <option value="Booking form">Booking form</option>
               <option value="Whatsapp">Whatsapp</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
               <option value="Phone">Phone</option>
               <option value="E-mail">E-mail</option>
-              <option value="Instagram">Instagram</option>
-              <option value="Walk in">Walk in</option>
+              <option value="Walk-in">Walk-in</option>
+              <option value="Self-Booking">Self-Booking</option>
             </select>
           </div>
           <div class="form-group">
@@ -15040,7 +15042,6 @@
       console.log('📊 Rendering origins pie chart with', data.length, 'requests');
 
       // Mapping from database values to chart categories
-      // Database has: Contactform, Instagram, Website, WhatsApp (with capitals)
       const originMapping = {
         // Booking form variations
         'Contactform': 'booking_form',
@@ -15057,6 +15058,10 @@
         // Instagram variations
         'Instagram': 'instagram',
         'instagram': 'instagram',
+
+        // Facebook variations
+        'Facebook': 'facebook',
+        'facebook': 'facebook',
 
         // Email variations
         'Email': 'email',
@@ -15078,24 +15083,19 @@
         // Self-Booking variations
         'Self-Booking': 'self_booking',
         'self_booking': 'self_booking',
-        'Self Booking': 'self_booking',
-
-        // Website
-        'Website': 'website',
-        'website': 'website'
+        'Self Booking': 'self_booking'
       };
 
       // Count origins
       const originCounts = {
         'booking_form': 0,
         'whatsapp': 0,
+        'instagram': 0,
+        'facebook': 0,
         'phone': 0,
         'email': 0,
-        'instagram': 0,
         'walk_in': 0,
-        'self_booking': 0,
-        'website': 0,
-        'other': 0
+        'self_booking': 0
       };
 
       // Track unknown origins for debugging
@@ -15112,14 +15112,11 @@
           if (mappedOrigin) {
             originCounts[mappedOrigin]++;
           } else {
-            // Unknown origin value
-            originCounts['other']++;
+            // Unknown origin value - log for debugging
             unknownOrigins.add(rawOrigin);
           }
-        } else {
-          // Requests without origin value
-          originCounts['other']++;
         }
+        // Note: Requests without origin value are not counted
       });
 
       console.log('📊 Origin counts:', originCounts);
@@ -15134,26 +15131,24 @@
       // Labels and colors (order must match originCounts)
       const labels = [
         'Booking form',
-        'WhatsApp',
-        'Phone',
-        'E-Mail',
+        'Whatsapp',
         'Instagram',
-        'Walk-In',
-        'Self-Booking',
-        'Website',
-        'Other'
+        'Facebook',
+        'Phone',
+        'E-mail',
+        'Walk-in',
+        'Self-Booking'
       ];
 
       const colors = [
         '#0071e3', // Accent (Booking Form)
         '#25D366', // WhatsApp Green
+        '#E1306C', // Instagram Pink
+        '#1877F2', // Facebook Blue
         '#34C759', // Phone Green (iOS)
         '#EA4335', // Email Red
-        '#E1306C', // Instagram Pink
         '#7B1FA2', // Walk-In Purple
-        '#00897B', // Self-Booking Teal
-        '#FF9800', // Website Orange
-        '#9E9E9E'  // Other Gray
+        '#00897B'  // Self-Booking Teal
       ];
 
       // Filter out categories with 0 count for cleaner chart
