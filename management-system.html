@@ -6145,8 +6145,12 @@
         console.log('📊 Loading Dashboard Statistics...');
 
         try {
+          // Show progress bar
+          ProgressBar.show('Starting to load dashboard...');
+
           // 1. LOAD ALL REQUESTS WITH STATUS (Handle 34K+ rows with pagination)
           console.log('📥 Loading all requests...');
+          ProgressBar.updateProgress(10, 'Loading requests...');
           let allRequests = [];
           let from = 0;
           const batchSize = 1000;
@@ -6165,12 +6169,16 @@
               from += batchSize;
               hasMore = batch.length === batchSize;
               console.log(`  ↳ Loaded ${allRequests.length} requests so far...`);
+              // Update progress (10% to 40%)
+              const requestProgress = 10 + Math.min(30, (allRequests.length / 1000) * 3);
+              ProgressBar.updateProgress(requestProgress, `Loading requests (${allRequests.length} loaded)...`);
             } else {
               hasMore = false;
             }
           }
 
           console.log('✅ Loaded', allRequests?.length || 0, 'total requests');
+          ProgressBar.updateProgress(40, 'Requests loaded. Loading appointments...');
 
           // 2. COUNT REQUESTS BY STATUS (INCLUDING ARCHIVED)
           const requestCounts = {
@@ -6208,12 +6216,17 @@
               allAppointments = allAppointments.concat(batch);
               from += batchSize;
               hasMore = batch.length === batchSize;
+              console.log(`  ↳ Loaded ${allAppointments.length} appointments so far...`);
+              // Update progress (40% to 65%)
+              const appointmentProgress = 40 + Math.min(25, (allAppointments.length / 1000) * 25);
+              ProgressBar.updateProgress(appointmentProgress, `Loading appointments (${allAppointments.length} loaded)...`);
             } else {
               hasMore = false;
             }
           }
 
           console.log('✅ Loaded', allAppointments?.length || 0, 'total appointments');
+          ProgressBar.updateProgress(70, 'Calculating statistics...');
 
           // 4. COUNT APPOINTMENTS BY STATUS
           const appointmentCounts = {
@@ -6277,16 +6290,20 @@
           if (badge6) badge6.textContent = `Today's Events: ${todayAppointments}`;
 
           // 7. UPDATE DASHBOARD CHARTS
+          ProgressBar.updateProgress(80, 'Rendering charts...');
           updateRequestStatusBreakdown(requestCounts, allRequests?.length || 0);
           updateAppointmentStatusBreakdown(appointmentCounts, allAppointments?.length || 0);
 
           // 8. Load project overview KPIs
+          ProgressBar.updateProgress(90, 'Loading project metrics...');
           await loadProjectOverviewKPIs();
 
           console.log('✅ Dashboard statistics loaded successfully');
+          ProgressBar.hide();
 
         } catch(err) {
           console.error("❌ Dashboard error:", err);
+          ProgressBar.hide();
         }
       }
 
@@ -7089,8 +7106,10 @@
 
       async function loadRequests() {
         try {
+          ProgressBar.show('Loading requests...');
           console.log('📋 Loading requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
 
+          ProgressBar.updateProgress(30, 'Fetching requests from database...');
           const { data, error } = await supabase
             .from('requests')
             .select(`
@@ -7105,6 +7124,7 @@
 
           allRequests = data || [];
           console.log('✅ Loaded', allRequests.length, 'requests');
+          ProgressBar.updateProgress(70, 'Filtering and rendering...');
 
           // Filter by status
           let filteredRequests = allRequests;
@@ -7139,8 +7159,10 @@
           console.log('📊 Filtered to', filteredRequests.length, 'requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
           renderRequestsList(filteredRequests);
           updateRequestBadges();
+          ProgressBar.hide();
         } catch(err) {
           console.error("❌ Requests error:", err);
+          ProgressBar.hide();
           document.getElementById('requestsList').innerHTML = `
             <div style="text-align:center; padding:40px; color:#E53935;">
               <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
@@ -8851,8 +8873,11 @@
         console.log('👤 Loading artists (page ' + page + ')...');
 
         try {
+          ProgressBar.show('Loading artists...');
+
           // Load from cache or database
           if (artistsCache.length === 0) {
+            ProgressBar.updateProgress(30, 'Fetching artists from database...');
             const { data, error } = await supabase
               .from('artists')
               .select(`
@@ -8867,6 +8892,7 @@
             console.log('✅ Loaded', artistsCache.length, 'artists into cache');
           }
 
+          ProgressBar.updateProgress(60, 'Applying filters...');
           // Apply filters
           applyArtistFilters();
 
@@ -8878,6 +8904,7 @@
           const endIndex = startIndex + artistsPageSize;
           const paginatedArtists = sorted.slice(startIndex, endIndex);
 
+          ProgressBar.updateProgress(80, 'Rendering table...');
           // Render table
           renderArtistsTable(paginatedArtists);
 
@@ -8888,9 +8915,11 @@
           renderArtistsPagination(page);
 
           currentArtistsPage = page;
+          ProgressBar.hide();
 
         } catch (error) {
           console.error('❌ Failed to load artists:', error);
+          ProgressBar.hide();
           const tbody = document.getElementById('artistsTableBody');
           if (tbody) {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#E53935;">Fehler beim Laden der Artists: ' + error.message + '</td></tr>';
@@ -9056,9 +9085,12 @@
         console.log('👥 Loading customers (page ' + page + ')...');
 
         try {
+          ProgressBar.show('Loading customers...');
+
           // Load from cache or database
           if (customersCache.length === 0) {
             console.log('🔄 Loading ALL customers from Supabase in batches...');
+            ProgressBar.updateProgress(20, 'Fetching customers from database...');
 
             let allData = [];
             let from = 0;
@@ -9080,6 +9112,10 @@
                 console.log(`📦 Loaded batch: ${from + 1} to ${from + data.length} (Total so far: ${allData.length})`);
                 from += batchSize;
 
+                // Update progress (20% to 50%)
+                const customerProgress = 20 + Math.min(30, (allData.length / 1000) * 3);
+                ProgressBar.updateProgress(customerProgress, `Loading customers (${allData.length} loaded)...`);
+
                 // Check if we got less than batch size, meaning we're done
                 if (data.length < batchSize) {
                   hasMore = false;
@@ -9094,6 +9130,7 @@
             console.log('✅ Loaded ALL', customersCache.length, 'customers into cache');
           }
 
+          ProgressBar.updateProgress(60, 'Applying filters...');
           // Apply filters
           applyCustomerFilters();
 
@@ -9105,6 +9142,7 @@
           const endIndex = startIndex + customersPageSize;
           const paginatedCustomers = sorted.slice(startIndex, endIndex);
 
+          ProgressBar.updateProgress(80, 'Rendering table...');
           // Render table
           renderCustomersTable(paginatedCustomers);
 
@@ -9115,9 +9153,11 @@
           renderCustomersPagination(page);
 
           currentCustomersPage = page;
+          ProgressBar.hide();
 
         } catch (error) {
           console.error('❌ Failed to load customers:', error);
+          ProgressBar.hide();
           const tbody = document.getElementById('customersTableBody');
           if (tbody) {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#E53935;">Fehler beim Laden der Customers: ' + error.message + '</td></tr>';
@@ -16527,6 +16567,12 @@
           <h3 style="margin:0 0 16px 0;">Request Status Breakdown</h3>
           <p style="color:var(--muted); margin-bottom:20px;">${total.toLocaleString()} Total Requests</p>
 
+          <!-- Pie Chart -->
+          <div style="position: relative; width: 300px; max-width: 100%; height: 300px; margin: 0 auto 30px;">
+            <canvas id="analyticsRequestStatusPieCanvas" width="300" height="300"></canvas>
+          </div>
+
+          <!-- Bullet Point List -->
           <div style="display:flex; flex-direction:column; gap:12px;">
             ${Object.entries(statusCounts).map(([status, count]) => {
               const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
@@ -16562,6 +16608,65 @@
 
       if (container) {
         container.innerHTML = breakdownHTML;
+
+        // Create pie chart after DOM is updated
+        requestAnimationFrame(() => {
+          const canvas = document.getElementById('analyticsRequestStatusPieCanvas');
+          if (!canvas) {
+            console.error('❌ Analytics request status pie canvas not found');
+            return;
+          }
+
+          // Prepare data for chart
+          const chartData = Object.entries(statusCounts)
+            .filter(([_, count]) => count > 0)
+            .map(([status, count]) => ({
+              label: formatStatusName(status),
+              count: count,
+              color: getStatusColor(status)
+            }))
+            .sort((a, b) => b.count - a.count);
+
+          console.log('✅ Creating analytics request status pie chart with', chartData.length, 'segments');
+
+          try {
+            new Chart(canvas, {
+              type: 'pie',
+              data: {
+                labels: chartData.map(d => d.label),
+                datasets: [{
+                  data: chartData.map(d => d.count),
+                  backgroundColor: chartData.map(d => d.color),
+                  borderWidth: 2,
+                  borderColor: '#fff'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+            console.log('✅ Analytics request status pie chart created successfully');
+          } catch (error) {
+            console.error('❌ Error creating analytics request status pie chart:', error);
+          }
+        });
       }
     }
 
@@ -16576,6 +16681,12 @@
           <h3 style="margin:0 0 16px 0;">Appointment Status Breakdown</h3>
           <p style="color:var(--muted); margin-bottom:20px;">${total.toLocaleString()} Total Appointments</p>
 
+          <!-- Pie Chart -->
+          <div style="position: relative; width: 300px; max-width: 100%; height: 300px; margin: 0 auto 30px;">
+            <canvas id="analyticsAppointmentStatusPieCanvas" width="300" height="300"></canvas>
+          </div>
+
+          <!-- Bullet Point List -->
           <div style="display:flex; flex-direction:column; gap:12px;">
             ${Object.entries(statusCounts).map(([status, count]) => {
               const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
@@ -16611,6 +16722,65 @@
 
       if (container) {
         container.innerHTML = breakdownHTML;
+
+        // Create pie chart after DOM is updated
+        requestAnimationFrame(() => {
+          const canvas = document.getElementById('analyticsAppointmentStatusPieCanvas');
+          if (!canvas) {
+            console.error('❌ Analytics appointment status pie canvas not found');
+            return;
+          }
+
+          // Prepare data for chart
+          const chartData = Object.entries(statusCounts)
+            .filter(([_, count]) => count > 0)
+            .map(([status, count]) => ({
+              label: formatStatusName(status),
+              count: count,
+              color: getStatusColor(status)
+            }))
+            .sort((a, b) => b.count - a.count);
+
+          console.log('✅ Creating analytics appointment status pie chart with', chartData.length, 'segments');
+
+          try {
+            new Chart(canvas, {
+              type: 'pie',
+              data: {
+                labels: chartData.map(d => d.label),
+                datasets: [{
+                  data: chartData.map(d => d.count),
+                  backgroundColor: chartData.map(d => d.color),
+                  borderWidth: 2,
+                  borderColor: '#fff'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return `${label}: ${value.toLocaleString('de-DE')} (${percentage}%)`;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+            console.log('✅ Analytics appointment status pie chart created successfully');
+          } catch (error) {
+            console.error('❌ Error creating analytics appointment status pie chart:', error);
+          }
+        });
       }
     }
 
