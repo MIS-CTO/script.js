@@ -18593,23 +18593,32 @@
         }
 
         try {
-          // Get current user for created_by field (required by RLS policy)
+          // Get current user for created_by field (optional)
           const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            showNotification('You must be logged in to add slots', 'error');
-            return;
+          console.log('🔍 Current user:', user);
+
+          // Build insert data - only add created_by if user exists
+          const insertData = {
+            artist_id: artistId,
+            date_from: dateFrom,
+            date_to: dateTo,
+            location_id: locationId,
+            notes: notes || null
+          };
+
+          // Add created_by field only if user is authenticated
+          if (user) {
+            insertData.created_by = user.id;
+            console.log('✅ User authenticated, adding created_by:', user.id);
+          } else {
+            console.log('⚠️ No user found, inserting without created_by');
           }
+
+          console.log('📤 Inserting data:', insertData);
 
           const { data, error } = await supabase
             .from('waitlist_slots')
-            .insert([{
-              artist_id: artistId,
-              date_from: dateFrom,
-              date_to: dateTo,
-              location_id: locationId,
-              notes: notes || null,
-              created_by: user.id
-            }])
+            .insert([insertData])
             .select();
 
           if (error) throw error;
