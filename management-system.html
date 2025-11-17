@@ -3483,14 +3483,6 @@
           <div>
             <h3>Bookings Over Time</h3>
 
-            <!-- Time Range Tabs -->
-            <div class="time-range-tabs">
-              <button class="time-tab active" data-range="weekly">Weekly</button>
-              <button class="time-tab" data-range="monthly">Monthly</button>
-              <button class="time-tab" data-range="yearly">Yearly</button>
-              <button class="time-tab" data-range="all">All-Time</button>
-            </div>
-
             <div style="position: relative; width: 100%; height: 400px; margin-top: 16px;">
               <canvas id="bookingsTimeline" style="width: 600px; height: 400px;"></canvas>
             </div>
@@ -3498,15 +3490,7 @@
 
           <!-- Requests & Appointments Overview -->
           <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <h3 style="margin: 0;">Requests & Appointments Overview</h3>
-              <select id="requestsAppointmentsTimeFilter" class="filter-select" style="width: auto;">
-                <option value="week">Weekly</option>
-                <option value="month" selected>Monthly</option>
-                <option value="year">Yearly</option>
-                <option value="all">All Time</option>
-              </select>
-            </div>
+            <h3>Requests & Appointments Overview</h3>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 20px;">
               <!-- Total Requests -->
               <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 113, 227, 0.05); border-radius: 12px;">
@@ -3539,15 +3523,7 @@
 
       <!-- Revenue Analytics Card -->
       <div class="chart-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h3 style="margin: 0;">Umsatz-Übersicht</h3>
-          <select id="revenueTimeFilter" class="filter-select" style="width: auto;">
-            <option value="week">Diese Woche</option>
-            <option value="month" selected>Dieser Monat</option>
-            <option value="year">Dieses Jahr</option>
-            <option value="all">Gesamt</option>
-          </select>
-        </div>
+        <h3>Umsatz-Übersicht</h3>
         <div style="display: flex; flex-direction: column; gap: 24px; padding: 20px;">
           <!-- Total Revenue -->
           <div style="text-align: center;">
@@ -3579,15 +3555,7 @@
 
       <!-- Revenue Timeline Card -->
       <div class="chart-card" style="grid-column: 1 / -1;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h3 style="margin: 0;">Umsatz im Zeitverlauf</h3>
-          <select id="revenueTimelineFilter" class="filter-select" style="width: auto;">
-            <option value="week">Diese Woche</option>
-            <option value="month" selected>Dieser Monat</option>
-            <option value="year">Dieses Jahr</option>
-            <option value="all">Gesamt</option>
-          </select>
-        </div>
+        <h3>Umsatz im Zeitverlauf</h3>
         <div style="position: relative; height: 400px;">
           <canvas id="revenueTimeline"></canvas>
         </div>
@@ -17102,22 +17070,18 @@
 
       // Load ALL requests data for Count Display (including canceled)
       allRequestsData = await loadAllRequestsData(locationFilter);
-      // Apply default time filter (month) for counts
-      const filteredAllRequestsForCount = filterByTimeRange(allRequestsData, 'month');
+      const filteredAllRequestsForCount = filterByDateRange(allRequestsData, 'created_at');
       await renderRequestsCount(filteredAllRequestsForCount);
 
       // Load appointments data for Timeline Chart
       appointmentsData = await loadAppointmentsData(locationFilter);
       const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-      await renderBookingsTimeline(filteredAppointments, currentTimeRange);
-      // Apply default time filter (month) for counts
-      const filteredAppointmentsForCount = filterByTimeRange(appointmentsData, 'month');
-      await renderAppointmentsCount(filteredAppointmentsForCount);
+      await renderBookingsTimeline(filteredAppointments, 'monthly');
+      await renderAppointmentsCount(filteredAppointments);
 
       // Load projects data for Revenue Analytics
       projectsData = await loadProjectsData(locationFilter);
-      // Apply default revenue time filter (month)
-      const filteredProjects = filterProjectsByRevenueDateRange(projectsData, 'month');
+      const filteredProjects = filterByDateRange(projectsData, 'created_at');
       await renderRevenueStats(filteredProjects);
       await renderRevenueTimeline(filteredProjects);
 
@@ -17605,24 +17569,6 @@
         });
       }
 
-      // Time Range Tab Switching
-      const timeTabs = document.querySelectorAll('.time-tab');
-      timeTabs.forEach(tab => {
-        tab.addEventListener('click', async function() {
-          console.log('🕒 Time range changed to:', this.dataset.range);
-
-          // Update active state
-          timeTabs.forEach(t => t.classList.remove('active'));
-          this.classList.add('active');
-
-          // Get selected range
-          const range = this.dataset.range;
-
-          // Reload timeline chart with appointments data
-          await renderBookingsTimeline(appointmentsData, range);
-        });
-      });
-
       // Location Filter Change
       const analyticsLocationFilter = document.getElementById('analyticsLocationFilter');
       if (analyticsLocationFilter) {
@@ -17637,26 +17583,18 @@
 
           // Reload ALL requests data for Count Display (including canceled)
           allRequestsData = await loadAllRequestsData(locationId);
-          // Apply requests/appointments-specific time filter if set
-          const reqAppTimeFilter = document.getElementById('requestsAppointmentsTimeFilter');
-          const reqAppFilterValue = reqAppTimeFilter?.value || 'month';
-          const filteredAllRequestsForCount = filterByTimeRange(allRequestsData, reqAppFilterValue);
+          const filteredAllRequestsForCount = filterByDateRange(allRequestsData, 'created_at');
           await renderRequestsCount(filteredAllRequestsForCount);
 
           // Reload appointments data for Timeline Chart
           appointmentsData = await loadAppointmentsData(locationId);
           const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-          await renderBookingsTimeline(filteredAppointments, currentTimeRange);
-          // Apply requests/appointments-specific time filter for count
-          const filteredAppointmentsForCount = filterByTimeRange(appointmentsData, reqAppFilterValue);
-          await renderAppointmentsCount(filteredAppointmentsForCount);
+          await renderBookingsTimeline(filteredAppointments, 'monthly');
+          await renderAppointmentsCount(filteredAppointments);
 
           // Reload projects data for Revenue Analytics
           projectsData = await loadProjectsData(locationId);
-          // Apply revenue-specific time filter if set
-          const revenueTimeFilter = document.getElementById('revenueTimeFilter');
-          const revenueFilterValue = revenueTimeFilter?.value || 'month';
-          const filteredProjects = filterProjectsByRevenueDateRange(projectsData, revenueFilterValue);
+          const filteredProjects = filterByDateRange(projectsData, 'created_at');
           await renderRevenueStats(filteredProjects);
           await renderRevenueTimeline(filteredProjects);
 
@@ -17681,7 +17619,7 @@
           await renderRequestsCount(filteredAllRequests);
 
           const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-          await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+          await renderBookingsTimeline(filteredAppointments, 'monthly');
           await renderAppointmentsCount(filteredAppointments);
 
           const filteredProjects = filterByDateRange(projectsData, 'created_at');
@@ -17715,7 +17653,7 @@
             await renderRequestsCount(filteredAllRequests);
 
             const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
-            await renderBookingsTimeline(filteredAppointments, currentTimeRange);
+            await renderBookingsTimeline(filteredAppointments, 'monthly');
             await renderAppointmentsCount(filteredAppointments);
 
             const filteredProjects = filterByDateRange(projectsData, 'created_at');
@@ -17731,77 +17669,6 @@
 
         analyticsStartDate.addEventListener('change', applyCustomDateRange);
         analyticsEndDate.addEventListener('change', applyCustomDateRange);
-      }
-
-      // ========================================
-      // REVENUE TIME FILTERS
-      // ========================================
-
-      // Revenue Time Filter Change (for Umsatz-Übersicht)
-      const revenueTimeFilter = document.getElementById('revenueTimeFilter');
-      if (revenueTimeFilter) {
-        revenueTimeFilter.addEventListener('change', async function() {
-          console.log('💰 Revenue time filter changed:', this.value);
-
-          // Filter projects by selected time range
-          const filteredProjects = filterProjectsByRevenueDateRange(projectsData, this.value);
-          console.log(`💰 Filtered projects: ${filteredProjects.length} of ${projectsData.length}`);
-
-          // Re-render only revenue stats
-          await renderRevenueStats(filteredProjects);
-
-          // Also update the timeline filter to match
-          const revenueTimelineFilter = document.getElementById('revenueTimelineFilter');
-          if (revenueTimelineFilter && revenueTimelineFilter.value !== this.value) {
-            revenueTimelineFilter.value = this.value;
-            await renderRevenueTimeline(filteredProjects);
-          }
-        });
-      }
-
-      // Revenue Timeline Filter Change (for Umsatz im Zeitverlauf)
-      const revenueTimelineFilter = document.getElementById('revenueTimelineFilter');
-      if (revenueTimelineFilter) {
-        revenueTimelineFilter.addEventListener('change', async function() {
-          console.log('📊 Revenue timeline filter changed:', this.value);
-
-          // Filter projects by selected time range
-          const filteredProjects = filterProjectsByRevenueDateRange(projectsData, this.value);
-          console.log(`📊 Filtered projects: ${filteredProjects.length} of ${projectsData.length}`);
-
-          // Re-render only revenue timeline
-          await renderRevenueTimeline(filteredProjects);
-
-          // Also update the stats filter to match
-          const revenueTimeFilter = document.getElementById('revenueTimeFilter');
-          if (revenueTimeFilter && revenueTimeFilter.value !== this.value) {
-            revenueTimeFilter.value = this.value;
-            await renderRevenueStats(filteredProjects);
-          }
-        });
-      }
-
-      // ========================================
-      // REQUESTS & APPOINTMENTS TIME FILTER
-      // ========================================
-
-      // Requests & Appointments Time Filter Change
-      const requestsAppointmentsTimeFilter = document.getElementById('requestsAppointmentsTimeFilter');
-      if (requestsAppointmentsTimeFilter) {
-        requestsAppointmentsTimeFilter.addEventListener('change', async function() {
-          console.log('📊 Requests & Appointments time filter changed:', this.value);
-
-          // Filter requests and appointments by selected time range
-          const filteredRequests = filterByTimeRange(allRequestsData, this.value);
-          const filteredAppointments = filterByTimeRange(appointmentsData, this.value);
-
-          console.log(`📊 Filtered requests: ${filteredRequests.length} of ${allRequestsData.length}`);
-          console.log(`📊 Filtered appointments: ${filteredAppointments.length} of ${appointmentsData.length}`);
-
-          // Re-render counts
-          await renderRequestsCount(filteredRequests);
-          await renderAppointmentsCount(filteredAppointments);
-        });
       }
 
       // ========================================
