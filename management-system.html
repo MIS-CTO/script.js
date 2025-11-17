@@ -18563,6 +18563,15 @@
       }
 
       // ============================================
+      // Utility: Show Notification
+      // ============================================
+      function showNotification(message, type = 'info') {
+        // Simple alert for now - could be enhanced with custom UI later
+        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+        alert(`${icon} ${message}`);
+      }
+
+      // ============================================
       // Handle Add Slot
       // ============================================
       async function handleAddSlot() {
@@ -18584,6 +18593,13 @@
         }
 
         try {
+          // Get current user for created_by field (required by RLS policy)
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            showNotification('You must be logged in to add slots', 'error');
+            return;
+          }
+
           const { data, error } = await supabase
             .from('waitlist_slots')
             .insert([{
@@ -18591,7 +18607,8 @@
               date_from: dateFrom,
               date_to: dateTo,
               location_id: locationId,
-              notes: notes || null
+              notes: notes || null,
+              created_by: user.id
             }])
             .select();
 
