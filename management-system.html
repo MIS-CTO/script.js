@@ -18122,6 +18122,26 @@
                   >
                     Delete
                   </button>
+                  <button
+                    class="toggle-share-paid-button"
+                    data-slot-id="${slot.id}"
+                    data-current-status="${slot.share_paid || false}"
+                    style="
+                      padding:8px 12px;
+                      border:1px solid ${slot.share_paid ? '#34c759' : '#ff3b30'};
+                      border-radius:8px;
+                      background:white;
+                      cursor:pointer;
+                      color:${slot.share_paid ? '#34c759' : '#ff3b30'};
+                      font-size:14px;
+                      font-weight:600;
+                      transition:all 0.2s;
+                    "
+                    onmouseover="this.style.background='${slot.share_paid ? '#f0fdf4' : '#fff5f5'}'"
+                    onmouseout="this.style.background='white'"
+                  >
+                    ${slot.share_paid ? '✅ Paid' : '❌ Unpaid'}
+                  </button>
                 </div>
               </div>
 
@@ -18151,9 +18171,13 @@
                 ` : ''}
               </div>
 
-              <!-- Status Badge -->
-              <div style="margin-top:12px;">
+              <!-- Status Badges -->
+              <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
                 ${statusBadge}
+                ${slot.share_paid
+                  ? '<span class="badge" style="background:#34c759; color:white;">✅ Share Paid</span>'
+                  : '<span class="badge" style="background:#ff3b30; color:white;">❌ Share Not Paid</span>'
+                }
               </div>
 
               <!-- Notes (if any) -->
@@ -18593,32 +18617,15 @@
         }
 
         try {
-          // Get current user for created_by field (optional)
-          const { data: { user } } = await supabase.auth.getUser();
-          console.log('🔍 Current user:', user);
-
-          // Build insert data - only add created_by if user exists
-          const insertData = {
-            artist_id: artistId,
-            date_from: dateFrom,
-            date_to: dateTo,
-            location_id: locationId,
-            notes: notes || null
-          };
-
-          // Add created_by field only if user is authenticated
-          if (user) {
-            insertData.created_by = user.id;
-            console.log('✅ User authenticated, adding created_by:', user.id);
-          } else {
-            console.log('⚠️ No user found, inserting without created_by');
-          }
-
-          console.log('📤 Inserting data:', insertData);
-
           const { data, error } = await supabase
             .from('waitlist_slots')
-            .insert([insertData])
+            .insert([{
+              artist_id: artistId,
+              date_from: dateFrom,
+              date_to: dateTo,
+              location_id: locationId,
+              notes: notes || null
+            }])
             .select();
 
           if (error) throw error;
@@ -18664,6 +18671,29 @@
       }
 
       // ============================================
+      // Toggle Share Paid
+      // ============================================
+      async function toggleSharePaid(slotId, currentStatus) {
+        const newStatus = !currentStatus;
+
+        try {
+          const { error } = await supabase
+            .from('waitlist_slots')
+            .update({ share_paid: newStatus })
+            .eq('id', slotId);
+
+          if (error) throw error;
+
+          showNotification(`Share marked as ${newStatus ? 'paid' : 'unpaid'}`, 'success');
+          await loadWaitlistSlots(currentWaitlistLocation);
+
+        } catch (error) {
+          console.error('Error updating share paid:', error);
+          showNotification('Failed to update share paid status', 'error');
+        }
+      }
+
+      // ============================================
       // Event Listeners
       // ============================================
       function attachWaitlistEventListeners() {
@@ -18682,6 +18712,16 @@
             e.stopPropagation();
             // TODO: Open edit modal
             showNotification('Edit functionality coming soon', 'info');
+          });
+        });
+
+        // Toggle share paid buttons
+        document.querySelectorAll('.toggle-share-paid-button').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const slotId = btn.dataset.slotId;
+            const currentStatus = btn.dataset.currentStatus === 'true';
+            toggleSharePaid(slotId, currentStatus);
           });
         });
       }
