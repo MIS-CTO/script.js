@@ -18235,7 +18235,7 @@
           bottom: 0;
           background: rgba(0,0,0,0.5);
           backdrop-filter: blur(10px);
-          z-index: 10000;
+          z-index: 99999;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -18248,22 +18248,18 @@
             border-radius: 20px;
             width: 100%;
             max-width: 600px;
-            max-height: 90vh;
-            overflow: visible;
+            max-height: 85vh;
             padding: 32px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            display: flex;
+            flex-direction: column;
           ">
-            <div style="
-              max-height: calc(90vh - 64px);
-              overflow-y: auto;
-              margin: 0 -32px;
-              padding: 0 32px;
-            ">
             <h2 style="margin: 0 0 24px 0;">Add Guest Artist Slot</h2>
 
-            <form id="addSlotForm">
-              <!-- Artist Search -->
-              <div style="margin-bottom: 24px; position: relative;">
+            <form id="addSlotForm" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+              <!-- Artist Search - FIXED POSITION -->
+              <div style="margin-bottom: 24px; position: relative; z-index: 1000;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
                   Artist *
                 </label>
@@ -18300,10 +18296,13 @@
                     max-height: 300px;
                     overflow-y: auto;
                     box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-                    z-index: 100000;
+                    z-index: 100001;
                   "
                 ></div>
               </div>
+
+              <!-- SCROLLABLE CONTENT -->
+              <div style="flex: 1; overflow-y: auto; margin: 0 -32px; padding: 0 32px;">
 
               <!-- Date Range -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
@@ -18426,8 +18425,9 @@
                   Add Slot
                 </button>
               </div>
+
+              </div>
             </form>
-            </div>
           </div>
         `;
 
