@@ -18302,7 +18302,7 @@
               </div>
 
               <!-- SCROLLABLE CONTENT -->
-              <div style="flex: 1; overflow-y: auto; margin: 0 -32px; padding: 0 32px;">
+              <div style="flex: 1; overflow-y: auto; margin: 0 -32px; padding: 0 32px; position: relative; z-index: 1;">
 
               <!-- Date Range -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
@@ -18496,8 +18496,20 @@
           `).join('');
 
           searchResults.style.display = 'block';
+          // DEBUG: Make it VERY visible
+          searchResults.style.border = '5px solid red';
+          searchResults.style.background = 'yellow';
+          searchResults.style.position = 'absolute';
+          searchResults.style.zIndex = '999999';
+
           console.log('📋 Dropdown display set to:', searchResults.style.display);
           console.log('📋 Dropdown element:', searchResults);
+          console.log('📋 Dropdown computed styles:', window.getComputedStyle(searchResults));
+          console.log('📋 Dropdown bounding rect:', searchResults.getBoundingClientRect());
+          console.log('📋 Dropdown offsetParent:', searchResults.offsetParent);
+          console.log('📋 Dropdown z-index:', window.getComputedStyle(searchResults).zIndex);
+          console.log('📋 Dropdown parent:', searchResults.parentElement);
+          console.log('📋 Input bounding rect:', searchInput.getBoundingClientRect());
 
           // Add click handlers to results
           document.querySelectorAll('.artist-search-result').forEach(item => {
