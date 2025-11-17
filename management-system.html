@@ -18279,26 +18279,6 @@
                   "
                 />
                 <input type="hidden" id="slotArtistId" required />
-
-                <!-- Dropdown for search results -->
-                <div
-                  id="artistSearchResults"
-                  style="
-                    display: none;
-                    position: absolute;
-                    top: 100%;
-                    left: 0;
-                    right: 0;
-                    background: white;
-                    border: 1px solid #e5e5ea;
-                    border-radius: 12px;
-                    margin-top: 4px;
-                    max-height: 300px;
-                    overflow-y: auto;
-                    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-                    z-index: 100001;
-                  "
-                ></div>
               </div>
 
               <!-- SCROLLABLE CONTENT -->
@@ -18435,8 +18415,31 @@
 
         // Setup artist search functionality
         const searchInput = document.getElementById('slotArtistSearch');
-        const searchResults = document.getElementById('artistSearchResults');
         const artistIdInput = document.getElementById('slotArtistId');
+
+        // Create dropdown OUTSIDE modal, mounted to body
+        const searchResults = document.createElement('div');
+        searchResults.id = 'artistSearchResults';
+        searchResults.style.cssText = `
+          display: none;
+          position: fixed;
+          background: white;
+          border: 1px solid #e5e5ea;
+          border-radius: 12px;
+          max-height: 300px;
+          overflow-y: auto;
+          box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+          z-index: 100000;
+        `;
+        document.body.appendChild(searchResults);
+
+        // Function to position dropdown below input
+        function positionDropdown() {
+          const rect = searchInput.getBoundingClientRect();
+          searchResults.style.top = `${rect.bottom + 4}px`;
+          searchResults.style.left = `${rect.left}px`;
+          searchResults.style.width = `${rect.width}px`;
+        }
 
         let selectedArtist = null;
 
@@ -18466,6 +18469,7 @@
                 No artists found
               </div>
             `;
+            positionDropdown();
             searchResults.style.display = 'block';
             artistIdInput.value = '';
             selectedArtist = null;
@@ -18495,21 +18499,16 @@
             </div>
           `).join('');
 
+          // Position and show dropdown
+          positionDropdown();
           searchResults.style.display = 'block';
-          // DEBUG: Make it VERY visible
-          searchResults.style.border = '5px solid red';
-          searchResults.style.background = 'yellow';
-          searchResults.style.position = 'absolute';
-          searchResults.style.zIndex = '999999';
 
-          console.log('📋 Dropdown display set to:', searchResults.style.display);
-          console.log('📋 Dropdown element:', searchResults);
-          console.log('📋 Dropdown computed styles:', window.getComputedStyle(searchResults));
-          console.log('📋 Dropdown bounding rect:', searchResults.getBoundingClientRect());
-          console.log('📋 Dropdown offsetParent:', searchResults.offsetParent);
-          console.log('📋 Dropdown z-index:', window.getComputedStyle(searchResults).zIndex);
-          console.log('📋 Dropdown parent:', searchResults.parentElement);
-          console.log('📋 Input bounding rect:', searchInput.getBoundingClientRect());
+          console.log('📋 Dropdown displayed at position:', {
+            top: searchResults.style.top,
+            left: searchResults.style.left,
+            width: searchResults.style.width,
+            zIndex: searchResults.style.zIndex
+          });
 
           // Add click handlers to results
           document.querySelectorAll('.artist-search-result').forEach(item => {
@@ -18536,6 +18535,7 @@
 
         // Event listeners
         document.getElementById('cancelSlotButton').addEventListener('click', () => {
+          searchResults.remove();
           modal.remove();
         });
 
@@ -18549,12 +18549,14 @@
           }
 
           await handleAddSlot();
+          searchResults.remove();
           modal.remove();
         });
 
         // Close on backdrop click
         modal.addEventListener('click', (e) => {
           if (e.target === modal) {
+            searchResults.remove();
             modal.remove();
           }
         });
