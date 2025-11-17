@@ -18188,17 +18188,42 @@
       // Add New Slot Modal
       // ============================================
       async function openAddSlotModal() {
-        // Load all artists for selection
-        const { data: artists, error } = await supabase
-          .from('artists')
-          .select('id, name, email, is_guest')
-          .order('name', { ascending: true });
+        // Load all artists and locations for selection
+        const [artistsResult, locationsResult] = await Promise.all([
+          supabase
+            .from('artists')
+            .select('id, name, email, is_guest')
+            .order('name', { ascending: true }),
+          supabase
+            .from('locations')
+            .select('id, name')
+            .order('name', { ascending: true })
+        ]);
 
-        if (error) {
-          console.error('Error loading artists:', error);
+        if (artistsResult.error) {
+          console.error('Error loading artists:', artistsResult.error);
           showNotification('Failed to load artists', 'error');
           return;
         }
+
+        if (locationsResult.error) {
+          console.error('Error loading locations:', locationsResult.error);
+        }
+
+        const artists = artistsResult.data || [];
+        const locations = locationsResult.data || [];
+
+        // Filter locations to only show the 5 specific ones
+        const allowedLocationNames = [
+          "Mommy I'm Sorry",
+          "Muttersöhne",
+          "Pardon Paris",
+          "Gon",
+          "Seventyone"
+        ];
+        const filteredLocations = locations.filter(loc =>
+          allowedLocationNames.includes(loc.name)
+        );
 
         const modal = document.createElement('div');
         modal.id = 'addSlotModal';
@@ -18231,13 +18256,16 @@
             <h2 style="margin: 0 0 24px 0;">Add Guest Artist Slot</h2>
 
             <form id="addSlotForm">
-              <!-- Artist Selection -->
-              <div style="margin-bottom: 24px;">
+              <!-- Artist Search -->
+              <div style="margin-bottom: 24px; position: relative;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
                   Artist *
                 </label>
-                <select
-                  id="slotArtistSelect"
+                <input
+                  type="text"
+                  id="slotArtistSearch"
+                  placeholder="Search for an artist..."
+                  autocomplete="off"
                   required
                   style="
                     width: 100%;
@@ -18247,14 +18275,28 @@
                     font-size: 16px;
                     background: white;
                   "
-                >
-                  <option value="">Select an artist...</option>
-                  ${artists.map(artist => `
-                    <option value="${artist.id}">
-                      ${artist.name} ${artist.is_guest ? '(Guest)' : ''}
-                    </option>
-                  `).join('')}
-                </select>
+                />
+                <input type="hidden" id="slotArtistId" required />
+
+                <!-- Dropdown for search results -->
+                <div
+                  id="artistSearchResults"
+                  style="
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background: white;
+                    border: 1px solid #e5e5ea;
+                    border-radius: 12px;
+                    margin-top: 4px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    z-index: 1000;
+                  "
+                ></div>
               </div>
 
               <!-- Date Range -->
@@ -18315,7 +18357,9 @@
                   "
                 >
                   <option value="">All locations</option>
-                  <!-- Will be populated dynamically -->
+                  ${filteredLocations.map(loc => `
+                    <option value="${loc.id}">${loc.name}</option>
+                  `).join('')}
                 </select>
               </div>
 
@@ -18381,16 +18425,85 @@
 
         document.body.appendChild(modal);
 
-        // Populate location select
-        const locationSelect = document.getElementById('slotLocationSelect');
-        if (locationSelect && window.allLocations) {
-          window.allLocations.forEach(loc => {
-            const option = document.createElement('option');
-            option.value = loc.id;
-            option.textContent = loc.name;
-            locationSelect.appendChild(option);
+        // Setup artist search functionality
+        const searchInput = document.getElementById('slotArtistSearch');
+        const searchResults = document.getElementById('artistSearchResults');
+        const artistIdInput = document.getElementById('slotArtistId');
+
+        let selectedArtist = null;
+
+        searchInput.addEventListener('input', function() {
+          const query = this.value.toLowerCase().trim();
+
+          if (query.length === 0) {
+            searchResults.style.display = 'none';
+            artistIdInput.value = '';
+            selectedArtist = null;
+            return;
+          }
+
+          // Filter artists
+          const filtered = artists.filter(artist =>
+            artist.name.toLowerCase().includes(query) ||
+            (artist.email && artist.email.toLowerCase().includes(query))
+          );
+
+          if (filtered.length === 0) {
+            searchResults.innerHTML = `
+              <div style="padding: 16px; text-align: center; color: var(--muted);">
+                No artists found
+              </div>
+            `;
+            searchResults.style.display = 'block';
+            artistIdInput.value = '';
+            selectedArtist = null;
+            return;
+          }
+
+          // Render results
+          searchResults.innerHTML = filtered.map(artist => `
+            <div
+              class="artist-search-result"
+              data-artist-id="${artist.id}"
+              data-artist-name="${artist.name}"
+              style="
+                padding: 12px 16px;
+                cursor: pointer;
+                border-bottom: 1px solid #f5f5f7;
+                transition: background 0.2s;
+              "
+              onmouseover="this.style.background='#f5f5f7'"
+              onmouseout="this.style.background='white'"
+            >
+              <div style="font-weight: 600; color: #1d1d1f;">${artist.name}</div>
+              <div style="font-size: 14px; color: var(--muted);">
+                ${artist.email || ''} ${artist.is_guest ? '· Guest Artist' : ''}
+              </div>
+            </div>
+          `).join('');
+
+          searchResults.style.display = 'block';
+
+          // Add click handlers to results
+          document.querySelectorAll('.artist-search-result').forEach(item => {
+            item.addEventListener('click', function() {
+              const artistId = this.dataset.artistId;
+              const artistName = this.dataset.artistName;
+
+              searchInput.value = artistName;
+              artistIdInput.value = artistId;
+              selectedArtist = artists.find(a => a.id === artistId);
+              searchResults.style.display = 'none';
+            });
           });
-        }
+        });
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function closeSearchResults(e) {
+          if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+          }
+        });
 
         // Event listeners
         document.getElementById('cancelSlotButton').addEventListener('click', () => {
@@ -18399,6 +18512,13 @@
 
         document.getElementById('addSlotForm').addEventListener('submit', async (e) => {
           e.preventDefault();
+
+          // Validate artist selection
+          if (!artistIdInput.value) {
+            showNotification('Please select an artist from the search results', 'error');
+            return;
+          }
+
           await handleAddSlot();
           modal.remove();
         });
@@ -18415,7 +18535,7 @@
       // Handle Add Slot
       // ============================================
       async function handleAddSlot() {
-        const artistId = document.getElementById('slotArtistSelect').value;
+        const artistId = document.getElementById('slotArtistId').value;
         const dateFrom = document.getElementById('slotDateFrom').value;
         const dateTo = document.getElementById('slotDateTo').value;
         const locationId = document.getElementById('slotLocationSelect').value || null;
