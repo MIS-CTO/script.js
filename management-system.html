@@ -18333,13 +18333,14 @@
                 </div>
               </div>
 
-              <!-- Location (optional) -->
+              <!-- Location -->
               <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
-                  Location (optional)
+                  Location *
                 </label>
                 <select
                   id="slotLocationSelect"
+                  required
                   style="
                     width: 100%;
                     padding: 12px 16px;
@@ -18349,7 +18350,7 @@
                     background: white;
                   "
                 >
-                  <option value="">All locations</option>
+                  <option value="">Select a location...</option>
                   ${filteredLocations.map(loc => `
                     <option value="${loc.id}">${loc.name}</option>
                   `).join('')}
@@ -18428,6 +18429,8 @@
         searchInput.addEventListener('input', function() {
           const query = this.value.toLowerCase().trim();
 
+          console.log('🔍 Artist search query:', query);
+
           if (query.length === 0) {
             searchResults.style.display = 'none';
             artistIdInput.value = '';
@@ -18441,9 +18444,11 @@
             (artist.email && artist.email.toLowerCase().includes(query))
           );
 
+          console.log(`✅ Found ${filtered.length} matching artists`);
+
           if (filtered.length === 0) {
             searchResults.innerHTML = `
-              <div style="padding: 16px; text-align: center; color: var(--muted);">
+              <div style="padding: 16px; text-align: center; color: #86868b;">
                 No artists found
               </div>
             `;
@@ -18464,12 +18469,13 @@
                 cursor: pointer;
                 border-bottom: 1px solid #f5f5f7;
                 transition: background 0.2s;
+                background: white;
               "
               onmouseover="this.style.background='#f5f5f7'"
               onmouseout="this.style.background='white'"
             >
               <div style="font-weight: 600; color: #1d1d1f;">${artist.name}</div>
-              <div style="font-size: 14px; color: var(--muted);">
+              <div style="font-size: 14px; color: #86868b;">
                 ${artist.email || ''} ${artist.is_guest ? '· Guest Artist' : ''}
               </div>
             </div>
@@ -18487,6 +18493,8 @@
               artistIdInput.value = artistId;
               selectedArtist = artists.find(a => a.id === artistId);
               searchResults.style.display = 'none';
+
+              console.log('✅ Artist selected:', artistName, '(ID:', artistId + ')');
             });
           });
         });
@@ -18531,11 +18539,11 @@
         const artistId = document.getElementById('slotArtistId').value;
         const dateFrom = document.getElementById('slotDateFrom').value;
         const dateTo = document.getElementById('slotDateTo').value;
-        const locationId = document.getElementById('slotLocationSelect').value || null;
+        const locationId = document.getElementById('slotLocationSelect').value;
         const notes = document.getElementById('slotNotes').value;
 
         // Validation
-        if (!artistId || !dateFrom || !dateTo) {
+        if (!artistId || !dateFrom || !dateTo || !locationId) {
           showNotification('Please fill in all required fields', 'error');
           return;
         }
