@@ -4964,53 +4964,55 @@
     </div>
 
     <!-- Create Request Button + Location Dropdown + Search Bar + Refresh Controls -->
-    <!-- Create Request Button + Location (First Row) -->
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-      <!-- Create Request Button (Only visible in New Requests tab) -->
-      <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
-        <span style="font-size:18px; font-weight:600;">+</span>
-        <span>Create Request</span>
-      </button>
+    <div style="display:grid; grid-template-columns:350px 1fr; gap:24px; margin-bottom:16px;">
+      <!-- Left Controls: Create Request + Location -->
+      <div style="display:flex; align-items:center; gap:12px;">
+        <!-- Create Request Button (Only visible in New Requests tab) -->
+        <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
+          <span style="font-size:18px; font-weight:600;">+</span>
+          <span>Create Request</span>
+        </button>
 
-      <!-- Location Dropdown -->
-      <select id="requestLocationDropdown" style="min-width:180px; padding:8px 12px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); cursor:pointer; height:37px;">
-        <option value="all">Alle Locations</option>
-        <option value="mommy">Mommy I'm Sorry</option>
-        <option value="gon">GON</option>
-        <option value="muttersohne">Muttersöhne</option>
-        <option value="pardon">Pardon Paris</option>
-      </select>
-    </div>
-
-    <!-- Search Bar + Auto-Refresh Controls (Second Row) -->
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-      <!-- Search Bar (left, responsive) -->
-      <div style="position:relative; flex:1;">
-        <input
-          type="text"
-          id="requestSearchInput"
-          placeholder="Search requests by keyword..."
-          style="width:100%; padding:8px 12px 8px 36px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); height:37px; box-sizing:border-box;">
-        <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
+        <!-- Location Dropdown -->
+        <select id="requestLocationDropdown" style="min-width:180px; padding:8px 12px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); cursor:pointer; height:37px;">
+          <option value="all">Alle Locations</option>
+          <option value="mommy">Mommy I'm Sorry</option>
+          <option value="gon">GON</option>
+          <option value="muttersohne">Muttersöhne</option>
+          <option value="pardon">Pardon Paris</option>
+        </select>
       </div>
 
-      <!-- Auto-Refresh Toggle (right) -->
-      <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer; white-space:nowrap;">
-        <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
-        <span>Auto-Refresh (30s)</span>
-      </label>
+      <!-- Right Controls: Search Bar + Auto-Refresh + Refresh Button -->
+      <div style="display:flex; align-items:center; gap:12px;">
+        <!-- Search Bar (left, responsive) -->
+        <div style="position:relative; flex:1;">
+          <input
+            type="text"
+            id="requestSearchInput"
+            placeholder="Search requests by keyword..."
+            style="width:100%; padding:8px 12px 8px 36px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); height:37px; box-sizing:border-box;">
+          <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </div>
 
-      <!-- Refresh Button (right) -->
-      <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit; white-space:nowrap; height:37px;">
-        <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-        <span id="refreshBtnText">Neue Requests laden</span>
-      </button>
+        <!-- Auto-Refresh Toggle (right) -->
+        <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer; white-space:nowrap;">
+          <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
+          <span>Auto-Refresh (30s)</span>
+        </label>
+
+        <!-- Refresh Button (right) -->
+        <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit; white-space:nowrap; height:37px;">
+          <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span id="refreshBtnText">Neue Requests laden</span>
+        </button>
+      </div>
     </div>
 
     <!-- Two Column Layout -->
