@@ -97,6 +97,27 @@
       --accent: var(--macos-accent-blue);
       --radius: var(--radius-xl);
       --shadow: var(--macos-shadow-medium);
+
+      /* Account Settings Page Variables */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f7;
+      --bg-tertiary: #fafafa;
+      --text-primary: #1d1d1f;
+      --text-secondary: #86868b;
+      --text-tertiary: #a1a1a6;
+      --border-color: rgba(0, 0, 0, 0.1);
+      --border-color-strong: rgba(0, 0, 0, 0.2);
+      --hover-bg: rgba(0, 0, 0, 0.05);
+      --hover-bg-light: rgba(0, 0, 0, 0.03);
+      --input-bg: #ffffff;
+      --input-border: rgba(0, 0, 0, 0.1);
+      --input-focus-border: rgba(0, 113, 227, 0.5);
+      --button-primary-bg: #0071e3;
+      --button-primary-hover: #0077ed;
+      --button-primary-text: #ffffff;
+      --button-secondary-bg: #ffffff;
+      --button-secondary-hover: #f5f5f7;
+      --button-secondary-text: #1d1d1f;
     }
 
     /* FORCE LIGHT MODE EVERYWHERE - Disable Dark Mode */
@@ -3652,7 +3673,7 @@
       display: flex;
       gap: 0; /* ⭐ Kein Gap */
       padding: 0 24px; /* Padding für Alignment mit Header */
-      background: #ffffff; /* Background für fixed navbar */
+      background: var(--bg-primary); /* ⭐ WEIß, nicht grau! */
       border-radius: 0; /* ⭐ KEINE rounded corners */
       backdrop-filter: none; /* ⭐ KEIN Blur */
       position: fixed; /* ⭐ Fixed unter Header */
@@ -3662,7 +3683,7 @@
       z-index: 999; /* Unter dem Header */
       height: 46px;
       align-items: center;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Subtile Trennlinie */
+      border-bottom: 1px solid var(--border-color); /* Subtile Trennlinie */
     }
 
     [data-theme="dark"] .navbar-container {
@@ -3828,6 +3849,467 @@
 
     [data-theme="dark"] .mobile-nav-item.active .mobile-nav-label {
       color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* ========================================
+       ACCOUNT SETTINGS PAGE
+       ======================================== */
+
+    /* Settings View Container */
+    .settings-view {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 110px);
+      background: var(--bg-secondary);
+    }
+
+    /* Account Settings Top Section */
+    .account-settings-header {
+      background: var(--bg-secondary);
+      padding: 40px 40px 32px 40px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .account-settings-title {
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    /* Settings Content Wrapper (Sidebar + Content) */
+    .settings-content-wrapper {
+      display: flex;
+      flex: 1;
+      background: var(--bg-secondary);
+    }
+
+    /* ========================================
+       SETTINGS SIDEBAR
+       ======================================== */
+
+    .settings-sidebar {
+      width: 280px;
+      background: transparent;
+      padding: 24px 0;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .search-container {
+      padding: 0 24px 24px 24px;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 36px;
+      padding: 0 12px 0 36px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--input-bg);
+      font-size: 13px;
+      color: var(--text-primary);
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='8' stroke='%2386868b' stroke-width='2'/%3E%3Cpath d='M21 21L16.65 16.65' stroke='%2386868b' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      background-size: 16px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--input-focus-border);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .sidebar-nav {
+      list-style: none;
+      padding: 0 12px;
+      margin: 0;
+    }
+
+    .nav-item {
+      padding: 8px 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 6px;
+      margin-bottom: 2px;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .nav-item:hover {
+      background: var(--hover-bg-light);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+      font-weight: 400;
+    }
+
+    /* ========================================
+       SETTINGS CONTENT AREA
+       ======================================== */
+
+    .settings-content {
+      flex: 1;
+      background: var(--bg-secondary);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .settings-main-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      padding: 40px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ========================================
+       SETTINGS CARDS
+       ======================================== */
+
+    .settings-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-section {
+      padding: 24px 0;
+    }
+
+    .card-section:first-child {
+      padding-top: 0;
+    }
+
+    .card-section:not(:last-child) {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .section-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    /* ========================================
+       AVATAR SECTION
+       ======================================== */
+
+    .avatar-container {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .avatar-display {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .avatar-display:hover {
+      transform: scale(1.05);
+    }
+
+    .avatar-display img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .avatar-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* ========================================
+       BUTTONS
+       ======================================== */
+
+    .btn {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--button-primary-bg);
+      color: var(--button-primary-text);
+    }
+
+    .btn-primary:hover {
+      background: var(--button-primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--button-secondary-bg);
+      color: var(--button-secondary-text);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--button-secondary-hover);
+      border-color: var(--border-color-strong);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #ef4444;
+    }
+
+    /* ========================================
+       USER INFO GRID
+       ======================================== */
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .info-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .field-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* ========================================
+       INPUT FIELDS
+       ======================================== */
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .input-field {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      background: var(--input-bg);
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      transition: border-color 0.15s ease;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--input-focus-border);
+    }
+
+    .input-field::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .input-helper {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+    }
+
+    .save-container {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+      margin-top: 16px;
+    }
+
+    /* Hidden File Input */
+    #avatarUpload {
+      display: none;
+    }
+
+    /* ========================================
+       ACTIVITY TAB
+       ======================================== */
+
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activity-item {
+      padding: 16px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--hover-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .activity-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-secondary);
+    }
+
+    .activity-details {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .activity-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .activity-time {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* ========================================
+       MOBILE RESPONSIVE - ACCOUNT SETTINGS
+       ======================================== */
+
+    @media (max-width: 768px) {
+      .account-settings-header {
+        padding: 20px 16px;
+      }
+
+      .account-settings-title {
+        font-size: 24px;
+      }
+
+      .settings-content-wrapper {
+        flex-direction: column;
+      }
+
+      .settings-sidebar {
+        width: 100%;
+        padding: 16px 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .search-container {
+        padding: 0 16px 16px 16px;
+      }
+
+      .sidebar-nav {
+        padding: 0 16px;
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+      }
+
+      .nav-item {
+        white-space: nowrap;
+        margin-bottom: 0;
+      }
+
+      .tab-content {
+        padding: 20px 16px;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .avatar-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .avatar-actions {
+        width: 100%;
+      }
+
+      .avatar-actions button {
+        flex: 1;
+      }
     }
 
     /* ========================================
@@ -4071,6 +4553,19 @@
     <a class="nav-link" href="#" data-view="dienstplan" id="tab-dienstplan">Dienstplan</a>
     <a class="nav-link" href="#" data-view="agreements" id="tab-agreements">Agreements</a>
     <a class="nav-link" href="#" data-view="analytics" id="tab-analytics">Analytics</a>
+  </nav>
+
+  <!-- Navigation Bar - Account Settings (Desktop only) -->
+  <nav class="navbar-container" id="settingsNavbar" style="display: none;">
+    <div class="hover-background"></div>
+    <a class="nav-link" href="#" id="returnToDashboard">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; margin-right: 6px; display: inline-block; vertical-align: middle;">
+        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Return to Dashboard
+    </a>
+    <a class="nav-link active" href="#" data-tab="activity">Activity</a>
+    <a class="nav-link" href="#" data-tab="settings">Settings</a>
   </nav>
 
   <section id="dashboard-section" class="active">
@@ -4956,6 +5451,186 @@
           <button type="button" class="btn btn-danger" onclick="logout()" style="width: 100%;">Abmelden</button>
         </div>
 
+      </div>
+    </div>
+  </section>
+
+  <!-- Account Settings View -->
+  <section id="accountSettings-section" style="display: none; padding: 0; margin-top: 110px;">
+    <div class="settings-view">
+      <!-- Account Settings Top Section -->
+      <div class="account-settings-header">
+        <h1 class="account-settings-title" id="mainTitle">Account Activity</h1>
+      </div>
+
+      <!-- Settings Content Wrapper (Sidebar + Content) -->
+      <div class="settings-content-wrapper">
+        <!-- Settings Sidebar -->
+        <div class="settings-sidebar">
+          <div class="search-container">
+            <input type="text" class="search-input" placeholder="Search...">
+          </div>
+
+          <ul class="sidebar-nav">
+            <li class="nav-item active" data-section="activity">Activity</li>
+            <li class="nav-item" data-section="avatar">Avatar</li>
+            <li class="nav-item" data-section="user-info">User Information</li>
+            <li class="nav-item" data-section="notifications">Notifications</li>
+            <li class="nav-item" data-section="statistics">Statistics</li>
+          </ul>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-content">
+          <!-- Settings Main Content -->
+          <div class="settings-main-content">
+            <!-- Activity Tab Content -->
+            <div class="tab-content active" id="activityTab">
+              <div class="activity-list">
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="activity-details">
+                    <div class="activity-title">Logged in from Stuttgart, Germany</div>
+                    <div class="activity-description">You successfully signed in to your account from a new device.</div>
+                    <div class="activity-time">2 hours ago</div>
+                  </div>
+                </div>
+
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 16V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 8H12.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="activity-details">
+                    <div class="activity-title">Profile updated</div>
+                    <div class="activity-description">You changed your notification preferences.</div>
+                    <div class="activity-time">1 day ago</div>
+                  </div>
+                </div>
+
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                      <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="activity-details">
+                    <div class="activity-title">Password changed</div>
+                    <div class="activity-description">You successfully updated your account password.</div>
+                    <div class="activity-time">3 days ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings Tab Content -->
+            <div class="tab-content" id="settingsTab">
+              <!-- Avatar Card -->
+              <div class="settings-card">
+                <div class="card-section">
+                  <h3 class="section-title">Avatar</h3>
+                  <p class="section-description">
+                    This is your avatar.<br>
+                    Click on the avatar to upload a custom one from your files.
+                  </p>
+
+                  <div class="avatar-container">
+                    <div class="avatar-display" id="avatarDisplay" onclick="document.getElementById('avatarUpload').click()">
+                      <!-- Gradient background by default -->
+                    </div>
+
+                    <div class="avatar-actions">
+                      <button class="btn btn-primary" onclick="document.getElementById('avatarUpload').click()">
+                        Upload
+                      </button>
+                      <button class="btn btn-danger" id="deleteAvatarBtn">
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  <input type="file" id="avatarUpload" accept="image/*">
+
+                  <p class="section-description" style="margin-top: 16px; margin-bottom: 0;">
+                    An avatar is optional but strongly recommended.
+                  </p>
+                </div>
+              </div>
+
+              <!-- User Information Card -->
+              <div class="settings-card">
+                <div class="card-section">
+                  <h3 class="section-title">User Information</h3>
+                  <p class="section-description">
+                    Your username and role are managed by your administrator.
+                  </p>
+
+                  <div class="info-grid">
+                    <div class="info-field">
+                      <label class="field-label">Username</label>
+                      <div class="field-value" id="usernameDisplay">david.mueller</div>
+                    </div>
+
+                    <div class="info-field">
+                      <label class="field-label">Role</label>
+                      <div class="field-value" id="roleDisplay">Management</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notifications Card -->
+              <div class="settings-card">
+                <div class="card-section">
+                  <h3 class="section-title">Notifications</h3>
+                  <p class="section-description">
+                    Manage how you receive notifications about your account.
+                  </p>
+
+                  <div class="input-group">
+                    <label class="input-label" for="phoneInput">Phone Number</label>
+                    <input
+                      type="tel"
+                      id="phoneInput"
+                      class="input-field"
+                      placeholder="+49 123 456789"
+                      value=""
+                    >
+                    <p class="input-helper">We'll use this to send you SMS notifications.</p>
+                  </div>
+
+                  <div class="input-group">
+                    <label class="input-label" for="emailInput">Email Address</label>
+                    <input
+                      type="email"
+                      id="emailInput"
+                      class="input-field"
+                      placeholder="your.email@example.com"
+                      value=""
+                    >
+                    <p class="input-helper">Primary email for account notifications.</p>
+                  </div>
+
+                  <div class="save-container">
+                    <button class="btn btn-primary" id="saveNotificationsBtn">
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -21164,13 +21839,12 @@
         });
       }
 
-      // Account Settings Link (placeholder)
+      // Account Settings Link
       const accountSettingsLink = document.getElementById('accountSettingsLink');
       if (accountSettingsLink) {
         accountSettingsLink.addEventListener('click', function(e) {
           e.preventDefault();
-          console.log('Account Settings clicked - not implemented yet');
-          // TODO: Implement account settings view
+          switchView('accountSettings');
           if (profileDropdown) profileDropdown.classList.remove('active');
         });
       }
@@ -21290,6 +21964,230 @@
         setupNavbarHover();
         setupMobileNavigation();
       });
+
+      // ==========================================
+      // ACCOUNT SETTINGS NAVIGATION
+      // ==========================================
+
+      const mainNavbar = document.getElementById('mainNavbar');
+      const settingsNavbar = document.getElementById('settingsNavbar');
+      const mainTitle = document.getElementById('mainTitle');
+
+      // Return to Dashboard from Settings Navbar
+      const returnToDashboardBtn = document.getElementById('returnToDashboard');
+      if (returnToDashboardBtn) {
+        returnToDashboardBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          switchView('dashboard');
+        });
+      }
+
+      // Settings Navbar Tab Switching
+      const settingsNavLinks = document.querySelectorAll('#settingsNavbar .nav-link[data-tab]');
+      settingsNavLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tabName = this.dataset.tab;
+
+          // Update navbar active state
+          settingsNavLinks.forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+
+          // Update main title
+          if (mainTitle) {
+            mainTitle.textContent = tabName === 'activity' ? 'Account Activity' : 'Account Settings';
+          }
+
+          // Switch tab content
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          document.getElementById(tabName + 'Tab').classList.add('active');
+        });
+      });
+
+      // Sidebar Navigation
+      const sidebarItems = document.querySelectorAll('.sidebar-nav .nav-item');
+
+      sidebarItems.forEach(item => {
+        item.addEventListener('click', function() {
+          const section = this.dataset.section;
+
+          // Update sidebar active state
+          sidebarItems.forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+
+          // Map sidebar items to tabs
+          if (section === 'activity') {
+            // Switch to Activity tab
+            if (mainTitle) mainTitle.textContent = 'Account Activity';
+            document.querySelectorAll('#settingsNavbar .nav-link').forEach(link => {
+              if (link.dataset.tab === 'activity') {
+                link.click();
+              }
+            });
+          } else {
+            // All other items go to Settings tab
+            if (mainTitle) mainTitle.textContent = 'Account Settings';
+            document.querySelectorAll('#settingsNavbar .nav-link').forEach(link => {
+              if (link.dataset.tab === 'settings') {
+                link.click();
+              }
+            });
+
+            // Scroll to specific section
+            setTimeout(() => {
+              const sectionMap = {
+                'avatar': '.settings-card:nth-child(1)',
+                'user-info': '.settings-card:nth-child(2)',
+                'notifications': '.settings-card:nth-child(3)',
+                'statistics': '.settings-card:nth-child(4)'
+              };
+
+              if (sectionMap[section]) {
+                const targetSection = document.querySelector(sectionMap[section]);
+                if (targetSection) {
+                  targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }
+            }, 100);
+          }
+        });
+      });
+
+      // ==========================================
+      // AVATAR UPLOAD
+      // ==========================================
+
+      const avatarUpload = document.getElementById('avatarUpload');
+      const avatarDisplay = document.getElementById('avatarDisplay');
+      const deleteAvatarBtn = document.getElementById('deleteAvatarBtn');
+      let currentAvatar = null;
+
+      if (avatarUpload) {
+        avatarUpload.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+              currentAvatar = event.target.result;
+              avatarDisplay.style.background = 'none';
+              avatarDisplay.innerHTML = `<img src="${currentAvatar}" alt="Avatar">`;
+              localStorage.setItem('userAvatar', currentAvatar);
+            };
+
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      if (deleteAvatarBtn) {
+        deleteAvatarBtn.addEventListener('click', function() {
+          if (confirm('Are you sure you want to delete your avatar?')) {
+            currentAvatar = null;
+            avatarDisplay.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            avatarDisplay.innerHTML = '';
+            localStorage.removeItem('userAvatar');
+          }
+        });
+      }
+
+      function loadSavedAvatar() {
+        const savedAvatar = localStorage.getItem('userAvatar');
+        if (savedAvatar && avatarDisplay) {
+          currentAvatar = savedAvatar;
+          avatarDisplay.style.background = 'none';
+          avatarDisplay.innerHTML = `<img src="${savedAvatar}" alt="Avatar">`;
+        }
+      }
+
+      loadSavedAvatar();
+
+      // ==========================================
+      // NOTIFICATIONS SAVE
+      // ==========================================
+
+      const phoneInput = document.getElementById('phoneInput');
+      const emailInput = document.getElementById('emailInput');
+      const saveNotificationsBtn = document.getElementById('saveNotificationsBtn');
+
+      function loadNotificationSettings() {
+        const savedPhone = localStorage.getItem('userPhone');
+        const savedEmail = localStorage.getItem('userEmail');
+
+        if (savedPhone && phoneInput) phoneInput.value = savedPhone;
+        if (savedEmail && emailInput) emailInput.value = savedEmail;
+      }
+
+      if (saveNotificationsBtn) {
+        saveNotificationsBtn.addEventListener('click', function() {
+          const phone = phoneInput ? phoneInput.value.trim() : '';
+          const email = emailInput ? emailInput.value.trim() : '';
+
+          if (email && !email.includes('@')) {
+            alert('Please enter a valid email address');
+            return;
+          }
+
+          localStorage.setItem('userPhone', phone);
+          localStorage.setItem('userEmail', email);
+
+          const originalText = saveNotificationsBtn.textContent;
+          saveNotificationsBtn.textContent = 'Saved ✓';
+          saveNotificationsBtn.style.background = '#10b981';
+
+          setTimeout(() => {
+            saveNotificationsBtn.textContent = originalText;
+            saveNotificationsBtn.style.background = '';
+          }, 2000);
+        });
+      }
+
+      loadNotificationSettings();
+
+      // ==========================================
+      // VIEW SWITCHING WITH NAVBAR
+      // ==========================================
+
+      function switchView(viewName) {
+        // Hide all sections
+        document.querySelectorAll('section[id$="-section"]').forEach(section => {
+          section.style.display = 'none';
+          section.classList.remove('active');
+        });
+
+        // Show selected section
+        const sectionElement = document.getElementById(viewName + '-section');
+        if (sectionElement) {
+          sectionElement.style.display = 'block';
+          sectionElement.classList.add('active');
+        }
+
+        // Switch navbar based on view (Desktop only)
+        if (window.innerWidth > 768) {
+          if (viewName === 'accountSettings') {
+            if (mainNavbar) mainNavbar.style.display = 'none';
+            if (settingsNavbar) settingsNavbar.style.display = 'flex';
+          } else {
+            if (mainNavbar) mainNavbar.style.display = 'flex';
+            if (settingsNavbar) settingsNavbar.style.display = 'none';
+
+            // Update main navbar active state
+            document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
+              link.classList.remove('active');
+              if (link.dataset.view === viewName) {
+                link.classList.add('active');
+              }
+            });
+          }
+        }
+
+        // Close dropdowns
+        document.querySelectorAll('.profile-dropdown, .notifications-dropdown, .feedback-dropdown').forEach(dropdown => {
+          dropdown.classList.remove('active');
+        });
+      }
 
       // Initialize auth
       initAuth();
