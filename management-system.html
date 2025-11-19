@@ -4709,6 +4709,250 @@
       });
     }
 
+
+    // ==========================================
+    // ACCOUNT SETTINGS NAVIGATION
+    // ==========================================
+
+    const accountSettingsLink = document.getElementById('accountSettingsLink');
+    if (accountSettingsLink) {
+      accountSettingsLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchView('accountSettings');
+      });
+    }
+
+    // Return to Dashboard from Settings Navbar
+    const returnToDashboardBtn = document.getElementById('returnToDashboard');
+    if (returnToDashboardBtn) {
+      returnToDashboardBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchView('dashboard');
+      });
+    }
+
+    // Header Title - Return to Dashboard
+    const headerTitle = document.querySelector('.header-title');
+    if (headerTitle) {
+      headerTitle.style.cursor = 'pointer';
+      headerTitle.addEventListener('click', function() {
+        switchView('dashboard');
+      });
+    }
+
+    // Sidebar Navigation in Settings
+    const sidebarItems = document.querySelectorAll('.sidebar-nav .nav-item');
+    const mainTitle = document.getElementById('mainTitle');
+
+    sidebarItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const section = this.dataset.section;
+
+        // Update active state
+        sidebarItems.forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+
+        // Map sidebar items to tabs and update main title
+        if (section === 'activity') {
+          // Switch to Activity tab
+          if (mainTitle) mainTitle.textContent = 'Account Activity';
+          document.querySelectorAll('#settingsNavbar .nav-link').forEach(link => {
+            if (link.dataset.tab === 'activity') {
+              link.classList.remove('active');
+              link.classList.add('active');
+
+              // Update tab content
+              document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+              });
+              const activityTab = document.getElementById('activityTab');
+              if (activityTab) activityTab.classList.add('active');
+            }
+          });
+        } else {
+          // All other items go to Settings tab
+          if (mainTitle) mainTitle.textContent = 'Account Settings';
+          document.querySelectorAll('#settingsNavbar .nav-link').forEach(link => {
+            if (link.dataset.tab === 'settings') {
+              link.classList.remove('active');
+              link.classList.add('active');
+
+              // Update tab content
+              document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+              });
+              const settingsTab = document.getElementById('settingsTab');
+              if (settingsTab) settingsTab.classList.add('active');
+            }
+          });
+
+          // Scroll to specific section
+          setTimeout(() => {
+            const sectionMap = {
+              'avatar': '.settings-card:nth-child(1)',
+              'user-info': '.settings-card:nth-child(2)',
+              'notifications': '.settings-card:nth-child(3)'
+            };
+
+            if (sectionMap[section]) {
+              const targetSection = document.querySelector(sectionMap[section]);
+              if (targetSection) {
+                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }
+          }, 100);
+        }
+      });
+    });
+
+    // Settings Navbar Tab Navigation
+    document.querySelectorAll('#settingsNavbar .nav-link[data-tab]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabName = this.dataset.tab;
+
+        // Update navbar active state
+        document.querySelectorAll('#settingsNavbar .nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update main title
+        if (mainTitle) {
+          mainTitle.textContent = tabName === 'activity' ? 'Account Activity' : 'Account Settings';
+        }
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        const tabContent = document.getElementById(tabName + 'Tab');
+        if (tabContent) tabContent.classList.add('active');
+      });
+    });
+
+    // ==========================================
+    // LOAD USER PROFILE
+    // ==========================================
+
+    async function loadUserProfile() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          console.log('Loading user profile:', user);
+
+          // Update Profile Dropdown
+          const currentUsername = document.getElementById('currentUsername');
+          const currentUserEmail = document.getElementById('currentUserEmail');
+
+          const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+
+          if (currentUsername) currentUsername.textContent = displayName;
+          if (currentUserEmail) currentUserEmail.textContent = user.email || '';
+
+          // Update Account Settings View
+          const usernameDisplay = document.getElementById('usernameDisplay');
+          const emailDisplay = document.getElementById('emailDisplay');
+          const roleDisplay = document.getElementById('roleDisplay');
+          const locationDisplay = document.getElementById('locationDisplay');
+
+          if (usernameDisplay) usernameDisplay.textContent = displayName;
+          if (emailDisplay) emailDisplay.textContent = user.email || 'Not set';
+          if (roleDisplay) roleDisplay.textContent = user.user_metadata?.role || 'User';
+          if (locationDisplay) locationDisplay.textContent = user.user_metadata?.location || 'Not set';
+
+          // Load saved notification settings
+          const phoneInput = document.getElementById('phoneInput');
+          const emailInput = document.getElementById('emailInput');
+
+          if (phoneInput && user.user_metadata?.phone) {
+            phoneInput.value = user.user_metadata.phone;
+          }
+          if (emailInput && user.email) {
+            emailInput.value = user.email;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      }
+    }
+
+    // ==========================================
+    // AVATAR UPLOAD
+    // ==========================================
+
+    const avatarUpload = document.getElementById('avatarUpload');
+    const avatarDisplay = document.getElementById('avatarDisplay');
+    const deleteAvatarBtn = document.getElementById('deleteAvatarBtn');
+
+    if (avatarUpload && avatarDisplay) {
+      avatarUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+
+          reader.onload = function(event) {
+            avatarDisplay.style.background = 'none';
+            avatarDisplay.innerHTML = `<img src="${event.target.result}" alt="Avatar">`;
+
+            // TODO: Upload to Supabase Storage
+            console.log('Avatar selected, upload to Supabase Storage here');
+          };
+
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    if (deleteAvatarBtn && avatarDisplay) {
+      deleteAvatarBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to delete your avatar?')) {
+          avatarDisplay.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          avatarDisplay.innerHTML = '';
+
+          // TODO: Delete from Supabase Storage
+          console.log('Delete avatar from Supabase Storage here');
+        }
+      });
+    }
+
+    // ==========================================
+    // SAVE NOTIFICATIONS SETTINGS
+    // ==========================================
+
+    const saveNotificationsBtn = document.getElementById('saveNotificationsBtn');
+
+    if (saveNotificationsBtn) {
+      saveNotificationsBtn.addEventListener('click', async function() {
+        const phoneInput = document.getElementById('phoneInput');
+        const emailInput = document.getElementById('emailInput');
+
+        const phone = phoneInput ? phoneInput.value.trim() : '';
+        const email = emailInput ? emailInput.value.trim() : '';
+
+        if (email && !email.includes('@')) {
+          alert('Please enter a valid email address');
+          return;
+        }
+
+        try {
+          // TODO: Save to Supabase user_metadata
+          console.log('Save notification settings:', { phone, email });
+
+          const originalText = saveNotificationsBtn.textContent;
+          saveNotificationsBtn.textContent = 'Saved ✓';
+          saveNotificationsBtn.style.background = '#10b981';
+
+          setTimeout(() => {
+            saveNotificationsBtn.textContent = originalText;
+            saveNotificationsBtn.style.background = '';
+          }, 2000);
+        } catch (error) {
+          console.error('Error saving notification settings:', error);
+          alert('Failed to save settings. Please try again.');
+        }
+      });
+    }
+
     // ========================================
     // LOADING PROGRESS BAR SYSTEM
     // ========================================
@@ -5105,6 +5349,9 @@
         loadInitialData(),
         initializePermissions()
       ]);
+
+      // Load user profile data
+      loadUserProfile();
 
       // Request tabs initialization function
       function initRequestTabs() {
