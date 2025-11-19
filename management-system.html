@@ -5184,67 +5184,61 @@
   <section id="artists-section">
     <h2>Artists</h2>
 
-    <!-- Add Button and Search Bar Row -->
+    <!-- Add Button, Search Bar, and Filters Row -->
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
       <button id="addArtistBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Add Artist</span>
       </button>
 
-      <div style="position:relative; flex:1; max-width:500px;">
+      <div style="position:relative; flex:1;">
         <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
         </svg>
         <input type="text" id="artistSearchInput" placeholder="Search artists by name or Instagram..." style="width:100%; padding:12px 16px 12px 42px; font-size:15px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
       </div>
+
+      <!-- Location Filter -->
+      <select id="artistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Locations</option>
+        <option value="NULL">Ohne Location</option>
+        <!-- Locations werden dynamisch geladen -->
+      </select>
+
+      <!-- Rank Filter -->
+      <select id="artistRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Ranks</option>
+        <option value="R1">R1</option>
+        <option value="R2">R2</option>
+        <option value="R3">R3</option>
+        <option value="R4">R4</option>
+        <option value="R5">R5</option>
+      </select>
+
+      <!-- Type Filter -->
+      <select id="artistTypeFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Types</option>
+        <option value="resident">Resident Artist</option>
+        <option value="guest">Guest Artist</option>
+      </select>
+
+      <!-- Status Filter -->
+      <select id="artistStatusFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Status</option>
+        <option value="active">Aktiv</option>
+        <option value="inactive">Inaktiv</option>
+      </select>
+
+      <!-- Clear Filters Button -->
+      <button class="btn-secondary" onclick="clearArtistFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap; height:37px;">
+        Filter zurücksetzen
+      </button>
     </div>
 
-    <!-- Filter Row -->
-    <div class="filter-section" style="background:rgba(255,255,255,0.95); border:1px solid var(--border-color); border-radius:12px; padding:20px; margin-bottom:24px;">
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:12px; align-items:center; margin-bottom:16px;">
-
-        <!-- Location Filter -->
-        <select id="artistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
-          <option value="">📍 Alle Locations</option>
-          <option value="NULL">⚠️ Ohne Location</option>
-          <!-- Locations werden dynamisch geladen -->
-        </select>
-
-        <!-- Rank Filter -->
-        <select id="artistRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
-          <option value="">🏆 Alle Ranks</option>
-          <option value="R1">R1</option>
-          <option value="R2">R2</option>
-          <option value="R3">R3</option>
-          <option value="R4">R4</option>
-          <option value="R5">R5</option>
-        </select>
-
-        <!-- Type Filter -->
-        <select id="artistTypeFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
-          <option value="">👥 Alle Types</option>
-          <option value="resident">Resident Artist</option>
-          <option value="guest">Guest Artist</option>
-        </select>
-
-        <!-- Status Filter -->
-        <select id="artistStatusFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
-          <option value="">✅ Alle Status</option>
-          <option value="active">Aktiv</option>
-          <option value="inactive">Inaktiv</option>
-        </select>
-
-        <!-- Clear Filters Button -->
-        <button class="btn-secondary" onclick="clearArtistFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap;">
-          🔄 Filter zurücksetzen
-        </button>
-      </div>
-
-      <!-- Results Count -->
-      <div style="font-size:14px; color:var(--muted);">
-        <span id="artistsResultCount" style="font-weight:600; color:var(--ink);">0</span> Artists gefunden
-      </div>
+    <!-- Results Count -->
+    <div style="font-size:14px; color:var(--muted); margin-bottom:16px;">
+      <span id="artistsResultCount" style="font-weight:600; color:var(--ink);">0</span> Artists gefunden
     </div>
 
     <table id="artistsTable">
@@ -5267,14 +5261,14 @@
   <section id="customers-section">
     <h2>Customers</h2>
 
-    <!-- Add Button and Search Bar Row -->
+    <!-- Add Button, Search Bar, and Filters Row -->
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
       <button id="addCustomerBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Add Customer</span>
       </button>
 
-      <div style="position:relative; flex:1; max-width:500px;">
+      <div style="position:relative; flex:1;">
         <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
@@ -5285,48 +5279,42 @@
           placeholder="Search customers by name, email or phone..."
           style="width:100%; padding:12px 16px 12px 42px; font-size:15px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
       </div>
+
+      <!-- Rank Filter -->
+      <select id="customerRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Ranks</option>
+        <option value="Bronze">Bronze</option>
+        <option value="Silver">Silver</option>
+        <option value="Gold">Gold</option>
+        <option value="Platinum">Platinum</option>
+      </select>
+
+      <!-- Blacklist Filter -->
+      <select id="customerBlacklistFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Customers</option>
+        <option value="false">Nicht Blacklisted</option>
+        <option value="true">Blacklisted</option>
+      </select>
+
+      <!-- Total Bookings Filter -->
+      <select id="customerBookingsFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Bookings</option>
+        <option value="0">0 Bookings</option>
+        <option value="1-2">1-2 Bookings</option>
+        <option value="3-5">3-5 Bookings</option>
+        <option value="6-10">6-10 Bookings</option>
+        <option value="11+">11+ Bookings</option>
+      </select>
+
+      <!-- Clear Filters Button -->
+      <button class="btn-secondary" onclick="clearCustomerFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap; height:37px;">
+        Filter zurücksetzen
+      </button>
     </div>
 
-    <!-- Filter Row -->
-    <div class="filter-section" style="background:rgba(255,255,255,0.95); border:1px solid var(--border-color); border-radius:12px; padding:20px; margin-bottom:24px;">
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; align-items:center; margin-bottom:16px;">
-
-        <!-- Rank Filter -->
-        <select id="customerRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
-          <option value="">🏆 Alle Ranks</option>
-          <option value="Bronze">🥉 Bronze</option>
-          <option value="Silver">🥈 Silver</option>
-          <option value="Gold">🥇 Gold</option>
-          <option value="Platinum">💎 Platinum</option>
-        </select>
-
-        <!-- Blacklist Filter -->
-        <select id="customerBlacklistFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
-          <option value="">👥 Alle Customers</option>
-          <option value="false">✅ Nicht Blacklisted</option>
-          <option value="true">🚫 Blacklisted</option>
-        </select>
-
-        <!-- Total Bookings Filter -->
-        <select id="customerBookingsFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer;">
-          <option value="">📊 Alle Bookings</option>
-          <option value="0">0 Bookings</option>
-          <option value="1-2">1-2 Bookings</option>
-          <option value="3-5">3-5 Bookings</option>
-          <option value="6-10">6-10 Bookings</option>
-          <option value="11+">11+ Bookings</option>
-        </select>
-
-        <!-- Clear Filters Button -->
-        <button class="btn-secondary" onclick="clearCustomerFilters()" style="padding:10px 20px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; cursor:pointer; white-space:nowrap;">
-          🔄 Filter zurücksetzen
-        </button>
-      </div>
-
-      <!-- Results Count -->
-      <div style="font-size:14px; color:var(--muted);">
-        <span id="customersResultCount" style="font-weight:600; color:var(--ink);">0</span> Customers gefunden
-      </div>
+    <!-- Results Count -->
+    <div style="font-size:14px; color:var(--muted); margin-bottom:16px;">
+      <span id="customersResultCount" style="font-weight:600; color:var(--ink);">0</span> Customers gefunden
     </div>
 
     <table id="customersTable">
@@ -8236,8 +8224,8 @@
                 `<option value="${l.id}">${l.name}</option>`
               ).join('');
               artistLocFilter.innerHTML = `
-                <option value="">📍 Alle Locations</option>
-                <option value="NULL">⚠️ Ohne Location</option>
+                <option value="">Alle Locations</option>
+                <option value="NULL">Ohne Location</option>
                 ${locationOptions}
               `;
             }
