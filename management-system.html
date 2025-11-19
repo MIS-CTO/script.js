@@ -3181,6 +3181,7 @@
       flex-direction: column;
       z-index: 1001;
       overflow-y: auto;
+      box-sizing: border-box;
     }
 
     [data-theme="dark"] .profile-dropdown {
@@ -3197,6 +3198,7 @@
       border-bottom: 1px solid rgba(0, 0, 0, 0.1);
       margin: -8px -8px 4px -8px;
       width: calc(100% + 16px);
+      box-sizing: border-box;
     }
 
     [data-theme="dark"] .profile-header {
@@ -3236,6 +3238,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      box-sizing: border-box;
     }
 
     [data-theme="dark"] .dropdown-item {
@@ -3252,6 +3255,16 @@
       color: rgba(255, 255, 255, 0.9);
     }
 
+    .dropdown-item svg {
+      width: 16px;
+      height: 16px;
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="dark"] .dropdown-item svg {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
     .dropdown-separator {
       height: 1px;
       background: rgba(0, 0, 0, 0.1);
@@ -3261,6 +3274,18 @@
 
     [data-theme="dark"] .dropdown-separator {
       background: rgba(255, 255, 255, 0.1);
+    }
+
+    .keyboard-shortcut {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="dark"] .keyboard-shortcut {
+      color: rgba(255, 255, 255, 0.5);
     }
 
     .theme-options {
@@ -3282,6 +3307,7 @@
       transition: background-color 0.15s ease, border-color 0.15s ease;
       font-size: 12px;
       color: rgba(0, 0, 0, 0.5);
+      font-weight: 400;
     }
 
     [data-theme="dark"] .theme-btn {
@@ -3315,6 +3341,7 @@
     .theme-btn svg {
       width: 14px;
       height: 14px;
+      color: currentColor;
     }
 
     .upgrade-btn {
@@ -3334,6 +3361,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-sizing: border-box;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
@@ -3348,6 +3376,10 @@
 
     [data-theme="dark"] .upgrade-btn:hover {
       background: rgba(255, 255, 255, 0.8);
+    }
+
+    .upgrade-btn svg {
+      color: currentColor;
     }
 
     /* Notifications Dropdown */
@@ -3942,7 +3974,15 @@
 
     <div class="dropdown-separator"></div>
 
-    <div class="dropdown-item">
+    <div class="dropdown-item" id="commandMenuLink">
+      <span>Command Menu</span>
+      <div class="keyboard-shortcut">
+        <button class="theme-btn" style="pointer-events: none;">⌘</button>
+        <button class="theme-btn" style="pointer-events: none;">K</button>
+      </div>
+    </div>
+
+    <div class="dropdown-item" id="themeToggleItem">
       <span>Theme</span>
       <div class="theme-options">
         <button class="theme-btn active" id="lightThemeBtn" data-theme="light">
@@ -3957,6 +3997,15 @@
           </svg>
         </button>
       </div>
+    </div>
+
+    <div class="dropdown-separator"></div>
+
+    <div class="dropdown-item" id="homePageLink">
+      <span>Home Page</span>
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
 
     <div class="dropdown-separator"></div>
@@ -21144,10 +21193,16 @@
       }
 
       if (lightThemeBtn) {
-        lightThemeBtn.addEventListener('click', () => setTheme('light'));
+        lightThemeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setTheme('light');
+        });
       }
       if (darkThemeBtn) {
-        darkThemeBtn.addEventListener('click', () => setTheme('dark'));
+        darkThemeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setTheme('dark');
+        });
       }
 
       // Load saved theme
@@ -21162,6 +21217,27 @@
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async function() {
           await logout();
+          if (profileDropdown) profileDropdown.classList.remove('active');
+        });
+      }
+
+      // Command Menu Link (placeholder)
+      const commandMenuLink = document.getElementById('commandMenuLink');
+      if (commandMenuLink) {
+        commandMenuLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Command Menu clicked - not implemented yet');
+          // TODO: Implement command menu modal
+        });
+      }
+
+      // Home Page Link
+      const homePageLink = document.getElementById('homePageLink');
+      if (homePageLink) {
+        homePageLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Open main website in new tab
+          window.open('https://mommyimsorry.com', '_blank');
           if (profileDropdown) profileDropdown.classList.remove('active');
         });
       }
