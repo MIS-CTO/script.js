@@ -3054,16 +3054,21 @@
     .hover-background {
       position: absolute;
       height: calc(100% - 16px);
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.08); /* Dunkler für bessere Sichtbarkeit */
       border-radius: 8px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       pointer-events: none;
       opacity: 0;
       top: 8px;
+      z-index: 0; /* Hinter den Links */
     }
 
     [data-theme="dark"] .hover-background {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .navbar-container:hover .hover-background {
+      opacity: 1; /* Sichtbar beim Hover über Container */
     }
 
     .nav-link {
@@ -3078,6 +3083,7 @@
       position: relative;
       z-index: 1;
       white-space: nowrap;
+      border-bottom: 2px solid transparent; /* Für Unterstrich */
     }
 
     [data-theme="dark"] .nav-link {
@@ -3095,11 +3101,13 @@
     .nav-link.active {
       color: rgba(0, 0, 0, 0.9);
       background: rgba(0, 0, 0, 0.05);
+      border-bottom: 2px solid rgba(0, 0, 0, 0.9); /* Klare Unterstreichung */
     }
 
     [data-theme="dark"] .nav-link.active {
       color: rgba(255, 255, 255, 0.9);
       background: rgba(255, 255, 255, 0.08);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.9);
     }
 
     /* ========================================
@@ -5456,27 +5464,78 @@
     // NAVBAR HOVER EFFECT (Desktop)
     // ==========================================
     function setupNavbarHover() {
-      const container = document.getElementById('mainNavbar');
-      if (!container) return;
+      const container = document.querySelector('nav.navbar-container');
+      if (!container) {
+        console.log('⚠️ Navbar container not found');
+        return;
+      }
 
       const hoverBg = container.querySelector('.hover-background');
+      if (!hoverBg) {
+        console.log('⚠️ Hover background not found');
+        return;
+      }
+
       const links = container.querySelectorAll('.nav-link');
 
+      console.log('✅ Hover setup:', {
+        container: !!container,
+        hoverBg: !!hoverBg,
+        links: links.length
+      });
+
+      // Initial position auf active link
+      const activeLink = container.querySelector('.nav-link.active');
+      if (activeLink) {
+        const rect = activeLink.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        hoverBg.style.width = rect.width + 'px';
+        hoverBg.style.left = (rect.left - containerRect.left) + 'px';
+      }
+
+      // Hover auf jeden Link
       links.forEach(link => {
         link.addEventListener('mouseenter', function() {
-          if (window.innerWidth > 768 && hoverBg) {
+          if (window.innerWidth > 768) {
             const rect = this.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
 
             hoverBg.style.width = rect.width + 'px';
             hoverBg.style.left = (rect.left - containerRect.left) + 'px';
             hoverBg.style.opacity = '1';
+
+            console.log('Hover:', this.textContent, {
+              width: rect.width,
+              left: rect.left - containerRect.left
+            });
           }
         });
       });
 
+      // Zurück zu active beim Mouse leave
       container.addEventListener('mouseleave', function() {
-        if (hoverBg) hoverBg.style.opacity = '0';
+        const activeLink = container.querySelector('.nav-link.active');
+        if (activeLink) {
+          const rect = activeLink.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          hoverBg.style.width = rect.width + 'px';
+          hoverBg.style.left = (rect.left - containerRect.left) + 'px';
+        } else {
+          hoverBg.style.opacity = '0';
+        }
+      });
+
+      // Update bei Tab-Wechsel
+      links.forEach(link => {
+        link.addEventListener('click', function() {
+          setTimeout(() => {
+            const rect = this.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            hoverBg.style.width = rect.width + 'px';
+            hoverBg.style.left = (rect.left - containerRect.left) + 'px';
+            hoverBg.style.opacity = '1';
+          }, 10);
+        });
       });
     }
 
@@ -20180,7 +20239,12 @@
       // Initialize navbar hover and mobile navigation
       setupNavbarHover();
       setupMobileNavigation();
-      window.addEventListener('resize', setupMobileNavigation);
+
+      // Re-init bei Resize
+      window.addEventListener('resize', function() {
+        setupNavbarHover();
+        setupMobileNavigation();
+      });
 
       // Initialize auth
       initAuth();
