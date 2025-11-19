@@ -14,6 +14,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Geist Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     /* ========================================
        macOS Light Mode Frosted Glass - CSS Variables
@@ -138,7 +144,7 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
       background: var(--macos-bg);
       color: var(--macos-text-primary);
       margin: 0;
@@ -1699,7 +1705,7 @@
       font-size: 12px;
       font-weight: 600;
       color: #0071e3;
-      font-family: 'Helvetica Neue', -apple-system, sans-serif;
+      font-family: 'Geist', -apple-system, sans-serif;
     }
 
     .project-status-badge {
@@ -1763,7 +1769,7 @@
       font-weight: 600;
       color: #1d1d1f;
       margin-bottom: 6px;
-      font-family: 'Helvetica Neue', -apple-system, sans-serif;
+      font-family: 'Geist', -apple-system, sans-serif;
     }
 
     .appointment-info {
@@ -2753,7 +2759,7 @@
       font-size: 28px;
       font-weight: 700;
       color: #1d1d1f;
-      font-family: 'Helvetica Neue', sans-serif;
+      font-family: 'Geist', sans-serif;
       line-height: 1.2;
     }
 
@@ -2933,7 +2939,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: #fff;
     }
 
@@ -3083,7 +3089,6 @@
       position: relative;
       z-index: 1;
       white-space: nowrap;
-      border-bottom: 2px solid transparent; /* Für Unterstrich */
     }
 
     [data-theme="dark"] .nav-link {
@@ -3100,14 +3105,26 @@
 
     .nav-link.active {
       color: rgba(0, 0, 0, 0.9);
-      background: rgba(0, 0, 0, 0.05);
-      border-bottom: 2px solid rgba(0, 0, 0, 0.9); /* Klare Unterstreichung */
     }
 
     [data-theme="dark"] .nav-link.active {
       color: rgba(255, 255, 255, 0.9);
-      background: rgba(255, 255, 255, 0.08);
-      border-bottom: 2px solid rgba(255, 255, 255, 0.9);
+    }
+
+    /* Active Indicator Line at Bottom */
+    .active-indicator {
+      position: absolute;
+      bottom: 0;
+      height: 2px;
+      background: rgba(0, 0, 0, 0.9);
+      border-radius: 2px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    [data-theme="dark"] .active-indicator {
+      background: rgba(255, 255, 255, 0.9);
     }
 
     /* ========================================
@@ -3239,6 +3256,7 @@
   <!-- Navigation Bar - Main (Desktop) -->
   <nav class="navbar-container" id="mainNavbar">
     <div class="hover-background"></div>
+    <div class="active-indicator"></div>
     <a class="nav-link active" href="#" data-view="dashboard" id="tab-dashboard">Dashboard</a>
     <a class="nav-link" href="#" data-view="requests" id="tab-requests">Requests</a>
     <a class="nav-link" href="#" data-view="calendar" id="tab-calendar">Calendar</a>
@@ -5471,8 +5489,10 @@
       }
 
       const hoverBg = container.querySelector('.hover-background');
-      if (!hoverBg) {
-        console.log('⚠️ Hover background not found');
+      const activeIndicator = container.querySelector('.active-indicator');
+
+      if (!hoverBg || !activeIndicator) {
+        console.log('⚠️ Elements not found:', { hoverBg: !!hoverBg, activeIndicator: !!activeIndicator });
         return;
       }
 
@@ -5481,17 +5501,23 @@
       console.log('✅ Hover setup:', {
         container: !!container,
         hoverBg: !!hoverBg,
+        activeIndicator: !!activeIndicator,
         links: links.length
       });
 
-      // Initial position auf active link
-      const activeLink = container.querySelector('.nav-link.active');
-      if (activeLink) {
-        const rect = activeLink.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        hoverBg.style.width = rect.width + 'px';
-        hoverBg.style.left = (rect.left - containerRect.left) + 'px';
+      // Update active indicator position
+      function updateActiveIndicator() {
+        const activeLink = container.querySelector('.nav-link.active');
+        if (activeLink) {
+          const rect = activeLink.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          activeIndicator.style.width = rect.width + 'px';
+          activeIndicator.style.left = (rect.left - containerRect.left) + 'px';
+        }
       }
+
+      // Initial position
+      updateActiveIndicator();
 
       // Hover auf jeden Link
       links.forEach(link => {
@@ -5503,37 +5529,20 @@
             hoverBg.style.width = rect.width + 'px';
             hoverBg.style.left = (rect.left - containerRect.left) + 'px';
             hoverBg.style.opacity = '1';
-
-            console.log('Hover:', this.textContent, {
-              width: rect.width,
-              left: rect.left - containerRect.left
-            });
           }
         });
       });
 
       // Zurück zu active beim Mouse leave
       container.addEventListener('mouseleave', function() {
-        const activeLink = container.querySelector('.nav-link.active');
-        if (activeLink) {
-          const rect = activeLink.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          hoverBg.style.width = rect.width + 'px';
-          hoverBg.style.left = (rect.left - containerRect.left) + 'px';
-        } else {
-          hoverBg.style.opacity = '0';
-        }
+        hoverBg.style.opacity = '0';
       });
 
       // Update bei Tab-Wechsel
       links.forEach(link => {
         link.addEventListener('click', function() {
           setTimeout(() => {
-            const rect = this.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-            hoverBg.style.width = rect.width + 'px';
-            hoverBg.style.left = (rect.left - containerRect.left) + 'px';
-            hoverBg.style.opacity = '1';
+            updateActiveIndicator();
           }, 10);
         });
       });
