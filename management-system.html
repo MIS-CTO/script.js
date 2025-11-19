@@ -271,6 +271,8 @@
       padding: 24px 5vw;
       max-width: 100%;
       margin: 0 auto;
+      margin-top: 110px; /* 64px Header + 46px Navbar */
+      min-height: calc(100vh - 110px);
     }
 
     section.active {
@@ -3039,23 +3041,116 @@
     }
 
     /* ========================================
+       HEADER SECTION
+       ======================================== */
+
+    .header-section {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 0 24px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] .header-section {
+      background: var(--bg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header-title {
+      color: rgba(0, 0, 0, 0.9);
+      font-size: 15px;
+      margin: 0;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    [data-theme="dark"] .header-title {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .header-title:hover {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    [data-theme="dark"] .header-title:hover {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .nav-icons {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .icon-button {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    [data-theme="dark"] .icon-button {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .icon-button:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="dark"] .icon-button:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .icon-button svg {
+      width: 18px;
+      height: 18px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    [data-theme="dark"] .icon-button svg {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* ========================================
        NAVBAR - CLEAN & SIMPLE
        ======================================== */
 
     .navbar-container {
       display: flex;
       gap: 0; /* ⭐ Kein Gap */
-      padding: 0; /* ⭐ Kein Padding */
-      background: transparent; /* ⭐ KEIN Background */
+      padding: 0 24px; /* Padding für Alignment mit Header */
+      background: var(--bg); /* Background für fixed navbar */
       border-radius: 0; /* ⭐ KEINE rounded corners */
       backdrop-filter: none; /* ⭐ KEIN Blur */
-      position: relative;
-      margin-bottom: 24px;
+      position: fixed; /* ⭐ Fixed unter Header */
+      top: 64px; /* ⭐ Unter dem Header */
+      left: 0;
+      right: 0;
+      z-index: 999; /* Unter dem Header */
+      height: 46px;
+      align-items: center;
       border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Subtile Trennlinie */
     }
 
     [data-theme="dark"] .navbar-container {
-      background: transparent;
+      background: var(--bg);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
@@ -3224,8 +3319,43 @@
        ======================================== */
 
     @media (max-width: 768px) {
+      /* Header adjustments for mobile */
+      .header-section {
+        padding: 0 16px;
+        height: 56px;
+      }
+
+      .header-title {
+        font-size: 14px;
+      }
+
+      .icon-button {
+        width: 32px;
+        height: 32px;
+      }
+
+      .icon-button svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Profile Button nur auf Desktop */
+      .icon-button.profile {
+        display: none;
+      }
+
+      /* Navbar unter kleineren Header */
       .navbar-container {
         display: none !important;
+        top: 56px;
+        height: 42px;
+      }
+
+      /* Section adjustments for mobile */
+      section {
+        margin-top: 56px; /* Nur Header auf Mobile */
+        margin-bottom: 72px; /* Platz für Footer Nav */
+        min-height: calc(100vh - 128px);
       }
 
       .mobile-footer-nav {
@@ -3259,6 +3389,28 @@
         </div>
         <div class="progress-percent" id="progressPercent">0%</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Header Section -->
+  <div class="header-section">
+    <h2 class="header-title">Culture over Money Dashboard</h2>
+
+    <div class="nav-icons">
+      <!-- Notification Bell -->
+      <button class="icon-button notification" id="notificationButton">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.37 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </button>
+
+      <!-- Profile Icon (Desktop only) -->
+      <button class="icon-button profile" id="profileButton">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -20244,6 +20396,62 @@
       // Initialize navbar hover and mobile navigation
       setupNavbarHover();
       setupMobileNavigation();
+
+      // Header Title - Return to Dashboard
+      const headerTitle = document.querySelector('.header-title');
+      if (headerTitle) {
+        headerTitle.addEventListener('click', function() {
+          // Switch to dashboard view
+          const sections = document.querySelectorAll('section');
+          sections.forEach(s => s.classList.remove('active'));
+          const dashboardSection = document.getElementById('dashboard-section');
+          if (dashboardSection) {
+            dashboardSection.classList.add('active');
+          }
+
+          // Update nav links
+          const navLinks = document.querySelectorAll('.nav-link');
+          navLinks.forEach(link => link.classList.remove('active'));
+          const dashboardLink = document.querySelector('.nav-link[data-view="dashboard"]');
+          if (dashboardLink) {
+            dashboardLink.classList.add('active');
+          }
+
+          // Update mobile nav
+          const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+          mobileNavItems.forEach(item => item.classList.remove('active'));
+          const mobileDashboardItem = document.querySelector('.mobile-nav-item[data-view="dashboard"]');
+          if (mobileDashboardItem) {
+            mobileDashboardItem.classList.add('active');
+          }
+        });
+      }
+
+      // Notification Button Toggle (Placeholder - no dropdown yet)
+      const notificationButton = document.getElementById('notificationButton');
+      if (notificationButton) {
+        notificationButton.addEventListener('click', function(e) {
+          e.stopPropagation();
+          console.log('Notification button clicked - dropdown not implemented yet');
+          // Future: Toggle notifications dropdown
+        });
+      }
+
+      // Profile Button Toggle (uses existing login modal)
+      const profileButton = document.getElementById('profileButton');
+      if (profileButton) {
+        profileButton.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const loginBackdrop = document.getElementById('loginBackdrop');
+          if (currentUser && loginBackdrop) {
+            document.getElementById('loginFormView').style.display = 'none';
+            document.getElementById('profileView').style.display = 'block';
+            loginBackdrop.classList.add('active');
+          } else if (loginBackdrop) {
+            loginBackdrop.classList.add('active');
+          }
+        });
+      }
 
       // Re-init bei Resize
       window.addEventListener('resize', function() {
