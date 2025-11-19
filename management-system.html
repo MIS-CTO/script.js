@@ -5615,10 +5615,12 @@
       const sections = document.querySelectorAll("section");
 
       // Load data and permissions in parallel for faster initial load
+      console.log('🚀 Starting to load initial data and permissions...');
       await Promise.all([
         loadInitialData(),
         initializePermissions()
       ]);
+      console.log('✅ Initial data and permissions loaded');
 
       // ==========================================
       // NAVBAR HOVER EFFECT - Apple Style
@@ -6250,8 +6252,16 @@
       // ============================================
       // COMPLETE DASHBOARD STATS FUNCTION
       // ============================================
-      async function loadDashboard() {
+      let dashboardLoaded = false;
+      async function loadDashboard(forceReload = false) {
+        // Prevent double loading unless forced
+        if (dashboardLoaded && !forceReload) {
+          console.log('📊 Dashboard already loaded, skipping...');
+          return;
+        }
+
         console.log('📊 Loading Dashboard Statistics...');
+        dashboardLoaded = true;
 
         try {
           // Show progress bar
@@ -19890,6 +19900,9 @@
 
       // Initialize auth
       initAuth();
+
+      // Log completion
+      console.log('✅ DOMContentLoaded: All initialization complete');
     });
   </script>
 
