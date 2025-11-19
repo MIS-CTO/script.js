@@ -3230,6 +3230,7 @@
       font-weight: 600;
       color: rgba(0, 0, 0, 0.9);
       margin-bottom: 4px;
+      text-align: left;
     }
 
     [data-theme="dark"] .profile-username {
@@ -3239,6 +3240,7 @@
     .profile-email {
       font-size: 13px;
       color: rgba(0, 0, 0, 0.5);
+      text-align: left;
     }
 
     [data-theme="dark"] .profile-email {
@@ -4588,12 +4590,6 @@
       <span class="badge" id="badge-guests">Guests: —</span>
       <span class="badge" id="badge-agreements-completed">Agreements: —</span>
       <span class="badge" id="badge-agreements-pending">Missing: —</span>
-    </div>
-
-    <!-- PROJECT OVERVIEW DASHBOARD -->
-    <div class="dashboard-section">
-      <h2>📊 Project Overview</h2>
-      <div id="projectKPIs"></div>
     </div>
   </section>
 
@@ -15730,6 +15726,17 @@
     function updateUIForUser(profile) {
       console.log('🎨 Updating UI for user:', profile.username);
       console.log('🖼️ Avatar URL:', profile.avatar_url || 'No avatar URL found');
+
+      // Update profile dropdown
+      const profileDropdownUsername = document.getElementById('profileDropdownUsername');
+      const profileDropdownEmail = document.getElementById('profileDropdownEmail');
+
+      if (profileDropdownUsername) {
+        profileDropdownUsername.textContent = profile.username || 'User name';
+      }
+      if (profileDropdownEmail) {
+        profileDropdownEmail.textContent = profile.email || 'user@example.com';
+      }
 
       // Show welcome message
       const dashboardWelcome = document.getElementById('dashboardWelcome');
