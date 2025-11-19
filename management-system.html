@@ -4951,7 +4951,7 @@
         <div id="requestsIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:#f5f5f7; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 1px 3px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
         <button class="request-tab active" data-status="open_request" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
           New Requests
-          <span id="badge-new" style="display:inline-block; background:#dc3545; color:white; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; min-width:18px; text-align:center;">0</span>
+          <span id="badge-new" style="display:inline-block; background:#8E8E93; color:white; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; min-width:18px; text-align:center;">0</span>
         </button>
         <button class="request-tab" data-status="my-requests" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">My Requests</button>
         <button class="request-tab" data-status="pending" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">In Progress</button>
@@ -9619,22 +9619,49 @@
         try {
           ProgressBar.show('Loading requests...');
           console.log('📋 Loading requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
+          console.log('🚨 BATCH LOADING ALL REQUESTS - Version 2025-11-19');
 
-          ProgressBar.updateProgress(30, 'Fetching requests from database...');
-          const { data, error } = await supabase
-            .from('requests')
-            .select(`
-              *,
-              customer:customers(id, first_name, last_name, email, phone, rank, instagram),
-              artist:artists(id, name, email, instagram),
-              location:locations(id, name, city)
-            `)
-            .order('created_at', { ascending: false });
+          // 🔥 BATCH LOADING: Load ALL requests in batches of 1000
+          ProgressBar.updateProgress(10, 'Starting batch loading...');
+          let allData = [];
+          let from = 0;
+          const batchSize = 1000;
+          let hasMore = true;
+          let batchNumber = 1;
 
-          if (error) throw error;
+          while (hasMore) {
+            console.log(`📦 Loading requests batch ${batchNumber} (records ${from} to ${from + batchSize - 1})...`);
 
-          allRequests = data || [];
-          console.log('✅ Loaded', allRequests.length, 'requests');
+            const { data: batch, error } = await supabase
+              .from('requests')
+              .select(`
+                *,
+                customer:customers(id, first_name, last_name, email, phone, rank, instagram),
+                artist:artists(id, name, email, instagram),
+                location:locations(id, name, city)
+              `)
+              .order('created_at', { ascending: false })
+              .range(from, from + batchSize - 1);
+
+            if (error) throw error;
+
+            if (batch && batch.length > 0) {
+              allData = allData.concat(batch);
+              from += batchSize;
+              hasMore = batch.length === batchSize;
+              console.log(`  ↳ Loaded ${allData.length} requests so far...`);
+
+              // Update progress (10% to 60%)
+              const requestProgress = 10 + Math.min(50, (allData.length / 1000) * 5);
+              ProgressBar.updateProgress(requestProgress, `Loading requests (${allData.length} loaded)...`);
+              batchNumber++;
+            } else {
+              hasMore = false;
+            }
+          }
+
+          allRequests = allData || [];
+          console.log('✅ Loaded', allRequests.length, 'total requests in', batchNumber - 1, 'batches');
           ProgressBar.updateProgress(70, 'Filtering and rendering...');
 
           // Filter by status
@@ -9646,15 +9673,9 @@
               r.assigned_to === currentUser?.username
             );
           } else if (currentRequestStatus === 'open_request') {
-            // ✅ Nur Requests der letzten 7 Tage als "new" anzeigen
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-            filteredRequests = allRequests.filter(r => {
-              if (r.status !== 'open_request') return false;
-              const createdAt = new Date(r.created_at);
-              return createdAt >= sevenDaysAgo;
-            });
+            // ✅ Show ALL open_request items (not just last 7 days)
+            // Badge count still only shows last 7 days as "new"
+            filteredRequests = allRequests.filter(r => r.status === 'open_request');
           } else if (currentRequestStatus !== 'all') {
             filteredRequests = allRequests.filter(r => r.status === currentRequestStatus);
           }
