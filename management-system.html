@@ -4944,18 +4944,6 @@
   <section id="requests-section">
     <h2>Request Management</h2>
 
-    <!-- Location Dropdown -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-      <label style="font-weight:600; font-size:14px; color:var(--ink);">Location:</label>
-      <select id="requestLocationDropdown" style="min-width:200px; padding:8px 12px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); cursor:pointer;">
-        <option value="all">Alle Locations</option>
-        <option value="mommy">Mommy I'm Sorry</option>
-        <option value="gon">GON</option>
-        <option value="muttersohne">Muttersöhne</option>
-        <option value="pardon">Pardon Paris</option>
-      </select>
-    </div>
-
     <!-- Request Status Switcher + Refresh Controls on Same Line -->
     <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px; justify-content:space-between;">
       <!-- Request Status Switcher -->
@@ -4989,12 +4977,35 @@
       </div>
     </div>
 
-    <!-- Create Request Button (Only visible in New Requests tab) -->
-    <div id="createRequestBtnContainer" style="display:flex; justify-content:flex-start; margin-bottom:16px;">
+    <!-- Create Request Button + Location Dropdown + Search Bar -->
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <!-- Create Request Button (Only visible in New Requests tab) -->
       <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Create Request</span>
       </button>
+
+      <!-- Location Dropdown -->
+      <select id="requestLocationDropdown" style="min-width:180px; padding:8px 12px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); cursor:pointer; height:37px;">
+        <option value="all">Alle Locations</option>
+        <option value="mommy">Mommy I'm Sorry</option>
+        <option value="gon">GON</option>
+        <option value="muttersohne">Muttersöhne</option>
+        <option value="pardon">Pardon Paris</option>
+      </select>
+
+      <!-- Search Bar -->
+      <div style="position:relative; flex:1; max-width:400px;">
+        <input
+          type="text"
+          id="requestSearchInput"
+          placeholder="Search requests by keyword..."
+          style="width:100%; padding:8px 12px 8px 36px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); height:37px; box-sizing:border-box;">
+        <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+      </div>
     </div>
 
     <!-- Two Column Layout -->
@@ -7266,10 +7277,13 @@
 
        FIXES IN v81:
        ✅ Updated: Location filter as dropdown in Request Tab (Alle, Mommy, GON, Muttersöhne, Pardon Paris)
-       ✅ Added: Location filtering logic for requests (filters by location.name)
-       ✅ Added: initRequestLocationDropdown() function for dropdown handling
-       ✅ Added: currentRequestLocation state variable
-       ✅ Updated: loadRequests() to filter by both status and location
+       ✅ Removed: "Location:" label from dropdown
+       ✅ Moved: Location dropdown next to Create Request button
+       ✅ Added: Search bar for filtering requests by keywords
+       ✅ Added: initRequestSearch() function with debounced search (300ms)
+       ✅ Added: currentRequestSearchKeyword state variable
+       ✅ Updated: loadRequests() to filter by status, location AND search keywords
+       ✅ Search includes: name, email, instagram, phone, description, notes, artist, location, request number
        ✅ Updated: Request Status Switcher and Auto-Refresh Controls aligned on same line
        ✅ Updated: Version number from v80 to v81
 
@@ -7933,6 +7947,43 @@
         });
       }
 
+      // ✅ NEW: Request Search initialization function
+      function initRequestSearch() {
+        const searchInput = document.getElementById('requestSearchInput');
+
+        console.log('Init Request Search input:', searchInput);
+
+        if (!searchInput) {
+          console.error('Missing search input');
+          return;
+        }
+
+        // Set initial value
+        currentRequestSearchKeyword = '';
+
+        // Add input listener with debounce
+        let searchTimeout;
+        searchInput.addEventListener('input', function(e) {
+          const keyword = e.target.value;
+          console.log('Search input changed:', keyword);
+
+          // Clear previous timeout
+          clearTimeout(searchTimeout);
+
+          // Debounce search for 300ms
+          searchTimeout = setTimeout(() => {
+            currentRequestSearchKeyword = keyword;
+            console.log('Updated currentRequestSearchKeyword to:', currentRequestSearchKeyword);
+
+            // Close detail view when searching
+            selectedRequestId = null;
+            closeRequestDetail();
+
+            loadRequests();
+          }, 300);
+        });
+      }
+
       // Refresh Requests Functionality
       let autoRefreshInterval = null;
       let isRefreshing = false;
@@ -8077,6 +8128,7 @@
             loadRequests();
             initRequestTabs();
             initRequestLocationDropdown(); // ✅ NEW: Initialize location filter dropdown
+            initRequestSearch(); // ✅ NEW: Initialize search functionality
           }
           else if (tabName === "calendar") renderCalendar();
           else if (tabName === "dienstplan") renderDienstplan();
@@ -9561,6 +9613,7 @@
       let allRequests = [];
       let currentRequestStatus = 'open_request';
       let currentRequestLocation = 'all'; // ✅ NEW: Track selected location filter
+      let currentRequestSearchKeyword = ''; // ✅ NEW: Track search keyword
       let selectedRequestId = null;
       // currentUser is declared globally outside this scope
 
@@ -9616,7 +9669,34 @@
             });
           }
 
-          console.log('📊 Filtered to', filteredRequests.length, 'requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
+          // ✅ NEW: Filter by search keyword
+          if (currentRequestSearchKeyword && currentRequestSearchKeyword.trim() !== '') {
+            const keyword = currentRequestSearchKeyword.toLowerCase().trim();
+            filteredRequests = filteredRequests.filter(r => {
+              // Search in multiple fields
+              const searchableFields = [
+                r.first_name || '',
+                r.last_name || '',
+                r.customer?.first_name || '',
+                r.customer?.last_name || '',
+                r.customer?.email || '',
+                r.customer?.instagram || '',
+                r.instagram || '',
+                r.email || '',
+                r.phone || '',
+                r.description || '',
+                r.notes || '',
+                r.artist?.name || '',
+                r.location?.name || '',
+                r.request_number || '',
+                r.id || ''
+              ].join(' ').toLowerCase();
+
+              return searchableFields.includes(keyword);
+            });
+          }
+
+          console.log('📊 Filtered to', filteredRequests.length, 'requests for status:', currentRequestStatus, 'location:', currentRequestLocation, 'keyword:', currentRequestSearchKeyword);
           renderRequestsList(filteredRequests);
           updateRequestBadges();
           ProgressBar.hide();
