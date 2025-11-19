@@ -4960,24 +4960,9 @@
         <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
         <button class="request-tab" data-status="archived" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Archived</button>
       </div>
-
-      <!-- Refresh Controls -->
-      <div style="display:flex; align-items:center; gap:12px;">
-        <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer;">
-          <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
-          <span>Auto-Refresh (30s)</span>
-        </label>
-        <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit;">
-          <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-          </svg>
-          <span id="refreshBtnText">Neue Requests laden</span>
-        </button>
-      </div>
     </div>
 
-    <!-- Create Request Button + Location Dropdown + Search Bar -->
+    <!-- Create Request Button + Location Dropdown + Search Bar + Refresh Controls -->
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
       <!-- Create Request Button (Only visible in New Requests tab) -->
       <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
@@ -5006,6 +4991,21 @@
           <path d="m21 21-4.35-4.35"></path>
         </svg>
       </div>
+
+      <!-- Auto-Refresh Toggle -->
+      <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer; white-space:nowrap;">
+        <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
+        <span>Auto-Refresh (30s)</span>
+      </label>
+
+      <!-- Refresh Button -->
+      <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit; white-space:nowrap; height:37px;">
+        <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        <span id="refreshBtnText">Neue Requests laden</span>
+      </button>
     </div>
 
     <!-- Two Column Layout -->
@@ -5082,9 +5082,25 @@
       </div>
     </div>
 
-    <!-- Switches Row -->
-    <div style="margin-bottom:16px; display:flex; gap:24px; align-items:center; justify-content:flex-end;">
-      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+    <div class="calendar-controls" style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+      <button id="createEventBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Create Event</span>
+      </button>
+      <button id="createBookingBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Create Booking</span>
+      </button>
+      <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
+        <select id="locationDropdown" style="min-width:200px;"></select>
+      </div>
+      <button id="prevDayBtn" class="btn-nav">‹ Prev</button>
+      <input type="date" id="datePickerInput">
+      <button id="todayBtn" class="btn-nav">Today</button>
+      <button id="nextDayBtn" class="btn-nav">Next ›</button>
+
+      <!-- Switches: Events, Residents, Guests -->
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; margin-left:auto;">
         <span style="font-weight:700;">Events</span>
         <label class="toggle-switch">
           <input type="checkbox" id="checkEvents" checked>
@@ -5105,24 +5121,6 @@
           <span class="toggle-slider"></span>
         </label>
       </label>
-    </div>
-
-    <div class="calendar-controls">
-      <button id="createEventBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px;">
-        <span style="font-size:18px; font-weight:600;">+</span>
-        <span>Create Event</span>
-      </button>
-      <button id="createBookingBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px;">
-        <span style="font-size:18px; font-weight:600;">+</span>
-        <span>Create Booking</span>
-      </button>
-      <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
-        <select id="locationDropdown" style="min-width:200px;"></select>
-      </div>
-      <button id="prevDayBtn" class="btn-nav">‹ Prev</button>
-      <input type="date" id="datePickerInput">
-      <button id="todayBtn" class="btn-nav">Today</button>
-      <button id="nextDayBtn" class="btn-nav">Next ›</button>
     </div>
 
     <div class="calendar-container" id="calendarContainer"></div>
@@ -5179,20 +5177,20 @@
   <section id="artists-section">
     <h2>Artists</h2>
 
-    <!-- Search Bar and Add Button Row -->
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
-      <div style="position:relative; flex:1; min-width:300px; max-width:500px;">
+    <!-- Add Button and Search Bar Row -->
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <button id="addArtistBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Add Artist</span>
+      </button>
+
+      <div style="position:relative; flex:1; max-width:500px;">
         <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
         </svg>
         <input type="text" id="artistSearchInput" placeholder="Search artists by name or Instagram..." style="width:100%; padding:12px 16px 12px 42px; font-size:15px; border:1px solid rgba(0,0,0,0.1); border-radius:999px;">
       </div>
-      
-      <button id="addArtistBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
-        <span style="font-size:18px; font-weight:600;">+</span>
-        <span>Add Artist</span>
-      </button>
     </div>
 
     <!-- Filter Row -->
@@ -5262,24 +5260,24 @@
   <section id="customers-section">
     <h2>Customers</h2>
 
-    <!-- Search Bar and Add Button Row -->
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
-      <div style="position:relative; flex:1; min-width:300px; max-width:500px;">
-        <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
-        <input 
-          type="text" 
-          id="customerSearchInput" 
-          placeholder="Search customers by name, email or phone..." 
-          style="width:100%; padding:12px 16px 12px 42px; font-size:15px; border:1px solid rgba(0,0,0,0.1); border-radius:999px;">
-      </div>
-      
+    <!-- Add Button and Search Bar Row -->
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
       <button id="addCustomerBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Add Customer</span>
       </button>
+
+      <div style="position:relative; flex:1; max-width:500px;">
+        <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input
+          type="text"
+          id="customerSearchInput"
+          placeholder="Search customers by name, email or phone..."
+          style="width:100%; padding:12px 16px 12px 42px; font-size:15px; border:1px solid rgba(0,0,0,0.1); border-radius:999px;">
+      </div>
     </div>
 
     <!-- Filter Row -->
@@ -9647,6 +9645,16 @@
               r.assigned_to_user_id === currentUser?.id ||
               r.assigned_to === currentUser?.username
             );
+          } else if (currentRequestStatus === 'open_request') {
+            // ✅ Nur Requests der letzten 7 Tage als "new" anzeigen
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            filteredRequests = allRequests.filter(r => {
+              if (r.status !== 'open_request') return false;
+              const createdAt = new Date(r.created_at);
+              return createdAt >= sevenDaysAgo;
+            });
           } else if (currentRequestStatus !== 'all') {
             filteredRequests = allRequests.filter(r => r.status === currentRequestStatus);
           }
@@ -10209,7 +10217,16 @@
       }
       
       function updateRequestBadges() {
-        const newCount = allRequests.filter(r => r.status === 'open_request').length;
+        // ✅ Nur Requests der letzten 7 Tage als "new" zählen
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const newCount = allRequests.filter(r => {
+          if (r.status !== 'open_request') return false;
+          const createdAt = new Date(r.created_at);
+          return createdAt >= sevenDaysAgo;
+        }).length;
+
         const badgeEl = document.getElementById('badge-new');
         if (badgeEl) {
           badgeEl.textContent = newCount;
@@ -11568,7 +11585,7 @@
               <td><span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span></td>
               <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span></td>
               <td style="text-align:right;">
-                <button class="btn btn-primary" onclick="viewArtistProfile('${artist.id}')" style="padding:6px 16px; font-size:13px;">View Profile</button>
+                <button class="btn btn-primary" onclick="viewArtistProfile('${artist.id}')" style="padding:6px 16px; font-size:13px; background:#1d1d1f; color:white;">View Profile</button>
               </td>
             </tr>
           `;
@@ -11826,7 +11843,7 @@
               <td>${rankBadge} ${blacklistBadge}</td>
               <td style="font-size:13px; color:var(--muted);">${new Date(customer.created_at).toLocaleDateString()}</td>
               <td style="text-align:right;">
-                <button class="btn btn-primary" onclick="openCustomerProfile('${customer.id}')" style="padding:6px 16px; font-size:13px;">View Profile</button>
+                <button class="btn btn-primary" onclick="openCustomerProfile('${customer.id}')" style="padding:6px 16px; font-size:13px; background:#1d1d1f; color:white;">View Profile</button>
               </td>
             </tr>
           `;
