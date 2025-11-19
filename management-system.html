@@ -4388,6 +4388,327 @@
     let artistDistributionChartInstance = null;
     let revenueByStatusChartInstance = null;
 
+    // ==========================================
+    // MOBILE DETECTION & FOOTER NAV SETUP
+    // ==========================================
+
+    function setupMobileNavigation() {
+      const mobileFooterNav = document.querySelector('.mobile-footer-nav');
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile && mobileFooterNav) {
+        mobileFooterNav.style.display = 'flex';
+      } else if (mobileFooterNav) {
+        mobileFooterNav.style.display = 'none';
+      }
+    }
+
+    // Setup on load
+    setupMobileNavigation();
+
+    // Setup on resize
+    window.addEventListener('resize', setupMobileNavigation);
+
+    // ==========================================
+    // MOBILE FOOTER NAVIGATION
+    // ==========================================
+
+    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+
+    mobileNavItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const viewName = this.dataset.mobileView;
+
+        // Update active state
+        mobileNavItems.forEach(navItem => navItem.classList.remove('active'));
+        this.classList.add('active');
+
+        // Switch view based on selection
+        if (viewName === 'profile') {
+          switchView('accountSettings');
+        } else {
+          switchView(viewName);
+        }
+
+        // Close dropdowns
+        document.querySelectorAll('.profile-dropdown, .notifications-dropdown').forEach(dropdown => {
+          dropdown.classList.remove('active');
+        });
+      });
+    });
+
+    // ==========================================
+    // VIEW MANAGEMENT
+    // ==========================================
+
+    function switchView(viewName) {
+      console.log('Switching to view:', viewName);
+
+      // Hide all sections (old system compatibility)
+      document.querySelectorAll('section').forEach(section => {
+        section.classList.remove('active');
+      });
+
+      // Hide all view-containers (new system)
+      document.querySelectorAll('.view-container').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      // Show selected section (old system)
+      const sectionElement = document.getElementById(viewName + '-section');
+      if (sectionElement) {
+        sectionElement.classList.add('active');
+      }
+
+      // Show selected view-container (new system)
+      const viewElement = document.getElementById(viewName + 'View');
+      if (viewElement) {
+        viewElement.classList.add('active');
+      }
+
+      // Switch navbar based on view (Desktop only)
+      const mainNavbar = document.getElementById('mainNavbar');
+      const settingsNavbar = document.getElementById('settingsNavbar');
+
+      if (window.innerWidth > 768) {
+        if (viewName === 'accountSettings') {
+          if (mainNavbar) mainNavbar.style.display = 'none';
+          if (settingsNavbar) settingsNavbar.style.display = 'flex';
+        } else {
+          if (mainNavbar) mainNavbar.style.display = 'flex';
+          if (settingsNavbar) settingsNavbar.style.display = 'none';
+
+          // Update main navbar active state
+          document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.view === viewName) {
+              link.classList.add('active');
+            }
+          });
+        }
+      }
+
+      // Update mobile footer nav active state
+      if (window.innerWidth <= 768) {
+        mobileNavItems.forEach(item => {
+          item.classList.remove('active');
+          if (item.dataset.mobileView === viewName ||
+              (viewName === 'accountSettings' && item.dataset.mobileView === 'profile')) {
+            item.classList.add('active');
+          }
+        });
+      }
+
+      // Close dropdowns
+      document.querySelectorAll('.profile-dropdown, .notifications-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
+
+      // View-specific initializations (preserve existing logic)
+      if (viewName === 'dashboard') loadDashboardData();
+      if (viewName === 'requests') loadRequests();
+      if (viewName === 'calendar') loadCalendar();
+      if (viewName === 'dienstplan') loadDienstplan();
+      if (viewName === 'artists') loadArtists();
+      if (viewName === 'customers') loadCustomers();
+      if (viewName === 'analytics') loadAnalytics();
+      if (viewName === 'waitlist') loadWaitlistView();
+      if (viewName === 'agreements') loadAgreementsView();
+    }
+
+    // ==========================================
+    // NAVBAR CLICK HANDLERS
+    // ==========================================
+
+    // Main Navbar Links
+    document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const viewName = this.dataset.view;
+        if (viewName) {
+          switchView(viewName);
+        }
+      });
+    });
+
+    // Settings Navbar - Return to Dashboard
+    const returnToDashboardBtn = document.getElementById('returnToDashboard');
+    if (returnToDashboardBtn) {
+      returnToDashboardBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchView('dashboard');
+      });
+    }
+
+    // Settings Navbar - Tab Switching
+    document.querySelectorAll('#settingsNavbar .nav-link[data-tab]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabName = this.dataset.tab;
+
+        // Update navbar active state
+        document.querySelectorAll('#settingsNavbar .nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update main title
+        const mainTitle = document.getElementById('mainTitle');
+        if (mainTitle) {
+          mainTitle.textContent = tabName === 'activity' ? 'Account Activity' : 'Account Settings';
+        }
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        const targetTab = document.getElementById(tabName + 'Tab');
+        if (targetTab) {
+          targetTab.classList.add('active');
+        }
+      });
+    });
+
+    // Account Settings Link in Profile Dropdown
+    const accountSettingsLink = document.getElementById('accountSettingsLink');
+    if (accountSettingsLink) {
+      accountSettingsLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchView('accountSettings');
+      });
+    }
+
+    // ==========================================
+    // NAVBAR HOVER EFFECTS (Desktop only)
+    // ==========================================
+
+    function setupNavbarHover(navbarId) {
+      const container = document.getElementById(navbarId);
+      if (!container) return;
+
+      const hoverBg = container.querySelector('.hover-background');
+      const links = container.querySelectorAll('.nav-link');
+
+      links.forEach(link => {
+        link.addEventListener('mouseenter', function() {
+          if (window.innerWidth > 768 && hoverBg) {
+            const rect = this.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            hoverBg.style.width = rect.width + 'px';
+            hoverBg.style.left = (rect.left - containerRect.left) + 'px';
+          }
+        });
+      });
+
+      container.addEventListener('mouseleave', function() {
+        if (hoverBg) hoverBg.style.opacity = '0';
+      });
+
+      container.addEventListener('mouseenter', function() {
+        if (hoverBg) hoverBg.style.opacity = '1';
+      });
+    }
+
+    // Setup both navbars
+    setupNavbarHover('mainNavbar');
+    setupNavbarHover('settingsNavbar');
+
+    // ==========================================
+    // DROPDOWN MANAGEMENT
+    // ==========================================
+
+    const profileButton = document.getElementById('profileButton');
+    const profileDropdown = document.getElementById('profileDropdown');
+    const notificationButton = document.getElementById('notificationButton');
+    const notificationsDropdown = document.getElementById('notificationsDropdown');
+
+    if (profileButton && profileDropdown) {
+      profileButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('active');
+        if (notificationsDropdown) notificationsDropdown.classList.remove('active');
+      });
+    }
+
+    if (notificationButton && notificationsDropdown) {
+      notificationButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        notificationsDropdown.classList.toggle('active');
+        if (profileDropdown) profileDropdown.classList.remove('active');
+      });
+    }
+
+    // Notification Tabs
+    const notificationTabs = document.querySelectorAll('.notification-tab');
+    notificationTabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        notificationTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (profileDropdown && !profileDropdown.contains(e.target) &&
+          (!profileButton || !profileButton.contains(e.target))) {
+        profileDropdown.classList.remove('active');
+      }
+      if (notificationsDropdown && !notificationsDropdown.contains(e.target) &&
+          (!notificationButton || !notificationButton.contains(e.target))) {
+        notificationsDropdown.classList.remove('active');
+      }
+    });
+
+    // ==========================================
+    // THEME TOGGLE
+    // ==========================================
+
+    const lightThemeBtn = document.getElementById('lightThemeBtn');
+    const darkThemeBtn = document.getElementById('darkThemeBtn');
+
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      setTheme(savedTheme);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+
+      if (lightThemeBtn && darkThemeBtn) {
+        if (theme === 'dark') {
+          darkThemeBtn.classList.add('active');
+          lightThemeBtn.classList.remove('active');
+        } else {
+          lightThemeBtn.classList.add('active');
+          darkThemeBtn.classList.remove('active');
+        }
+      }
+    }
+
+    if (lightThemeBtn) lightThemeBtn.addEventListener('click', () => setTheme('light'));
+    if (darkThemeBtn) darkThemeBtn.addEventListener('click', () => setTheme('dark'));
+
+    loadTheme();
+
+    // ==========================================
+    // LOGOUT HANDLER
+    // ==========================================
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+
+        try {
+          await supabase.auth.signOut();
+          window.location.href = '/';
+        } catch (err) {
+          console.error('Logout error:', err);
+          alert('Error logging out. Please try again.');
+        }
+      });
+    }
+
     // ========================================
     // LOADING PROGRESS BAR SYSTEM
     // ========================================
