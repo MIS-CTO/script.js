@@ -3039,92 +3039,89 @@
     }
 
     /* ========================================
-       NAVBAR STYLES
+       NAVBAR - CLEAN & SIMPLE
        ======================================== */
 
     .navbar-container {
       display: flex;
-      gap: 8px;
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
+      gap: 0; /* ⭐ Kein Gap */
+      padding: 0; /* ⭐ Kein Padding */
+      background: transparent; /* ⭐ KEIN Background */
+      border-radius: 0; /* ⭐ KEINE rounded corners */
+      backdrop-filter: none; /* ⭐ KEIN Blur */
       position: relative;
       margin-bottom: 24px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Subtile Trennlinie */
     }
 
     [data-theme="dark"] .navbar-container {
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .hover-background {
-      position: absolute;
-      height: calc(100% - 16px);
-      background: rgba(0, 0, 0, 0.08); /* Dunkler für bessere Sichtbarkeit */
-      border-radius: 8px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
-      opacity: 0;
-      top: 8px;
-      z-index: 0; /* Hinter den Links */
-    }
-
-    [data-theme="dark"] .hover-background {
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .navbar-container:hover .hover-background {
-      opacity: 1; /* Sichtbar beim Hover über Container */
+      background: transparent;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .nav-link {
-      padding: 10px 16px;
-      border-radius: 8px;
+      padding: 12px 20px; /* ⭐ Mehr Padding für bessere Klickfläche */
+      border-radius: 0; /* ⭐ KEINE rounded corners */
       text-decoration: none;
-      color: rgba(0, 0, 0, 0.6);
+      color: rgba(0, 0, 0, 0.5); /* ⭐ Heller für inactive */
       font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s ease;
+      font-weight: 400; /* ⭐ Normal weight */
+      transition: color 0.2s ease;
       cursor: pointer;
       position: relative;
       z-index: 1;
       white-space: nowrap;
+      background: transparent; /* ⭐ KEIN Background */
+      border: none; /* ⭐ KEIN Border */
     }
 
     [data-theme="dark"] .nav-link {
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.5);
     }
 
     .nav-link:hover {
-      color: rgba(0, 0, 0, 0.9);
+      color: rgba(0, 0, 0, 0.7); /* ⭐ Nur Text dunkler */
     }
 
     [data-theme="dark"] .nav-link:hover {
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.7);
     }
 
     .nav-link.active {
-      color: rgba(0, 0, 0, 0.9);
+      color: rgba(0, 0, 0, 0.9); /* ⭐ Text ganz dunkel */
+      font-weight: 500; /* ⭐ Medium weight */
+      background: transparent; /* ⭐ KEIN Background */
+      border: none; /* ⭐ KEIN Border */
     }
 
     [data-theme="dark"] .nav-link.active {
       color: rgba(255, 255, 255, 0.9);
+      background: transparent;
     }
 
-    /* Active Indicator Line at Bottom */
+    /* ========================================
+       NUR EINE INDIKATOR-LINIE
+       ======================================== */
+
     .active-indicator {
       position: absolute;
-      bottom: 0;
+      bottom: -1px; /* ⭐ Überdeckt die Border-Bottom */
       height: 2px;
       background: rgba(0, 0, 0, 0.9);
-      border-radius: 2px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
       z-index: 2;
     }
 
     [data-theme="dark"] .active-indicator {
       background: rgba(255, 255, 255, 0.9);
+    }
+
+    /* ========================================
+       HOVER-BACKGROUND ENTFERNEN
+       ======================================== */
+
+    .hover-background {
+      display: none; /* ⭐ KOMPLETT WEG */
     }
 
     /* ========================================
@@ -3255,7 +3252,6 @@
 
   <!-- Navigation Bar - Main (Desktop) -->
   <nav class="navbar-container" id="mainNavbar">
-    <div class="hover-background"></div>
     <div class="active-indicator"></div>
     <a class="nav-link active" href="#" data-view="dashboard" id="tab-dashboard">Dashboard</a>
     <a class="nav-link" href="#" data-view="requests" id="tab-requests">Requests</a>
@@ -5479,73 +5475,41 @@
     let revenueByStatusChartInstance = null;
 
     // ==========================================
-    // NAVBAR HOVER EFFECT (Desktop)
+    // NAVBAR ACTIVE INDICATOR (SIMPLE)
     // ==========================================
     function setupNavbarHover() {
       const container = document.querySelector('nav.navbar-container');
-      if (!container) {
-        console.log('⚠️ Navbar container not found');
-        return;
-      }
+      if (!container) return;
 
-      const hoverBg = container.querySelector('.hover-background');
       const activeIndicator = container.querySelector('.active-indicator');
-
-      if (!hoverBg || !activeIndicator) {
-        console.log('⚠️ Elements not found:', { hoverBg: !!hoverBg, activeIndicator: !!activeIndicator });
-        return;
-      }
+      if (!activeIndicator) return;
 
       const links = container.querySelectorAll('.nav-link');
 
-      console.log('✅ Hover setup:', {
-        container: !!container,
-        hoverBg: !!hoverBg,
-        activeIndicator: !!activeIndicator,
-        links: links.length
-      });
-
-      // Update active indicator position
-      function updateActiveIndicator() {
+      // Funktion: Indikator positionieren
+      function updateIndicator() {
         const activeLink = container.querySelector('.nav-link.active');
         if (activeLink) {
           const rect = activeLink.getBoundingClientRect();
           const containerRect = container.getBoundingClientRect();
+
           activeIndicator.style.width = rect.width + 'px';
           activeIndicator.style.left = (rect.left - containerRect.left) + 'px';
         }
       }
 
-      // Initial position
-      updateActiveIndicator();
+      // Initial Position
+      updateIndicator();
 
-      // Hover auf jeden Link
-      links.forEach(link => {
-        link.addEventListener('mouseenter', function() {
-          if (window.innerWidth > 768) {
-            const rect = this.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-
-            hoverBg.style.width = rect.width + 'px';
-            hoverBg.style.left = (rect.left - containerRect.left) + 'px';
-            hoverBg.style.opacity = '1';
-          }
-        });
-      });
-
-      // Zurück zu active beim Mouse leave
-      container.addEventListener('mouseleave', function() {
-        hoverBg.style.opacity = '0';
-      });
-
-      // Update bei Tab-Wechsel
+      // Update bei Tab-Click
       links.forEach(link => {
         link.addEventListener('click', function() {
-          setTimeout(() => {
-            updateActiveIndicator();
-          }, 10);
+          setTimeout(updateIndicator, 10);
         });
       });
+
+      // Update bei Resize
+      window.addEventListener('resize', updateIndicator);
     }
 
     // ==========================================
