@@ -3675,6 +3675,7 @@
       gap: 0; /* ⭐ Kein Gap */
       padding: 0 24px; /* Padding für Alignment mit Header */
       background: #ffffff; /* ⭐ WEIß */
+      opacity: 1; /* ⭐ Komplett undurchsichtig */
       border-radius: 0; /* ⭐ KEINE rounded corners */
       backdrop-filter: none; /* ⭐ KEIN Blur */
       position: fixed; /* ⭐ Fixed unter Header */
@@ -3689,6 +3690,7 @@
 
     [data-theme="dark"] .navbar-container {
       background: #1c1c1e;
+      opacity: 1;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
@@ -15738,6 +15740,30 @@
         profileDropdownEmail.textContent = profile.email || 'user@example.com';
       }
 
+      // Update Account Settings Page
+      const usernameDisplay = document.getElementById('usernameDisplay');
+      const roleDisplay = document.getElementById('roleDisplay');
+      const emailInput = document.getElementById('emailInput');
+      const phoneInput = document.getElementById('phoneInput');
+      const avatarDisplay = document.getElementById('avatarDisplay');
+
+      if (usernameDisplay) {
+        usernameDisplay.textContent = profile.username || 'username';
+      }
+      if (roleDisplay) {
+        roleDisplay.textContent = (profile.role || 'user').charAt(0).toUpperCase() + (profile.role || 'user').slice(1);
+      }
+      if (emailInput) {
+        emailInput.value = profile.email || '';
+      }
+      // phoneInput wird aus localStorage geladen
+
+      // Update avatar in Account Settings
+      if (avatarDisplay && profile.avatar_url) {
+        avatarDisplay.style.background = 'none';
+        avatarDisplay.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+      }
+
       // Show welcome message
       const dashboardWelcome = document.getElementById('dashboardWelcome');
       const dashboardWelcomeText = document.getElementById('dashboardWelcomeText');
@@ -22071,44 +22097,121 @@
       let currentAvatar = null;
 
       if (avatarUpload) {
-        avatarUpload.addEventListener('change', function(e) {
+        avatarUpload.addEventListener('change', async function(e) {
           const file = e.target.files[0];
           if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
+            if (!currentUser) {
+              alert('Please log in to upload an avatar');
+              return;
+            }
 
-            reader.onload = function(event) {
-              currentAvatar = event.target.result;
-              avatarDisplay.style.background = 'none';
-              avatarDisplay.innerHTML = `<img src="${currentAvatar}" alt="Avatar">`;
-              localStorage.setItem('userAvatar', currentAvatar);
-            };
+            try {
+              // Show preview immediately
+              const reader = new FileReader();
+              reader.onload = function(event) {
+                avatarDisplay.style.background = 'none';
+                avatarDisplay.innerHTML = `<img src="${event.target.result}" alt="Avatar">`;
+              };
+              reader.readAsDataURL(file);
 
-            reader.readAsDataURL(file);
+              // Upload to Supabase
+              const fileExt = file.name.split('.').pop();
+              const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+
+              console.log('📤 Uploading avatar for:', currentUser.username);
+
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(fileName, file, {
+                  cacheControl: '3600',
+                  upsert: true
+                });
+
+              if (uploadError) {
+                console.error('❌ Upload error:', uploadError);
+                alert('Upload failed: ' + uploadError.message);
+                return;
+              }
+
+              // Get public URL
+              const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(fileName);
+
+              console.log('✅ Avatar uploaded:', publicUrl);
+
+              // Update database
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ avatar_url: publicUrl })
+                .eq('id', currentUser.id);
+
+              if (updateError) {
+                console.error('❌ Database update error:', updateError);
+                alert('Failed to update profile');
+                return;
+              }
+
+              // Update currentUser
+              currentUser.avatar_url = publicUrl;
+              localStorage.setItem('avatarUrl', publicUrl);
+
+              // Update all UI elements
+              updateUIForUser(currentUser);
+
+              console.log('✅ Avatar updated successfully');
+            } catch (err) {
+              console.error('❌ Upload failed:', err);
+              alert('Upload failed: ' + err.message);
+            }
           }
         });
       }
 
       if (deleteAvatarBtn) {
-        deleteAvatarBtn.addEventListener('click', function() {
-          if (confirm('Are you sure you want to delete your avatar?')) {
-            currentAvatar = null;
+        deleteAvatarBtn.addEventListener('click', async function() {
+          if (!confirm('Are you sure you want to delete your avatar?')) {
+            return;
+          }
+
+          if (!currentUser) {
+            alert('Please log in');
+            return;
+          }
+
+          try {
+            // Update database to remove avatar
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ avatar_url: null })
+              .eq('id', currentUser.id);
+
+            if (updateError) {
+              console.error('❌ Database update error:', updateError);
+              alert('Failed to delete avatar');
+              return;
+            }
+
+            // Update UI
+            currentUser.avatar_url = null;
+            localStorage.removeItem('avatarUrl');
+
             avatarDisplay.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             avatarDisplay.innerHTML = '';
-            localStorage.removeItem('userAvatar');
+
+            // Update all UI elements
+            updateUIForUser(currentUser);
+
+            console.log('✅ Avatar deleted successfully');
+          } catch (err) {
+            console.error('❌ Delete failed:', err);
+            alert('Delete failed: ' + err.message);
           }
         });
       }
 
-      function loadSavedAvatar() {
-        const savedAvatar = localStorage.getItem('userAvatar');
-        if (savedAvatar && avatarDisplay) {
-          currentAvatar = savedAvatar;
-          avatarDisplay.style.background = 'none';
-          avatarDisplay.innerHTML = `<img src="${savedAvatar}" alt="Avatar">`;
-        }
-      }
-
-      loadSavedAvatar();
+      // Avatar is loaded from currentUser.avatar_url in updateUIForUser()
+      // No need for separate loadSavedAvatar function
 
       // ==========================================
       // NOTIFICATIONS SAVE
