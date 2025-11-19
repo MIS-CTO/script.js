@@ -5277,6 +5277,55 @@
     let revenueByStatusChartInstance = null;
 
     // ========================================
+    // RETRY LOGIC FOR NETWORK REQUESTS
+    // ========================================
+
+    /**
+     * Retry a Supabase request with exponential backoff
+     * @param {Function} requestFn - Async function that returns a Supabase query
+     * @param {number} maxRetries - Maximum number of retries (default: 3)
+     * @param {number} baseDelay - Base delay in ms (default: 1000)
+     * @returns {Promise} - The successful result or throws final error
+     */
+    async function retryWithBackoff(requestFn, maxRetries = 3, baseDelay = 1000) {
+      let lastError = null;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const result = await requestFn();
+
+          // Check for Supabase error
+          if (result.error) {
+            throw result.error;
+          }
+
+          return result;
+        } catch (error) {
+          lastError = error;
+
+          // Don't retry on final attempt
+          if (attempt === maxRetries) {
+            break;
+          }
+
+          // Calculate exponential backoff delay
+          const delay = baseDelay * Math.pow(2, attempt);
+          const jitter = Math.random() * 200; // Add jitter to prevent thundering herd
+          const totalDelay = delay + jitter;
+
+          console.warn(`⚠️ Request failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${Math.round(totalDelay)}ms...`, error.message);
+
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, totalDelay));
+        }
+      }
+
+      // All retries failed
+      console.error('❌ All retry attempts failed:', lastError);
+      throw lastError;
+    }
+
+    // ========================================
     // LOADING PROGRESS BAR SYSTEM
     // ========================================
 
@@ -6011,26 +6060,33 @@
 
       async function loadInitialData() {
         try {
-          // Load all data in parallel for faster initial load
-          const [
-            { data: artists },
-            { data: teamMembers },
-            { data: locations }
-          ] = await Promise.all([
-            supabase.from('artists').select('*'),
+          console.log('📥 Loading initial data with retry logic...');
+
+          // Load data SEQUENTIALLY with retry logic to avoid network overload
+          // Artists
+          const artistsResult = await retryWithBackoff(() =>
+            supabase.from('artists').select('*')
+          );
+          allArtists = artistsResult.data || [];
+          console.log('✅ Artists loaded:', allArtists.length);
+
+          // Team Members
+          const teamMembersResult = await retryWithBackoff(() =>
             supabase.from('dienstplan_resources')
               .select('*')
               .order('sort_order', { ascending: true })
-              .order('name', { ascending: true }),
-            supabase.from('locations').select('*').order('name', { ascending: true })
-          ]);
+              .order('name', { ascending: true })
+          );
+          allTeamMembers = teamMembersResult.data || [];
+          console.log('✅ Team members loaded:', allTeamMembers.length);
 
-          allArtists = artists || [];
-          allTeamMembers = teamMembers || [];
-          allLocations = locations || []; // FIXED: Populate global allLocations variable
-          console.log('Artists loaded:', allArtists.length);
-          console.log('Team members loaded:', allTeamMembers.length);
-          console.log('Locations loaded:', allLocations.length);
+          // Locations
+          const locationsResult = await retryWithBackoff(() =>
+            supabase.from('locations').select('*').order('name', { ascending: true })
+          );
+          const locations = locationsResult.data || [];
+          allLocations = locations;
+          console.log('✅ Locations loaded:', allLocations.length);
           
           if (locations && locations.length > 0) {
             // Finde "mommy i'm sorry" oder nimm die erste Location
