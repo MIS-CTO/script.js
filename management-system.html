@@ -2147,7 +2147,7 @@
       background:#e8e8ed;
     }
 
-    /* Login & Profile Styles */
+    /* Login & Profile Styles - Fullscreen */
     .login-backdrop {
       display: none;
       position: fixed;
@@ -2155,8 +2155,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
+      background: var(--macos-bg);
       z-index: 999999;
       align-items: center;
       justify-content: center;
@@ -2168,9 +2167,9 @@
       background: white;
       border-radius: 16px;
       padding: 40px;
-      width: 90%;
+      width: 100%;
       max-width: 420px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
       position: relative;
     }
     .login-welcome {
@@ -2995,9 +2994,54 @@
         width: 100%;
       }
     }
+
+    /* Initial Fullscreen Loader */
+    .initial-loader {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--macos-bg);
+      z-index: 1000000;
+      align-items: center;
+      justify-content: center;
+    }
+    .initial-loader.active {
+      display: flex;
+    }
+    .loader-content {
+      text-align: center;
+    }
+    .loader-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--macos-fill-tertiary);
+      border-top-color: var(--macos-accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+    .loader-text {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--macos-text-secondary);
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
+  <!-- Fullscreen Initial Loading Indicator -->
+  <div id="initialLoader" class="initial-loader active">
+    <div class="loader-content">
+      <div class="loader-spinner"></div>
+      <div class="loader-text">Lade Daten...</div>
+    </div>
+  </div>
+
   <!-- Loading Progress Bar Overlay (Pop-up) -->
   <div id="loadingOverlay" class="loading-overlay hidden">
     <div class="loading-container">
@@ -3025,15 +3069,6 @@
     <a id="tab-agreements" href="#agreements">Agreements</a>
     <a id="tab-analytics" href="#analytics">Analytics</a>
     <a id="tab-waitlist" href="#waitlist">Waitlist</a>
-
-    <!-- Profile Button -->
-    <button class="profile-button" id="profileButton">
-      <svg id="profileButtonIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-        <circle cx="12" cy="7" r="4"></circle>
-      </svg>
-      <span id="profileButtonText">Login</span>
-    </button>
   </nav>
 
   <section id="dashboard-section" class="active">
@@ -5691,6 +5726,12 @@
         loadInitialData(),
         initializePermissions()
       ]);
+
+      // Hide initial loader after data is loaded
+      const initialLoader = document.getElementById('initialLoader');
+      if (initialLoader) {
+        initialLoader.classList.remove('active');
+      }
 
       // Request tabs initialization function
       function initRequestTabs() {
@@ -13451,7 +13492,6 @@
           </div>
           <div class="login-actions">
             <button type="submit" class="btn btn-primary" style="width: 100%;">Anmelden</button>
-            <button type="button" class="btn skip-button" onclick="skipLogin()">Testing: Anmeldung überspringen</button>
           </div>
         </form>
       </div>
@@ -13749,13 +13789,11 @@
           }
         }
 
-        // Show login modal on first visit
-        if (!localStorage.getItem('hasSkippedLogin')) {
-          console.log('📋 No session found - showing login modal');
-          setTimeout(() => {
-            document.getElementById('loginBackdrop').classList.add('active');
-          }, 500);
-        }
+        // Show login modal if not logged in
+        console.log('📋 No session found - showing login modal');
+        setTimeout(() => {
+          document.getElementById('loginBackdrop').classList.add('active');
+        }, 500);
       } catch (err) {
         console.error('💥 Init auth failed:', err);
       }
@@ -13946,44 +13984,6 @@
       console.log('🎨 Updating UI for user:', profile.username);
       console.log('🖼️ Avatar URL:', profile.avatar_url || 'No avatar URL found');
 
-      const profileButton = document.getElementById('profileButton');
-      const profileButtonText = document.getElementById('profileButtonText');
-      const profileButtonIcon = document.getElementById('profileButtonIcon');
-
-      profileButtonText.textContent = profile.username;
-
-      // Update profile button avatar
-      if (profile.avatar_url) {
-        let avatarImg = profileButton.querySelector('.profile-avatar');
-        if (!avatarImg) {
-          avatarImg = document.createElement('img');
-          avatarImg.className = 'profile-avatar';
-          avatarImg.onerror = function() {
-            console.error('❌ Failed to load profile button avatar:', profile.avatar_url);
-          };
-          profileButton.insertBefore(avatarImg, profileButtonText);
-        }
-        avatarImg.src = profile.avatar_url;
-
-        // Hide default SVG icon when avatar is present
-        if (profileButtonIcon) {
-          profileButtonIcon.style.display = 'none';
-        }
-
-        console.log('✅ Profile button avatar updated:', profile.avatar_url);
-      } else {
-        // Remove avatar if not present and show default icon
-        const existingAvatar = profileButton.querySelector('.profile-avatar');
-        if (existingAvatar) {
-          existingAvatar.remove();
-        }
-
-        // Show default SVG icon
-        if (profileButtonIcon) {
-          profileButtonIcon.style.display = 'block';
-        }
-      }
-
       // Show welcome message
       const dashboardWelcome = document.getElementById('dashboardWelcome');
       const dashboardWelcomeText = document.getElementById('dashboardWelcomeText');
@@ -14028,12 +14028,6 @@
       }, 300); // Wait for backdrop animation to finish
     }
 
-    // Skip login
-    function skipLogin() {
-      localStorage.setItem('hasSkippedLogin', 'true');
-      closeLoginModal();
-    }
-
     // Logout
     async function logout() {
       if (confirm('Möchtest du dich wirklich abmelden?')) {
@@ -14044,23 +14038,10 @@
         localStorage.removeItem('username');
         localStorage.removeItem('userRole');
         localStorage.removeItem('avatarUrl');
-        localStorage.removeItem('hasSkippedLogin');
 
         console.log('🗑️ Session data cleared (including avatar)');
 
         // Reset UI
-        document.getElementById('profileButtonText').textContent = 'Login';
-        const existingAvatar = document.getElementById('profileButton').querySelector('.profile-avatar');
-        if (existingAvatar) {
-          existingAvatar.remove();
-        }
-
-        // Show default SVG icon again
-        const profileButtonIcon = document.getElementById('profileButtonIcon');
-        if (profileButtonIcon) {
-          profileButtonIcon.style.display = 'block';
-        }
-
         const dashboardWelcome = document.getElementById('dashboardWelcome');
         if (dashboardWelcome) {
           dashboardWelcome.style.display = 'none';
@@ -17909,20 +17890,14 @@
         loginForm.addEventListener('submit', handleLogin);
       }
 
-      // Close modal when clicking outside
+      // Close modal when clicking outside (only if logged in)
       document.getElementById('loginBackdrop')?.addEventListener('click', (e) => {
         if (e.target.id === 'loginBackdrop') {
-          if (currentUser || localStorage.getItem('hasSkippedLogin')) {
+          if (currentUser) {
             closeLoginModal();
           }
         }
       });
-
-      // Profile button
-      const profileButton = document.getElementById('profileButton');
-      if (profileButton) {
-        profileButton.addEventListener('click', toggleProfileMenu);
-      }
 
       // Analytics Tab Click - Initialize charts when Analytics tab is clicked
       const analyticsTab = document.getElementById('tab-analytics');
