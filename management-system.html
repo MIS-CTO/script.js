@@ -4409,7 +4409,172 @@
     // Setup on resize
     window.addEventListener('resize', setupMobileNavigation);
 
-    // Navigation setup will be done in DOMContentLoaded
+    // ==========================================
+    // MOBILE FOOTER NAVIGATION
+    // ==========================================
+
+    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+
+    mobileNavItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const viewName = this.dataset.mobileView;
+
+        // Update active state
+        mobileNavItems.forEach(navItem => navItem.classList.remove('active'));
+        this.classList.add('active');
+
+        // Switch view based on selection
+        if (viewName === 'profile') {
+          switchView('accountSettings');
+        } else {
+          switchView(viewName);
+        }
+
+        // Close dropdowns
+        document.querySelectorAll('.profile-dropdown, .notifications-dropdown').forEach(dropdown => {
+          dropdown.classList.remove('active');
+        });
+      });
+    });
+
+    // ==========================================
+    // VIEW MANAGEMENT
+    // ==========================================
+
+    function switchView(viewName) {
+      console.log('Switching to view:', viewName);
+
+      // Hide all sections (old system compatibility)
+      document.querySelectorAll('section').forEach(section => {
+        section.classList.remove('active');
+      });
+
+      // Hide all view-containers (new system)
+      document.querySelectorAll('.view-container').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      // Show selected section (old system)
+      const sectionElement = document.getElementById(viewName + '-section');
+      if (sectionElement) {
+        sectionElement.classList.add('active');
+      }
+
+      // Show selected view-container (new system)
+      const viewElement = document.getElementById(viewName + 'View');
+      if (viewElement) {
+        viewElement.classList.add('active');
+      }
+
+      // Switch navbar based on view (Desktop only)
+      const mainNavbar = document.getElementById('mainNavbar');
+      const settingsNavbar = document.getElementById('settingsNavbar');
+
+      if (window.innerWidth > 768) {
+        if (viewName === 'accountSettings') {
+          if (mainNavbar) mainNavbar.style.display = 'none';
+          if (settingsNavbar) settingsNavbar.style.display = 'flex';
+        } else {
+          if (mainNavbar) mainNavbar.style.display = 'flex';
+          if (settingsNavbar) settingsNavbar.style.display = 'none';
+
+          // Update main navbar active state
+          document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.view === viewName) {
+              link.classList.add('active');
+            }
+          });
+        }
+      }
+
+      // Update mobile footer nav active state
+      if (window.innerWidth <= 768) {
+        mobileNavItems.forEach(item => {
+          item.classList.remove('active');
+          if (item.dataset.mobileView === viewName ||
+              (viewName === 'accountSettings' && item.dataset.mobileView === 'profile')) {
+            item.classList.add('active');
+          }
+        });
+      }
+
+      // Close dropdowns
+      document.querySelectorAll('.profile-dropdown, .notifications-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
+
+      // View-specific initializations (preserve existing logic)
+      if (viewName === 'dashboard') loadDashboardData();
+      if (viewName === 'requests') loadRequests();
+      if (viewName === 'calendar') loadCalendar();
+      if (viewName === 'dienstplan') loadDienstplan();
+      if (viewName === 'artists') loadArtists();
+      if (viewName === 'customers') loadCustomers();
+      if (viewName === 'analytics') loadAnalytics();
+      if (viewName === 'waitlist') loadWaitlistView();
+      if (viewName === 'agreements') loadAgreementsView();
+    }
+
+    // ==========================================
+    // NAVBAR CLICK HANDLERS
+    // ==========================================
+
+    // Main Navbar Links
+    document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const viewName = this.dataset.view;
+        if (viewName) {
+          switchView(viewName);
+        }
+      });
+    });
+
+    // Settings Navbar - Return to Dashboard
+    const returnToDashboardBtn = document.getElementById('returnToDashboard');
+    if (returnToDashboardBtn) {
+      returnToDashboardBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchView('dashboard');
+      });
+    }
+
+    // Settings Navbar - Tab Switching
+    document.querySelectorAll('#settingsNavbar .nav-link[data-tab]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabName = this.dataset.tab;
+
+        // Update navbar active state
+        document.querySelectorAll('#settingsNavbar .nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update main title
+        const mainTitle = document.getElementById('mainTitle');
+        if (mainTitle) {
+          mainTitle.textContent = tabName === 'activity' ? 'Account Activity' : 'Account Settings';
+        }
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        const targetTab = document.getElementById(tabName + 'Tab');
+        if (targetTab) {
+          targetTab.classList.add('active');
+        }
+      });
+    });
+
+    // Account Settings Link in Profile Dropdown
+    const accountSettingsLink = document.getElementById('accountSettingsLink');
+    if (accountSettingsLink) {
+      accountSettingsLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        switchView('accountSettings');
+      });
+    }
 
     // ==========================================
     // NAVBAR HOVER EFFECTS (Desktop only)
@@ -5175,60 +5340,6 @@
       root.style.setProperty('--location-accent', colors.accent);
     }
 
-    // Setup navbar navigation event listeners
-    function setupNavbarNavigation() {
-      console.log('Setting up navbar navigation...');
-
-      // Main Navbar Links
-      document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const viewName = this.dataset.view;
-          if (viewName) {
-            switchView(viewName);
-          }
-        });
-      });
-
-      // Settings Navbar - Return to Dashboard
-      const returnToDashboardBtn = document.getElementById('returnToDashboard');
-      if (returnToDashboardBtn) {
-        returnToDashboardBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          switchView('dashboard');
-        });
-      }
-
-      // Settings Navbar - Tab Switching
-      document.querySelectorAll('#settingsNavbar .nav-link[data-tab]').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const tabName = this.dataset.tab;
-
-          // Update navbar active state
-          document.querySelectorAll('#settingsNavbar .nav-link').forEach(l => l.classList.remove('active'));
-          this.classList.add('active');
-
-          // Update main title
-          const mainTitle = document.getElementById('mainTitle');
-          if (mainTitle) {
-            mainTitle.textContent = tabName === 'activity' ? 'Account Activity' : 'Account Settings';
-          }
-
-          // Update tab content
-          document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-          });
-          const targetTab = document.getElementById(tabName + 'Tab');
-          if (targetTab) {
-            targetTab.classList.add('active');
-          }
-        });
-      });
-
-      console.log('Navbar navigation setup complete');
-    }
-
     document.addEventListener("DOMContentLoaded", async () => {
       const tabs = document.querySelectorAll("nav a[id^='tab-']");
       const sections = document.querySelectorAll("section");
@@ -5542,173 +5653,10 @@
         }
       }
 
-      // Initialize new navbar navigation
-      setupNavbarNavigation();
-
-      // Old tabs.forEach - kept for backward compatibility (though tabs no longer exist)
       tabs.forEach(tab => tab.addEventListener("click", (e) => {
         e.preventDefault();
         showSection(tab);
       }));
-
-      // ==========================================
-      // NEW NAVBAR NAVIGATION SETUP
-      // ==========================================
-
-      // Initialize new navbar navigation
-      const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-
-      // switchView function - handles both old section and new view-container systems
-      function switchView(viewName) {
-        console.log('Switching to view:', viewName);
-
-        // Hide all sections (old system compatibility)
-        document.querySelectorAll('section').forEach(section => {
-          section.classList.remove('active');
-        });
-
-        // Hide all view-containers (new system)
-        document.querySelectorAll('.view-container').forEach(view => {
-          view.classList.remove('active');
-        });
-
-        // Show selected section (old system)
-        const sectionElement = document.getElementById(viewName + '-section');
-        if (sectionElement) {
-          sectionElement.classList.add('active');
-        }
-
-        // Show selected view-container (new system)
-        const viewElement = document.getElementById(viewName + 'View');
-        if (viewElement) {
-          viewElement.classList.add('active');
-        }
-
-        // Switch navbar based on view (Desktop only)
-        const mainNavbar = document.getElementById('mainNavbar');
-        const settingsNavbar = document.getElementById('settingsNavbar');
-
-        if (window.innerWidth > 768) {
-          if (viewName === 'accountSettings') {
-            if (mainNavbar) mainNavbar.style.display = 'none';
-            if (settingsNavbar) settingsNavbar.style.display = 'flex';
-          } else {
-            if (mainNavbar) mainNavbar.style.display = 'flex';
-            if (settingsNavbar) settingsNavbar.style.display = 'none';
-
-            // Update main navbar active state
-            document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
-              link.classList.remove('active');
-              if (link.dataset.view === viewName) {
-                link.classList.add('active');
-              }
-            });
-          }
-        }
-
-        // Update mobile footer nav active state
-        if (window.innerWidth <= 768) {
-          mobileNavItems.forEach(item => {
-            item.classList.remove('active');
-            if (item.dataset.mobileView === viewName ||
-                (viewName === 'accountSettings' && item.dataset.mobileView === 'profile')) {
-              item.classList.add('active');
-            }
-          });
-        }
-
-        // Close dropdowns
-        document.querySelectorAll('.profile-dropdown, .notifications-dropdown').forEach(dropdown => {
-          dropdown.classList.remove('active');
-        });
-
-        // View-specific initializations (preserve existing logic)
-        if (viewName === 'dashboard') loadDashboardData();
-        if (viewName === 'requests') loadRequests();
-        if (viewName === 'calendar') loadCalendar();
-        if (viewName === 'dienstplan') loadDienstplan();
-        if (viewName === 'artists') loadArtists();
-        if (viewName === 'customers') loadCustomers();
-        if (viewName === 'analytics') loadAnalytics();
-        if (viewName === 'waitlist') loadWaitlistView();
-        if (viewName === 'agreements') loadAgreementsView();
-      }
-
-      // Main Navbar Links Event Listeners
-      document.querySelectorAll('#mainNavbar .nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const viewName = this.dataset.view;
-          if (viewName) {
-            switchView(viewName);
-          }
-        });
-      });
-
-      // Mobile Footer Navigation Event Listeners
-      mobileNavItems.forEach(item => {
-        item.addEventListener('click', function() {
-          const viewName = this.dataset.mobileView;
-
-          // Update active state
-          mobileNavItems.forEach(navItem => navItem.classList.remove('active'));
-          this.classList.add('active');
-
-          // Switch view based on selection
-          if (viewName === 'profile') {
-            switchView('accountSettings');
-          } else {
-            switchView(viewName);
-          }
-        });
-      });
-
-      // Settings Navbar - Return to Dashboard
-      const returnToDashboardBtn = document.getElementById('returnToDashboard');
-      if (returnToDashboardBtn) {
-        returnToDashboardBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          switchView('dashboard');
-        });
-      }
-
-      // Settings Navbar - Tab Switching
-      document.querySelectorAll('#settingsNavbar .nav-link[data-tab]').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const tabName = this.dataset.tab;
-
-          // Update navbar active state
-          document.querySelectorAll('#settingsNavbar .nav-link').forEach(l => l.classList.remove('active'));
-          this.classList.add('active');
-
-          // Update main title
-          const mainTitle = document.getElementById('mainTitle');
-          if (mainTitle) {
-            mainTitle.textContent = tabName === 'activity' ? 'Account Activity' : 'Account Settings';
-          }
-
-          // Update tab content
-          document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-          });
-          const targetTab = document.getElementById(tabName + 'Tab');
-          if (targetTab) {
-            targetTab.classList.add('active');
-          }
-        });
-      });
-
-      // Account Settings Link in Profile Dropdown
-      const accountSettingsLink = document.getElementById('accountSettingsLink');
-      if (accountSettingsLink) {
-        accountSettingsLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          switchView('accountSettings');
-        });
-      }
-
-      console.log('✓ New navbar navigation initialized');
 
       async function loadInitialData() {
         try {
