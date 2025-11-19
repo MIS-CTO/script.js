@@ -4944,39 +4944,49 @@
   <section id="requests-section">
     <h2>Request Management</h2>
 
-    <!-- Location Filter Buttons -->
-    <div style="position:relative; background:white; border-radius:28px; padding:6px; margin-bottom:16px; display:inline-flex; gap:0; border:1px solid rgba(0,0,0,0.06);">
-      <div id="requestsLocationIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:#f5f5f7; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 1px 3px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
-      <button class="request-location-tab active" data-location="all" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
-        Alle Locations
-      </button>
-      <button class="request-location-tab" data-location="mommy" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
-        Mommy I'm Sorry
-      </button>
-      <button class="request-location-tab" data-location="gon" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
-        GON
-      </button>
-      <button class="request-location-tab" data-location="muttersohne" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
-        Muttersöhne
-      </button>
-      <button class="request-location-tab" data-location="pardon" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
-        Pardon Paris
-      </button>
+    <!-- Location Dropdown -->
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+      <label style="font-weight:600; font-size:14px; color:var(--ink);">Location:</label>
+      <select id="requestLocationDropdown" style="min-width:200px; padding:8px 12px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); cursor:pointer;">
+        <option value="all">Alle Locations</option>
+        <option value="mommy">Mommy I'm Sorry</option>
+        <option value="gon">GON</option>
+        <option value="muttersohne">Muttersöhne</option>
+        <option value="pardon">Pardon Paris</option>
+      </select>
     </div>
 
-    <!-- Sub Navigation -->
-    <div style="position:relative; background:white; border-radius:28px; padding:6px; margin-bottom:24px; display:inline-flex; gap:0; border:1px solid rgba(0,0,0,0.06);">
-      <div id="requestsIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:#f5f5f7; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 1px 3px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
-      <button class="request-tab active" data-status="open_request" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
-        New Requests
-        <span id="badge-new" style="display:inline-block; background:#dc3545; color:white; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; min-width:18px; text-align:center;">0</span>
-      </button>
-      <button class="request-tab" data-status="my-requests" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">My Requests</button>
-      <button class="request-tab" data-status="pending" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">In Progress</button>
-      <button class="request-tab" data-status="scheduled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Scheduled</button>
-      <button class="request-tab" data-status="finished" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Finished</button>
-      <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
-      <button class="request-tab" data-status="archived" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Archived</button>
+    <!-- Request Status Switcher + Refresh Controls on Same Line -->
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px; justify-content:space-between;">
+      <!-- Request Status Switcher -->
+      <div style="position:relative; background:white; border-radius:28px; padding:6px; display:inline-flex; gap:0; border:1px solid rgba(0,0,0,0.06);">
+        <div id="requestsIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:#f5f5f7; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 1px 3px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
+        <button class="request-tab active" data-status="open_request" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#1d1d1f; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+          New Requests
+          <span id="badge-new" style="display:inline-block; background:#dc3545; color:white; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; min-width:18px; text-align:center;">0</span>
+        </button>
+        <button class="request-tab" data-status="my-requests" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">My Requests</button>
+        <button class="request-tab" data-status="pending" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">In Progress</button>
+        <button class="request-tab" data-status="scheduled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Scheduled</button>
+        <button class="request-tab" data-status="finished" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Finished</button>
+        <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
+        <button class="request-tab" data-status="archived" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Archived</button>
+      </div>
+
+      <!-- Refresh Controls -->
+      <div style="display:flex; align-items:center; gap:12px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer;">
+          <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
+          <span>Auto-Refresh (30s)</span>
+        </label>
+        <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit;">
+          <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span id="refreshBtnText">Neue Requests laden</span>
+        </button>
+      </div>
     </div>
 
     <!-- Create Request Button (Only visible in New Requests tab) -->
@@ -4984,21 +4994,6 @@
       <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Create Request</span>
-      </button>
-    </div>
-
-    <!-- Refresh Controls -->
-    <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-bottom:16px;">
-      <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer;">
-        <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
-        <span>Auto-Refresh (30s)</span>
-      </label>
-      <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit;">
-        <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-        <span id="refreshBtnText">Neue Requests laden</span>
       </button>
     </div>
 
@@ -7270,11 +7265,12 @@
        ============================================
 
        FIXES IN v81:
-       ✅ Added: 4 Location filter buttons in Request Tab (Alle, Mommy, GON, Muttersöhne, Pardon Paris)
+       ✅ Updated: Location filter as dropdown in Request Tab (Alle, Mommy, GON, Muttersöhne, Pardon Paris)
        ✅ Added: Location filtering logic for requests (filters by location.name)
-       ✅ Added: initRequestLocationTabs() function with animated indicator
+       ✅ Added: initRequestLocationDropdown() function for dropdown handling
        ✅ Added: currentRequestLocation state variable
        ✅ Updated: loadRequests() to filter by both status and location
+       ✅ Updated: Request Status Switcher and Auto-Refresh Controls aligned on same line
        ✅ Updated: Version number from v80 to v81
 
        FIXES IN v80:
@@ -7906,72 +7902,34 @@
         });
       }
 
-      // ✅ NEW: Request Location tabs initialization function
-      function initRequestLocationTabs() {
-        const locationTabs = document.querySelectorAll('.request-location-tab');
-        const locationIndicator = document.getElementById('requestsLocationIndicator');
+      // ✅ NEW: Request Location dropdown initialization function
+      function initRequestLocationDropdown() {
+        const locationDropdown = document.getElementById('requestLocationDropdown');
 
-        console.log('Init Request Location tabs found:', locationTabs.length);
-        console.log('Init Location Indicator element:', locationIndicator);
+        console.log('Init Request Location dropdown:', locationDropdown);
 
-        if (!locationIndicator || locationTabs.length === 0) {
-          console.error('Missing location indicator or tabs');
+        if (!locationDropdown) {
+          console.error('Missing location dropdown');
           return;
         }
 
-        function updateLocationIndicator(tab) {
-          if (!locationIndicator || !tab) return;
+        // Set initial value
+        currentRequestLocation = 'all';
 
-          const tabRect = tab.getBoundingClientRect();
-          const containerRect = tab.parentElement.getBoundingClientRect();
-          const left = tabRect.left - containerRect.left;
-          const width = tabRect.width;
+        // Add change listener
+        locationDropdown.addEventListener('change', function(e) {
+          const selectedLocation = e.target.value;
+          console.log('Location dropdown changed:', selectedLocation);
 
-          console.log('Updating location indicator - Left:', left, 'Width:', width);
+          // Update current location
+          currentRequestLocation = selectedLocation;
+          console.log('Updated currentRequestLocation to:', currentRequestLocation);
 
-          locationIndicator.style.width = `${width}px`;
-          locationIndicator.style.transform = `translateX(${left}px)`;
-        }
+          // Close detail view when switching location
+          selectedRequestId = null;
+          closeRequestDetail();
 
-        // Initialize indicator position
-        setTimeout(() => {
-          const activeTab = document.querySelector('.request-location-tab.active');
-          if (activeTab) {
-            console.log('Initializing location indicator for active tab');
-            updateLocationIndicator(activeTab);
-          }
-        }, 50);
-
-        // Add click listeners
-        locationTabs.forEach((tab, index) => {
-          console.log('Adding click listener to location tab', index, tab.textContent);
-
-          // Remove old listeners by cloning
-          const newTab = tab.cloneNode(true);
-          tab.parentNode.replaceChild(newTab, tab);
-
-          newTab.addEventListener('click', function(e) {
-            console.log('Location tab clicked:', this.textContent, 'Location:', this.dataset.location);
-
-            // Update current location
-            currentRequestLocation = this.dataset.location;
-            console.log('Updated currentRequestLocation to:', currentRequestLocation);
-
-            document.querySelectorAll('.request-location-tab').forEach(t => {
-              t.classList.remove('active');
-              t.style.color = '#86868b';
-            });
-            this.classList.add('active');
-            this.style.color = '#1d1d1f';
-
-            updateLocationIndicator(this);
-
-            // Close detail view when switching location
-            selectedRequestId = null;
-            closeRequestDetail();
-
-            loadRequests();
-          });
+          loadRequests();
         });
       }
 
@@ -8118,7 +8076,7 @@
           else if (tabName === "requests") {
             loadRequests();
             initRequestTabs();
-            initRequestLocationTabs(); // ✅ NEW: Initialize location filter tabs
+            initRequestLocationDropdown(); // ✅ NEW: Initialize location filter dropdown
           }
           else if (tabName === "calendar") renderCalendar();
           else if (tabName === "dienstplan") renderDienstplan();
