@@ -3100,12 +3100,32 @@
     }
 
     /* ========================================
-       NUR EINE INDIKATOR-LINIE
+       HOVER BACKGROUND (Grauer Container)
+       ======================================== */
+
+    .hover-background {
+      position: absolute;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      opacity: 0;
+      top: 0;
+      z-index: 0;
+    }
+
+    [data-theme="dark"] .hover-background {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* ========================================
+       ACTIVE INDIKATOR-LINIE (Am Bottom)
        ======================================== */
 
     .active-indicator {
       position: absolute;
-      bottom: -1px; /* ⭐ Überdeckt die Border-Bottom */
+      bottom: -1px;
       height: 2px;
       background: rgba(0, 0, 0, 0.9);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3114,14 +3134,6 @@
 
     [data-theme="dark"] .active-indicator {
       background: rgba(255, 255, 255, 0.9);
-    }
-
-    /* ========================================
-       HOVER-BACKGROUND ENTFERNEN
-       ======================================== */
-
-    .hover-background {
-      display: none; /* ⭐ KOMPLETT WEG */
     }
 
     /* ========================================
@@ -3252,6 +3264,7 @@
 
   <!-- Navigation Bar - Main (Desktop) -->
   <nav class="navbar-container" id="mainNavbar">
+    <div class="hover-background"></div>
     <div class="active-indicator"></div>
     <a class="nav-link active" href="#" data-view="dashboard" id="tab-dashboard">Dashboard</a>
     <a class="nav-link" href="#" data-view="requests" id="tab-requests">Requests</a>
@@ -5475,41 +5488,60 @@
     let revenueByStatusChartInstance = null;
 
     // ==========================================
-    // NAVBAR ACTIVE INDICATOR (SIMPLE)
+    // NAVBAR INDICATORS (Hover + Active)
     // ==========================================
     function setupNavbarHover() {
       const container = document.querySelector('nav.navbar-container');
       if (!container) return;
 
+      const hoverBg = container.querySelector('.hover-background');
       const activeIndicator = container.querySelector('.active-indicator');
-      if (!activeIndicator) return;
+      if (!hoverBg || !activeIndicator) return;
 
       const links = container.querySelectorAll('.nav-link');
 
-      // Funktion: Indikator positionieren
-      function updateIndicator() {
+      // Funktion: Active-Indikator positionieren
+      function updateActiveIndicator() {
         const activeLink = container.querySelector('.nav-link.active');
         if (activeLink) {
           const rect = activeLink.getBoundingClientRect();
           const containerRect = container.getBoundingClientRect();
-
           activeIndicator.style.width = rect.width + 'px';
           activeIndicator.style.left = (rect.left - containerRect.left) + 'px';
         }
       }
 
       // Initial Position
-      updateIndicator();
+      updateActiveIndicator();
+
+      // Hover: Grauer Container bewegt sich
+      links.forEach(link => {
+        link.addEventListener('mouseenter', function() {
+          if (window.innerWidth > 768) {
+            const rect = this.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            hoverBg.style.width = rect.width + 'px';
+            hoverBg.style.left = (rect.left - containerRect.left) + 'px';
+            hoverBg.style.opacity = '1';
+          }
+        });
+      });
+
+      // Mouse leave: Hover-Background ausblenden
+      container.addEventListener('mouseleave', function() {
+        hoverBg.style.opacity = '0';
+      });
 
       // Update bei Tab-Click
       links.forEach(link => {
         link.addEventListener('click', function() {
-          setTimeout(updateIndicator, 10);
+          setTimeout(updateActiveIndicator, 10);
         });
       });
 
       // Update bei Resize
-      window.addEventListener('resize', updateIndicator);
+      window.addEventListener('resize', updateActiveIndicator);
     }
 
     // ==========================================
