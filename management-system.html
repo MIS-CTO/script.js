@@ -5370,7 +5370,6 @@
     let allTeamMembers = [];
     let allLocations = []; // FIXED: Declare allLocations globally to prevent undefined errors
     let currentTimeIndicatorInterval = null; // FIXED: Track interval to prevent memory leak
-    let dashboardLoaded = false; // Prevent double-loading of dashboard data
 
     // Sorting state
     let artistSortConfig = { field: 'name', order: 'asc' };
@@ -6253,6 +6252,7 @@
       // ============================================
       // COMPLETE DASHBOARD STATS FUNCTION
       // ============================================
+      let dashboardLoaded = false;
       async function loadDashboard(forceReload = false) {
         // Prevent double loading unless forced
         if (dashboardLoaded && !forceReload) {
