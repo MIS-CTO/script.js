@@ -11526,6 +11526,11 @@
       let currentArtistsPage = 1;
       const artistsPageSize = 50;
 
+      // Image Upload State Management
+      let currentEditingArtistId = null;
+      let uploadedProfilePicture = null;
+      let uploadedBackgroundImage = null;
+
       async function loadArtists(page = 1) {
         console.log('👤 Loading artists (page ' + page + ')...');
 
@@ -13282,336 +13287,682 @@
         }
       };
 
-      // View Artist Profile Functions
+      // ==========================================
+      // ARTIST IMAGE UPLOAD FUNCTIONS
+      // ==========================================
+
+      function openEditArtistModal(artistId) {
+        currentEditingArtistId = artistId;
+
+        // Reset uploaded images
+        uploadedProfilePicture = null;
+        uploadedBackgroundImage = null;
+
+        // Load artist data
+        const artist = artistsCache.find(a => a.id === artistId) || allArtists.find(a => a.id === artistId);
+        if (!artist) return;
+
+        const modalHtml = `
+          <div id="customEditArtistModal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+          ">
+            <div style="
+              background: white;
+              padding: 32px;
+              border-radius: 16px;
+              width: 90%;
+              max-width: 800px;
+              max-height: 90vh;
+              overflow-y: auto;
+              box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            ">
+              <h2 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">
+                ✏️ Edit Artist - ${artist.name}
+              </h2>
+
+              <form id="customEditArtistForm" onsubmit="saveArtistChanges(event)">
+                <!-- Basic Info -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Name</label>
+                    <input type="text" id="customEditArtistName" value="${artist.name || ''}" required style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                    ">
+                  </div>
+
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Email</label>
+                    <input type="email" id="customEditArtistEmail" value="${artist.email || ''}" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                    ">
+                  </div>
+                </div>
+
+                <!-- Images Section -->
+                <div style="background: rgba(0,0,0,0.02); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">📸 Bilder</h3>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Profile Picture -->
+                    <div>
+                      <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">
+                        Profilbild (Quadratisch)
+                      </label>
+
+                      <!-- Current Image -->
+                      <div id="currentProfilePic" style="
+                        width: 100%;
+                        height: 200px;
+                        border-radius: 8px;
+                        background: ${artist.profile_picture_url ? `url('${artist.profile_picture_url}')` : '#f0f0f0'};
+                        background-size: cover;
+                        background-position: center;
+                        margin-bottom: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #86868b;
+                        font-size: 14px;
+                      ">
+                        ${!artist.profile_picture_url ? 'Kein Bild' : ''}
+                      </div>
+
+                      <!-- Upload Button -->
+                      <input type="file" id="profilePicInput" accept="image/*" style="display: none;" onchange="handleProfilePicUpload(event)">
+                      <button type="button" onclick="document.getElementById('profilePicInput').click()" style="
+                        width: 100%;
+                        padding: 10px;
+                        background: #007AFF;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                      ">
+                        📤 Upload Profilbild
+                      </button>
+                      <div id="profilePicStatus" style="margin-top: 8px; font-size: 12px; color: #34C759;"></div>
+                    </div>
+
+                    <!-- Background Image -->
+                    <div>
+                      <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">
+                        Hintergrundbild (Landscape)
+                      </label>
+
+                      <!-- Current Image -->
+                      <div id="currentBackgroundImg" style="
+                        width: 100%;
+                        height: 200px;
+                        border-radius: 8px;
+                        background: ${artist.background_image_url ? `url('${artist.background_image_url}')` : '#f0f0f0'};
+                        background-size: cover;
+                        background-position: center;
+                        margin-bottom: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #86868b;
+                        font-size: 14px;
+                      ">
+                        ${!artist.background_image_url ? 'Kein Bild' : ''}
+                      </div>
+
+                      <!-- Upload Button -->
+                      <input type="file" id="backgroundImgInput" accept="image/*" style="display: none;" onchange="handleBackgroundImgUpload(event)">
+                      <button type="button" onclick="document.getElementById('backgroundImgInput').click()" style="
+                        width: 100%;
+                        padding: 10px;
+                        background: #007AFF;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                      ">
+                        📤 Upload Hintergrund
+                      </button>
+                      <div id="backgroundImgStatus" style="margin-top: 8px; font-size: 12px; color: #34C759;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bio & Description -->
+                <div style="margin-bottom: 16px;">
+                  <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Short Description</label>
+                  <input type="text" id="customEditArtistShortDesc" value="${artist.short_description || ''}" maxlength="150" style="
+                    width: 100%;
+                    padding: 10px 12px;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    border-radius: 8px;
+                    font-size: 14px;
+                    margin-top: 4px;
+                  ">
+                  <small style="color: #86868b; font-size: 11px;">Max 150 Zeichen für Webflow Waitlist Display</small>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Bio</label>
+                  <textarea id="customEditArtistBio" rows="4" style="
+                    width: 100%;
+                    padding: 10px 12px;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    border-radius: 8px;
+                    font-size: 14px;
+                    margin-top: 4px;
+                    resize: vertical;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  ">${artist.bio || ''}</textarea>
+                </div>
+
+                <!-- Instagram & Rank -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Instagram</label>
+                    <input type="text" id="customEditArtistInstagram" value="${artist.instagram || ''}" placeholder="@username" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                    ">
+                  </div>
+
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Rank</label>
+                    <select id="customEditArtistRank" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                      background: white;
+                    ">
+                      <option value="">No Rank</option>
+                      <option value="R1" ${artist.rank === 'R1' ? 'selected' : ''}>R1</option>
+                      <option value="R2" ${artist.rank === 'R2' ? 'selected' : ''}>R2</option>
+                      <option value="R3" ${artist.rank === 'R3' ? 'selected' : ''}>R3</option>
+                      <option value="R4" ${artist.rank === 'R4' ? 'selected' : ''}>R4</option>
+                      <option value="R5" ${artist.rank === 'R5' ? 'selected' : ''}>R5</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                  <button type="button" onclick="closeEditArtistModal()" style="
+                    padding: 12px 24px;
+                    background: #f0f0f0;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                  ">Cancel</button>
+
+                  <button type="submit" style="
+                    padding: 12px 24px;
+                    background: #34C759;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                  ">💾 Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+      }
+
+      function closeEditArtistModal() {
+        const modal = document.getElementById('customEditArtistModal');
+        if (modal) modal.remove();
+        currentEditingArtistId = null;
+        uploadedProfilePicture = null;
+        uploadedBackgroundImage = null;
+      }
+
+      // Make openEditArtistModal globally accessible
+      window.openEditArtistModal = openEditArtistModal;
+      window.closeEditArtistModal = closeEditArtistModal;
+
+      // Image Upload Handlers
+      async function handleProfilePicUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        console.log('📤 Uploading profile picture...');
+        document.getElementById('profilePicStatus').textContent = '⏳ Uploading...';
+        document.getElementById('profilePicStatus').style.color = '#007AFF';
+
+        const url = await uploadArtistImage(currentEditingArtistId, file, 'profile');
+
+        if (url) {
+          uploadedProfilePicture = url;
+          document.getElementById('currentProfilePic').style.backgroundImage = `url('${url}')`;
+          document.getElementById('currentProfilePic').textContent = '';
+          document.getElementById('profilePicStatus').textContent = '✅ Uploaded successfully!';
+          document.getElementById('profilePicStatus').style.color = '#34C759';
+        } else {
+          document.getElementById('profilePicStatus').textContent = '❌ Upload failed';
+          document.getElementById('profilePicStatus').style.color = '#FF3B30';
+        }
+      }
+
+      async function handleBackgroundImgUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        console.log('📤 Uploading background image...');
+        document.getElementById('backgroundImgStatus').textContent = '⏳ Uploading...';
+        document.getElementById('backgroundImgStatus').style.color = '#007AFF';
+
+        const url = await uploadArtistImage(currentEditingArtistId, file, 'background');
+
+        if (url) {
+          uploadedBackgroundImage = url;
+          document.getElementById('currentBackgroundImg').style.backgroundImage = `url('${url}')`;
+          document.getElementById('currentBackgroundImg').textContent = '';
+          document.getElementById('backgroundImgStatus').textContent = '✅ Uploaded successfully!';
+          document.getElementById('backgroundImgStatus').style.color = '#34C759';
+        } else {
+          document.getElementById('backgroundImgStatus').textContent = '❌ Upload failed';
+          document.getElementById('backgroundImgStatus').style.color = '#FF3B30';
+        }
+      }
+
+      async function uploadArtistImage(artistId, imageFile, imageType) {
+        try {
+          // Validate file type
+          if (!imageFile.type.startsWith('image/')) {
+            alert('Please upload an image file!');
+            return null;
+          }
+
+          // Validate file size (max 5MB)
+          if (imageFile.size > 5 * 1024 * 1024) {
+            alert('File too large! Maximum size is 5MB.');
+            return null;
+          }
+
+          // Generate unique filename
+          const fileExt = imageFile.name.split('.').pop();
+          const fileName = `${artistId}_${imageType}_${Date.now()}.${fileExt}`;
+          const filePath = `${fileName}`;
+
+          console.log('📤 Uploading to Supabase Storage:', filePath);
+
+          // Upload to Supabase Storage
+          const { data, error } = await supabase.storage
+            .from('artist-images')
+            .upload(filePath, imageFile, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (error) {
+            console.error('❌ Upload error:', error);
+            alert('Upload failed: ' + error.message);
+            return null;
+          }
+
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from('artist-images')
+            .getPublicUrl(filePath);
+
+          const publicUrl = urlData.publicUrl;
+          console.log('✅ Image uploaded successfully:', publicUrl);
+
+          return publicUrl;
+
+        } catch (err) {
+          console.error('💥 Upload failed:', err);
+          alert('Upload error: ' + err.message);
+          return null;
+        }
+      }
+
+      // Make upload functions globally accessible
+      window.handleProfilePicUpload = handleProfilePicUpload;
+      window.handleBackgroundImgUpload = handleBackgroundImgUpload;
+
+      // Save Artist Changes Function
+      async function saveArtistChanges(event) {
+        event.preventDefault();
+
+        console.log('💾 Saving artist changes...');
+
+        const updateData = {
+          name: document.getElementById('customEditArtistName').value,
+          email: document.getElementById('customEditArtistEmail').value || null,
+          short_description: document.getElementById('customEditArtistShortDesc').value || null,
+          bio: document.getElementById('customEditArtistBio').value || null,
+          instagram: document.getElementById('customEditArtistInstagram').value || null,
+          rank: document.getElementById('customEditArtistRank').value || null
+        };
+
+        // Add uploaded images if any
+        if (uploadedProfilePicture) {
+          updateData.profile_picture_url = uploadedProfilePicture;
+          console.log('💾 Saving profile picture URL:', uploadedProfilePicture);
+        }
+        if (uploadedBackgroundImage) {
+          updateData.background_image_url = uploadedBackgroundImage;
+          console.log('💾 Saving background image URL:', uploadedBackgroundImage);
+        }
+
+        const { data, error } = await supabase
+          .from('artists')
+          .update(updateData)
+          .eq('id', currentEditingArtistId);
+
+        if (error) {
+          console.error('❌ Error saving artist:', error);
+          alert('Error: ' + error.message);
+          return;
+        }
+
+        console.log('✅ Artist updated successfully');
+        alert('✅ Artist updated successfully!');
+
+        closeEditArtistModal();
+
+        // Clear cache and reload
+        artistsCache = [];
+        await loadInitialData();
+        await loadArtists();
+      }
+
+      // Make saveArtistChanges globally accessible
+      window.saveArtistChanges = saveArtistChanges;
+
+      // View Artist Profile Functions - Apple-Inspired Design with Images
       window.viewArtistProfile = async function(artistId) {
-        const artist = allArtists.find(a => a.id === artistId);
+        const artist = artistsCache.find(a => a.id === artistId) || allArtists.find(a => a.id === artistId);
         if (!artist) {
           alert('❌ Artist not found');
           return;
         }
 
-        // Show modal immediately with loading state
-        document.getElementById('viewArtistProfileModal').classList.add('active');
-        document.querySelector('#viewArtistProfileModal h3').textContent = `Artist Profile - ${artist.name}`;
+        const modalHtml = `
+          <div id="customViewArtistModal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+          ">
+            <div style="
+              background: white;
+              border-radius: 16px;
+              width: 90%;
+              max-width: 800px;
+              max-height: 90vh;
+              overflow: hidden;
+              box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            ">
+              <!-- Background Header -->
+              <div style="
+                height: 300px;
+                background: ${artist.background_image_url ? `url('${artist.background_image_url}')` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+                background-size: cover;
+                background-position: center;
+                position: relative;
+                display: flex;
+                align-items: flex-end;
+                padding: 30px;
+              ">
+                <div style="
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);
+                "></div>
 
-        // Populate modal with artist data
-        const content = document.getElementById('viewArtistProfileContent');
+                <!-- Profile Picture & Name -->
+                <div style="position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 20px; width: 100%;">
+                  ${artist.profile_picture_url ? `
+                    <img src="${artist.profile_picture_url}" style="
+                      width: 120px;
+                      height: 120px;
+                      border-radius: 50%;
+                      border: 4px solid white;
+                      object-fit: cover;
+                    ">
+                  ` : `
+                    <div style="
+                      width: 120px;
+                      height: 120px;
+                      border-radius: 50%;
+                      border: 4px solid white;
+                      background: rgba(255,255,255,0.2);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 48px;
+                      color: white;
+                      font-weight: 600;
+                    ">
+                      ${artist.name.charAt(0).toUpperCase()}
+                    </div>
+                  `}
 
-        // Format Instagram handle
-        const instagramDisplay = artist.instagram
-          ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color:var(--location-primary); text-decoration:none;">@${artist.instagram.replace('@', '')}</a>`
-          : '<span style="color:var(--muted);">-</span>';
+                  <div style="flex: 1; color: white;">
+                    <h2 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600;">${artist.name}</h2>
+                    ${artist.rank ? `<span style="
+                      display: inline-block;
+                      padding: 6px 12px;
+                      background: rgba(255,255,255,0.2);
+                      backdrop-filter: blur(10px);
+                      border-radius: 6px;
+                      font-size: 14px;
+                      font-weight: 600;
+                    ">${artist.rank}</span>` : ''}
+                    ${artist.is_guest ? `<span style="
+                      display: inline-block;
+                      padding: 6px 12px;
+                      background: rgba(90, 200, 250, 0.3);
+                      backdrop-filter: blur(10px);
+                      border-radius: 6px;
+                      font-size: 14px;
+                      font-weight: 600;
+                      margin-left: 8px;
+                    ">🌟 Guest</span>` : ''}
+                  </div>
 
-        // Format location
-        const locationDisplay = artist.city_location
-          ? `<span class="location-badge">${artist.city_location}</span>`
-          : (artist.location && artist.location.name)
-            ? `<span class="location-badge">${artist.location.name}</span>`
-            : '<span style="color:var(--muted);">-</span>';
-
-        // Format type badge
-        const typeDisplay = `<span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? '👥 Guest' : '🏠 Resident'}</span>`;
-
-        // Format rank badge
-        const rankDisplay = `<span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span>`;
-
-        // Format status badge
-        const statusDisplay = `<span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span>`;
-
-        content.innerHTML = `
-          <div style="display:grid; gap:20px;">
-            <div>
-              <h2 style="font-size:24px; font-weight:600; color:var(--macos-text-primary); margin:0 0 8px 0;">${artist.name || '-'}</h2>
-            </div>
-
-            <div style="display:grid; gap:16px;">
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Instagram:</span>
-                <span style="font-size:14px;">${instagramDisplay}</span>
+                  <button onclick="closeViewArtistModal()" style="
+                    background: rgba(255,255,255,0.2);
+                    backdrop-filter: blur(10px);
+                    border: none;
+                    color: white;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    font-size: 20px;
+                    cursor: pointer;
+                    align-self: flex-start;
+                  ">×</button>
+                </div>
               </div>
 
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Type:</span>
-                <div>${typeDisplay}</div>
-              </div>
+              <!-- Content -->
+              <div style="padding: 32px; overflow-y: auto; max-height: calc(90vh - 300px);">
+                <!-- Short Description -->
+                ${artist.short_description ? `
+                  <div style="
+                    background: rgba(0,122,255,0.1);
+                    padding: 16px;
+                    border-radius: 8px;
+                    margin-bottom: 24px;
+                    border-left: 3px solid #007AFF;
+                  ">
+                    <p style="margin: 0; font-size: 16px; color: #1d1d1f; font-weight: 500;">
+                      ${artist.short_description}
+                    </p>
+                  </div>
+                ` : ''}
 
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Location:</span>
-                <div>${locationDisplay}</div>
-              </div>
+                <!-- Info Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                  <div>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Email</label>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.email || 'N/A'}</p>
+                  </div>
 
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Rank:</span>
-                <div>${rankDisplay}</div>
-              </div>
+                  <div>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Instagram</label>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">
+                      ${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color: #007AFF; text-decoration: none;">@${artist.instagram.replace('@', '')}</a>` : 'N/A'}
+                    </p>
+                  </div>
 
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:center;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Status:</span>
-                <div>${statusDisplay}</div>
-              </div>
+                  <div>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Type</label>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.is_guest ? '🌟 Guest Artist' : '🏠 Resident'}</p>
+                  </div>
 
-              ${artist.email ? `
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Email:</span>
-                <span style="font-size:14px; color:var(--macos-text-primary);">${artist.email}</span>
-              </div>
-              ` : ''}
+                  <div>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Rank</label>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.rank || 'No rank'}</p>
+                  </div>
+                </div>
 
-              ${artist.phone ? `
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Phone:</span>
-                <span style="font-size:14px; color:var(--macos-text-primary);">${artist.phone}</span>
-              </div>
-              ` : ''}
+                <!-- Bio -->
+                ${artist.bio ? `
+                  <div style="margin-bottom: 24px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Bio</label>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #1d1d1f;">${artist.bio}</p>
+                  </div>
+                ` : ''}
 
-              ${artist.bio ? `
-              <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; align-items:start;">
-                <span style="color:var(--muted); font-size:13px; font-weight:500;">Bio:</span>
-                <span style="font-size:14px; color:var(--macos-text-primary); line-height:1.6;">${artist.bio}</span>
-              </div>
-              ` : ''}
-            </div>
+                <!-- Images Section -->
+                <div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px;">
+                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">📸 Bilder</h3>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Profilbild</label>
+                      ${artist.profile_picture_url ? `
+                        <img src="${artist.profile_picture_url}" style="
+                          width: 100%;
+                          height: 200px;
+                          object-fit: cover;
+                          border-radius: 8px;
+                        ">
+                        <div style="margin-top: 8px;">
+                          <a href="${artist.profile_picture_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">🔗 Open full size</a>
+                        </div>
+                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">Kein Bild</div>'}
+                    </div>
 
-            <!-- Projects Section -->
-            <div style="margin-top:32px; padding-top:24px; border-top:1px solid rgba(0,0,0,0.1);">
-              <h4 style="font-size:17px; font-weight:600; color:var(--macos-text-primary); margin-bottom:16px;">Completed Projects</h4>
-              <div id="artistProjectsList" style="display:flex; flex-direction:column; gap:12px;">
-                <div style="padding:20px; text-align:center; color:var(--macos-text-secondary);">Loading projects...</div>
+                    <div>
+                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Hintergrundbild</label>
+                      ${artist.background_image_url ? `
+                        <img src="${artist.background_image_url}" style="
+                          width: 100%;
+                          height: 200px;
+                          object-fit: cover;
+                          border-radius: 8px;
+                        ">
+                        <div style="margin-top: 8px;">
+                          <a href="${artist.background_image_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">🔗 Open full size</a>
+                        </div>
+                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">Kein Bild</div>'}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div style="margin-top: 24px; display: flex; gap: 12px;">
+                  <button onclick="closeViewArtistModal(); openEditArtistModal('${artist.id}');" style="
+                    flex: 1;
+                    padding: 12px;
+                    background: #007AFF;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                  ">✏️ Edit Artist</button>
+
+                  <button onclick="closeViewArtistModal()" style="
+                    padding: 12px 24px;
+                    background: #f0f0f0;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                  ">Close</button>
+                </div>
               </div>
             </div>
           </div>
         `;
 
-        // Set up button event listeners
-        document.getElementById('deleteArtistFromProfileBtn').onclick = () => deleteArtistFromProfile(artistId);
-        document.getElementById('editArtistFromProfileBtn').onclick = () => editArtistFromProfile(artistId);
-
-        // Load artist projects asynchronously
-        try {
-          console.log('🔍 Loading projects for artist:', artistId);
-
-          const { data: projects, error } = await supabase
-            .from('appointments')
-            .select(`
-              *,
-              customer:customers(first_name, last_name, email, instagram),
-              location:locations(name, city)
-            `)
-            .eq('artist_id', artistId)
-            .not('artist_id', 'is', null)
-            .order('start', { ascending: false });
-
-          if (error) {
-            console.error('Error loading artist projects:', error);
-            document.getElementById('artistProjectsList').innerHTML =
-              '<div style="padding:20px; text-align:center; color:var(--macos-accent-red);">Error loading projects</div>';
-            return;
-          }
-
-          console.log('✅ Projects loaded:', projects?.length || 0);
-          renderArtistProjectsSection(projects || []);
-
-        } catch (err) {
-          console.error('❌ Error loading artist projects:', err);
-          document.getElementById('artistProjectsList').innerHTML =
-            '<div style="padding:20px; text-align:center; color:var(--macos-accent-red);">Error loading projects</div>';
-        }
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
       };
 
-      function renderArtistProjectsSection(appointments) {
-        const container = document.getElementById('artistProjectsList');
-
-        if (!container) {
-          console.error('❌ artistProjectsList container not found');
-          return;
-        }
-
-        if (!appointments || appointments.length === 0) {
-          container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--macos-text-secondary); background:rgba(0,0,0,0.02); border-radius:8px;">No appointments found</div>';
-          return;
-        }
-
-        // Group appointments by project_number
-        const projectGroups = {};
-
-        appointments.forEach(appointment => {
-          const projectNum = appointment.project_number || `no-project`;
-
-          if (!projectGroups[projectNum]) {
-            projectGroups[projectNum] = {
-              project_number: projectNum,
-              appointments: [],
-              customer_name: null,
-              customer_email: null,
-              first_appointment: null,
-              last_appointment: null
-            };
-          }
-
-          projectGroups[projectNum].appointments.push(appointment);
-
-          // Set customer info (all appointments in project have same customer)
-          if (appointment.customer) {
-            projectGroups[projectNum].customer_name =
-              `${appointment.customer.first_name || ''} ${appointment.customer.last_name || ''}`.trim();
-            projectGroups[projectNum].customer_email = appointment.customer.email;
-          }
-        });
-
-        // Calculate date ranges for each project
-        Object.values(projectGroups).forEach(project => {
-          project.appointments.sort((a, b) => new Date(a.start) - new Date(b.start));
-          project.first_appointment = project.appointments[0]?.start;
-          project.last_appointment = project.appointments[project.appointments.length - 1]?.start;
-        });
-
-        console.log('📊 Grouped into', Object.keys(projectGroups).length, 'projects');
-
-        // Convert to array and sort by most recent
-        const projects = Object.values(projectGroups)
-          .sort((a, b) => new Date(b.last_appointment) - new Date(a.last_appointment));
-
-        // Render project cards
-        container.innerHTML = projects.map((project, index) => {
-          const projectId = project.project_number.replace(/[^a-zA-Z0-9]/g, '-');
-
-          return `
-            <div class="project-card" data-project-number="${project.project_number}">
-              <div class="project-header" onclick="toggleArtistProjectDetails('${projectId}')">
-                <div class="project-info">
-                  <div class="project-title">
-                    <span class="project-badge">${project.project_number === 'no-project' ? 'Ungrouped' : project.project_number}</span>
-                    <span class="customer-name">${project.customer_name || project.customer_email || 'Unknown Customer'}</span>
-                  </div>
-                  <div class="project-meta">
-                    <span class="appointment-count">${project.appointments.length} ${project.appointments.length === 1 ? 'session' : 'sessions'}</span>
-                    <span class="date-range">
-                      ${formatProjectDate(project.first_appointment)}
-                      ${project.appointments.length > 1 ? ' → ' + formatProjectDate(project.last_appointment) : ''}
-                    </span>
-                  </div>
-                </div>
-                <button class="expand-btn" aria-label="Toggle details">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                </button>
-              </div>
-
-              <div class="project-details" id="project-details-${projectId}" style="display: none;">
-                ${project.appointments.map(appointment => {
-                  const statusClass = appointment.status ? `status-${appointment.status}` : '';
-                  return `
-                    <div class="appointment-item" style="cursor:pointer; transition:all 0.2s;" onclick="openAppointmentFromProfile('${appointment.id}')" onmouseover="this.style.backgroundColor='rgba(0,0,0,0.03)'" onmouseout="this.style.backgroundColor=''">
-                      <div class="appointment-date">
-                        ${formatProjectDateTime(appointment.start)}
-                      </div>
-                      <div class="appointment-info">
-                        <span class="booking-type">${appointment.booking_type || 'Appointment'}</span>
-                        ${appointment.status ? `<span class="status-badge ${statusClass}">${appointment.status}</span>` : ''}
-                      </div>
-                      ${appointment.notes ? `<div class="appointment-notes">${appointment.notes}</div>` : ''}
-                      ${appointment.placement ? `<div class="appointment-notes">📍 ${appointment.placement}</div>` : ''}
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          `;
-        }).join('');
+      function closeViewArtistModal() {
+        const modal = document.getElementById('customViewArtistModal');
+        if (modal) modal.remove();
       }
 
-      // Toggle function for artist project details
-      window.toggleArtistProjectDetails = function(projectId) {
-        const detailsEl = document.getElementById(`project-details-${projectId}`);
-        const card = document.querySelector(`[data-project-number]`);
+      // Make globally accessible
+      window.closeViewArtistModal = closeViewArtistModal;
 
-        if (!detailsEl) return;
-
-        const isVisible = detailsEl.style.display !== 'none';
-
-        // Toggle visibility
-        detailsEl.style.display = isVisible ? 'none' : 'block';
-
-        // Rotate expand button
-        const expandBtn = detailsEl.previousElementSibling?.querySelector('.expand-btn svg');
-        if (expandBtn) {
-          expandBtn.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
-        }
-      };
-
-      // Helper function for project dates
-      function formatProjectDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      }
-
-      // Helper function for project date-time
-      function formatProjectDateTime(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('de-DE', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      }
-
+      // Keep old closeViewProfile for backward compatibility
       window.closeViewProfile = function() {
-        document.getElementById('viewArtistProfileModal').classList.remove('active');
-        // Clear content
-        document.getElementById('viewArtistProfileContent').innerHTML = '';
-        document.querySelector('#viewArtistProfileModal h3').textContent = 'Artist Profile';
-      };
-
-      window.deleteArtistFromProfile = async function(artistId) {
-        const artist = allArtists.find(a => a.id === artistId);
-        if (!artist) {
-          alert('❌ Artist not found');
-          return;
-        }
-
-        // First confirmation
-        if (!confirm(`Are you sure you want to delete ${artist.name}? This action cannot be undone.`)) {
-          return;
-        }
-
-        // Second confirmation
-        if (!confirm(`⚠️ FINAL WARNING: This will permanently delete the artist. Click OK to confirm.`)) {
-          return;
-        }
-
-        try {
-          const { error } = await supabase
-            .from('artists')
-            .delete()
-            .eq('id', artistId);
-
-          if (error) throw error;
-
-          // Close modal
-          closeViewProfile();
-
-          // Clear cache and reload
-          artistsCache = [];
-          await loadInitialData();
-          await loadArtists();
-          renderCalendar();
-          alert('Artist deleted successfully!');
-        } catch (err) {
-          alert('Error deleting artist: ' + err.message);
+        // Try closing both old and new modals
+        closeViewArtistModal();
+        const oldModal = document.getElementById('viewArtistProfileModal');
+        if (oldModal) {
+          oldModal.classList.remove('active');
+          const content = document.getElementById('viewArtistProfileContent');
+          if (content) content.innerHTML = '';
+          const title = document.querySelector('#viewArtistProfileModal h3');
+          if (title) title.textContent = 'Artist Profile';
         }
       };
 
+      // Update editArtistFromProfile to use new modal
       window.editArtistFromProfile = function(artistId) {
-        // Close view profile modal
-        closeViewProfile();
-        // Open edit modal
-        editArtist(artistId);
+        closeViewArtistModal();
+        openEditArtistModal(artistId);
       };
+
       
       // Edit Customer Functions
       window.editCustomer = async function(customerId) {
