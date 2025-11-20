@@ -13499,6 +13499,44 @@
                   ">${artist.bio || ''}</textarea>
                 </div>
 
+                <!-- Type & Location -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Type</label>
+                    <select id="customEditArtistType" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                      background: white;
+                    ">
+                      <option value="resident" ${!artist.is_guest ? 'selected' : ''}>Resident</option>
+                      <option value="guest" ${artist.is_guest ? 'selected' : ''}>Guest</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location</label>
+                    <select id="customEditArtistLocation" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                      background: white;
+                    ">
+                      <option value="">-- Select Location --</option>
+                      <option value="Stuttgart" ${artist.city_location === 'Stuttgart' ? 'selected' : ''}>Stuttgart</option>
+                      <option value="Köln" ${artist.city_location === 'Köln' ? 'selected' : ''}>Köln</option>
+                      <option value="Berlin" ${artist.city_location === 'Berlin' ? 'selected' : ''}>Berlin</option>
+                      <option value="München" ${artist.city_location === 'München' ? 'selected' : ''}>München</option>
+                    </select>
+                  </div>
+                </div>
+
                 <!-- Instagram, Rank & Style -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                   <div>
@@ -13782,7 +13820,9 @@
           bio: document.getElementById('customEditArtistBio').value || null,
           instagram: document.getElementById('customEditArtistInstagram').value || null,
           rank: document.getElementById('customEditArtistRank').value || null,
-          style: document.getElementById('customEditArtistStyle').value || null
+          style: document.getElementById('customEditArtistStyle').value || null,
+          is_guest: document.getElementById('customEditArtistType').value === 'guest',
+          city_location: document.getElementById('customEditArtistLocation').value || null
         };
 
         // Add uploaded images if any
