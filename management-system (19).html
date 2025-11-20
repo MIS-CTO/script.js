@@ -13628,20 +13628,45 @@
       }
     }
 
-    // Load Dienstplan Requests (Management only)
+    // Load Dienstplan Requests (Management only) - with batch loading
     async function loadDienstplanRequests() {
       try {
-        const { data, error } = await supabase
-          .from('working_time_requests')
-          .select('*')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false });
+        console.log('📥 Loading pending dienstplan requests...');
 
-        if (error) throw error;
+        // Fetch requests in batches
+        let allRequests = [];
+        let from = 0;
+        const batchSize = 1000;
+        let hasMore = true;
 
-        displayDienstplanRequests(data || []);
+        while (hasMore) {
+          const { data: batch, error } = await supabase
+            .from('working_time_requests')
+            .select('*')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+            .range(from, from + batchSize - 1);
+
+          if (error) {
+            console.error('Error loading requests batch:', error);
+            throw error;
+          }
+
+          if (batch && batch.length > 0) {
+            allRequests = allRequests.concat(batch);
+            from += batchSize;
+            hasMore = batch.length === batchSize;
+            console.log(`  ↳ Loaded ${allRequests.length} pending requests so far...`);
+          } else {
+            hasMore = false;
+          }
+        }
+
+        console.log(`✅ Total pending requests loaded: ${allRequests.length}`);
+        displayDienstplanRequests(allRequests);
+
       } catch (error) {
-        console.error('Error loading requests:', error);
+        console.error('❌ Error loading requests:', error);
       }
     }
 
@@ -13754,9 +13779,11 @@
       }
     }
 
-    // Load Dienstplan Data (with role-based filtering)
+    // Load Dienstplan Data (with role-based filtering and batch loading)
     async function loadDienstplanData() {
       try {
+        console.log('📅 Loading Dienstplan data...');
+
         // Get current user info
         const { data: { user } } = await supabase.auth.getUser();
         const { data: profile } = await supabase
@@ -13768,16 +13795,40 @@
         const userRole = profile.role;
         const isManagement = ['Management', 'Geschäftsführung', 'Admin'].includes(userRole);
 
-        // Fetch working_times (RLS will filter automatically)
-        const { data: workingTimes, error } = await supabase
-          .from('working_times')
-          .select('*')
-          .order('date', { ascending: true })
-          .order('time', { ascending: true });
+        console.log(`  ↳ User role: ${userRole}, isManagement: ${isManagement}`);
 
-        if (error) throw error;
+        // Fetch working_times in batches (RLS will filter automatically)
+        let allWorkingTimes = [];
+        let from = 0;
+        const batchSize = 1000;
+        let hasMore = true;
 
-        displayDienstplanCalendar(workingTimes || []);
+        while (hasMore) {
+          const { data: batch, error } = await supabase
+            .from('working_times')
+            .select('*')
+            .order('date', { ascending: true })
+            .order('time', { ascending: true })
+            .range(from, from + batchSize - 1);
+
+          if (error) {
+            console.error('Error loading working_times batch:', error);
+            throw error;
+          }
+
+          if (batch && batch.length > 0) {
+            allWorkingTimes = allWorkingTimes.concat(batch);
+            from += batchSize;
+            hasMore = batch.length === batchSize;
+            console.log(`  ↳ Loaded ${allWorkingTimes.length} working_times entries so far...`);
+          } else {
+            hasMore = false;
+          }
+        }
+
+        console.log(`✅ Total working_times loaded: ${allWorkingTimes.length}`);
+
+        displayDienstplanCalendar(allWorkingTimes);
 
         // Load requests if management
         if (isManagement) {
@@ -13785,7 +13836,8 @@
         }
 
       } catch (error) {
-        console.error('Error loading Dienstplan:', error);
+        console.error('❌ Error loading Dienstplan:', error);
+        alert('Fehler beim Laden des Dienstplans');
       }
     }
 
@@ -13793,6 +13845,22 @@
     function displayDienstplanCalendar(workingTimes) {
       const container = document.getElementById('dienstplanCalendar');
       if (!container) return;
+
+      // Check if there are any entries
+      if (!workingTimes || workingTimes.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 60px 20px; text-align: center; color: var(--macos-text-secondary);">
+            <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+            <div style="font-size: 18px; font-weight: 600; color: var(--macos-text-primary); margin-bottom: 8px;">
+              Keine Dienstplan-Einträge vorhanden
+            </div>
+            <div style="font-size: 14px;">
+              Erstelle eine neue Anfrage, um Einträge im Dienstplan zu erstellen
+            </div>
+          </div>
+        `;
+        return;
+      }
 
       // Group by date and email
       const groupedData = {};
@@ -13814,6 +13882,21 @@
 
       // Create calendar view
       const dates = Object.keys(groupedData).sort();
+
+      if (dates.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 60px 20px; text-align: center; color: var(--macos-text-secondary);">
+            <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+            <div style="font-size: 18px; font-weight: 600; color: var(--macos-text-primary); margin-bottom: 8px;">
+              Keine Dienstplan-Einträge vorhanden
+            </div>
+            <div style="font-size: 14px;">
+              Erstelle eine neue Anfrage, um Einträge im Dienstplan zu erstellen
+            </div>
+          </div>
+        `;
+        return;
+      }
 
       container.innerHTML = `
         <div class="dienstplan-grid">
