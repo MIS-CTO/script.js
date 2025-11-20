@@ -731,8 +731,12 @@
     .dienstplan-table {
       width:100%;
       display:grid;
-      grid-template-columns:150px repeat(31, 80px);
+      grid-template-columns:200px repeat(31, 80px);
       border-collapse:collapse;
+      overflow-x:auto;
+      background:rgba(255,255,255,0.95);
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,0.06);
     }
     
     .dp-header-row {
@@ -13828,7 +13832,7 @@
 
         console.log(`✅ Total working_times loaded: ${allWorkingTimes.length}`);
 
-        displayDienstplanCalendar(allWorkingTimes);
+        await displayDienstplanCalendar(allWorkingTimes);
 
         // Load requests if management
         if (isManagement) {
@@ -13841,8 +13845,8 @@
       }
     }
 
-    // Display Dienstplan Calendar
-    function displayDienstplanCalendar(workingTimes) {
+    // Display Dienstplan Calendar - Monthly Table View Sorted by Roles
+    async function displayDienstplanCalendar(workingTimes) {
       const container = document.getElementById('dienstplanCalendar');
       if (!container) return;
 
@@ -13862,73 +13866,214 @@
         return;
       }
 
-      // Group by date and email
-      const groupedData = {};
+      // Get current month and year
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-      workingTimes.forEach(entry => {
-        const dateKey = entry.date;
-        const emailKey = entry.email;
-
-        if (!groupedData[dateKey]) {
-          groupedData[dateKey] = {};
-        }
-
-        if (!groupedData[dateKey][emailKey]) {
-          groupedData[dateKey][emailKey] = [];
-        }
-
-        groupedData[dateKey][emailKey].push(entry);
-      });
-
-      // Create calendar view
-      const dates = Object.keys(groupedData).sort();
-
-      if (dates.length === 0) {
-        container.innerHTML = `
-          <div style="padding: 60px 20px; text-align: center; color: var(--macos-text-secondary);">
-            <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
-            <div style="font-size: 18px; font-weight: 600; color: var(--macos-text-primary); margin-bottom: 8px;">
-              Keine Dienstplan-Einträge vorhanden
-            </div>
-            <div style="font-size: 14px;">
-              Erstelle eine neue Anfrage, um Einträge im Dienstplan zu erstellen
-            </div>
-          </div>
-        `;
-        return;
+      // Create array of all days in current month
+      const daysArray = [];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        daysArray.push({
+          day,
+          date: date,
+          dateString: date.toISOString().split('T')[0],
+          weekday: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][date.getDay()],
+          isToday: day === now.getDate()
+        });
       }
 
-      container.innerHTML = `
-        <div class="dienstplan-grid">
-          ${dates.map(date => {
-            const dayData = groupedData[date];
-            const emails = Object.keys(dayData);
+      // Group working times by email and date
+      const dataByEmailAndDate = {};
+      workingTimes.forEach(entry => {
+        const email = entry.email;
+        const date = entry.date;
 
-            return `
-              <div class="dienstplan-day">
-                <div class="dienstplan-date-header">${formatDate(date)}</div>
-                ${emails.map(email => {
-                  const entries = dayData[email];
-                  const states = [...new Set(entries.map(e => e.state))];
+        if (!dataByEmailAndDate[email]) {
+          dataByEmailAndDate[email] = {};
+        }
 
-                  return `
-                    <div class="dienstplan-entry">
-                      <div class="dienstplan-artist">${email.split('@')[0]}</div>
-                      <div class="dienstplan-states">
-                        ${states.map(state => `
-                          <span class="dienstplan-badge" style="background: ${DIENSTPLAN_CATEGORIES[state]?.color || '#666'}; color: ${state === 'Available' || state === 'Sick' ? '#000' : '#fff'};">
-                            ${state}
-                          </span>
-                        `).join('')}
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
+        if (!dataByEmailAndDate[email][date]) {
+          dataByEmailAndDate[email][date] = [];
+        }
+
+        dataByEmailAndDate[email][date].push(entry);
+      });
+
+      // Get all unique emails and fetch their roles
+      const uniqueEmails = [...new Set(workingTimes.map(wt => wt.email))];
+
+      // Fetch profiles with roles for all emails
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('email, role, username')
+        .in('email', uniqueEmails);
+
+      // Also fetch from artists table to get additional users
+      const { data: artists, error: artistsError } = await supabase
+        .from('artists')
+        .select('email, prename, surname')
+        .in('email', uniqueEmails);
+
+      // Create email to user info mapping
+      const emailToUserInfo = {};
+
+      if (profiles) {
+        profiles.forEach(profile => {
+          emailToUserInfo[profile.email] = {
+            email: profile.email,
+            role: profile.role || 'Not defined',
+            displayName: profile.username || profile.email.split('@')[0]
+          };
+        });
+      }
+
+      if (artists) {
+        artists.forEach(artist => {
+          if (!emailToUserInfo[artist.email]) {
+            emailToUserInfo[artist.email] = {
+              email: artist.email,
+              role: 'Guest',
+              displayName: artist.prename && artist.surname
+                ? `${artist.prename} ${artist.surname}`
+                : artist.email.split('@')[0]
+            };
+          } else if (!emailToUserInfo[artist.email].displayName || emailToUserInfo[artist.email].displayName === artist.email.split('@')[0]) {
+            // Update display name if we have better info from artists table
+            if (artist.prename && artist.surname) {
+              emailToUserInfo[artist.email].displayName = `${artist.prename} ${artist.surname}`;
+            }
+          }
+        });
+      }
+
+      // For any emails not in profiles or artists, use email as fallback
+      uniqueEmails.forEach(email => {
+        if (!emailToUserInfo[email]) {
+          emailToUserInfo[email] = {
+            email: email,
+            role: 'Not defined',
+            displayName: email.split('@')[0]
+          };
+        }
+      });
+
+      // Define role order for sorting
+      const roleOrder = {
+        'Admin': 1,
+        'Administrator': 2,
+        'Management': 3,
+        'Geschäftsführung': 4,
+        'Booking Manager': 5,
+        'Booking Team': 6,
+        'Booking Member': 7,
+        'Resident Artist': 8,
+        'Resident': 9,
+        'Guest Artist': 10,
+        'Guest': 11,
+        'Guest (Keine Preise)': 12,
+        'Media Department': 13,
+        'Azubi': 14,
+        'Not defined': 99
+      };
+
+      // Group users by role
+      const usersByRole = {};
+      Object.values(emailToUserInfo).forEach(userInfo => {
+        const role = userInfo.role;
+        if (!usersByRole[role]) {
+          usersByRole[role] = [];
+        }
+        usersByRole[role].push(userInfo);
+      });
+
+      // Sort users within each role by display name
+      Object.keys(usersByRole).forEach(role => {
+        usersByRole[role].sort((a, b) => a.displayName.localeCompare(b.displayName));
+      });
+
+      // Get sorted role keys
+      const sortedRoles = Object.keys(usersByRole).sort((a, b) => {
+        const orderA = roleOrder[a] || 999;
+        const orderB = roleOrder[b] || 999;
+        return orderA - orderB;
+      });
+
+      // Build the table HTML
+      let tableHTML = '<div style="overflow-x: auto; width: 100%;"><div class="dienstplan-table">';
+
+      // Header row
+      tableHTML += '<div class="dp-header-row">';
+      tableHTML += '<div class="dp-name-header">Resources</div>';
+
+      daysArray.forEach(dayInfo => {
+        const todayClass = dayInfo.isToday ? ' style="background: rgba(255, 59, 48, 0.1); border-left: 2px solid #FF3B30;"' : '';
+        tableHTML += `
+          <div class="dp-day-header"${todayClass}>
+            <span class="day-num">${dayInfo.day}</span>
+            <span class="weekday">${dayInfo.weekday}</span>
+          </div>
+        `;
+      });
+
+      tableHTML += '</div>';
+
+      // Data rows - grouped by role
+      sortedRoles.forEach(role => {
+        const users = usersByRole[role];
+
+        // Role header row
+        tableHTML += '<div class="dp-row">';
+        tableHTML += `<div class="dp-name-cell" style="font-weight: 600; padding-left: 12px; background: rgba(249,249,249,0.98);">📋 ${role}</div>`;
+
+        // Empty cells for role header row
+        daysArray.forEach(dayInfo => {
+          const todayStyle = dayInfo.isToday ? ' style="border-left: 2px solid #FF3B30;"' : '';
+          tableHTML += `<div class="dp-cell"${todayStyle}></div>`;
+        });
+
+        tableHTML += '</div>';
+
+        // User rows
+        users.forEach(userInfo => {
+          tableHTML += '<div class="dp-row">';
+          tableHTML += `<div class="dp-name-cell">${userInfo.displayName}</div>`;
+
+          // Day cells for this user
+          daysArray.forEach(dayInfo => {
+            const dateString = dayInfo.dateString;
+            const entries = dataByEmailAndDate[userInfo.email]?.[dateString] || [];
+            const states = [...new Set(entries.map(e => e.state))];
+
+            let cellContent = '';
+            let cellStyle = '';
+
+            if (states.length > 0) {
+              // Get the most recent state (in case of multiple)
+              const primaryState = states[0];
+              const category = DIENSTPLAN_CATEGORIES[primaryState];
+
+              if (category) {
+                const bgColor = category.color;
+                const textColor = (primaryState === 'Available' || primaryState === 'Sick') ? '#000' : '#fff';
+                cellStyle = `background: ${bgColor}; color: ${textColor}; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center;`;
+                cellContent = primaryState;
+              }
+            }
+
+            const todayBorder = dayInfo.isToday ? ' border-left: 2px solid #FF3B30;' : '';
+            tableHTML += `<div class="dp-cell" style="${cellStyle}${todayBorder}" title="${states.join(', ')}">${cellContent}</div>`;
+          });
+
+          tableHTML += '</div>';
+        });
+      });
+
+      tableHTML += '</div></div>';
+
+      container.innerHTML = tableHTML;
     }
 
     // Format Date Helper
