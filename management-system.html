@@ -13327,7 +13327,7 @@
               box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             ">
               <h2 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 600;">
-                ✏️ Edit Artist - ${artist.name}
+                Edit Artist - ${artist.name}
               </h2>
 
               <form id="customEditArtistForm" onsubmit="saveArtistChanges(event)">
@@ -13360,13 +13360,13 @@
 
                 <!-- Images Section -->
                 <div style="background: rgba(0,0,0,0.02); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
-                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">📸 Bilder</h3>
+                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Images</h3>
 
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <!-- Profile Picture -->
                     <div>
                       <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">
-                        Profilbild (Quadratisch)
+                        Profile Picture (Square)
                       </label>
 
                       <!-- Current Image -->
@@ -13384,30 +13384,42 @@
                         color: #86868b;
                         font-size: 14px;
                       ">
-                        ${!artist.profile_picture_url ? 'Kein Bild' : ''}
+                        ${!artist.profile_picture_url ? 'No Image' : ''}
                       </div>
 
-                      <!-- Upload Button -->
-                      <input type="file" id="profilePicInput" accept="image/*" style="display: none;" onchange="handleProfilePicUpload(event)">
-                      <button type="button" onclick="document.getElementById('profilePicInput').click()" style="
-                        width: 100%;
-                        padding: 10px;
-                        background: #007AFF;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                      ">
-                        📤 Upload Profilbild
-                      </button>
+                      <!-- Upload & Delete Buttons -->
+                      <div style="display: flex; gap: 8px;">
+                        <input type="file" id="profilePicInput" accept="image/*" style="display: none;" onchange="handleProfilePicUpload(event)">
+                        <button type="button" onclick="document.getElementById('profilePicInput').click()" style="
+                          flex: 1;
+                          padding: 10px;
+                          background: #007AFF;
+                          color: white;
+                          border: none;
+                          border-radius: 8px;
+                          font-weight: 600;
+                          cursor: pointer;
+                        ">Upload</button>
+                        ${artist.profile_picture_url ? `
+                        <button type="button" onclick="deleteProfilePicture()" style="
+                          flex: 1;
+                          padding: 10px;
+                          background: #FF3B30;
+                          color: white;
+                          border: none;
+                          border-radius: 8px;
+                          font-weight: 600;
+                          cursor: pointer;
+                        ">Delete</button>
+                        ` : ''}
+                      </div>
                       <div id="profilePicStatus" style="margin-top: 8px; font-size: 12px; color: #34C759;"></div>
                     </div>
 
                     <!-- Background Image -->
                     <div>
                       <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">
-                        Hintergrundbild (Landscape)
+                        Background Image (Landscape)
                       </label>
 
                       <!-- Current Image -->
@@ -13425,23 +13437,35 @@
                         color: #86868b;
                         font-size: 14px;
                       ">
-                        ${!artist.background_image_url ? 'Kein Bild' : ''}
+                        ${!artist.background_image_url ? 'No Image' : ''}
                       </div>
 
-                      <!-- Upload Button -->
-                      <input type="file" id="backgroundImgInput" accept="image/*" style="display: none;" onchange="handleBackgroundImgUpload(event)">
-                      <button type="button" onclick="document.getElementById('backgroundImgInput').click()" style="
-                        width: 100%;
-                        padding: 10px;
-                        background: #007AFF;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                      ">
-                        📤 Upload Hintergrund
-                      </button>
+                      <!-- Upload & Delete Buttons -->
+                      <div style="display: flex; gap: 8px;">
+                        <input type="file" id="backgroundImgInput" accept="image/*" style="display: none;" onchange="handleBackgroundImgUpload(event)">
+                        <button type="button" onclick="document.getElementById('backgroundImgInput').click()" style="
+                          flex: 1;
+                          padding: 10px;
+                          background: #007AFF;
+                          color: white;
+                          border: none;
+                          border-radius: 8px;
+                          font-weight: 600;
+                          cursor: pointer;
+                        ">Upload</button>
+                        ${artist.background_image_url ? `
+                        <button type="button" onclick="deleteBackgroundImage()" style="
+                          flex: 1;
+                          padding: 10px;
+                          background: #FF3B30;
+                          color: white;
+                          border: none;
+                          border-radius: 8px;
+                          font-weight: 600;
+                          cursor: pointer;
+                        ">Delete</button>
+                        ` : ''}
+                      </div>
                       <div id="backgroundImgStatus" style="margin-top: 8px; font-size: 12px; color: #34C759;"></div>
                     </div>
                   </div>
@@ -13458,7 +13482,7 @@
                     font-size: 14px;
                     margin-top: 4px;
                   ">
-                  <small style="color: #86868b; font-size: 11px;">Max 150 Zeichen für Webflow Waitlist Display</small>
+                  <small style="color: #86868b; font-size: 11px;">Max 150 characters for Webflow Waitlist Display</small>
                 </div>
 
                 <div style="margin-bottom: 16px;">
@@ -13475,8 +13499,8 @@
                   ">${artist.bio || ''}</textarea>
                 </div>
 
-                <!-- Instagram & Rank -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <!-- Instagram, Rank & Style -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                   <div>
                     <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Instagram</label>
                     <input type="text" id="customEditArtistInstagram" value="${artist.instagram || ''}" placeholder="@username" style="
@@ -13508,6 +13532,18 @@
                       <option value="R5" ${artist.rank === 'R5' ? 'selected' : ''}>R5</option>
                     </select>
                   </div>
+
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Style</label>
+                    <input type="text" id="customEditArtistStyle" value="${artist.style || ''}" placeholder="e.g. Realism, Traditional" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                    ">
+                  </div>
                 </div>
 
                 <!-- Actions -->
@@ -13529,7 +13565,7 @@
                     border-radius: 8px;
                     font-weight: 600;
                     cursor: pointer;
-                  ">💾 Save Changes</button>
+                  ">Save Changes</button>
                 </div>
               </form>
             </div>
@@ -13652,11 +13688,92 @@
       window.handleProfilePicUpload = handleProfilePicUpload;
       window.handleBackgroundImgUpload = handleBackgroundImgUpload;
 
+      // Delete Image Functions
+      async function deleteProfilePicture() {
+        if (!confirm('Are you sure you want to delete the profile picture?')) return;
+
+        try {
+          document.getElementById('profilePicStatus').textContent = 'Deleting...';
+          document.getElementById('profilePicStatus').style.color = '#007AFF';
+
+          // Update database to remove URL
+          const { error } = await supabase
+            .from('artists')
+            .update({ profile_picture_url: null })
+            .eq('id', currentEditingArtistId);
+
+          if (error) throw error;
+
+          // Update UI
+          uploadedProfilePicture = null;
+          document.getElementById('currentProfilePic').style.backgroundImage = '';
+          document.getElementById('currentProfilePic').textContent = 'No Image';
+          document.getElementById('profilePicStatus').textContent = 'Image deleted successfully';
+          document.getElementById('profilePicStatus').style.color = '#34C759';
+
+          console.log('Profile picture deleted successfully');
+
+          // Refresh modal to remove delete button
+          setTimeout(() => {
+            closeEditArtistModal();
+            openEditArtistModal(currentEditingArtistId);
+          }, 1000);
+
+        } catch (err) {
+          console.error('Error deleting profile picture:', err);
+          document.getElementById('profilePicStatus').textContent = 'Delete failed';
+          document.getElementById('profilePicStatus').style.color = '#FF3B30';
+          alert('Error deleting image: ' + err.message);
+        }
+      }
+
+      async function deleteBackgroundImage() {
+        if (!confirm('Are you sure you want to delete the background image?')) return;
+
+        try {
+          document.getElementById('backgroundImgStatus').textContent = 'Deleting...';
+          document.getElementById('backgroundImgStatus').style.color = '#007AFF';
+
+          // Update database to remove URL
+          const { error } = await supabase
+            .from('artists')
+            .update({ background_image_url: null })
+            .eq('id', currentEditingArtistId);
+
+          if (error) throw error;
+
+          // Update UI
+          uploadedBackgroundImage = null;
+          document.getElementById('currentBackgroundImg').style.backgroundImage = '';
+          document.getElementById('currentBackgroundImg').textContent = 'No Image';
+          document.getElementById('backgroundImgStatus').textContent = 'Image deleted successfully';
+          document.getElementById('backgroundImgStatus').style.color = '#34C759';
+
+          console.log('Background image deleted successfully');
+
+          // Refresh modal to remove delete button
+          setTimeout(() => {
+            closeEditArtistModal();
+            openEditArtistModal(currentEditingArtistId);
+          }, 1000);
+
+        } catch (err) {
+          console.error('Error deleting background image:', err);
+          document.getElementById('backgroundImgStatus').textContent = 'Delete failed';
+          document.getElementById('backgroundImgStatus').style.color = '#FF3B30';
+          alert('Error deleting image: ' + err.message);
+        }
+      }
+
+      // Make delete functions globally accessible
+      window.deleteProfilePicture = deleteProfilePicture;
+      window.deleteBackgroundImage = deleteBackgroundImage;
+
       // Save Artist Changes Function
       async function saveArtistChanges(event) {
         event.preventDefault();
 
-        console.log('💾 Saving artist changes...');
+        console.log('Saving artist changes...');
 
         const updateData = {
           name: document.getElementById('customEditArtistName').value,
@@ -13664,7 +13781,8 @@
           short_description: document.getElementById('customEditArtistShortDesc').value || null,
           bio: document.getElementById('customEditArtistBio').value || null,
           instagram: document.getElementById('customEditArtistInstagram').value || null,
-          rank: document.getElementById('customEditArtistRank').value || null
+          rank: document.getElementById('customEditArtistRank').value || null,
+          style: document.getElementById('customEditArtistStyle').value || null
         };
 
         // Add uploaded images if any
