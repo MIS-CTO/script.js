@@ -5033,9 +5033,42 @@
 
   <section id="calendar-section">
     <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
-      <h2 style="margin:0; font-size:28px; font-weight:700;">Booking Calendar</h2>
+      <h2 style="margin:0; font-size:28px; font-weight:700;">Calendar</h2>
       <div id="currentDateDisplayTop" style="font-weight:700; font-size:28px; color:var(--ink);"></div>
     </div>
+
+    <!-- Calendar Tabs -->
+    <div class="calendar-tabs" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.1);">
+      <button onclick="switchCalendarView('appointments')" id="calendarTabAppointments" style="
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid #007AFF;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #1d1d1f;
+      ">
+        📅 Termine
+      </button>
+      <button onclick="switchCalendarView('worktracking')" id="calendarTabWorkTracking" style="
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #1d1d1f;
+      ">
+        ⏰ Work Tracking
+      </button>
+    </div>
+
+    <!-- Appointments View -->
+    <div id="calendarAppointmentsView">
 
     <!-- Combined Container: Location Info + Booking Types -->
     <div style="margin-bottom:16px; padding:16px 20px; background:rgba(255,255,255,0.95); border-radius:12px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:16px;">
@@ -5131,54 +5164,103 @@
     </div>
 
     <div class="calendar-container" id="calendarContainer"></div>
+    </div>
+    <!-- End Appointments View -->
+
+    <!-- Work Tracking View -->
+    <div id="calendarWorkTrackingView" style="display: none;">
+      <div id="calendarWorkTrackingContainer"></div>
+    </div>
+    <!-- End Work Tracking View -->
   </section>
 
   <section id="dienstplan-section">
-    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
-      <h2 style="margin:0; font-size:28px; font-weight:700;">Dienstplan</h2>
-      <div id="dienstplanMonth" style="font-weight:700; font-size:28px; color:var(--ink);"></div>
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+      <h2 style="margin:0; font-size:28px; font-weight:700;">Dienstplan & Work Tracking</h2>
     </div>
-    
-    <!-- Status Legend -->
-    <div style="display:flex; gap:16px; margin-bottom:24px; padding:16px 20px; background:rgba(255,255,255,0.95); border-radius:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; border:1px solid var(--border-color);">
-      <span style="font-weight:500; font-size:13px; color:var(--muted);">Status:</span>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <div style="width:12px; height:12px; border-radius:3px; background:#2196F3;"></div>
-        <span style="font-size:13px; color:var(--ink);">Home office</span>
+
+    <!-- Filters Bar -->
+    <div class="filters-bar" style="
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+    ">
+      <!-- Zeitraum -->
+      <div style="flex: 1; min-width: 180px;">
+        <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 6px;">Von</label>
+        <input type="date" id="dienstplanStartDate" onchange="loadDienstplanData()" style="
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 8px;
+          font-size: 14px;
+        ">
       </div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <div style="width:12px; height:12px; border-radius:3px; background:#FF9800;"></div>
-        <span style="font-size:13px; color:var(--ink);">Business trip</span>
+
+      <div style="flex: 1; min-width: 180px;">
+        <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 6px;">Bis</label>
+        <input type="date" id="dienstplanEndDate" onchange="loadDienstplanData()" style="
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 8px;
+          font-size: 14px;
+        ">
       </div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <div style="width:12px; height:12px; border-radius:3px; background:#4CAF50;"></div>
-        <span style="font-size:13px; color:var(--ink);">Vacation</span>
+
+      <!-- Rolle Filter -->
+      <div style="flex: 1; min-width: 180px;">
+        <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 6px;">Rolle</label>
+        <select id="dienstplanRoleFilter" onchange="applyDienstplanFilters()" style="
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 8px;
+          font-size: 14px;
+          background: white;
+        ">
+          <option value="all">Alle Rollen</option>
+          <option value="Geschäftsführung">Geschäftsführung</option>
+          <option value="Management">Management</option>
+          <option value="Booking Team">Booking Team</option>
+          <option value="Resident Artist">Resident Artist</option>
+          <option value="Guest Artist">Guest Artist</option>
+          <option value="Mediadepartment">Media Department</option>
+          <option value="other">Other</option>
+          <option value="null">Ohne Rolle</option>
+        </select>
       </div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <div style="width:12px; height:12px; border-radius:3px; background:#9C27B0;"></div>
-        <span style="font-size:13px; color:var(--ink);">Others</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <div style="width:12px; height:12px; border-radius:3px; background:#F44336;"></div>
-        <span style="font-size:13px; color:var(--ink);">Sick</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <div style="width:12px; height:12px; border-radius:3px; background:#795548;"></div>
-        <span style="font-size:13px; color:var(--ink);">Guestspot</span>
+
+      <!-- Status Filter -->
+      <div style="flex: 1; min-width: 180px;">
+        <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 6px;">Status</label>
+        <select id="dienstplanStatusFilter" onchange="applyDienstplanFilters()" style="
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 8px;
+          font-size: 14px;
+          background: white;
+        ">
+          <option value="all">Alle Status</option>
+          <option value="Available">Available</option>
+          <option value="Vacation">Vacation</option>
+          <option value="Blocked">Blocked</option>
+        </select>
       </div>
     </div>
-    
-    <div class="calendar-controls" style="margin-bottom:24px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
-        <label style="font-weight:600; font-size:14px;">Location:</label>
-        <select id="dienstplanLocationDropdown" style="min-width:200px;"></select>
-      </div>
-      <button id="prevMonthBtn" class="btn-nav">‹ Vorheriger Monat</button>
-      <button id="currentMonthBtn" class="btn-nav">Aktueller Monat</button>
-      <button id="nextMonthBtn" class="btn-nav">Nächster Monat ›</button>
-    </div>
-    
-    <div id="dienstplanContainer" style="width:100%; overflow-x:auto; overflow-y:visible;"></div>
+
+    <!-- Table 1: Dienstplan (Monthly Planning) -->
+    <div id="dienstplanTableContainer"></div>
+
+    <!-- Table 2: Work Tracking Stats -->
+    <div id="workTrackingTableContainer"></div>
   </section>
 
   <section id="artists-section">
@@ -7637,10 +7719,11 @@
       return locationColors.default;
     }
 
-    function getCurrentLocationName() {
-      const select = document.querySelector('#dienstplanLocationDropdown option:checked');
-      return select ? select.textContent : '';
-    }
+    // REMOVED: Old dienstplan system function
+    // function getCurrentLocationName() {
+    //   const select = document.querySelector('#dienstplanLocationDropdown option:checked');
+    //   return select ? select.textContent : '';
+    // }
 
     // ============================================
     // UI PERMISSIONS INITIALIZATION
@@ -8124,7 +8207,7 @@
             initRequestSearch(); // ✅ NEW: Initialize search functionality
           }
           else if (tabName === "calendar") renderCalendar();
-          else if (tabName === "dienstplan") renderDienstplan();
+          else if (tabName === "dienstplan") initializeDienstplan();
           else if (tabName === "agreements") {
             updateAgreementsDateDisplay();
             loadAgreements();
@@ -8204,17 +8287,18 @@
               renderCalendar();
             };
             
-            // Dienstplan Location Dropdown
-            const dienstplanLocSelect = document.getElementById('dienstplanLocationDropdown');
-            dienstplanLocSelect.innerHTML = locations.map(l => 
-              `<option value="${l.id}" ${l.id === selectedDienstplanLocationId ? 'selected' : ''}>${l.name}</option>`
-            ).join('');
-            
-            dienstplanLocSelect.onchange = (e) => {
-              selectedDienstplanLocationId = e.target.value;
-              console.log('Dienstplan location changed to:', selectedDienstplanLocationId);
-              renderDienstplan();
-            };
+            // Dienstplan Location Dropdown - REMOVED (old system)
+            // const dienstplanLocSelect = document.getElementById('dienstplanLocationDropdown');
+            // if (dienstplanLocSelect) {
+            //   dienstplanLocSelect.innerHTML = locations.map(l =>
+            //     `<option value="${l.id}" ${l.id === selectedDienstplanLocationId ? 'selected' : ''}>${l.name}</option>`
+            //   ).join('');
+            //
+            //   dienstplanLocSelect.onchange = (e) => {
+            //     selectedDienstplanLocationId = e.target.value;
+            //     console.log('Dienstplan location changed to:', selectedDienstplanLocationId);
+            //   };
+            // }
 
             // Artist Location Filter Dropdown
             const artistLocFilter = document.getElementById('artistLocationFilter');
@@ -15648,196 +15732,511 @@
         renderCalendar();
       });
       
-      document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
-        dienstplanDate.setMonth(dienstplanDate.getMonth() - 1);
-        renderDienstplan();
-      });
-      
-      document.getElementById('nextMonthBtn')?.addEventListener('click', () => {
-        dienstplanDate.setMonth(dienstplanDate.getMonth() + 1);
-        renderDienstplan();
-      });
-      
-      document.getElementById('currentMonthBtn')?.addEventListener('click', () => {
-        dienstplanDate = new Date();
-        renderDienstplan();
-      });
     });
 
-    function renderDienstplan() {
-      const monthDisplay = document.getElementById('dienstplanMonth');
-      const container = document.getElementById('dienstplanContainer');
-      if (!monthDisplay || !container) return;
-      
-      const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 
-                          'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-      const month = monthNames[dienstplanDate.getMonth()];
-      const year = dienstplanDate.getFullYear();
-      monthDisplay.textContent = `${month} ${year}`;
-      
-      // Get location colors
-      const locationData = document.querySelector('#dienstplanLocationDropdown option:checked')?.textContent || '';
-      const colors = getLocationColors(locationData);
-      
-      const daysInMonth = new Date(dienstplanDate.getFullYear(), dienstplanDate.getMonth() + 1, 0).getDate();
+    // ===== NEW DIENSTPLAN & WORK TRACKING SYSTEM =====
 
-      // Filter by selected location if applicable
-      let filteredMembers = allTeamMembers;
-      if (selectedDienstplanLocationId) {
-        filteredMembers = allTeamMembers.filter(m =>
-          // Show all non-artist roles
-          m.category !== 'Resident Artists' ||
-          // OR show artists only if they match the location
-          (m.category === 'Resident Artists' && m.city_location === getCurrentLocationName())
-        );
-      }
+    // Global variables for caching
+    let dienstplanCache = [];
+    let dienstplanFiltered = [];
+    let workTrackingCache = [];
+    let workTrackingStats = {};
 
-      // Group team members by category
-      const categories = [];
-      const categoryNames = ['Geschäftsführung', 'Management', 'Booking Team', 'Mediadepartment', 'Resident Artists', 'Guest Artists', 'Azubis', 'Andere'];
-      
-      categoryNames.forEach(categoryName => {
-        const members = filteredMembers.filter(m => m.category === categoryName && m.active);
-        if (members.length > 0 || categoryName === 'Resident Artists' || categoryName === 'Guest Artists') {
-          // For Artist categories, use artists instead
-          if (categoryName === 'Resident Artists') {
-            let residentArtists = allArtists.filter(a => !a.is_guest && a.active);
-            // Filter by location if selected
-            if (selectedDienstplanLocationId) {
-              residentArtists = residentArtists.filter(a => a.city_location === getCurrentLocationName());
-            }
-            if (residentArtists.length > 0) {
-              categories.push({
-                name: categoryName,
-                people: residentArtists.map(a => a.name)
-              });
-            }
-          } else if (categoryName === 'Guest Artists') {
-            const guestArtists = allArtists.filter(a => a.is_guest && a.active);
-            if (guestArtists.length > 0) {
-              categories.push({
-                name: categoryName,
-                people: guestArtists.map(a => a.name)
-              });
-            }
-          } else {
-            categories.push({
-              name: categoryName,
-              people: members.map(m => m.name)
-            });
-          }
-        }
-      });
-      
-      let html = '<table style="width:auto; min-width:100%; border-collapse:collapse; background:white; table-layout:fixed;">';
-      
-      // Header row with days
-      html += '<thead><tr>';
-      html += '<th style="position:sticky; left:0; z-index:20; background:rgba(249,249,249,0.98); padding:12px; text-align:left; border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); font-size:13px; color:#666; width:150px; min-width:150px; max-width:150px;">Resources</th>';
-      
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(dienstplanDate.getFullYear(), dienstplanDate.getMonth(), day);
-        const weekday = date.toLocaleDateString('de-DE', { weekday: 'short' }).toUpperCase();
-        
-        // Check if this is today
-        const today = new Date();
-        const isToday = date.getDate() === today.getDate() && 
-                        date.getMonth() === today.getMonth() && 
-                        date.getFullYear() === today.getFullYear();
-        
-        const todayStyle = isToday ? 'background:#ff3b30; color:white;' : `background:${colors.light};`;
-        
-        html += `<th style="${todayStyle} padding:8px 4px; text-align:center; border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); font-size:11px; width:80px; min-width:80px; max-width:80px;">
-                   <div style="font-size:13px; font-weight:600; ${isToday ? 'color:white;' : 'color:#1d1d1f;'}">${day}</div>
-                   <div style="font-size:10px; font-weight:500; ${isToday ? 'color:rgba(255,255,255,0.9);' : 'color:#666;'} margin-top:2px;">${weekday}</div>
-                 </th>`;
-      }
-      html += '</tr></thead>';
-      
-      html += '<tbody>';
-      
-      categories.forEach((cat, catIndex) => {
-        // Category header row
-        html += `<tr class="category-row">
-                   <td colspan="${daysInMonth + 1}" style="padding:0; border-bottom:1px solid rgba(0,0,0,0.06);">
-                     <button class="category-header-btn" data-category="${catIndex}" style="width:100%; display:flex; align-items:center; justify-content:flex-start; background:#f5f5f5; color:#1d1d1f; border:none; padding:12px 16px; font-size:14px; font-weight:600; cursor:pointer; text-align:left; font-family:inherit;">
-                       <span class="arrow" style="margin-right:8px; font-size:12px; display:inline-block; width:16px; transition:transform 0.3s ease;">▶</span>
-                       <span>${cat.name}</span>
-                     </button>
-                   </td>
-                 </tr>`;
-        
-        // People rows (hidden by default)
-        cat.people.forEach((person, personIndex) => {
-          html += `<tr class="person-row" data-category="${catIndex}" style="display:none;">
-                     <td style="position:sticky; left:0; z-index:10; background:rgba(255,255,255,0.98); padding:10px 12px 10px 32px; text-align:left; border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); font-size:13px; color:#1d1d1f; width:150px; min-width:150px; max-width:150px;">${person}</td>`;
-          
-          for (let day = 1; day <= daysInMonth; day++) {
-            html += `<td style="border-right:1px solid rgba(0,0,0,0.06); border-bottom:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.8); cursor:pointer; padding:0; width:80px; min-width:80px; max-width:80px;">
-                       <div class="dp-cell" data-cat="${catIndex}" data-person="${personIndex}" data-day="${day}" style="width:100%; height:100%; min-height:40px;"></div>
-                     </td>`;
-          }
-          
-          html += '</tr>';
-        });
-      });
-      
-      html += '</tbody></table>';
-      container.innerHTML = html;
-      
-      // Add event listeners
-      document.querySelectorAll('.category-header-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const catIndex = this.dataset.category;
-          const arrow = this.querySelector('.arrow');
-          const personRows = document.querySelectorAll(`.person-row[data-category="${catIndex}"]`);
-          const isOpen = openCategories.has(catIndex);
-          
-          if (isOpen) {
-            personRows.forEach(row => row.style.display = 'none');
-            arrow.style.transform = 'rotate(0deg)';
-            openCategories.delete(catIndex);
-          } else {
-            personRows.forEach(row => row.style.display = 'table-row');
-            arrow.style.transform = 'rotate(90deg)';
-            openCategories.add(catIndex);
-          }
-        });
-      });
-      
-      // Restore previously open categories
-      openCategories.forEach(catIndex => {
-        const btn = document.querySelector(`.category-header-btn[data-category="${catIndex}"]`);
-        const arrow = btn?.querySelector('.arrow');
-        const personRows = document.querySelectorAll(`.person-row[data-category="${catIndex}"]`);
-        
-        if (btn && arrow) {
-          personRows.forEach(row => row.style.display = 'table-row');
-          arrow.style.transform = 'rotate(90deg)';
-        }
-      });
-      
-      // Cell click handlers with location colors
-      document.querySelectorAll('.dp-cell').forEach(cell => {
-        cell.addEventListener('click', function() {
-          if (!this.classList.contains('working') && !this.classList.contains('off') && !this.classList.contains('vacation')) {
-            this.classList.add('working');
-            this.style.background = colors.accent;
-          } else if (this.classList.contains('working')) {
-            this.classList.remove('working');
-            this.classList.add('off');
-            this.style.background = '#FFEBEE';
-          } else if (this.classList.contains('off')) {
-            this.classList.remove('off');
-            this.classList.add('vacation');
-            this.style.background = '#FFF3E0';
-          } else {
-            this.classList.remove('vacation');
-            this.style.background = '';
-          }
-        });
-      });
+    // Helper function: Get role badge HTML
+    function getRoleBadge(role) {
+      const roleColors = {
+        'Geschäftsführung': { bg: 'rgba(255, 215, 0, 0.15)', text: '#B8860B', label: 'GF' },
+        'Management': { bg: 'rgba(0, 122, 255, 0.15)', text: '#007AFF', label: 'Management' },
+        'Booking Team': { bg: 'rgba(175, 82, 222, 0.15)', text: '#AF52DE', label: 'Booking' },
+        'Resident Artist': { bg: 'rgba(52, 199, 89, 0.15)', text: '#34C759', label: 'Resident' },
+        'Guest Artist': { bg: 'rgba(90, 200, 250, 0.15)', text: '#5AC8FA', label: 'Guest' },
+        'Mediadepartment': { bg: 'rgba(255, 149, 0, 0.15)', text: '#FF9500', label: 'Media' },
+        'other': { bg: 'rgba(142, 142, 147, 0.15)', text: '#8E8E93', label: 'Other' }
+      };
+
+      const config = roleColors[role] || {
+        bg: 'rgba(142, 142, 147, 0.15)',
+        text: '#8E8E93',
+        label: role || 'Unbekannt'
+      };
+
+      return `
+        <span style="
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 6px;
+          background: ${config.bg};
+          color: ${config.text};
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          text-transform: uppercase;
+        ">${config.label}</span>
+      `;
     }
+
+    // Helper function: Get status badge HTML
+    function getStatusBadge(status) {
+      const statusColors = {
+        'Available': { bg: 'rgba(52, 199, 89, 0.15)', text: '#34C759' },
+        'Vacation': { bg: 'rgba(255, 149, 0, 0.15)', text: '#FF9500' },
+        'Blocked': { bg: 'rgba(255, 59, 48, 0.15)', text: '#FF3B30' }
+      };
+
+      const config = statusColors[status] || { bg: 'rgba(142, 142, 147, 0.15)', text: '#8E8E93' };
+
+      return `
+        <span style="
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 6px;
+          background: ${config.bg};
+          color: ${config.text};
+          font-size: 11px;
+          font-weight: 600;
+        ">${status || 'N/A'}</span>
+      `;
+    }
+
+    // Helper function: Format date
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // Load Dienstplan Data from database
+    async function loadDienstplanData() {
+      console.log('📅 Loading Dienstplan data...');
+
+      const startDateInput = document.getElementById('dienstplanStartDate');
+      const endDateInput = document.getElementById('dienstplanEndDate');
+
+      // Set default dates if not set (current month)
+      if (!startDateInput.value) {
+        const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        startDateInput.value = startDate.toISOString().split('T')[0];
+      }
+      if (!endDateInput.value) {
+        const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+        endDateInput.value = endDate.toISOString().split('T')[0];
+      }
+
+      const startDate = startDateInput.value;
+      const endDate = endDateInput.value;
+
+      try {
+        const { data, error } = await supabase
+          .from('dienstplan')
+          .select(`
+            *,
+            artist:artists!artist_id(
+              name,
+              email,
+              instagram,
+              rank,
+              is_guest
+            ),
+            location:locations!location_id(
+              name,
+              city
+            )
+          `)
+          .gte('start_date', startDate)
+          .lte('end_date', endDate)
+          .order('start_date', { ascending: true });
+
+        if (error) {
+          console.error('❌ Error loading dienstplan:', error);
+          showNotification('Fehler beim Laden der Dienstplan-Daten', 'error');
+          return;
+        }
+
+        console.log('✅ Dienstplan loaded:', data.length, 'entries');
+        dienstplanCache = data;
+        applyDienstplanFilters();
+
+        // Also load work tracking data
+        await loadWorkTrackingData();
+      } catch (err) {
+        console.error('❌ Exception loading dienstplan:', err);
+        showNotification('Fehler beim Laden der Dienstplan-Daten', 'error');
+      }
+    }
+
+    // Apply filters to dienstplan data
+    function applyDienstplanFilters() {
+      const roleFilter = document.getElementById('dienstplanRoleFilter')?.value || 'all';
+      const statusFilter = document.getElementById('dienstplanStatusFilter')?.value || 'all';
+
+      console.log('🔍 Applying filters - Role:', roleFilter, 'Status:', statusFilter);
+
+      dienstplanFiltered = dienstplanCache.filter(entry => {
+        // Role filter
+        if (roleFilter !== 'all') {
+          if (roleFilter === 'null' && entry.role !== null) return false;
+          if (roleFilter !== 'null' && entry.role !== roleFilter) return false;
+        }
+
+        // Status filter
+        if (statusFilter !== 'all' && entry.state !== statusFilter) return false;
+
+        return true;
+      });
+
+      // Sort: start_date ASC, then role ASC
+      dienstplanFiltered.sort((a, b) => {
+        const dateCompare = new Date(a.start_date) - new Date(b.start_date);
+        if (dateCompare !== 0) return dateCompare;
+        return (a.role || 'zzz').localeCompare(b.role || 'zzz');
+      });
+
+      console.log('✅ Filtered:', dienstplanFiltered.length, 'entries');
+      renderDienstplanTable();
+    }
+
+    // Render Dienstplan Table (Table 1)
+    function renderDienstplanTable() {
+      const container = document.getElementById('dienstplanTableContainer');
+      if (!container) return;
+
+      if (!dienstplanFiltered || dienstplanFiltered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: #86868b;">
+            <p style="font-size: 16px;">Keine Einträge gefunden</p>
+            <p style="font-size: 14px; margin-top: 8px;">Wählen Sie einen anderen Zeitraum oder passen Sie die Filter an.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <div style="margin-bottom: 30px;">
+          <h3 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 600; color: #1d1d1f;">
+            📅 Dienstplan - Monatsansicht
+            <span style="color: #86868b; font-weight: 500; font-size: 15px; margin-left: 8px;">
+              (${dienstplanFiltered.length} Einträge)
+            </span>
+          </h3>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0; background: white; border-radius: 8px; overflow: hidden;">
+              <thead>
+                <tr style="background: rgba(0,0,0,0.02);">
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Rolle</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Artist</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Email</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Zeitraum</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Arbeitszeit</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Status</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Location</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      dienstplanFiltered.forEach((entry, index) => {
+        const artistName = entry.artist?.name || 'Unbekannt';
+        const locationName = entry.location?.name || 'N/A';
+        const workingHours = entry.working_start && entry.working_end
+          ? `${entry.working_start.substring(0,5)} - ${entry.working_end.substring(0,5)}`
+          : 'N/A';
+        const dateRange = `${formatDate(entry.start_date)} - ${formatDate(entry.end_date)}`;
+
+        html += `
+          <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); ${index % 2 === 0 ? 'background: rgba(0,0,0,0.01);' : ''}">
+            <td style="padding: 12px;">
+              ${getRoleBadge(entry.role)}
+            </td>
+            <td style="padding: 12px; font-weight: 500; color: #1d1d1f;">
+              ${artistName}
+            </td>
+            <td style="padding: 12px; color: #86868b; font-size: 13px;">
+              ${entry.email || 'N/A'}
+            </td>
+            <td style="padding: 12px; color: #1d1d1f; font-size: 13px;">
+              ${dateRange}
+            </td>
+            <td style="padding: 12px; color: #1d1d1f; font-size: 13px; font-weight: 500;">
+              ${workingHours}
+            </td>
+            <td style="padding: 12px;">
+              ${getStatusBadge(entry.state)}
+            </td>
+            <td style="padding: 12px; color: #86868b; font-size: 13px;">
+              ${locationName}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Load Work Tracking Data from database
+    async function loadWorkTrackingData() {
+      console.log('⏰ Loading Work Tracking data...');
+
+      const startDate = document.getElementById('dienstplanStartDate').value;
+      const endDate = document.getElementById('dienstplanEndDate').value;
+
+      try {
+        const { data, error } = await supabase
+          .from('work_tracking')
+          .select(`
+            *,
+            profile:profiles!user_id(
+              username,
+              email,
+              role,
+              avatar_url,
+              weekly_hours,
+              vacation_days
+            ),
+            location:locations!location_id(
+              name,
+              city
+            )
+          `)
+          .gte('date', startDate)
+          .lte('date', endDate)
+          .order('date', { ascending: false });
+
+        if (error) {
+          console.error('❌ Error loading work_tracking:', error);
+          return;
+        }
+
+        console.log('✅ Work Tracking loaded:', data.length, 'entries');
+        workTrackingCache = data;
+        calculateWorkTrackingStats();
+      } catch (err) {
+        console.error('❌ Exception loading work tracking:', err);
+      }
+    }
+
+    // Calculate Work Tracking Statistics
+    function calculateWorkTrackingStats() {
+      console.log('📊 Calculating Work Tracking stats...');
+
+      // Group by user_email
+      const userStats = {};
+
+      workTrackingCache.forEach(entry => {
+        const email = entry.user_email || entry.profile?.email;
+        if (!email) return;
+
+        if (!userStats[email]) {
+          userStats[email] = {
+            username: entry.profile?.username || email.split('@')[0],
+            email: email,
+            role: entry.role || entry.profile?.role,
+            weekly_hours: entry.profile?.weekly_hours || 40,
+            vacation_days: entry.profile?.vacation_days || 30,
+            total_hours_worked: 0,
+            total_days_worked: 0,
+            vacation_days_taken: 0,
+            sick_days: 0,
+            entries: []
+          };
+        }
+
+        userStats[email].entries.push(entry);
+
+        // Calculate hours
+        if (entry.total_hours) {
+          userStats[email].total_hours_worked += parseFloat(entry.total_hours);
+        }
+
+        // Count working days
+        if (entry.status === 'working') {
+          userStats[email].total_days_worked++;
+        }
+
+        // Count vacation and sick days
+        if (entry.status === 'vacation') {
+          userStats[email].vacation_days_taken++;
+        }
+        if (entry.status === 'sick') {
+          userStats[email].sick_days++;
+        }
+      });
+
+      workTrackingStats = userStats;
+      renderWorkTrackingTable();
+    }
+
+    // Render Work Tracking Table (Table 2)
+    function renderWorkTrackingTable() {
+      const container = document.getElementById('workTrackingTableContainer');
+      if (!container) return;
+
+      const users = Object.values(workTrackingStats);
+
+      if (users.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: #86868b;">
+            <p style="font-size: 16px;">Keine Work Tracking Daten vorhanden</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <div style="margin-top: 40px; padding-top: 40px; border-top: 2px solid rgba(0,0,0,0.05);">
+          <h3 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 600; color: #1d1d1f;">
+            ⏰ Work Tracking - Übersicht
+            <span style="color: #86868b; font-weight: 500; font-size: 15px; margin-left: 8px;">
+              (${users.length} Mitarbeiter)
+            </span>
+          </h3>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0; background: white; border-radius: 8px; overflow: hidden;">
+              <thead>
+                <tr style="background: rgba(0,0,0,0.02);">
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Rolle</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Name</th>
+                  <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Email</th>
+                  <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Wochenstunden (Soll)</th>
+                  <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Gearbeitete Stunden</th>
+                  <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Arbeitstage</th>
+                  <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Urlaubstage (verfügbar)</th>
+                  <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Urlaub genommen</th>
+                  <th style="padding: 12px; text-align: center; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.1);">Krankheitstage</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      users.forEach((user, index) => {
+        const remainingVacation = user.vacation_days - user.vacation_days_taken;
+        const avgHoursPerDay = user.total_days_worked > 0
+          ? (user.total_hours_worked / user.total_days_worked).toFixed(1)
+          : '0';
+
+        html += `
+          <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); ${index % 2 === 0 ? 'background: rgba(0,0,0,0.01);' : ''}">
+            <td style="padding: 12px;">
+              ${getRoleBadge(user.role)}
+            </td>
+            <td style="padding: 12px; font-weight: 500; color: #1d1d1f;">
+              ${user.username}
+            </td>
+            <td style="padding: 12px; color: #86868b; font-size: 13px;">
+              ${user.email}
+            </td>
+            <td style="padding: 12px; text-align: center; color: #1d1d1f; font-weight: 500;">
+              ${user.weekly_hours}h / Woche
+            </td>
+            <td style="padding: 12px; text-align: center; color: #1d1d1f; font-weight: 600; font-size: 15px;">
+              ${user.total_hours_worked.toFixed(1)}h
+              <span style="color: #86868b; font-size: 12px; font-weight: 400; display: block; margin-top: 2px;">(Ø ${avgHoursPerDay}h/Tag)</span>
+            </td>
+            <td style="padding: 12px; text-align: center; color: #1d1d1f; font-weight: 500;">
+              ${user.total_days_worked} Tage
+            </td>
+            <td style="padding: 12px; text-align: center; color: #34C759; font-weight: 600;">
+              ${remainingVacation} / ${user.vacation_days}
+            </td>
+            <td style="padding: 12px; text-align: center; color: #FF9500; font-weight: 500;">
+              ${user.vacation_days_taken} Tage
+            </td>
+            <td style="padding: 12px; text-align: center; color: #FF3B30; font-weight: 500;">
+              ${user.sick_days} Tage
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Switch Calendar View (Appointments / Work Tracking)
+    function switchCalendarView(view) {
+      const tabAppointments = document.getElementById('calendarTabAppointments');
+      const tabWorkTracking = document.getElementById('calendarTabWorkTracking');
+      const appointmentsView = document.getElementById('calendarAppointmentsView');
+      const workTrackingView = document.getElementById('calendarWorkTrackingView');
+
+      if (!tabAppointments || !tabWorkTracking || !appointmentsView || !workTrackingView) return;
+
+      // Update active tab
+      tabAppointments.style.borderBottom =
+        view === 'appointments' ? '2px solid #007AFF' : '2px solid transparent';
+      tabWorkTracking.style.borderBottom =
+        view === 'worktracking' ? '2px solid #007AFF' : '2px solid transparent';
+
+      if (view === 'appointments') {
+        appointmentsView.style.display = 'block';
+        workTrackingView.style.display = 'none';
+      } else {
+        appointmentsView.style.display = 'none';
+        workTrackingView.style.display = 'block';
+        loadCalendarWorkTracking();
+      }
+    }
+
+    // Load Work Tracking for Calendar View
+    async function loadCalendarWorkTracking() {
+      const container = document.getElementById('calendarWorkTrackingContainer');
+      if (!container) return;
+
+      // Show loading state
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #86868b;">
+          <p style="font-size: 16px;">Lade Work Tracking Daten...</p>
+        </div>
+      `;
+
+      // Load data with same date range as dienstplan (use current month if not set)
+      const startDateInput = document.getElementById('dienstplanStartDate');
+      const endDateInput = document.getElementById('dienstplanEndDate');
+
+      if (!startDateInput.value) {
+        const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        startDateInput.value = startDate.toISOString().split('T')[0];
+      }
+      if (!endDateInput.value) {
+        const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+        endDateInput.value = endDate.toISOString().split('T')[0];
+      }
+
+      await loadWorkTrackingData();
+
+      // Copy content from dienstplan work tracking container
+      const sourceContainer = document.getElementById('workTrackingTableContainer');
+      if (sourceContainer) {
+        container.innerHTML = sourceContainer.innerHTML;
+      }
+    }
+
+    // Initialize Dienstplan when tab is opened
+    function initializeDienstplan() {
+      if (dienstplanCache.length === 0) {
+        loadDienstplanData();
+      }
+    }
+
+    // Make functions globally available
+    window.loadDienstplanData = loadDienstplanData;
+    window.applyDienstplanFilters = applyDienstplanFilters;
+    window.switchCalendarView = switchCalendarView;
+    window.initializeDienstplan = initializeDienstplan;
   </script>
 
   <!-- Login Modal -->
