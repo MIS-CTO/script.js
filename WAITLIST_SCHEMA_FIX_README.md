@@ -134,7 +134,7 @@ await supabase
     notes,
     status,
     share_paid,
-    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    artist:artists(id, name, email, instagram, profile_picture_url, style, is_guest),
     location:locations(id, name, city)
   `)
   .in('status', ['waiting', 'active'])
@@ -153,7 +153,7 @@ await supabase
     notes,
     status,
     share_personal_data,
-    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    artist:artists(id, name, email, instagram, profile_picture_url, style, is_guest),
     location:locations(id, name, city)
   `)
   .gte('date_from', today)
@@ -254,7 +254,7 @@ if (currentListType === 'waitlist') {
   selectQuery = `
     id, artist_id, location_id, slot_number, notes, status,
     share_paid,  // ✅ waitlist_slots field
-    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    artist:artists(id, name, email, instagram, profile_picture_url, style, is_guest),
     location:locations(id, name, city)
   `;
 } else {
@@ -263,7 +263,7 @@ if (currentListType === 'waitlist') {
     date_from, date_to,  // ✅ upcoming_slots fields
     notes, status,
     share_personal_data,  // ✅ upcoming_slots field
-    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    artist:artists(id, name, email, instagram, profile_picture_url, style, is_guest),
     location:locations(id, name, city)
   `;
 }
