@@ -828,7 +828,173 @@
     .dp-cell.vacation {
       background:#FFF3E0;
     }
-    
+
+    /* ========================================
+       DIENSTPLAN REQUEST SYSTEM STYLES
+       ======================================== */
+
+    /* New Dienstplan Calendar Grid */
+    .dienstplan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .dienstplan-day {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: saturate(160%) blur(15px);
+      -webkit-backdrop-filter: saturate(160%) blur(15px);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .dienstplan-day:hover {
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .dienstplan-date-header {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--macos-text-primary);
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .dienstplan-entry {
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .dienstplan-entry:last-child {
+      border-bottom: none;
+    }
+
+    .dienstplan-artist {
+      font-size: 13px;
+      color: var(--macos-text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .dienstplan-states {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .dienstplan-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* Request Cards */
+    .request-card {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: saturate(160%) blur(15px);
+      -webkit-backdrop-filter: saturate(160%) blur(15px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      transition: all 0.2s ease;
+    }
+
+    .request-card:hover {
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .request-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    .request-email {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--macos-text-primary);
+      margin-bottom: 5px;
+    }
+
+    .request-category {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .request-date {
+      font-size: 12px;
+      color: var(--macos-text-secondary);
+    }
+
+    .request-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+      font-size: 13px;
+      color: var(--macos-text-secondary);
+    }
+
+    .request-notes {
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 8px;
+      font-style: italic;
+      color: var(--macos-text-secondary);
+    }
+
+    .request-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .approve-btn,
+    .reject-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Geist', -apple-system, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .approve-btn {
+      background: rgba(52, 199, 89, 0.15);
+      color: #34C759;
+      border: 1px solid rgba(52, 199, 89, 0.2);
+    }
+
+    .approve-btn:hover {
+      background: rgba(52, 199, 89, 0.25);
+      border-color: rgba(52, 199, 89, 0.3);
+    }
+
+    .reject-btn {
+      background: rgba(255, 59, 48, 0.15);
+      color: #FF3B30;
+      border: 1px solid rgba(255, 59, 48, 0.2);
+    }
+
+    .reject-btn:hover {
+      background: rgba(255, 59, 48, 0.25);
+      border-color: rgba(255, 59, 48, 0.3);
+    }
+
     /* Apple-style Toggle Switch */
     .toggle-switch {
       position: relative;
@@ -3202,14 +3368,24 @@
   </section>
 
   <section id="dienstplan-section">
-    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
-      <h2 style="margin:0; font-size:28px; font-weight:700;">Dienstplan</h2>
-      <div id="dienstplanMonth" style="font-weight:700; font-size:28px; color:var(--ink);"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <h2 style="margin:0; font-size:28px; font-weight:700;">Dienstplan</h2>
+        <div id="dienstplanMonth" style="font-weight:700; font-size:28px; color:var(--ink);"></div>
+      </div>
+      <button class="btn-nav" onclick="openRequestModal()" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Neue Anfrage</span>
+      </button>
     </div>
-    
+
     <!-- Status Legend -->
     <div style="display:flex; gap:16px; margin-bottom:24px; padding:16px 20px; background:rgba(255,255,255,0.95); border-radius:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; border:1px solid rgba(0,0,0,0.06);">
       <span style="font-weight:500; font-size:13px; color:var(--muted);">Status:</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#007AFF;"></div>
+        <span style="font-size:13px; color:var(--ink);">Training</span>
+      </div>
       <div style="display:flex; align-items:center; gap:6px;">
         <div style="width:12px; height:12px; border-radius:3px; background:#2196F3;"></div>
         <span style="font-size:13px; color:var(--ink);">Home office</span>
@@ -3224,7 +3400,7 @@
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
         <div style="width:12px; height:12px; border-radius:3px; background:#9C27B0;"></div>
-        <span style="font-size:13px; color:var(--ink);">Others</span>
+        <span style="font-size:13px; color:var(--ink);">Other</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
         <div style="width:12px; height:12px; border-radius:3px; background:#F44336;"></div>
@@ -3234,8 +3410,18 @@
         <div style="width:12px; height:12px; border-radius:3px; background:#795548;"></div>
         <span style="font-size:13px; color:var(--ink);">Guestspot</span>
       </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="width:12px; height:12px; border-radius:3px; background:#FF9500;"></div>
+        <span style="font-size:13px; color:var(--ink);">Convention</span>
+      </div>
     </div>
-    
+
+    <!-- New Calendar View -->
+    <div style="background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.06); border-radius:12px; padding:20px; margin-bottom:30px;">
+      <div id="dienstplanCalendar"></div>
+    </div>
+
+    <!-- Legacy Calendar (keep for now) -->
     <div class="calendar-controls" style="margin-bottom:24px;">
       <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
         <label style="font-weight:600; font-size:14px;">Location:</label>
@@ -3245,8 +3431,14 @@
       <button id="currentMonthBtn" class="btn-nav">Aktueller Monat</button>
       <button id="nextMonthBtn" class="btn-nav">Nächster Monat ›</button>
     </div>
-    
+
     <div id="dienstplanContainer" style="width:100%; overflow-x:auto; overflow-y:visible;"></div>
+
+    <!-- Requests Section (Management Only) -->
+    <div id="requestsSection" style="display: none; margin-top:40px;">
+      <h3 style="margin-bottom: 20px; font-size:24px; font-weight:700; color:var(--ink);">Offene Anfragen</h3>
+      <div id="requestsContainer"></div>
+    </div>
   </section>
 
   <section id="artists-section">
@@ -5890,7 +6082,18 @@
             initRequestLocationTabs(); // ✅ NEW: Initialize location filter tabs
           }
           else if (tabName === "calendar") renderCalendar();
-          else if (tabName === "dienstplan") renderDienstplan();
+          else if (tabName === "dienstplan") {
+            renderDienstplan();
+            // Check if user is management and show/hide requests section
+            const role = currentUser?.role;
+            const isManagement = ['Management', 'Geschäftsführung', 'Admin'].includes(role);
+            const requestsSection = document.getElementById('requestsSection');
+            if (requestsSection) {
+              requestsSection.style.display = isManagement ? 'block' : 'none';
+            }
+            // Load new calendar data
+            loadDienstplanData();
+          }
           else if (tabName === "agreements") {
             updateAgreementsDateDisplay();
             loadAgreements();
@@ -13326,6 +13529,340 @@
         });
       });
     }
+
+    // ============================================
+    // DIENSTPLAN REQUEST SYSTEM
+    // ============================================
+
+    // Category mapping (German)
+    const DIENSTPLAN_CATEGORIES = {
+      'Training': { color: '#007AFF', label: 'Training' },
+      'Vacation': { color: '#4CAF50', label: 'Vacation' },
+      'Sick': { color: '#F44336', label: 'Sick' },
+      'Home office': { color: '#2196F3', label: 'Home office' },
+      'Business trip': { color: '#FF9800', label: 'Business trip' },
+      'Convention': { color: '#FF9500', label: 'Convention' },
+      'Guestspot': { color: '#795548', label: 'Guestspot' },
+      'Other': { color: '#9C27B0', label: 'Other' },
+      'Available': { color: '#FFFFFF', label: 'Verfügbar' }
+    };
+
+    // Open Request Modal
+    function openRequestModal() {
+      const modal = document.getElementById('requestModal');
+      modal.style.display = 'flex';
+
+      // Populate category dropdown
+      const categorySelect = document.getElementById('requestCategory');
+      categorySelect.innerHTML = '';
+
+      Object.keys(DIENSTPLAN_CATEGORIES).forEach(category => {
+        if (category !== 'Available') { // Don't allow Available requests
+          const option = document.createElement('option');
+          option.value = category;
+          option.textContent = DIENSTPLAN_CATEGORIES[category].label;
+          categorySelect.appendChild(option);
+        }
+      });
+    }
+
+    // Close Request Modal
+    function closeRequestModal() {
+      document.getElementById('requestModal').style.display = 'none';
+      document.getElementById('requestForm').reset();
+    }
+
+    // Submit Request
+    async function submitRequest() {
+      const category = document.getElementById('requestCategory').value;
+      const notes = document.getElementById('requestNotes').value;
+      const startDate = document.getElementById('requestStartDate').value;
+      const endDate = document.getElementById('requestEndDate').value;
+      const startTime = document.getElementById('requestStartTime').value;
+      const endTime = document.getElementById('requestEndTime').value;
+
+      if (!category || !startDate || !endDate) {
+        alert('Bitte fülle alle Pflichtfelder aus');
+        return;
+      }
+
+      try {
+        // Get current user's email
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', user.id)
+          .single();
+
+        const userEmail = profileData.email;
+
+        // Insert request
+        const { error } = await supabase
+          .from('working_time_requests')
+          .insert({
+            email: userEmail,
+            category: category,
+            notes: notes || null,
+            start_date: startDate,
+            end_date: endDate,
+            start_time: startTime || null,
+            end_time: endTime || null,
+            created_by: user.id
+          });
+
+        if (error) throw error;
+
+        closeRequestModal();
+        alert('Anfrage erfolgreich erstellt!');
+
+        // Reload requests if user is management
+        const role = currentUser?.role;
+        if (['Management', 'Geschäftsführung', 'Admin'].includes(role)) {
+          await loadDienstplanRequests();
+        }
+
+      } catch (error) {
+        console.error('Error submitting request:', error);
+        alert('Fehler beim Erstellen der Anfrage');
+      }
+    }
+
+    // Load Dienstplan Requests (Management only)
+    async function loadDienstplanRequests() {
+      try {
+        const { data, error } = await supabase
+          .from('working_time_requests')
+          .select('*')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        displayDienstplanRequests(data || []);
+      } catch (error) {
+        console.error('Error loading requests:', error);
+      }
+    }
+
+    // Display Requests (Management only)
+    function displayDienstplanRequests(requests) {
+      const container = document.getElementById('requestsContainer');
+      if (!container) return;
+
+      if (requests.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 40px; text-align: center; color: var(--macos-text-secondary);">
+            Keine offenen Anfragen
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = requests.map(request => `
+        <div class="request-card" data-request-id="${request.id}">
+          <div class="request-header">
+            <div>
+              <div class="request-email">${request.email}</div>
+              <div class="request-category" style="color: ${DIENSTPLAN_CATEGORIES[request.category]?.color || '#000'}">
+                ${request.category}
+              </div>
+            </div>
+            <div class="request-date">${formatDateTime(request.created_at)}</div>
+          </div>
+
+          <div class="request-details">
+            <div><strong>Von:</strong> ${formatDate(request.start_date)} ${request.start_time || ''}</div>
+            <div><strong>Bis:</strong> ${formatDate(request.end_date)} ${request.end_time || ''}</div>
+            ${request.notes ? `<div class="request-notes">${request.notes}</div>` : ''}
+          </div>
+
+          <div class="request-actions">
+            <button class="approve-btn" onclick="handleRequest('${request.id}', 'approved')">
+              <span style="color: #34C759;">✓</span> Genehmigen
+            </button>
+            <button class="reject-btn" onclick="handleRequest('${request.id}', 'rejected')">
+              <span style="color: #FF3B30;">✗</span> Ablehnen
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Handle Request Approval/Rejection
+    async function handleRequest(requestId, status) {
+      try {
+        // Get request details
+        const { data: request, error: fetchError } = await supabase
+          .from('working_time_requests')
+          .select('*')
+          .eq('id', requestId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        if (status === 'approved') {
+          // Create working_times entries for each day
+          const startDate = new Date(request.start_date);
+          const endDate = new Date(request.end_date);
+
+          const entries = [];
+
+          for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            // Create entries for business hours (10:00-20:00, 30-min slots)
+            for (let hour = 10; hour < 20; hour++) {
+              for (let minute = 0; minute < 60; minute += 30) {
+                const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+
+                entries.push({
+                  date: d.toISOString().split('T')[0],
+                  time: timeStr,
+                  email: request.email,
+                  state: request.category
+                });
+              }
+            }
+          }
+
+          // Insert all entries
+          const { error: insertError } = await supabase
+            .from('working_times')
+            .insert(entries);
+
+          if (insertError) throw insertError;
+        }
+
+        // Update request status
+        const { data: { user } } = await supabase.auth.getUser();
+        const { error: updateError } = await supabase
+          .from('working_time_requests')
+          .update({
+            status: status,
+            reviewed_by: user.id,
+            reviewed_at: new Date().toISOString()
+          })
+          .eq('id', requestId);
+
+        if (updateError) throw updateError;
+
+        await loadDienstplanRequests();
+        alert(`Anfrage ${status === 'approved' ? 'genehmigt' : 'abgelehnt'}`);
+
+      } catch (error) {
+        console.error('Error handling request:', error);
+        alert('Fehler beim Bearbeiten der Anfrage');
+      }
+    }
+
+    // Load Dienstplan Data (with role-based filtering)
+    async function loadDienstplanData() {
+      try {
+        // Get current user info
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, role')
+          .eq('id', user.id)
+          .single();
+
+        const userRole = profile.role;
+        const isManagement = ['Management', 'Geschäftsführung', 'Admin'].includes(userRole);
+
+        // Fetch working_times (RLS will filter automatically)
+        const { data: workingTimes, error } = await supabase
+          .from('working_times')
+          .select('*')
+          .order('date', { ascending: true })
+          .order('time', { ascending: true });
+
+        if (error) throw error;
+
+        displayDienstplanCalendar(workingTimes || []);
+
+        // Load requests if management
+        if (isManagement) {
+          await loadDienstplanRequests();
+        }
+
+      } catch (error) {
+        console.error('Error loading Dienstplan:', error);
+      }
+    }
+
+    // Display Dienstplan Calendar
+    function displayDienstplanCalendar(workingTimes) {
+      const container = document.getElementById('dienstplanCalendar');
+      if (!container) return;
+
+      // Group by date and email
+      const groupedData = {};
+
+      workingTimes.forEach(entry => {
+        const dateKey = entry.date;
+        const emailKey = entry.email;
+
+        if (!groupedData[dateKey]) {
+          groupedData[dateKey] = {};
+        }
+
+        if (!groupedData[dateKey][emailKey]) {
+          groupedData[dateKey][emailKey] = [];
+        }
+
+        groupedData[dateKey][emailKey].push(entry);
+      });
+
+      // Create calendar view
+      const dates = Object.keys(groupedData).sort();
+
+      container.innerHTML = `
+        <div class="dienstplan-grid">
+          ${dates.map(date => {
+            const dayData = groupedData[date];
+            const emails = Object.keys(dayData);
+
+            return `
+              <div class="dienstplan-day">
+                <div class="dienstplan-date-header">${formatDate(date)}</div>
+                ${emails.map(email => {
+                  const entries = dayData[email];
+                  const states = [...new Set(entries.map(e => e.state))];
+
+                  return `
+                    <div class="dienstplan-entry">
+                      <div class="dienstplan-artist">${email.split('@')[0]}</div>
+                      <div class="dienstplan-states">
+                        ${states.map(state => `
+                          <span class="dienstplan-badge" style="background: ${DIENSTPLAN_CATEGORIES[state]?.color || '#666'}; color: ${state === 'Available' || state === 'Sick' ? '#000' : '#fff'};">
+                            ${state}
+                          </span>
+                        `).join('')}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    // Format Date Helper
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+      const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+      return `${days[date.getDay()]}, ${date.getDate()}. ${months[date.getMonth()]}`;
+    }
+
+    // Format DateTime Helper
+    function formatDateTime(isoString) {
+      const date = new Date(isoString);
+      return formatDate(date.toISOString().split('T')[0]) + ' ' +
+             date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
   </script>
 
   <!-- Login Modal -->
@@ -13462,6 +13999,65 @@
         <button type="button" class="btn btn-secondary" onclick="closeAvatarUploadModal()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1;">Abbrechen</button>
         <button type="button" class="btn" id="uploadAvatarBtn" onclick="uploadAvatarFromModal()" disabled style="background:var(--ink); color:white; border:none; flex:1; opacity:0.5;">Hochladen</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       DIENSTPLAN REQUEST MODAL
+       ======================================== -->
+  <div id="requestModal" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0, 0, 0, 0.5); backdrop-filter:blur(10px); z-index:10000; align-items:center; justify-content:center; padding:20px;">
+    <div class="modal" style="max-width:500px; width:100%; max-height:90vh; overflow-y:auto; background:rgba(255,255,255,0.95); backdrop-filter:saturate(180%) blur(20px); border:1px solid rgba(0,0,0,0.1); border-radius:16px; padding:30px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+        <h3 style="font-size:20px; font-weight:600; color:var(--macos-text-primary); margin:0;">Neue Dienstplan-Anfrage</h3>
+        <button onclick="closeRequestModal()" style="background:none; border:none; font-size:28px; color:var(--macos-text-secondary); cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; transition:color 0.2s ease;">
+          ×
+        </button>
+      </div>
+
+      <form id="requestForm" onsubmit="event.preventDefault(); submitRequest();">
+        <div style="margin-bottom:20px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--macos-text-secondary); margin-bottom:8px;">Kategorie *</label>
+          <select id="requestCategory" required style="width:100%; padding:12px; background:rgba(255, 255, 255, 0.8); border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--macos-text-primary); font-family:'Geist', -apple-system, sans-serif; font-size:14px; transition:all 0.2s ease;">
+            <!-- Populated by JavaScript -->
+          </select>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--macos-text-secondary); margin-bottom:8px;">Von Datum *</label>
+          <input type="date" id="requestStartDate" required style="width:100%; padding:12px; background:rgba(255, 255, 255, 0.8); border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--macos-text-primary); font-family:'Geist', -apple-system, sans-serif; font-size:14px; transition:all 0.2s ease;">
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--macos-text-secondary); margin-bottom:8px;">Bis Datum *</label>
+          <input type="date" id="requestEndDate" required style="width:100%; padding:12px; background:rgba(255, 255, 255, 0.8); border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--macos-text-primary); font-family:'Geist', -apple-system, sans-serif; font-size:14px; transition:all 0.2s ease;">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+          <div>
+            <label style="display:block; font-size:13px; font-weight:500; color:var(--macos-text-secondary); margin-bottom:8px;">Von Uhrzeit (optional)</label>
+            <input type="time" id="requestStartTime" style="width:100%; padding:12px; background:rgba(255, 255, 255, 0.8); border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--macos-text-primary); font-family:'Geist', -apple-system, sans-serif; font-size:14px; transition:all 0.2s ease;">
+          </div>
+
+          <div>
+            <label style="display:block; font-size:13px; font-weight:500; color:var(--macos-text-secondary); margin-bottom:8px;">Bis Uhrzeit (optional)</label>
+            <input type="time" id="requestEndTime" style="width:100%; padding:12px; background:rgba(255, 255, 255, 0.8); border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--macos-text-primary); font-family:'Geist', -apple-system, sans-serif; font-size:14px; transition:all 0.2s ease;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:25px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--macos-text-secondary); margin-bottom:8px;">Notizen (optional)</label>
+          <textarea id="requestNotes" rows="3" placeholder="Zusätzliche Informationen..." style="width:100%; padding:12px; background:rgba(255, 255, 255, 0.8); border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--macos-text-primary); font-family:'Geist', -apple-system, sans-serif; font-size:14px; transition:all 0.2s ease; resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:25px;">
+          <button type="button" onclick="closeRequestModal()" class="btn-secondary" style="flex:1; padding:12px; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--macos-text-primary); font-family:'Geist', -apple-system, sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s ease;">
+            Abbrechen
+          </button>
+          <button type="submit" class="btn-nav" style="flex:1; padding:12px; background:#1d1d1f; border:none; border-radius:8px; color:white; font-family:'Geist', -apple-system, sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s ease;">
+            Anfrage senden
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
