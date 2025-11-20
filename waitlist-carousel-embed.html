@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waitlist Carousel Embed</title>
+    <style>
+        /* ============================================
+           WAITLIST CAROUSEL EMBED - INLINE STYLES
+           ============================================ */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Main Container */
+        .waitlist-carousel {
+            width: 100%;
+            height: 50vh;
+            position: relative;
+            overflow: hidden;
+            display: none; /* Hidden by default until data loads */
+        }
+
+        .waitlist-carousel.visible {
+            display: block;
+        }
+
+        /* Image Section (35vh) */
+        .carousel-image-section {
+            width: 100%;
+            height: 35vh;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Image Overlays */
+        .carousel-overlay {
+            position: absolute;
+            z-index: 10;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .carousel-style-overlay {
+            top: 16px;
+            left: 16px;
+        }
+
+        .carousel-style-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .carousel-style-value {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .carousel-instagram-overlay {
+            top: 16px;
+            right: 16px;
+        }
+
+        .carousel-instagram-link {
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .carousel-instagram-link:hover {
+            opacity: 0.8;
+        }
+
+        /* Text Section (15vh) */
+        .carousel-text-section {
+            width: 100%;
+            height: 15vh;
+            background: #f5f5f5;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top Row: Name/Dates + Button */
+        .carousel-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .carousel-artist-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .carousel-artist-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d2d2d;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .carousel-dates {
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .carousel-book-button {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+            white-space: nowrap;
+            margin-left: 16px;
+            flex-shrink: 0;
+        }
+
+        .carousel-book-button:hover {
+            background: #333;
+        }
+
+        /* Bio Text */
+        .carousel-bio {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* Loading/Error States */
+        .carousel-state-message {
+            width: 100%;
+            height: 50vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .carousel-state-message.hidden {
+            display: none;
+        }
+
+        .carousel-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d2d2d;
+            margin-bottom: 8px;
+        }
+
+        .carousel-state-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .carousel-debug-info {
+            font-size: 11px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+            background: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 8px;
+            max-width: 90%;
+            word-break: break-all;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .carousel-artist-name {
+                font-size: 18px;
+            }
+
+            .carousel-dates {
+                font-size: 12px;
+            }
+
+            .carousel-bio {
+                font-size: 11px;
+            }
+
+            .carousel-book-button {
+                padding: 8px 16px;
+                font-size: 11px;
+            }
+
+            .carousel-style-overlay,
+            .carousel-instagram-overlay {
+                top: 12px;
+            }
+
+            .carousel-style-overlay {
+                left: 12px;
+            }
+
+            .carousel-instagram-overlay {
+                right: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================================
+     WAITLIST CAROUSEL EMBED COMPONENT
+     ============================================ -->
+
+<!-- Loading/Error State Container -->
+<div id="carouselState" class="carousel-state-message">
+    <div class="carousel-state-title">Loading...</div>
+    <div class="carousel-state-description">Fetching artist data...</div>
+</div>
+
+<!-- Main Carousel Container -->
+<div id="waitlistCarousel" class="waitlist-carousel">
+    <!-- Image Section (35vh) -->
+    <div class="carousel-image-section">
+        <img id="carouselImage" class="carousel-image" alt="Artist">
+
+        <!-- Style Overlay (Top-Left) -->
+        <div class="carousel-overlay carousel-style-overlay">
+            <div class="carousel-style-label">Style</div>
+            <div id="carouselStyle" class="carousel-style-value">—</div>
+        </div>
+
+        <!-- Instagram Overlay (Top-Right) -->
+        <div class="carousel-overlay carousel-instagram-overlay">
+            <a id="carouselInstagram" href="#" target="_blank" class="carousel-instagram-link">@—</a>
+        </div>
+    </div>
+
+    <!-- Text Section (15vh) -->
+    <div class="carousel-text-section">
+        <!-- Top Row: Name/Dates + Button -->
+        <div class="carousel-header-row">
+            <div class="carousel-artist-info">
+                <div id="carouselName" class="carousel-artist-name">Artist Name</div>
+                <div id="carouselDates" class="carousel-dates">—</div>
+            </div>
+            <button id="carouselButton" class="carousel-book-button">Book now</button>
+        </div>
+
+        <!-- Bio -->
+        <div id="carouselBio" class="carousel-bio">
+            Loading artist information...
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ============================================
+       CONFIGURATION
+       ============================================ */
+
+    // ⚙️ CHANGE THIS NUMBER TO SWITCH SLOTS (1-60)
+    const SLOT_NUMBER = 1;
+
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://auxxyehgzkozdjylhqnx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA';
+
+    // Auto-refresh interval (5 minutes)
+    const REFRESH_INTERVAL = 5 * 60 * 1000;
+
+    /* ============================================
+       UTILITY FUNCTIONS
+       ============================================ */
+
+    /**
+     * Format date to German short format (e.g., "20.Nov-4.Dez")
+     */
+    function formatGermanDateRange(dateFrom, dateTo) {
+        if (!dateFrom || !dateTo) return '—';
+
+        const germanMonths = {
+            1: 'Jan', 2: 'Feb', 3: 'Mär', 4: 'Apr', 5: 'Mai', 6: 'Jun',
+            7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Dez'
+        };
+
+        try {
+            const from = new Date(dateFrom);
+            const to = new Date(dateTo);
+
+            const fromDay = from.getDate();
+            const fromMonth = germanMonths[from.getMonth() + 1];
+
+            const toDay = to.getDate();
+            const toMonth = germanMonths[to.getMonth() + 1];
+
+            return `${fromDay}.${fromMonth}-${toDay}.${toMonth}`;
+        } catch (error) {
+            console.error('Date formatting error:', error);
+            return '—';
+        }
+    }
+
+    /**
+     * Truncate text to max length with ellipsis
+     */
+    function truncateText(text, maxLength = 120) {
+        if (!text) return '';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength).trim() + '...';
+    }
+
+    /**
+     * Get initials from artist name
+     */
+    function getInitials(name) {
+        if (!name) return '?';
+        const parts = name.split(' ');
+        if (parts.length >= 2) {
+            return parts[0][0] + parts[parts.length - 1][0];
+        }
+        return name[0] || '?';
+    }
+
+    /* ============================================
+       STATE MANAGEMENT
+       ============================================ */
+
+    /**
+     * Show loading state
+     */
+    function showLoadingState() {
+        console.log(`🔄 Loading Slot ${SLOT_NUMBER}...`);
+
+        const stateEl = document.getElementById('carouselState');
+        const carouselEl = document.getElementById('waitlistCarousel');
+
+        stateEl.innerHTML = `
+            <div class="carousel-state-title">Loading Slot ${SLOT_NUMBER}...</div>
+            <div class="carousel-state-description">Fetching artist data from Supabase</div>
+        `;
+        stateEl.classList.remove('hidden');
+        carouselEl.classList.remove('visible');
+    }
+
+    /**
+     * Show empty state (no artist in slot)
+     */
+    function showEmptyState() {
+        console.log(`⚠️ No artist found in Slot ${SLOT_NUMBER}`);
+
+        const stateEl = document.getElementById('carouselState');
+        const carouselEl = document.getElementById('waitlistCarousel');
+
+        stateEl.innerHTML = `
+            <div class="carousel-state-title">⚠️ No artist in Slot ${SLOT_NUMBER}</div>
+            <div class="carousel-state-description">This slot is currently inactive</div>
+            <div class="carousel-debug-info">Add data in Supabase: active_waitlist_view</div>
+        `;
+        stateEl.classList.remove('hidden');
+        carouselEl.classList.remove('visible');
+    }
+
+    /**
+     * Show error state
+     */
+    function showErrorState(error) {
+        console.error('❌ Error loading carousel:', error);
+
+        const stateEl = document.getElementById('carouselState');
+        const carouselEl = document.getElementById('waitlistCarousel');
+
+        stateEl.innerHTML = `
+            <div class="carousel-state-title">❌ Error Loading Slot ${SLOT_NUMBER}</div>
+            <div class="carousel-state-description">Failed to fetch artist data</div>
+            <div class="carousel-debug-info">${error.message || 'Unknown error'}</div>
+        `;
+        stateEl.classList.remove('hidden');
+        carouselEl.classList.remove('visible');
+    }
+
+    /**
+     * Show success state with artist data
+     */
+    function showSuccessState(artistData) {
+        console.log(`✅ Successfully loaded Slot ${SLOT_NUMBER}:`, artistData);
+
+        const stateEl = document.getElementById('carouselState');
+        const carouselEl = document.getElementById('waitlistCarousel');
+
+        // Hide state message, show carousel
+        stateEl.classList.add('hidden');
+        carouselEl.classList.add('visible');
+
+        // Populate carousel with artist data
+        populateCarousel(artistData);
+    }
+
+    /* ============================================
+       DATA POPULATION
+       ============================================ */
+
+    /**
+     * Populate carousel with artist data
+     */
+    function populateCarousel(data) {
+        // Image (with fallback to gradient)
+        const imageEl = document.getElementById('carouselImage');
+        const imageUrl = data.profile_picture_url || data.background_image_url;
+
+        if (imageUrl) {
+            imageEl.src = imageUrl;
+            imageEl.alt = data.artist_name || 'Artist';
+
+            // Handle image load error
+            imageEl.onerror = () => {
+                console.warn('Image failed to load, using gradient placeholder');
+                imageEl.style.display = 'none';
+            };
+        } else {
+            console.log('No image URL provided, using gradient background');
+            imageEl.style.display = 'none';
+        }
+
+        // Style
+        const styleEl = document.getElementById('carouselStyle');
+        styleEl.textContent = data.style || 'Various Styles';
+
+        // Instagram
+        const instagramEl = document.getElementById('carouselInstagram');
+        if (data.instagram) {
+            const handle = data.instagram.startsWith('@') ? data.instagram : `@${data.instagram}`;
+            instagramEl.textContent = handle;
+            instagramEl.href = `https://instagram.com/${data.instagram.replace('@', '')}`;
+        } else {
+            instagramEl.textContent = '@—';
+            instagramEl.href = '#';
+            instagramEl.style.pointerEvents = 'none';
+        }
+
+        // Artist Name
+        const nameEl = document.getElementById('carouselName');
+        nameEl.textContent = data.artist_name || 'Unknown Artist';
+
+        // Dates
+        const datesEl = document.getElementById('carouselDates');
+        datesEl.textContent = formatGermanDateRange(data.date_from, data.date_to);
+
+        // Bio (with truncation)
+        const bioEl = document.getElementById('carouselBio');
+        const bioText = data.bio || data.short_description || 'No bio available';
+        bioEl.textContent = truncateText(bioText, 120);
+
+        // Book Button
+        const buttonEl = document.getElementById('carouselButton');
+        buttonEl.onclick = () => {
+            // If instagram is available, link to DM
+            if (data.instagram) {
+                const handle = data.instagram.replace('@', '');
+                window.open(`https://instagram.com/${handle}`, '_blank');
+            } else {
+                alert('Booking information not available');
+            }
+        };
+
+        console.log('📊 Carousel populated with data');
+    }
+
+    /* ============================================
+       DATA FETCHING
+       ============================================ */
+
+    /**
+     * Fetch artist data from Supabase
+     */
+    async function fetchArtistData() {
+        showLoadingState();
+
+        const endpoint = `${SUPABASE_URL}/rest/v1/active_waitlist_view`;
+        const params = new URLSearchParams({
+            slot_number: `eq.${SLOT_NUMBER}`,
+            select: '*'
+        });
+
+        const url = `${endpoint}?${params.toString()}`;
+
+        console.log('🌐 Fetching from:', url);
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('📡 Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('📦 Response data:', data);
+
+            // Check if data exists
+            if (!data || data.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            // Show artist data
+            showSuccessState(data[0]);
+
+        } catch (error) {
+            showErrorState(error);
+        }
+    }
+
+    /* ============================================
+       INITIALIZATION
+       ============================================ */
+
+    /**
+     * Initialize carousel
+     */
+    function initCarousel() {
+        console.log('🚀 Initializing Waitlist Carousel...');
+        console.log(`📍 Configured for Slot: ${SLOT_NUMBER}`);
+
+        // Initial fetch
+        fetchArtistData();
+
+        // Set up auto-refresh
+        setInterval(() => {
+            console.log('🔄 Auto-refreshing data...');
+            fetchArtistData();
+        }, REFRESH_INTERVAL);
+    }
+
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCarousel);
+    } else {
+        initCarousel();
+    }
+</script>
+
+</body>
+</html>
