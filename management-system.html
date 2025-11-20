@@ -21709,9 +21709,9 @@
         const descriptionEl = document.getElementById('listTypeDescription');
         if (descriptionEl) {
           if (listType === 'waitlist') {
-            descriptionEl.textContent = 'Artists with confirmed booking dates';
+            descriptionEl.textContent = '🕒 Artists available NOW (no specific dates)';
           } else {
-            descriptionEl.textContent = 'Future artists without confirmed dates';
+            descriptionEl.textContent = '📅 Artists with SPECIFIC booking dates';
           }
         }
 
@@ -21727,8 +21727,10 @@
 
         try {
           // Select appropriate table/view based on currentListType
+          // WAITLIST = Artists available NOW (NO dates)
+          // UPCOMING = Artists with SPECIFIC dates (WITH dates)
           const viewName = currentListType === 'waitlist'
-            ? 'active_waitlist_slots'
+            ? 'active_waitlist_view'
             : 'upcoming_waitlist_view';
 
           // Build query
@@ -21736,11 +21738,11 @@
             .from(viewName)
             .select('*');
 
-          // Order by date_from for waitlist, slot_number for upcoming
+          // Order by slot_number for waitlist (NO dates), date_from for upcoming (WITH dates)
           if (currentListType === 'waitlist') {
-            query = query.order('date_from', { ascending: true });
-          } else {
             query = query.order('slot_number', { ascending: true });
+          } else {
+            query = query.order('date_from', { ascending: true });
           }
 
           // Apply location filter if not 'all'
@@ -21791,9 +21793,10 @@
           // Use slot_number from database if available, otherwise use index + 1
           const slotNumber = slot.slot_number || (index + 1);
 
-          // Date calculations only for waitlist
+          // Date calculations ONLY for UPCOMING (has dates)
+          // WAITLIST has NO dates (artists available NOW)
           let fromDate, toDate, isActive, isUpcoming, daysRemaining, daysUntilStart;
-          if (currentListType === 'waitlist' && slot.date_from && slot.date_to) {
+          if (currentListType === 'upcoming' && slot.date_from && slot.date_to) {
             fromDate = new Date(slot.date_from);
             toDate = new Date(slot.date_to);
             const today = new Date();
@@ -21805,17 +21808,18 @@
             daysUntilStart = Math.ceil((fromDate - today) / (1000 * 60 * 60 * 24));
           }
 
-          // Status badge (only for waitlist)
+          // Status badge
           let statusBadge = '';
-          if (currentListType === 'waitlist') {
+          if (currentListType === 'upcoming') {
+            // For upcoming list with dates, show date-based status
             if (isActive) {
               statusBadge = `<span class="badge" style="background:#34c759; color:white;">🎨 Active (${daysRemaining} days left)</span>`;
             } else if (isUpcoming) {
               statusBadge = `<span class="badge" style="background:#007aff; color:white;">📅 Starts in ${daysUntilStart} days</span>`;
             }
           } else {
-            // For upcoming list, show a simple "Upcoming" badge
-            statusBadge = `<span class="badge" style="background:#007aff; color:white;">📅 Upcoming</span>`;
+            // For waitlist (NO dates), show "Available Now" badge
+            statusBadge = `<span class="badge" style="background:#34c759; color:white;">🕒 Jetzt verfügbar</span>`;
           }
 
           return `
@@ -21920,9 +21924,9 @@
                 </div>
               </div>
 
-              <!-- Date Range (Waitlist Only) or Location -->
+              <!-- Date Range (UPCOMING ONLY - has dates) or Location -->
               <div style="display:flex; gap:24px; margin-bottom:12px;">
-                ${currentListType === 'waitlist' && fromDate && toDate ? `
+                ${currentListType === 'upcoming' && fromDate && toDate ? `
                   <div style="flex:1;">
                     <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Start Date</div>
                     <div style="font-weight:600; color:#1d1d1f;">
@@ -22116,8 +22120,8 @@
                 />
               </div>
 
-              <!-- Date Range (Waitlist Only) -->
-              ${currentListType === 'waitlist' ? `
+              <!-- Date Range (UPCOMING ONLY - has dates, Waitlist has NO dates) -->
+              ${currentListType === 'upcoming' ? `
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
@@ -22435,8 +22439,8 @@
           notes: notes || null
         };
 
-        // For waitlist, add date fields and validate
-        if (currentListType === 'waitlist') {
+        // For UPCOMING, add date fields and validate (UPCOMING has dates, WAITLIST has NO dates)
+        if (currentListType === 'upcoming') {
           const dateFrom = document.getElementById('slotDateFrom')?.value;
           const dateTo = document.getElementById('slotDateTo')?.value;
 

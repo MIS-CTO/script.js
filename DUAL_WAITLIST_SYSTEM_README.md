@@ -4,8 +4,8 @@
 
 The **Dual Waitlist System** extends the existing tattoo studio management platform to support two separate artist lists within a single "Waitlist" tab:
 
-1. **Waitlist** - Artists with confirmed booking dates
-2. **Upcoming List** - Future artists without confirmed dates
+1. **Waitlist** - Artists available NOW (no specific dates)
+2. **Upcoming List** - Artists with SPECIFIC booking dates
 
 This system maintains design consistency with the existing Apple-inspired interface while providing flexible artist management capabilities.
 
@@ -26,21 +26,21 @@ This system maintains design consistency with the existing Apple-inspired interf
 
 ## ✨ Features
 
-### Waitlist (Existing - Enhanced)
-- ✅ Artists with confirmed booking dates
-- ✅ Date range display (Start Date / End Date)
-- ✅ Active/Upcoming status calculations
-- ✅ Days remaining/until start indicators
-- ✅ Date-based filtering
-- ✅ Share paid tracking
-
-### Upcoming List (New)
-- ✅ Artists without confirmed dates
+### Waitlist (Modified)
+- ✅ Artists available NOW (no specific dates)
 - ✅ No date fields in UI or database
-- ✅ Simple "Upcoming" status badge
+- ✅ Simple "🕒 Jetzt verfügbar" status badge
 - ✅ Location and style information
 - ✅ Share paid tracking
 - ✅ Slot number management (1-60)
+
+### Upcoming List (New)
+- ✅ Artists with SPECIFIC booking dates
+- ✅ Date range display (Start Date / End Date)
+- ✅ Active/Upcoming status calculations
+- ✅ Days remaining/until start indicators
+- ✅ Date-based ordering
+- ✅ Share paid tracking
 
 ### Shared Features
 - 🔄 **Seamless Toggle**: Switch between lists with one click
@@ -57,9 +57,9 @@ This system maintains design consistency with the existing Apple-inspired interf
 
 ### Tables
 
-#### `upcoming_slots` (New)
+#### `waitlist_slots` (Modified)
 ```sql
-CREATE TABLE upcoming_slots (
+CREATE TABLE waitlist_slots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slot_number INTEGER NOT NULL,
   artist_id UUID REFERENCES artists(id) ON DELETE CASCADE,
@@ -74,27 +74,29 @@ CREATE TABLE upcoming_slots (
 );
 ```
 
-**Key Differences from `waitlist_slots`:**
-- ❌ No `date_from` field
-- ❌ No `date_to` field
+**Key Features:**
+- ❌ NO `date_from` field (removed)
+- ❌ NO `date_to` field (removed)
+- ✅ For artists available NOW
 - ✅ Includes `slot_number` for manual ordering
-- ✅ Same location, artist, and payment tracking
+- ✅ Location, artist, and payment tracking
 
-#### `waitlist_slots` (Existing)
+#### `upcoming_slots` (New)
 ```sql
--- Includes all fields from upcoming_slots PLUS:
+-- Includes all fields from waitlist_slots PLUS:
 -- date_from DATE NOT NULL
 -- date_to DATE NOT NULL
+-- CHECK (date_to >= date_from)
 ```
 
 ### Views
 
-#### `upcoming_waitlist_view` (New)
+#### `active_waitlist_view` (Modified)
 ```sql
-CREATE VIEW upcoming_waitlist_view AS
+CREATE VIEW active_waitlist_view AS
 SELECT
-  us.id, us.slot_number, us.artist_id, us.location_id,
-  us.status, us.notes, us.share_paid, us.created_at, us.updated_at,
+  ws.id, ws.slot_number, ws.artist_id, ws.location_id,
+  ws.status, ws.notes, ws.share_paid, ws.created_at, ws.updated_at,
 
   -- Artist information
   a.name AS artist_name,
@@ -107,16 +109,18 @@ SELECT
   l.name AS location_name,
   l.city AS location_city
 
-FROM upcoming_slots us
-LEFT JOIN artists a ON us.artist_id = a.id
-LEFT JOIN locations l ON us.location_id = l.id
-WHERE us.status IN ('active', 'upcoming')
-ORDER BY us.slot_number ASC;
+FROM waitlist_slots ws
+LEFT JOIN artists a ON ws.artist_id = a.id
+LEFT JOIN locations l ON ws.location_id = l.id
+WHERE ws.status IN ('active', 'upcoming')
+ORDER BY ws.slot_number ASC;
 ```
 
-#### `active_waitlist_slots` (Existing)
-- Similar structure but includes date fields
-- Orders by `date_from` ascending
+**Note:** NO date fields (artists available NOW)
+
+#### `upcoming_waitlist_view` (New)
+- Similar structure but INCLUDES `date_from` and `date_to` fields
+- Orders by `date_from` ascending (date-based ordering)
 
 ---
 
@@ -158,45 +162,43 @@ ORDER BY us.slot_number ASC;
 
 ### 2. Slot Cards
 
-**Waitlist Card** (with dates):
+**Waitlist Card** (NO dates - available NOW):
 ```
 ┌─────────────────────────────────────┐
 │ [1] Artist Name                     │
 │     artist@email.com                │
 │                                     │
-│ Start: 15. Jan 2025 | End: 22. Jan │
 │ Location: Studio Name               │
 │ Style: Blackwork                    │
 │                                     │
-│ [🎨 Active (5 days left)]          │
+│ [🕒 Jetzt verfügbar]               │
 │ [✅ Share Paid]                    │
 └─────────────────────────────────────┘
 ```
 
-**Upcoming Card** (no dates):
+**Upcoming Card** (WITH dates - scheduled):
 ```
 ┌─────────────────────────────────────┐
 │ [15] Artist Name                    │
 │      artist@email.com               │
 │                                     │
+│ Start: 15. Jan 2025 | End: 22. Jan │
 │ Location: Studio Name               │
 │ Style: Traditional                  │
 │                                     │
-│ [📅 Upcoming]                      │
+│ [📅 Starts in 10 days]             │
 │ [❌ Share Not Paid]                │
 └─────────────────────────────────────┘
 ```
 
 ### 3. Add Slot Modal
 
-**Waitlist Modal** (with date fields):
+**Waitlist Modal** (NO date fields - available NOW):
 ```
 ┌─ Add Waitlist Artist Slot ─────────┐
 │                                     │
 │ Artist *         [Search...]        │
 │ Slot Number *    [1-60]            │
-│ Start Date *     [Date Picker]     │
-│ End Date *       [Date Picker]     │
 │ Location *       [Dropdown]        │
 │ Notes (optional) [Text Area]       │
 │                                     │
@@ -204,12 +206,14 @@ ORDER BY us.slot_number ASC;
 └─────────────────────────────────────┘
 ```
 
-**Upcoming Modal** (no date fields):
+**Upcoming Modal** (WITH date fields - scheduled):
 ```
 ┌─ Add Upcoming Artist Slot ─────────┐
 │                                     │
 │ Artist *         [Search...]        │
 │ Slot Number *    [1-60]            │
+│ Start Date *     [Date Picker]     │
+│ End Date *       [Date Picker]     │
 │ Location *       [Dropdown]        │
 │ Notes (optional) [Text Area]       │
 │                                     │
@@ -253,17 +257,19 @@ function switchListType(listType) {
 
 ```javascript
 async function loadWaitlistSlots(locationFilter = 'all') {
+  // WAITLIST = Artists available NOW (NO dates)
+  // UPCOMING = Artists with SPECIFIC dates
   const viewName = currentListType === 'waitlist'
-    ? 'active_waitlist_slots'
+    ? 'active_waitlist_view'
     : 'upcoming_waitlist_view';
 
   let query = supabase.from(viewName).select('*');
 
-  // Order by date_from for waitlist, slot_number for upcoming
+  // Order by slot_number for waitlist (NO dates), date_from for upcoming (HAS dates)
   if (currentListType === 'waitlist') {
-    query = query.order('date_from', { ascending: true });
-  } else {
     query = query.order('slot_number', { ascending: true });
+  } else {
+    query = query.order('date_from', { ascending: true });
   }
 
   // Apply location filter
@@ -282,16 +288,22 @@ async function loadWaitlistSlots(locationFilter = 'all') {
 ```javascript
 function renderWaitlistSlots(slots) {
   container.innerHTML = slots.map(slot => {
-    // Date calculations only for waitlist
-    if (currentListType === 'waitlist' && slot.date_from) {
+    // Date calculations ONLY for UPCOMING (has dates)
+    // WAITLIST has NO dates (artists available NOW)
+    if (currentListType === 'upcoming' && slot.date_from) {
       // Calculate dates, status, days remaining
     }
 
     // Conditional date range rendering
-    const dateSection = currentListType === 'waitlist' ? `
+    const dateSection = currentListType === 'upcoming' ? `
       <div>Start: ${fromDate}</div>
       <div>End: ${toDate}</div>
     ` : '';
+
+    // Status badge
+    const statusBadge = currentListType === 'upcoming'
+      ? `Active/Upcoming with dates`
+      : `🕒 Jetzt verfügbar`;
 
     return `<div class="waitlist-slot-card">...</div>`;
   }).join('');
@@ -310,8 +322,8 @@ async function handleAddSlot() {
     notes: notes
   };
 
-  // Add dates only for waitlist
-  if (currentListType === 'waitlist') {
+  // Add dates ONLY for UPCOMING (has dates, WAITLIST has NO dates)
+  if (currentListType === 'upcoming') {
     slotData.date_from = dateFrom;
     slotData.date_to = dateTo;
 
@@ -394,33 +406,33 @@ CREATE POLICY "Allow authenticated users full access"
 
 ### For Studio Managers
 
-#### Adding an Artist to Waitlist (With Dates)
+#### Adding an Artist to Waitlist (NO Dates - Available NOW)
 1. Click **Waitlist** tab in navigation
 2. Ensure **"Waitlist"** toggle is selected
 3. Click **"+ Add Slot"** button
 4. Fill in:
    - Search and select artist
    - Enter slot number (1-60)
-   - Select start date
-   - Select end date
    - Choose location
    - Add optional notes
 5. Click **"Add Slot"**
 
-#### Adding an Artist to Upcoming List (No Dates)
+#### Adding an Artist to Upcoming List (WITH Dates - Scheduled)
 1. Click **Waitlist** tab in navigation
 2. Click **"Upcoming List"** toggle
 3. Click **"+ Add Slot"** button
 4. Fill in:
    - Search and select artist
    - Enter slot number (1-60)
+   - **Select start date**
+   - **Select end date**
    - Choose location
    - Add optional notes
 5. Click **"Add Slot"**
 
 #### Switching Between Lists
-- Click **"Waitlist"** button to see artists with confirmed dates
-- Click **"Upcoming List"** button to see future artists without dates
+- Click **"Waitlist"** button to see artists available NOW (no dates)
+- Click **"Upcoming List"** button to see artists with SPECIFIC dates
 
 #### Filtering by Location
 1. Select a list (Waitlist or Upcoming)
@@ -594,7 +606,11 @@ The Dual Waitlist System successfully extends the existing waitlist functionalit
 
 ### Changes Made:
 
-1. **Database**: Created `upcoming_slots` table and `upcoming_waitlist_view`
+1. **Database**:
+   - MODIFIED `waitlist_slots` table (REMOVED date_from, date_to)
+   - CREATED `upcoming_slots` table (WITH date_from, date_to)
+   - CREATED `active_waitlist_view` (for waitlist WITHOUT dates)
+   - CREATED `upcoming_waitlist_view` (for upcoming WITH dates)
 2. **HTML**: Added toggle component to waitlist section
 3. **CSS**: Styled toggle with Apple design patterns
 4. **JavaScript**: Implemented dual-list logic with conditional rendering
@@ -603,13 +619,20 @@ The Dual Waitlist System successfully extends the existing waitlist functionalit
 ### Migration Checklist:
 
 - [ ] Run `upcoming_slots_migration.sql` in Supabase
-- [ ] Verify tables and views exist
-- [ ] Configure RLS policies
+- [ ] Verify `waitlist_slots` has NO date_from/date_to columns
+- [ ] Verify `upcoming_slots` table exists with date fields
+- [ ] Verify both views exist and return data correctly
+- [ ] Configure RLS policies for both tables
 - [ ] Test toggle functionality
-- [ ] Test add/edit/delete operations
+- [ ] Test add operations (waitlist WITHOUT dates, upcoming WITH dates)
+- [ ] Test edit/delete operations
 - [ ] Test location filtering
 - [ ] Test payment status toggle
-- [ ] Verify existing waitlist still works
+
+### IMPORTANT DATABASE STRUCTURE:
+
+**WAITLIST_SLOTS**: Artists available NOW - NO date_from, NO date_to
+**UPCOMING_SLOTS**: Artists with dates - HAS date_from, HAS date_to
 
 ---
 
