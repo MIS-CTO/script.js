@@ -21733,6 +21733,8 @@
             ? 'active_waitlist_view'
             : 'upcoming_waitlist_view';
 
+          console.log(`   View: ${viewName}, Location filter: ${locationFilter || 'all'}`);
+
           // Build query
           let query = supabase
             .from(viewName)
@@ -21752,10 +21754,26 @@
 
           const { data, error } = await query;
 
-          if (error) throw error;
+          if (error) {
+            console.error('❌ Database Error:', {
+              view: viewName,
+              listType: currentListType,
+              locationFilter: locationFilter,
+              error: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            throw error;
+          }
 
           waitlistSlots = data || [];
           console.log(`✅ Loaded ${waitlistSlots.length} ${currentListType} slots`);
+
+          // Log sample of first slot for debugging
+          if (waitlistSlots.length > 0) {
+            console.log('   First slot structure:', Object.keys(waitlistSlots[0]));
+          }
 
           // Render slots
           renderWaitlistSlots(waitlistSlots);
@@ -21764,7 +21782,14 @@
 
         } catch (error) {
           console.error(`❌ Error loading ${currentListType} slots:`, error);
-          showNotification(`Failed to load ${currentListType} slots`, 'error');
+          showNotification(`Failed to load ${currentListType} slots: ${error.message}`, 'error');
+
+          // Show empty state
+          const container = document.getElementById('waitlistSlotsContainer');
+          const emptyState = document.getElementById('waitlistEmptyState');
+          if (container) container.innerHTML = '';
+          if (emptyState) emptyState.style.display = 'block';
+
           return [];
         }
       }
@@ -22464,12 +22489,25 @@
             ? 'waitlist_slots'
             : 'upcoming_slots';
 
+          console.log(`➕ Adding slot to ${tableName}:`, slotData);
+
           const { data, error } = await supabase
             .from(tableName)
             .insert([slotData])
             .select();
 
-          if (error) throw error;
+          if (error) {
+            console.error('❌ Database Error:', {
+              table: tableName,
+              listType: currentListType,
+              slotData: slotData,
+              error: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            throw error;
+          }
 
           console.log(`✅ ${currentListType} slot added successfully:`, data);
           showNotification('Slot added successfully', 'success');
@@ -22479,7 +22517,18 @@
 
         } catch (error) {
           console.error(`❌ Error adding ${currentListType} slot:`, error);
-          showNotification('Failed to add slot: ' + error.message, 'error');
+
+          // Provide more specific error messages
+          let errorMessage = 'Failed to add slot: ';
+          if (error.code === '23505') {
+            errorMessage += 'This slot number is already taken for this location';
+          } else if (error.message.includes('date')) {
+            errorMessage += 'Invalid date values';
+          } else {
+            errorMessage += error.message;
+          }
+
+          showNotification(errorMessage, 'error');
         }
       }
 
@@ -22497,12 +22546,24 @@
             ? 'waitlist_slots'
             : 'upcoming_slots';
 
+          console.log(`🗑️ Deleting slot from ${tableName}: ${slotId}`);
+
           const { error } = await supabase
             .from(tableName)
             .delete()
             .eq('id', slotId);
 
-          if (error) throw error;
+          if (error) {
+            console.error('❌ Database Error:', {
+              table: tableName,
+              slotId: slotId,
+              error: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            throw error;
+          }
 
           console.log(`✅ ${currentListType} slot deleted successfully`);
           showNotification('Slot deleted successfully', 'success');
@@ -22512,7 +22573,7 @@
 
         } catch (error) {
           console.error(`❌ Error deleting ${currentListType} slot:`, error);
-          showNotification('Failed to delete slot', 'error');
+          showNotification('Failed to delete slot: ' + error.message, 'error');
         }
       }
 
@@ -22523,24 +22584,46 @@
         const newStatus = !currentStatus;
 
         try {
-          // Select appropriate table based on currentListType
+          // Select appropriate table and field based on currentListType
           const tableName = currentListType === 'waitlist'
             ? 'waitlist_slots'
             : 'upcoming_slots';
 
+          // IMPORTANT: Different tables use different field names
+          // - waitlist_slots: uses 'share_paid'
+          // - upcoming_slots: uses 'share_personal_data'
+          const fieldName = currentListType === 'waitlist'
+            ? 'share_paid'
+            : 'share_personal_data';
+
+          const updateData = { [fieldName]: newStatus };
+
+          console.log(`🔄 Updating ${tableName}.${fieldName} to ${newStatus} for slot ${slotId}`);
+
           const { error } = await supabase
             .from(tableName)
-            .update({ share_paid: newStatus })
+            .update(updateData)
             .eq('id', slotId);
 
-          if (error) throw error;
+          if (error) {
+            console.error('❌ Database Error:', {
+              table: tableName,
+              field: fieldName,
+              slotId: slotId,
+              error: error.message,
+              details: error.details,
+              hint: error.hint
+            });
+            throw error;
+          }
 
+          console.log(`✅ Successfully updated ${tableName}.${fieldName}`);
           showNotification(`Share marked as ${newStatus ? 'paid' : 'unpaid'}`, 'success');
           await loadWaitlistSlots(currentWaitlistLocation);
 
         } catch (error) {
-          console.error('Error updating share paid:', error);
-          showNotification('Failed to update share paid status', 'error');
+          console.error('❌ Error updating share paid status:', error);
+          showNotification('Failed to update share paid status: ' + error.message, 'error');
         }
       }
 
