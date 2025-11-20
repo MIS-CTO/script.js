@@ -21726,25 +21726,89 @@
         console.log(`📋 Loading ${currentListType} slots...`);
 
         try {
-          // Select appropriate table/view based on currentListType
+          // Select appropriate table based on currentListType
           // WAITLIST = Artists available NOW (NO dates)
           // UPCOMING = Artists with SPECIFIC dates (WITH dates)
-          const viewName = currentListType === 'waitlist'
-            ? 'active_waitlist_view'
-            : 'upcoming_waitlist_view';
+          const tableName = currentListType === 'waitlist'
+            ? 'waitlist_slots'
+            : 'upcoming_slots';
 
-          console.log(`   View: ${viewName}, Location filter: ${locationFilter || 'all'}`);
+          console.log(`   Table: ${tableName}, Location filter: ${locationFilter || 'all'}`);
+
+          // Build select query with joins
+          // IMPORTANT: waitlist_slots has NO date fields, upcoming_slots has date_from/date_to
+          let selectQuery;
+          if (currentListType === 'waitlist') {
+            // WAITLIST: NO date_from/date_to fields
+            selectQuery = `
+              id,
+              artist_id,
+              location_id,
+              slot_number,
+              notes,
+              status,
+              created_at,
+              display_order,
+              share_paid,
+              artist:artists(
+                id,
+                name,
+                email,
+                instagram,
+                image_url,
+                style,
+                is_guest
+              ),
+              location:locations(
+                id,
+                name,
+                city
+              )
+            `;
+          } else {
+            // UPCOMING: WITH date_from/date_to fields
+            selectQuery = `
+              id,
+              artist_id,
+              location_id,
+              slot_number,
+              date_from,
+              date_to,
+              notes,
+              status,
+              created_at,
+              display_order,
+              share_personal_data,
+              artist:artists(
+                id,
+                name,
+                email,
+                instagram,
+                image_url,
+                style,
+                is_guest
+              ),
+              location:locations(
+                id,
+                name,
+                city
+              )
+            `;
+          }
 
           // Build query
           let query = supabase
-            .from(viewName)
-            .select('*');
+            .from(tableName)
+            .select(selectQuery)
+            .in('status', ['waiting', 'active', 'upcoming']);
 
           // Order by slot_number for waitlist (NO dates), date_from for upcoming (WITH dates)
           if (currentListType === 'waitlist') {
             query = query.order('slot_number', { ascending: true });
           } else {
-            query = query.order('date_from', { ascending: true });
+            // For upcoming, filter to show only future/current dates
+            const today = new Date().toISOString().split('T')[0];
+            query = query.gte('date_from', today).order('date_from', { ascending: true });
           }
 
           // Apply location filter if not 'all'
@@ -21756,7 +21820,7 @@
 
           if (error) {
             console.error('❌ Database Error:', {
-              view: viewName,
+              table: tableName,
               listType: currentListType,
               locationFilter: locationFilter,
               error: error.message,
@@ -21767,12 +21831,34 @@
             throw error;
           }
 
-          waitlistSlots = data || [];
+          // Transform data to match expected format (flatten nested objects)
+          waitlistSlots = (data || []).map(slot => ({
+            ...slot,
+            // Flatten artist data
+            artist_name: slot.artist?.name,
+            artist_email: slot.artist?.email,
+            artist_instagram: slot.artist?.instagram,
+            artist_image_url: slot.artist?.image_url,
+            artist_style: slot.artist?.style,
+            artist_is_guest: slot.artist?.is_guest,
+            // Flatten location data
+            location_name: slot.location?.name,
+            location_city: slot.location?.city,
+            // Map share_personal_data to share_paid for upcoming slots (for consistency)
+            share_paid: currentListType === 'upcoming' ? slot.share_personal_data : slot.share_paid
+          }));
+
           console.log(`✅ Loaded ${waitlistSlots.length} ${currentListType} slots`);
 
           // Log sample of first slot for debugging
           if (waitlistSlots.length > 0) {
             console.log('   First slot structure:', Object.keys(waitlistSlots[0]));
+            if (currentListType === 'upcoming' && waitlistSlots[0].date_from) {
+              console.log('   First slot dates:', {
+                date_from: waitlistSlots[0].date_from,
+                date_to: waitlistSlots[0].date_to
+              });
+            }
           }
 
           // Render slots

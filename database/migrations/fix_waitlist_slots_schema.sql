@@ -56,76 +56,22 @@ ALTER TABLE waitlist_slots ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES a
 ALTER TABLE waitlist_slots ADD COLUMN IF NOT EXISTS share_paid BOOLEAN DEFAULT false;
 
 -- =====================================================
--- 3. Recreate Views with Correct Field Mappings
+-- 3. Remove Old Views (No longer needed - using direct table queries)
 -- =====================================================
 
--- Drop existing views
+-- Drop existing views as we now use direct table queries with Supabase joins
+-- The frontend now uses .from('waitlist_slots').select('*, artist:artists(*), location:locations(*)')
+-- instead of views, which provides better performance and flexibility
+
 DROP VIEW IF EXISTS active_waitlist_view CASCADE;
 DROP VIEW IF EXISTS upcoming_waitlist_view CASCADE;
+DROP VIEW IF EXISTS active_waitlist_slots CASCADE;
+DROP VIEW IF EXISTS active_upcoming_view CASCADE;
 
--- Create active_waitlist_view (NO date fields)
-CREATE VIEW active_waitlist_view AS
-SELECT
-  ws.id,
-  ws.slot_number,
-  ws.artist_id,
-  ws.location_id,
-  ws.status,
-  ws.notes,
-  ws.share_paid,  -- ✅ waitlist_slots uses share_paid
-  ws.display_order,
-  ws.created_at,
-  ws.created_by,
-
-  -- Artist information
-  a.name AS artist_name,
-  a.email AS artist_email,
-  a.instagram AS artist_instagram,
-  a.image_url AS artist_image_url,
-  a.style AS artist_style,
-
-  -- Location information
-  l.name AS location_name,
-  l.city AS location_city
-
-FROM waitlist_slots ws
-LEFT JOIN artists a ON ws.artist_id = a.id
-LEFT JOIN locations l ON ws.location_id = l.id
-WHERE ws.status IN ('active', 'upcoming')
-ORDER BY ws.slot_number ASC;
-
--- Create upcoming_waitlist_view (WITH date fields)
-CREATE VIEW upcoming_waitlist_view AS
-SELECT
-  us.id,
-  us.slot_number,
-  us.artist_id,
-  us.location_id,
-  us.date_from,
-  us.date_to,
-  us.status,
-  us.notes,
-  us.share_personal_data AS share_paid,  -- ✅ ALIAS: Map share_personal_data to share_paid for frontend consistency
-  us.display_order,
-  us.created_at,
-  us.created_by,
-
-  -- Artist information
-  a.name AS artist_name,
-  a.email AS artist_email,
-  a.instagram AS artist_instagram,
-  a.image_url AS artist_image_url,
-  a.style AS artist_style,
-
-  -- Location information
-  l.name AS location_name,
-  l.city AS location_city
-
-FROM upcoming_slots us
-LEFT JOIN artists a ON us.artist_id = a.id
-LEFT JOIN locations l ON us.location_id = l.id
-WHERE us.status IN ('active', 'upcoming')
-ORDER BY us.date_from ASC;
+-- Note: Views are no longer needed because:
+-- 1. Frontend uses Supabase .select() with joins (e.g., artist:artists(*))
+-- 2. Direct table queries provide better control and performance
+-- 3. No need to maintain separate view definitions
 
 -- =====================================================
 -- 4. Create Triggers for updated_at
@@ -160,8 +106,8 @@ EXECUTE FUNCTION update_updated_at_column();
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON waitlist_slots TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON upcoming_slots TO authenticated;
-GRANT SELECT ON active_waitlist_view TO authenticated;
-GRANT SELECT ON upcoming_waitlist_view TO authenticated;
+
+-- Note: No view permissions needed as views have been removed
 
 -- Enable Row Level Security
 ALTER TABLE waitlist_slots ENABLE ROW LEVEL SECURITY;
@@ -179,9 +125,12 @@ ALTER TABLE upcoming_slots ENABLE ROW LEVEL SECURITY;
 -- Check upcoming_slots structure (should have date_from, date_to, share_personal_data)
 -- \d upcoming_slots
 
--- Test views
--- SELECT * FROM active_waitlist_view LIMIT 1;
--- SELECT * FROM upcoming_waitlist_view LIMIT 1;
+-- Test direct table queries (no views needed)
+-- SELECT * FROM waitlist_slots LIMIT 1;
+-- SELECT * FROM upcoming_slots LIMIT 1;
+
+-- Verify views are removed
+-- \dv  -- Should NOT show active_waitlist_view or upcoming_waitlist_view
 
 -- =====================================================
 -- MIGRATION COMPLETE
@@ -200,8 +149,8 @@ ALTER TABLE upcoming_slots ENABLE ROW LEVEL SECURITY;
 --   ✅ HAS share_personal_data column (not share_paid!)
 --
 -- Views:
---   ✅ active_waitlist_view: Uses share_paid directly
---   ✅ upcoming_waitlist_view: Aliases share_personal_data AS share_paid
---      (This keeps frontend code consistent)
+--   ✅ All views removed (active_waitlist_view, upcoming_waitlist_view, etc.)
+--   ✅ Frontend now uses direct table queries with Supabase joins
+--   ✅ Example: .from('waitlist_slots').select('*, artist:artists(*), location:locations(*)')
 --
 -- =====================================================

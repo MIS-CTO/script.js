@@ -2,7 +2,7 @@
 
 ## Problem
 
-Nach der Datenbank-Migration gab es Schema-Inkonsistenzen zwischen den Tabellen `waitlist_slots` und `upcoming_slots`, die dazu führten, dass die Daten nicht korrekt geladen wurden.
+Nach der Datenbank-Migration gab es Schema-Inkonsistenzen zwischen den Tabellen `waitlist_slots` und `upcoming_slots`, die dazu führten, dass die Daten nicht korrekt geladen wurden. Außerdem versuchte der Code, auf Views zuzugreifen, die nicht mehr existierten.
 
 ## Gelöste Probleme
 
@@ -28,7 +28,20 @@ Nach der Datenbank-Migration gab es Schema-Inkonsistenzen zwischen den Tabellen 
   - **waitlist_slots**: `share_paid`
   - **upcoming_slots**: `share_personal_data`
 
-### 3. ❌ Fehlendes detailliertes Error Logging
+### 3. ❌ Views existieren nicht mehr
+
+**Problem:**
+- Code versuchte auf `active_waitlist_view` und `upcoming_waitlist_view` zuzugreifen
+- Diese Views existieren nicht (mehr) in der Datenbank
+- Fehler: "relation 'active_waitlist_view' does not exist"
+
+**Lösung:**
+- Kompletter Wechsel von Views zu direkten Tabellen-Queries
+- Verwendet Supabase Joins: `.select('*, artist:artists(*), location:locations(*)')`
+- `loadWaitlistSlots()` nutzt jetzt direkte Queries auf `waitlist_slots` und `upcoming_slots`
+- Bessere Performance und Flexibilität durch direkte Tabellen-Zugriffe
+
+### 4. ❌ Fehlendes detailliertes Error Logging
 
 **Problem:**
 - Fehler waren schwer zu debuggen, da Details fehlten
@@ -95,6 +108,68 @@ CREATE TABLE upcoming_slots (
 
 ---
 
+## Neue Query-Struktur (Keine Views mehr!)
+
+### Direkte Tabellen-Queries mit Supabase Joins
+
+Statt Views zu verwenden, nutzen wir jetzt direkte Tabellen-Queries mit Supabase-Joins:
+
+**❌ ALTE Methode (mit Views):**
+```javascript
+await supabase
+  .from('active_waitlist_view')  // ❌ View existiert nicht mehr
+  .select('*')
+```
+
+**✅ NEUE Methode (direkte Tabelle mit Joins):**
+```javascript
+// Waitlist Query
+await supabase
+  .from('waitlist_slots')  // ✅ Direkte Tabelle
+  .select(`
+    id,
+    artist_id,
+    location_id,
+    slot_number,
+    notes,
+    status,
+    share_paid,
+    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    location:locations(id, name, city)
+  `)
+  .in('status', ['waiting', 'active'])
+  .order('slot_number', { ascending: true });
+
+// Upcoming Query
+await supabase
+  .from('upcoming_slots')  // ✅ Direkte Tabelle
+  .select(`
+    id,
+    artist_id,
+    location_id,
+    slot_number,
+    date_from,
+    date_to,
+    notes,
+    status,
+    share_personal_data,
+    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    location:locations(id, name, city)
+  `)
+  .gte('date_from', today)
+  .order('date_from', { ascending: true });
+```
+
+### Vorteile der neuen Methode:
+
+1. **Keine View-Abhängigkeiten** - Direkter Zugriff auf Tabellen
+2. **Bessere Performance** - Supabase optimiert Joins automatisch
+3. **Mehr Flexibilität** - Einfacher anzupassen ohne Migration
+4. **Weniger Maintenance** - Keine separaten View-Definitionen pflegen
+5. **Besseres Debugging** - Klare Fehler bei fehlenden Feldern
+
+---
+
 ## Migration durchführen
 
 ### Option 1: Supabase SQL Editor (Empfohlen)
@@ -136,24 +211,80 @@ Nach der Migration überprüfe das Schema:
 -- 2. Prüfe upcoming_slots Spalten (sollte date_from, date_to, share_personal_data haben)
 \d upcoming_slots
 
--- 3. Teste Views
-SELECT * FROM active_waitlist_view LIMIT 1;
-SELECT * FROM upcoming_waitlist_view LIMIT 1;
+-- 3. Prüfe dass Views NICHT mehr existieren
+\dv  -- Sollte KEINE active_waitlist_view oder upcoming_waitlist_view zeigen
 
--- 4. Prüfe ob share_paid in View vorhanden ist (aliasiert von share_personal_data)
-SELECT
-  id,
-  share_personal_data,  -- Spalte in Tabelle
-  share_paid            -- Alias in View
-FROM upcoming_waitlist_view
-LIMIT 1;
+-- 4. Teste direkte Tabellen-Queries
+SELECT * FROM waitlist_slots LIMIT 1;
+SELECT * FROM upcoming_slots LIMIT 1;
+
+-- 5. Teste Supabase Join-Query (wie im Frontend verwendet)
+-- Dies würde im Frontend so aussehen:
+-- .from('waitlist_slots').select('*, artist:artists(*), location:locations(*)')
 ```
 
 ---
 
 ## Geänderte Funktionen
 
-### 1. toggleSharePaid()
+### 1. loadWaitlistSlots()
+
+**Vorher:**
+```javascript
+// Verwendete Views
+const viewName = currentListType === 'waitlist'
+  ? 'active_waitlist_view'  // ❌ View existiert nicht mehr
+  : 'upcoming_waitlist_view';
+
+const { data, error } = await supabase
+  .from(viewName)
+  .select('*');
+```
+
+**Nachher:**
+```javascript
+// Verwendet direkte Tabellen mit Joins
+const tableName = currentListType === 'waitlist'
+  ? 'waitlist_slots'
+  : 'upcoming_slots';
+
+// Conditional select based on table (waitlist has NO dates, upcoming has dates)
+let selectQuery;
+if (currentListType === 'waitlist') {
+  selectQuery = `
+    id, artist_id, location_id, slot_number, notes, status,
+    share_paid,  // ✅ waitlist_slots field
+    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    location:locations(id, name, city)
+  `;
+} else {
+  selectQuery = `
+    id, artist_id, location_id, slot_number,
+    date_from, date_to,  // ✅ upcoming_slots fields
+    notes, status,
+    share_personal_data,  // ✅ upcoming_slots field
+    artist:artists(id, name, email, instagram, image_url, style, is_guest),
+    location:locations(id, name, city)
+  `;
+}
+
+const { data, error } = await supabase
+  .from(tableName)
+  .select(selectQuery);
+
+// Transform data to flatten nested objects
+waitlistSlots = data.map(slot => ({
+  ...slot,
+  artist_name: slot.artist?.name,
+  location_name: slot.location?.name,
+  // Map share_personal_data to share_paid for consistency
+  share_paid: currentListType === 'upcoming'
+    ? slot.share_personal_data
+    : slot.share_paid
+}));
+```
+
+### 2. toggleSharePaid()
 
 **Vorher:**
 ```javascript
@@ -334,9 +465,11 @@ if (currentListType === 'upcoming' && slot.date_from) { ... }
 
 ✅ **Alle Änderungen implementiert:**
 1. Korrigierte Migration erstellt
-2. toggleSharePaid() verwendet jetzt richtige Felder
-3. Detailliertes Error Logging in allen CRUD-Funktionen
-4. Schema-Dokumentation aktualisiert
+2. **Views komplett entfernt** - Verwendet jetzt direkte Tabellen-Queries
+3. loadWaitlistSlots() nutzt Supabase Joins statt Views
+4. toggleSharePaid() verwendet jetzt richtige Felder
+5. Detailliertes Error Logging in allen CRUD-Funktionen
+6. Schema-Dokumentation aktualisiert
 
 ✅ **Nächste Schritte:**
 1. Migration in Supabase durchführen
