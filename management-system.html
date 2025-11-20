@@ -13706,7 +13706,7 @@
       window.viewArtistProfile = async function(artistId) {
         const artist = artistsCache.find(a => a.id === artistId) || allArtists.find(a => a.id === artistId);
         if (!artist) {
-          alert('❌ Artist not found');
+          alert('Artist not found');
           return;
         }
 
@@ -13736,7 +13736,7 @@
               <!-- Background Header -->
               <div style="
                 height: 300px;
-                background: ${artist.background_image_url ? `url('${artist.background_image_url}')` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+                background: ${artist.background_image_url ? `url('${artist.background_image_url}')` : 'linear-gradient(135deg, #e0e0e0 0%, #9e9e9e 100%)'};
                 background-size: cover;
                 background-position: center;
                 position: relative;
@@ -13801,7 +13801,7 @@
                       font-size: 14px;
                       font-weight: 600;
                       margin-left: 8px;
-                    ">🌟 Guest</span>` : ''}
+                    ">Guest</span>` : ''}
                   </div>
 
                   <button onclick="closeViewArtistModal()" style="
@@ -13852,7 +13852,7 @@
 
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Type</label>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.is_guest ? '🌟 Guest Artist' : '🏠 Resident'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.is_guest ? 'Guest Artist' : 'Resident'}</p>
                   </div>
 
                   <div>
@@ -13870,11 +13870,11 @@
                 ` : ''}
 
                 <!-- Images Section -->
-                <div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px;">
-                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">📸 Bilder</h3>
+                <div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px; margin-bottom: 24px;">
+                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Images</h3>
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
-                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Profilbild</label>
+                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Profile Picture</label>
                       ${artist.profile_picture_url ? `
                         <img src="${artist.profile_picture_url}" style="
                           width: 100%;
@@ -13883,13 +13883,13 @@
                           border-radius: 8px;
                         ">
                         <div style="margin-top: 8px;">
-                          <a href="${artist.profile_picture_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">🔗 Open full size</a>
+                          <a href="${artist.profile_picture_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">Open full size</a>
                         </div>
-                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">Kein Bild</div>'}
+                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">No Image</div>'}
                     </div>
 
                     <div>
-                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Hintergrundbild</label>
+                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Background Image</label>
                       ${artist.background_image_url ? `
                         <img src="${artist.background_image_url}" style="
                           width: 100%;
@@ -13898,10 +13898,18 @@
                           border-radius: 8px;
                         ">
                         <div style="margin-top: 8px;">
-                          <a href="${artist.background_image_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">🔗 Open full size</a>
+                          <a href="${artist.background_image_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">Open full size</a>
                         </div>
-                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">Kein Bild</div>'}
+                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">No Image</div>'}
                     </div>
+                  </div>
+                </div>
+
+                <!-- Projects Section -->
+                <div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px;">
+                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Completed Projects</h3>
+                  <div id="artistProjectsList" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="padding: 20px; text-align: center; color: #86868b;">Loading projects...</div>
                   </div>
                 </div>
 
@@ -13916,7 +13924,7 @@
                     border-radius: 8px;
                     font-weight: 600;
                     cursor: pointer;
-                  ">✏️ Edit Artist</button>
+                  ">Edit Artist</button>
 
                   <button onclick="closeViewArtistModal()" style="
                     padding: 12px 24px;
@@ -13933,6 +13941,37 @@
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Load artist projects asynchronously
+        try {
+          console.log('Loading projects for artist:', artistId);
+
+          const { data: projects, error } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              customer:customers(first_name, last_name, email, instagram),
+              location:locations(name, city)
+            `)
+            .eq('artist_id', artistId)
+            .not('artist_id', 'is', null)
+            .order('start', { ascending: false });
+
+          if (error) {
+            console.error('Error loading artist projects:', error);
+            document.getElementById('artistProjectsList').innerHTML =
+              '<div style="padding: 20px; text-align: center; color: #FF3B30;">Error loading projects</div>';
+            return;
+          }
+
+          console.log('Projects loaded:', projects?.length || 0);
+          renderArtistProjectsSection(projects || []);
+
+        } catch (err) {
+          console.error('Error loading artist projects:', err);
+          document.getElementById('artistProjectsList').innerHTML =
+            '<div style="padding: 20px; text-align: center; color: #FF3B30;">Error loading projects</div>';
+        }
       };
 
       function closeViewArtistModal() {
@@ -13942,6 +13981,157 @@
 
       // Make globally accessible
       window.closeViewArtistModal = closeViewArtistModal;
+
+      // Render Artist Projects Section
+      function renderArtistProjectsSection(appointments) {
+        const container = document.getElementById('artistProjectsList');
+
+        if (!container) {
+          console.error('artistProjectsList container not found');
+          return;
+        }
+
+        if (!appointments || appointments.length === 0) {
+          container.innerHTML = '<div style="padding: 20px; text-align: center; color: #86868b; background: rgba(0,0,0,0.02); border-radius: 8px;">No appointments found</div>';
+          return;
+        }
+
+        // Group appointments by project_number
+        const projectGroups = {};
+
+        appointments.forEach(appointment => {
+          const projectNum = appointment.project_number || 'no-project';
+
+          if (!projectGroups[projectNum]) {
+            projectGroups[projectNum] = {
+              project_number: projectNum,
+              appointments: [],
+              customer_name: null,
+              customer_email: null,
+              first_appointment: null,
+              last_appointment: null
+            };
+          }
+
+          projectGroups[projectNum].appointments.push(appointment);
+
+          // Set customer info (all appointments in project have same customer)
+          if (appointment.customer) {
+            projectGroups[projectNum].customer_name =
+              `${appointment.customer.first_name || ''} ${appointment.customer.last_name || ''}`.trim();
+            projectGroups[projectNum].customer_email = appointment.customer.email;
+          }
+        });
+
+        // Calculate date ranges for each project
+        Object.values(projectGroups).forEach(project => {
+          project.appointments.sort((a, b) => new Date(a.start) - new Date(b.start));
+          project.first_appointment = project.appointments[0]?.start;
+          project.last_appointment = project.appointments[project.appointments.length - 1]?.start;
+        });
+
+        console.log('Grouped into', Object.keys(projectGroups).length, 'projects');
+
+        // Convert to array and sort by most recent
+        const projects = Object.values(projectGroups)
+          .sort((a, b) => new Date(b.last_appointment) - new Date(a.last_appointment));
+
+        // Render project cards
+        container.innerHTML = projects.map((project, index) => {
+          const projectId = project.project_number.replace(/[^a-zA-Z0-9]/g, '-');
+
+          return `
+            <div class="project-card" data-project-number="${project.project_number}">
+              <div class="project-header" onclick="toggleArtistProjectDetails('${projectId}')" style="cursor: pointer;">
+                <div class="project-info">
+                  <div class="project-title">
+                    <span class="project-badge">${project.project_number === 'no-project' ? 'Ungrouped' : project.project_number}</span>
+                    <span class="customer-name">${project.customer_name || project.customer_email || 'Unknown Customer'}</span>
+                  </div>
+                  <div class="project-meta">
+                    <span class="appointment-count">${project.appointments.length} ${project.appointments.length === 1 ? 'session' : 'sessions'}</span>
+                    <span class="date-range">
+                      ${formatProjectDate(project.first_appointment)}
+                      ${project.appointments.length > 1 ? ' → ' + formatProjectDate(project.last_appointment) : ''}
+                    </span>
+                  </div>
+                </div>
+                <button class="expand-btn" aria-label="Toggle details" style="background: none; border: none; cursor: pointer;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="project-details" id="project-details-${projectId}" style="display: none;">
+                ${project.appointments.map(appointment => {
+                  const statusClass = appointment.status ? `status-${appointment.status}` : '';
+                  return `
+                    <div class="appointment-item" style="cursor: pointer; padding: 12px; border-radius: 6px; transition: all 0.2s;" onclick="openAppointmentFromProfile('${appointment.id}')" onmouseover="this.style.backgroundColor='rgba(0,0,0,0.03)'" onmouseout="this.style.backgroundColor=''">
+                      <div class="appointment-date" style="font-size: 13px; color: #86868b; margin-bottom: 4px;">
+                        ${formatProjectDateTime(appointment.start)}
+                      </div>
+                      <div class="appointment-info" style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                        <span class="booking-type" style="font-weight: 600; font-size: 14px;">${appointment.booking_type || 'Appointment'}</span>
+                        ${appointment.status ? `<span class="status-badge ${statusClass}">${appointment.status}</span>` : ''}
+                      </div>
+                      ${appointment.notes ? `<div class="appointment-notes" style="font-size: 13px; color: #86868b;">${appointment.notes}</div>` : ''}
+                      ${appointment.placement ? `<div class="appointment-notes" style="font-size: 13px; color: #86868b;">Placement: ${appointment.placement}</div>` : ''}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Toggle function for artist project details
+      window.toggleArtistProjectDetails = function(projectId) {
+        const detailsEl = document.getElementById(`project-details-${projectId}`);
+
+        if (!detailsEl) return;
+
+        const isVisible = detailsEl.style.display !== 'none';
+
+        // Toggle visibility
+        detailsEl.style.display = isVisible ? 'none' : 'block';
+
+        // Rotate expand button
+        const expandBtn = detailsEl.previousElementSibling?.querySelector('.expand-btn svg');
+        if (expandBtn) {
+          expandBtn.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+      };
+
+      // Helper function for project dates
+      function formatProjectDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      // Helper function for project date-time
+      function formatProjectDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('de-DE', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      // Open appointment from profile (if not already defined)
+      if (typeof window.openAppointmentFromProfile === 'undefined') {
+        window.openAppointmentFromProfile = function(appointmentId) {
+          console.log('Opening appointment:', appointmentId);
+          // This function should be implemented elsewhere to open appointment details
+          alert('Open appointment: ' + appointmentId);
+        };
+      }
 
       // Keep old closeViewProfile for backward compatibility
       window.closeViewProfile = function() {
@@ -13963,7 +14153,7 @@
         openEditArtistModal(artistId);
       };
 
-      
+
       // Edit Customer Functions
       window.editCustomer = async function(customerId) {
         try {
