@@ -12409,20 +12409,13 @@
 
         const userId = document.getElementById('assignTeamMember').value;
 
-        // Get username for display
-        const { data: user } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', userId)
-          .single();
-
         try {
           const { error } = await supabase
             .from('requests')
             .update({
               status: 'pending',
               assigned_to_user_id: userId,
-              assigned_to: user?.username || 'Unknown' // For display purposes
+              assigned_to: userId // Use UUID instead of username
             })
             .eq('id', selectedRequestId);
 
