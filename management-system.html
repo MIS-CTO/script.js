@@ -5751,14 +5751,14 @@
       </button>
 
       <!-- Notification Bell -->
-      <button class="icon-button notification" id="notificationButton">
+      <button class="icon-button notification" id="notificationButton" style="position: relative;">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.37 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
       </button>
 
-      <!-- Project Invitations Icon -->
-      <button class="icon-button" id="projectInvitationsButton" style="position: relative;">
+      <!-- Project Invitations Icon - Hidden (invitations now in main inbox) -->
+      <button class="icon-button" id="projectInvitationsButton" style="position: relative; display: none;">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
           <path d="M3 8L12 13L21 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -10517,6 +10517,10 @@
       async function searchUsers(searchTerm) {
         try {
           const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            console.error('❌ User not authenticated');
+            return;
+          }
 
           const { data, error } = await supabase
             .from('profiles')
@@ -10600,6 +10604,10 @@
 
         try {
           const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            alert('Du musst angemeldet sein, um ein Projekt zu erstellen.');
+            return;
+          }
 
           // 1. Create Project
           const { data: project, error: projectError } = await supabase
@@ -10614,6 +10622,9 @@
             .single();
 
           if (projectError) throw projectError;
+          if (!project) {
+            throw new Error('Projekt konnte nicht erstellt werden');
+          }
 
           // 2. Add Creator as Owner
           const { error: ownerError } = await supabase
@@ -10710,8 +10721,8 @@
           );
 
           currentInvitations = invitationsWithCreators;
-          renderInvitations();
-          updateInvitationsBadge();
+          renderInvitationsInInbox();
+          updateNotificationBadge();
 
           console.log('✅ Invitations loaded:', currentInvitations.length);
         } catch (err) {
@@ -10719,24 +10730,36 @@
         }
       }
 
-      // Render Invitations
-      function renderInvitations() {
-        const container = document.getElementById('invitationsContent');
+      // Render Invitations in Inbox
+      function renderInvitationsInInbox() {
+        const container = document.querySelector('.notifications-content');
+        if (!container) return;
 
         if (currentInvitations.length === 0) {
-          container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary); font-size: 14px;">Keine Einladungen</div>';
+          container.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-icon">
+                <rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M3 9L12 14L21 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <p class="empty-text">Keine neuen Benachrichtigungen</p>
+            </div>`;
           return;
         }
 
         container.innerHTML = currentInvitations.map(invitation => `
-          <div class="invitation-card">
-            <div class="invitation-title">${invitation.task_projects.title}</div>
-            <div class="invitation-from">Von: ${invitation.creator_username}</div>
-            <div class="invitation-actions">
-              <button class="invitation-btn invitation-btn-decline" onclick="declineInvitation('${invitation.id}')">
+          <div class="invitation-card" style="margin: 8px; padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; color: var(--text-primary);">
+              Projekt-Einladung: ${invitation.task_projects.title}
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+              Von: ${invitation.creator_username}
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button class="invitation-btn invitation-btn-decline" onclick="declineInvitation('${invitation.id}')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 13px;">
                 Ablehnen
               </button>
-              <button class="invitation-btn invitation-btn-accept" onclick="acceptInvitation('${invitation.id}')">
+              <button class="invitation-btn invitation-btn-accept" onclick="acceptInvitation('${invitation.id}')" style="padding: 6px 12px; border-radius: 6px; border: none; background: var(--primary-color); color: white; cursor: pointer; font-size: 13px;">
                 ✓ Annehmen
               </button>
             </div>
@@ -10744,14 +10767,37 @@
         `).join('');
       }
 
-      // Update Badge
+      // Update Notification Badge (for main notification button)
+      function updateNotificationBadge() {
+        // Add badge to notification button if it doesn't exist
+        let badge = document.querySelector('#notificationButton .notification-badge');
+        if (!badge && currentInvitations.length > 0) {
+          badge = document.createElement('span');
+          badge.className = 'notification-badge';
+          badge.style.cssText = 'position: absolute; top: 8px; right: 8px; background: var(--primary-color); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600;';
+          document.getElementById('notificationButton').appendChild(badge);
+        }
+
+        if (badge) {
+          if (currentInvitations.length > 0) {
+            badge.textContent = currentInvitations.length;
+            badge.style.display = 'flex';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      }
+
+      // Keep old badge function for backwards compatibility
       function updateInvitationsBadge() {
         const badge = document.getElementById('invitationsBadge');
-        if (currentInvitations.length > 0) {
-          badge.textContent = currentInvitations.length;
-          badge.style.display = 'flex';
-        } else {
-          badge.style.display = 'none';
+        if (badge) {
+          if (currentInvitations.length > 0) {
+            badge.textContent = currentInvitations.length;
+            badge.style.display = 'flex';
+          } else {
+            badge.style.display = 'none';
+          }
         }
       }
 
@@ -26342,7 +26388,13 @@
       if (notificationButton) {
         notificationButton.addEventListener('click', function(e) {
           e.stopPropagation();
-          if (notificationsDropdown) notificationsDropdown.classList.toggle('active');
+          if (notificationsDropdown) {
+            notificationsDropdown.classList.toggle('active');
+            // Load pending invitations when opening notifications
+            if (notificationsDropdown.classList.contains('active')) {
+              loadPendingInvitations();
+            }
+          }
           if (profileDropdown) profileDropdown.classList.remove('active');
           if (feedbackDropdown) feedbackDropdown.classList.remove('active');
         });
