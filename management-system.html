@@ -6742,9 +6742,10 @@
           <label style="font-size:13px; color:var(--muted);">Team Member</label>
           <select id="assignTeamMember" required>
             <option value="">-- Select Team Member --</option>
-            <option value="member1">Name 1</option>
-            <option value="member2">Name 2</option>
-            <option value="member3">Name 3</option>
+            <option value="cara">Cara</option>
+            <option value="aman">Aman</option>
+            <option value="bennett">Bennett</option>
+            <option value="jan">Jan</option>
           </select>
         </div>
         <div class="modal-actions" style="gap:8px;">
@@ -10984,15 +10985,17 @@
       
       // Assign Request
       window.assignRequest = async function() {
-        // Load all users with 'Booking Team' role from profiles
-        const { data: bookingTeam } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .eq('role', 'Booking Team');
+        // Use fixed list of team members
+        const teamMembers = [
+          { id: 'cara', username: 'Cara' },
+          { id: 'aman', username: 'Aman' },
+          { id: 'bennett', username: 'Bennett' },
+          { id: 'jan', username: 'Jan' }
+        ];
 
         const teamMemberSelect = document.getElementById('assignTeamMember');
         teamMemberSelect.innerHTML = '<option value="">-- Select Team Member --</option>' +
-          (bookingTeam || []).map(m => `<option value="${m.id}">${m.username}</option>`).join('');
+          teamMembers.map(m => `<option value="${m.id}">${m.username}</option>`).join('');
 
         document.getElementById('assignModal').classList.add('active');
       };
