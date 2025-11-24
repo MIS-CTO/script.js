@@ -3487,6 +3487,7 @@
       -webkit-backdrop-filter: blur(20px);
       padding: 20px 24px;
       border-radius: 16px;
+      pointer-events: auto; /* Allow clicks on the container itself */
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
       min-width: 320px;
       pointer-events: auto; /* Allow clicks on the modal itself */
@@ -17489,14 +17490,16 @@
         const isToday = dateKey === new Date().toISOString().split('T')[0];
 
         html += `
-          <div style="
+          <div class="dienstplan-day-cell" data-date="${dateKey}" style="
             min-height: 100px;
             background: ${isToday ? 'rgba(0, 122, 255, 0.05)' : 'rgba(0,0,0,0.01)'};
             border: ${isToday ? '2px solid #007AFF' : '1px solid rgba(0,0,0,0.05)'};
             border-radius: 8px;
             padding: 8px;
             overflow: hidden;
-          ">
+            cursor: pointer;
+            transition: all 0.2s ease;
+          " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
             <div style="font-weight: 600; font-size: 14px; color: ${isToday ? '#007AFF' : '#1d1d1f'}; margin-bottom: 6px;">
               ${day}
             </div>
@@ -17550,6 +17553,196 @@
       `;
 
       container.innerHTML = html;
+
+      // Add click handlers to calendar days
+      setTimeout(() => {
+        document.querySelectorAll('.dienstplan-day-cell').forEach(cell => {
+          cell.addEventListener('click', function() {
+            const dateKey = this.getAttribute('data-date');
+            showDayDetail(dateKey);
+          });
+        });
+      }, 100);
+    }
+
+    // Show detailed view for a specific day
+    function showDayDetail(dateKey) {
+      const dayEntries = [];
+
+      // Find all entries for this day
+      dienstplanFiltered.forEach(entry => {
+        const start = new Date(entry.start_date);
+        const end = new Date(entry.end_date);
+
+        // Check if this entry includes the selected date
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          if (d.toISOString().split('T')[0] === dateKey) {
+            dayEntries.push(entry);
+            break;
+          }
+        }
+      });
+
+      const date = new Date(dateKey);
+      const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+      const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+      const dayName = dayNames[date.getDay()];
+      const dayNumber = date.getDate();
+      const monthName = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+
+      // Sort entries by working start time
+      dayEntries.sort((a, b) => {
+        const timeA = a.working_start || '00:00';
+        const timeB = b.working_start || '00:00';
+        return timeA.localeCompare(timeB);
+      });
+
+      let modalHtml = `
+        <div class="modal-overlay" onclick="closeDayDetailModal(event)" style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+          padding: 20px;
+        ">
+          <div class="modal-content" onclick="event.stopPropagation()" style="
+            background: var(--macos-elevated);
+            backdrop-filter: var(--macos-blur-strong);
+            -webkit-backdrop-filter: var(--macos-blur-strong);
+            border: 1px solid var(--macos-stroke-primary);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--macos-shadow-large);
+          ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <div>
+                <h2 style="margin: 0; font-size: 24px; font-weight: 600; color: var(--macos-text-primary);">
+                  ${dayName}, ${dayNumber}. ${monthName} ${year}
+                </h2>
+                <p style="margin: 4px 0 0 0; font-size: 14px; color: var(--macos-text-secondary);">
+                  ${dayEntries.length} ${dayEntries.length === 1 ? 'Eintrag' : 'Einträge'}
+                </p>
+              </div>
+              <button onclick="closeDayDetailModal()" style="
+                background: var(--macos-fill-tertiary);
+                border: none;
+                border-radius: 8px;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 20px;
+                color: var(--macos-text-secondary);
+                transition: all 0.2s ease;
+              " onmouseover="this.style.background='var(--macos-fill-secondary)'" onmouseout="this.style.background='var(--macos-fill-tertiary)'">
+                ✕
+              </button>
+            </div>
+      `;
+
+      if (dayEntries.length === 0) {
+        modalHtml += `
+          <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
+            <p style="font-size: 16px;">Keine Einträge für diesen Tag</p>
+          </div>
+        `;
+      } else {
+        modalHtml += `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+
+        dayEntries.forEach(entry => {
+          const artistName = entry.artist?.name || 'Unbekannt';
+          const statusColor = entry.state === 'Available' ? 'var(--macos-accent-green)' :
+                             entry.state === 'Vacation' ? 'var(--macos-accent-orange)' :
+                             'var(--macos-accent-red)';
+          const statusText = entry.state === 'Available' ? 'Verfügbar' :
+                            entry.state === 'Vacation' ? 'Urlaub' :
+                            'Nicht verfügbar';
+          const workingHours = entry.working_start && entry.working_end
+            ? `${entry.working_start.substring(0,5)} - ${entry.working_end.substring(0,5)}`
+            : 'Keine Zeiten angegeben';
+          const role = entry.role || 'Keine Rolle angegeben';
+
+          modalHtml += `
+            <div style="
+              background: var(--macos-panel);
+              border: 1px solid var(--macos-stroke-primary);
+              border-left: 4px solid ${statusColor};
+              border-radius: 10px;
+              padding: 16px;
+              transition: all 0.2s ease;
+            " onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                <div style="font-size: 16px; font-weight: 600; color: var(--macos-text-primary);">
+                  ${artistName}
+                </div>
+                <div style="
+                  background: ${statusColor}20;
+                  color: ${statusColor};
+                  padding: 4px 10px;
+                  border-radius: 6px;
+                  font-size: 12px;
+                  font-weight: 600;
+                ">
+                  ${statusText}
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--macos-text-secondary);">
+                  <span style="font-weight: 500;">🕐</span>
+                  <span>${workingHours}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--macos-text-secondary);">
+                  <span style="font-weight: 500;">💼</span>
+                  <span>${role}</span>
+                </div>
+                ${entry.note ? `
+                  <div style="display: flex; align-items: start; gap: 8px; color: var(--macos-text-secondary); margin-top: 4px;">
+                    <span style="font-weight: 500;">📝</span>
+                    <span style="flex: 1;">${entry.note}</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        });
+
+        modalHtml += `</div>`;
+      }
+
+      modalHtml += `
+          </div>
+        </div>
+      `;
+
+      // Create and show modal
+      const modalContainer = document.createElement('div');
+      modalContainer.id = 'dayDetailModal';
+      modalContainer.innerHTML = modalHtml;
+      document.body.appendChild(modalContainer);
+    }
+
+    // Close day detail modal
+    function closeDayDetailModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      const modal = document.getElementById('dayDetailModal');
+      if (modal) {
+        modal.remove();
+      }
     }
 
     // Load Work Tracking Data from database with BATCH LOADING
@@ -24868,10 +25061,25 @@
 
       // Load saved theme
       function loadTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(savedTheme);
+        let theme = localStorage.getItem('theme');
+
+        // If no saved theme, use system preference
+        if (!theme) {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          theme = prefersDark ? 'dark' : 'light';
+        }
+
+        setTheme(theme);
       }
       loadTheme();
+
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        // Only apply system preference if user hasn't manually set a theme
+        if (!localStorage.getItem('theme')) {
+          setTheme(e.matches ? 'dark' : 'light');
+        }
+      });
 
       // Logout Button
       const logoutBtn = document.getElementById('logoutBtn');
