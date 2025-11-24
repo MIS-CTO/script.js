@@ -5001,6 +5001,11 @@
         min-width: auto !important;
       }
 
+      /* Hide Create Booking button on mobile */
+      #createBookingBtn {
+        display: none !important;
+      }
+
       /* Date Navigation Container */
       .date-nav-container {
         flex-direction: column !important;
@@ -24536,17 +24541,19 @@
         item.addEventListener('click', function() {
           const viewName = this.dataset.mobileView;
 
-          // Update active state
+          // Update active state on mobile nav items
           mobileNavItems.forEach(navItem => navItem.classList.remove('active'));
           this.classList.add('active');
 
-          // Switch to the selected view
-          const viewId = viewName + '-section';
-          const sections = document.querySelectorAll('section');
-          sections.forEach(s => s.classList.remove('active'));
+          // Hide all sections and show selected section
+          document.querySelectorAll('section[id$="-section"]').forEach(section => {
+            section.style.display = 'none';
+            section.classList.remove('active');
+          });
 
-          const targetSection = document.getElementById(viewId);
+          const targetSection = document.getElementById(viewName + '-section');
           if (targetSection) {
+            targetSection.style.display = 'block';
             targetSection.classList.add('active');
           }
 
