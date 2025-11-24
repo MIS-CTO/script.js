@@ -5388,17 +5388,13 @@
       </div>
     </div>
 
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-      <h2 style="margin:0;">Dashboard</h2>
+    <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:16px;">
       <span id="versionBadge" style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace;">v84</span>
     </div>
     <div>
-      <span class="badge" id="badge-pending">Pending: —</span>
-      <span class="badge" id="badge-scheduled">Scheduled: —</span>
-      <span class="badge" id="badge-residents">Residents: —</span>
-      <span class="badge" id="badge-guests">Guests: —</span>
-      <span class="badge" id="badge-agreements-completed">Agreements: —</span>
-      <span class="badge" id="badge-agreements-pending">Missing: —</span>
+      <span class="badge" id="badge-weekly-open-requests">Neue offene Anfragen (diese Woche): —</span>
+      <span class="badge" id="badge-weekly-events">Events (diese Woche): —</span>
+      <span class="badge" id="badge-weekly-bookings">Buchungen (diese Woche): —</span>
     </div>
 
     <!-- Dashboard Grid Layout -->
@@ -9265,20 +9261,59 @@
             .from('artists')
             .select('*', { count: 'exact', head: true });
 
-          // 6. UPDATE LEGACY BADGES (keep for compatibility)
-          const badge1 = document.getElementById('badge-pending');
-          const badge2 = document.getElementById('badge-scheduled');
-          const badge3 = document.getElementById('badge-residents');
-          const badge4 = document.getElementById('badge-guests');
-          const badge5 = document.getElementById('badge-agreements-completed');
-          const badge6 = document.getElementById('badge-agreements-pending');
+          // 6. CALCULATE WEEKLY STATISTICS
+          // Get start of current week (Monday)
+          const now = new Date();
+          const dayOfWeek = now.getDay();
+          const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Adjust when day is Sunday
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - diff);
+          weekStart.setHours(0, 0, 0, 0);
 
-          if (badge1) badge1.textContent = `Pending: ${requestCounts.pending}`;
-          if (badge2) badge2.textContent = `Scheduled: ${requestCounts.scheduled}`;
-          if (badge3) badge3.textContent = `Residents: ${artistCount || 0}`;
-          if (badge4) badge4.textContent = `Guests: 0`;
-          if (badge5) badge5.textContent = `Open Requests: ${requestCounts.open_request}`;
-          if (badge6) badge6.textContent = `Today's Events: ${todayAppointments}`;
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 7);
+
+          // Count new open requests this week
+          let weeklyOpenRequests = 0;
+          (allRequests || []).forEach(req => {
+            if (req.status === 'open_request' && req.created_at) {
+              const createdDate = new Date(req.created_at);
+              if (createdDate >= weekStart && createdDate < weekEnd) {
+                weeklyOpenRequests++;
+              }
+            }
+          });
+
+          // Count events (appointments) this week
+          let weeklyEvents = 0;
+          (allAppointments || []).forEach(apt => {
+            if (apt.start) {
+              const aptDate = new Date(apt.start);
+              if (aptDate >= weekStart && aptDate < weekEnd) {
+                weeklyEvents++;
+              }
+            }
+          });
+
+          // Count bookings (appointments created) this week
+          let weeklyBookings = 0;
+          (allAppointments || []).forEach(apt => {
+            if (apt.created_at) {
+              const createdDate = new Date(apt.created_at);
+              if (createdDate >= weekStart && createdDate < weekEnd) {
+                weeklyBookings++;
+              }
+            }
+          });
+
+          // Update weekly statistics badges
+          const badgeWeeklyOpenRequests = document.getElementById('badge-weekly-open-requests');
+          const badgeWeeklyEvents = document.getElementById('badge-weekly-events');
+          const badgeWeeklyBookings = document.getElementById('badge-weekly-bookings');
+
+          if (badgeWeeklyOpenRequests) badgeWeeklyOpenRequests.textContent = `Neue offene Anfragen (diese Woche): ${weeklyOpenRequests}`;
+          if (badgeWeeklyEvents) badgeWeeklyEvents.textContent = `Events (diese Woche): ${weeklyEvents}`;
+          if (badgeWeeklyBookings) badgeWeeklyBookings.textContent = `Buchungen (diese Woche): ${weeklyBookings}`;
 
           // 7. UPDATE DASHBOARD CHARTS
           ProgressBar.updateProgress(80, 'Rendering charts...');
