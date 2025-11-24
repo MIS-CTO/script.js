@@ -7996,55 +7996,56 @@
 
         // Add click event listeners to mobile nav items
         const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+
         mobileNavItems.forEach(item => {
-          // Remove any existing listeners by cloning
-          const newItem = item.cloneNode(true);
-          item.parentNode.replaceChild(newItem, item);
-
-          newItem.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const viewName = this.dataset.mobileView;
-            console.log('📱 Mobile nav clicked:', viewName);
-
-            if (!viewName) return;
-
-            // Update active state for mobile nav
-            document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
-            this.classList.add('active');
-
-            // Hide all sections first
-            document.querySelectorAll('section[id$="-section"]').forEach(section => {
-              section.style.display = 'none';
-              section.classList.remove('active');
-            });
-
-            // Show the selected section
-            const sectionElement = document.getElementById(viewName + '-section');
-            if (sectionElement) {
-              sectionElement.style.display = 'block';
-              sectionElement.classList.add('active');
-              console.log('✅ Switched to section:', viewName + '-section');
-            } else {
-              console.error('❌ Section not found:', viewName + '-section');
-            }
-
-            // Also update desktop nav active state if exists
-            document.querySelectorAll('.nav-link').forEach(link => {
-              link.classList.remove('active');
-              if (link.dataset.view === viewName) {
-                link.classList.add('active');
-              }
-            });
-
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          });
+          // Use a named function to avoid duplicate listeners
+          item.addEventListener('click', handleMobileNavClick);
         });
       } else if (mobileFooterNav) {
         mobileFooterNav.style.display = 'none';
       }
+    }
+
+    // Named handler function for mobile navigation clicks
+    function handleMobileNavClick(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const viewName = this.dataset.mobileView;
+      console.log('📱 Mobile nav clicked:', viewName);
+
+      if (!viewName) return;
+
+      // Update active state for mobile nav
+      document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+      this.classList.add('active');
+
+      // Hide all sections first
+      document.querySelectorAll('section[id$="-section"]').forEach(section => {
+        section.style.display = 'none';
+        section.classList.remove('active');
+      });
+
+      // Show the selected section
+      const sectionElement = document.getElementById(viewName + '-section');
+      if (sectionElement) {
+        sectionElement.style.display = 'block';
+        sectionElement.classList.add('active');
+        console.log('✅ Switched to section:', viewName + '-section');
+      } else {
+        console.error('❌ Section not found:', viewName + '-section');
+      }
+
+      // Also update desktop nav active state if exists
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.view === viewName) {
+          link.classList.add('active');
+        }
+      });
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // ========================================
