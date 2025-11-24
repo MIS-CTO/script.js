@@ -5034,6 +5034,13 @@
         margin: 0 auto;
       }
 
+      /* Dashboard Bottom Row - Stack vertically on mobile */
+      .dashboard-bottom-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 24px !important;
+      }
+
       /* Hide desktop calendar grid */
       .calendar-container .calendar-grid {
         display: none !important;
@@ -7989,6 +7996,34 @@
 
       if (isMobile && mobileFooterNav) {
         mobileFooterNav.style.display = 'flex';
+
+        // Add click event listeners to mobile nav items
+        const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+        mobileNavItems.forEach(item => {
+          // Remove any existing listeners by cloning
+          const newItem = item.cloneNode(true);
+          item.parentNode.replaceChild(newItem, item);
+
+          newItem.addEventListener('click', function() {
+            const viewName = this.dataset.mobileView;
+            if (!viewName) return;
+
+            // Update active state for mobile nav
+            document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+
+            // Switch to the selected view
+            switchView(viewName);
+
+            // Also update desktop nav active state if exists
+            document.querySelectorAll('.nav-link').forEach(link => {
+              link.classList.remove('active');
+              if (link.dataset.view === viewName) {
+                link.classList.add('active');
+              }
+            });
+          });
+        });
       } else if (mobileFooterNav) {
         mobileFooterNav.style.display = 'none';
       }
