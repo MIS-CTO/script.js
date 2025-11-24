@@ -1382,24 +1382,33 @@
     #artistsTable tbody tr {
       transition:background 0.15s ease;
     }
-    
+
     #artistsTable tbody tr:hover {
       background:rgba(0,113,227,0.02);
     }
+
+    [data-theme="dark"] #artistsTable tbody tr {
+      background: rgba(44, 44, 46, 0.5); /* Dark gray in dark mode */
+    }
+
+    [data-theme="dark"] #artistsTable tbody tr:hover {
+      background: rgba(58, 58, 60, 0.8); /* Darker gray on hover in dark mode */
+    }
+
     #customersTable tbody tr {
       transition:background 0.15s ease;
     }
-    
+
     #customersTable tbody tr:hover {
       background:rgba(0,113,227,0.02);
     }
-    /* Artists Table Styles */
-    #artistsTable tbody tr {
-      transition:background 0.15s ease;
+
+    [data-theme="dark"] #customersTable tbody tr {
+      background: rgba(44, 44, 46, 0.5); /* Dark gray in dark mode */
     }
-    
-    #artistsTable tbody tr:hover {
-      background:rgba(0,113,227,0.02);
+
+    [data-theme="dark"] #customersTable tbody tr:hover {
+      background: rgba(58, 58, 60, 0.8); /* Darker gray on hover in dark mode */
     }
     
     
@@ -2358,7 +2367,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: #ffffff;
+      background: #ffffff !important; /* Always white, no dark mode */
       z-index: 999999;
       align-items: center;
       justify-content: center;
@@ -2385,8 +2394,24 @@
     }
     .login-welcome p {
       margin: 0;
-      color: var(--muted);
+      color: #86868b !important; /* Always use light mode color */
       font-size: 14px;
+    }
+
+    /* Force all login elements to use light mode colors */
+    .login-backdrop * {
+      color: #1d1d1f !important;
+    }
+
+    .login-backdrop .login-welcome h2,
+    .login-backdrop label {
+      color: #1d1d1f !important;
+    }
+
+    .login-backdrop input {
+      background: #ffffff !important;
+      color: #1d1d1f !important;
+      border-color: #ddd !important;
     }
     .login-form .form-group {
       margin-bottom: 20px;
@@ -2606,12 +2631,22 @@
       padding-left: 4px;
     }
 
+    [data-theme="dark"] .container-section-title {
+      color: var(--macos-text-primary);
+    }
+
     .dashboard-card {
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 24px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    [data-theme="dark"] .dashboard-card {
+      background: rgba(44, 44, 46, 0.5);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
     /* ========================================
@@ -2639,6 +2674,14 @@
 
     .event-item:hover {
       background: var(--hover-bg-light);
+    }
+
+    [data-theme="dark"] .event-item {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .event-item:hover {
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .event-item:last-child {
@@ -2679,6 +2722,10 @@
       font-size: 14px;
     }
 
+    [data-theme="dark"] .event-empty {
+      color: var(--macos-text-secondary);
+    }
+
     /* ========================================
        SCHWARZES BRETT
        ======================================== */
@@ -2701,9 +2748,19 @@
       transition: all 0.2s ease;
     }
 
+    [data-theme="dark"] .brett-item {
+      background: rgba(58, 58, 60, 0.5);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
     .brett-item:hover {
       background: var(--hover-bg-light);
       border-color: var(--border-color-strong);
+    }
+
+    [data-theme="dark"] .brett-item:hover {
+      background: rgba(72, 72, 74, 0.6);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
     .brett-item:last-child {
@@ -2747,10 +2804,13 @@
       align-items: center;
       padding: 4px 10px;
       border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      background: var(--hover-bg);
+      background: var(--hover-bg-light);
       color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .brett-tag {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--macos-text-secondary);
     }
 
     .brett-empty {
@@ -3496,7 +3556,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: var(--macos-bg);
+      background: #f5f5f7 !important; /* Always light, no dark mode */
       z-index: 1000000;
       align-items: center;
       justify-content: center;
@@ -3510,13 +3570,14 @@
     .loader-spinner {
       width: 48px;
       height: 48px;
-      border: 3px solid var(--macos-fill-tertiary);
-      border-top-color: var(--macos-accent-blue);
+      border: 3px solid rgba(120, 120, 128, 0.12) !important; /* Always light gray */
+      border-top-color: #0071e3 !important; /* Always blue */
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 20px;
     }
     .loader-text {
+      color: #1d1d1f !important; /* Always dark text */
       font-size: 15px;
       font-weight: 500;
       color: var(--macos-text-secondary);
@@ -4155,7 +4216,7 @@
     }
 
     [data-theme="dark"] .navbar-container {
-      background: #1c1c1e;
+      background: #2c2c2e; /* Match header navbar color */
       opacity: 1;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
@@ -5866,27 +5927,31 @@
       </p>
     </div>
 
-    <!-- Add Slot Button + Toggle + Search Bar in One Row -->
-    <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
-      <!-- Left: Add Slot Button + Toggle -->
-      <div style="display:flex; align-items:center; gap:12px;">
-        <button id="addWaitlistSlotButton" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
-          <span style="font-size:18px; font-weight:600;">+</span>
-          <span>Add Slot</span>
-        </button>
+    <!-- Add Slot Button + Location Dropdown + Toggle + Search Bar in One Row -->
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+      <!-- Location Dropdown -->
+      <select id="waitlistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
+        <option value="all">All Locations</option>
+        <!-- Locations will be loaded dynamically -->
+      </select>
 
-        <div id="waitlistTypeToggle" style="display:inline-flex; background:rgba(142, 142, 147, 0.12); border-radius:10px; padding:3px;">
-          <button class="list-toggle-option active" data-list-type="waitlist" style="position:relative; padding:8px 20px; border:none; background:white; color:#1d1d1f; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 2px 4px rgba(0,0,0,0.08);">
-            Waitlist
-          </button>
-          <button class="list-toggle-option" data-list-type="upcoming" style="position:relative; padding:8px 20px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
-            Upcoming List
-          </button>
-        </div>
+      <!-- Add Slot Button -->
+      <button id="addWaitlistSlotButton" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Add Slot</span>
+      </button>
+
+      <div id="waitlistTypeToggle" style="display:inline-flex; background:rgba(142, 142, 147, 0.12); border-radius:10px; padding:3px;">
+        <button class="list-toggle-option active" data-list-type="waitlist" style="position:relative; padding:8px 20px; border:none; background:white; color:#1d1d1f; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 2px 4px rgba(0,0,0,0.08);">
+          Waitlist
+        </button>
+        <button class="list-toggle-option" data-list-type="upcoming" style="position:relative; padding:8px 20px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
+          Upcoming List
+        </button>
       </div>
 
-      <!-- Right: Search Bar -->
-      <div style="position:relative; flex:1; max-width:400px;">
+      <!-- Search Bar (fills remaining width) -->
+      <div style="position:relative; flex:1;">
         <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
@@ -5900,19 +5965,7 @@
       Artists with confirmed booking dates
     </p>
 
-    <!-- Location Filter (optional, if using location-specific slots) -->
-    <div style="margin-bottom:24px;">
-      <div style="position:relative; background:#e8e8ed; border-radius:28px; padding:6px; display:inline-flex; gap:0;">
-        <div id="waitlistLocationIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:white; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 3px 8px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
-
-        <button class="waitlist-location-tab active" data-location="all" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; color:#1d1d1f; font-weight:600; font-size:14px; cursor:pointer; border-radius:22px; transition:color 0.2s;">
-          All Locations
-        </button>
-
-        <!-- Add location buttons dynamically -->
-        <div id="waitlistLocationButtons" style="position:relative; z-index:2; display:flex; gap:0;"></div>
-      </div>
-    </div>
+    <!-- Location Filter removed - now using dropdown above -->
 
     <!-- Active Slots Display -->
     <div id="waitlistSlotsContainer">
@@ -8512,6 +8565,18 @@
               artistLocFilter.innerHTML = `
                 <option value="">Alle Locations</option>
                 <option value="NULL">Ohne Location</option>
+                ${locationOptions}
+              `;
+            }
+
+            // Waitlist Location Filter Dropdown
+            const waitlistLocFilter = document.getElementById('waitlistLocationFilter');
+            if (waitlistLocFilter) {
+              const locationOptions = locations.map(l =>
+                `<option value="${l.id}">${l.name}</option>`
+              ).join('');
+              waitlistLocFilter.innerHTML = `
+                <option value="all">All Locations</option>
                 ${locationOptions}
               `;
             }
@@ -22958,21 +23023,17 @@
           });
         }
 
-        // Location filter buttons
-        const locationButtons = document.querySelectorAll('.waitlist-location-tab');
-        locationButtons.forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const location = btn.dataset.location;
+        // Location filter dropdown
+        const waitlistLocationFilter = document.getElementById('waitlistLocationFilter');
+        if (waitlistLocationFilter) {
+          waitlistLocationFilter.addEventListener('change', async (e) => {
+            const location = e.target.value;
             currentWaitlistLocation = location;
-
-            // Update active state
-            locationButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
 
             // Reload slots
             await loadWaitlistSlots(location);
           });
-        });
+        }
 
         // Load initial data (default to waitlist)
         await loadWaitlistSlots(currentWaitlistLocation);
