@@ -4371,6 +4371,15 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
+    /* Active state with gray container */
+    .mobile-nav-item.active {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .mobile-nav-item.active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
     .mobile-nav-icon {
       width: 24px;
       height: 24px;
@@ -4403,10 +4412,12 @@
 
     .mobile-nav-item.active .mobile-nav-label {
       color: rgba(0, 0, 0, 0.9);
+      font-weight: 600;
     }
 
     [data-theme="dark"] .mobile-nav-item.active .mobile-nav-label {
       color: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
     }
 
     /* ========================================
@@ -4969,9 +4980,53 @@
          Apple Calendar Mobile Design
          ======================================== */
 
-      /* Hide desktop calendar controls on mobile */
+      /* Calendar controls responsive on mobile */
       .calendar-controls {
-        display: none !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 0 16px;
+      }
+
+      .calendar-controls > button,
+      .calendar-controls > div {
+        width: 100%;
+      }
+
+      .calendar-controls button {
+        justify-content: center;
+      }
+
+      .calendar-controls select {
+        width: 100% !important;
+        min-width: auto !important;
+      }
+
+      /* Date Navigation Container */
+      .date-nav-container {
+        flex-direction: column !important;
+        width: 100% !important;
+      }
+
+      .date-nav-container input[type="date"] {
+        width: 100%;
+        margin-bottom: 4px;
+      }
+
+      .day-nav-buttons {
+        width: 100%;
+        display: flex !important;
+        gap: 8px !important;
+      }
+
+      .day-nav-buttons button {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* Toggle switches stay inline */
+      .calendar-controls label {
+        width: auto !important;
+        margin: 0 auto;
       }
 
       /* Hide desktop calendar grid */
@@ -5583,10 +5638,16 @@
       <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
         <select id="locationDropdown" style="min-width:200px;"></select>
       </div>
-      <button id="prevDayBtn" class="btn-nav">‹ Prev</button>
-      <input type="date" id="datePickerInput">
-      <button id="todayBtn" class="btn-nav">Today</button>
-      <button id="nextDayBtn" class="btn-nav">Next ›</button>
+
+      <!-- Date Navigation Container -->
+      <div class="date-nav-container" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <input type="date" id="datePickerInput">
+        <div class="day-nav-buttons" style="display:flex; gap:8px;">
+          <button id="prevDayBtn" class="btn-nav">‹ Prev</button>
+          <button id="todayBtn" class="btn-nav">Today</button>
+          <button id="nextDayBtn" class="btn-nav">Next ›</button>
+        </div>
+      </div>
 
       <!-- Switches: Events, Residents, Guests -->
       <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; margin-left:auto;">
@@ -24479,22 +24540,6 @@
           mobileNavItems.forEach(navItem => navItem.classList.remove('active'));
           this.classList.add('active');
 
-          // Handle profile view specially
-          if (viewName === 'profile') {
-            // Open login modal/profile view
-            const loginBackdrop = document.getElementById('loginBackdrop');
-            if (loginBackdrop && currentUser) {
-              // Show profile view
-              document.getElementById('loginFormView').style.display = 'none';
-              document.getElementById('profileView').style.display = 'block';
-              loginBackdrop.classList.add('active');
-            } else if (loginBackdrop) {
-              // Show login view
-              loginBackdrop.classList.add('active');
-            }
-            return;
-          }
-
           // Switch to the selected view
           const viewId = viewName + '-section';
           const sections = document.querySelectorAll('section');
@@ -24542,7 +24587,7 @@
           // Update mobile nav
           const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
           mobileNavItems.forEach(item => item.classList.remove('active'));
-          const mobileDashboardItem = document.querySelector('.mobile-nav-item[data-view="dashboard"]');
+          const mobileDashboardItem = document.querySelector('.mobile-nav-item[data-mobile-view="dashboard"]');
           if (mobileDashboardItem) {
             mobileDashboardItem.classList.add('active');
           }
@@ -25106,14 +25151,6 @@
         <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <span class="mobile-nav-label">Dienstplan</span>
-    </div>
-
-    <div class="mobile-nav-item" data-mobile-view="profile">
-      <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <span class="mobile-nav-label">Profile</span>
     </div>
   </div>
 
