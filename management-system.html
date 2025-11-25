@@ -10575,21 +10575,27 @@
         renderInvitedMembers();
       };
 
-      // Submit New Project
-      document.getElementById('submitProjectBtn')?.addEventListener('click', async () => {
-        const title = document.getElementById('projectTitle').value.trim();
-        const description = document.getElementById('projectDescription').value.trim();
-        const isTeamProject = document.getElementById('isTeamProject').checked;
-
-        if (!title) {
-          alert('Bitte gib einen Projekttitel ein.');
-          return;
-        }
-
+      // Create Project Function - Session wird bei jedem Aufruf neu geladen
+      async function createTodoProject() {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            alert('Du musst angemeldet sein, um ein Projekt zu erstellen.');
+          // WICHTIG: Session IMMER neu laden, nicht auf Variable verlassen
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+          if (sessionError || !session || !session.user) {
+            console.error('Session error:', sessionError);
+            alert('Du musst eingeloggt sein, um ein Projekt zu erstellen.');
+            return;
+          }
+
+          const currentUserId = session.user.id; // Lokale Variable, nicht global
+          console.log('✅ Authenticated user:', currentUserId);
+
+          const title = document.getElementById('projectTitle').value.trim();
+          const description = document.getElementById('projectDescription').value.trim();
+          const isTeamProject = document.getElementById('isTeamProject').checked;
+
+          if (!title) {
+            alert('Bitte gib einen Projekttitel ein.');
             return;
           }
 
@@ -10600,29 +10606,39 @@
               title: title,
               description: description || null,
               is_team_project: isTeamProject,
-              created_by: user.id
+              created_by: currentUserId  // Nutze die lokale Variable
             })
             .select()
             .single();
 
-          if (projectError) throw projectError;
+          if (projectError) {
+            console.error('Error creating project:', projectError);
+            alert('Fehler beim Erstellen des Projekts: ' + projectError.message);
+            return;
+          }
+
           if (!project) {
             throw new Error('Projekt konnte nicht erstellt werden');
           }
+
+          console.log('✅ Project created:', project);
 
           // 2. Add Creator as Owner
           const { error: ownerError } = await supabase
             .from('project_members')
             .insert({
               project_id: project.id,
-              user_id: user.id,
+              user_id: currentUserId,
               status: 'owner'
             });
 
-          if (ownerError) throw ownerError;
+          if (ownerError) {
+            console.error('Error adding owner:', ownerError);
+            throw ownerError;
+          }
 
           // 3. Invite Team Members
-          if (isTeamProject && selectedInvitedUsers.length > 0) {
+          if (isTeamProject && typeof selectedInvitedUsers !== 'undefined' && selectedInvitedUsers.length > 0) {
             const invitations = selectedInvitedUsers.map(u => ({
               project_id: project.id,
               user_id: u.id,
@@ -10633,10 +10649,13 @@
               .from('project_members')
               .insert(invitations);
 
-            if (inviteError) throw inviteError;
+            if (inviteError) {
+              console.error('Error inviting members:', inviteError);
+              throw inviteError;
+            }
           }
 
-          console.log('✅ Project created');
+          console.log('✅ Project created successfully');
 
           // Reset form
           document.getElementById('newProjectPopup').classList.remove('active');
@@ -10644,14 +10663,21 @@
           document.getElementById('projectDescription').value = '';
           document.getElementById('isTeamProject').checked = false;
           document.getElementById('teamMembersSection').style.display = 'none';
-          selectedInvitedUsers = [];
+
+          // Selected users zurücksetzen (falls vorhanden)
+          if (typeof selectedInvitedUsers !== 'undefined') {
+            selectedInvitedUsers = [];
+          }
 
           await loadTodoProjects();
         } catch (err) {
-          console.error('❌ Error creating project:', err);
-          alert('Fehler beim Erstellen des Projekts');
+          console.error('❌ Unexpected error creating project:', err);
+          alert('Ein unerwarteter Fehler ist aufgetreten: ' + err.message);
         }
-      });
+      }
+
+      // Submit New Project - Event Listener ruft die Funktion auf
+      document.getElementById('submitProjectBtn')?.addEventListener('click', createTodoProject);
 
       // Load projects when dashboard section is active
       if (document.getElementById('todoProjectsContainer')) {
