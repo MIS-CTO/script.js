@@ -10558,8 +10558,8 @@
         container.style.display = 'block';
       }
 
-      // Select User for Invitation
-      function selectUser(userId, username) {
+      // Select User for Invitation (exposed to window for onclick handlers)
+      window.selectUser = function(userId, username) {
         if (!selectedInvitedUsers.find(u => u.id === userId)) {
           selectedInvitedUsers.push({ id: userId, username: username });
           renderInvitedMembers();
@@ -10567,7 +10567,7 @@
 
         document.getElementById('userSearchInput').value = '';
         document.getElementById('userSearchResults').style.display = 'none';
-      }
+      };
 
       // Render Invited Members
       function renderInvitedMembers() {
@@ -10586,11 +10586,11 @@
         `).join('');
       }
 
-      // Remove Invited User
-      function removeInvitedUser(userId) {
+      // Remove Invited User (exposed to window for onclick handlers)
+      window.removeInvitedUser = function(userId) {
         selectedInvitedUsers = selectedInvitedUsers.filter(u => u.id !== userId);
         renderInvitedMembers();
-      }
+      };
 
       // Submit New Project
       document.getElementById('submitProjectBtn')?.addEventListener('click', async () => {
