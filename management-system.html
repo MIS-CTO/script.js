@@ -24221,11 +24221,10 @@
               id,
               artist_id,
               location_id,
-              slot_number,
+              display_order,
               notes,
               status,
               created_at,
-              display_order,
               share_paid,
               artist:artists(
                 id,
@@ -24248,13 +24247,12 @@
               id,
               artist_id,
               location_id,
-              slot_number,
+              display_order,
               date_from,
               date_to,
               notes,
               status,
               created_at,
-              display_order,
               share_personal_data,
               artist:artists(
                 id,
@@ -24279,9 +24277,9 @@
             .select(selectQuery)
             .in('status', ['waiting', 'active', 'upcoming']);
 
-          // Order by slot_number for waitlist (NO dates), date_from for upcoming (WITH dates)
+          // Order by display_order for waitlist (NO dates), date_from for upcoming (WITH dates)
           if (currentListType === 'waitlist') {
-            query = query.order('slot_number', { ascending: true });
+            query = query.order('display_order', { ascending: true });
           } else {
             // For upcoming, filter to show only future/current dates
             const today = new Date().toISOString().split('T')[0];
@@ -24378,8 +24376,8 @@
 
         // Render slots
         container.innerHTML = slots.map((slot, index) => {
-          // Use slot_number from database if available, otherwise use index + 1
-          const slotNumber = slot.slot_number || (index + 1);
+          // Use display_order from database if available, otherwise use index + 1
+          const slotNumber = slot.display_order || (index + 1);
 
           // Date calculations ONLY for UPCOMING (has dates)
           // WAITLIST has NO dates (artists available NOW)
@@ -25023,7 +25021,7 @@
 
         // Prepare data object
         const slotData = {
-          slot_number: slotNum,
+          display_order: slotNum,
           artist_id: artistId,
           location_id: locationId,
           notes: notes || null
