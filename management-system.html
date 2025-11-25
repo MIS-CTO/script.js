@@ -24203,78 +24203,20 @@
         console.log(`📋 Loading ${currentListType} slots...`);
 
         try {
-          // Select appropriate table based on currentListType
+          // Select appropriate VIEW based on currentListType
+          // Views have display_order (calculated) and all joined data
           // WAITLIST = Artists available NOW (NO dates)
           // UPCOMING = Artists with SPECIFIC dates (WITH dates)
-          const tableName = currentListType === 'waitlist'
-            ? 'waitlist_slots'
-            : 'upcoming_slots';
+          const viewName = currentListType === 'waitlist'
+            ? 'waitlist_slots_ordered'    // ✅ Use VIEW (has display_order)
+            : 'upcoming_slots_ordered';   // ✅ Use VIEW (has display_order)
 
-          console.log(`   Table: ${tableName}, Location filter: ${locationFilter || 'all'}`);
+          console.log(`   View: ${viewName}, Location filter: ${locationFilter || 'all'}`);
 
-          // Build select query with joins
-          // IMPORTANT: waitlist_slots has NO date fields, upcoming_slots has date_from/date_to
-          let selectQuery;
-          if (currentListType === 'waitlist') {
-            // WAITLIST: NO date_from/date_to fields
-            selectQuery = `
-              id,
-              artist_id,
-              location_id,
-              display_order,
-              notes,
-              status,
-              created_at,
-              share_paid,
-              artist:artists(
-                id,
-                name,
-                email,
-                instagram,
-                profile_picture_url,
-                style,
-                is_guest
-              ),
-              location:locations(
-                id,
-                name,
-                city
-              )
-            `;
-          } else {
-            // UPCOMING: WITH date_from/date_to fields
-            selectQuery = `
-              id,
-              artist_id,
-              location_id,
-              display_order,
-              date_from,
-              date_to,
-              notes,
-              status,
-              created_at,
-              share_personal_data,
-              artist:artists(
-                id,
-                name,
-                email,
-                instagram,
-                profile_picture_url,
-                style,
-                is_guest
-              ),
-              location:locations(
-                id,
-                name,
-                city
-              )
-            `;
-          }
-
-          // Build query
+          // Build query - views already have all joined data including display_order
           let query = supabase
-            .from(tableName)
-            .select(selectQuery)
+            .from(viewName)
+            .select('*')  // ✅ View has all fields including display_order and joined artist/location data
             .in('status', ['waiting', 'active', 'upcoming']);
 
           // Order by display_order for waitlist (NO dates), date_from for upcoming (WITH dates)
@@ -24295,7 +24237,7 @@
 
           if (error) {
             console.error('❌ Database Error:', {
-              table: tableName,
+              view: viewName,
               listType: currentListType,
               locationFilter: locationFilter,
               error: error.message,
@@ -24306,19 +24248,13 @@
             throw error;
           }
 
-          // Transform data to match expected format (flatten nested objects)
+          // Transform data to match expected format
+          // Views return flat field names (artist_name, location_name, etc.)
+          // No need to flatten nested objects - views already have flat structure
           waitlistSlots = (data || []).map(slot => ({
             ...slot,
-            // Flatten artist data
-            artist_name: slot.artist?.name,
-            artist_email: slot.artist?.email,
-            artist_instagram: slot.artist?.instagram,
-            artist_image_url: slot.artist?.profile_picture_url,
-            artist_style: slot.artist?.style,
-            artist_is_guest: slot.artist?.is_guest,
-            // Flatten location data
-            location_name: slot.location?.name,
-            location_city: slot.location?.city,
+            // Views already provide flat fields: artist_name, artist_email, artist_instagram, etc.
+            // Views already provide: location_name, location_city, etc.
             // Map share_personal_data to share_paid for upcoming slots (for consistency)
             share_paid: currentListType === 'upcoming' ? slot.share_personal_data : slot.share_paid
           }));
