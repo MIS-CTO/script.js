@@ -24686,28 +24686,6 @@
               <!-- SCROLLABLE CONTENT -->
               <div style="flex: 1; overflow-y: auto; margin: 0 -32px; padding: 0 32px; position: relative; z-index: 1;">
 
-              <!-- Slot Number -->
-              <div style="margin-bottom: 24px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
-                  Slot Number (1-60) *
-                </label>
-                <input
-                  type="number"
-                  id="slotNumber"
-                  min="1"
-                  max="60"
-                  required
-                  placeholder="Enter slot number (1-60)"
-                  style="
-                    width: 100%;
-                    padding: 12px 16px;
-                    border: 1px solid #e5e5ea;
-                    border-radius: 12px;
-                    font-size: 16px;
-                  "
-                />
-              </div>
-
               <!-- Date Range (UPCOMING ONLY - has dates, Waitlist has NO dates) -->
               ${currentListType === 'upcoming' ? `
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
@@ -25002,26 +24980,17 @@
       // ============================================
       async function handleAddSlot() {
         const artistId = document.getElementById('slotArtistId').value;
-        const slotNumber = document.getElementById('slotNumber').value;
         const locationId = document.getElementById('slotLocationSelect').value;
         const notes = document.getElementById('slotNotes').value;
 
         // Basic validation
-        if (!artistId || !slotNumber || !locationId) {
+        if (!artistId || !locationId) {
           showNotification('Please fill in all required fields', 'error');
           return;
         }
 
-        // Validate slot number
-        const slotNum = parseInt(slotNumber);
-        if (slotNum < 1 || slotNum > 60) {
-          showNotification('Slot number must be between 1 and 60', 'error');
-          return;
-        }
-
-        // Prepare data object
+        // Prepare data object (display_order is automatically assigned by database)
         const slotData = {
-          display_order: slotNum,
           artist_id: artistId,
           location_id: locationId,
           notes: notes || null
