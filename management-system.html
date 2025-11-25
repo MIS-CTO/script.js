@@ -10517,9 +10517,9 @@
       // Search Users
       async function searchUsers(searchTerm) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            console.error('❌ User not authenticated');
+          // Use currentUser from our custom auth system (not supabase.auth)
+          if (!currentUser) {
+            console.error('❌ User not authenticated - please login first');
             return;
           }
 
@@ -10527,7 +10527,7 @@
             .from('profiles')
             .select('id, username, email')
             .or(`username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
-            .neq('id', user.id)
+            .neq('id', currentUser.id)
             .limit(5);
 
           if (error) throw error;
