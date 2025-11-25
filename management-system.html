@@ -8507,7 +8507,14 @@
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage
+      }
+    });
 
     // ========================================
     // GLOBAL CHART INSTANCES (Declared early to avoid TDZ errors)
@@ -10577,16 +10584,24 @@
 
       // Helper: Get Current User ID mit Fallback auf profiles Tabelle
       async function getCurrentUserId() {
-        // Versuche Session zu holen
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          console.log('✅ User ID from session:', session.user.id);
-          return session.user.id;
+        // Zuerst: Prüfe ob currentUser bereits gesetzt ist (vom custom Auth-System)
+        if (typeof currentUser !== 'undefined' && currentUser?.id) {
+          console.log('✅ User ID from currentUser:', currentUser.id);
+          return currentUser.id;
         }
 
-        console.log('⚠️ No session found, trying profiles fallback...');
+        // Dann: Versuche Supabase Session zu holen
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            console.log('✅ User ID from session:', session.user.id);
+            return session.user.id;
+          }
+        } catch (err) {
+          console.log('⚠️ Session check failed:', err.message);
+        }
 
-        // Fallback: Hole User aus profiles basierend auf currentUser (global)
+        // Fallback: Hole User aus profiles basierend auf currentUser email
         if (typeof currentUser !== 'undefined' && currentUser?.email) {
           const { data: profile } = await supabase
             .from('profiles')
