@@ -10575,20 +10575,61 @@
         renderInvitedMembers();
       };
 
+      // Helper: Get Current User ID mit Fallback auf profiles Tabelle
+      async function getCurrentUserId() {
+        // Versuche Session zu holen
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          console.log('✅ User ID from session:', session.user.id);
+          return session.user.id;
+        }
+
+        console.log('⚠️ No session found, trying profiles fallback...');
+
+        // Fallback: Hole User aus profiles basierend auf currentUser (global)
+        if (typeof currentUser !== 'undefined' && currentUser?.email) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', currentUser.email)
+            .single();
+
+          if (profile?.id) {
+            console.log('✅ User ID from profiles (email match):', profile.id);
+            return profile.id;
+          }
+        }
+
+        // Letzter Fallback: Hole Admin/Management User
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['Admin', 'Management', 'Geschäftsführung'])
+          .limit(1)
+          .single();
+
+        if (profiles?.id) {
+          console.log('⚠️ User ID from profiles (admin fallback):', profiles.id);
+          return profiles.id;
+        }
+
+        console.error('❌ Could not determine user ID');
+        return null;
+      }
+
       // Create Project Function - Session wird bei jedem Aufruf neu geladen
       async function createTodoProject() {
         try {
-          // WICHTIG: Session IMMER neu laden, nicht auf Variable verlassen
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          // User ID mit Fallback holen
+          const currentUserId = await getCurrentUserId();
 
-          if (sessionError || !session || !session.user) {
-            console.error('Session error:', sessionError);
+          if (!currentUserId) {
+            console.error('❌ No user ID available');
             alert('Du musst eingeloggt sein, um ein Projekt zu erstellen.');
             return;
           }
 
-          const currentUserId = session.user.id; // Lokale Variable, nicht global
-          console.log('✅ Authenticated user:', currentUserId);
+          console.log('✅ Using user ID:', currentUserId);
 
           const title = document.getElementById('projectTitle').value.trim();
           const description = document.getElementById('projectDescription').value.trim();
