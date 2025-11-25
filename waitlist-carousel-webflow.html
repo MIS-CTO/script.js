@@ -378,7 +378,7 @@
             stateEl.innerHTML = `
                 <div class="carousel-state-title">⚠️ No artist in Slot ${SLOT_NUMBER}</div>
                 <div class="carousel-state-description">This slot is currently inactive</div>
-                <div class="carousel-debug-info">Add data in Supabase: active_waitlist_view</div>
+                <div class="carousel-debug-info">Add data in Supabase: waitlist_slots</div>
             `;
             stateEl.classList.remove('hidden');
             carouselEl.classList.remove('visible');
@@ -495,14 +495,17 @@
 
         /**
          * Fetch artist data from Supabase
+         * Uses direct table query with join (active_waitlist_view was removed)
          */
         async function fetchArtistData() {
             showLoadingState();
 
-            const endpoint = `${SUPABASE_URL}/rest/v1/active_waitlist_view`;
+            // Query waitlist_slots directly with artist join
+            const endpoint = `${SUPABASE_URL}/rest/v1/waitlist_slots`;
+            const selectFields = 'slot_number,artist:artists(name,instagram,profile_picture_url,background_image_url,style,short_description,bio,is_guest)';
             const params = new URLSearchParams({
                 slot_number: `eq.${SLOT_NUMBER}`,
-                select: '*'
+                select: selectFields
             });
 
             const url = `${endpoint}?${params.toString()}`;
@@ -529,13 +532,30 @@
                 console.log('📦 Response data:', data);
 
                 // Check if data exists
-                if (!data || data.length === 0) {
+                if (!data || data.length === 0 || !data[0].artist) {
                     showEmptyState();
                     return;
                 }
 
+                // Flatten nested artist data for populateCarousel
+                const slot = data[0];
+                const artist = slot.artist;
+                const flattenedData = {
+                    slot_number: slot.slot_number,
+                    artist_name: artist.name,
+                    instagram: artist.instagram,
+                    profile_picture_url: artist.profile_picture_url,
+                    background_image_url: artist.background_image_url,
+                    style: artist.style,
+                    short_description: artist.short_description,
+                    bio: artist.bio,
+                    is_guest: artist.is_guest
+                };
+
+                console.log('📊 Flattened data:', flattenedData);
+
                 // Show artist data
-                showSuccessState(data[0]);
+                showSuccessState(flattenedData);
 
             } catch (error) {
                 showErrorState(error);
