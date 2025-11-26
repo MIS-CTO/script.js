@@ -10170,10 +10170,31 @@
       async function loadTodoProjects() {
         try {
           console.log('📋 Loading To-Do Projects...');
-          const { data: { user } } = await supabase.auth.getUser();
+          let { data: { user } } = await supabase.auth.getUser();
+
+          // Fallback: User aus localStorage holen wenn nicht gefunden
+          if (!user) {
+            console.log('⚠️ No user from auth, trying localStorage fallback...');
+            const storedSession = localStorage.getItem('supabase.auth.token');
+            if (storedSession) {
+              try {
+                const sessionData = JSON.parse(storedSession);
+                user = sessionData?.currentSession?.user || null;
+                console.log('📦 User from localStorage:', user ? user.id : 'not found');
+              } catch (e) {
+                console.error('❌ Error parsing localStorage session:', e);
+              }
+            }
+
+            // Zweiter Fallback: currentUser Variable prüfen
+            if (!user && typeof currentUser !== 'undefined' && currentUser) {
+              user = currentUser;
+              console.log('📦 User from currentUser variable:', user.id);
+            }
+          }
 
           if (!user) {
-            console.error('❌ No user found');
+            console.error('❌ No user found (auch kein Fallback verfügbar)');
             return;
           }
 
@@ -24545,18 +24566,20 @@
       }
 
       // ============================================
-      // Freie Waitlist Slots abrufen (1-30)
+      // Freie Waitlist Slots abrufen (1-30) - NUR FÜR WAITLIST!
       // ============================================
       async function getAvailableWaitlistSlots(locationId = null) {
-        try {
-          // Bestimme Tabelle basierend auf aktueller Liste
-          const tableName = currentListType === 'waitlist'
-            ? 'waitlist_slots'
-            : 'upcoming_slots';
+        // Diese Funktion ist NUR für waitlist_slots relevant!
+        // upcoming_slots hat KEINE display_order Spalte!
+        if (currentListType !== 'waitlist') {
+          console.log('⚠️ getAvailableWaitlistSlots() nur für Waitlist - übersprungen');
+          return [];
+        }
 
-          // Belegte Slots aus DB holen
+        try {
+          // NUR waitlist_slots hat display_order
           let query = supabase
-            .from(tableName)
+            .from('waitlist_slots')
             .select('display_order')
             .not('display_order', 'is', null);
 
@@ -24579,7 +24602,7 @@
             }
           }
 
-          console.log(`📋 Freie Slots für ${currentListType}: ${availableSlots.length}/30`, availableSlots);
+          console.log(`📋 Freie Waitlist-Slots: ${availableSlots.length}/30`, availableSlots);
           return availableSlots;
 
         } catch (error) {
@@ -24786,8 +24809,9 @@
                 </select>
               </div>
 
-              <!-- Slot Number (1-30) -->
-              <div style="margin-bottom: 24px;">
+              <!-- Slot Number (1-30) - NUR FÜR WAITLIST -->
+              ${currentListType === 'waitlist' ? `
+              <div id="slotNumberContainer" style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
                   Slot Nummer (1-30) *
                 </label>
@@ -24809,6 +24833,7 @@
                   Zeigt nur freie Slots für die gewählte Location
                 </p>
               </div>
+              ` : ''}
 
               <!-- Notes -->
               <div style="margin-bottom: 24px;">
@@ -24874,16 +24899,19 @@
 
         document.body.appendChild(modal);
 
-        // Setup location change listener to update slot dropdown
+        // Setup location change listener to update slot dropdown - NUR FÜR WAITLIST
         const locationSelect = document.getElementById('slotLocationSelect');
         const slotNumberSelect = document.getElementById('slotNumberSelect');
 
         locationSelect.addEventListener('change', async function() {
           const selectedLocationId = this.value;
-          if (selectedLocationId) {
-            await updateSlotDropdown(slotNumberSelect, selectedLocationId);
-          } else {
-            slotNumberSelect.innerHTML = '<option value="">Zuerst Location wählen...</option>';
+          // Slot-Dropdown nur für Waitlist aktualisieren (existiert nur dort)
+          if (currentListType === 'waitlist' && slotNumberSelect) {
+            if (selectedLocationId) {
+              await updateSlotDropdown(slotNumberSelect, selectedLocationId);
+            } else {
+              slotNumberSelect.innerHTML = '<option value="">Zuerst Location wählen...</option>';
+            }
           }
         });
 
@@ -25046,53 +25074,70 @@
       }
 
       // ============================================
-      // Handle Add Slot (Supports Both Lists)
+      // Handle Add Slot (GETRENNTE LOGIK für Waitlist/Upcoming)
       // ============================================
       async function handleAddSlot() {
         const artistId = document.getElementById('slotArtistId').value;
         const locationId = document.getElementById('slotLocationSelect').value;
-        const slotNumber = document.getElementById('slotNumberSelect').value;
         const notes = document.getElementById('slotNotes').value;
 
-        // Basic validation
-        if (!artistId || !locationId || !slotNumber) {
-          showNotification('Bitte alle Pflichtfelder ausfüllen (inkl. Slot-Nummer)', 'error');
+        // Basis-Validierung (für beide Listen)
+        if (!artistId || !locationId) {
+          showNotification('Bitte Artist und Location auswählen', 'error');
           return;
         }
 
-        // Prepare data object with selected display_order
-        const slotData = {
-          artist_id: artistId,
-          location_id: locationId,
-          display_order: parseInt(slotNumber),
-          notes: notes || null
-        };
+        let slotData;
+        let tableName;
 
-        // For UPCOMING, add date fields and validate (UPCOMING has dates, WAITLIST has NO dates)
-        if (currentListType === 'upcoming') {
+        // ========== WAITLIST: MIT display_order, OHNE Datum ==========
+        if (currentListType === 'waitlist') {
+          const slotNumberSelect = document.getElementById('slotNumberSelect');
+          const slotNumber = slotNumberSelect ? slotNumberSelect.value : null;
+
+          if (!slotNumber) {
+            showNotification('Bitte Slot-Nummer auswählen', 'error');
+            return;
+          }
+
+          slotData = {
+            artist_id: artistId,
+            location_id: locationId,
+            display_order: parseInt(slotNumber),
+            status: 'active',
+            notes: notes || null
+            // KEIN date_from, date_to!
+          };
+          tableName = 'waitlist_slots';
+
+        // ========== UPCOMING: OHNE display_order, MIT Datum ==========
+        } else {
           const dateFrom = document.getElementById('slotDateFrom')?.value;
           const dateTo = document.getElementById('slotDateTo')?.value;
 
           if (!dateFrom || !dateTo) {
-            showNotification('Please fill in all required date fields', 'error');
+            showNotification('Bitte Start- und Enddatum ausfüllen', 'error');
             return;
           }
 
           if (new Date(dateTo) < new Date(dateFrom)) {
-            showNotification('End date must be after start date', 'error');
+            showNotification('Enddatum muss nach Startdatum liegen', 'error');
             return;
           }
 
-          slotData.date_from = dateFrom;
-          slotData.date_to = dateTo;
+          slotData = {
+            artist_id: artistId,
+            location_id: locationId,
+            date_from: dateFrom,
+            date_to: dateTo,
+            status: 'upcoming',
+            notes: notes || null
+            // KEIN display_order!
+          };
+          tableName = 'upcoming_slots';
         }
 
         try {
-          // Select appropriate table based on currentListType
-          const tableName = currentListType === 'waitlist'
-            ? 'waitlist_slots'
-            : 'upcoming_slots';
-
           console.log(`➕ Adding slot to ${tableName}:`, slotData);
 
           const { data, error } = await supabase
@@ -25114,7 +25159,7 @@
           }
 
           console.log(`✅ ${currentListType} slot added successfully:`, data);
-          showNotification('Slot added successfully', 'success');
+          showNotification('Slot erfolgreich hinzugefügt', 'success');
 
           // Reload slots
           await loadWaitlistSlots(currentWaitlistLocation);
@@ -25123,11 +25168,11 @@
           console.error(`❌ Error adding ${currentListType} slot:`, error);
 
           // Provide more specific error messages
-          let errorMessage = 'Failed to add slot: ';
+          let errorMessage = 'Fehler beim Hinzufügen: ';
           if (error.code === '23505') {
-            errorMessage += 'This slot number is already taken for this location';
+            errorMessage += 'Diese Slot-Nummer ist bereits vergeben';
           } else if (error.message.includes('date')) {
-            errorMessage += 'Invalid date values';
+            errorMessage += 'Ungültige Datumswerte';
           } else {
             errorMessage += error.message;
           }
