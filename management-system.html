@@ -9116,6 +9116,191 @@
       root.style.setProperty('--location-accent', colors.accent);
     }
 
+    // ============================================
+    // PROJECT MENU & TASK FUNCTIONS (GLOBAL)
+    // ============================================
+
+    // Project Menü anzeigen (3-Punkte Menü)
+    function showProjectMenu(event, projectId) {
+      event.stopPropagation();
+
+      // Schließe andere offene Menüs
+      document.querySelectorAll('.project-menu-dropdown').forEach(m => m.remove());
+
+      const button = event.currentTarget;
+      const rect = button.getBoundingClientRect();
+
+      const menu = document.createElement('div');
+      menu.className = 'project-menu-dropdown';
+      menu.style.cssText = `
+        position: fixed;
+        left: ${rect.left}px;
+        top: ${rect.bottom + 5}px;
+        background: var(--macos-elevated, #fff);
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        min-width: 150px;
+        overflow: hidden;
+      `;
+
+      menu.innerHTML = `
+        <button onclick="editProject('${projectId}')" style="width:100%;padding:10px 16px;border:none;background:none;text-align:left;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px;">
+          <span>✏️</span> Bearbeiten
+        </button>
+        <button onclick="confirmDeleteProject('${projectId}')" style="width:100%;padding:10px 16px;border:none;background:none;text-align:left;cursor:pointer;font-size:14px;color:#ff3b30;display:flex;align-items:center;gap:8px;">
+          <span>🗑️</span> Löschen
+        </button>
+      `;
+
+      document.body.appendChild(menu);
+
+      // Schließen bei Klick außerhalb
+      setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+          if (!menu.contains(e.target)) {
+            menu.remove();
+            document.removeEventListener('click', closeMenu);
+          }
+        });
+      }, 10);
+    }
+
+    // Task Input anzeigen
+    function showAddTaskInput(projectId) {
+      // Falls projectId nicht übergeben wird, versuche currentProjectDetail zu verwenden (Modal-Kontext)
+      if (!projectId && typeof currentProjectDetail !== 'undefined' && currentProjectDetail) {
+        // Modal-Version: zeige den addTaskContainer
+        const addTaskContainer = document.getElementById('addTaskContainer');
+        const newTaskInput = document.getElementById('newTaskInput');
+        if (addTaskContainer) {
+          addTaskContainer.style.display = 'block';
+          if (newTaskInput) newTaskInput.focus();
+          return;
+        }
+        projectId = currentProjectDetail.id;
+      }
+
+      const container = document.getElementById('tasks-' + projectId) ||
+                        document.querySelector(`[data-project-id="${projectId}"] .tasks-container`);
+
+      if (!container) {
+        console.error('Tasks container nicht gefunden für Projekt:', projectId);
+        return;
+      }
+
+      // Prüfe ob Input bereits existiert
+      if (container.querySelector('.new-task-input-wrapper')) return;
+
+      const inputDiv = document.createElement('div');
+      inputDiv.className = 'new-task-input-wrapper';
+      inputDiv.style.cssText = 'display:flex;gap:8px;margin-top:12px;padding:8px;background:var(--macos-window,#f5f5f5);border-radius:8px;';
+
+      inputDiv.innerHTML = `
+        <input type="text" class="new-task-input" placeholder="Neue Aufgabe..."
+          style="flex:1;padding:8px 12px;border:1px solid var(--border-color,#e0e0e0);border-radius:6px;font-size:14px;background:white;">
+        <button onclick="addTaskToProject('${projectId}')"
+          style="padding:8px 16px;background:var(--apple-blue,#007aff);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:500;">
+          Hinzufügen
+        </button>
+      `;
+
+      container.appendChild(inputDiv);
+
+      const input = inputDiv.querySelector('input');
+      input.focus();
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          addTaskToProject(projectId);
+        }
+      });
+    }
+
+    // Task zu Projekt hinzufügen
+    async function addTaskToProject(projectId) {
+      const container = document.getElementById('tasks-' + projectId) ||
+                        document.querySelector(`[data-project-id="${projectId}"] .tasks-container`);
+      const input = container?.querySelector('.new-task-input');
+      const title = input?.value?.trim();
+
+      if (!title) {
+        showNotification('Bitte Task-Titel eingeben', 'warning');
+        return;
+      }
+
+      try {
+        const { error } = await supabase
+          .from('project_tasks')
+          .insert([{
+            project_id: projectId,
+            title: title,
+            is_completed: false,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+
+        showNotification('Task hinzugefügt', 'success');
+        await loadTodoProjects();
+
+      } catch (error) {
+        console.error('Error adding task:', error);
+        showNotification('Fehler: ' + error.message, 'error');
+      }
+    }
+
+    // Projekt löschen bestätigen
+    function confirmDeleteProject(projectId) {
+      // Schließe Menü
+      document.querySelectorAll('.project-menu-dropdown').forEach(m => m.remove());
+
+      if (!confirm('Projekt wirklich löschen? Alle Tasks werden auch gelöscht.')) return;
+
+      deleteProject(projectId);
+    }
+
+    // Projekt löschen
+    async function deleteProject(projectId) {
+      try {
+        // Erst Tasks löschen
+        await supabase.from('project_tasks').delete().eq('project_id', projectId);
+
+        // Dann Projekt-Members löschen (falls vorhanden)
+        await supabase.from('project_members').delete().eq('project_id', projectId);
+
+        // Dann Projekt löschen
+        const { error } = await supabase.from('task_projects').delete().eq('id', projectId);
+
+        if (error) throw error;
+
+        showNotification('Projekt gelöscht', 'success');
+        await loadTodoProjects();
+
+      } catch (error) {
+        console.error('Error deleting project:', error);
+        showNotification('Fehler: ' + error.message, 'error');
+      }
+    }
+
+    // Projekt bearbeiten
+    function editProject(projectId) {
+      // Schließe Menü
+      document.querySelectorAll('.project-menu-dropdown').forEach(m => m.remove());
+
+      // Öffne Projekt-Detail oder Edit-Modal
+      if (typeof openProjectDetail === 'function') {
+        openProjectDetail(projectId);
+      } else {
+        console.log('Edit project:', projectId);
+        showNotification('Projekt bearbeiten: ' + projectId, 'info');
+      }
+    }
+
+    // ============================================
+    // END PROJECT MENU & TASK FUNCTIONS
+    // ============================================
+
     document.addEventListener("DOMContentLoaded", async () => {
       const tabs = document.querySelectorAll("nav a[id^='tab-']");
       const sections = document.querySelectorAll("section");
@@ -10281,35 +10466,6 @@
         });
       }
 
-      // Show Project Menu
-      function showProjectMenu(projectId) {
-        const project = currentProjects.find(p => p.id === projectId);
-        if (!project) return;
-
-        const confirmDelete = confirm(`Projekt "${project.title}" wirklich löschen?`);
-        if (confirmDelete) {
-          deleteProject(projectId);
-        }
-      }
-
-      // Delete Project
-      async function deleteProject(projectId) {
-        try {
-          const { error } = await supabase
-            .from('task_projects')
-            .delete()
-            .eq('id', projectId);
-
-          if (error) throw error;
-
-          console.log('✅ Project deleted');
-          await loadTodoProjects();
-        } catch (err) {
-          console.error('❌ Error deleting project:', err);
-          alert('Fehler beim Löschen des Projekts');
-        }
-      }
-
       // Open Project Detail Modal
       async function openProjectDetail(projectId) {
         const project = currentProjects.find(p => p.id === projectId);
@@ -10410,12 +10566,6 @@
           currentProjectDetail = null;
         }
       });
-
-      // Show Add Task Input
-      function showAddTaskInput() {
-        document.getElementById('addTaskContainer').style.display = 'block';
-        document.getElementById('newTaskInput').focus();
-      }
 
       // Submit New Task
       async function submitNewTask() {
