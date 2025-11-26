@@ -7335,12 +7335,8 @@
         <div class="form-group">
           <label style="font-size:13px; color:var(--muted);">Team Member</label>
           <select id="assignTeamMember" required>
-            <option value="">-- Select Team Member --</option>
-            <option value="b67d032d-5206-498f-b4ec-0e145d468052">Cara</option>
-            <option value="4048a85a-7018-4003-b4a1-41b05676c758">Aman</option>
-            <option value="48c82f73-8e00-437f-af32-b1ec13b12d4e">Bennett</option>
-            <option value="feb0f09d-4461-44c5-a769-67a7716ba7ad">Fay</option>
-            <option value="feef5b54-4506-4324-af8b-1617636e3ee2">Jan</option>
+            <option value="">-- Lädt Team... --</option>
+            <!-- Wird dynamisch durch assignRequest() gefüllt -->
           </select>
         </div>
         <div class="modal-actions" style="gap:8px;">
@@ -8531,6 +8527,38 @@
     let revenueByStatusChartInstance = null;
 
     // ==========================================
+    // BOOKING TEAM MEMBERS (Dynamic Loading)
+    // ==========================================
+    let bookingTeamMembers = [];
+
+    // Team Members aus Datenbank laden
+    async function loadBookingTeamMembers() {
+      try {
+        const { data, error } = await supabase
+          .from('booking_team_members')  // View aus Supabase
+          .select('id, username, email, role, avatar_url')
+          .order('username');
+
+        if (error) throw error;
+
+        bookingTeamMembers = data || [];
+        console.log('✅ Booking Team geladen:', bookingTeamMembers.length, 'Mitglieder');
+        return bookingTeamMembers;
+      } catch (error) {
+        console.error('❌ Fehler beim Laden des Booking Teams:', error);
+        // Fallback zu bekannten Team Members
+        bookingTeamMembers = [
+          { id: 'b67d032d-5206-498f-b4ec-0e145d468052', username: 'Cara' },
+          { id: '4048a85a-7018-4003-b4a1-41b05676c758', username: 'Aman' },
+          { id: '48c82f73-8e00-437f-af32-b1ec13b12d4e', username: 'Bennet' },
+          { id: 'feb0f09d-4461-44c5-a769-67a7716ba7ad', username: 'Fay' },
+          { id: 'feef5b54-4506-4324-af8b-1617636e3ee2', username: 'Jan' },
+        ];
+        return bookingTeamMembers;
+      }
+    }
+
+    // ==========================================
     // NAVBAR INDICATORS (Hover + Active)
     // ==========================================
     function setupNavbarHover() {
@@ -9095,7 +9123,8 @@
       // Load data and permissions in parallel for faster initial load
       await Promise.all([
         loadInitialData(),
-        initializePermissions()
+        initializePermissions(),
+        loadBookingTeamMembers()  // Team Members für Dropdowns vorladen
       ]);
 
       // Hide initial loader after data is loaded
@@ -11851,10 +11880,9 @@
           // Filter by status
           let filteredRequests = allRequests;
           if (currentRequestStatus === 'my-requests') {
-            // Filter by assigned user
+            // Filter by assigned user (nur UUID prüfen - zuverlässiger)
             filteredRequests = allRequests.filter(r =>
-              r.assigned_to_user_id === currentUser?.id ||
-              r.assigned_to === currentUser?.username
+              r.assigned_to_user_id === currentUser?.id
             );
           } else if (currentRequestStatus === 'open_request') {
             // ✅ Show ALL open_request items (not just last 7 days)
@@ -12451,18 +12479,14 @@
       
       // Assign Request
       window.assignRequest = async function() {
-        // Use fixed list of team members
-        const teamMembers = [
-          { id: 'b67d032d-5206-498f-b4ec-0e145d468052', username: 'Cara' },
-          { id: '4048a85a-7018-4003-b4a1-41b05676c758', username: 'Aman' },
-          { id: '48c82f73-8e00-437f-af32-b1ec13b12d4e', username: 'Bennett' },
-          { id: 'feb0f09d-4461-44c5-a769-67a7716ba7ad', username: 'Fay' },
-          { id: 'feef5b54-4506-4324-af8b-1617636e3ee2', username: 'Jan' }
-        ];
+        // Dynamisch Team Members laden (falls noch nicht geladen)
+        if (bookingTeamMembers.length === 0) {
+          await loadBookingTeamMembers();
+        }
 
         const teamMemberSelect = document.getElementById('assignTeamMember');
         teamMemberSelect.innerHTML = '<option value="">-- Select Team Member --</option>' +
-          teamMembers.map(m => `<option value="${m.id}">${m.username}</option>`).join('');
+          bookingTeamMembers.map(m => `<option value="${m.id}">${m.username}</option>`).join('');
 
         document.getElementById('assignModal').classList.add('active');
       };
@@ -12476,23 +12500,28 @@
 
         const userId = document.getElementById('assignTeamMember').value;
 
+        // Username aus bookingTeamMembers holen
+        const selectedMember = bookingTeamMembers.find(m => m.id === userId);
+        const username = selectedMember?.username || 'Unknown';
+
         try {
           const { error } = await supabase
             .from('requests')
             .update({
               status: 'pending',
-              assigned_to_user_id: userId,
-              assigned_to: userId // Use UUID instead of username
+              assigned_to_user_id: userId,      // UUID für Joins
+              assigned_to: username              // ✅ Username für Anzeige
             })
             .eq('id', selectedRequestId);
 
           if (error) throw error;
 
+          console.log(`✅ Request zugewiesen an: ${username}`);
           document.getElementById('assignModal').classList.remove('active');
           document.getElementById('assignForm').reset();
           await loadRequests();
           showRequestDetail(selectedRequestId);
-          alert('Request assigned successfully!');
+          alert(`Request erfolgreich an ${username} zugewiesen!`);
         } catch (err) {
           alert('Error assigning request: ' + err.message);
         }
@@ -24516,6 +24545,74 @@
       }
 
       // ============================================
+      // Freie Waitlist Slots abrufen (1-30)
+      // ============================================
+      async function getAvailableWaitlistSlots(locationId = null) {
+        try {
+          // Bestimme Tabelle basierend auf aktueller Liste
+          const tableName = currentListType === 'waitlist'
+            ? 'waitlist_slots'
+            : 'upcoming_slots';
+
+          // Belegte Slots aus DB holen
+          let query = supabase
+            .from(tableName)
+            .select('display_order')
+            .not('display_order', 'is', null);
+
+          if (locationId && locationId !== 'all') {
+            query = query.eq('location_id', locationId);
+          }
+
+          const { data: usedSlots, error } = await query;
+
+          if (error) throw error;
+
+          // Belegte Nummern extrahieren
+          const usedNumbers = (usedSlots || []).map(s => s.display_order);
+
+          // Freie Slots berechnen (1-30)
+          const availableSlots = [];
+          for (let i = 1; i <= 30; i++) {
+            if (!usedNumbers.includes(i)) {
+              availableSlots.push(i);
+            }
+          }
+
+          console.log(`📋 Freie Slots für ${currentListType}: ${availableSlots.length}/30`, availableSlots);
+          return availableSlots;
+
+        } catch (error) {
+          console.error('❌ Fehler beim Laden freier Slots:', error);
+          // Fallback: alle Slots verfügbar
+          return Array.from({ length: 30 }, (_, i) => i + 1);
+        }
+      }
+
+      // Slot-Dropdown aktualisieren
+      async function updateSlotDropdown(selectElement, locationId = null) {
+        if (!selectElement) return;
+
+        selectElement.innerHTML = '<option value="">Lädt...</option>';
+
+        const availableSlots = await getAvailableWaitlistSlots(locationId);
+
+        // Dropdown leeren und neu befüllen
+        selectElement.innerHTML = '<option value="">Slot wählen...</option>';
+
+        availableSlots.forEach(slot => {
+          const option = document.createElement('option');
+          option.value = slot;
+          option.textContent = `Slot ${slot}`;
+          selectElement.appendChild(option);
+        });
+
+        if (availableSlots.length === 0) {
+          selectElement.innerHTML = '<option value="" disabled>Alle 30 Slots belegt!</option>';
+        }
+      }
+
+      // ============================================
       // Add New Slot Modal
       // ============================================
       async function openAddSlotModal() {
@@ -24689,6 +24786,30 @@
                 </select>
               </div>
 
+              <!-- Slot Number (1-30) -->
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
+                  Slot Nummer (1-30) *
+                </label>
+                <select
+                  id="slotNumberSelect"
+                  required
+                  style="
+                    width: 100%;
+                    padding: 12px 16px;
+                    border: 1px solid #e5e5ea;
+                    border-radius: 12px;
+                    font-size: 16px;
+                    background: white;
+                  "
+                >
+                  <option value="">Zuerst Location wählen...</option>
+                </select>
+                <p style="margin: 8px 0 0 0; font-size: 12px; color: #86868b;">
+                  Zeigt nur freie Slots für die gewählte Location
+                </p>
+              </div>
+
               <!-- Notes -->
               <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1d1d1f;">
@@ -24752,6 +24873,19 @@
         `;
 
         document.body.appendChild(modal);
+
+        // Setup location change listener to update slot dropdown
+        const locationSelect = document.getElementById('slotLocationSelect');
+        const slotNumberSelect = document.getElementById('slotNumberSelect');
+
+        locationSelect.addEventListener('change', async function() {
+          const selectedLocationId = this.value;
+          if (selectedLocationId) {
+            await updateSlotDropdown(slotNumberSelect, selectedLocationId);
+          } else {
+            slotNumberSelect.innerHTML = '<option value="">Zuerst Location wählen...</option>';
+          }
+        });
 
         // Setup artist search functionality
         const searchInput = document.getElementById('slotArtistSearch');
@@ -24917,18 +25051,20 @@
       async function handleAddSlot() {
         const artistId = document.getElementById('slotArtistId').value;
         const locationId = document.getElementById('slotLocationSelect').value;
+        const slotNumber = document.getElementById('slotNumberSelect').value;
         const notes = document.getElementById('slotNotes').value;
 
         // Basic validation
-        if (!artistId || !locationId) {
-          showNotification('Please fill in all required fields', 'error');
+        if (!artistId || !locationId || !slotNumber) {
+          showNotification('Bitte alle Pflichtfelder ausfüllen (inkl. Slot-Nummer)', 'error');
           return;
         }
 
-        // Prepare data object (display_order is automatically assigned by database)
+        // Prepare data object with selected display_order
         const slotData = {
           artist_id: artistId,
           location_id: locationId,
+          display_order: parseInt(slotNumber),
           notes: notes || null
         };
 
