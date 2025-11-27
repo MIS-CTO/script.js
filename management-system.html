@@ -6825,6 +6825,9 @@
         <button class="list-toggle-option" data-list-type="upcoming" style="position:relative; padding:8px 20px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
           Upcoming List
         </button>
+        <button class="list-toggle-option" data-list-type="previous" style="position:relative; padding:8px 20px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
+          Previous Guest Spots
+        </button>
       </div>
 
       <!-- Search Bar (fills remaining width) -->
@@ -16310,6 +16313,9 @@
       // Make saveArtistChanges globally accessible
       window.saveArtistChanges = saveArtistChanges;
 
+      // Current Artist ID for modal tabs
+      let currentArtistIdInModal = null;
+
       // View Artist Profile Functions - Apple-Inspired Design with Images
       window.viewArtistProfile = async function(artistId) {
         const artist = artistsCache.find(a => a.id === artistId) || allArtists.find(a => a.id === artistId);
@@ -16317,6 +16323,9 @@
           alert('Artist not found');
           return;
         }
+
+        // Store current artist ID for tab switching
+        currentArtistIdInModal = artistId;
 
         const modalHtml = `
           <div id="customViewArtistModal" style="
@@ -16520,27 +16529,60 @@
                   </div>
                 </div>
 
-                <!-- Projects Section -->
+                <!-- Tab Navigation -->
                 <div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px;">
-                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Completed Projects</h3>
-                  <div id="artistProjectsList" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div style="padding: 20px; text-align: center; color: #86868b;">Loading projects...</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="display: flex; gap: 0; border-bottom: 2px solid rgba(0,0,0,0.1);">
+                      <button class="artist-profile-tab active" data-tab="projects" onclick="showArtistProfileTab('projects')" style="
+                        padding: 12px 20px;
+                        background: none;
+                        border: none;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        color: #007aff;
+                        border-bottom: 2px solid #007aff;
+                        margin-bottom: -2px;
+                        transition: all 0.2s;
+                      ">Completed Projects</button>
+                      <button class="artist-profile-tab" data-tab="guestspots" onclick="showArtistProfileTab('guestspots')" style="
+                        padding: 12px 20px;
+                        background: none;
+                        border: none;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        color: #86868b;
+                        border-bottom: 2px solid transparent;
+                        margin-bottom: -2px;
+                        transition: all 0.2s;
+                      ">Guest Spots</button>
+                    </div>
+                    <button onclick="closeViewArtistModal(); openEditArtistModal('${artist.id}');" style="
+                      padding: 8px 16px;
+                      background: #007AFF;
+                      color: white;
+                      border: none;
+                      border-radius: 8px;
+                      font-weight: 500;
+                      font-size: 14px;
+                      cursor: pointer;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                    ">✏️ Edit</button>
+                  </div>
+
+                  <!-- Tab Content -->
+                  <div id="artist-profile-tab-content" style="min-height: 200px;">
+                    <div id="artistProjectsList" style="display: flex; flex-direction: column; gap: 12px;">
+                      <div style="padding: 20px; text-align: center; color: #86868b;">Loading projects...</div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Actions -->
-                <div style="margin-top: 24px; display: flex; gap: 12px;">
-                  <button onclick="closeViewArtistModal(); openEditArtistModal('${artist.id}');" style="
-                    flex: 1;
-                    padding: 12px;
-                    background: #007AFF;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                  ">Edit Artist</button>
-
+                <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
                   <button onclick="closeViewArtistModal()" style="
                     padding: 12px 24px;
                     background: #f0f0f0;
@@ -16738,6 +16780,116 @@
           minute: '2-digit'
         });
       }
+
+      // ============================================
+      // Artist Profile Tab Functions
+      // ============================================
+      async function loadArtistGuestSpots(artistId) {
+        const container = document.getElementById('artist-profile-tab-content');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center;padding:40px;">Lädt...</div>';
+
+        try {
+          const { data, error } = await supabase
+            .from('artist_guest_spots')
+            .select('*')
+            .eq('artist_id', artistId)
+            .order('status_order', { ascending: true })
+            .order('date_from', { ascending: false });
+
+          if (error) throw error;
+
+          if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);">Keine Guest Spots vorhanden</div>';
+            return;
+          }
+
+          const statusConfig = {
+            'active': { color: '#34c759', label: '🎨 Active' },
+            'upcoming': { color: '#007aff', label: '📅 Upcoming' },
+            'completed': { color: '#8e8e93', label: '✅ Completed' },
+            'canceled': { color: '#ff3b30', label: '❌ Canceled' }
+          };
+
+          container.innerHTML = data.map(function(spot) {
+            const config = statusConfig[spot.status] || { color: '#8e8e93', label: spot.status };
+            const dateFrom = spot.date_from ? new Date(spot.date_from).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+            const dateTo = spot.date_to ? new Date(spot.date_to).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+
+            return '<div style="padding:16px 20px;border:1px solid var(--border-color,#e0e0e0);border-radius:12px;margin-bottom:12px;">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<div>' +
+                  '<p style="margin:0;font-weight:600;font-size:15px;">' + (spot.location_name || 'Unknown Location') + '</p>' +
+                  '<p style="margin:6px 0 0 0;color:var(--muted);font-size:13px;">' + dateFrom + ' - ' + dateTo + '</p>' +
+                  (spot.cancel_reason ? '<p style="margin:8px 0 0 0;color:#ff3b30;font-size:13px;">Grund: ' + spot.cancel_reason + '</p>' : '') +
+                '</div>' +
+                '<span style="background:' + config.color + ';color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;">' + config.label + '</span>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+
+        } catch (error) {
+          console.error('Error loading artist guest spots:', error);
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:#ff3b30;">Fehler beim Laden</div>';
+        }
+      }
+
+      function showArtistProfileTab(tab) {
+        document.querySelectorAll('.artist-profile-tab').forEach(function(btn) {
+          btn.classList.remove('active');
+          btn.style.borderBottomColor = 'transparent';
+          btn.style.color = '#86868b';
+        });
+
+        const activeBtn = document.querySelector('.artist-profile-tab[data-tab="' + tab + '"]');
+        if (activeBtn) {
+          activeBtn.classList.add('active');
+          activeBtn.style.borderBottomColor = '#007aff';
+          activeBtn.style.color = '#007aff';
+        }
+
+        if (tab === 'projects') {
+          loadArtistCompletedProjects(currentArtistIdInModal);
+        } else if (tab === 'guestspots') {
+          loadArtistGuestSpots(currentArtistIdInModal);
+        }
+      }
+
+      // Load artist completed projects (for tab switching)
+      async function loadArtistCompletedProjects(artistId) {
+        const container = document.getElementById('artist-profile-tab-content');
+        if (!container) return;
+
+        container.innerHTML = '<div id="artistProjectsList" style="display: flex; flex-direction: column; gap: 12px;"><div style="padding: 20px; text-align: center; color: #86868b;">Loading projects...</div></div>';
+
+        try {
+          const { data: projects, error } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              customer:customers(first_name, last_name, email, instagram),
+              location:locations(name, city)
+            `)
+            .eq('artist_id', artistId)
+            .not('artist_id', 'is', null)
+            .order('start', { ascending: false });
+
+          if (error) throw error;
+
+          renderArtistProjectsSection(projects || []);
+
+        } catch (err) {
+          console.error('Error loading artist projects:', err);
+          document.getElementById('artistProjectsList').innerHTML =
+            '<div style="padding: 20px; text-align: center; color: #FF3B30;">Error loading projects</div>';
+        }
+      }
+
+      // Make tab functions globally accessible
+      window.showArtistProfileTab = showArtistProfileTab;
+      window.loadArtistGuestSpots = loadArtistGuestSpots;
+      window.loadArtistCompletedProjects = loadArtistCompletedProjects;
 
       // Open appointment from profile (if not already defined)
       if (typeof window.openAppointmentFromProfile === 'undefined') {
@@ -24357,10 +24509,10 @@
 
       let currentWaitlistLocation = 'all';
       let waitlistSlots = [];
-      let currentListType = 'waitlist'; // 'waitlist' or 'upcoming'
+      let currentListType = 'waitlist'; // 'waitlist', 'upcoming', or 'previous'
 
       // ============================================
-      // Switch List Type (Waitlist / Upcoming)
+      // Switch List Type (Waitlist / Upcoming / Previous)
       // ============================================
       function switchListType(listType) {
         console.log(`🔄 Switching to ${listType} list`);
@@ -24387,13 +24539,19 @@
         if (descriptionEl) {
           if (listType === 'waitlist') {
             descriptionEl.textContent = '🕒 Artists available NOW (no specific dates)';
-          } else {
+          } else if (listType === 'upcoming') {
             descriptionEl.textContent = '📅 Artists with SPECIFIC booking dates';
+          } else if (listType === 'previous') {
+            descriptionEl.textContent = '📋 Completed and canceled guest spots history';
           }
         }
 
-        // Reload data
-        loadWaitlistSlots(currentWaitlistLocation);
+        // Reload data based on list type
+        if (listType === 'previous') {
+          loadPreviousGuestSpots(currentWaitlistLocation);
+        } else {
+          loadWaitlistSlots(currentWaitlistLocation);
+        }
       }
 
       // ============================================
@@ -24489,6 +24647,89 @@
 
           return [];
         }
+      }
+
+      // ============================================
+      // Load Previous Guest Spots
+      // ============================================
+      async function loadPreviousGuestSpots(locationFilter = 'all') {
+        console.log('📋 Loading Previous Guest Spots...');
+
+        try {
+          let query = supabase
+            .from('previous_guest_spots')
+            .select('*')
+            .order('date_from', { ascending: false });
+
+          if (locationFilter && locationFilter !== 'all') {
+            query = query.eq('location_id', locationFilter);
+          }
+
+          const { data, error } = await query;
+
+          if (error) throw error;
+
+          renderPreviousGuestSpots(data || []);
+
+        } catch (error) {
+          console.error('❌ Error loading previous guest spots:', error);
+          showNotification('Fehler: ' + error.message, 'error');
+        }
+      }
+
+      // ============================================
+      // Render Previous Guest Spots
+      // ============================================
+      function renderPreviousGuestSpots(spots) {
+        const container = document.getElementById('waitlistSlotsContainer');
+        const emptyState = document.getElementById('waitlistEmptyState');
+
+        if (emptyState) emptyState.style.display = 'none';
+
+        if (!spots || spots.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine vergangenen Guest Spots</p></div>';
+          return;
+        }
+
+        container.innerHTML = spots.map(spot => {
+          const statusBadge = spot.status === 'completed'
+            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">✅ Completed</span>'
+            : '<span style="background:#ff3b30;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">❌ Canceled</span>';
+
+          const paidBadge = spot.share_personal_data
+            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">💰 Paid</span>'
+            : '<span style="background:#ff9500;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">💳 Unpaid</span>';
+
+          const cancelInfo = spot.status === 'canceled' && spot.cancel_reason
+            ? '<p style="color:#ff3b30;font-size:13px;margin-top:12px;"><strong>Absagegrund:</strong> ' + spot.cancel_reason + '</p>'
+            : '';
+
+          const canceledBy = spot.canceled_by_username
+            ? '<p style="color:var(--muted);font-size:12px;margin-top:4px;">Abgesagt von: ' + spot.canceled_by_username + '</p>'
+            : '';
+
+          return '<div style="background:var(--macos-elevated, #fff);border-radius:16px;padding:24px;margin-bottom:16px;border:1px solid var(--border-color, #e0e0e0);opacity:' + (spot.status === 'canceled' ? '0.7' : '1') + ';">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+              '<div style="flex:1;">' +
+                '<h3 style="margin:0 0 4px 0;font-size:18px;font-weight:600;">' + (spot.artist_name || spot.name || 'Unknown Artist') + '</h3>' +
+                '<p style="margin:0;color:var(--muted);font-size:14px;">' + (spot.location_name || '') + (spot.location_city ? ' (' + spot.location_city + ')' : '') + '</p>' +
+                '<p style="margin:12px 0 8px 0;font-size:14px;"><strong>Zeitraum:</strong> ' + formatDateDE(spot.date_from) + ' - ' + formatDateDE(spot.date_to) + '</p>' +
+                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' + statusBadge + paidBadge + '</div>' +
+                cancelInfo + canceledBy +
+              '</div>' +
+              (spot.profile_picture_url ? '<img src="' + spot.profile_picture_url + '" alt="' + (spot.artist_name || '') + '" style="width:60px;height:60px;border-radius:12px;object-fit:cover;margin-left:16px;">' : '') +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      // ============================================
+      // Format Date German Style
+      // ============================================
+      function formatDateDE(dateStr) {
+        if (!dateStr) return 'N/A';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
       }
 
       // ============================================
@@ -24645,6 +24886,27 @@
                   >
                     ${slot.share_paid ? '✅ Paid' : '❌ Unpaid'}
                   </button>
+                  ${currentListType === 'upcoming' ? `
+                  <button
+                    class="cancel-slot-button"
+                    onclick="cancelUpcomingSlot('${slot.id}')"
+                    style="
+                      padding:8px 16px;
+                      border:1px solid #ff3b30;
+                      border-radius:8px;
+                      background:transparent;
+                      cursor:pointer;
+                      color:#ff3b30;
+                      font-size:14px;
+                      font-weight:500;
+                      transition:all 0.2s;
+                    "
+                    onmouseover="this.style.background='#ff3b30'; this.style.color='white';"
+                    onmouseout="this.style.background='transparent'; this.style.color='#ff3b30';"
+                  >
+                    Cancel
+                  </button>
+                  ` : ''}
                 </div>
               </div>
 
@@ -25425,6 +25687,39 @@
           showNotification('Failed to update share paid status: ' + error.message, 'error');
         }
       }
+
+      // ============================================
+      // Cancel Upcoming Slot
+      // ============================================
+      async function cancelUpcomingSlot(slotId) {
+        const reason = prompt('Grund für Absage (optional):');
+
+        if (reason === null) return; // User clicked browser Cancel
+
+        try {
+          const { error } = await supabase
+            .from('upcoming_slots')
+            .update({
+              status: 'canceled',
+              cancel_reason: reason.trim() || null,
+              canceled_at: new Date().toISOString(),
+              canceled_by: currentUser?.id || null
+            })
+            .eq('id', slotId);
+
+          if (error) throw error;
+
+          showNotification('Guest Spot wurde abgesagt', 'success');
+          loadWaitlistSlots(currentWaitlistLocation);
+
+        } catch (error) {
+          console.error('❌ Error canceling slot:', error);
+          showNotification('Fehler: ' + error.message, 'error');
+        }
+      }
+
+      // Make globally accessible
+      window.cancelUpcomingSlot = cancelUpcomingSlot;
 
       // ============================================
       // Event Listeners
