@@ -5547,6 +5547,7 @@
     let allArtists = [];
     let allTeamMembers = [];
     let allLocations = []; // FIXED: Declare allLocations globally to prevent undefined errors
+    let bookingTeamMembers = []; // NEW: Dynamic booking team members from DB view
     let currentTimeIndicatorInterval = null; // FIXED: Track interval to prevent memory leak
 
     // Sorting state
@@ -5614,6 +5615,219 @@
     function getCurrentLocationName() {
       const select = document.querySelector('#dienstplanLocationDropdown option:checked');
       return select ? select.textContent : '';
+    }
+
+    // ============================================
+    // CUSTOMER & TEAM HELPER FUNCTIONS
+    // ============================================
+
+    /**
+     * Findet existierenden Customer oder erstellt neuen
+     * @param {Object} customerData - { first_name, last_name, email, phone, instagram }
+     * @returns {Promise<string>} customer_id (UUID)
+     */
+    async function findOrCreateCustomer(customerData) {
+      const { first_name, last_name, email, phone, instagram } = customerData;
+
+      console.log('🔍 Finding or creating customer:', { email, phone });
+
+      // 1. Suche per Email (case-insensitive)
+      if (email && email.trim()) {
+        const { data: existingByEmail } = await supabase
+          .from('customers')
+          .select('id')
+          .ilike('email', email.trim())
+          .limit(1)
+          .single();
+
+        if (existingByEmail) {
+          console.log('✅ Customer found by email:', existingByEmail.id);
+          return existingByEmail.id;
+        }
+      }
+
+      // 2. Suche per Phone (normalisiert)
+      if (phone && phone.trim()) {
+        const normalizedPhone = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
+        if (normalizedPhone.length >= 6) {
+          const { data: existingByPhone } = await supabase
+            .from('customers')
+            .select('id')
+            .or(`phone.ilike.%${normalizedPhone}%`)
+            .limit(1)
+            .single();
+
+          if (existingByPhone) {
+            console.log('✅ Customer found by phone:', existingByPhone.id);
+            return existingByPhone.id;
+          }
+        }
+      }
+
+      // 3. Neuen Customer erstellen
+      console.log('📝 Creating new customer...');
+      const { data: newCustomer, error } = await supabase
+        .from('customers')
+        .insert({
+          first_name: first_name?.trim() || null,
+          last_name: last_name?.trim() || null,
+          email: email?.trim().toLowerCase() || null,
+          phone: phone?.trim() || null,
+          instagram: instagram?.trim() || null,
+          rank: 'Bronze',
+          total_bookings: 0,
+          total_spent: 0
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('❌ Error creating customer:', error);
+        throw error;
+      }
+
+      console.log('✅ New customer created:', newCustomer.id);
+      return newCustomer.id;
+    }
+
+    /**
+     * Lädt Booking Team Members aus der Datenbank View
+     * @returns {Promise<Array>} Array von { id, username, email, role }
+     */
+    async function loadBookingTeamMembers() {
+      console.log('👥 Loading booking team members...');
+
+      try {
+        const { data, error } = await supabase
+          .from('booking_team_members')
+          .select('*');
+
+        if (error) {
+          console.warn('⚠️ Error loading team members from view, using fallback:', error);
+          // Fallback zu statischer Liste
+          return [
+            { id: '4048a85a-7018-4003-b4a1-41b05676c758', username: 'Aman', role: 'Booking Team' },
+            { id: '48c82f73-8e00-437f-af32-b1ec13b12d4e', username: 'Bennet', role: 'Booking Team' },
+            { id: 'b67d032d-5206-498f-b4ec-0e145d468052', username: 'Cara', role: 'Booking Team' },
+            { id: '77c75e8e-8b4e-4502-9f78-93b1936097c6', username: 'Dennis', role: 'Admin' },
+            { id: 'feb0f09d-4461-44c5-a769-67a7716ba7ad', username: 'Fay', role: 'Booking Team' },
+            { id: 'feef5b54-4506-4324-af8b-1617636e3ee2', username: 'Jan', role: 'Admin' }
+          ];
+        }
+
+        console.log('✅ Booking team loaded:', data?.length || 0, 'members');
+        return data || [];
+
+      } catch (err) {
+        console.error('❌ Failed to load team members:', err);
+        return [];
+      }
+    }
+
+    /**
+     * Erstellt ein vollständiges Appointment aus einem Request
+     * Überträgt ALLE relevanten Daten inkl. IDs und Tattoo-Details
+     * @param {Object} requestData - Der vollständige Request mit Relations
+     * @param {Object} options - { projectId, projectNumber } optional für Payment Workflow
+     * @returns {Promise<Object>} Das erstellte Appointment
+     */
+    async function createAppointmentFromRequest(requestData, options = {}) {
+      const { projectId, projectNumber } = options;
+
+      console.log('📅 Creating appointment from request:', requestData.id);
+      console.log('   Options:', options);
+
+      // Datum und Zeit kombinieren
+      const scheduledDate = requestData.scheduled_date
+        ? new Date(requestData.scheduled_date)
+        : new Date();
+
+      const startTime = requestData.start_time || '10:00';
+      const endTime = requestData.end_time || '12:00';
+
+      const [startHour, startMin] = startTime.split(':');
+      const startDateTime = new Date(scheduledDate);
+      startDateTime.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
+
+      const [endHour, endMin] = endTime.split(':');
+      const endDateTime = new Date(scheduledDate);
+      endDateTime.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
+
+      // Vollständiges Appointment-Objekt
+      const appointmentData = {
+        // IDs - KRITISCH für Verknüpfungen!
+        request_id: requestData.id,
+        customer_id: requestData.customer_id || null,
+        artist_id: requestData.artist_id || null,
+        location_id: requestData.location_id || null,
+        project_id: projectId || null,
+        project_number: projectNumber || null,
+
+        // Email-Felder (Backup für Legacy-Kompatibilität)
+        customer_email: requestData.email || requestData.customer?.email || null,
+        artist_email: requestData.artist?.email || null,
+        creator_email: currentUser?.email || null,
+
+        // Zeitdaten
+        start: startDateTime.toISOString(),
+        end: endDateTime.toISOString(),
+
+        // Tattoo-Details - ALLE übertragen!
+        placement: requestData.placement || null,
+        size: requestData.size || null,
+        style: requestData.style || null,
+        colorway: requestData.colorway || null,
+        description: requestData.description || null,
+        reference_images: requestData.reference_images || null,
+
+        // Booking Details
+        booking_type: requestData.booking_type || 'request',
+        priority: requestData.priority || 'normal',
+
+        // Status
+        status: 'scheduled',
+        state: 'Zugesagt',
+
+        // Payment (initial)
+        payment_status: requestData.payment_status || 'unpaid',
+        payment_amount: requestData.total_amount || requestData.total_price || null,
+        stripe_payment_link: requestData.stripe_payment_link || null,
+
+        // Notizen
+        notice: requestData.notes || requestData.internal_notes || null,
+
+        // Meta
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('📋 Appointment data prepared:', appointmentData);
+
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .insert(appointmentData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error creating appointment:', error);
+        throw error;
+      }
+
+      // Bidirektionale Verknüpfung: Request mit appointment_id updaten
+      const { error: updateError } = await supabase
+        .from('requests')
+        .update({ appointment_id: appointment.id })
+        .eq('id', requestData.id);
+
+      if (updateError) {
+        console.warn('⚠️ Could not update request with appointment_id:', updateError);
+      }
+
+      console.log('✅ Appointment created:', appointment.id);
+      console.log('🔗 Bidirectional link: Request', requestData.id, '↔ Appointment', appointment.id);
+
+      return appointment;
     }
 
     // ============================================
@@ -6136,6 +6350,10 @@
           console.log('Artists loaded:', allArtists.length);
           console.log('Team members loaded:', allTeamMembers.length);
           console.log('Locations loaded:', allLocations.length);
+
+          // NEW: Load booking team members for request assignment
+          bookingTeamMembers = await loadBookingTeamMembers();
+          console.log('Booking team members loaded:', bookingTeamMembers.length);
           
           if (locations && locations.length > 0) {
             // Finde "mommy i'm sorry" oder nimm die erste Location
@@ -7949,32 +8167,37 @@
       
       // Request Tab Switching is handled in initRequestTabs()
       
-      // Assign Request
+      // Assign Request - UPDATED: Dynamic team loading + username fix
       window.assignRequest = async function() {
-        // Use fixed list of team members
-        const teamMembers = [
-          { id: 'b67d032d-5206-498f-b4ec-0e145d468052', username: 'Cara' },
-          { id: '4048a85a-7018-4003-b4a1-41b05676c758', username: 'Aman' },
-          { id: '48c82f73-8e00-437f-af32-b1ec13b12d4e', username: 'Bennett' },
-          { id: 'feb0f09d-4461-44c5-a769-67a7716ba7ad', username: 'Fay' },
-          { id: 'feef5b54-4506-4324-af8b-1617636e3ee2', username: 'Jan' }
-        ];
+        // Reload team members if empty (lazy load)
+        if (bookingTeamMembers.length === 0) {
+          bookingTeamMembers = await loadBookingTeamMembers();
+        }
 
         const teamMemberSelect = document.getElementById('assignTeamMember');
         teamMemberSelect.innerHTML = '<option value="">-- Select Team Member --</option>' +
-          teamMembers.map(m => `<option value="${m.id}">${m.username}</option>`).join('');
+          bookingTeamMembers.map(m =>
+            `<option value="${m.id}" data-username="${m.username}">${m.username}${m.role ? ' (' + m.role + ')' : ''}</option>`
+          ).join('');
 
         document.getElementById('assignModal').classList.add('active');
       };
-      
+
       document.getElementById('cancelAssign')?.addEventListener('click', () => {
         document.getElementById('assignModal').classList.remove('active');
       });
-      
+
       document.getElementById('assignForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const userId = document.getElementById('assignTeamMember').value;
+        const selectEl = document.getElementById('assignTeamMember');
+        const userId = selectEl.value;
+        const username = selectEl.options[selectEl.selectedIndex]?.dataset?.username || null;
+
+        if (!userId) {
+          alert('Please select a team member');
+          return;
+        }
 
         try {
           const { error } = await supabase
@@ -7982,7 +8205,7 @@
             .update({
               status: 'pending',
               assigned_to_user_id: userId,
-              assigned_to: userId // Use UUID instead of username
+              assigned_to: username  // FIX: Now stores username, not UUID!
             })
             .eq('id', selectedRequestId);
 
@@ -7992,44 +8215,69 @@
           document.getElementById('assignForm').reset();
           await loadRequests();
           showRequestDetail(selectedRequestId);
-          alert('Request assigned successfully!');
+          alert('✅ Request assigned to ' + username + '!');
         } catch (err) {
           alert('Error assigning request: ' + err.message);
         }
       });
       
-      // Schedule Appointment
+      // Schedule Appointment - UPDATED: Now creates REAL appointment in DB!
       window.scheduleAppointment = async function() {
         // Load artists
         const { data: artists } = await supabase.from('artists').select('*');
         const artistSelect = document.getElementById('scheduleArtist');
         artistSelect.innerHTML = '<option value="">-- Select Artist --</option>' +
           (artists || []).map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        
+
+        // Pre-fill with existing values from request if available
+        const request = allRequests.find(r => r.id === selectedRequestId);
+        if (request) {
+          if (request.artist_id) {
+            artistSelect.value = request.artist_id;
+          }
+          if (request.scheduled_date) {
+            document.getElementById('scheduleDate').value = request.scheduled_date;
+          }
+          if (request.start_time) {
+            document.getElementById('scheduleStartTime').value = request.start_time;
+          }
+          if (request.end_time) {
+            document.getElementById('scheduleEndTime').value = request.end_time;
+          }
+        }
+
         document.getElementById('scheduleModal').classList.add('active');
       };
-      
+
       document.getElementById('cancelSchedule')?.addEventListener('click', () => {
         document.getElementById('scheduleModal').classList.remove('active');
       });
-      
+
       document.getElementById('scheduleForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const artistId = document.getElementById('scheduleArtist').value;
         const date = document.getElementById('scheduleDate').value;
         const startTime = document.getElementById('scheduleStartTime').value;
         const endTime = document.getElementById('scheduleEndTime').value;
-        
+
+        if (!artistId || !date || !startTime || !endTime) {
+          alert('Please fill in all fields');
+          return;
+        }
+
         try {
-          // Get artist name
+          console.log('📅 Scheduling appointment for request:', selectedRequestId);
+
+          // Get artist details
           const { data: artist } = await supabase
             .from('artists')
-            .select('name')
+            .select('name, email')
             .eq('id', artistId)
             .single();
-          
-          const { error } = await supabase
+
+          // 1. Update request with scheduling info
+          const { error: updateError } = await supabase
             .from('requests')
             .update({
               status: 'scheduled',
@@ -8040,15 +8288,41 @@
               end_time: endTime
             })
             .eq('id', selectedRequestId);
-          
-          if (error) throw error;
-          
+
+          if (updateError) throw updateError;
+
+          // 2. Get FULL request data for appointment creation
+          const { data: fullRequest, error: fetchError } = await supabase
+            .from('requests')
+            .select(`
+              *,
+              customer:customers(*),
+              artist:artists(*),
+              location:locations(*)
+            `)
+            .eq('id', selectedRequestId)
+            .single();
+
+          if (fetchError) throw fetchError;
+
+          // 3. Create REAL appointment in appointments table!
+          const appointment = await createAppointmentFromRequest(fullRequest);
+
+          console.log('✅ Appointment created:', appointment.id);
+
           document.getElementById('scheduleModal').classList.remove('active');
           document.getElementById('scheduleForm').reset();
           await loadRequests();
           showRequestDetail(selectedRequestId);
-          alert('Appointment scheduled successfully!');
+
+          alert('✅ Appointment scheduled successfully!\\n\\n' +
+                '📅 Appointment ID: ' + appointment.id.substring(0, 8) + '...\\n' +
+                '👤 Artist: ' + (artist?.name || 'Unknown') + '\\n' +
+                '📆 Date: ' + date + '\\n' +
+                '⏰ Time: ' + startTime + ' - ' + endTime);
+
         } catch (err) {
+          console.error('❌ Error scheduling appointment:', err);
           alert('Error scheduling appointment: ' + err.message);
         }
       });
@@ -8843,43 +9117,82 @@
         document.getElementById('createRequestForm').reset();
       });
 
-      // Submit handler for create request form
+      // Submit handler for create request form - UPDATED: Now creates/links customer!
       document.getElementById('createRequestForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         try {
+          // Collect form data
+          const firstName = document.getElementById('createFirstName').value.trim();
+          const lastName = document.getElementById('createLastName').value.trim();
+          const email = document.getElementById('createEmail').value.trim();
+          const phone = document.getElementById('createPhone').value.trim();
+          const instagram = document.getElementById('createInstagram').value?.trim() || null;
+
+          console.log('📝 Creating new request...');
+
+          // NEW: Find or create customer first!
+          let customerId = null;
+          if (email || phone) {
+            try {
+              customerId = await findOrCreateCustomer({
+                first_name: firstName,
+                last_name: lastName,
+                email: email,
+                phone: phone,
+                instagram: instagram
+              });
+              console.log('👤 Customer ID:', customerId);
+            } catch (customerErr) {
+              console.warn('⚠️ Could not create/find customer, continuing without:', customerErr);
+            }
+          }
+
           const requestData = {
-            first_name: document.getElementById('createFirstName').value,
-            last_name: document.getElementById('createLastName').value,
-            email: document.getElementById('createEmail').value,
-            customer_phone: document.getElementById('createPhone').value,
-            instagram: document.getElementById('createInstagram').value || null,
-            priority: document.getElementById('createPriority').value || 'normal',
-            placement: document.getElementById('createPlacement').value || null,
-            size: document.getElementById('createSize').value || null,
-            style: document.getElementById('createStyle').value || null,
-            colorway: document.getElementById('createColorway').value || null,
-            description: document.getElementById('createDescription').value || null,
-            location_id: document.getElementById('createLocation').value,
+            // Customer reference - NEW!
+            customer_id: customerId,
+            // Customer info (kept for backwards compatibility)
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            customer_phone: phone,
+            instagram: instagram,
+            // Request details
+            priority: document.getElementById('createPriority')?.value || 'normal',
+            placement: document.getElementById('createPlacement')?.value || null,
+            size: document.getElementById('createSize')?.value || null,
+            style: document.getElementById('createStyle')?.value || null,
+            colorway: document.getElementById('createColorway')?.value || null,
+            description: document.getElementById('createDescription')?.value || null,
+            location_id: document.getElementById('createLocation')?.value || selectedLocationId,
+            // Status
             status: 'open_request',
-            origin: document.getElementById('createOrigin').value,
-            booking_type: 'request'
+            payment_status: 'unpaid',
+            // Meta
+            origin: document.getElementById('createOrigin')?.value || 'Manual',
+            booking_type: document.getElementById('createBookingType')?.value || 'request'
           };
+
+          console.log('📋 Request data:', requestData);
 
           const { data, error } = await supabase
             .from('requests')
             .insert([requestData])
-            .select();
+            .select()
+            .single();
 
           if (error) throw error;
+
+          console.log('✅ Request created:', data.id);
 
           document.getElementById('createRequestModal').classList.remove('active');
           document.getElementById('createRequestForm').reset();
           await loadRequests();
 
-          alert('✅ Request created successfully!');
+          alert('✅ Request created successfully!' +
+                (customerId ? '\\n\\n👤 Customer linked: ' + customerId.substring(0, 8) + '...' : ''));
         } catch (err) {
-          console.error('Error creating request:', err);
+          console.error('❌ Error creating request:', err);
           alert('❌ Error creating request: ' + err.message);
         }
       });
@@ -19951,64 +20264,20 @@
       }
 
       /**
-       * Create new Appointment in appointments table
+       * @deprecated Use createAppointmentFromRequest() instead
+       * This function is kept for backwards compatibility only.
+       * The new function transfers ALL data including IDs and tattoo details.
        */
       async function createAppointment(requestData, projectId, projectNumber) {
-        try {
-          console.log('📅 Creating new appointment for project:', projectNumber);
+        console.warn('⚠️ DEPRECATED: createAppointment() is deprecated. Use createAppointmentFromRequest() instead.');
+        console.warn('   The new function properly transfers all IDs (customer_id, artist_id, location_id, request_id)');
+        console.warn('   and tattoo details (placement, size, style, colorway, description, reference_images).');
 
-          // Parse scheduled date and times
-          const scheduledDate = requestData.scheduled_date ? new Date(requestData.scheduled_date) : new Date();
-          const startTime = requestData.start_time || '10:00';
-          const endTime = requestData.end_time || '12:00';
-
-          // Combine date and time
-          const [startHour, startMin] = startTime.split(':');
-          const startDateTime = new Date(scheduledDate);
-          startDateTime.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
-
-          const [endHour, endMin] = endTime.split(':');
-          const endDateTime = new Date(scheduledDate);
-          endDateTime.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
-
-          const appointmentData = {
-            artist_email: requestData.artist?.email || null,
-            customer_email: requestData.customer?.email || requestData.email,
-            project_id: projectId,
-            project_number: projectNumber,
-            creator_email: currentUser?.email || null,
-            wannado_id: null,
-            state: 'scheduled',
-            work_process: null,
-            start: startDateTime.toISOString(),
-            end: endDateTime.toISOString(),
-            notice: requestData.notes || null,
-            notification_24h_send: false,
-            notification_2h_after_send: false,
-            notification_1month_after_send: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            deleted_at: null
-          };
-
-          const { data, error } = await supabase
-            .from('appointments')
-            .insert(appointmentData)
-            .select()
-            .single();
-
-          if (error) {
-            console.error('❌ Error creating appointment:', error);
-            throw error;
-          }
-
-          console.log('✅ Appointment created successfully:', data);
-          return data;
-
-        } catch (error) {
-          console.error('❌ Failed to create appointment:', error);
-          throw error;
-        }
+        // Delegate to new function for backwards compatibility
+        return createAppointmentFromRequest(requestData, {
+          projectId: projectId,
+          projectNumber: projectNumber
+        });
       }
 
       /**
@@ -20083,12 +20352,22 @@
           // STEP 4: Create Appointment in appointments table
           // ========================================
           console.log('\\n📅 STEP 4: Creating appointment in appointments table...');
-          newAppointment = await createAppointment(
-            currentPaymentRequest,
-            newProject.id,
-            projectNumber
-          );
+          // UPDATED: Use new createAppointmentFromRequest function for full data transfer
+          newAppointment = await createAppointmentFromRequest(currentPaymentRequest, {
+            projectId: newProject.id,
+            projectNumber: projectNumber
+          });
           console.log('✅ Appointment created with ID:', newAppointment.id);
+
+          // Update appointment with payment link info
+          await supabase
+            .from('appointments')
+            .update({
+              stripe_payment_link: paymentLink.url,
+              payment_link_sent_at: new Date().toISOString(),
+              payment_status: 'deposit_pending'
+            })
+            .eq('id', newAppointment.id);
 
           // ========================================
           // STEP 5: Update Request with project_number
