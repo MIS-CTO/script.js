@@ -12736,41 +12736,6 @@
                 </div>
               ` : ''}
               <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-
-              <!-- Action Buttons für Request-Liste -->
-              <div class="request-list-actions" style="display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border, #eee);">
-
-                <!-- Details Button - immer sichtbar -->
-                <button onclick="event.stopPropagation(); showRequestDetail('${req.id}')"
-                        style="padding: 6px 12px; background: var(--surface, #f5f5f7); border: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--ink, #1d1d1f);">
-                  ✏️ Details
-                </button>
-
-                ${req.status === 'open_request' ? `
-                  <!-- Assign Button - nur für open_request -->
-                  <button onclick="event.stopPropagation(); assignRequest('${req.id}')"
-                          style="padding: 6px 12px; background: var(--surface, #f5f5f7); border: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--ink, #1d1d1f);">
-                    👤 Assign
-                  </button>
-                ` : ''}
-
-                ${['pending', 'open_request'].includes(req.status) ? `
-                  <!-- Schedule Button - für pending und open_request -->
-                  <button onclick="event.stopPropagation(); scheduleAppointment('${req.id}')"
-                          style="padding: 6px 12px; background: #0071e3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
-                    📅 Schedule
-                  </button>
-                ` : ''}
-
-                ${['pending', 'open_request'].includes(req.status) && req.artist_id && req.scheduled_date && req.total_amount > 0 ? `
-                  <!-- Schedule + Payment Button - nur wenn alle Daten vorhanden -->
-                  <button onclick="event.stopPropagation(); scheduleWithPayment('${req.id}')"
-                          style="padding: 6px 12px; background: linear-gradient(135deg, #34c759, #30d158); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
-                    💳 + Payment
-                  </button>
-                ` : ''}
-
-              </div>
             </div>
           `;
         }).join('');
