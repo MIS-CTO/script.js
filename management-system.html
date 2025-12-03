@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v86</title>
+  <title>Management System v87</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -8756,11 +8756,19 @@
     /**
      * Schedule + Payment Link via Edge Function
      * API Keys werden sicher auf dem Server verwaltet
+     * @param {string} requestId - Die Request ID (optional, nutzt sonst selectedRequestId)
      */
-    async function scheduleWithPayment() {
-      if (!selectedRequestId) return;
+    async function scheduleWithPayment(requestId = null) {
+      // Request ID bestimmen
+      const targetRequestId = requestId || selectedRequestId || window.selectedRequestId;
 
-      const request = allRequests.find(r => r.id === selectedRequestId);
+      if (!targetRequestId) {
+        alert('Kein Request ausgewählt');
+        console.error('❌ scheduleWithPayment: No request ID available');
+        return;
+      }
+
+      const request = allRequests.find(r => r.id === targetRequestId);
       if (!request) {
         alert('Request nicht gefunden');
         return;
@@ -8820,7 +8828,7 @@
               'apikey': SUPABASE_KEY,
               'Authorization': 'Bearer ' + SUPABASE_KEY
             },
-            body: JSON.stringify({ request_id: selectedRequestId })
+            body: JSON.stringify({ request_id: targetRequestId })
           }
         );
 
@@ -8833,8 +8841,8 @@
         console.log('✅ Edge Function Success:', result);
 
         // UI aktualisieren - nur diesen einen Request refreshen
-        await refreshSingleRequest(selectedRequestId);
-        showRequestDetail(selectedRequestId);
+        await refreshSingleRequest(targetRequestId);
+        showRequestDetail(targetRequestId);
 
         alert(
           `✅ Erfolgreich!\n\n` +
@@ -8863,8 +8871,7 @@
      */
     function openPaymentWorkflowModalNew(requestId) {
       console.warn('⚠️ openPaymentWorkflowModalNew() redirects to scheduleWithPayment()');
-      selectedRequestId = requestId;
-      scheduleWithPayment();
+      scheduleWithPayment(requestId);
     }
 
     window.openPaymentWorkflowModalNew = openPaymentWorkflowModalNew;
@@ -12308,7 +12315,14 @@
       let currentRequestLocation = 'all'; // ✅ NEW: Track selected location filter
       let currentRequestSearchKeyword = ''; // ✅ NEW: Track search keyword
       let selectedRequestId = null;
+      window.selectedRequestId = null; // Also on window for onclick handlers
       // currentUser is declared globally outside this scope
+
+      // Helper to set selectedRequestId (updates both local and window)
+      function setSelectedRequestId(id) {
+        selectedRequestId = id;
+        window.selectedRequestId = id;
+      }
 
       // ==========================================
       // REQUEST CACHE SYSTEM
@@ -12730,7 +12744,11 @@
         const request = allRequests.find(r => r.id === requestId);
         if (!request) return;
 
-        console.log('📋 Showing request detail:', request);
+        // Set selectedRequestId globally for onclick handlers
+        selectedRequestId = requestId;
+        window.selectedRequestId = requestId;
+
+        console.log('📋 Showing request detail:', requestId, request);
 
         const detailEl = document.getElementById('requestDetail');
 
@@ -12772,16 +12790,16 @@
         } else {
           // Show status-based actions for other tabs
           if (request.status === 'open_request') {
-            actions = `<button class="btn" onclick="assignRequest()" style="background:var(--ink); color:white; border:none;">Assign to Team Member</button>`;
+            actions = `<button class="btn" onclick="assignRequest('${request.id}')" style="background:var(--ink); color:white; border:none;">Assign to Team Member</button>`;
           } else if (request.status === 'pending') {
-            actions = `<button class="btn" onclick="scheduleAppointment()" style="background:var(--ink); color:white; border:none;">Schedule Appointment</button>`;
+            actions = `<button class="btn" onclick="scheduleAppointment('${request.id}')" style="background:var(--ink); color:white; border:none;">Schedule Appointment</button>`;
           } else if (request.status === 'scheduled') {
             actions = `
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="btn" onclick="editAppointment()" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">Edit Appointment</button>
-                <button class="btn" onclick="resetAppointment()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">Reset</button>
-                <button class="btn" onclick="cancelAppointmentRequest()" style="background:#ff9500; color:white; border:none; flex:1; min-width:140px;">Cancel</button>
-                <button class="btn" onclick="deleteRequest()" style="background:#dc3545; color:white; border:none; flex:1; min-width:140px;">Delete</button>
+                <button class="btn" onclick="editAppointment('${request.id}')" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">Edit Appointment</button>
+                <button class="btn" onclick="resetAppointment('${request.id}')" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">Reset</button>
+                <button class="btn" onclick="cancelAppointmentRequest('${request.id}')" style="background:#ff9500; color:white; border:none; flex:1; min-width:140px;">Cancel</button>
+                <button class="btn" onclick="deleteRequest('${request.id}')" style="background:#dc3545; color:white; border:none; flex:1; min-width:140px;">Delete</button>
               </div>
             `;
           }
@@ -13028,7 +13046,7 @@
             <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px; padding-top:20px; border-top:1px solid #e5e5e5;">
 
               ${request.artist_id && request.scheduled_date && request.total_amount > 0 ? `
-                <button onclick="scheduleWithPayment()"
+                <button onclick="scheduleWithPayment('${request.id}')"
                         class="btn"
                         style="background:linear-gradient(135deg, #34c759, #30d158); color:white; width:100%; padding:14px; border-radius:10px; font-weight:600; cursor:pointer; transition:all 0.2s; border:none; font-size:15px;"
                         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(52,199,89,0.3)';"
@@ -13102,7 +13120,21 @@
       // Request Tab Switching is handled in initRequestTabs()
       
       // Assign Request
-      window.assignRequest = async function() {
+      let assigningRequestId = null; // Track which request is being assigned
+
+      window.assignRequest = async function(requestId = null) {
+        // Request ID bestimmen
+        const targetRequestId = requestId || selectedRequestId || window.selectedRequestId;
+
+        if (!targetRequestId) {
+          alert('Kein Request ausgewählt');
+          console.error('❌ assignRequest: No request ID available');
+          return;
+        }
+
+        // Store for form submission
+        assigningRequestId = targetRequestId;
+
         // Dynamisch Team Members laden (falls noch nicht geladen)
         if (bookingTeamMembers.length === 0) {
           await loadBookingTeamMembers();
@@ -13114,13 +13146,22 @@
 
         document.getElementById('assignModal').classList.add('active');
       };
-      
+
       document.getElementById('cancelAssign')?.addEventListener('click', () => {
         document.getElementById('assignModal').classList.remove('active');
+        assigningRequestId = null;
       });
-      
+
       document.getElementById('assignForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Use the stored request ID
+        const targetRequestId = assigningRequestId || selectedRequestId || window.selectedRequestId;
+
+        if (!targetRequestId) {
+          alert('Kein Request ausgewählt');
+          return;
+        }
 
         const userId = document.getElementById('assignTeamMember').value;
 
@@ -13136,15 +13177,19 @@
               assigned_to_user_id: userId,      // UUID für Joins
               assigned_to: username              // ✅ Username für Anzeige
             })
-            .eq('id', selectedRequestId);
+            .eq('id', targetRequestId);
 
           if (error) throw error;
 
           console.log(`✅ Request zugewiesen an: ${username}`);
           document.getElementById('assignModal').classList.remove('active');
           document.getElementById('assignForm').reset();
-          await loadRequests();
-          showRequestDetail(selectedRequestId);
+
+          // Nur diesen einen Request im Cache aktualisieren
+          await refreshSingleRequest(targetRequestId);
+          showRequestDetail(targetRequestId);
+
+          assigningRequestId = null;
           alert(`Request erfolgreich an ${username} zugewiesen!`);
         } catch (err) {
           alert('Error assigning request: ' + err.message);
@@ -13152,28 +13197,68 @@
       });
       
       // Schedule Appointment
-      window.scheduleAppointment = async function() {
+      let schedulingRequestId = null; // Track which request is being scheduled
+
+      window.scheduleAppointment = async function(requestId = null) {
+        // Request ID bestimmen
+        const targetRequestId = requestId || selectedRequestId || window.selectedRequestId;
+
+        if (!targetRequestId) {
+          alert('Kein Request ausgewählt');
+          console.error('❌ scheduleAppointment: No request ID available');
+          return;
+        }
+
+        // Store for form submission
+        schedulingRequestId = targetRequestId;
+
         // Load artists
-        const { data: artists } = await supabase.from('artists').select('*');
+        const { data: artists } = await supabase.from('artists').select('*').order('name');
         const artistSelect = document.getElementById('scheduleArtist');
         artistSelect.innerHTML = '<option value="">-- Select Artist --</option>' +
           (artists || []).map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        
+
+        // Pre-fill with existing data if available
+        const request = allRequests.find(r => r.id === targetRequestId);
+        if (request) {
+          if (request.artist_id) {
+            artistSelect.value = request.artist_id;
+          }
+          if (request.scheduled_date) {
+            document.getElementById('scheduleDate').value = request.scheduled_date;
+          }
+          if (request.start_time) {
+            document.getElementById('scheduleStartTime').value = request.start_time;
+          }
+          if (request.end_time) {
+            document.getElementById('scheduleEndTime').value = request.end_time;
+          }
+        }
+
         document.getElementById('scheduleModal').classList.add('active');
       };
-      
+
       document.getElementById('cancelSchedule')?.addEventListener('click', () => {
         document.getElementById('scheduleModal').classList.remove('active');
+        schedulingRequestId = null;
       });
-      
+
       document.getElementById('scheduleForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
+        // Use the stored request ID
+        const targetRequestId = schedulingRequestId || selectedRequestId || window.selectedRequestId;
+
+        if (!targetRequestId) {
+          alert('Kein Request ausgewählt');
+          return;
+        }
+
         const artistId = document.getElementById('scheduleArtist').value;
         const date = document.getElementById('scheduleDate').value;
         const startTime = document.getElementById('scheduleStartTime').value;
         const endTime = document.getElementById('scheduleEndTime').value;
-        
+
         try {
           // Get artist name
           const { data: artist } = await supabase
@@ -13181,7 +13266,7 @@
             .select('name')
             .eq('id', artistId)
             .single();
-          
+
           const { error } = await supabase
             .from('requests')
             .update({
@@ -13192,14 +13277,18 @@
               start_time: startTime,
               end_time: endTime
             })
-            .eq('id', selectedRequestId);
-          
+            .eq('id', targetRequestId);
+
           if (error) throw error;
-          
+
           document.getElementById('scheduleModal').classList.remove('active');
           document.getElementById('scheduleForm').reset();
-          await loadRequests();
-          showRequestDetail(selectedRequestId);
+
+          // Nur diesen einen Request im Cache aktualisieren
+          await refreshSingleRequest(targetRequestId);
+          showRequestDetail(targetRequestId);
+
+          schedulingRequestId = null;
           alert('Appointment scheduled successfully!');
         } catch (err) {
           alert('Error scheduling appointment: ' + err.message);
