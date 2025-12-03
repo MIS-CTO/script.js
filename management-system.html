@@ -8964,6 +8964,181 @@
     window.updateRequestInCache = updateRequestInCache;
 
     /**
+     * Schedule Appointment OHNE Payment Link
+     * Erstellt nur einen Termin, sendet keine Email
+     * @param {string} requestId - Die Request ID (optional)
+     */
+    async function scheduleAppointmentDirect(requestId = null) {
+      const targetRequestId = requestId || selectedRequestId || window.selectedRequestId;
+
+      if (!targetRequestId) {
+        alert('Kein Request ausgewählt');
+        return;
+      }
+
+      // Request finden
+      const requestsArray = allRequests || window.allRequests || [];
+      let request = requestsArray.find(r => r.id === targetRequestId);
+
+      if (!request) {
+        // Direkt aus DB laden
+        const { data, error } = await supabase
+          .from('requests')
+          .select(`*, customer:customers(*), artist:artists(*), location:locations(*)`)
+          .eq('id', targetRequestId)
+          .single();
+
+        if (error || !data) {
+          alert('Request nicht gefunden');
+          return;
+        }
+        request = data;
+      }
+
+      // Validierungen
+      if (!request.artist_id) {
+        alert('Bitte erst einen Artist auswählen');
+        return;
+      }
+      if (!request.scheduled_date) {
+        alert('Bitte erst ein Datum auswählen');
+        return;
+      }
+
+      // Confirmation
+      const artistName = request.artist?.name || 'Artist';
+      const scheduledDate = new Date(request.scheduled_date).toLocaleDateString('de-DE');
+      const confirmed = confirm(
+        `Termin erstellen (ohne Payment Link)?\n\n` +
+        `📅 Datum: ${scheduledDate}\n` +
+        `🎨 Artist: ${artistName}\n\n` +
+        `⚠️ Es wird KEIN Payment Link erstellt und KEINE Email gesendet.`
+      );
+
+      if (!confirmed) return;
+
+      // Button Status
+      const btn = event?.target;
+      const originalText = btn?.innerHTML;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Wird erstellt...';
+      }
+
+      try {
+        console.log('📅 Creating Appointment without Payment...');
+
+        // Datum und Zeit vorbereiten
+        const scheduledDateObj = new Date(request.scheduled_date);
+        const startTime = request.start_time || '10:00';
+        const endTime = request.end_time || '12:00';
+
+        const [startHour, startMin] = startTime.split(':').map(Number);
+        const [endHour, endMin] = endTime.split(':').map(Number);
+
+        const startDateTime = new Date(scheduledDateObj);
+        startDateTime.setHours(startHour, startMin, 0, 0);
+
+        const endDateTime = new Date(scheduledDateObj);
+        endDateTime.setHours(endHour, endMin, 0, 0);
+
+        // Appointment erstellen
+        const { data: appointment, error: aptError } = await supabase
+          .from('appointments')
+          .insert({
+            request_id: request.id,
+            customer_id: request.customer_id,
+            artist_id: request.artist_id,
+            location_id: request.location_id,
+            customer_email: request.email || request.customer?.email,
+            start: startDateTime.toISOString(),
+            end: endDateTime.toISOString(),
+            placement: request.placement,
+            size: request.size,
+            style: request.style,
+            colorway: request.colorway,
+            description: request.description,
+            booking_type: request.booking_type,
+            priority: request.priority,
+            status: 'scheduled',
+            state: 'Zugesagt',
+            payment_status: 'unpaid',
+            payment_amount: request.total_amount || null,
+          })
+          .select()
+          .single();
+
+        if (aptError) {
+          throw new Error('Appointment konnte nicht erstellt werden: ' + aptError.message);
+        }
+
+        console.log('✅ Appointment created:', appointment.id);
+
+        // Request updaten
+        const { error: updateError } = await supabase
+          .from('requests')
+          .update({
+            status: 'scheduled',
+            appointment_id: appointment.id,
+          })
+          .eq('id', targetRequestId);
+
+        if (updateError) {
+          console.error('⚠️ Request update error:', updateError);
+        }
+
+        console.log('✅ Request updated to scheduled');
+
+        // Cache aktualisieren
+        if (typeof updateRequestInCache === 'function') {
+          await updateRequestInCache(targetRequestId, {
+            status: 'scheduled',
+            appointment_id: appointment.id
+          });
+        } else if (typeof refreshSingleRequest === 'function') {
+          await refreshSingleRequest(targetRequestId);
+        } else if (typeof window.refreshSingleRequest === 'function') {
+          await window.refreshSingleRequest(targetRequestId);
+        }
+
+        // Tabs neu filtern
+        if (typeof filterAndRenderRequests === 'function') {
+          filterAndRenderRequests();
+        } else if (typeof window.filterAndRenderRequests === 'function') {
+          window.filterAndRenderRequests();
+        }
+
+        // Detail-View schließen
+        if (typeof closeRequestDetail === 'function') {
+          closeRequestDetail();
+        } else if (typeof window.closeRequestDetail === 'function') {
+          window.closeRequestDetail();
+        }
+
+        alert(
+          `✅ Termin erstellt!\n\n` +
+          `📅 Datum: ${scheduledDate}\n` +
+          `🎨 Artist: ${artistName}\n\n` +
+          `ℹ️ Kein Payment Link gesendet.\n` +
+          `Der Kunde muss separat kontaktiert werden.`
+        );
+
+      } catch (err) {
+        console.error('❌ Error:', err);
+        alert('Fehler: ' + err.message);
+
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText || '📅 Schedule';
+        }
+      }
+    }
+
+    // Global machen
+    window.scheduleAppointmentDirect = scheduleAppointmentDirect;
+
+    /**
      * Legacy-Alias für alten Payment Workflow
      * Leitet auf die neue Edge Function-basierte Implementation um
      */
@@ -13147,6 +13322,18 @@
           ${(request.status === 'pending' || request.status === 'open_request') && !request.stripe_payment_link ? `
             <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px; padding-top:20px; border-top:1px solid #e5e5e5;">
 
+              <!-- Schedule Button (ohne Payment) - zeigen wenn Artist + Datum vorhanden -->
+              ${request.artist_id && request.scheduled_date ? `
+                <button onclick="scheduleAppointmentDirect('${request.id}')"
+                        class="btn"
+                        style="background:#0071e3; color:white; width:100%; padding:14px; border-radius:10px; font-weight:600; cursor:pointer; transition:all 0.2s; border:none; font-size:15px;"
+                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,113,227,0.3)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                  📅 Schedule (ohne Payment)
+                </button>
+              ` : ''}
+
+              <!-- Schedule + Payment Link Button - NUR wenn ALLE Daten vorhanden -->
               ${request.artist_id && request.scheduled_date && request.total_amount > 0 ? `
                 <button onclick="scheduleWithPayment('${request.id}')"
                         class="btn"
@@ -13155,16 +13342,28 @@
                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
                   💳 Schedule + Payment Link senden
                 </button>
-              ` : `
+              ` : ''}
+
+              <!-- Warnung wenn Artist oder Datum fehlt -->
+              ${!request.artist_id || !request.scheduled_date ? `
                 <div style="background:#fff3cd; padding:12px 16px; border-radius:8px; border-left:4px solid #ffc107;">
                   <p style="margin:0; font-size:13px; color:#856404;">
-                    ⚠️ Für Payment Link fehlt:
+                    ⚠️ Für Terminierung fehlt:
                     ${!request.artist_id ? '<b>Artist</b> ' : ''}
                     ${!request.scheduled_date ? '<b>Datum</b> ' : ''}
-                    ${!request.total_amount ? '<b>Preis</b>' : ''}
                   </p>
                 </div>
-              `}
+              ` : ''}
+
+              <!-- Info wenn Preis fehlt aber Schedule möglich -->
+              ${request.artist_id && request.scheduled_date && (!request.total_amount || request.total_amount <= 0) ? `
+                <div style="background:#e3f2fd; padding:12px 16px; border-radius:8px; border-left:4px solid #2196f3;">
+                  <p style="margin:0; font-size:13px; color:#1565c0;">
+                    ℹ️ Für Payment Link fehlt noch: <b>Preis</b>
+                  </p>
+                </div>
+              ` : ''}
+
             </div>
           ` : ''}
 
