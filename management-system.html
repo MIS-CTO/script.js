@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v85</title>
+  <title>Management System v86</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -8540,22 +8540,47 @@
         const { data, error } = await supabase
           .from('booking_team_members')  // View aus Supabase
           .select('id, username, email, role, avatar_url')
-          .order('username');
+          .order('username', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+          console.warn('⚠️ booking_team_members view error, using fallback:', error.message);
+          // Fallback: Direkt aus profiles laden
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, username, email, role, avatar_url')
+            .in('role', ['admin', 'booking', 'management', 'team']);
+
+          if (!profileError && profiles) {
+            bookingTeamMembers = profiles;
+            console.log('✅ Team loaded from profiles:', bookingTeamMembers.length);
+            return bookingTeamMembers;
+          }
+
+          // Letzter Fallback: Hardcoded
+          bookingTeamMembers = [
+            { id: '4048a85a-7018-4003-b4a1-41b05676c758', username: 'Aman', role: 'team' },
+            { id: '48c82f73-8e00-437f-af32-b1ec13b12d4e', username: 'Bennet', role: 'team' },
+            { id: 'b67d032d-5206-498f-b4ec-0e145d468052', username: 'Cara', role: 'team' },
+            { id: '77c75e8e-8b4e-4502-9f78-93b1936097c6', username: 'Dennis', role: 'team' },
+            { id: 'feb0f09d-4461-44c5-a769-67a7716ba7ad', username: 'Fay', role: 'team' },
+            { id: 'feef5b54-4506-4324-af8b-1617636e3ee2', username: 'Jan', role: 'team' }
+          ];
+          return bookingTeamMembers;
+        }
 
         bookingTeamMembers = data || [];
         console.log('✅ Booking Team geladen:', bookingTeamMembers.length, 'Mitglieder');
         return bookingTeamMembers;
-      } catch (error) {
-        console.error('❌ Fehler beim Laden des Booking Teams:', error);
-        // Fallback zu bekannten Team Members
+
+      } catch (err) {
+        console.error('❌ loadBookingTeamMembers error:', err);
+        // Fallback bei totalem Fehler
         bookingTeamMembers = [
-          { id: 'b67d032d-5206-498f-b4ec-0e145d468052', username: 'Cara' },
-          { id: '4048a85a-7018-4003-b4a1-41b05676c758', username: 'Aman' },
-          { id: '48c82f73-8e00-437f-af32-b1ec13b12d4e', username: 'Bennet' },
-          { id: 'feb0f09d-4461-44c5-a769-67a7716ba7ad', username: 'Fay' },
-          { id: 'feef5b54-4506-4324-af8b-1617636e3ee2', username: 'Jan' },
+          { id: '4048a85a-7018-4003-b4a1-41b05676c758', username: 'Aman', role: 'team' },
+          { id: '48c82f73-8e00-437f-af32-b1ec13b12d4e', username: 'Bennet', role: 'team' },
+          { id: 'b67d032d-5206-498f-b4ec-0e145d468052', username: 'Cara', role: 'team' },
+          { id: 'feb0f09d-4461-44c5-a769-67a7716ba7ad', username: 'Fay', role: 'team' },
+          { id: 'feef5b54-4506-4324-af8b-1617636e3ee2', username: 'Jan', role: 'team' }
         ];
         return bookingTeamMembers;
       }
@@ -8567,65 +8592,72 @@
     /**
      * Findet existierenden Customer oder erstellt neuen
      * @param {Object} customerData - { first_name, last_name, email, phone, instagram }
-     * @returns {Promise<string>} customer_id (UUID)
+     * @returns {Promise<string|null>} customer_id (UUID) oder null
      */
     async function findOrCreateCustomer(customerData) {
       const { first_name, last_name, email, phone, instagram } = customerData;
 
-      // 1. Suche per Email (case-insensitive)
-      if (email) {
-        const { data: existingByEmail } = await supabase
+      try {
+        // 1. Suche per Email (case-insensitive)
+        if (email && email.trim()) {
+          const { data: existingByEmail, error: emailError } = await supabase
+            .from('customers')
+            .select('id')
+            .ilike('email', email.trim())
+            .limit(1);
+
+          // Kein .single() - stattdessen Array prüfen
+          if (!emailError && existingByEmail && existingByEmail.length > 0) {
+            console.log('✅ Customer found by email:', existingByEmail[0].id);
+            return existingByEmail[0].id;
+          }
+        }
+
+        // 2. Suche per Phone
+        if (phone && phone.trim()) {
+          const normalizedPhone = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
+          if (normalizedPhone.length >= 6) {
+            const { data: existingByPhone, error: phoneError } = await supabase
+              .from('customers')
+              .select('id')
+              .ilike('phone', `%${normalizedPhone.slice(-8)}%`)
+              .limit(1);
+
+            if (!phoneError && existingByPhone && existingByPhone.length > 0) {
+              console.log('✅ Customer found by phone:', existingByPhone[0].id);
+              return existingByPhone[0].id;
+            }
+          }
+        }
+
+        // 3. Neuen Customer erstellen
+        const { data: newCustomer, error: insertError } = await supabase
           .from('customers')
+          .insert({
+            first_name: first_name?.trim() || null,
+            last_name: last_name?.trim() || null,
+            email: email?.trim().toLowerCase() || null,
+            phone: phone?.trim() || null,
+            instagram: instagram?.trim() || null,
+            rank: 'Bronze',
+            total_bookings: 0,
+            total_spent: 0
+          })
           .select('id')
-          .ilike('email', email.trim())
-          .limit(1)
           .single();
 
-        if (existingByEmail) {
-          console.log('✅ Customer found by email:', existingByEmail.id);
-          return existingByEmail.id;
+        if (insertError) {
+          console.error('❌ Error creating customer:', insertError);
+          return null; // Nicht werfen, Request trotzdem erstellen
         }
+
+        console.log('✅ New customer created:', newCustomer.id);
+        return newCustomer.id;
+
+      } catch (err) {
+        console.error('❌ findOrCreateCustomer error:', err);
+        return null; // Nicht werfen, Request trotzdem erstellen
       }
-
-      // 2. Suche per Phone
-      if (phone) {
-        const normalizedPhone = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
-        const { data: existingByPhone } = await supabase
-          .from('customers')
-          .select('id')
-          .or(`phone.ilike.%${normalizedPhone}%`)
-          .limit(1)
-          .single();
-
-        if (existingByPhone) {
-          console.log('✅ Customer found by phone:', existingByPhone.id);
-          return existingByPhone.id;
-        }
-      }
-
-      // 3. Neuen Customer erstellen
-      const { data: newCustomer, error } = await supabase
-        .from('customers')
-        .insert({
-          first_name: first_name?.trim() || null,
-          last_name: last_name?.trim() || null,
-          email: email?.trim().toLowerCase() || null,
-          phone: phone?.trim() || null,
-          instagram: instagram?.trim() || null,
-          rank: 'Bronze',
-          total_bookings: 0,
-          total_spent: 0
-        })
-        .select('id')
-        .single();
-
-      if (error) {
-        console.error('❌ Error creating customer:', error);
-        throw error;
-      }
-
-      console.log('✅ New customer created:', newCustomer.id);
-      return newCustomer.id;
     }
 
     // ==========================================
@@ -8800,8 +8832,8 @@
 
         console.log('✅ Edge Function Success:', result);
 
-        // UI aktualisieren
-        await loadRequests();
+        // UI aktualisieren - nur diesen einen Request refreshen
+        await refreshSingleRequest(selectedRequestId);
         showRequestDetail(selectedRequestId);
 
         alert(
@@ -12278,11 +12310,32 @@
       let selectedRequestId = null;
       // currentUser is declared globally outside this scope
 
-      async function loadRequests() {
+      // ==========================================
+      // REQUEST CACHE SYSTEM
+      // ==========================================
+      let requestsLoaded = false;
+      let requestsLastLoadTime = null;
+      const REQUESTS_CACHE_DURATION = 5 * 60 * 1000; // 5 Minuten Cache
+
+      async function loadRequests(options = {}) {
+        const { forceReload = false } = options;
+
+        // Cache prüfen (wenn nicht force reload und Cache noch gültig)
+        const now = Date.now();
+        if (!forceReload && requestsLoaded && requestsLastLoadTime && allRequests.length > 0) {
+          const cacheAge = now - requestsLastLoadTime;
+          if (cacheAge < REQUESTS_CACHE_DURATION) {
+            console.log('📦 Using cached requests (' + Math.round(cacheAge/1000) + 's old, ' + allRequests.length + ' total)');
+            // Nur filtern und rendern, nicht neu laden
+            filterAndRenderRequests();
+            return;
+          }
+        }
+
         try {
           ProgressBar.show('Loading requests...');
           console.log('📋 Loading requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
-          console.log('🚨 BATCH LOADING ALL REQUESTS - Version 2025-11-19');
+          console.log('🚨 BATCH LOADING ALL REQUESTS - Version 2025-12-03 (with cache)');
 
           // 🔥 BATCH LOADING: Load ALL requests in batches of 1000
           ProgressBar.updateProgress(10, 'Starting batch loading...');
@@ -12324,7 +12377,9 @@
           }
 
           allRequests = allData || [];
-          console.log('✅ Loaded', allRequests.length, 'total requests in', batchNumber - 1, 'batches');
+          requestsLoaded = true;
+          requestsLastLoadTime = now;
+          console.log('✅ Loaded', allRequests.length, 'total requests in', batchNumber - 1, 'batches (cached)');
           ProgressBar.updateProgress(70, 'Filtering and rendering...');
 
           // Filter by status
@@ -12403,7 +12458,114 @@
           `;
         }
       }
-      
+
+      /**
+       * Filter und Render aus Cache (ohne Neu-Laden)
+       */
+      function filterAndRenderRequests() {
+        // Filter by status
+        let filteredRequests = allRequests;
+        if (currentRequestStatus === 'my-requests') {
+          filteredRequests = allRequests.filter(r =>
+            r.assigned_to_user_id === currentUser?.id
+          );
+        } else if (currentRequestStatus === 'open_request') {
+          filteredRequests = allRequests.filter(r => r.status === 'open_request');
+        } else if (currentRequestStatus !== 'all') {
+          filteredRequests = allRequests.filter(r => r.status === currentRequestStatus);
+        }
+
+        // Filter by location
+        if (currentRequestLocation !== 'all') {
+          filteredRequests = filteredRequests.filter(r => {
+            const locationName = (r.location?.name || '').toLowerCase();
+            if (currentRequestLocation === 'mommy') return locationName.includes('mommy');
+            if (currentRequestLocation === 'gon') return locationName.includes('gon');
+            if (currentRequestLocation === 'muttersohne') return locationName.includes('muttersöhne') || locationName.includes('muttersohne');
+            if (currentRequestLocation === 'pardon') return locationName.includes('pardon');
+            return true;
+          });
+        }
+
+        // Filter by search keyword
+        if (currentRequestSearchKeyword && currentRequestSearchKeyword.trim() !== '') {
+          const keyword = currentRequestSearchKeyword.toLowerCase().trim();
+          filteredRequests = filteredRequests.filter(r => {
+            const searchableFields = [
+              r.first_name || '', r.last_name || '',
+              r.customer?.first_name || '', r.customer?.last_name || '',
+              r.customer?.email || '', r.email || '',
+              r.phone || '', r.description || '', r.notes || '',
+              r.artist?.name || '', r.location?.name || '',
+              r.request_number || '', r.id || ''
+            ].join(' ').toLowerCase();
+            return searchableFields.includes(keyword);
+          });
+        }
+
+        console.log('📊 Filtered from cache:', filteredRequests.length, 'requests');
+        renderRequestsList(filteredRequests);
+        updateRequestBadges();
+      }
+
+      /**
+       * Einzelnen Request im Cache aktualisieren (statt alle neu laden)
+       * @param {string} requestId - ID des Requests
+       */
+      async function refreshSingleRequest(requestId) {
+        try {
+          const { data, error } = await supabase
+            .from('requests')
+            .select(`
+              *,
+              customer:customers(id, first_name, last_name, email, phone, rank, instagram),
+              artist:artists(id, name, email, instagram),
+              location:locations(id, name, city)
+            `)
+            .eq('id', requestId)
+            .single();
+
+          if (error) throw error;
+
+          // Im Cache aktualisieren
+          const index = allRequests.findIndex(r => r.id === requestId);
+          if (index !== -1) {
+            allRequests[index] = data;
+          } else {
+            allRequests.unshift(data); // Neuen Request am Anfang einfügen
+          }
+
+          // UI aktualisieren ohne komplettes Neu-Rendern
+          filterAndRenderRequests();
+
+          console.log('✅ Single request refreshed:', requestId);
+          return data;
+
+        } catch (err) {
+          console.error('❌ Error refreshing request:', err);
+          return null;
+        }
+      }
+
+      /**
+       * Neuen Request zum Cache hinzufügen
+       * @param {Object} request - Der neue Request (mit Relations)
+       */
+      function addRequestToCache(request) {
+        allRequests.unshift(request);
+        filterAndRenderRequests();
+        console.log('✅ Request added to cache');
+      }
+
+      /**
+       * Request Cache invalidieren und neu laden
+       */
+      async function reloadRequests() {
+        requestsLoaded = false;
+        requestsLastLoadTime = null;
+        await loadRequests({ forceReload: true });
+      }
+
       function renderRequestsList(requests) {
         const listEl = document.getElementById('requestsList');
         
@@ -13509,8 +13671,8 @@
           uploadProgressBar.style.width = '100%';
           uploadProgressText.textContent = 'Upload complete!';
 
-          // Reload the request
-          await loadRequests();
+          // Reload nur diesen einen Request
+          await refreshSingleRequest(editingRequestId);
           const updatedRequest = allRequests.find(r => r.id === editingRequestId);
 
           // Update the image display
@@ -13569,8 +13731,8 @@
             console.warn('Warning: Could not delete file from storage:', deleteError);
           }
 
-          // Reload the request
-          await loadRequests();
+          // Reload nur diesen einen Request
+          await refreshSingleRequest(editingRequestId);
           const updatedRequest = allRequests.find(r => r.id === editingRequestId);
 
           // Update the image display
@@ -13628,7 +13790,8 @@
 
           if (error) throw error;
 
-          await loadRequests();
+          // Nur diesen einen Request im Cache aktualisieren
+          await refreshSingleRequest(editingRequestId);
           showRequestDetail(editingRequestId);
 
           alert('✅ Request updated successfully!');
@@ -13815,7 +13978,9 @@
           if (error) throw error;
 
           document.getElementById('editRequestModal').classList.remove('active');
-          await loadRequests();
+
+          // Nur diesen einen Request im Cache aktualisieren (statt alle neu laden)
+          await refreshSingleRequest(editingRequestId);
 
           // Reload detail view if still showing this request
           if (selectedRequestId === editingRequestId) {
@@ -13910,13 +14075,31 @@
           const { data, error } = await supabase
             .from('requests')
             .insert([requestData])
-            .select();
+            .select()
+            .single();
 
           if (error) throw error;
 
+          // Neuen Request mit Relations laden und zum Cache hinzufügen (statt alle neu laden)
+          if (data && data.id) {
+            const { data: newRequestWithRelations } = await supabase
+              .from('requests')
+              .select(`
+                *,
+                customer:customers(id, first_name, last_name, email, phone, rank, instagram),
+                artist:artists(id, name, email, instagram),
+                location:locations(id, name, city)
+              `)
+              .eq('id', data.id)
+              .single();
+
+            if (newRequestWithRelations) {
+              addRequestToCache(newRequestWithRelations);
+            }
+          }
+
           document.getElementById('createRequestModal').classList.remove('active');
           document.getElementById('createRequestForm').reset();
-          await loadRequests();
 
           alert('✅ Request created successfully!');
         } catch (err) {
