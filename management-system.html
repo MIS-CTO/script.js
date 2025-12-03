@@ -13322,16 +13322,10 @@
           ${(request.status === 'pending' || request.status === 'open_request') && !request.stripe_payment_link ? `
             <div style="display:flex; flex-direction:row; gap:12px; margin-top:20px; padding-top:20px; border-top:1px solid #e5e5e5; flex-wrap:wrap;">
 
-              <!-- Edit Button -->
-              <button onclick="editRequest('${request.id}')"
-                      style="flex:1; min-width:120px; padding:12px 16px; background:#1d1d1f; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
-                Edit Request
-              </button>
-
               <!-- Schedule Button (ohne Payment) - weiß mit schwarzer Outline -->
               ${request.artist_id && request.scheduled_date ? `
                 <button onclick="scheduleAppointmentDirect('${request.id}')"
-                        style="flex:1; min-width:120px; padding:12px 16px; background:white; color:#1d1d1f; border:2px solid #1d1d1f; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
+                        style="flex:1; min-width:150px; padding:12px 16px; background:white; color:#1d1d1f; border:2px solid #1d1d1f; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
                   Schedule
                 </button>
               ` : ''}
@@ -13339,7 +13333,7 @@
               <!-- Schedule + Payment Link Button - weiß mit schwarzer Outline -->
               ${request.artist_id && request.scheduled_date && request.total_amount > 0 ? `
                 <button onclick="scheduleWithPayment('${request.id}')"
-                        style="flex:1; min-width:120px; padding:12px 16px; background:white; color:#1d1d1f; border:2px solid #1d1d1f; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
+                        style="flex:1; min-width:150px; padding:12px 16px; background:white; color:#1d1d1f; border:2px solid #1d1d1f; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
                   Schedule + Payment
                 </button>
               ` : ''}
@@ -13854,14 +13848,16 @@
                     ${!request.artist_id ? `<p style="margin:4px 0 0; font-size:12px; color:#86868b;">Bitte erst einen Artist auswählen</p>` : ''}
                   </div>
                   <div class="detail-item">
-                    <div class="detail-label">Start Time</div>
-                    <input type="time" id="fullEditStartTime" value="${request.start_time || ''}"
-                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                    <div class="detail-label">Startzeit</div>
+                    <input type="time" id="fullEditStartTime" value="${request.start_time || '10:00'}"
+                           ${!request.artist_id ? 'disabled' : ''}
+                           style="width:100%; padding:8px 12px; border:1px solid ${!request.artist_id ? '#e5e5e5' : 'rgba(0,0,0,0.1)'}; border-radius:8px; font-size:14px; ${!request.artist_id ? 'background:#f5f5f7; cursor:not-allowed;' : ''}">
                   </div>
                   <div class="detail-item">
-                    <div class="detail-label">End Time</div>
-                    <input type="time" id="fullEditEndTime" value="${request.end_time || ''}"
-                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                    <div class="detail-label">Endzeit</div>
+                    <input type="time" id="fullEditEndTime" value="${request.end_time || '12:00'}"
+                           ${!request.artist_id ? 'disabled' : ''}
+                           style="width:100%; padding:8px 12px; border:1px solid ${!request.artist_id ? '#e5e5e5' : 'rgba(0,0,0,0.1)'}; border-radius:8px; font-size:14px; ${!request.artist_id ? 'background:#f5f5f7; cursor:not-allowed;' : ''}">
                   </div>
                 </div>
               </div>
@@ -14018,28 +14014,44 @@
       };
 
       /**
-       * Aktiviert Date-Picker wenn Artist ausgewählt wird
+       * Aktiviert Date- und Time-Picker wenn Artist ausgewählt wird
        */
       function onArtistSelected(artistId) {
         const dateInput = document.getElementById('fullEditScheduledDate');
-        if (dateInput) {
-          if (artistId) {
-            dateInput.disabled = false;
-            dateInput.style.background = 'white';
-            dateInput.style.cursor = 'text';
-            dateInput.style.borderColor = 'rgba(0,0,0,0.1)';
-            // Entferne Hinweistext wenn vorhanden
-            const hint = dateInput.nextElementSibling;
-            if (hint && hint.tagName === 'P') {
-              hint.remove();
+        const startTimeInput = document.getElementById('fullEditStartTime');
+        const endTimeInput = document.getElementById('fullEditEndTime');
+
+        const inputs = [dateInput, startTimeInput, endTimeInput];
+
+        inputs.forEach(input => {
+          if (input) {
+            if (artistId) {
+              input.disabled = false;
+              input.style.background = 'white';
+              input.style.cursor = 'text';
+              input.style.borderColor = 'rgba(0,0,0,0.1)';
+            } else {
+              input.disabled = true;
+              input.style.background = '#f5f5f7';
+              input.style.cursor = 'not-allowed';
+              input.style.borderColor = '#e5e5e5';
             }
-          } else {
-            dateInput.disabled = true;
-            dateInput.style.background = '#f5f5f7';
-            dateInput.style.cursor = 'not-allowed';
-            dateInput.style.borderColor = '#e5e5e5';
-            dateInput.value = '';
           }
+        });
+
+        // Hinweistext bei Datum entfernen wenn Artist ausgewählt
+        if (dateInput && artistId) {
+          const hint = dateInput.nextElementSibling;
+          if (hint && hint.tagName === 'P') {
+            hint.remove();
+          }
+        }
+
+        // Werte zurücksetzen wenn Artist entfernt wird
+        if (!artistId) {
+          if (dateInput) dateInput.value = '';
+          if (startTimeInput) startTimeInput.value = '10:00';
+          if (endTimeInput) endTimeInput.value = '12:00';
         }
       }
 
