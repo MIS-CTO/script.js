@@ -8778,10 +8778,30 @@
         return;
       }
 
-      const request = allRequests.find(r => r.id === targetRequestId);
+      // Request finden - mit Fallback auf window.allRequests und DB
+      const requestsArray = window.allRequests || [];
+      let request = requestsArray.find(r => r.id === targetRequestId);
+
+      // Falls nicht im Cache, direkt aus DB laden
       if (!request) {
-        alert('Request nicht gefunden');
-        return;
+        console.log('📥 Request not in cache, loading from DB...');
+        const { data, error } = await supabase
+          .from('requests')
+          .select(`
+            *,
+            customer:customers(id, first_name, last_name, email, phone),
+            artist:artists(id, name, email),
+            location:locations(id, name, city)
+          `)
+          .eq('id', targetRequestId)
+          .single();
+
+        if (error || !data) {
+          alert('Request nicht gefunden');
+          console.error('❌ Request not found:', error);
+          return;
+        }
+        request = data;
       }
 
       // Validierungen
@@ -12401,6 +12421,7 @@
           }
 
           allRequests = allData || [];
+          window.allRequests = allRequests; // Global für onclick Handler
           requestsLoaded = true;
           requestsLastLoadTime = now;
           console.log('✅ Loaded', allRequests.length, 'total requests in', batchNumber - 1, 'batches (cached)');
@@ -13263,8 +13284,30 @@
         artistSelect.innerHTML = '<option value="">-- Select Artist --</option>' +
           (artists || []).map(a => `<option value="${a.id}">${a.name}</option>`).join('');
 
+        // Request finden - mit Fallback auf window.allRequests und DB
+        const requestsArray = window.allRequests || [];
+        let request = requestsArray.find(r => r.id === targetRequestId);
+
+        // Falls nicht im Cache, direkt aus DB laden
+        if (!request) {
+          console.log('📥 Request not in cache, loading from DB...');
+          const { data, error } = await supabase
+            .from('requests')
+            .select(`
+              *,
+              customer:customers(id, first_name, last_name, email, phone),
+              artist:artists(id, name, email),
+              location:locations(id, name, city)
+            `)
+            .eq('id', targetRequestId)
+            .single();
+
+          if (!error && data) {
+            request = data;
+          }
+        }
+
         // Pre-fill with existing data if available
-        const request = allRequests.find(r => r.id === targetRequestId);
         if (request) {
           if (request.artist_id) {
             artistSelect.value = request.artist_id;
