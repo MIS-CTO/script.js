@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Management System v84</title>
+  <title>Management System v85</title>
   
   <!-- iOS Web App Configuration -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -8562,6 +8562,282 @@
     }
 
     // ==========================================
+    // FIND OR CREATE CUSTOMER
+    // ==========================================
+    /**
+     * Findet existierenden Customer oder erstellt neuen
+     * @param {Object} customerData - { first_name, last_name, email, phone, instagram }
+     * @returns {Promise<string>} customer_id (UUID)
+     */
+    async function findOrCreateCustomer(customerData) {
+      const { first_name, last_name, email, phone, instagram } = customerData;
+
+      // 1. Suche per Email (case-insensitive)
+      if (email) {
+        const { data: existingByEmail } = await supabase
+          .from('customers')
+          .select('id')
+          .ilike('email', email.trim())
+          .limit(1)
+          .single();
+
+        if (existingByEmail) {
+          console.log('✅ Customer found by email:', existingByEmail.id);
+          return existingByEmail.id;
+        }
+      }
+
+      // 2. Suche per Phone
+      if (phone) {
+        const normalizedPhone = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
+        const { data: existingByPhone } = await supabase
+          .from('customers')
+          .select('id')
+          .or(`phone.ilike.%${normalizedPhone}%`)
+          .limit(1)
+          .single();
+
+        if (existingByPhone) {
+          console.log('✅ Customer found by phone:', existingByPhone.id);
+          return existingByPhone.id;
+        }
+      }
+
+      // 3. Neuen Customer erstellen
+      const { data: newCustomer, error } = await supabase
+        .from('customers')
+        .insert({
+          first_name: first_name?.trim() || null,
+          last_name: last_name?.trim() || null,
+          email: email?.trim().toLowerCase() || null,
+          phone: phone?.trim() || null,
+          instagram: instagram?.trim() || null,
+          rank: 'Bronze',
+          total_bookings: 0,
+          total_spent: 0
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('❌ Error creating customer:', error);
+        throw error;
+      }
+
+      console.log('✅ New customer created:', newCustomer.id);
+      return newCustomer.id;
+    }
+
+    // ==========================================
+    // CREATE APPOINTMENT FROM REQUEST
+    // ==========================================
+    /**
+     * Erstellt ein vollständiges Appointment aus einem Request
+     * Überträgt ALLE relevanten Daten inkl. IDs und Tattoo-Details
+     * @param {Object} request - Der vollständige Request mit Relations
+     * @param {Object} options - { projectId, projectNumber } optional
+     * @returns {Promise<Object>} Das erstellte Appointment
+     */
+    async function createAppointmentFromRequest(request, options = {}) {
+      const { projectId, projectNumber } = options;
+
+      // Datum und Zeit
+      const scheduledDate = request.scheduled_date
+        ? new Date(request.scheduled_date)
+        : new Date();
+
+      const startTime = request.start_time || '10:00';
+      const endTime = request.end_time || '12:00';
+
+      const [startHour, startMin] = startTime.split(':');
+      const startDateTime = new Date(scheduledDate);
+      startDateTime.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
+
+      const [endHour, endMin] = endTime.split(':');
+      const endDateTime = new Date(scheduledDate);
+      endDateTime.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
+
+      // Vollständiges Appointment
+      const appointmentData = {
+        // IDs
+        request_id: request.id,
+        customer_id: request.customer_id || null,
+        artist_id: request.artist_id || null,
+        location_id: request.location_id || null,
+        project_id: projectId || null,
+        project_number: projectNumber || null,
+
+        // Emails
+        customer_email: request.email || request.customer?.email || null,
+        artist_email: request.artist?.email || null,
+
+        // Zeit
+        start: startDateTime.toISOString(),
+        end: endDateTime.toISOString(),
+
+        // Tattoo-Details
+        placement: request.placement || null,
+        size: request.size || null,
+        style: request.style || null,
+        colorway: request.colorway || null,
+        description: request.description || null,
+        reference_images: request.reference_images || null,
+        booking_type: request.booking_type || null,
+        priority: request.priority || null,
+
+        // Status
+        status: 'scheduled',
+        state: 'Zugesagt',
+        payment_status: request.payment_status || 'unpaid',
+        payment_amount: request.total_amount || null,
+
+        // Meta
+        created_at: new Date().toISOString()
+      };
+
+      console.log('📅 Creating appointment:', appointmentData);
+
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .insert(appointmentData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error creating appointment:', error);
+        throw error;
+      }
+
+      // Bidirektional verknüpfen
+      await supabase
+        .from('requests')
+        .update({ appointment_id: appointment.id })
+        .eq('id', request.id);
+
+      console.log('✅ Appointment created:', appointment.id);
+      return appointment;
+    }
+
+    // ==========================================
+    // SCHEDULE WITH PAYMENT - Edge Function
+    // ==========================================
+    /**
+     * Schedule + Payment Link via Edge Function
+     * API Keys werden sicher auf dem Server verwaltet
+     */
+    async function scheduleWithPayment() {
+      if (!selectedRequestId) return;
+
+      const request = allRequests.find(r => r.id === selectedRequestId);
+      if (!request) {
+        alert('Request nicht gefunden');
+        return;
+      }
+
+      // Validierungen
+      if (!request.artist_id) {
+        alert('Bitte erst einen Artist auswählen');
+        return;
+      }
+      if (!request.scheduled_date) {
+        alert('Bitte erst ein Datum auswählen');
+        return;
+      }
+      if (!request.total_amount || request.total_amount <= 0) {
+        alert('Bitte erst den Preis eingeben (Total Amount)');
+        return;
+      }
+
+      const customerEmail = request.email || request.customer?.email;
+      if (!customerEmail) {
+        alert('Keine Email-Adresse vorhanden');
+        return;
+      }
+
+      // Confirmation
+      const artistName = request.artist?.name || 'Artist';
+      const scheduledDate = new Date(request.scheduled_date).toLocaleDateString('de-DE');
+      const confirmed = confirm(
+        `Termin bestätigen und Payment Link senden?\n\n` +
+        `📅 Datum: ${scheduledDate}\n` +
+        `🎨 Artist: ${artistName}\n` +
+        `💰 Betrag: ${request.total_amount.toFixed(2)} €\n` +
+        `📧 Email: ${customerEmail}`
+      );
+
+      if (!confirmed) return;
+
+      const btn = event?.target;
+      const originalText = btn?.innerHTML;
+
+      try {
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '⏳ Wird verarbeitet...';
+        }
+
+        console.log('🚀 Calling create-payment-link Edge Function...');
+
+        // Edge Function aufrufen
+        const response = await fetch(
+          'https://auxxyehgzkozdjylhqnx.supabase.co/functions/v1/create-payment-link',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY
+            },
+            body: JSON.stringify({ request_id: selectedRequestId })
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Unbekannter Fehler');
+        }
+
+        console.log('✅ Edge Function Success:', result);
+
+        // UI aktualisieren
+        await loadRequests();
+        showRequestDetail(selectedRequestId);
+
+        alert(
+          `✅ Erfolgreich!\n\n` +
+          `📅 Appointment erstellt\n` +
+          `💳 Payment Link generiert\n` +
+          `📧 Email versendet an:\n${result.email_sent_to || customerEmail}`
+        );
+
+      } catch (err) {
+        console.error('❌ Error:', err);
+        alert('Fehler: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText || '💳 Schedule + Payment Link';
+        }
+      }
+    }
+
+    // Make scheduleWithPayment globally available
+    window.scheduleWithPayment = scheduleWithPayment;
+
+    /**
+     * Legacy-Alias für alten Payment Workflow
+     * Leitet auf die neue Edge Function-basierte Implementation um
+     */
+    function openPaymentWorkflowModalNew(requestId) {
+      console.warn('⚠️ openPaymentWorkflowModalNew() redirects to scheduleWithPayment()');
+      selectedRequestId = requestId;
+      scheduleWithPayment();
+    }
+
+    window.openPaymentWorkflowModalNew = openPaymentWorkflowModalNew;
+
+    // ==========================================
     // NAVBAR INDICATORS (Hover + Active)
     // ==========================================
     function setupNavbarHover() {
@@ -12585,16 +12861,28 @@
 
           ${actions ? `<div class="action-buttons">${actions}</div>` : ''}
 
-          <!-- Payment Workflow Section -->
-          ${request.status === 'pending' && !request.stripe_payment_link ? `
-            <div style="margin-top:24px;">
-              <button onclick="openPaymentWorkflowModal('${request.id}')"
-                      class="btn"
-                      style="background:var(--macos-accent-green); color:white; width:100%; padding:14px; border-radius:10px; font-weight:600; cursor:pointer; transition:all 0.2s; border:none; font-size:14px;"
-                      onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(52,199,89,0.3)';"
-                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                💳 Zahlungsabwicklung starten
-              </button>
+          <!-- Schedule + Payment Workflow Section -->
+          ${(request.status === 'pending' || request.status === 'open_request') && !request.stripe_payment_link ? `
+            <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px; padding-top:20px; border-top:1px solid #e5e5e5;">
+
+              ${request.artist_id && request.scheduled_date && request.total_amount > 0 ? `
+                <button onclick="scheduleWithPayment()"
+                        class="btn"
+                        style="background:linear-gradient(135deg, #34c759, #30d158); color:white; width:100%; padding:14px; border-radius:10px; font-weight:600; cursor:pointer; transition:all 0.2s; border:none; font-size:15px;"
+                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(52,199,89,0.3)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                  💳 Schedule + Payment Link senden
+                </button>
+              ` : `
+                <div style="background:#fff3cd; padding:12px 16px; border-radius:8px; border-left:4px solid #ffc107;">
+                  <p style="margin:0; font-size:13px; color:#856404;">
+                    ⚠️ Für Payment Link fehlt:
+                    ${!request.artist_id ? '<b>Artist</b> ' : ''}
+                    ${!request.scheduled_date ? '<b>Datum</b> ' : ''}
+                    ${!request.total_amount ? '<b>Preis</b>' : ''}
+                  </p>
+                </div>
+              `}
             </div>
           ` : ''}
 
@@ -12612,10 +12900,10 @@
                       🔗 ${request.stripe_payment_link}
                     </a>
                   </div>
-                  ${request.total_price ? `
+                  ${request.total_price || request.total_amount ? `
                     <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(52,199,89,0.2);">
                       <div style="font-size:13px; color:var(--macos-text-secondary); margin-bottom:4px;">
-                        <strong>Gesamtpreis:</strong> €${request.total_price.toFixed(2)}
+                        <strong>Gesamtpreis:</strong> €${(request.total_price || request.total_amount || 0).toFixed(2)}
                       </div>
                       ${request.deposit_amount ? `
                         <div style="font-size:13px; color:var(--macos-text-secondary);">
@@ -13017,6 +13305,28 @@
                   </select>
                 </div>
               </div>
+
+              <!-- Payment & Pricing -->
+              <div class="detail-section">
+                <h3>💰 Payment & Pricing</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <div class="detail-label">Gesamtpreis (€)</div>
+                    <input type="number" id="fullEditTotalAmount" value="${request.total_amount || ''}"
+                           step="0.01" min="0" placeholder="z.B. 500.00"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Payment Status</div>
+                    <select id="fullEditPaymentStatus" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                      <option value="unpaid" ${request.payment_status === 'unpaid' ? 'selected' : ''}>Unpaid</option>
+                      <option value="deposit_paid" ${request.payment_status === 'deposit_paid' ? 'selected' : ''}>Deposit Paid</option>
+                      <option value="fully_paid" ${request.payment_status === 'fully_paid' ? 'selected' : ''}>Fully Paid</option>
+                      <option value="refunded" ${request.payment_status === 'refunded' ? 'selected' : ''}>Refunded</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Action Buttons (Fixed Footer) -->
@@ -13024,9 +13334,6 @@
               <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
                 <button type="submit" class="btn" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">
                   💾 Save Changes
-                </button>
-                <button type="button" class="btn" onclick="scheduleFromEdit()" style="background:#007AFF; color:white; border:none; flex:1; min-width:140px;">
-                  📅 Schedule
                 </button>
                 <button type="button" class="btn" onclick="cancelFullFrameEdit()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">
                   ✕ Cancel
@@ -13289,6 +13596,10 @@
         if (!editingRequestId) return;
 
         try {
+          // Parse total_amount as float
+          const totalAmountValue = document.getElementById('fullEditTotalAmount')?.value;
+          const totalAmount = totalAmountValue ? parseFloat(totalAmountValue) : null;
+
           const updateData = {
             first_name: document.getElementById('fullEditFirstName').value,
             last_name: document.getElementById('fullEditLastName').value,
@@ -13305,7 +13616,9 @@
             start_time: document.getElementById('fullEditStartTime').value || null,
             end_time: document.getElementById('fullEditEndTime').value || null,
             status: document.getElementById('fullEditStatus').value,
-            artist_id: document.getElementById('fullEditArtistId').value || null
+            artist_id: document.getElementById('fullEditArtistId').value || null,
+            total_amount: totalAmount,
+            payment_status: document.getElementById('fullEditPaymentStatus')?.value || 'unpaid'
           };
 
           const { error } = await supabase
@@ -13551,12 +13864,36 @@
         e.preventDefault();
 
         try {
+          // Collect form data
+          const firstName = document.getElementById('createFirstName').value;
+          const lastName = document.getElementById('createLastName').value;
+          const email = document.getElementById('createEmail').value;
+          const phone = document.getElementById('createPhone').value;
+          const instagram = document.getElementById('createInstagram').value || null;
+
+          // Find or create customer to link the request
+          let customerId = null;
+          try {
+            customerId = await findOrCreateCustomer({
+              first_name: firstName,
+              last_name: lastName,
+              email: email,
+              phone: phone,
+              instagram: instagram
+            });
+            console.log('✅ Customer linked:', customerId);
+          } catch (customerErr) {
+            console.warn('⚠️ Could not link customer:', customerErr);
+            // Continue without customer_id - not critical
+          }
+
           const requestData = {
-            first_name: document.getElementById('createFirstName').value,
-            last_name: document.getElementById('createLastName').value,
-            email: document.getElementById('createEmail').value,
-            customer_phone: document.getElementById('createPhone').value,
-            instagram: document.getElementById('createInstagram').value || null,
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            customer_phone: phone,
+            instagram: instagram,
+            customer_id: customerId,  // Link to customer
             priority: document.getElementById('createPriority').value || 'normal',
             placement: document.getElementById('createPlacement').value || null,
             size: document.getElementById('createSize').value || null,
@@ -13566,7 +13903,8 @@
             location_id: document.getElementById('createLocation').value,
             status: 'open_request',
             origin: document.getElementById('createOrigin').value,
-            booking_type: 'request'
+            booking_type: 'request',
+            payment_status: 'unpaid'
           };
 
           const { data, error } = await supabase
