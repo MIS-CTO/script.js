@@ -13153,9 +13153,17 @@
 
       // Request Tab Switching is handled in initRequestTabs()
 
-      // UI-Funktionen global verfügbar machen
-      window.showRequestDetail = showRequestDetail;
-      window.closeRequestDetail = closeRequestDetail;
+      // ============================================
+      // ALLE UI-FUNKTIONEN GLOBAL VERFÜGBAR MACHEN
+      // (für onclick-Handler in dynamisch generiertem HTML)
+      // ============================================
+      if (typeof showRequestDetail === 'function') window.showRequestDetail = showRequestDetail;
+      if (typeof closeRequestDetail === 'function') window.closeRequestDetail = closeRequestDetail;
+      if (typeof filterAndRenderRequests === 'function') window.filterAndRenderRequests = filterAndRenderRequests;
+      if (typeof loadRequests === 'function') window.loadRequests = loadRequests;
+      if (typeof updateRequestBadges === 'function') window.updateRequestBadges = updateRequestBadges;
+
+      console.log('✅ UI functions exposed to window');
 
       // Assign Request
       let assigningRequestId = null; // Track which request is being assigned
