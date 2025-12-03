@@ -5471,14 +5471,24 @@
     // PAYMENT SYSTEM CONFIGURATION
     // ========================================
 
-    // Stripe Configuration (TEST MODE for now)
-    // 🔐 IMPORTANT: Replace these placeholders with your actual Stripe API keys
-    const STRIPE_SECRET_KEY = 'INSERT_STRIPE_SECRET_KEY_HERE'; // Get from https://dashboard.stripe.com/test/apikeys
-    const STRIPE_PUBLISHABLE_KEY = 'INSERT_STRIPE_PUBLISHABLE_KEY_HERE'; // Get from https://dashboard.stripe.com/test/apikeys
+    // --------------------------------------------------------
+    // API KEYS STATUS:
+    // --------------------------------------------------------
+    // scheduleWithPayment() → Nutzt Edge Function 'create-payment-link'
+    //                         (KEINE API Keys im Frontend noetig!)
+    //
+    // executePaymentWorkflow() → Nutzt noch direkte API Calls
+    //                            (Legacy - Migration zu Edge Function geplant)
+    // --------------------------------------------------------
 
-    // Resend Configuration (for email sending)
-    // 🔐 IMPORTANT: Replace this placeholder with your actual Resend API key
-    const RESEND_API_KEY = 'INSERT_RESEND_API_KEY_HERE'; // Get from https://resend.com/api-keys
+    // Stripe Configuration (Legacy - nur fuer executePaymentWorkflow)
+    // TODO: Migration zu Edge Function, dann diese Keys entfernen
+    const STRIPE_SECRET_KEY = 'INSERT_STRIPE_SECRET_KEY_HERE';
+    const STRIPE_PUBLISHABLE_KEY = 'INSERT_STRIPE_PUBLISHABLE_KEY_HERE';
+
+    // Resend Configuration (Legacy - nur fuer executePaymentWorkflow)
+    // TODO: Migration zu Edge Function, dann diesen Key entfernen
+    const RESEND_API_KEY = 'INSERT_RESEND_API_KEY_HERE';
 
     // Email Configuration
     const EMAIL_FROM = 'onboarding@resend.dev'; // Testing email - no domain verification needed
@@ -8363,205 +8373,24 @@
       });
 
       // ============================================
-      // SCHEDULE + PAYMENT LINK (Combined Workflow)
+      // SCHEDULE + PAYMENT LINK (via Edge Function)
       // ============================================
+      //
+      // Die folgenden Funktionen wurden durch die Edge Function 'create-payment-link' ersetzt:
+      // - createStripePaymentLinkForRequest() → Edge Function übernimmt Stripe API
+      // - sendPaymentRequestEmail() → Edge Function übernimmt Email-Versand
+      //
+      // Vorteile der Edge Function:
+      // ✅ API Keys sicher auf dem Server (Supabase Secrets)
+      // ✅ Keine sensiblen Daten im Frontend
+      // ✅ Alle Operationen in einer atomaren Transaktion
+      // ✅ Bessere Fehlerbehandlung und Logging
+      //
 
       /**
-       * Creates a Stripe Payment Link for a Request
-       * @param {Object} request - The request with total_amount
-       * @returns {Promise<Object>} { url: string, id: string }
-       */
-      async function createStripePaymentLinkForRequest(request) {
-        const amount = Math.round((request.total_amount || 0) * 100); // In Cents
-        if (amount <= 0) {
-          throw new Error('Kein gültiger Betrag angegeben');
-        }
-
-        const customerName = `${request.first_name || ''} ${request.last_name || ''}`.trim() || 'Kunde';
-        const customerEmail = request.email || request.customer?.email || '';
-        const artistName = request.artist?.name || 'Artist';
-        const placement = request.placement || 'Tattoo';
-
-        console.log('💳 Creating Stripe Payment Link...');
-        console.log('   Amount:', amount, 'cents');
-        console.log('   Customer:', customerName);
-        console.log('   Artist:', artistName);
-
-        const response = await fetch('https://api.stripe.com/v1/payment_links', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: new URLSearchParams({
-            'line_items[0][price_data][currency]': 'eur',
-            'line_items[0][price_data][product_data][name]': `Tattoo Anzahlung - ${placement}`,
-            'line_items[0][price_data][product_data][description]': `Artist: ${artistName} | Kunde: ${customerName}`,
-            'line_items[0][price_data][unit_amount]': amount.toString(),
-            'line_items[0][quantity]': '1',
-            'metadata[request_id]': request.id || '',
-            'metadata[customer_id]': request.customer_id || '',
-            'metadata[customer_email]': customerEmail,
-            'metadata[artist_name]': artistName,
-            'after_completion[type]': 'redirect',
-            'after_completion[redirect][url]': 'https://www.mommyimsorry.com/payment-success'
-          })
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          console.error('❌ Stripe error:', error);
-          throw new Error(error.error?.message || 'Stripe Payment Link konnte nicht erstellt werden');
-        }
-
-        const paymentLink = await response.json();
-        console.log('✅ Stripe Payment Link created:', paymentLink.id);
-
-        return {
-          url: paymentLink.url,
-          id: paymentLink.id
-        };
-      }
-
-      /**
-       * Sends the Payment Request Email to the customer
-       * @param {Object} request - The request with all details
-       * @param {string} paymentLinkUrl - The Stripe Payment Link
-       */
-      async function sendPaymentRequestEmail(request, paymentLinkUrl) {
-        const customerEmail = request.email || request.customer?.email;
-        if (!customerEmail) {
-          throw new Error('Keine Email-Adresse vorhanden');
-        }
-
-        const customerName = `${request.first_name || ''} ${request.last_name || ''}`.trim() || 'Kunde';
-        const artistName = request.artist?.name || 'dein Artist';
-        const totalAmount = request.total_amount || 0;
-        const depositAmount = totalAmount * 0.5;
-
-        const scheduledDateFormatted = request.scheduled_date
-          ? new Date(request.scheduled_date).toLocaleDateString('de-DE', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })
-          : 'wird noch bestätigt';
-
-        const startTime = request.start_time || '10:00';
-        const requestRef = request.request_number || request.id?.substring(0, 8) || 'REQ';
-
-        console.log('📧 Sending payment email to:', customerEmail);
-
-        const emailHtml = `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1d1d1f;">
-
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="font-size: 24px; font-weight: 600; margin: 0;">Dein Tattoo-Termin steht! 🎉</h1>
-            </div>
-
-            <p style="font-size: 16px; line-height: 1.6;">Hallo ${customerName},</p>
-            <p style="font-size: 16px; line-height: 1.6;">perfekt! Wir freuen uns schon sehr auf das Projekt. 😊</p>
-
-            <div style="background: #f5f5f7; padding: 24px; border-radius: 12px; margin: 24px 0;">
-              <h3 style="margin: 0 0 16px; font-size: 14px; text-transform: uppercase; color: #86868b; letter-spacing: 0.5px;">Termindetails</h3>
-              <p style="margin: 8px 0; font-size: 16px;"><strong>📅 Datum:</strong> ${scheduledDateFormatted}</p>
-              <p style="margin: 8px 0; font-size: 16px;"><strong>🕐 Uhrzeit:</strong> ${startTime} Uhr</p>
-              <p style="margin: 8px 0; font-size: 16px;"><strong>🎨 Artist:</strong> ${artistName}</p>
-              <p style="margin: 8px 0; font-size: 16px;"><strong>📍 Projekt:</strong> ${request.placement || 'Custom Tattoo'}</p>
-              <p style="margin: 8px 0; font-size: 16px;"><strong>💰 Gesamtpreis:</strong> ${totalAmount.toFixed(2)} €</p>
-            </div>
-
-            <h3 style="font-size: 18px; margin: 32px 0 16px;">Zahlungsoptionen</h3>
-
-            <div style="background: #fff; border: 1px solid #e5e5e5; padding: 20px; border-radius: 12px; margin-bottom: 16px;">
-              <p style="margin: 0 0 8px; font-weight: 600;">Option 1: Überweisung</p>
-              <p style="margin: 0; font-size: 14px; color: #666;">
-                🔹 50% der Gesamtsumme (${depositAmount.toFixed(2)} €) vorab per Überweisung<br>
-                🔹 Die verbleibenden 50% bequem am Termin in bar
-              </p>
-            </div>
-
-            <div style="background: #fff; border: 1px solid #e5e5e5; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
-              <p style="margin: 0 0 8px; font-weight: 600;">Option 2: Online bezahlen</p>
-              <p style="margin: 0; font-size: 14px; color: #666;">
-                💳 Die Gesamtsumme direkt online begleichen<br>
-                (Klarna, Kreditkarte, Apple Pay, Ratenzahlung verfügbar)
-              </p>
-            </div>
-
-            <div style="text-align: center; margin: 32px 0;">
-              <a href="${paymentLinkUrl}" style="display: inline-block; background: #0071e3; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 16px;">Jetzt online bezahlen</a>
-            </div>
-
-            <div style="background: #f5f5f7; padding: 20px; border-radius: 12px; margin: 24px 0;">
-              <h4 style="margin: 0 0 12px; font-size: 14px;">Bankverbindung für Überweisung:</h4>
-              <p style="margin: 0; font-size: 14px; line-height: 1.8;">
-                <strong>Empfänger:</strong> Mommy I'm Sorry Verwaltung GmbH<br>
-                <strong>IBAN:</strong> DE65 6005 0101 0405 7944 09<br>
-                <strong>Betrag:</strong> ${depositAmount.toFixed(2)} €<br>
-                <strong>Verwendungszweck:</strong> ${requestRef}
-              </p>
-            </div>
-
-            <div style="background: #fff3cd; padding: 16px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 24px 0;">
-              <p style="margin: 0; font-size: 14px; color: #856404;">
-                ⚠️ Bitte überweise innerhalb von <strong>2 Tagen</strong> und sende einen Screenshot zur Bestätigung.
-                Ohne Zahlung innerhalb von 6 Tagen wird der Termin automatisch storniert.
-              </p>
-            </div>
-
-            <h4 style="font-size: 16px; margin: 32px 0 12px;">Wichtige Hinweise:</h4>
-            <ul style="font-size: 14px; color: #666; padding-left: 20px; line-height: 1.8;">
-              <li>❌ Kein Alkohol 24h vor dem Termin</li>
-              <li>❌ Keine blutverdünnenden Mittel (Aspirin, Ibuprofen)</li>
-              <li>✅ Gut ausgeruht und gegessen zum Termin kommen</li>
-              <li>📜 Es gelten unsere <a href="https://www.mommyimsorry.com/agb" style="color: #0071e3;">AGB</a></li>
-            </ul>
-
-            <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 32px 0;">
-
-            <p style="font-size: 16px; line-height: 1.6;">Wir freuen uns auf dich! 🖤</p>
-            <p style="font-size: 16px; line-height: 1.6;">Dein Mommy I'm Sorry Team</p>
-
-            <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 32px 0;">
-
-            <p style="font-size: 12px; color: #86868b; text-align: center; line-height: 1.6;">
-              Mommy I'm Sorry Verwaltung GmbH | Tübinger Str. 73, 70178 Stuttgart<br>
-              📞 0711 51875672 | 📧 info@mommyimsorry.com | 📸 @mommyimsorry
-            </p>
-          </div>
-        `;
-
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: EMAIL_FROM,
-            to: customerEmail,
-            reply_to: EMAIL_REPLY_TO,
-            subject: `Dein Tattoo-Termin am ${scheduledDateFormatted} ✨`,
-            html: emailHtml
-          })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Email error:', errorText);
-          throw new Error(`Email konnte nicht gesendet werden: ${errorText}`);
-        }
-
-        const result = await response.json();
-        console.log('✅ Payment request email sent:', result.id);
-        return result;
-      }
-
-      /**
-       * Schedule + Payment Link in einem Schritt
-       * Erstellt Appointment, generiert Stripe Link, sendet Email
+       * Schedule + Payment Link - Ruft Edge Function auf
+       * Alle API Keys sicher auf dem Server (Supabase Secrets)
+       * Die Edge Function übernimmt: Stripe Link, Appointment, Email, Logging
        */
       window.scheduleWithPayment = async function(event) {
         if (!selectedRequestId) {
@@ -8575,7 +8404,7 @@
           return;
         }
 
-        // Validierungen
+        // Schnelle Validierungen im Frontend
         if (!request.artist_id) {
           alert('❌ Bitte erst einen Artist auswählen (im Edit-Modus)');
           return;
@@ -8627,112 +8456,51 @@
           }
 
           console.log('🚀 ========================================');
-          console.log('🚀 STARTING SCHEDULE + PAYMENT WORKFLOW');
+          console.log('🚀 CALLING CREATE-PAYMENT-LINK EDGE FUNCTION');
           console.log('🚀 ========================================');
-          console.log('📋 Request:', selectedRequestId);
+          console.log('📋 Request ID:', selectedRequestId);
           console.log('💰 Amount:', request.total_amount, '€');
           console.log('📧 Email:', customerEmail);
 
-          // 1. Refresh request data to get full relations
-          console.log('\\n📥 Step 1: Fetching full request data...');
-          const { data: fullRequest, error: fetchError } = await supabase
-            .from('requests')
-            .select(`
-              *,
-              customer:customers(*),
-              artist:artists(*),
-              location:locations(*)
-            `)
-            .eq('id', selectedRequestId)
-            .single();
+          // Edge Function aufrufen - KEINE API Keys im Frontend nötig!
+          const response = await fetch(
+            `${SUPABASE_URL}/functions/v1/create-payment-link`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+              },
+              body: JSON.stringify({ request_id: selectedRequestId })
+            }
+          );
 
-          if (fetchError) throw fetchError;
-          console.log('✅ Full request data loaded');
+          const result = await response.json();
+          console.log('📬 Edge Function Response:', result);
 
-          // 2. Create Appointment
-          console.log('\\n📅 Step 2: Creating appointment...');
-          const appointment = await createAppointmentFromRequest(fullRequest);
-          console.log('✅ Appointment created:', appointment.id);
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || result.message || 'Unbekannter Fehler');
+          }
 
-          // 3. Create Stripe Payment Link
-          console.log('\\n💳 Step 3: Creating Stripe payment link...');
-          const paymentLink = await createStripePaymentLinkForRequest(fullRequest);
-          console.log('✅ Payment link created:', paymentLink.url);
+          console.log('✅ Edge Function Success!');
+          console.log('   Payment Link:', result.payment_link);
+          console.log('   Appointment ID:', result.appointment_id);
+          console.log('   Email sent to:', result.email_sent_to);
 
-          // 4. Update Request with payment info
-          console.log('\\n📝 Step 4: Updating request...');
-          const { error: updateError } = await supabase
-            .from('requests')
-            .update({
-              status: 'scheduled',
-              payment_status: 'deposit_pending',
-              appointment_id: appointment.id,
-              stripe_payment_link: paymentLink.url,
-              payment_link_sent_at: new Date().toISOString()
-            })
-            .eq('id', selectedRequestId);
-
-          if (updateError) throw updateError;
-          console.log('✅ Request updated');
-
-          // 5. Update Appointment with payment info
-          console.log('\\n📝 Step 5: Updating appointment with payment info...');
-          await supabase
-            .from('appointments')
-            .update({
-              payment_status: 'deposit_pending',
-              stripe_payment_link: paymentLink.url,
-              payment_link_sent_at: new Date().toISOString()
-            })
-            .eq('id', appointment.id);
-          console.log('✅ Appointment updated');
-
-          // 6. Send Email
-          console.log('\\n📧 Step 6: Sending payment email...');
-          await sendPaymentRequestEmail(fullRequest, paymentLink.url);
-          console.log('✅ Email sent to:', customerEmail);
-
-          // 7. Create Payment Log
-          console.log('\\n📝 Step 7: Creating payment log...');
-          await supabase
-            .from('payment_logs')
-            .insert({
-              request_id: selectedRequestId,
-              appointment_id: appointment.id,
-              action: 'payment_link_sent',
-              action_type: 'payment_link_created',
-              amount: request.total_amount,
-              total_amount: request.total_amount,
-              stripe_payment_link: paymentLink.url,
-              email_sent_to: customerEmail,
-              status: 'sent',
-              created_by: currentUser?.id || null,
-              details: JSON.stringify({
-                payment_link_id: paymentLink.id,
-                payment_link_url: paymentLink.url,
-                customer_email: customerEmail,
-                scheduled_date: request.scheduled_date,
-                artist_name: artistName,
-                total_amount: request.total_amount
-              })
-            });
-          console.log('✅ Payment log created');
-
-          // 8. Refresh UI
-          console.log('\\n🔄 Step 8: Refreshing UI...');
+          // UI aktualisieren
           await loadRequests();
           showRequestDetail(selectedRequestId);
 
-          console.log('\\n🎉 ========================================');
+          console.log('🎉 ========================================');
           console.log('🎉 SCHEDULE + PAYMENT WORKFLOW COMPLETED!');
           console.log('🎉 ========================================');
 
           // Success Message
           alert(
             `✅ Erfolgreich!\n\n` +
-            `📅 Appointment erstellt: ${appointment.id.substring(0, 8)}...\n` +
+            `📅 Appointment erstellt\n` +
             `💳 Payment Link generiert\n` +
-            `📧 Email versendet an:\n${customerEmail}\n\n` +
+            `📧 Email versendet an:\n${result.email_sent_to || customerEmail}\n\n` +
             `Der Kunde hat jetzt 6 Tage Zeit zum Bezahlen.`
           );
 
