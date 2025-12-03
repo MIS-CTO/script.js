@@ -4405,6 +4405,16 @@
           </div>
         </div>
 
+        <!-- Pricing / Payment -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Pricing / Payment</h4>
+          <div class="form-group">
+            <label style="font-size:13px; color:var(--muted);">Gesamtpreis (EUR) *</label>
+            <input type="number" id="editTotalAmount" step="0.01" min="0" placeholder="z.B. 500.00">
+            <p style="margin:4px 0 0; font-size:11px; color:var(--muted);">Wird fuer Payment Link benoetigt</p>
+          </div>
+        </div>
+
         <!-- Status Management -->
         <div style="margin-bottom:24px;">
           <h4 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--ink);">Status Management</h4>
@@ -5384,6 +5394,8 @@
 
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";
+    // Alias fuer Edge Function Kompatibilitaet
+    const SUPABASE_ANON_KEY = SUPABASE_KEY;
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -8469,7 +8481,8 @@
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_KEY}`
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
               },
               body: JSON.stringify({ request_id: selectedRequestId })
             }
@@ -8515,6 +8528,21 @@
             btn.style.opacity = '1';
           }
         }
+      };
+
+      /**
+       * Legacy-Alias fuer alten Payment Workflow
+       * Leitet auf den neuen scheduleWithPayment() um wenn ohne Parameter aufgerufen
+       */
+      window.openPaymentWorkflowModalLegacy = window.openPaymentWorkflowModal;
+      window.openPaymentWorkflowModal = function(requestId) {
+        if (!requestId) {
+          console.warn('⚠️ openPaymentWorkflowModal() called without requestId. Redirecting to scheduleWithPayment()...');
+          scheduleWithPayment();
+          return;
+        }
+        // Call the original legacy function with requestId
+        return window.openPaymentWorkflowModalLegacy(requestId);
       };
 
       // Cancel Appointment
@@ -8764,6 +8792,20 @@
                 </div>
               </div>
 
+              <!-- Pricing / Payment -->
+              <div class="detail-section">
+                <h3>Pricing / Payment</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <div class="detail-label">Gesamtpreis (EUR) *</div>
+                    <input type="number" id="fullEditTotalAmount" value="${request.total_amount || ''}" step="0.01" min="0"
+                           placeholder="z.B. 500.00"
+                           style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                    <p style="margin:4px 0 0; font-size:11px; color:var(--muted);">Wird fuer Payment Link benoetigt</p>
+                  </div>
+                </div>
+              </div>
+
               <!-- Status Management -->
               <div class="detail-section">
                 <h3>Status Management</h3>
@@ -8785,9 +8827,6 @@
               <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
                 <button type="submit" class="btn" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">
                   💾 Save Changes
-                </button>
-                <button type="button" class="btn" onclick="scheduleFromEdit()" style="background:#007AFF; color:white; border:none; flex:1; min-width:140px;">
-                  📅 Schedule
                 </button>
                 <button type="button" class="btn" onclick="cancelFullFrameEdit()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">
                   ✕ Cancel
@@ -9065,6 +9104,7 @@
             scheduled_date: document.getElementById('fullEditScheduledDate').value || null,
             start_time: document.getElementById('fullEditStartTime').value || null,
             end_time: document.getElementById('fullEditEndTime').value || null,
+            total_amount: parseFloat(document.getElementById('fullEditTotalAmount')?.value) || null,
             status: document.getElementById('fullEditStatus').value,
             artist_id: document.getElementById('fullEditArtistId').value || null
           };
@@ -9096,7 +9136,10 @@
         }
       };
 
+      // DEPRECATED: Schedule button removed from Edit mode
+      // Schedule actions should be done from the normal Request Detail view
       window.scheduleFromEdit = async function() {
+        console.warn('⚠️ scheduleFromEdit() is deprecated. Use normal view for scheduling.');
         if (!editingRequestId) return;
 
         // First save current changes
@@ -9251,6 +9294,7 @@
             scheduled_date: document.getElementById('editScheduledDate').value || null,
             start_time: document.getElementById('editStartTime').value || null,
             end_time: document.getElementById('editEndTime').value || null,
+            total_amount: parseFloat(document.getElementById('editTotalAmount')?.value) || null,
             status: document.getElementById('editStatus').value,
             artist_id: document.getElementById('editArtistId').value || null
           };
