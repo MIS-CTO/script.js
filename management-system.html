@@ -9486,6 +9486,80 @@
       guests: true
     };
 
+    // ═══════════════════════════════════════════════════════════════
+    // ZENTRALES CACHE-SYSTEM
+    // ═══════════════════════════════════════════════════════════════
+    const DataCache = {
+      config: {
+        requests:     { ttl: 5 * 60 * 1000,  data: null, timestamp: null, loading: false },
+        artists:      { ttl: 10 * 60 * 1000, data: null, timestamp: null, loading: false },
+        customers:    { ttl: 10 * 60 * 1000, data: null, timestamp: null, loading: false },
+        appointments: { ttl: 2 * 60 * 1000,  data: null, timestamp: null, loading: false },
+        dashboard:    { ttl: 2 * 60 * 1000,  data: null, timestamp: null, loading: false }
+      },
+
+      get(key) {
+        const cache = this.config[key];
+        if (!cache) return null;
+        if (cache.data && cache.timestamp && (Date.now() - cache.timestamp < cache.ttl)) {
+          console.log(`📦 Cache HIT: ${key} (${Math.round((Date.now() - cache.timestamp) / 1000)}s old)`);
+          return cache.data;
+        }
+        console.log(`📭 Cache MISS: ${key}`);
+        return null;
+      },
+
+      set(key, data) {
+        if (this.config[key]) {
+          this.config[key].data = data;
+          this.config[key].timestamp = Date.now();
+          this.config[key].loading = false;
+          console.log(`💾 Cache SET: ${key} (${Array.isArray(data) ? data.length + ' items' : 'object'})`);
+        }
+      },
+
+      invalidate(key) {
+        if (key) {
+          if (this.config[key]) {
+            this.config[key].data = null;
+            this.config[key].timestamp = null;
+            console.log(`🗑️ Cache INVALIDATED: ${key}`);
+          }
+        } else {
+          // Invalidate all caches
+          Object.keys(this.config).forEach(k => {
+            this.config[k].data = null;
+            this.config[k].timestamp = null;
+          });
+          console.log('🗑️ ALL CACHES INVALIDATED');
+        }
+      },
+
+      isLoading(key) {
+        return this.config[key]?.loading || false;
+      },
+
+      setLoading(key, loading) {
+        if (this.config[key]) this.config[key].loading = loading;
+      }
+    };
+
+    // Global function for manual refresh
+    window.refreshData = function(dataType) {
+      DataCache.invalidate(dataType);
+      switch(dataType) {
+        case 'requests': loadRequests({ forceReload: true }); break;
+        case 'artists': loadArtists(true); break;
+        case 'customers': loadCustomers(true); break;
+        case 'appointments': loadEvents(); break;
+        case 'dashboard': loadDashboard(); break;
+        default: DataCache.invalidate(); location.reload();
+      }
+    };
+
+    // Make DataCache globally available
+    window.DataCache = DataCache;
+
     // Google-inspirierte Farbschemata pro Location
     const locationColors = {
       'mommy': {
@@ -9892,18 +9966,68 @@
     // END PROJECT MENU & TASK FUNCTIONS
     // ============================================
 
+    // ═══════════════════════════════════════════════════════════════
+    // INITIALIZATION AFTER LOGIN (called after successful authentication)
+    // ═══════════════════════════════════════════════════════════════
+    let dataInitialized = false;
+
+    async function initializeAfterLogin() {
+      if (dataInitialized) {
+        console.log('📦 Data already initialized, skipping...');
+        return;
+      }
+
+      console.log('🚀 Loading data after login verification...');
+      dataInitialized = true;
+
+      try {
+        // Load data and permissions in parallel
+        await Promise.all([
+          loadInitialData(),
+          initializePermissions(),
+          loadBookingTeamMembers()
+        ]);
+
+        console.log('✅ All initial data loaded successfully');
+      } catch (err) {
+        console.error('❌ Error loading initial data:', err);
+        dataInitialized = false; // Allow retry
+      }
+    }
+
+    // Make globally available for login handler
+    window.initializeAfterLogin = initializeAfterLogin;
+
     document.addEventListener("DOMContentLoaded", async () => {
       const tabs = document.querySelectorAll("nav a[id^='tab-']");
       const sections = document.querySelectorAll("section");
 
-      // Load data and permissions in parallel for faster initial load
-      await Promise.all([
-        loadInitialData(),
-        initializePermissions(),
-        loadBookingTeamMembers()  // Team Members für Dropdowns vorladen
-      ]);
+      // ═══════════════════════════════════════════════════════════════
+      // LOGIN-GATE: Check authentication BEFORE loading any data
+      // ═══════════════════════════════════════════════════════════════
+      const rememberMe = localStorage.getItem('rememberMe') === 'true';
+      const savedUsername = localStorage.getItem('username');
 
-      // Hide initial loader after data is loaded
+      if (!rememberMe || !savedUsername) {
+        // Not logged in - show login modal and wait
+        console.log('🔐 No saved session - waiting for login before loading data...');
+        setTimeout(() => {
+          document.getElementById('loginBackdrop')?.classList.add('active');
+        }, 300);
+
+        // Hide initial loader since we're waiting for login
+        const initialLoader = document.getElementById('initialLoader');
+        if (initialLoader) {
+          initialLoader.classList.remove('active');
+        }
+        // Data will be loaded after successful login via initializeAfterLogin()
+      } else {
+        // User has saved session - verify and load data
+        console.log('🔑 Found saved session for:', savedUsername, '- loading data...');
+        await initializeAfterLogin();
+      }
+
+      // Hide initial loader after data is loaded (or login gate)
       const initialLoader = document.getElementById('initialLoader');
       if (initialLoader) {
         initialLoader.classList.remove('active');
@@ -12019,6 +12143,14 @@
       async function loadProjectOverviewKPIs() {
         console.log('📦 Loading Project Overview KPIs for Dashboard...');
 
+        // ═══════════════════════════════════════════════════════════════
+        // RACE-CONDITION FIX: Check if calculateProjectMetrics is available
+        // ═══════════════════════════════════════════════════════════════
+        if (typeof window.calculateProjectMetrics !== 'function') {
+          console.warn('⚠️ calculateProjectMetrics not yet available, skipping KPIs');
+          return;
+        }
+
         try {
           const { data: appointments, error } = await supabase
             .from('appointments')
@@ -12598,31 +12730,35 @@
       }
 
       // ==========================================
-      // REQUEST CACHE SYSTEM
+      // REQUEST LOADING (using central DataCache)
       // ==========================================
-      let requestsLoaded = false;
-      let requestsLastLoadTime = null;
-      const REQUESTS_CACHE_DURATION = 5 * 60 * 1000; // 5 Minuten Cache
-
       async function loadRequests(options = {}) {
         const { forceReload = false } = options;
 
-        // Cache prüfen (wenn nicht force reload und Cache noch gültig)
-        const now = Date.now();
-        if (!forceReload && requestsLoaded && requestsLastLoadTime && allRequests.length > 0) {
-          const cacheAge = now - requestsLastLoadTime;
-          if (cacheAge < REQUESTS_CACHE_DURATION) {
-            console.log('📦 Using cached requests (' + Math.round(cacheAge/1000) + 's old, ' + allRequests.length + ' total)');
-            // Nur filtern und rendern, nicht neu laden
+        // ═══════════════════════════════════════════════════════════════
+        // USE CENTRAL DATACACHE SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        if (!forceReload) {
+          const cached = DataCache.get('requests');
+          if (cached) {
+            allRequests = cached;
+            window.allRequests = allRequests;
             filterAndRenderRequests();
             return;
           }
         }
 
+        // Prevent parallel loads
+        if (DataCache.isLoading('requests')) {
+          console.log('⏳ Requests already loading, skipping duplicate request...');
+          return;
+        }
+        DataCache.setLoading('requests', true);
+
         try {
           ProgressBar.show('Loading requests...');
           console.log('📋 Loading requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
-          console.log('🚨 BATCH LOADING ALL REQUESTS - Version 2025-12-03 (with cache)');
+          console.log('🚨 BATCH LOADING ALL REQUESTS - Version 2025-12-05 (with DataCache)');
 
           // 🔥 BATCH LOADING: Load ALL requests in batches of 1000
           ProgressBar.updateProgress(10, 'Starting batch loading...');
@@ -12665,9 +12801,8 @@
 
           allRequests = allData || [];
           window.allRequests = allRequests; // Global für onclick Handler
-          requestsLoaded = true;
-          requestsLastLoadTime = now;
-          console.log('✅ Loaded', allRequests.length, 'total requests in', batchNumber - 1, 'batches (cached)');
+          DataCache.set('requests', allRequests); // Store in central cache
+          console.log('✅ Loaded', allRequests.length, 'total requests in', batchNumber - 1, 'batches');
           ProgressBar.updateProgress(70, 'Filtering and rendering...');
 
           // Filter by status
@@ -12736,6 +12871,7 @@
           ProgressBar.hide();
         } catch(err) {
           console.error("❌ Requests error:", err);
+          DataCache.setLoading('requests', false); // Reset loading state on error
           ProgressBar.hide();
           document.getElementById('requestsList').innerHTML = `
             <div style="text-align:center; padding:40px; color:#E53935;">
@@ -21376,9 +21512,16 @@
 
         alert(`Willkommen zurück, ${profile.username}!`);
 
-        // Reload data
-        await initializePermissions();
-        await loadEvents();
+        // ═══════════════════════════════════════════════════════════════
+        // LOAD ALL DATA AFTER SUCCESSFUL LOGIN
+        // ═══════════════════════════════════════════════════════════════
+        if (typeof window.initializeAfterLogin === 'function') {
+          await window.initializeAfterLogin();
+        } else {
+          // Fallback to old behavior
+          await initializePermissions();
+          await loadEvents();
+        }
         renderCalendar();
 
         // Reset button state
