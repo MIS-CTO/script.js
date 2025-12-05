@@ -9966,68 +9966,28 @@
     // END PROJECT MENU & TASK FUNCTIONS
     // ============================================
 
-    // ═══════════════════════════════════════════════════════════════
-    // INITIALIZATION AFTER LOGIN (called after successful authentication)
-    // ═══════════════════════════════════════════════════════════════
-    let dataInitialized = false;
-
-    async function initializeAfterLogin() {
-      if (dataInitialized) {
-        console.log('📦 Data already initialized, skipping...');
-        return;
-      }
-
-      console.log('🚀 Loading data after login verification...');
-      dataInitialized = true;
-
-      try {
-        // Load data and permissions in parallel
-        await Promise.all([
-          loadInitialData(),
-          initializePermissions(),
-          loadBookingTeamMembers()
-        ]);
-
-        console.log('✅ All initial data loaded successfully');
-      } catch (err) {
-        console.error('❌ Error loading initial data:', err);
-        dataInitialized = false; // Allow retry
-      }
-    }
-
-    // Make globally available for login handler
-    window.initializeAfterLogin = initializeAfterLogin;
-
     document.addEventListener("DOMContentLoaded", async () => {
       const tabs = document.querySelectorAll("nav a[id^='tab-']");
       const sections = document.querySelectorAll("section");
 
       // ═══════════════════════════════════════════════════════════════
-      // LOGIN-GATE: Check authentication BEFORE loading any data
+      // LOAD DATA AT PAGE LOAD (with Loading Screen)
+      // DataCache will prevent duplicate loads on tab switches
       // ═══════════════════════════════════════════════════════════════
-      const rememberMe = localStorage.getItem('rememberMe') === 'true';
-      const savedUsername = localStorage.getItem('username');
+      console.log('🚀 Loading initial data...');
 
-      if (!rememberMe || !savedUsername) {
-        // Not logged in - show login modal and wait
-        console.log('🔐 No saved session - waiting for login before loading data...');
-        setTimeout(() => {
-          document.getElementById('loginBackdrop')?.classList.add('active');
-        }, 300);
-
-        // Hide initial loader since we're waiting for login
-        const initialLoader = document.getElementById('initialLoader');
-        if (initialLoader) {
-          initialLoader.classList.remove('active');
-        }
-        // Data will be loaded after successful login via initializeAfterLogin()
-      } else {
-        // User has saved session - verify and load data
-        console.log('🔑 Found saved session for:', savedUsername, '- loading data...');
-        await initializeAfterLogin();
+      try {
+        await Promise.all([
+          loadInitialData(),
+          initializePermissions(),
+          loadBookingTeamMembers()
+        ]);
+        console.log('✅ All initial data loaded successfully');
+      } catch (err) {
+        console.error('❌ Error loading initial data:', err);
       }
 
-      // Hide initial loader after data is loaded (or login gate)
+      // Hide initial loader after data is loaded
       const initialLoader = document.getElementById('initialLoader');
       if (initialLoader) {
         initialLoader.classList.remove('active');
@@ -12758,51 +12718,74 @@
         try {
           ProgressBar.show('Loading requests...');
           console.log('📋 Loading requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
-          console.log('🚨 BATCH LOADING ALL REQUESTS - Version 2025-12-05 (with DataCache)');
+          console.log('🚀 OPTIMIZED PARALLEL BATCH LOADING - Version 2025-12-05');
 
-          // 🔥 BATCH LOADING: Load ALL requests in batches of 1000
-          ProgressBar.updateProgress(10, 'Starting batch loading...');
+          // ═══════════════════════════════════════════════════════════════
+          // OPTIMIZED: Parallel batch loading for faster performance
+          // ═══════════════════════════════════════════════════════════════
+          const BATCH_SIZE = 5000;      // Larger batches
+          const PARALLEL_BATCHES = 4;   // 4 parallel requests
+
+          ProgressBar.updateProgress(5, 'Getting total count...');
+
+          // First get the total count
+          const { count, error: countError } = await supabase
+            .from('requests')
+            .select('*', { count: 'exact', head: true });
+
+          if (countError) throw countError;
+
+          const totalRecords = count || 0;
+          const totalBatches = Math.ceil(totalRecords / BATCH_SIZE);
+          console.log(`📊 Total requests: ${totalRecords}, loading in ${totalBatches} batches (${PARALLEL_BATCHES} parallel)`);
+
+          ProgressBar.updateProgress(10, `Loading ${totalRecords.toLocaleString()} requests...`);
+
           let allData = [];
-          let from = 0;
-          const batchSize = 1000;
-          let hasMore = true;
-          let batchNumber = 1;
 
-          while (hasMore) {
-            console.log(`📦 Loading requests batch ${batchNumber} (records ${from} to ${from + batchSize - 1})...`);
+          // Load in parallel batch groups
+          for (let i = 0; i < totalBatches; i += PARALLEL_BATCHES) {
+            const batchPromises = [];
 
-            const { data: batch, error } = await supabase
-              .from('requests')
-              .select(`
-                *,
-                customer:customers(id, first_name, last_name, email, phone, rank, instagram),
-                artist:artists(id, name, email, instagram),
-                location:locations!requests_location_id_fkey(id, name, city)
-              `)
-              .order('created_at', { ascending: false })
-              .range(from, from + batchSize - 1);
+            for (let j = 0; j < PARALLEL_BATCHES && (i + j) < totalBatches; j++) {
+              const start = (i + j) * BATCH_SIZE;
+              const end = start + BATCH_SIZE - 1;
 
-            if (error) throw error;
-
-            if (batch && batch.length > 0) {
-              allData = allData.concat(batch);
-              from += batchSize;
-              hasMore = batch.length === batchSize;
-              console.log(`  ↳ Loaded ${allData.length} requests so far...`);
-
-              // Update progress (10% to 60%)
-              const requestProgress = 10 + Math.min(50, (allData.length / 1000) * 5);
-              ProgressBar.updateProgress(requestProgress, `Loading requests (${allData.length} loaded)...`);
-              batchNumber++;
-            } else {
-              hasMore = false;
+              batchPromises.push(
+                supabase
+                  .from('requests')
+                  .select(`
+                    *,
+                    customer:customers(id, first_name, last_name, email, phone, rank, instagram),
+                    artist:artists(id, name, email, instagram),
+                    location:locations!requests_location_id_fkey(id, name, city)
+                  `)
+                  .order('created_at', { ascending: false })
+                  .range(start, end)
+              );
             }
+
+            const results = await Promise.all(batchPromises);
+
+            results.forEach(({ data, error }) => {
+              if (error) {
+                console.error('Batch error:', error);
+              } else if (data) {
+                allData = allData.concat(data);
+              }
+            });
+
+            // Update progress (10% to 70%)
+            const loaded = Math.min((i + PARALLEL_BATCHES) * BATCH_SIZE, totalRecords);
+            const progressPercent = 10 + Math.round((loaded / totalRecords) * 60);
+            ProgressBar.updateProgress(progressPercent, `Loading requests (${loaded.toLocaleString()}/${totalRecords.toLocaleString()})...`);
+            console.log(`📦 Loaded ${loaded.toLocaleString()}/${totalRecords.toLocaleString()} requests (${Math.round(loaded/totalRecords*100)}%)`);
           }
 
           allRequests = allData || [];
           window.allRequests = allRequests; // Global für onclick Handler
           DataCache.set('requests', allRequests); // Store in central cache
-          console.log('✅ Loaded', allRequests.length, 'total requests in', batchNumber - 1, 'batches');
+          console.log(`✅ Loaded ${allRequests.length.toLocaleString()} total requests with parallel batching`);
           ProgressBar.updateProgress(70, 'Filtering and rendering...');
 
           // Filter by status
@@ -21513,15 +21496,10 @@
         alert(`Willkommen zurück, ${profile.username}!`);
 
         // ═══════════════════════════════════════════════════════════════
-        // LOAD ALL DATA AFTER SUCCESSFUL LOGIN
+        // DATA ALREADY LOADED AT PAGE LOAD - Just refresh UI
         // ═══════════════════════════════════════════════════════════════
-        if (typeof window.initializeAfterLogin === 'function') {
-          await window.initializeAfterLogin();
-        } else {
-          // Fallback to old behavior
-          await initializePermissions();
-          await loadEvents();
-        }
+        await initializePermissions();
+        await loadEvents();
         renderCalendar();
 
         // Reset button state
