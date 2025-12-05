@@ -8783,7 +8783,7 @@
         // Direkt aus DB laden
         const { data, error } = await supabase
           .from('requests')
-          .select(`*, customer:customers(*), artist:artists(*), location:locations!location_id(*)`)
+          .select(`*, customer:customers(*), artist:artists(*), location:locations!requests_location_id_fkey(*)`)
           .eq('id', targetRequestId)
           .single();
 
@@ -8984,7 +8984,7 @@
         // Direkt aus DB laden
         const { data, error } = await supabase
           .from('requests')
-          .select(`*, customer:customers(*), artist:artists(*), location:locations!location_id(*)`)
+          .select(`*, customer:customers(*), artist:artists(*), location:locations!requests_location_id_fkey(*)`)
           .eq('id', targetRequestId)
           .single();
 
@@ -12641,7 +12641,7 @@
                 *,
                 customer:customers(id, first_name, last_name, email, phone, rank, instagram),
                 artist:artists(id, name, email, instagram),
-                location:locations!location_id(id, name, city)
+                location:locations!requests_location_id_fkey(id, name, city)
               `)
               .order('created_at', { ascending: false })
               .range(from, from + batchSize - 1);
@@ -12808,7 +12808,7 @@
               *,
               customer:customers(id, first_name, last_name, email, phone, rank, instagram),
               artist:artists(id, name, email, instagram),
-              location:locations!location_id(id, name, city)
+              location:locations!requests_location_id_fkey(id, name, city)
             `)
             .eq('id', requestId)
             .single();
@@ -13537,7 +13537,7 @@
               *,
               customer:customers(id, first_name, last_name, email, phone),
               artist:artists(id, name, email),
-              location:locations!location_id(id, name, city)
+              location:locations!requests_location_id_fkey(id, name, city)
             `)
             .eq('id', targetRequestId)
             .single();
@@ -14556,7 +14556,7 @@
                 *,
                 customer:customers(id, first_name, last_name, email, phone, rank, instagram),
                 artist:artists(id, name, email, instagram),
-                location:locations!location_id(id, name, city)
+                location:locations!requests_location_id_fkey(id, name, city)
               `)
               .eq('id', data.id)
               .single();
@@ -17597,7 +17597,7 @@
             .select(`
               *,
               customer:customers(first_name, last_name, email, instagram),
-              location:locations!location_id(name, city)
+              location:locations!appointments_location_id_fkey(name, city)
             `)
             .eq('artist_id', artistId)
             .not('artist_id', 'is', null)
@@ -17858,7 +17858,7 @@
             .select(`
               *,
               customer:customers(first_name, last_name, email, instagram),
-              location:locations!location_id(name, city)
+              location:locations!appointments_location_id_fkey(name, city)
             `)
             .eq('artist_id', artistId)
             .not('artist_id', 'is', null)
@@ -18084,7 +18084,7 @@
             .select(`
               *,
               artist:artists(name, instagram),
-              location:locations!location_id(name, city)
+              location:locations!appointments_location_id_fkey(name, city)
             `)
             .eq('customer_id', customerId)
             .order('start', { ascending: false });
@@ -19236,7 +19236,7 @@
             *,
             customer:customers(id, first_name, last_name, email, phone, instagram),
             artist:artists(id, name, email, instagram, phone),
-            location:locations!location_id(id, name, city)
+            location:locations!appointments_location_id_fkey(id, name, city)
           `)
           .eq('id', appointmentId)
           .single();
@@ -19675,7 +19675,7 @@
               *,
               customer:customers(id, first_name, last_name, email, instagram),
               artist:artists(id, name, instagram, is_guest),
-              location:locations!location_id(name, city)
+              location:locations!appointments_location_id_fkey(name, city)
             `)
             .eq('id', appointmentId)
             .single();
@@ -26869,7 +26869,7 @@
               *,
               customer:customers(*),
               artist:artists(*),
-              location:locations!location_id(*)
+              location:locations!requests_location_id_fkey(*)
             `)
             .eq('id', requestId)
             .single();
