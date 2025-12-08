@@ -13186,7 +13186,18 @@
         } else {
           // Show status-based actions for other tabs
           if (request.status === 'open_request') {
-            actions = `<button class="btn" onclick="assignRequest('${request.id}')" style="background:var(--ink); color:white; border:none;">Assign to Team Member</button>`;
+            actions = `
+              <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button class="btn" onclick="assignRequest('${request.id}')"
+                        style="flex: 1; padding: 12px 16px; background: #1d1d1f; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                  Assign to Team Member
+                </button>
+                <button class="btn" onclick="deleteRequest('${request.id}')"
+                        style="padding: 12px 16px; background: white; color: #ff3b30; border: 2px solid #ff3b30; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; min-width: 100px;">
+                  Delete
+                </button>
+              </div>
+            `;
           } else if (request.status === 'pending') {
             actions = `<button class="btn" onclick="scheduleAppointment('${request.id}')" style="background:var(--ink); color:white; border:none;">Schedule Appointment</button>`;
           } else if (request.status === 'scheduled') {
@@ -14876,8 +14887,16 @@
       };
 
       // Delete Request (direct delete with confirmation)
-      window.deleteRequest = async function() {
-        if (!confirm('⚠️ WARNING: Are you sure you want to DELETE this request permanently?\n\nThis action CANNOT be undone!')) {
+      // @param {string} requestId - Optional Request ID (falls back to selectedRequestId)
+      window.deleteRequest = async function(requestId) {
+        const idToDelete = requestId || selectedRequestId;
+
+        if (!idToDelete) {
+          alert('Keine Request ID');
+          return;
+        }
+
+        if (!confirm('⚠️ Request wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.')) {
           return;
         }
 
@@ -14885,17 +14904,32 @@
           const { error } = await supabase
             .from('requests')
             .delete()
-            .eq('id', selectedRequestId);
+            .eq('id', idToDelete);
 
           if (error) throw error;
 
+          console.log('✅ Request deleted:', idToDelete);
+
+          // Aus Cache entfernen
+          const index = allRequests.findIndex(r => r.id === idToDelete);
+          if (index !== -1) {
+            allRequests.splice(index, 1);
+          }
+
           selectedRequestId = null;
-          await loadRequests();
           closeRequestDetail();
-          alert('✅ Request deleted successfully!');
+
+          // Liste neu rendern
+          if (typeof filterAndRenderRequests === 'function') {
+            filterAndRenderRequests();
+          } else {
+            await loadRequests();
+          }
+
+          alert('✅ Request wurde gelöscht');
         } catch (err) {
-          console.error('Error deleting request:', err);
-          alert('❌ Error deleting request: ' + err.message);
+          console.error('❌ Delete error:', err);
+          alert('Fehler beim Löschen: ' + err.message);
         }
       };
 
