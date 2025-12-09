@@ -13014,9 +13014,68 @@
         await loadRequests({ forceReload: true });
       }
 
+      /**
+       * Generiert den Status-Indikator für die Card
+       */
+      function getCardStatusIndicator(request) {
+        var lastAction = request.last_action;
+        var paymentStatus = request.payment_status;
+
+        if (!lastAction && !request.stripe_payment_link) {
+          return '';
+        }
+
+        var indicator = '';
+        var bgColor = '';
+        var textColor = '';
+
+        // Priorität: letzter wichtiger Status
+        if (lastAction === 'storniert' || lastAction === 'auto_storniert') {
+          indicator = 'Storniert';
+          bgColor = '#ffebee';
+          textColor = '#c62828';
+        } else if (lastAction === 'reminder_2_sent' || lastAction === 'auto_reminder_2') {
+          indicator = '2nd Reminder';
+          bgColor = '#fff3e0';
+          textColor = '#e65100';
+        } else if (lastAction === 'reminder_1_sent' || lastAction === 'auto_reminder_1') {
+          indicator = '1st Reminder';
+          bgColor = '#fff8e1';
+          textColor = '#f57f17';
+        } else if (lastAction === 'rescheduled') {
+          indicator = 'Rescheduled';
+          bgColor = '#e8eaf6';
+          textColor = '#3949ab';
+        } else if (paymentStatus === 'paid' || paymentStatus === 'fully_paid') {
+          indicator = 'Bezahlt';
+          bgColor = '#e8f5e9';
+          textColor = '#2e7d32';
+        } else if (request.stripe_payment_link && paymentStatus === 'pending') {
+          indicator = 'Payment Pending';
+          bgColor = '#e3f2fd';
+          textColor = '#1565c0';
+        } else if (lastAction === 'scheduled_with_payment') {
+          indicator = 'Payment Link Sent';
+          bgColor = '#e8f5e9';
+          textColor = '#2e7d32';
+        } else if (lastAction === 'scheduled') {
+          indicator = 'Scheduled';
+          bgColor = '#e3f2fd';
+          textColor = '#1565c0';
+        }
+
+        if (!indicator) {
+          return '';
+        }
+
+        return '<span style="display:inline-block;margin-left:8px;padding:2px 8px;font-size:11px;font-weight:600;background:' + bgColor + ';color:' + textColor + ';border-radius:4px">' + indicator + '</span>';
+      }
+
+      window.getCardStatusIndicator = getCardStatusIndicator;
+
       function renderRequestsList(requests) {
         const listEl = document.getElementById('requestsList');
-        
+
         // Check if viewing "My Requests" without being logged in
         if (currentRequestStatus === 'my-requests' && !currentUser) {
           listEl.innerHTML = `
@@ -13118,9 +13177,10 @@
             <div class="request-item ${statusClass}" data-id="${req.id}">
               <div class="request-header">
                 <div class="request-id">${requestNumber}</div>
-                <div style="display:flex; gap:6px; align-items:center;">
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                   ${priorityBadge}
                   <div class="request-badge ${req.status}">${statusNames[req.status] || req.status}</div>
+                  ${getCardStatusIndicator(req)}
                 </div>
               </div>
               <div class="request-name">
