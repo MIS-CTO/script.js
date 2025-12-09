@@ -113,16 +113,6 @@
       overflow: hidden;
     }
 
-    .artist-card .artist-name,
-    .artist-card .artist-instagram,
-    .artist-card .artist-badge {
-      padding: 0 24px;
-    }
-
-    .artist-card .artist-badge {
-      margin-bottom: 20px;
-    }
-
     .artist-card:hover {
       border-color: var(--accent);
       box-shadow: var(--shadow);
@@ -135,28 +125,31 @@
       box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
     }
 
-    .artist-avatar {
+    .artist-image {
       width: 100%;
-      height: 200px;
-      border-radius: 16px 16px 0 0;
+      height: 220px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      margin: 0 0 16px 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
+      font-size: 48px;
       color: white;
       font-weight: 600;
       overflow: hidden;
     }
 
-    .artist-avatar img {
+    .artist-image img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+
+    .artist-info {
+      padding: 20px;
+    }
+
     .artist-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
-    .artist-instagram { font-size: 14px; color: #86868b; margin-bottom: 12px; }
+    .artist-style { font-size: 14px; color: #86868b; margin-bottom: 12px; }
 
     .artist-badge {
       display: inline-block;
@@ -595,16 +588,25 @@
       'use strict';
 
       // ============================================
-      // CONFIGURATION - Mommy I'm Sorry Stuttgart
+      // CONFIGURATION
       // ============================================
       const SUPABASE_URL = 'https://auxxyehgzkozdjylhqnx.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA';
 
-      // Location: Mommy I'm Sorry Stuttgart
+      // Location ID (für Appointments)
       const LOCATION_ID = 'bbb9f280-5d07-413f-a319-d81bfddafc24';
 
-      // Resident Artists für Consultation (per Name filtern)
-      const RESIDENT_ARTIST_NAMES = ['Ata', 'Gil', 'Luca', 'Mary', 'Mela'];
+      // Artist IDs für Consultation: Ata, Gil, Luca, Mary, Mela
+      const ARTIST_IDS = [
+        '90cd70be-f1a4-409e-8570-7aa2699fc683',
+        '98b63cd4-7e2e-409c-94cd-ac259a0a2635',
+        '9c60a246-68f0-4d9a-968e-03f490f10e5f',
+        'a2b390b5-4898-4bd5-a6b3-8ea66878dcc9',
+        'eb67d5dc-2f6f-45e1-ba56-f8e513ef32ba'
+      ];
+
+      // Placeholder Bild
+      const PLACEHOLDER_IMAGE = 'https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/artist-images/Bildschirmfoto%202025-11-25%20um%2016.13.50.png';
 
       // Stripe Payment Link (100 EUR Consultation)
       const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kCeOq6aIgmj15t';
@@ -660,14 +662,17 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
+      // ============================================
+      // LOAD ARTISTS BY ID
+      // ============================================
       async function loadArtists() {
         showLoading('Artists werden geladen...');
         try {
-          // Lade Artists per Name (Ata, Gil, Luca, Mary, Mela)
+          // Lade Artists per ID
           const { data, error } = await supabase
             .from('artists')
-            .select('id, name, email, instagram, avatar_url, profile_picture_url, background_image_url, style, rank')
-            .in('name', RESIDENT_ARTIST_NAMES)
+            .select('id, name, email, instagram, profile_picture_url, background_image_url, style, rank')
+            .in('id', ARTIST_IDS)
             .order('rank', { ascending: true });
 
           if (error) throw error;
@@ -689,22 +694,21 @@
           return;
         }
 
-        // Placeholder für fehlende Bilder
-        const PLACEHOLDER = 'https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/artist-images/Bildschirmfoto%202025-11-25%20um%2016.13.50.png';
-
         artistsGrid.innerHTML = artists.map(artist => {
-          // Nutze background_image_url oder profile_picture_url oder avatar_url
-          const imageUrl = artist.background_image_url || artist.profile_picture_url || artist.avatar_url || PLACEHOLDER;
+          // Nutze background_image_url oder profile_picture_url
+          const imageUrl = artist.background_image_url || artist.profile_picture_url || PLACEHOLDER_IMAGE;
           const style = artist.style || 'Various Styles';
 
           return `
             <div class="artist-card" data-artist-id="${artist.id}">
-              <div class="artist-avatar">
-                <img src="${imageUrl}" alt="${artist.name}" onerror="this.parentElement.innerHTML='${artist.name.charAt(0)}'">
+              <div class="artist-image">
+                <img src="${imageUrl}" alt="${artist.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='${artist.name.charAt(0)}'">
               </div>
-              <div class="artist-name">${artist.name}</div>
-              <div class="artist-instagram">${style}</div>
-              <div class="artist-badge">🏠 Resident Artist</div>
+              <div class="artist-info">
+                <div class="artist-name">${artist.name}</div>
+                <div class="artist-style">${style}</div>
+                <div class="artist-badge">🏠 Resident Artist</div>
+              </div>
             </div>
           `;
         }).join('');
@@ -738,6 +742,7 @@
 
           if (error) throw error;
           availability = data || [];
+          console.log('✅ Loaded availability for', selectedArtist.name, ':', availability.length, 'entries');
 
           const { data: apts } = await supabase
             .from('appointments')
@@ -897,6 +902,8 @@
 
           if (aptError) throw aptError;
 
+          console.log('✅ Created appointment:', apt.id);
+
           localStorage.setItem('consultation_email', email);
           localStorage.setItem('consultation_appointment_id', apt.id);
 
@@ -923,6 +930,8 @@
             state: 'Zugesagt',
             payment_status: 'paid'
           }).eq('id', appointmentId);
+
+          console.log('✅ Appointment confirmed:', appointmentId);
 
           document.getElementById('successEmail').textContent = localStorage.getItem('consultation_email') || 'deine E-Mail';
           document.querySelectorAll('.progress-step').forEach(el => el.classList.add('completed'));
