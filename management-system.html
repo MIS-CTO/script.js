@@ -13698,13 +13698,23 @@
             </div>
 
             <div class="detail-item" style="margin-top:16px;">
-              <div class="detail-label">Reference Images${request.reference_images && request.reference_images.length > 0 ? ` (${request.reference_images.length})` : ''}</div>
+              <div class="detail-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Reference Images${request.reference_images && request.reference_images.length > 0 ? ` (${request.reference_images.length})` : ''}</span>
+                ${request.reference_images && request.reference_images.length > 0 ? `
+                  <button onclick="downloadAllImages('${request.id}')" style="padding:4px 12px;background:#0071e3;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">
+                    ⬇ Download All
+                  </button>
+                ` : ''}
+              </div>
               <div class="detail-value">
                 ${request.reference_images && request.reference_images.length > 0 ? `
-                  <div class="reference-images">
+                  <div class="reference-images" style="display:flex;flex-wrap:wrap;gap:8px;">
                     ${request.reference_images.map((img, idx) => `
-                      <div class="reference-image-thumb" onclick="openImageModal('${img}')">
-                        <img src="${img}" alt="Reference ${idx + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                      <div style="position:relative;">
+                        <div class="reference-image-thumb" onclick="openImageModal('${img}')" style="cursor:pointer;">
+                          <img src="${img}" alt="Reference ${idx + 1}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                        </div>
+                        <button onclick="event.stopPropagation();downloadSingleImage('${img}', 'reference_${idx + 1}')" style="position:absolute;bottom:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px" title="Download">⬇</button>
                       </div>
                     `).join('')}
                   </div>
@@ -15281,27 +15291,48 @@
         var currentUser = window.currentUsername || 'Unknown';
 
         try {
-          // Request soft delete
-          await supabase.from('requests').update({
-            deleted_at: new Date().toISOString(),
+          var now = new Date().toISOString();
+
+          // Request soft delete in DB
+          var updateResult = await supabase.from('requests').update({
+            deleted_at: now,
             deleted_by: currentUser
           }).eq('id', requestId);
+
+          if (updateResult.error) throw updateResult.error;
 
           // Activity Log
           await supabase.from('request_activity_log').insert({
             request_id: requestId,
             action: 'deleted',
             action_by: currentUser,
-            details: { deleted_at: new Date().toISOString() }
+            details: { deleted_at: now }
           });
 
-          // UI aktualisieren
-          if (typeof closeRequestDetail === 'function') closeRequestDetail();
-          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+          // WICHTIG: Lokalen Cache aktualisieren
+          var requestsArray = window.allRequests || allRequests || [];
+          for (var i = 0; i < requestsArray.length; i++) {
+            if (requestsArray[i].id === requestId) {
+              requestsArray[i].deleted_at = now;
+              requestsArray[i].deleted_by = currentUser;
+              break;
+            }
+          }
 
-          alert('Request wurde geloescht. Kann innerhalb von 5 Tagen wiederhergestellt werden.');
+          // Detail schließen
+          if (typeof closeRequestDetail === 'function') closeRequestDetail();
+
+          // WICHTIG: Zu Deleted Tab wechseln und neu rendern
+          var deletedTab = document.querySelector('[data-status="deleted"]');
+          if (deletedTab) deletedTab.click();
+
+          // Badges aktualisieren
+          if (typeof updateRequestBadges === 'function') updateRequestBadges();
+
+          alert('Request wurde geloescht.');
         } catch (err) {
-          alert('Fehler: ' + err.message);
+          console.error('Delete error:', err);
+          alert('Fehler: ' + (err.message || err));
         }
       }
       window.softDeleteRequest = softDeleteRequest;
@@ -15374,20 +15405,24 @@
         if (!confirm('Request wirklich canceln? Es wird KEINE Email gesendet.')) return;
 
         var currentUser = window.currentUsername || 'Unknown';
+        var now = new Date().toISOString();
 
         try {
-          await supabase.from('requests').update({
+          // Request updaten
+          var updateResult = await supabase.from('requests').update({
             status: 'canceled',
             last_action: 'canceled',
-            last_action_at: new Date().toISOString()
+            last_action_at: now
           }).eq('id', requestId);
+
+          if (updateResult.error) throw updateResult.error;
 
           // Appointment auch canceln falls vorhanden
           var reqResult = await supabase.from('requests').select('appointment_id').eq('id', requestId).single();
           if (reqResult.data && reqResult.data.appointment_id) {
             await supabase.from('appointments').update({
               status: 'canceled',
-              canceled_at: new Date().toISOString(),
+              canceled_at: now,
               cancel_reason: 'manual_cancel'
             }).eq('id', reqResult.data.appointment_id);
           }
@@ -15400,12 +15435,31 @@
             details: { email_sent: false }
           });
 
+          // WICHTIG: Lokalen Cache aktualisieren
+          var requestsArray = window.allRequests || allRequests || [];
+          for (var i = 0; i < requestsArray.length; i++) {
+            if (requestsArray[i].id === requestId) {
+              requestsArray[i].status = 'canceled';
+              requestsArray[i].last_action = 'canceled';
+              requestsArray[i].last_action_at = now;
+              break;
+            }
+          }
+
+          // Detail schließen
           if (typeof closeRequestDetail === 'function') closeRequestDetail();
-          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+
+          // WICHTIG: Zu Canceled Tab wechseln
+          var canceledTab = document.querySelector('[data-status="canceled"]');
+          if (canceledTab) canceledTab.click();
+
+          // Badges aktualisieren
+          if (typeof updateRequestBadges === 'function') updateRequestBadges();
 
           alert('Request wurde gecancelt.');
         } catch (err) {
-          alert('Fehler: ' + err.message);
+          console.error('Cancel error:', err);
+          alert('Fehler: ' + (err.message || err));
         }
       }
       window.cancelRequest = cancelRequest;
@@ -15516,6 +15570,96 @@
         await editRequest(requestId);
       }
       window.editRequestInfos = editRequestInfos;
+
+      /**
+       * Einzelnes Bild herunterladen
+       */
+      async function downloadSingleImage(imageUrl, filename) {
+        try {
+          var response = await fetch(imageUrl);
+          var blob = await response.blob();
+          var extension = imageUrl.split('.').pop().split('?')[0] || 'jpg';
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = filename + '.' + extension;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+        } catch (err) {
+          console.error('Download error:', err);
+          // Fallback: In neuem Tab öffnen
+          window.open(imageUrl, '_blank');
+        }
+      }
+      window.downloadSingleImage = downloadSingleImage;
+
+      /**
+       * Alle Bilder eines Requests herunterladen
+       */
+      async function downloadAllImages(requestId) {
+        var requestsArray = window.allRequests || allRequests || [];
+        var request = requestsArray.find(function(r) { return r.id === requestId; });
+
+        if (!request || !request.reference_images || request.reference_images.length === 0) {
+          alert('Keine Bilder vorhanden');
+          return;
+        }
+
+        var images = request.reference_images;
+        var customerName = ((request.first_name || '') + '_' + (request.last_name || '')).replace(/\s+/g, '_') || 'customer';
+
+        for (var i = 0; i < images.length; i++) {
+          var img = images[i];
+          var imgUrl = typeof img === 'string' ? img : (img.url || img.path || '');
+          if (imgUrl) {
+            await downloadSingleImage(imgUrl, customerName + '_ref_' + (i + 1));
+            // Kleine Pause zwischen Downloads
+            await new Promise(function(resolve) { setTimeout(resolve, 500); });
+          }
+        }
+      }
+      window.downloadAllImages = downloadAllImages;
+
+      /**
+       * Bild in Modal öffnen (Vollansicht)
+       */
+      function openImageModal(imageUrl) {
+        // Existierendes Modal entfernen falls vorhanden
+        var existingModal = document.getElementById('image-modal');
+        if (existingModal) existingModal.remove();
+
+        var modal = document.createElement('div');
+        modal.id = 'image-modal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:10000;cursor:pointer';
+        modal.onclick = function() { document.body.removeChild(modal); };
+
+        var img = document.createElement('img');
+        img.src = imageUrl;
+        img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;border-radius:8px';
+
+        var downloadBtn = document.createElement('button');
+        downloadBtn.innerHTML = '⬇ Download';
+        downloadBtn.style.cssText = 'position:absolute;bottom:20px;right:20px;padding:12px 24px;background:#0071e3;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer';
+        downloadBtn.onclick = function(e) {
+          e.stopPropagation();
+          downloadSingleImage(imageUrl, 'reference_image');
+        };
+
+        var closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '✕';
+        closeBtn.style.cssText = 'position:absolute;top:20px;right:20px;width:40px;height:40px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer';
+        closeBtn.onclick = function(e) {
+          e.stopPropagation();
+          document.body.removeChild(modal);
+        };
+
+        modal.appendChild(img);
+        modal.appendChild(downloadBtn);
+        modal.appendChild(closeBtn);
+        document.body.appendChild(modal);
+      }
+      window.openImageModal = openImageModal;
 
       // Auto-move scheduled to finished (check every minute)
       setInterval(async () => {
