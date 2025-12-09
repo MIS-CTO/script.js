@@ -907,8 +907,8 @@
           localStorage.setItem('consultation_email', email);
           localStorage.setItem('consultation_appointment_id', apt.id);
 
-          // Redirect to Stripe Payment Link
-          window.location.href = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${apt.id}`;
+          // Redirect to Stripe Payment Link (use top for iframe compatibility)
+          window.top.location.href = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${apt.id}`;
 
         } catch (err) {
           console.error('Error:', err);
@@ -918,9 +918,18 @@
       }
 
       async function checkForSuccess() {
+        // Check both iframe and top-level URL for success parameter
         const urlParams = new URLSearchParams(window.location.search);
-        const success = urlParams.get('success');
-        const appointmentId = urlParams.get('appointment_id') || localStorage.getItem('consultation_appointment_id');
+        let topUrlParams = urlParams;
+        try {
+          if (window.top !== window) {
+            topUrlParams = new URLSearchParams(window.top.location.search);
+          }
+        } catch (e) {
+          console.log('Cannot access top window (cross-origin)');
+        }
+        const success = urlParams.get('success') || topUrlParams.get('success');
+        const appointmentId = urlParams.get('appointment_id') || topUrlParams.get('appointment_id') || localStorage.getItem('consultation_appointment_id');
 
         if (success === 'true' && appointmentId) {
           showLoading('Buchung wird bestätigt...');
@@ -940,7 +949,14 @@
 
           localStorage.removeItem('consultation_email');
           localStorage.removeItem('consultation_appointment_id');
-          window.history.replaceState({}, document.title, window.location.pathname);
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            if (window.top !== window) {
+              window.top.history.replaceState({}, document.title, window.top.location.pathname);
+            }
+          } catch (e) {
+            console.log('Could not clear URL params:', e);
+          }
           hideLoading();
         }
       }
