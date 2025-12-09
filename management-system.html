@@ -8514,9 +8514,19 @@
       <div id="appointmentDetailsContent" style="display:flex; flex-direction:column; gap:24px;">
         <!-- Content will be dynamically inserted -->
       </div>
-      <div class="modal-actions" style="margin-top:24px; border-top:1px solid rgba(0,0,0,0.1); padding-top:16px;">
-        <button type="button" class="btn btn-secondary" onclick="closeAppointmentDetailsModal()">Schließen</button>
-        <button type="button" class="btn btn-primary" id="appointmentDetailsEditBtn">Status ändern</button>
+      <div class="modal-actions" style="margin-top:24px; border-top:1px solid rgba(0,0,0,0.1); padding-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-secondary" onclick="closeAppointmentDetailsModal()" style="flex:1; min-width:100px;">
+          Schließen
+        </button>
+        <button type="button" class="btn" id="appointmentDetailsEditBtn" style="background:#0071e3; color:white; border:none; flex:1; min-width:100px;">
+          ✏️ Bearbeiten
+        </button>
+        <button type="button" class="btn" id="appointmentDetailsCancelBtn" style="background:#ff9500; color:white; border:none; flex:1; min-width:100px;">
+          ❌ Stornieren
+        </button>
+        <button type="button" class="btn" id="appointmentDetailsDeleteBtn" style="background:#ff3b30; color:white; border:none; flex:1; min-width:100px;">
+          🗑️ Löschen
+        </button>
       </div>
     </div>
   </div>
@@ -14680,6 +14690,21 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Work Process -->
+              <div class="detail-section">
+                <h3>🎨 Work Process</h3>
+                <div class="detail-item">
+                  <div class="detail-label">Art des Termins</div>
+                  <select id="fullEditWorkProcess" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+                    <option value="Consultation" ${request.work_process === 'Consultation' ? 'selected' : ''}>Consultation</option>
+                    <option value="New Tattoo" ${request.work_process === 'New Tattoo' || !request.work_process ? 'selected' : ''}>New Tattoo</option>
+                    <option value="Continuing Tattoo" ${request.work_process === 'Continuing Tattoo' ? 'selected' : ''}>Continuing Tattoo</option>
+                    <option value="Touch Up" ${request.work_process === 'Touch Up' ? 'selected' : ''}>Touch Up</option>
+                    <option value="WannaDo" ${request.work_process === 'WannaDo' ? 'selected' : ''}>WannaDo</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <!-- Action Button (Fixed Footer) -->
@@ -15497,7 +15522,8 @@
             // Status wird nicht mehr im Edit Window geändert
             artist_id: document.getElementById('fullEditArtistId').value || null,
             total_amount: totalAmount,
-            payment_status: document.getElementById('fullEditPaymentStatus')?.value || 'unpaid'
+            payment_status: document.getElementById('fullEditPaymentStatus')?.value || 'unpaid',
+            work_process: document.getElementById('fullEditWorkProcess')?.value || 'New Tattoo'
           };
 
           const { error } = await supabase
@@ -21152,7 +21178,71 @@
 
         // Set up buttons
         document.getElementById('appointmentDetailsEditBtn').onclick = () => {
-          editAppointmentState(appointmentId, appointment.state || 'Unbekannt');
+          closeAppointmentDetailsModal();
+          if (appointment.request_id) {
+            editingRequestId = appointment.request_id;
+            const request = allRequests.find(r => r.id === appointment.request_id);
+            if (request) {
+              showFullFrameEdit(request);
+            } else {
+              fetchAndEditRequest(appointment.request_id);
+            }
+          } else {
+            editAppointmentState(appointmentId, appointment.state || 'Unbekannt');
+          }
+        };
+
+        document.getElementById('appointmentDetailsCancelBtn').onclick = async () => {
+          if (!confirm('Möchtest du diesen Termin wirklich stornieren?')) return;
+
+          try {
+            // Update appointment state to Cancelled
+            const { error: appointmentError } = await supabase
+              .from('appointments')
+              .update({ state: 'Cancelled' })
+              .eq('id', appointmentId);
+
+            if (appointmentError) throw appointmentError;
+
+            // If linked to a request, update request status too
+            if (appointment.request_id) {
+              const { error: requestError } = await supabase
+                .from('requests')
+                .update({ status: 'canceled' })
+                .eq('id', appointment.request_id);
+
+              if (requestError) console.error('Error updating request:', requestError);
+            }
+
+            showToast('Termin wurde storniert', 'success');
+            closeAppointmentDetailsModal();
+            loadCalendarData();
+            loadAllRequests();
+          } catch (error) {
+            console.error('Error cancelling appointment:', error);
+            showToast('Fehler beim Stornieren', 'error');
+          }
+        };
+
+        document.getElementById('appointmentDetailsDeleteBtn').onclick = async () => {
+          if (!confirm('Möchtest du diesen Termin wirklich PERMANENT löschen?')) return;
+          if (!confirm('ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden! Wirklich löschen?')) return;
+
+          try {
+            const { error } = await supabase
+              .from('appointments')
+              .delete()
+              .eq('id', appointmentId);
+
+            if (error) throw error;
+
+            showToast('Termin wurde gelöscht', 'success');
+            closeAppointmentDetailsModal();
+            loadCalendarData();
+          } catch (error) {
+            console.error('Error deleting appointment:', error);
+            showToast('Fehler beim Löschen', 'error');
+          }
         };
 
         modal.classList.add('active');
