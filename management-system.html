@@ -10658,6 +10658,17 @@
 
       tabs.forEach(tab => tab.addEventListener("click", (e) => {
         e.preventDefault();
+
+        // Prevent artist users from accessing restricted tabs via click
+        if (isArtistUser()) {
+          const tabName = tab.id.replace('tab-', '');
+          const allowedTabs = ['dashboard', 'calendar', 'dienstplan'];
+          if (!allowedTabs.includes(tabName)) {
+            console.log('🚫 Artist user blocked from accessing:', tabName);
+            return;
+          }
+        }
+
         showSection(tab);
       }));
 
@@ -17793,9 +17804,23 @@
           // Only show slots if visible
           if (visible) {
             // Get all events for this category and date
-            const categoryEvents = events.filter(e =>
+            let categoryEvents = events.filter(e =>
               e.date === dateStr && e.category === cat
             );
+
+            // Filter for artist users: Only show their own appointments
+            if (isArtistUser() && currentUserArtistId) {
+              categoryEvents = categoryEvents.filter(e => {
+                // Artist Info events: Always show (they're general info)
+                if (e.category === 'artist_info') return true;
+
+                // Events without artistId: Don't show to artist users
+                if (!e.artistId) return false;
+
+                // Only show events where the artistId matches the logged-in user's artist ID
+                return e.artistId === currentUserArtistId;
+              });
+            }
 
             console.log(`📅 Rendering ${categoryEvents.length} ${label} for ${dateStr}`);
 
@@ -17803,8 +17828,8 @@
             // Sort by start time
             const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
-            // If no events, show at least one empty slot
-            if (sortedEvents.length === 0) {
+            // If no events, show at least one empty slot (but not for artist users)
+            if (sortedEvents.length === 0 && !isArtistUser()) {
               html += `<div class="slot-row empty-row"><div class="slot-label">Slot 1</div>`;
 
               // Empty cells
@@ -22931,6 +22956,96 @@
     // ============================================
 
     let currentUser = null;
+    let currentUserArtistId = null; // Artist ID für den aktuellen User (via Email-Matching)
+
+    // ============================================
+    // ARTIST USER RESTRICTIONS
+    // ============================================
+    const ARTIST_USERNAMES = ['Gil', 'Ata', 'Ben', 'Nele', 'Silas', 'Luka', 'Mary'];
+
+    /**
+     * Prüft ob der aktuelle User ein Artist-User ist
+     */
+    function isArtistUser() {
+      if (!currentUser || !currentUser.username) return false;
+      return ARTIST_USERNAMES.some(name =>
+        name.toLowerCase() === currentUser.username.toLowerCase()
+      );
+    }
+
+    /**
+     * Lädt die Artist-ID für den aktuellen User
+     * Verbindung: profiles.email = artists.email (Matching über E-Mail)
+     */
+    async function loadCurrentUserArtistId() {
+      if (!currentUser || !currentUser.email) {
+        currentUserArtistId = null;
+        return;
+      }
+
+      try {
+        // Finde Artist mit gleicher E-Mail wie der eingeloggte User
+        const { data: artist, error } = await supabase
+          .from('artists')
+          .select('id, name, email')
+          .eq('email', currentUser.email)  // profiles.email = artists.email
+          .single();
+
+        if (error || !artist) {
+          console.log('ℹ️ No artist record for email:', currentUser.email);
+          currentUserArtistId = null;
+          return;
+        }
+
+        currentUserArtistId = artist.id;
+        console.log('🎨 Artist found for user:', currentUser.username, '→', artist.name, '(ID:', artist.id, ')');
+      } catch (err) {
+        console.error('Error loading artist ID:', err);
+        currentUserArtistId = null;
+      }
+    }
+
+    /**
+     * Wendet Ansichtsbeschränkungen für Artist-User an
+     */
+    function applyArtistUserRestrictions() {
+      if (!isArtistUser()) {
+        // Nicht-Artist-User: Alle Tabs anzeigen
+        showAllNavigationTabs();
+        return;
+      }
+
+      console.log('🎨 Artist User detected:', currentUser.username, '- Applying view restrictions');
+
+      // Tabs die Artist-User sehen dürfen
+      const allowedTabs = ['dashboard', 'calendar', 'dienstplan'];
+
+      // Alle Navigation Tabs durchgehen
+      const allTabs = document.querySelectorAll('nav a[id^="tab-"]');
+      allTabs.forEach(tab => {
+        const tabName = tab.id.replace('tab-', '');
+        if (allowedTabs.includes(tabName)) {
+          tab.style.display = ''; // Anzeigen
+        } else {
+          tab.style.display = 'none'; // Verstecken
+        }
+      });
+    }
+
+    /**
+     * Zeigt alle Navigation Tabs (für normale User)
+     */
+    function showAllNavigationTabs() {
+      const allTabs = document.querySelectorAll('nav a[id^="tab-"]');
+      allTabs.forEach(tab => {
+        tab.style.display = ''; // Alle anzeigen
+      });
+    }
+
+    // Global verfügbar machen
+    window.isArtistUser = isArtistUser;
+    window.applyArtistUserRestrictions = applyArtistUserRestrictions;
+    window.loadCurrentUserArtistId = loadCurrentUserArtistId;
 
     // Check for saved session on page load
     async function initAuth() {
@@ -23242,6 +23357,11 @@
       if (profileAvatarPreview && profile.avatar_url) {
         profileAvatarPreview.src = profile.avatar_url;
       }
+
+      // Load artist ID for current user and apply restrictions
+      loadCurrentUserArtistId().then(() => {
+        applyArtistUserRestrictions();
+      });
     }
 
     // Close login modal
