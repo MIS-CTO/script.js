@@ -6067,6 +6067,10 @@
         <button class="request-tab" data-status="finished" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Finished</button>
         <button class="request-tab" data-status="canceled" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Canceled</button>
         <button class="request-tab" data-status="archived" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">Archived</button>
+        <button class="request-tab" data-status="deleted" style="position:relative; z-index:2; padding:10px 24px; border:none; background:transparent; border-radius:22px; font-size:14px; font-weight:500; cursor:pointer; color:#86868b; font-family:inherit; transition:color 0.2s; white-space:nowrap;">
+          Deleted
+          <span id="badge-deleted" style="display:none; background:#ff3b30; color:white; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; min-width:18px; text-align:center;">0</span>
+        </button>
       </div>
     </div>
 
@@ -12910,14 +12914,28 @@
       function filterAndRenderRequests() {
         // Filter by status
         let filteredRequests = allRequests;
-        if (currentRequestStatus === 'my-requests') {
+
+        // Deleted Tab - nur gelöschte Requests anzeigen
+        if (currentRequestStatus === 'deleted') {
+          filteredRequests = allRequests.filter(r => r.deleted_at !== null && r.deleted_at !== undefined);
+        }
+        // My Requests - keine gelöschten
+        else if (currentRequestStatus === 'my-requests') {
           filteredRequests = allRequests.filter(r =>
-            r.assigned_to_user_id === currentUser?.id
+            r.assigned_to_user_id === currentUser?.id && !r.deleted_at
           );
-        } else if (currentRequestStatus === 'open_request') {
-          filteredRequests = allRequests.filter(r => r.status === 'open_request');
-        } else if (currentRequestStatus !== 'all') {
-          filteredRequests = allRequests.filter(r => r.status === currentRequestStatus);
+        }
+        // Open Requests - keine gelöschten
+        else if (currentRequestStatus === 'open_request') {
+          filteredRequests = allRequests.filter(r => r.status === 'open_request' && !r.deleted_at);
+        }
+        // Alle anderen Status - keine gelöschten
+        else if (currentRequestStatus !== 'all') {
+          filteredRequests = allRequests.filter(r => r.status === currentRequestStatus && !r.deleted_at);
+        }
+        // All - auch keine gelöschten (die sind im Deleted Tab)
+        else {
+          filteredRequests = allRequests.filter(r => !r.deleted_at);
         }
 
         // Filter by location
@@ -13073,6 +13091,22 @@
 
       window.getCardStatusIndicator = getCardStatusIndicator;
 
+      /**
+       * Generiert den Countdown für gelöschte Requests
+       */
+      function getDeletedCountdown(request) {
+        if (!request.deleted_at) return '';
+
+        var deletedAt = new Date(request.deleted_at);
+        var now = new Date();
+        var daysElapsed = Math.floor((now.getTime() - deletedAt.getTime()) / (1000 * 60 * 60 * 24));
+        var daysLeft = Math.max(0, 5 - daysElapsed);
+
+        return '<div style="background:#fff3cd;padding:6px 10px;border-radius:6px;margin-top:8px;font-size:11px;color:#856404">⏳ Wird in ' + daysLeft + ' Tag' + (daysLeft !== 1 ? 'en' : '') + ' permanent geloescht</div>';
+      }
+
+      window.getDeletedCountdown = getDeletedCountdown;
+
       function renderRequestsList(requests) {
         const listEl = document.getElementById('requestsList');
 
@@ -13199,6 +13233,7 @@
                 </div>
               ` : ''}
               <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              ${getDeletedCountdown(req)}
             </div>
           `;
         }).join('');
@@ -13818,12 +13853,13 @@
       }
 
       function updateRequestBadges() {
-        // ✅ Nur Requests der letzten 7 Tage als "new" zählen
+        // ✅ Nur Requests der letzten 7 Tage als "new" zählen (keine gelöschten)
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
         const newCount = allRequests.filter(r => {
           if (r.status !== 'open_request') return false;
+          if (r.deleted_at) return false; // Gelöschte ausschließen
           const createdAt = new Date(r.created_at);
           return createdAt >= sevenDaysAgo;
         }).length;
@@ -13832,6 +13868,15 @@
         if (badgeEl) {
           badgeEl.textContent = newCount;
           badgeEl.style.display = newCount > 0 ? 'inline-block' : 'none';
+        }
+
+        // Deleted count
+        const deletedCount = allRequests.filter(r => r.deleted_at !== null && r.deleted_at !== undefined).length;
+
+        const deletedBadge = document.getElementById('badge-deleted');
+        if (deletedBadge) {
+          deletedBadge.textContent = deletedCount;
+          deletedBadge.style.display = deletedCount > 0 ? 'inline-block' : 'none';
         }
       }
 
