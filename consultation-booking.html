@@ -47,6 +47,12 @@
       margin-bottom: 40px;
     }
 
+    .header-section {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 40px;
+      margin-bottom: 40px;
+    }
+
     .booking-progress {
       display: flex;
       justify-content: center;
@@ -61,7 +67,7 @@
       gap: 8px;
       padding: 10px 20px;
       background: rgba(0,0,0,0.03);
-      border-radius: 100px;
+      border-radius: 0;
       font-size: 14px;
       font-weight: 500;
       color: #86868b;
@@ -97,21 +103,38 @@
     }
 
     .artists-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      display: flex;
+      flex-direction: row;
       gap: 24px;
       margin-bottom: 32px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 10px;
+    }
+
+    .artists-grid::-webkit-scrollbar {
+      display: none;
     }
 
     .artist-card {
       background: var(--bg);
       border: 2px solid var(--border);
-      border-radius: 20px;
+      border-radius: 0;
       padding: 0;
       cursor: pointer;
       transition: all 0.3s ease;
       text-align: center;
       overflow: hidden;
+      flex: 0 0 auto;
+      width: calc(20% - 20px);
+      min-width: 280px;
+      height: 60vh;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
     }
 
     .artist-card:hover {
@@ -128,7 +151,8 @@
 
     .artist-image {
       width: 100%;
-      height: 220px;
+      flex: 1;
+      min-height: 0;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
       align-items: center;
@@ -147,6 +171,7 @@
 
     .artist-info {
       padding: 20px;
+      flex-shrink: 0;
     }
 
     .artist-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
@@ -354,6 +379,14 @@
 
     .btn-primary { background: var(--accent); color: white; }
     .btn-primary:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+
+    .btn-next {
+      border-radius: 0;
+      width: 300px;
+      max-width: 100%;
+      font-weight: 400;
+      flex: none;
+    }
     .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-secondary { background: rgba(0,0,0,0.05); color: var(--ink); }
     .btn-secondary:hover { background: rgba(0,0,0,0.1); }
@@ -427,9 +460,27 @@
       .consultation-booking { padding: 20px 16px; }
       .consultation-booking h2 { font-size: 24px; }
       .booking-progress { flex-direction: column; align-items: center; }
-      .artists-grid { grid-template-columns: 1fr; }
+
+      .artists-grid {
+        gap: 16px;
+        padding: 0 0 20px 0;
+        margin: 0 -16px 32px -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .artist-card {
+        width: 85vw;
+        min-width: 85vw;
+        height: 55vh;
+      }
+
       .form-row { grid-template-columns: 1fr; }
       .button-row { flex-direction: column; }
+
+      .btn-next {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -440,25 +491,27 @@
       <div class="loading-text" id="loadingText">Wird geladen...</div>
     </div>
 
-    <h2>Consultation Buchen</h2>
-    <p class="subtitle">Buche eine persönliche Beratung mit einem unserer Artists</p>
+    <div class="header-section">
+      <h2>Consultation Buchen</h2>
+      <p class="subtitle">Buche eine persönliche Beratung mit einem unserer Artists</p>
 
-    <div class="booking-progress">
-      <div class="progress-step active" data-step="1">
-        <span class="step-number">1</span>
-        <span>Artist wählen</span>
-      </div>
-      <div class="progress-step" data-step="2">
-        <span class="step-number">2</span>
-        <span>Datum wählen</span>
-      </div>
-      <div class="progress-step" data-step="3">
-        <span class="step-number">3</span>
-        <span>Deine Daten</span>
-      </div>
-      <div class="progress-step" data-step="4">
-        <span class="step-number">4</span>
-        <span>Bezahlen</span>
+      <div class="booking-progress">
+        <div class="progress-step active" data-step="1">
+          <span class="step-number">1</span>
+          <span>Artist wählen</span>
+        </div>
+        <div class="progress-step" data-step="2">
+          <span class="step-number">2</span>
+          <span>Datum wählen</span>
+        </div>
+        <div class="progress-step" data-step="3">
+          <span class="step-number">3</span>
+          <span>Deine Daten</span>
+        </div>
+        <div class="progress-step" data-step="4">
+          <span class="step-number">4</span>
+          <span>Bezahlen</span>
+        </div>
       </div>
     </div>
 
@@ -470,7 +523,7 @@
       </div>
       <div class="button-row">
         <div></div>
-        <button class="btn btn-primary" id="btnToStep2" disabled>Weiter zur Terminauswahl</button>
+        <button class="btn btn-primary btn-next" id="btnToStep2" disabled>Weiter zur Terminauswahl</button>
       </div>
     </div>
 
@@ -498,7 +551,7 @@
       </div>
       <div class="button-row">
         <button class="btn btn-secondary" id="btnBackToStep1">Zurück</button>
-        <button class="btn btn-primary" id="btnToStep3" disabled>Weiter zu deinen Daten</button>
+        <button class="btn btn-primary btn-next" id="btnToStep3" disabled>Weiter zu deinen Daten</button>
       </div>
     </div>
 
