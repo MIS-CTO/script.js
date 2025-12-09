@@ -13252,7 +13252,192 @@
         return buttonsHtml + warnings.join('');
       }
 
-      function showRequestDetail(requestId) {
+      /**
+       * Generiert die Verlauf-Cards aus request_activity_log
+       * @param {string} requestId - Die Request ID
+       * @param {Object} request - Der Request mit allen Daten
+       * @returns {Promise<string>} HTML für Verlauf-Cards
+       */
+      async function generateActivityCards(requestId, request) {
+        try {
+          // Activity Log laden
+          var result = await supabase
+            .from('request_activity_log')
+            .select('*')
+            .eq('request_id', requestId)
+            .order('action_at', { ascending: false });
+
+          var activities = result.data || [];
+
+          // Falls keine Activities, prüfe ob Payment Link existiert (Legacy-Daten)
+          if (activities.length === 0 && request.stripe_payment_link) {
+            activities = [{
+              action: 'payment_link_sent',
+              action_at: request.payment_link_sent_at || request.updated_at,
+              action_by: 'System',
+              details: {
+                payment_link: request.stripe_payment_link,
+                amount: request.total_amount
+              }
+            }];
+          }
+
+          if (activities.length === 0) {
+            return '';
+          }
+
+          var cardsHtml = '<div style="margin-top:24px;padding-top:20px;border-top:1px solid #e5e5e5"><h4 style="margin:0 0 16px;font-size:14px;font-weight:600;color:#86868b;text-transform:uppercase">Verlauf</h4>';
+
+          for (var i = 0; i < activities.length; i++) {
+            var activity = activities[i];
+            var card = generateSingleActivityCard(activity, request);
+            cardsHtml += card;
+          }
+
+          cardsHtml += '</div>';
+          return cardsHtml;
+
+        } catch (err) {
+          console.error('Error loading activity log:', err);
+          return '';
+        }
+      }
+
+      /**
+       * Generiert eine einzelne Verlauf-Card
+       */
+      function generateSingleActivityCard(activity, request) {
+        var action = activity.action;
+        var actionAt = new Date(activity.action_at).toLocaleString('de-DE');
+        var actionBy = activity.action_by || 'System';
+        var details = activity.details || {};
+        var isSystem = activity.is_system_action;
+
+        var icon = '';
+        var title = '';
+        var bgColor = '#f5f5f7';
+        var borderColor = '#e5e5e5';
+        var extraContent = '';
+
+        switch (action) {
+          case 'payment_link_sent':
+          case 'scheduled_with_payment':
+            icon = '✅';
+            title = 'Zahlungslink versendet';
+            bgColor = '#e8f5e9';
+            borderColor = '#4caf50';
+            var paymentLink = details.payment_link || request.stripe_payment_link || '';
+            var amount = details.amount || request.total_amount || 0;
+            extraContent = '<p style="margin:8px 0 4px;font-size:13px;color:#424245">🔗 <a href="' + paymentLink + '" target="_blank" style="color:#0071e3">' + paymentLink + '</a></p>';
+            extraContent += '<p style="margin:0;font-size:13px;color:#424245">Gesamtpreis: ' + Number(amount).toFixed(2) + ' EUR</p>';
+            break;
+
+          case 'scheduled':
+            icon = '📅';
+            title = 'Scheduled';
+            bgColor = '#e3f2fd';
+            borderColor = '#2196f3';
+            break;
+
+          case 'reminder_1_sent':
+          case 'auto_reminder_1':
+            icon = '📧';
+            title = '1st Reminder sent';
+            bgColor = '#fff8e1';
+            borderColor = '#ffc107';
+            if (isSystem) title += ' (Auto)';
+            break;
+
+          case 'reminder_2_sent':
+          case 'auto_reminder_2':
+            icon = '📧⚠️';
+            title = '2nd Reminder sent';
+            bgColor = '#fff3e0';
+            borderColor = '#ff9800';
+            if (isSystem) title += ' (Auto)';
+            break;
+
+          case 'rescheduled':
+            icon = '🔄';
+            title = 'Rescheduled';
+            bgColor = '#e8eaf6';
+            borderColor = '#3f51b5';
+            break;
+
+          case 'canceled':
+            icon = '⏸️';
+            title = 'Canceled';
+            bgColor = '#fff3e0';
+            borderColor = '#ff9800';
+            break;
+
+          case 'storniert':
+          case 'auto_storniert':
+            icon = '❌';
+            title = 'Storniert';
+            bgColor = '#ffebee';
+            borderColor = '#f44336';
+            if (isSystem) title += ' (Auto)';
+            if (details.email_sent) {
+              extraContent = '<p style="margin:4px 0 0;font-size:12px;color:#666">Email versendet an: ' + (details.email_sent_to || 'Kunde') + '</p>';
+            }
+            break;
+
+          case 'deleted':
+            icon = '🗑️';
+            title = 'Geloescht';
+            bgColor = '#fce4ec';
+            borderColor = '#e91e63';
+            break;
+
+          case 'restored':
+            icon = '♻️';
+            title = 'Wiederhergestellt';
+            bgColor = '#e8f5e9';
+            borderColor = '#4caf50';
+            break;
+
+          case 'assigned':
+            icon = '👤';
+            title = 'Assigned';
+            bgColor = '#e3f2fd';
+            borderColor = '#2196f3';
+            if (details.assigned_to) {
+              extraContent = '<p style="margin:4px 0 0;font-size:12px;color:#666">An: ' + details.assigned_to + '</p>';
+            }
+            break;
+
+          case 'payment_received':
+            icon = '💰';
+            title = 'Zahlung eingegangen';
+            bgColor = '#e8f5e9';
+            borderColor = '#4caf50';
+            break;
+
+          default:
+            icon = '📝';
+            title = action;
+            break;
+        }
+
+        var html = '<div style="background:' + bgColor + ';border-left:4px solid ' + borderColor + ';border-radius:8px;padding:12px 16px;margin-bottom:12px">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+        html += '<div>';
+        html += '<p style="margin:0;font-size:14px;font-weight:600;color:#1d1d1f">' + icon + ' ' + title + '</p>';
+        html += '<p style="margin:4px 0 0;font-size:12px;color:#86868b">' + actionAt + '</p>';
+        html += '</div>';
+        html += '<span style="font-size:11px;color:#86868b;background:white;padding:2px 8px;border-radius:4px">' + actionBy + '</span>';
+        html += '</div>';
+        html += extraContent;
+        html += '</div>';
+
+        return html;
+      }
+
+      window.generateActivityCards = generateActivityCards;
+      window.generateSingleActivityCard = generateSingleActivityCard;
+
+      async function showRequestDetail(requestId) {
         const request = allRequests.find(r => r.id === requestId);
         if (!request) return;
 
@@ -13297,6 +13482,9 @@
         // Action Buttons generieren
         var currentUser = window.currentUsername || 'Unknown';
         var actionButtonsHtml = generateActionButtons(request, currentUser);
+
+        // Activity Cards laden
+        var activityCardsHtml = await generateActivityCards(requestId, request);
 
         detailEl.innerHTML = `
           <div style="margin-bottom:24px;">
@@ -13564,9 +13752,11 @@
               </div>
             </div>
           ` : ''}
+
+          ${activityCardsHtml}
         `;
       }
-      
+
       function updateRequestBadges() {
         // ✅ Nur Requests der letzten 7 Tage als "new" zählen
         const sevenDaysAgo = new Date();
