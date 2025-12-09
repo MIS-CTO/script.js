@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultation Buchen - Culture over Money</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --ink: #1d1d1f;
+      --bg: #ffffff;
+      --accent: #0071e3;
+      --success: #34c759;
+      --warning: #ff9500;
+      --error: #ff3b30;
+      --border: rgba(0,0,0,0.1);
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: #fafafa;
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    .consultation-booking {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .consultation-booking h2 {
+      font-size: 32px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .consultation-booking .subtitle {
+      font-size: 17px;
+      color: #86868b;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .booking-progress {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .progress-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(0,0,0,0.03);
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #86868b;
+      transition: all 0.3s ease;
+    }
+
+    .progress-step.active { background: var(--accent); color: white; }
+    .progress-step.completed { background: var(--success); color: white; }
+
+    .progress-step .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .booking-step {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .booking-step.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .artists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .artist-card {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .artist-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+      transform: translateY(-4px);
+    }
+
+    .artist-card.selected {
+      border-color: var(--accent);
+      background: rgba(0, 113, 227, 0.05);
+      box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+    }
+
+    .artist-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: white;
+      font-weight: 600;
+      overflow: hidden;
+    }
+
+    .artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .artist-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .artist-instagram { font-size: 14px; color: #86868b; margin-bottom: 12px; }
+
+    .artist-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(52, 199, 89, 0.1);
+      color: var(--success);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .calendar-container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .calendar-title { font-size: 18px; font-weight: 600; }
+    .calendar-nav { display: flex; gap: 8px; }
+
+    .calendar-nav button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .calendar-nav button:hover { background: rgba(0,0,0,0.05); }
+    .calendar-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .calendar-weekday {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #86868b;
+      padding: 8px 0;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: default;
+      transition: all 0.2s ease;
+      position: relative;
+      background: rgba(0,0,0,0.02);
+      color: #ccc;
+    }
+
+    .calendar-day.available {
+      background: rgba(52, 199, 89, 0.12);
+      color: var(--ink);
+      cursor: pointer;
+      border: 2px solid rgba(52, 199, 89, 0.3);
+    }
+
+    .calendar-day.available:hover {
+      background: rgba(52, 199, 89, 0.25);
+      transform: scale(1.05);
+    }
+
+    .calendar-day.available::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .calendar-day.selected {
+      background: var(--accent) !important;
+      color: white !important;
+      border-color: var(--accent) !important;
+    }
+
+    .calendar-day.selected::after { background: white; }
+    .calendar-day.today { box-shadow: inset 0 0 0 2px var(--accent); }
+    .calendar-day.past { background: transparent; color: #ddd; }
+    .calendar-day.empty { background: transparent; }
+
+    .selected-date-display {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(0, 113, 227, 0.05);
+      border: 2px solid rgba(0, 113, 227, 0.2);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .selected-date-display .date { font-size: 18px; font-weight: 600; color: var(--ink); }
+    .selected-date-display .time { font-size: 14px; color: #86868b; margin-top: 4px; }
+
+    .customer-form {
+      max-width: 500px;
+      margin: 0 auto;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+    }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+    }
+
+    .form-group input::placeholder { color: #aaa; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .booking-summary {
+      max-width: 500px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, rgba(0,113,227,0.05), rgba(52,199,89,0.05));
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-item:last-child { border-bottom: none; }
+    .summary-label { font-size: 14px; color: #86868b; }
+    .summary-value { font-size: 14px; font-weight: 600; color: var(--ink); }
+
+    .summary-total {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-total .label { font-size: 18px; font-weight: 600; }
+    .summary-total .price { font-size: 32px; font-weight: 700; color: var(--accent); }
+
+    .btn {
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #005bb5; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3); }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { background: rgba(0,0,0,0.05); color: var(--ink); }
+    .btn-secondary:hover { background: rgba(0,0,0,0.1); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #2db84d; }
+
+    .button-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 32px; }
+    .button-row .btn { flex: 1; }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .loading-overlay.active { opacity: 1; visibility: visible; }
+
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text { margin-top: 16px; font-size: 16px; color: #86868b; }
+
+    .success-container { text-align: center; padding: 60px 20px; }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 40px;
+      color: white;
+    }
+
+    .success-title { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+    .success-text { font-size: 16px; color: #86868b; max-width: 400px; margin: 0 auto; }
+
+    .error-message {
+      background: rgba(255, 59, 48, 0.1);
+      border: 2px solid rgba(255, 59, 48, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      color: var(--error);
+      text-align: center;
+      display: none;
+    }
+
+    .error-message.visible { display: block; }
+
+    @media (max-width: 768px) {
+      .consultation-booking { padding: 20px 16px; }
+      .consultation-booking h2 { font-size: 24px; }
+      .booking-progress { flex-direction: column; align-items: center; }
+      .artists-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .button-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="consultation-booking" id="consultationBooking">
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">Wird geladen...</div>
+    </div>
+
+    <h2>Consultation Buchen</h2>
+    <p class="subtitle">Buche eine persönliche Beratung mit einem unserer Artists</p>
+
+    <div class="booking-progress">
+      <div class="progress-step active" data-step="1">
+        <span class="step-number">1</span>
+        <span>Artist wählen</span>
+      </div>
+      <div class="progress-step" data-step="2">
+        <span class="step-number">2</span>
+        <span>Datum wählen</span>
+      </div>
+      <div class="progress-step" data-step="3">
+        <span class="step-number">3</span>
+        <span>Deine Daten</span>
+      </div>
+      <div class="progress-step" data-step="4">
+        <span class="step-number">4</span>
+        <span>Bezahlen</span>
+      </div>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="booking-step active" data-step="1">
+      <div class="artists-grid" id="artistsGrid">
+        <p style="text-align: center; color: #86868b; grid-column: 1/-1;">Artists werden geladen...</p>
+      </div>
+      <div class="button-row" style="justify-content: flex-end;">
+        <button class="btn btn-primary" id="btnToStep2" disabled>Weiter zur Terminauswahl →</button>
+      </div>
+    </div>
+
+    <div class="booking-step" data-step="2">
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <div class="calendar-nav"><button id="prevMonth">‹</button></div>
+          <span class="calendar-title" id="calendarTitle">Januar 2025</span>
+          <div class="calendar-nav"><button id="nextMonth">›</button></div>
+        </div>
+        <div class="calendar-weekdays">
+          <div class="calendar-weekday">Mo</div>
+          <div class="calendar-weekday">Di</div>
+          <div class="calendar-weekday">Mi</div>
+          <div class="calendar-weekday">Do</div>
+          <div class="calendar-weekday">Fr</div>
+          <div class="calendar-weekday">Sa</div>
+          <div class="calendar-weekday">So</div>
+        </div>
+        <div class="calendar-days" id="calendarDays"></div>
+        <div class="selected-date-display" id="selectedDateDisplay" style="display: none;">
+          <div class="date" id="selectedDateText">-</div>
+          <div class="time">🕐 11:00 - 12:00 Uhr (1 Stunde)</div>
+        </div>
+      </div>
+      <div class="button-row">
+        <button class="btn btn-secondary" id="btnBackToStep1">← Zurück</button>
+        <button class="btn btn-primary" id="btnToStep3" disabled>Weiter zu deinen Daten →</button>
+      </div>
+    </div>
+
+    <div class="booking-step" data-step="3">
+      <div class="customer-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">Vorname *</label>
+            <input type="text" id="firstName" placeholder="Max" required>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Nachname *</label>
+            <input type="text" id="lastName" placeholder="Mustermann" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">E-Mail *</label>
+          <input type="email" id="email" placeholder="max@beispiel.de" required>
+        </div>
+        <div class="form-group">
+          <label for="phone">Telefon *</label>
+          <input type="tel" id="phone" placeholder="+49 123 456789" required>
+        </div>
+        <div class="form-group">
+          <label for="instagram">Instagram (optional)</label>
+          <input type="text" id="instagram" placeholder="@dein_instagram">
+        </div>
+      </div>
+      <div class="button-row">
+        <button class="btn btn-secondary" id="btnBackToStep2">← Zurück</button>
+        <button class="btn btn-primary" id="btnToStep4">Weiter zur Zusammenfassung →</button>
+      </div>
+    </div>
+
+    <div class="booking-step" data-step="4">
+      <div class="booking-summary">
+        <h3 style="margin: 0 0 20px 0; font-size: 20px;">📋 Zusammenfassung</h3>
+        <div class="summary-item">
+          <span class="summary-label">Artist</span>
+          <span class="summary-value" id="summaryArtist">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Datum</span>
+          <span class="summary-value" id="summaryDate">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Uhrzeit</span>
+          <span class="summary-value">11:00 - 12:00 Uhr</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Name</span>
+          <span class="summary-value" id="summaryName">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">E-Mail</span>
+          <span class="summary-value" id="summaryEmail">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Telefon</span>
+          <span class="summary-value" id="summaryPhone">-</span>
+        </div>
+        <div class="summary-total">
+          <span class="label">Consultation Fee</span>
+          <span class="price">100 €</span>
+        </div>
+      </div>
+      <div class="button-row">
+        <button class="btn btn-secondary" id="btnBackToStep3">← Zurück</button>
+        <button class="btn btn-success" id="btnPayNow">💳 Jetzt bezahlen (100 €)</button>
+      </div>
+    </div>
+
+    <div class="booking-step" data-step="success">
+      <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h3 class="success-title">Buchung erfolgreich!</h3>
+        <p class="success-text">
+          Deine Consultation wurde gebucht. Du erhältst in Kürze eine Bestätigung per E-Mail an <strong id="successEmail">-</strong>.
+        </p>
+        <div style="margin-top: 32px;">
+          <button class="btn btn-primary" onclick="window.location.reload()">Neue Buchung</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ============================================
+      // CONFIGURATION - Mommy I'm Sorry Stuttgart
+      // ============================================
+      const SUPABASE_URL = 'https://auxxyehgzkozdjylhqnx.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA';
+
+      // Location: Mommy I'm Sorry Stuttgart
+      const LOCATION_ID = 'bbb9f280-5d07-413f-a319-d81bfddafc24';
+
+      // Stripe Payment Link (100 EUR Consultation)
+      const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kCeOq6aIgmj15t';
+
+      // ============================================
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      let artists = [];
+      let availability = [];
+      let selectedArtist = null;
+      let selectedDate = null;
+      let currentMonth = new Date();
+      let existingAppointments = [];
+
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      const loadingText = document.getElementById('loadingText');
+      const artistsGrid = document.getElementById('artistsGrid');
+      const calendarDays = document.getElementById('calendarDays');
+      const calendarTitle = document.getElementById('calendarTitle');
+      const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+      const selectedDateText = document.getElementById('selectedDateText');
+      const errorMessage = document.getElementById('errorMessage');
+
+      function showLoading(text = 'Wird geladen...') {
+        loadingText.textContent = text;
+        loadingOverlay.classList.add('active');
+      }
+
+      function hideLoading() { loadingOverlay.classList.remove('active'); }
+
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.add('visible');
+        setTimeout(() => errorMessage.classList.remove('visible'), 5000);
+      }
+
+      function formatDate(date) {
+        return date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      }
+
+      function formatDateISO(date) { return date.toISOString().split('T')[0]; }
+
+      function goToStep(step) {
+        document.querySelectorAll('.progress-step').forEach(el => {
+          const s = parseInt(el.dataset.step);
+          el.classList.remove('active', 'completed');
+          if (s < step) el.classList.add('completed');
+          if (s === step) el.classList.add('active');
+        });
+        document.querySelectorAll('.booking-step').forEach(el => el.classList.remove('active'));
+        const stepEl = document.querySelector(`.booking-step[data-step="${step}"]`);
+        if (stepEl) stepEl.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      async function loadArtists() {
+        showLoading('Artists werden geladen...');
+        try {
+          const { data, error } = await supabase
+            .from('artists')
+            .select('id, name, email, instagram, avatar_url, rank')
+            .eq('is_guest', false)
+            .eq('location_id', LOCATION_ID)
+            .order('rank', { ascending: true });
+
+          if (error) throw error;
+          artists = data || [];
+          renderArtists();
+        } catch (err) {
+          console.error('Error loading artists:', err);
+          artistsGrid.innerHTML = '<p style="text-align:center; color:#ff3b30; grid-column: 1/-1;">Fehler beim Laden der Artists.</p>';
+        } finally {
+          hideLoading();
+        }
+      }
+
+      function renderArtists() {
+        if (artists.length === 0) {
+          artistsGrid.innerHTML = '<p style="text-align:center; color:#86868b; grid-column: 1/-1;">Keine Artists verfügbar</p>';
+          return;
+        }
+        artistsGrid.innerHTML = artists.map(artist => `
+          <div class="artist-card" data-artist-id="${artist.id}">
+            <div class="artist-avatar">
+              ${artist.avatar_url ? `<img src="${artist.avatar_url}" alt="${artist.name}" onerror="this.parentElement.innerHTML='${artist.name.charAt(0)}'">` : artist.name.charAt(0)}
+            </div>
+            <div class="artist-name">${artist.name}</div>
+            <div class="artist-instagram">${artist.instagram || ''}</div>
+            <div class="artist-badge">🏠 Resident Artist</div>
+          </div>
+        `).join('');
+
+        document.querySelectorAll('.artist-card').forEach(card => {
+          card.addEventListener('click', () => {
+            selectedArtist = artists.find(a => a.id === card.dataset.artistId);
+            document.querySelectorAll('.artist-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            document.getElementById('btnToStep2').disabled = false;
+          });
+        });
+      }
+
+      async function loadAvailability() {
+        if (!selectedArtist) return;
+        showLoading('Verfügbarkeit wird geladen...');
+
+        const today = new Date();
+        const oneYearLater = new Date();
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+
+        try {
+          const { data, error } = await supabase
+            .from('dienstplan')
+            .select('start_date, end_date, state')
+            .eq('artist_id', selectedArtist.id)
+            .eq('state', 'Available')
+            .gte('start_date', formatDateISO(today))
+            .lte('start_date', formatDateISO(oneYearLater));
+
+          if (error) throw error;
+          availability = data || [];
+
+          const { data: apts } = await supabase
+            .from('appointments')
+            .select('start, end')
+            .eq('artist_id', selectedArtist.id)
+            .neq('status', 'canceled')
+            .gte('start', today.toISOString());
+
+          existingAppointments = apts || [];
+          renderCalendar();
+        } catch (err) {
+          console.error('Error:', err);
+          showError('Fehler beim Laden der Verfügbarkeit');
+        } finally {
+          hideLoading();
+        }
+      }
+
+      function renderCalendar() {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+        const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+        calendarTitle.textContent = `${monthNames[month]} ${year}`;
+
+        const firstDay = new Date(year, month, 1);
+        let startDay = firstDay.getDay();
+        startDay = startDay === 0 ? 6 : startDay - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let html = '';
+        for (let i = 0; i < startDay; i++) html += '<div class="calendar-day empty"></div>';
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(year, month, day);
+          const dateStr = formatDateISO(date);
+          const isToday = date.getTime() === today.getTime();
+          const isPast = date < today;
+          const isAvailable = !isPast && isDateAvailable(dateStr);
+          const isSelected = selectedDate === dateStr;
+
+          let classes = 'calendar-day';
+          if (isToday) classes += ' today';
+          if (isPast) classes += ' past';
+          if (isAvailable) classes += ' available';
+          if (isSelected) classes += ' selected';
+
+          html += `<div class="${classes}" data-date="${dateStr}">${day}</div>`;
+        }
+
+        calendarDays.innerHTML = html;
+
+        document.querySelectorAll('.calendar-day.available').forEach(day => {
+          day.addEventListener('click', () => {
+            selectedDate = day.dataset.date;
+            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+            day.classList.add('selected');
+            selectedDateText.textContent = formatDate(new Date(selectedDate));
+            selectedDateDisplay.style.display = 'block';
+            document.getElementById('btnToStep3').disabled = false;
+          });
+        });
+
+        const now = new Date();
+        document.getElementById('prevMonth').disabled = currentMonth.getFullYear() === now.getFullYear() && currentMonth.getMonth() <= now.getMonth();
+      }
+
+      function isDateAvailable(dateStr) {
+        const isInDienstplan = availability.some(entry => {
+          const start = entry.start_date;
+          const end = entry.end_date || entry.start_date;
+          return dateStr >= start && dateStr <= end;
+        });
+        if (!isInDienstplan) return false;
+
+        const slotStart = new Date(dateStr + 'T11:00:00');
+        const slotEnd = new Date(dateStr + 'T12:00:00');
+        return !existingAppointments.some(apt => {
+          const aptStart = new Date(apt.start);
+          const aptEnd = new Date(apt.end);
+          return (slotStart < aptEnd && slotEnd > aptStart);
+        });
+      }
+
+      function validateForm() {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+
+        if (!firstName || !lastName || !email || !phone) {
+          showError('Bitte fülle alle Pflichtfelder aus.');
+          return false;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showError('Bitte gib eine gültige E-Mail-Adresse ein.');
+          return false;
+        }
+        return true;
+      }
+
+      function updateSummary() {
+        document.getElementById('summaryArtist').textContent = selectedArtist?.name || '-';
+        document.getElementById('summaryDate').textContent = selectedDate ? formatDate(new Date(selectedDate)) : '-';
+        document.getElementById('summaryName').textContent = `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`;
+        document.getElementById('summaryEmail').textContent = document.getElementById('email').value;
+        document.getElementById('summaryPhone').textContent = document.getElementById('phone').value;
+      }
+
+      async function processPayment() {
+        showLoading('Buchung wird verarbeitet...');
+
+        try {
+          const firstName = document.getElementById('firstName').value.trim();
+          const lastName = document.getElementById('lastName').value.trim();
+          const email = document.getElementById('email').value.trim();
+          const phone = document.getElementById('phone').value.trim();
+          const instagram = document.getElementById('instagram').value.trim();
+
+          let customerId = null;
+          const { data: existing } = await supabase.from('customers').select('id').eq('email', email).single();
+
+          if (existing) {
+            customerId = existing.id;
+          } else {
+            const { data: newCust, error } = await supabase.from('customers')
+              .insert({ first_name: firstName, last_name: lastName, email, phone, instagram: instagram || null })
+              .select().single();
+            if (error) throw error;
+            customerId = newCust.id;
+          }
+
+          const startDateTime = new Date(selectedDate + 'T11:00:00');
+          const endDateTime = new Date(selectedDate + 'T12:00:00');
+
+          const { data: apt, error: aptError } = await supabase.from('appointments')
+            .insert({
+              customer_id: customerId,
+              artist_id: selectedArtist.id,
+              location_id: LOCATION_ID,
+              customer_email: email,
+              customer_phone: phone,
+              first_name: firstName,
+              last_name: lastName,
+              instagram: instagram || null,
+              start: startDateTime.toISOString(),
+              end: endDateTime.toISOString(),
+              booking_type: 'consultation',
+              status: 'pending_payment',
+              state: 'Offen',
+              payment_status: 'pending',
+              payment_amount: 10000,
+              work_process: 'Consultation'
+            })
+            .select().single();
+
+          if (aptError) throw aptError;
+
+          localStorage.setItem('consultation_email', email);
+          localStorage.setItem('consultation_appointment_id', apt.id);
+
+          // Redirect to Stripe Payment Link
+          window.location.href = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${apt.id}`;
+
+        } catch (err) {
+          console.error('Error:', err);
+          showError('Fehler bei der Buchung: ' + err.message);
+          hideLoading();
+        }
+      }
+
+      async function checkForSuccess() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        const appointmentId = urlParams.get('appointment_id') || localStorage.getItem('consultation_appointment_id');
+
+        if (success === 'true' && appointmentId) {
+          showLoading('Buchung wird bestätigt...');
+
+          await supabase.from('appointments').update({
+            status: 'scheduled',
+            state: 'Zugesagt',
+            payment_status: 'paid'
+          }).eq('id', appointmentId);
+
+          document.getElementById('successEmail').textContent = localStorage.getItem('consultation_email') || 'deine E-Mail';
+          document.querySelectorAll('.progress-step').forEach(el => el.classList.add('completed'));
+          document.querySelectorAll('.booking-step').forEach(el => el.classList.remove('active'));
+          document.querySelector('.booking-step[data-step="success"]').classList.add('active');
+
+          localStorage.removeItem('consultation_email');
+          localStorage.removeItem('consultation_appointment_id');
+          window.history.replaceState({}, document.title, window.location.pathname);
+          hideLoading();
+        }
+      }
+
+      // Event Listeners
+      document.getElementById('btnToStep2').addEventListener('click', async () => { await loadAvailability(); goToStep(2); });
+      document.getElementById('btnBackToStep1').addEventListener('click', () => goToStep(1));
+      document.getElementById('btnToStep3').addEventListener('click', () => goToStep(3));
+      document.getElementById('btnBackToStep2').addEventListener('click', () => goToStep(2));
+      document.getElementById('btnToStep4').addEventListener('click', () => { if (validateForm()) { updateSummary(); goToStep(4); } });
+      document.getElementById('btnBackToStep3').addEventListener('click', () => goToStep(3));
+      document.getElementById('btnPayNow').addEventListener('click', () => processPayment());
+      document.getElementById('prevMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() - 1); renderCalendar(); });
+      document.getElementById('nextMonth').addEventListener('click', () => { currentMonth.setMonth(currentMonth.getMonth() + 1); renderCalendar(); });
+
+      // Init
+      checkForSuccess();
+      loadArtists();
+    })();
+  </script>
+</body>
+</html>
