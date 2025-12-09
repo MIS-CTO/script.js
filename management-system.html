@@ -5715,6 +5715,286 @@
         -webkit-overflow-scrolling: touch;
       }
     }
+
+    /* ========================================
+       Mini Availability Calendar Styles
+       ======================================== */
+    .availability-calendar-container {
+      margin-top: 16px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,248,250,0.95));
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .availability-calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .availability-calendar-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d1d1f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .availability-calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .availability-calendar-nav button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #1d1d1f;
+      transition: all 0.2s ease;
+    }
+
+    .availability-calendar-nav button:hover {
+      background: rgba(0,113,227,0.1);
+      color: #0071e3;
+    }
+
+    .availability-calendar-nav button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .availability-calendar-month {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .availability-calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .availability-calendar-weekday {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #86868b;
+      text-transform: uppercase;
+      padding: 8px 0;
+    }
+
+    .availability-calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .availability-calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: default;
+      transition: all 0.2s ease;
+      position: relative;
+      min-height: 44px;
+    }
+
+    .availability-calendar-day.empty {
+      background: transparent;
+    }
+
+    .availability-calendar-day.unavailable {
+      color: #c7c7cc;
+      background: rgba(0,0,0,0.02);
+    }
+
+    .availability-calendar-day.past {
+      color: #c7c7cc;
+      background: rgba(0,0,0,0.02);
+    }
+
+    .availability-calendar-day.available {
+      background: rgba(52, 199, 89, 0.12);
+      color: #1d1d1f;
+      cursor: pointer;
+      border: 1px solid rgba(52, 199, 89, 0.3);
+    }
+
+    .availability-calendar-day.available:hover {
+      background: rgba(52, 199, 89, 0.25);
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
+    }
+
+    .availability-calendar-day.available::after {
+      content: '';
+      position: absolute;
+      bottom: 6px;
+      width: 4px;
+      height: 4px;
+      background: #34C759;
+      border-radius: 50%;
+    }
+
+    .availability-calendar-day.selected {
+      background: #0071e3 !important;
+      color: white !important;
+      border-color: #0071e3 !important;
+    }
+
+    .availability-calendar-day.selected::after {
+      background: white;
+    }
+
+    .availability-calendar-day.today {
+      font-weight: 700;
+      box-shadow: inset 0 0 0 2px #0071e3;
+    }
+
+    /* Time Slots Container */
+    .time-slots-container {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .time-slots-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .time-slots-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+    }
+
+    .time-slots-date {
+      font-size: 13px;
+      color: #86868b;
+    }
+
+    .time-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 8px;
+    }
+
+    .time-slot {
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      background: rgba(0,0,0,0.03);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .time-slot:hover {
+      background: rgba(0,113,227,0.1);
+      border-color: rgba(0,113,227,0.3);
+      color: #0071e3;
+    }
+
+    .time-slot.selected {
+      background: #0071e3;
+      color: white;
+      border-color: #0071e3;
+    }
+
+    .time-slot.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* End Time Selection */
+    .end-time-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .end-time-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 8px;
+    }
+
+    .selected-time-display {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: rgba(52, 199, 89, 0.1);
+      border: 1px solid rgba(52, 199, 89, 0.3);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .selected-time-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .selected-time-date {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+    }
+
+    .selected-time-range {
+      font-size: 13px;
+      color: #34C759;
+      font-weight: 500;
+    }
+
+    .selected-time-clear {
+      padding: 6px 12px;
+      font-size: 12px;
+      background: rgba(255,59,48,0.1);
+      color: #FF3B30;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .selected-time-clear:hover {
+      background: rgba(255,59,48,0.2);
+    }
   </style>
 </head>
 <body>
@@ -14338,6 +14618,8 @@
                   <div id="fullEditSelectedArtist" style="margin-top:8px; font-size:13px; color:var(--muted);">
                     ${request.artist ? `Selected: ${request.artist.name}` : ''}
                   </div>
+                  <!-- Availability Calendar Container -->
+                  <div id="artistAvailabilityCalendar" style="display:none;"></div>
                 </div>
               </div>
 
@@ -14505,10 +14787,17 @@
           }
           imageUploadInput.value = ''; // Reset input
         });
+
+        // Zeige Kalender wenn bereits Artist ausgewählt
+        if (request.artist_id && request.artist?.name) {
+          setTimeout(() => {
+            showArtistAvailabilityCalendar(request.artist_id, request.artist.name);
+          }, 100);
+        }
       };
 
       // Helper functions for full frame edit
-      window.selectFullEditArtist = function(artistId, artistName) {
+      window.selectFullEditArtist = async function(artistId, artistName) {
         document.getElementById('fullEditArtistId').value = artistId;
         document.getElementById('fullEditArtistSearch').value = artistName;
         document.getElementById('fullEditSelectedArtist').textContent = `Selected: ${artistName}`;
@@ -14516,6 +14805,13 @@
 
         // Aktiviert Date-Picker wenn Artist ausgewählt wird
         onArtistSelected(artistId);
+
+        // Zeige Verfügbarkeitskalender
+        if (artistId) {
+          await showArtistAvailabilityCalendar(artistId, artistName);
+        } else {
+          hideArtistAvailabilityCalendar();
+        }
       };
 
       /**
@@ -14561,6 +14857,491 @@
       }
 
       window.onArtistSelected = onArtistSelected;
+
+      // ========================================
+      // Artist Availability Calendar System
+      // ========================================
+
+      let artistAvailabilityData = [];
+      let selectedAvailabilityArtistId = null;
+      let availabilityCalendarMonth = new Date();
+      let selectedAppointmentDate = null;
+      let selectedStartTime = null;
+      let selectedEndTime = null;
+
+      /**
+       * Lädt Verfügbarkeitsdaten für einen Artist aus der dienstplan Tabelle
+       */
+      async function loadArtistAvailability(artistId) {
+        if (!artistId) {
+          artistAvailabilityData = [];
+          return;
+        }
+
+        const today = new Date();
+        const oneYearLater = new Date();
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+
+        try {
+          const { data, error } = await supabase
+            .from('dienstplan')
+            .select('id, start_date, end_date, state, working_start, working_end')
+            .eq('artist_id', artistId)
+            .eq('state', 'Available')
+            .gte('start_date', today.toISOString().split('T')[0])
+            .lte('start_date', oneYearLater.toISOString().split('T')[0])
+            .order('start_date', { ascending: true });
+
+          if (error) {
+            console.error('Error loading artist availability:', error);
+            artistAvailabilityData = [];
+            return;
+          }
+
+          artistAvailabilityData = data || [];
+          console.log(`✅ Loaded ${artistAvailabilityData.length} availability entries for artist`);
+        } catch (err) {
+          console.error('Exception loading availability:', err);
+          artistAvailabilityData = [];
+        }
+      }
+
+      /**
+       * Zeigt den Verfügbarkeitskalender für den ausgewählten Artist
+       */
+      async function showArtistAvailabilityCalendar(artistId, artistName) {
+        selectedAvailabilityArtistId = artistId;
+        availabilityCalendarMonth = new Date();
+        selectedAppointmentDate = null;
+        selectedStartTime = null;
+        selectedEndTime = null;
+
+        // Lade Verfügbarkeitsdaten
+        await loadArtistAvailability(artistId);
+
+        const container = document.getElementById('artistAvailabilityCalendar');
+        if (!container) return;
+
+        container.style.display = 'block';
+        renderAvailabilityCalendar(artistName);
+      }
+
+      /**
+       * Versteckt den Verfügbarkeitskalender
+       */
+      function hideArtistAvailabilityCalendar() {
+        const container = document.getElementById('artistAvailabilityCalendar');
+        if (container) {
+          container.style.display = 'none';
+          container.innerHTML = '';
+        }
+        artistAvailabilityData = [];
+        selectedAvailabilityArtistId = null;
+      }
+
+      /**
+       * Rendert den Kalender für den aktuellen Monat
+       */
+      function renderAvailabilityCalendar(artistName) {
+        const container = document.getElementById('artistAvailabilityCalendar');
+        if (!container) return;
+
+        const today = new Date();
+        const currentMonth = availabilityCalendarMonth.getMonth();
+        const currentYear = availabilityCalendarMonth.getFullYear();
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+        const adjustedStartDay = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
+
+        // Max date (1 year from today)
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() + 1);
+
+        // Check if we can navigate
+        const canGoPrev = currentYear > today.getFullYear() ||
+                          (currentYear === today.getFullYear() && currentMonth > today.getMonth());
+        const canGoNext = currentYear < maxDate.getFullYear() ||
+                          (currentYear === maxDate.getFullYear() && currentMonth < maxDate.getMonth());
+
+        const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                            'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+        // Build available dates set for quick lookup
+        const availableDates = new Set();
+        artistAvailabilityData.forEach(entry => {
+          const start = new Date(entry.start_date);
+          const end = entry.end_date ? new Date(entry.end_date) : start;
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            availableDates.add(d.toISOString().split('T')[0]);
+          }
+        });
+
+        let html = `
+          <div class="availability-calendar-container">
+            <div class="availability-calendar-header">
+              <div class="availability-calendar-title">
+                <span>📅</span>
+                <span>Verfügbarkeit: ${artistName || 'Artist'}</span>
+              </div>
+              <div class="availability-calendar-nav">
+                <button type="button" onclick="navigateAvailabilityCalendar(-1)" ${!canGoPrev ? 'disabled' : ''}>‹</button>
+                <span class="availability-calendar-month">${monthNames[currentMonth]} ${currentYear}</span>
+                <button type="button" onclick="navigateAvailabilityCalendar(1)" ${!canGoNext ? 'disabled' : ''}>›</button>
+              </div>
+            </div>
+
+            <div class="availability-calendar-weekdays">
+              <div class="availability-calendar-weekday">Mo</div>
+              <div class="availability-calendar-weekday">Di</div>
+              <div class="availability-calendar-weekday">Mi</div>
+              <div class="availability-calendar-weekday">Do</div>
+              <div class="availability-calendar-weekday">Fr</div>
+              <div class="availability-calendar-weekday">Sa</div>
+              <div class="availability-calendar-weekday">So</div>
+            </div>
+
+            <div class="availability-calendar-days">
+        `;
+
+        // Empty cells before first day
+        for (let i = 0; i < adjustedStartDay; i++) {
+          html += `<div class="availability-calendar-day empty"></div>`;
+        }
+
+        // Days of month
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(currentYear, currentMonth, day);
+          const dateStr = date.toISOString().split('T')[0];
+          const isToday = dateStr === today.toISOString().split('T')[0];
+          const isPast = date < new Date(today.toDateString());
+          const isAvailable = availableDates.has(dateStr) && !isPast;
+          const isSelected = selectedAppointmentDate === dateStr;
+
+          let dayClass = 'availability-calendar-day';
+          if (isToday) dayClass += ' today';
+          if (isPast) {
+            dayClass += ' past';
+          } else if (isAvailable) {
+            dayClass += ' available';
+          } else {
+            dayClass += ' unavailable';
+          }
+          if (isSelected) dayClass += ' selected';
+
+          const clickHandler = isAvailable ? `onclick="selectAvailabilityDate('${dateStr}')"` : '';
+
+          html += `<div class="${dayClass}" ${clickHandler}>${day}</div>`;
+        }
+
+        html += `
+            </div>
+
+            <div id="timeSlotsContainer"></div>
+            <div id="selectedTimeDisplay"></div>
+          </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Wenn bereits ein Datum ausgewählt war, zeige Time Slots
+        if (selectedAppointmentDate) {
+          showTimeSlots(selectedAppointmentDate);
+        }
+      }
+
+      /**
+       * Navigiert im Kalender vor/zurück
+       */
+      function navigateAvailabilityCalendar(direction) {
+        availabilityCalendarMonth.setMonth(availabilityCalendarMonth.getMonth() + direction);
+
+        const artistName = document.getElementById('fullEditArtistSearch')?.value || 'Artist';
+        renderAvailabilityCalendar(artistName);
+      }
+
+      window.navigateAvailabilityCalendar = navigateAvailabilityCalendar;
+
+      /**
+       * Wählt ein Datum aus und zeigt die verfügbaren Time Slots
+       */
+      function selectAvailabilityDate(dateStr) {
+        selectedAppointmentDate = dateStr;
+        selectedStartTime = null;
+        selectedEndTime = null;
+
+        // Update calendar display
+        document.querySelectorAll('.availability-calendar-day').forEach(el => {
+          el.classList.remove('selected');
+        });
+        event.target.classList.add('selected');
+
+        showTimeSlots(dateStr);
+        updateSelectedTimeDisplay();
+      }
+
+      window.selectAvailabilityDate = selectAvailabilityDate;
+
+      /**
+       * Zeigt die verfügbaren 30-Minuten Time Slots für ein Datum
+       */
+      function showTimeSlots(dateStr) {
+        const container = document.getElementById('timeSlotsContainer');
+        if (!container) return;
+
+        // Finde die Verfügbarkeit für dieses Datum
+        const availability = artistAvailabilityData.find(entry => {
+          const start = new Date(entry.start_date);
+          const end = entry.end_date ? new Date(entry.end_date) : start;
+          const checkDate = new Date(dateStr);
+          return checkDate >= start && checkDate <= end;
+        });
+
+        if (!availability) {
+          container.innerHTML = `<p style="color:#86868b; font-size:13px; margin-top:12px;">Keine Verfügbarkeit für dieses Datum gefunden.</p>`;
+          return;
+        }
+
+        const workingStart = availability.working_start || '10:00:00';
+        const workingEnd = availability.working_end || '20:00:00';
+
+        // Parse times
+        const [startHour, startMin] = workingStart.split(':').map(Number);
+        const [endHour, endMin] = workingEnd.split(':').map(Number);
+
+        // Generate 30-minute slots
+        const slots = [];
+        let currentHour = startHour;
+        let currentMin = startMin;
+
+        while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+          const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
+          slots.push(timeStr);
+
+          currentMin += 30;
+          if (currentMin >= 60) {
+            currentMin = 0;
+            currentHour++;
+          }
+        }
+
+        // Format date for display
+        const dateObj = new Date(dateStr);
+        const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+        const formattedDate = `${dayNames[dateObj.getDay()]}, ${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}`;
+
+        let html = `
+          <div class="time-slots-container">
+            <div class="time-slots-header">
+              <span class="time-slots-title">⏰ Startzeit wählen</span>
+              <span class="time-slots-date">${formattedDate}</span>
+            </div>
+            <div class="time-slots-grid">
+        `;
+
+        slots.forEach(slot => {
+          const isSelected = selectedStartTime === slot;
+          html += `
+            <div class="time-slot ${isSelected ? 'selected' : ''}"
+                 onclick="selectStartTime('${slot}', '${workingEnd.substring(0,5)}')">
+              ${slot}
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+            <div id="endTimeSection"></div>
+          </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Wenn bereits Startzeit ausgewählt, zeige Endzeit-Auswahl
+        if (selectedStartTime) {
+          showEndTimeSlots(selectedStartTime, workingEnd.substring(0, 5));
+        }
+      }
+
+      /**
+       * Wählt eine Startzeit aus
+       */
+      function selectStartTime(timeStr, maxEndTime) {
+        selectedStartTime = timeStr;
+        selectedEndTime = null;
+
+        // Update UI
+        document.querySelectorAll('.time-slots-grid .time-slot').forEach(el => {
+          el.classList.remove('selected');
+          if (el.textContent.trim() === timeStr) {
+            el.classList.add('selected');
+          }
+        });
+
+        showEndTimeSlots(timeStr, maxEndTime);
+        updateSelectedTimeDisplay();
+      }
+
+      window.selectStartTime = selectStartTime;
+
+      /**
+       * Zeigt die Endzeit-Auswahl (basierend auf Startzeit)
+       */
+      function showEndTimeSlots(startTime, maxEndTime) {
+        const container = document.getElementById('endTimeSection');
+        if (!container) return;
+
+        const [startHour, startMin] = startTime.split(':').map(Number);
+        const [maxHour, maxMin] = maxEndTime.split(':').map(Number);
+
+        // Generate end time slots (mindestens 30 min nach Start)
+        const slots = [];
+        let currentHour = startHour;
+        let currentMin = startMin + 30;
+
+        if (currentMin >= 60) {
+          currentMin = 0;
+          currentHour++;
+        }
+
+        while (currentHour < maxHour || (currentHour === maxHour && currentMin <= maxMin)) {
+          const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
+          slots.push(timeStr);
+
+          currentMin += 30;
+          if (currentMin >= 60) {
+            currentMin = 0;
+            currentHour++;
+          }
+        }
+
+        // Add max end time if not already included
+        if (!slots.includes(maxEndTime) && slots.length > 0) {
+          slots.push(maxEndTime);
+        }
+
+        let html = `
+          <div class="end-time-section">
+            <div class="end-time-label">🏁 Endzeit wählen</div>
+            <div class="time-slots-grid">
+        `;
+
+        slots.forEach(slot => {
+          const isSelected = selectedEndTime === slot;
+          html += `
+            <div class="time-slot ${isSelected ? 'selected' : ''}"
+                 onclick="selectEndTime('${slot}')">
+              ${slot}
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+
+        container.innerHTML = html;
+      }
+
+      /**
+       * Wählt eine Endzeit aus und aktualisiert die Form-Felder
+       */
+      function selectEndTime(timeStr) {
+        selectedEndTime = timeStr;
+
+        // Update UI
+        document.querySelectorAll('#endTimeSection .time-slot').forEach(el => {
+          el.classList.remove('selected');
+          if (el.textContent.trim() === timeStr) {
+            el.classList.add('selected');
+          }
+        });
+
+        // Update form fields
+        updateAppointmentFields();
+        updateSelectedTimeDisplay();
+      }
+
+      window.selectEndTime = selectEndTime;
+
+      /**
+       * Aktualisiert die versteckten Form-Felder mit den ausgewählten Werten
+       */
+      function updateAppointmentFields() {
+        const dateInput = document.getElementById('fullEditScheduledDate');
+        const startTimeInput = document.getElementById('fullEditStartTime');
+        const endTimeInput = document.getElementById('fullEditEndTime');
+
+        if (dateInput && selectedAppointmentDate) {
+          dateInput.value = selectedAppointmentDate;
+        }
+
+        if (startTimeInput && selectedStartTime) {
+          startTimeInput.value = selectedStartTime;
+        }
+
+        if (endTimeInput && selectedEndTime) {
+          endTimeInput.value = selectedEndTime;
+        }
+      }
+
+      /**
+       * Zeigt die aktuelle Auswahl an
+       */
+      function updateSelectedTimeDisplay() {
+        const container = document.getElementById('selectedTimeDisplay');
+        if (!container) return;
+
+        if (!selectedAppointmentDate || !selectedStartTime || !selectedEndTime) {
+          container.innerHTML = '';
+          return;
+        }
+
+        const dateObj = new Date(selectedAppointmentDate);
+        const formattedDate = `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}`;
+
+        container.innerHTML = `
+          <div class="selected-time-display">
+            <div class="selected-time-info">
+              <span class="selected-time-date">📅 ${formattedDate}</span>
+              <span class="selected-time-range">⏰ ${selectedStartTime} - ${selectedEndTime} Uhr</span>
+            </div>
+            <button type="button" class="selected-time-clear" onclick="clearTimeSelection()">
+              ✕ Zurücksetzen
+            </button>
+          </div>
+        `;
+      }
+
+      /**
+       * Setzt die Zeitauswahl zurück
+       */
+      function clearTimeSelection() {
+        selectedAppointmentDate = null;
+        selectedStartTime = null;
+        selectedEndTime = null;
+
+        // Clear form fields
+        const dateInput = document.getElementById('fullEditScheduledDate');
+        const startTimeInput = document.getElementById('fullEditStartTime');
+        const endTimeInput = document.getElementById('fullEditEndTime');
+
+        if (dateInput) dateInput.value = '';
+        if (startTimeInput) startTimeInput.value = '10:00';
+        if (endTimeInput) endTimeInput.value = '12:00';
+
+        // Re-render calendar
+        const artistName = document.getElementById('fullEditArtistSearch')?.value || 'Artist';
+        renderAvailabilityCalendar(artistName);
+      }
+
+      window.clearTimeSelection = clearTimeSelection;
+
+      // Make functions globally available
+      window.showArtistAvailabilityCalendar = showArtistAvailabilityCalendar;
+      window.hideArtistAvailabilityCalendar = hideArtistAvailabilityCalendar;
 
       // Upload reference images
       window.uploadReferenceImages = async function(files) {
