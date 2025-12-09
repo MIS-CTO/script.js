@@ -14654,31 +14654,10 @@
                 </div>
               </div>
 
-              <!-- Appointment Details -->
-              <div class="detail-section">
-                <h3>Appointment Details</h3>
-                <div class="detail-grid">
-                  <div class="detail-item">
-                    <div class="detail-label">Datum</div>
-                    <input type="date" id="fullEditScheduledDate" value="${request.scheduled_date || ''}"
-                           ${!request.artist_id ? 'disabled' : ''}
-                           style="width:100%; padding:8px 12px; border:1px solid ${!request.artist_id ? '#e5e5e5' : 'rgba(0,0,0,0.1)'}; border-radius:8px; font-size:14px; box-sizing:border-box; ${!request.artist_id ? 'background:#f5f5f7; cursor:not-allowed;' : ''}">
-                    ${!request.artist_id ? `<p style="margin:4px 0 0; font-size:12px; color:#86868b;">Bitte erst einen Artist auswählen</p>` : ''}
-                  </div>
-                  <div class="detail-item">
-                    <div class="detail-label">Startzeit</div>
-                    <input type="time" id="fullEditStartTime" value="${request.start_time || '10:00'}"
-                           ${!request.artist_id ? 'disabled' : ''}
-                           style="width:100%; padding:8px 12px; border:1px solid ${!request.artist_id ? '#e5e5e5' : 'rgba(0,0,0,0.1)'}; border-radius:8px; font-size:14px; ${!request.artist_id ? 'background:#f5f5f7; cursor:not-allowed;' : ''}">
-                  </div>
-                  <div class="detail-item">
-                    <div class="detail-label">Endzeit</div>
-                    <input type="time" id="fullEditEndTime" value="${request.end_time || '12:00'}"
-                           ${!request.artist_id ? 'disabled' : ''}
-                           style="width:100%; padding:8px 12px; border:1px solid ${!request.artist_id ? '#e5e5e5' : 'rgba(0,0,0,0.1)'}; border-radius:8px; font-size:14px; ${!request.artist_id ? 'background:#f5f5f7; cursor:not-allowed;' : ''}">
-                  </div>
-                </div>
-              </div>
+              <!-- Hidden fields for appointment data (filled by availability calendar) -->
+              <input type="hidden" id="fullEditScheduledDate" value="${request.scheduled_date || ''}">
+              <input type="hidden" id="fullEditStartTime" value="${request.start_time || ''}">
+              <input type="hidden" id="fullEditEndTime" value="${request.end_time || ''}">
 
               <!-- Payment & Pricing -->
               <div class="detail-section">
@@ -14818,44 +14797,19 @@
       };
 
       /**
-       * Aktiviert Date- und Time-Picker wenn Artist ausgewählt wird
+       * Wird aufgerufen wenn Artist ausgewählt/entfernt wird
+       * Setzt die versteckten Appointment-Felder zurück wenn kein Artist
        */
       function onArtistSelected(artistId) {
-        const dateInput = document.getElementById('fullEditScheduledDate');
-        const startTimeInput = document.getElementById('fullEditStartTime');
-        const endTimeInput = document.getElementById('fullEditEndTime');
-
-        const inputs = [dateInput, startTimeInput, endTimeInput];
-
-        inputs.forEach(input => {
-          if (input) {
-            if (artistId) {
-              input.disabled = false;
-              input.style.background = 'white';
-              input.style.cursor = 'text';
-              input.style.borderColor = 'rgba(0,0,0,0.1)';
-            } else {
-              input.disabled = true;
-              input.style.background = '#f5f5f7';
-              input.style.cursor = 'not-allowed';
-              input.style.borderColor = '#e5e5e5';
-            }
-          }
-        });
-
-        // Hinweistext bei Datum entfernen wenn Artist ausgewählt
-        if (dateInput && artistId) {
-          const hint = dateInput.nextElementSibling;
-          if (hint && hint.tagName === 'P') {
-            hint.remove();
-          }
-        }
-
         // Werte zurücksetzen wenn Artist entfernt wird
         if (!artistId) {
+          const dateInput = document.getElementById('fullEditScheduledDate');
+          const startTimeInput = document.getElementById('fullEditStartTime');
+          const endTimeInput = document.getElementById('fullEditEndTime');
+
           if (dateInput) dateInput.value = '';
-          if (startTimeInput) startTimeInput.value = '10:00';
-          if (endTimeInput) endTimeInput.value = '12:00';
+          if (startTimeInput) startTimeInput.value = '';
+          if (endTimeInput) endTimeInput.value = '';
         }
       }
 
@@ -17791,7 +17745,7 @@
         let html = '<div class="calendar-grid" style="position:relative;">';
 
         html += '<div class="calendar-header"><div class="slot-header">Slots</div>';
-        for (let h = 10; h <= 20; h++) html += `<div class="hour-header" style="grid-column:span 2;">${h}:00</div>`;
+        for (let h = 9; h <= 21; h++) html += `<div class="hour-header" style="grid-column:span 2;">${h}:00</div>`;
         html += '</div>';
 
         // Define categories to render
@@ -17807,7 +17761,7 @@
 
           // Always show category header
           html += '<div class="calendar-header"><div class="category-header">' + label + '</div>';
-          for (let h = 10; h <= 20; h++) html += '<div class="category-spacer" style="grid-column:span 2;"></div>';
+          for (let h = 9; h <= 21; h++) html += '<div class="category-spacer" style="grid-column:span 2;"></div>';
           html += '</div>';
 
           // Only show slots if visible
@@ -17828,7 +17782,7 @@
               html += `<div class="slot-row empty-row"><div class="slot-label">Slot 1</div>`;
 
               // Empty cells
-              for (let h = 10; h <= 20; h++) {
+              for (let h = 9; h <= 21; h++) {
                 html += `<div class="slot-cell"></div>`;
                 html += `<div class="slot-cell half-hour"></div>`;
               }
@@ -17843,9 +17797,9 @@
 
                 html += `<div class="slot-row"><div class="slot-label">${slotLabel}</div>`;
 
-                // Create cells for time slots 10:00 - 21:00
+                // Create cells for time slots 09:00 - 21:00
                 const cells = [];
-                for (let h = 10; h <= 20; h++) {
+                for (let h = 9; h <= 21; h++) {
                   [0, 0.5].forEach(offset => {
                     const currentTime = h + offset;
                     cells.push({
@@ -17857,8 +17811,8 @@
                 }
 
                 // Mark where this event starts and its span
-                const startIndex = Math.max(0, Math.floor((evt.startHour - 10) * 2));
-                const endIndex = Math.min(cells.length, Math.floor((evt.endHour - 10) * 2));
+                const startIndex = Math.max(0, Math.floor((evt.startHour - 9) * 2));
+                const endIndex = Math.min(cells.length, Math.floor((evt.endHour - 9) * 2));
                 const span = endIndex - startIndex;
 
                 if (span > 0 && startIndex < cells.length) {
