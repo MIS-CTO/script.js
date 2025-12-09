@@ -20,7 +20,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #fafafa;
       color: var(--ink);
       min-height: 100vh;
@@ -69,7 +69,8 @@
     }
 
     .progress-step.active { background: var(--accent); color: white; }
-    .progress-step.completed { background: var(--success); color: white; }
+    .progress-step.completed { background: rgba(0,0,0,0.03); color: var(--ink); }
+    .progress-step.completed .step-number { background: var(--success); color: white; }
 
     .progress-step .step-number {
       width: 24px;
@@ -643,6 +644,61 @@
         setTimeout(() => errorMessage.classList.remove('visible'), 5000);
       }
 
+      function showPaymentWaitingMessage() {
+        // Show step 4 with payment instructions
+        const buttonRow = document.querySelector('.booking-step[data-step="4"] .button-row');
+
+        if (buttonRow) {
+          buttonRow.innerHTML = `
+            <div style="width: 100%; text-align: center; padding: 20px;">
+              <p style="font-size: 16px; color: #86868b; margin-bottom: 16px;">
+                💳 Zahlung wird in neuem Tab durchgeführt...
+              </p>
+              <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">
+                Nach erfolgreicher Zahlung klicke auf den Button unten.
+              </p>
+              <button class="btn btn-primary" onclick="checkPaymentAndRedirect()">
+                ✓ Zahlung abgeschlossen
+              </button>
+              <button class="btn btn-secondary" style="margin-top: 10px;" onclick="goToStep(3)">
+                ← Zurück
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      async function checkPaymentAndRedirect() {
+        const appointmentId = localStorage.getItem('consultation_appointment_id');
+        if (!appointmentId) {
+          showError('Keine Buchung gefunden. Bitte erneut versuchen.');
+          return;
+        }
+
+        showLoading('Zahlung wird überprüft...');
+
+        // Mark as completed since user clicked the button
+        await supabase.from('appointments').update({
+          status: 'scheduled',
+          state: 'Zugesagt',
+          payment_status: 'paid'
+        }).eq('id', appointmentId);
+
+        // Show success
+        document.getElementById('successEmail').textContent = localStorage.getItem('consultation_email') || 'deine E-Mail';
+        document.querySelectorAll('.progress-step').forEach(el => el.classList.add('completed'));
+        document.querySelectorAll('.booking-step').forEach(el => el.classList.remove('active'));
+        document.querySelector('.booking-step[data-step="success"]').classList.add('active');
+
+        localStorage.removeItem('consultation_email');
+        localStorage.removeItem('consultation_appointment_id');
+        hideLoading();
+      }
+
+      // Make functions globally available
+      window.checkPaymentAndRedirect = checkPaymentAndRedirect;
+      window.goToStep = goToStep;
+
       function formatDate(date) {
         return date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       }
@@ -907,8 +963,13 @@
           localStorage.setItem('consultation_email', email);
           localStorage.setItem('consultation_appointment_id', apt.id);
 
-          // Redirect to Stripe Payment Link (use top for iframe compatibility)
-          window.top.location.href = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${apt.id}`;
+          // Open Stripe Payment Link in new tab
+          const paymentUrl = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${apt.id}`;
+          window.open(paymentUrl, '_blank');
+
+          // Show waiting message
+          hideLoading();
+          showPaymentWaitingMessage();
 
         } catch (err) {
           console.error('Error:', err);
