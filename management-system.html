@@ -8868,6 +8868,25 @@
         // ERFOLG - UI aktualisieren
         console.log('✅ Payment Link erstellt:', result.payment_link);
 
+        // Activity Log erstellen
+        await supabase.from('request_activity_log').insert({
+          request_id: targetRequestId,
+          appointment_id: result.appointment_id,
+          action: 'scheduled_with_payment',
+          action_by: window.currentUsername || 'Unknown',
+          details: {
+            scheduled_date: request.scheduled_date,
+            artist_id: request.artist_id,
+            payment_link: result.payment_link
+          }
+        });
+
+        // Last Action updaten
+        await supabase.from('requests').update({
+          last_action: 'scheduled_with_payment',
+          last_action_at: new Date().toISOString()
+        }).eq('id', targetRequestId);
+
         // Request im Cache aktualisieren
         await updateRequestInCache(targetRequestId, {
           status: 'scheduled',
@@ -9088,6 +9107,25 @@
         }
 
         console.log('✅ Request updated to scheduled');
+
+        // Activity Log erstellen
+        await supabase.from('request_activity_log').insert({
+          request_id: targetRequestId,
+          appointment_id: appointment.id,
+          action: 'scheduled',
+          action_by: window.currentUsername || 'Unknown',
+          details: {
+            scheduled_date: request.scheduled_date,
+            artist_id: request.artist_id,
+            payment_link: null
+          }
+        });
+
+        // Last Action updaten
+        await supabase.from('requests').update({
+          last_action: 'scheduled',
+          last_action_at: new Date().toISOString()
+        }).eq('id', targetRequestId);
 
         // Cache aktualisieren
         if (typeof updateRequestInCache === 'function') {
@@ -13135,7 +13173,85 @@
           </div>
         `;
       }
-      
+
+      /**
+       * Generiert die Action-Buttons basierend auf Request-Status
+       * @param {Object} request - Der Request
+       * @param {string} currentUser - Aktueller Benutzer
+       * @returns {string} HTML für Buttons
+       */
+      function generateActionButtons(request, currentUser) {
+        var buttons = [];
+        var status = request.status;
+        var hasPaymentLink = !!request.stripe_payment_link;
+        var hasArtist = !!request.artist_id;
+        var hasDate = !!request.scheduled_date;
+        var hasPrice = request.total_amount && request.total_amount > 0;
+        var isDeleted = !!request.deleted_at;
+        var allDataComplete = hasArtist && hasDate && hasPrice;
+
+        // Gelöschte Requests
+        if (isDeleted) {
+          var daysLeft = 5 - Math.floor((Date.now() - new Date(request.deleted_at).getTime()) / (1000 * 60 * 60 * 24));
+          buttons.push('<div style="background:#fff3cd;padding:12px 16px;border-radius:8px;margin-bottom:12px;border-left:4px solid #ffc107"><p style="margin:0;font-size:13px;color:#856404">⏳ Wird in <strong>' + Math.max(0, daysLeft) + ' Tagen</strong> permanent geloescht</p></div>');
+          buttons.push('<button onclick="restoreRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#34c759;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Restore</button>');
+          buttons.push('<button onclick="permanentDeleteRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#ff3b30;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Permanent Delete</button>');
+          return '<div style="display:flex;flex-direction:column;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #e5e5e5">' + buttons.join('') + '</div>';
+        }
+
+        // New Request
+        if (status === 'open_request') {
+          buttons.push('<button onclick="assignRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Assign to User</button>');
+          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+        }
+
+        // Pending
+        else if (status === 'pending') {
+          buttons.push('<button onclick="editRequest(\'' + request.id + '\')" style="padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Edit Request</button>');
+
+          if (allDataComplete) {
+            buttons.push('<button onclick="scheduleAppointmentDirect(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Schedule</button>');
+            buttons.push('<button onclick="scheduleWithPayment(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Schedule + Payment</button>');
+          }
+
+          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+        }
+
+        // Scheduled
+        else if (status === 'scheduled') {
+          buttons.push('<button onclick="editRequestInfos(\'' + request.id + '\')" style="padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Edit Infos</button>');
+          buttons.push('<button onclick="rescheduleRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>');
+
+          if (hasPaymentLink) {
+            buttons.push('<button onclick="storniereRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Stornierung</button>');
+          } else {
+            buttons.push('<button onclick="cancelRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff9500;border:2px solid #ff9500;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>');
+          }
+
+          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+        }
+
+        // Canceled
+        else if (status === 'canceled') {
+          buttons.push('<button onclick="restoreRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#34c759;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Restore</button>');
+          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+        }
+
+        // Warnung wenn Daten fehlen (bei pending)
+        var warnings = [];
+        if (status === 'pending' && !allDataComplete) {
+          var missing = [];
+          if (!hasArtist) missing.push('Artist');
+          if (!hasDate) missing.push('Datum');
+          if (!hasPrice) missing.push('Preis');
+          warnings.push('<div style="background:#fff3cd;padding:12px 16px;border-radius:8px;border-left:4px solid #ffc107;margin-top:12px"><p style="margin:0;font-size:13px;color:#856404">Fuer Terminierung fehlt: <strong>' + missing.join(', ') + '</strong></p></div>');
+        }
+
+        var buttonsHtml = '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #e5e5e5">' + buttons.join('') + '</div>';
+
+        return buttonsHtml + warnings.join('');
+      }
+
       function showRequestDetail(requestId) {
         const request = allRequests.find(r => r.id === requestId);
         if (!request) return;
@@ -13178,39 +13294,9 @@
           'Bronze': 'background:#CD7F32; color:white;'
         }[customer.rank] || '' : '';
 
-        let actions = '';
-
-        // Show Edit button only in "My Requests" tab
-        if (currentRequestStatus === 'my-requests') {
-          actions = `<button class="btn" onclick="editRequest('${request.id}')" style="background:var(--ink); color:white; border:none;">Edit Request</button>`;
-        } else {
-          // Show status-based actions for other tabs
-          if (request.status === 'open_request') {
-            actions = `
-              <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn" onclick="assignRequest('${request.id}')"
-                        style="flex: 1; padding: 12px 16px; background: #1d1d1f; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
-                  Assign to Team Member
-                </button>
-                <button class="btn" onclick="deleteRequest('${request.id}')"
-                        style="padding: 12px 16px; background: white; color: #ff3b30; border: 2px solid #ff3b30; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; min-width: 100px;">
-                  Delete
-                </button>
-              </div>
-            `;
-          } else if (request.status === 'pending') {
-            actions = `<button class="btn" onclick="scheduleAppointment('${request.id}')" style="background:var(--ink); color:white; border:none;">Schedule Appointment</button>`;
-          } else if (request.status === 'scheduled') {
-            actions = `
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="btn" onclick="editAppointment('${request.id}')" style="background:var(--ink); color:white; border:none; flex:1; min-width:140px;">Edit Appointment</button>
-                <button class="btn" onclick="resetAppointment('${request.id}')" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1); flex:1; min-width:140px;">Reset</button>
-                <button class="btn" onclick="cancelAppointmentRequest('${request.id}')" style="background:#ff9500; color:white; border:none; flex:1; min-width:140px;">Cancel</button>
-                <button class="btn" onclick="deleteRequest('${request.id}')" style="background:#dc3545; color:white; border:none; flex:1; min-width:140px;">Delete</button>
-              </div>
-            `;
-          }
-        }
+        // Action Buttons generieren
+        var currentUser = window.currentUsername || 'Unknown';
+        var actionButtonsHtml = generateActionButtons(request, currentUser);
 
         detailEl.innerHTML = `
           <div style="margin-bottom:24px;">
@@ -13446,49 +13532,7 @@
             </div>
           </div>
 
-          ${actions ? `<div class="action-buttons">${actions}</div>` : ''}
-
-          <!-- Schedule + Payment Workflow Section -->
-          ${(request.status === 'pending' || request.status === 'open_request') && !request.stripe_payment_link ? `
-            <div style="display:flex; flex-direction:row; gap:12px; margin-top:20px; padding-top:20px; border-top:1px solid #e5e5e5; flex-wrap:wrap;">
-
-              <!-- Schedule Button (ohne Payment) - weiß mit schwarzer Outline -->
-              ${request.artist_id && request.scheduled_date ? `
-                <button onclick="scheduleAppointmentDirect('${request.id}')"
-                        style="flex:1; min-width:150px; padding:12px 16px; background:white; color:#1d1d1f; border:2px solid #1d1d1f; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
-                  Schedule
-                </button>
-              ` : ''}
-
-              <!-- Schedule + Payment Link Button - weiß mit schwarzer Outline -->
-              ${request.artist_id && request.scheduled_date && request.total_amount > 0 ? `
-                <button onclick="scheduleWithPayment('${request.id}')"
-                        style="flex:1; min-width:150px; padding:12px 16px; background:white; color:#1d1d1f; border:2px solid #1d1d1f; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
-                  Schedule + Payment
-                </button>
-              ` : ''}
-
-            </div>
-
-            <!-- Warnungen unter den Buttons -->
-            ${!request.artist_id || !request.scheduled_date ? `
-              <div style="background:#fff3cd; padding:12px 16px; border-radius:8px; border-left:4px solid #ffc107; margin-top:12px;">
-                <p style="margin:0; font-size:13px; color:#856404;">
-                  Für Terminierung fehlt:
-                  ${!request.artist_id ? '<strong>Artist</strong> ' : ''}
-                  ${!request.scheduled_date ? '<strong>Datum</strong>' : ''}
-                </p>
-              </div>
-            ` : ''}
-
-            ${request.artist_id && request.scheduled_date && (!request.total_amount || request.total_amount <= 0) ? `
-              <div style="background:#e3f2fd; padding:12px 16px; border-radius:8px; border-left:4px solid #2196f3; margin-top:12px;">
-                <p style="margin:0; font-size:13px; color:#1565c0;">
-                  Für Payment Link fehlt: <strong>Preis</strong>
-                </p>
-              </div>
-            ` : ''}
-          ` : ''}
+          ${actionButtonsHtml}
 
           ${request.stripe_payment_link ? `
             <div style="background:rgba(52,199,89,0.1); padding:16px; border-radius:10px; margin-top:24px; border:1px solid rgba(52,199,89,0.3);">
@@ -14932,6 +14976,251 @@
           alert('Fehler beim Löschen: ' + err.message);
         }
       };
+
+      /**
+       * Soft Delete - Request in Deleted Tab verschieben
+       */
+      async function softDeleteRequest(requestId) {
+        if (!confirm('Request loeschen? Er kann innerhalb von 5 Tagen wiederhergestellt werden.')) return;
+
+        var currentUser = window.currentUsername || 'Unknown';
+
+        try {
+          // Request soft delete
+          await supabase.from('requests').update({
+            deleted_at: new Date().toISOString(),
+            deleted_by: currentUser
+          }).eq('id', requestId);
+
+          // Activity Log
+          await supabase.from('request_activity_log').insert({
+            request_id: requestId,
+            action: 'deleted',
+            action_by: currentUser,
+            details: { deleted_at: new Date().toISOString() }
+          });
+
+          // UI aktualisieren
+          if (typeof closeRequestDetail === 'function') closeRequestDetail();
+          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+
+          alert('Request wurde geloescht. Kann innerhalb von 5 Tagen wiederhergestellt werden.');
+        } catch (err) {
+          alert('Fehler: ' + err.message);
+        }
+      }
+      window.softDeleteRequest = softDeleteRequest;
+
+      /**
+       * Permanent Delete - Endgueltig loeschen
+       */
+      async function permanentDeleteRequest(requestId) {
+        if (!confirm('ACHTUNG: Request ENDGUELTIG loeschen? Dies kann NICHT rueckgaengig gemacht werden!')) return;
+
+        try {
+          await supabase.from('requests').delete().eq('id', requestId);
+
+          if (typeof closeRequestDetail === 'function') closeRequestDetail();
+          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+
+          alert('Request wurde permanent geloescht.');
+        } catch (err) {
+          alert('Fehler: ' + err.message);
+        }
+      }
+      window.permanentDeleteRequest = permanentDeleteRequest;
+
+      /**
+       * Restore - Wiederherstellen aus Deleted/Canceled
+       */
+      async function restoreRequest(requestId) {
+        var currentUser = window.currentUsername || 'Unknown';
+
+        try {
+          // Request laden um vorherigen Status zu ermitteln
+          var result = await supabase.from('requests').select('*').eq('id', requestId).single();
+          var request = result.data;
+
+          // Neuer Status: pending (oder open_request wenn nie assigned)
+          var newStatus = request.assigned_to ? 'pending' : 'open_request';
+
+          await supabase.from('requests').update({
+            deleted_at: null,
+            deleted_by: null,
+            restored_at: new Date().toISOString(),
+            restored_by: currentUser,
+            status: request.status === 'canceled' ? newStatus : request.status,
+            last_action: 'restored',
+            last_action_at: new Date().toISOString()
+          }).eq('id', requestId);
+
+          // Activity Log
+          await supabase.from('request_activity_log').insert({
+            request_id: requestId,
+            action: 'restored',
+            action_by: currentUser,
+            details: { previous_status: request.status, new_status: newStatus }
+          });
+
+          if (typeof closeRequestDetail === 'function') closeRequestDetail();
+          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+
+          alert('Request wurde wiederhergestellt.');
+        } catch (err) {
+          alert('Fehler: ' + err.message);
+        }
+      }
+      window.restoreRequest = restoreRequest;
+
+      /**
+       * Cancel - Ohne Email, nur Status ändern
+       */
+      async function cancelRequest(requestId) {
+        if (!confirm('Request wirklich canceln? Es wird KEINE Email gesendet.')) return;
+
+        var currentUser = window.currentUsername || 'Unknown';
+
+        try {
+          await supabase.from('requests').update({
+            status: 'canceled',
+            last_action: 'canceled',
+            last_action_at: new Date().toISOString()
+          }).eq('id', requestId);
+
+          // Appointment auch canceln falls vorhanden
+          var reqResult = await supabase.from('requests').select('appointment_id').eq('id', requestId).single();
+          if (reqResult.data && reqResult.data.appointment_id) {
+            await supabase.from('appointments').update({
+              status: 'canceled',
+              canceled_at: new Date().toISOString(),
+              cancel_reason: 'manual_cancel'
+            }).eq('id', reqResult.data.appointment_id);
+          }
+
+          // Activity Log
+          await supabase.from('request_activity_log').insert({
+            request_id: requestId,
+            action: 'canceled',
+            action_by: currentUser,
+            details: { email_sent: false }
+          });
+
+          if (typeof closeRequestDetail === 'function') closeRequestDetail();
+          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+
+          alert('Request wurde gecancelt.');
+        } catch (err) {
+          alert('Fehler: ' + err.message);
+        }
+      }
+      window.cancelRequest = cancelRequest;
+
+      /**
+       * Stornierung - Mit Email senden
+       */
+      async function storniereRequest(requestId) {
+        if (!confirm('Request stornieren und Stornierungsmail senden?')) return;
+
+        var currentUser = window.currentUsername || 'Unknown';
+        var btn = event ? event.target : null;
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = 'Wird storniert...';
+        }
+
+        try {
+          // Request laden
+          var reqResult = await supabase.from('requests')
+            .select('*, customer:customers(*), artist:artists(*)')
+            .eq('id', requestId)
+            .single();
+          var request = reqResult.data;
+
+          // Stornierungsmail senden via Edge Function
+          var response = await fetch('https://auxxyehgzkozdjylhqnx.supabase.co/functions/v1/send-cancellation-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA'
+            },
+            body: JSON.stringify({ request_id: requestId, action_by: currentUser })
+          });
+
+          var result = await response.json();
+
+          // Request Status updaten
+          await supabase.from('requests').update({
+            status: 'canceled',
+            last_action: 'storniert',
+            last_action_at: new Date().toISOString()
+          }).eq('id', requestId);
+
+          // Activity Log
+          await supabase.from('request_activity_log').insert({
+            request_id: requestId,
+            action: 'storniert',
+            action_by: currentUser,
+            details: { email_sent: result.success, email_sent_to: request.email || request.customer?.email }
+          });
+
+          if (typeof closeRequestDetail === 'function') closeRequestDetail();
+          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+
+          alert('Request wurde storniert und Email versendet.');
+        } catch (err) {
+          alert('Fehler: ' + err.message);
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Stornierung';
+          }
+        }
+      }
+      window.storniereRequest = storniereRequest;
+
+      /**
+       * Reschedule - Zurück zu Pending
+       */
+      async function rescheduleRequest(requestId) {
+        if (!confirm('Request zurueck zu Pending setzen? Der Termin wird zurueckgesetzt.')) return;
+
+        var currentUser = window.currentUsername || 'Unknown';
+
+        try {
+          await supabase.from('requests').update({
+            status: 'pending',
+            last_action: 'rescheduled',
+            last_action_at: new Date().toISOString()
+          }).eq('id', requestId);
+
+          // Activity Log
+          await supabase.from('request_activity_log').insert({
+            request_id: requestId,
+            action: 'rescheduled',
+            action_by: currentUser,
+            details: { previous_status: 'scheduled' }
+          });
+
+          if (typeof closeRequestDetail === 'function') closeRequestDetail();
+          if (typeof filterAndRenderRequests === 'function') filterAndRenderRequests();
+
+          alert('Request wurde zurueck zu Pending gesetzt.');
+        } catch (err) {
+          alert('Fehler: ' + err.message);
+        }
+      }
+      window.rescheduleRequest = rescheduleRequest;
+
+      /**
+       * Edit Infos - Nur bestimmte Felder editierbar
+       */
+      async function editRequestInfos(requestId) {
+        // Oeffnet Edit Modal aber mit eingeschraenkten Feldern
+        // Nur: placement, size, style, colorway, description, start_time, end_time
+        window.editMode = 'infos_only';
+        await editRequest(requestId);
+      }
+      window.editRequestInfos = editRequestInfos;
 
       // Auto-move scheduled to finished (check every minute)
       setInterval(async () => {
