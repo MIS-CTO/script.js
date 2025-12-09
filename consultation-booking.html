@@ -106,10 +106,21 @@
       background: var(--bg);
       border: 2px solid var(--border);
       border-radius: 20px;
-      padding: 24px;
+      padding: 0;
       cursor: pointer;
       transition: all 0.3s ease;
       text-align: center;
+      overflow: hidden;
+    }
+
+    .artist-card .artist-name,
+    .artist-card .artist-instagram,
+    .artist-card .artist-badge {
+      padding: 0 24px;
+    }
+
+    .artist-card .artist-badge {
+      margin-bottom: 20px;
     }
 
     .artist-card:hover {
@@ -125,11 +136,11 @@
     }
 
     .artist-avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
+      width: 100%;
+      height: 200px;
+      border-radius: 16px 16px 0 0;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      margin: 0 auto 16px;
+      margin: 0 0 16px 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -139,7 +150,11 @@
       overflow: hidden;
     }
 
-    .artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .artist-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
     .artist-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
     .artist-instagram { font-size: 14px; color: #86868b; margin-bottom: 12px; }
 
@@ -588,6 +603,9 @@
       // Location: Mommy I'm Sorry Stuttgart
       const LOCATION_ID = 'bbb9f280-5d07-413f-a319-d81bfddafc24';
 
+      // Resident Artists für Consultation (per Name filtern)
+      const RESIDENT_ARTIST_NAMES = ['Ata', 'Gil', 'Luca', 'Mary', 'Mela'];
+
       // Stripe Payment Link (100 EUR Consultation)
       const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kCeOq6aIgmj15t';
 
@@ -645,15 +663,17 @@
       async function loadArtists() {
         showLoading('Artists werden geladen...');
         try {
+          // Lade Artists per Name (Ata, Gil, Luca, Mary, Mela)
           const { data, error } = await supabase
             .from('artists')
-            .select('id, name, email, instagram, avatar_url, rank')
-            .eq('is_guest', false)
-            .eq('location_id', LOCATION_ID)
+            .select('id, name, email, instagram, avatar_url, profile_picture_url, background_image_url, style, rank')
+            .in('name', RESIDENT_ARTIST_NAMES)
             .order('rank', { ascending: true });
 
           if (error) throw error;
+
           artists = data || [];
+          console.log('✅ Loaded artists:', artists.map(a => a.name));
           renderArtists();
         } catch (err) {
           console.error('Error loading artists:', err);
@@ -668,16 +688,26 @@
           artistsGrid.innerHTML = '<p style="text-align:center; color:#86868b; grid-column: 1/-1;">Keine Artists verfügbar</p>';
           return;
         }
-        artistsGrid.innerHTML = artists.map(artist => `
-          <div class="artist-card" data-artist-id="${artist.id}">
-            <div class="artist-avatar">
-              ${artist.avatar_url ? `<img src="${artist.avatar_url}" alt="${artist.name}" onerror="this.parentElement.innerHTML='${artist.name.charAt(0)}'">` : artist.name.charAt(0)}
+
+        // Placeholder für fehlende Bilder
+        const PLACEHOLDER = 'https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/artist-images/Bildschirmfoto%202025-11-25%20um%2016.13.50.png';
+
+        artistsGrid.innerHTML = artists.map(artist => {
+          // Nutze background_image_url oder profile_picture_url oder avatar_url
+          const imageUrl = artist.background_image_url || artist.profile_picture_url || artist.avatar_url || PLACEHOLDER;
+          const style = artist.style || 'Various Styles';
+
+          return `
+            <div class="artist-card" data-artist-id="${artist.id}">
+              <div class="artist-avatar">
+                <img src="${imageUrl}" alt="${artist.name}" onerror="this.parentElement.innerHTML='${artist.name.charAt(0)}'">
+              </div>
+              <div class="artist-name">${artist.name}</div>
+              <div class="artist-instagram">${style}</div>
+              <div class="artist-badge">🏠 Resident Artist</div>
             </div>
-            <div class="artist-name">${artist.name}</div>
-            <div class="artist-instagram">${artist.instagram || ''}</div>
-            <div class="artist-badge">🏠 Resident Artist</div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
         document.querySelectorAll('.artist-card').forEach(card => {
           card.addEventListener('click', () => {
