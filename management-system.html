@@ -13039,7 +13039,7 @@
         var lastAction = request.last_action;
         var paymentStatus = request.payment_status;
 
-        if (!lastAction && !request.stripe_payment_link) {
+        if (!lastAction && !request.stripe_payment_link && paymentStatus !== 'paid') {
           return '';
         }
 
@@ -13047,37 +13047,51 @@
         var bgColor = '';
         var textColor = '';
 
-        // Priorität: letzter wichtiger Status
-        if (lastAction === 'storniert' || lastAction === 'auto_storniert') {
+        // PRIORITÄT 1: Bezahlt (höchste Priorität)
+        if (paymentStatus === 'paid' || paymentStatus === 'fully_paid') {
+          indicator = '✅ Bezahlt';
+          bgColor = '#e8f5e9';
+          textColor = '#2e7d32';
+        }
+        // PRIORITÄT 2: Payment Failed
+        else if (paymentStatus === 'failed' || lastAction === 'payment_failed') {
+          indicator = '❌ Fehlgeschlagen';
+          bgColor = '#ffebee';
+          textColor = '#c62828';
+        }
+        // PRIORITÄT 3: Storniert
+        else if (lastAction === 'storniert' || lastAction === 'auto_storniert') {
           indicator = 'Storniert';
           bgColor = '#ffebee';
           textColor = '#c62828';
-        } else if (lastAction === 'reminder_2_sent' || lastAction === 'auto_reminder_2') {
+        }
+        // PRIORITÄT 4: 2nd Reminder
+        else if (lastAction === 'reminder_2_sent' || lastAction === 'auto_reminder_2') {
           indicator = '2nd Reminder';
           bgColor = '#fff3e0';
           textColor = '#e65100';
-        } else if (lastAction === 'reminder_1_sent' || lastAction === 'auto_reminder_1') {
+        }
+        // PRIORITÄT 5: 1st Reminder
+        else if (lastAction === 'reminder_1_sent' || lastAction === 'auto_reminder_1') {
           indicator = '1st Reminder';
           bgColor = '#fff8e1';
           textColor = '#f57f17';
-        } else if (lastAction === 'rescheduled') {
+        }
+        // PRIORITÄT 6: Rescheduled
+        else if (lastAction === 'rescheduled') {
           indicator = 'Rescheduled';
           bgColor = '#e8eaf6';
           textColor = '#3949ab';
-        } else if (paymentStatus === 'paid' || paymentStatus === 'fully_paid') {
-          indicator = 'Bezahlt';
-          bgColor = '#e8f5e9';
-          textColor = '#2e7d32';
-        } else if (request.stripe_payment_link && paymentStatus === 'pending') {
-          indicator = 'Payment Pending';
-          bgColor = '#e3f2fd';
-          textColor = '#1565c0';
-        } else if (lastAction === 'scheduled_with_payment') {
-          indicator = 'Payment Link Sent';
-          bgColor = '#e8f5e9';
-          textColor = '#2e7d32';
-        } else if (lastAction === 'scheduled') {
-          indicator = 'Scheduled';
+        }
+        // PRIORITÄT 7: Payment Pending (Zahlungslink gesendet, noch nicht bezahlt)
+        else if (request.stripe_payment_link && paymentStatus === 'pending') {
+          indicator = '⏳ Offen';
+          bgColor = '#fff3e0';
+          textColor = '#e65100';
+        }
+        // PRIORITÄT 8: Payment Link Sent
+        else if (lastAction === 'scheduled_with_payment' || lastAction === 'payment_link_sent') {
+          indicator = 'Payment Link';
           bgColor = '#e3f2fd';
           textColor = '#1565c0';
         }
