@@ -17109,10 +17109,13 @@
 
                     // Payment status text labels
                     const paymentLabels = {
-                      'unpaid': 'Unbezahlt',
-                      'deposit_paid': 'Anzahlung erhalten',
-                      'fully_paid': 'Vollständig bezahlt',
-                      'refunded': 'Rückerstattet'
+                      'paid': '✅ Bezahlt',
+                      'fully_paid': '✅ Bezahlt',
+                      'deposit_paid': '💰 Anzahlung',
+                      'pending': '⏳ Offen',
+                      'failed': '❌ Fehlgeschlagen',
+                      'refunded': '↩️ Rückerstattet',
+                      'unpaid': '💳 Unbezahlt'
                     };
                     const paymentLabel = cell.event.isAppointment && cell.event.paymentStatus
                       ? paymentLabels[cell.event.paymentStatus] || paymentLabels['unpaid']
@@ -20140,10 +20143,13 @@
       // ============================================
       window.getPaymentStatusBadge = function(paymentStatus) {
         const badges = {
-          'unpaid': '<span class="payment-badge unpaid">💳 Unbezahlt</span>',
-          'deposit_paid': '<span class="payment-badge deposit">💰 Anzahlung</span>',
+          'paid': '<span class="payment-badge paid">✅ Bezahlt</span>',
           'fully_paid': '<span class="payment-badge paid">✅ Bezahlt</span>',
-          'refunded': '<span class="payment-badge refunded">↩️ Rückerstattet</span>'
+          'deposit_paid': '<span class="payment-badge deposit">💰 Anzahlung</span>',
+          'pending': '<span class="payment-badge pending" style="background:#fff3e0;color:#e65100">⏳ Offen</span>',
+          'failed': '<span class="payment-badge failed" style="background:#ffebee;color:#c62828">❌ Fehlgeschlagen</span>',
+          'refunded': '<span class="payment-badge refunded">↩️ Rückerstattet</span>',
+          'unpaid': '<span class="payment-badge unpaid">💳 Unbezahlt</span>'
         };
         return badges[paymentStatus] || badges['unpaid'];
       };
