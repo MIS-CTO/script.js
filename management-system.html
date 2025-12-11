@@ -2640,8 +2640,20 @@
 
     .dashboard-bottom-row {
       display: grid;
-      grid-template-columns: 30% 35% 35%;
+      grid-template-columns: repeat(4, 1fr);
       gap: 24px;
+    }
+
+    /* All 4 containers should have same width */
+    .dashboard-bottom-row > .container-section {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .dashboard-bottom-row > .container-section .dashboard-card,
+    .dashboard-bottom-row > .container-section .todo-projects-left,
+    .dashboard-bottom-row > .container-section .todo-tasks-right {
+      min-width: 280px;
     }
 
     .container-section {
@@ -4004,16 +4016,30 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
-    /* Responsive */
-    @media (max-width: 1024px) {
-      .todo-projects-section {
-        grid-template-columns: 1fr;
-        height: auto;
+    /* Responsive - Tablet (2x2 Grid) */
+    @media (max-width: 1200px) {
+      .dashboard-bottom-row {
+        grid-template-columns: repeat(2, 1fr);
       }
 
       .todo-projects-left,
       .todo-tasks-right {
-        min-height: 400px;
+        min-height: 350px;
+      }
+    }
+
+    /* Responsive - Mobile (1 Column) */
+    @media (max-width: 768px) {
+      .dashboard-bottom-row {
+        grid-template-columns: 1fr !important;
+      }
+
+      .todo-projects-left,
+      .todo-tasks-right,
+      .pinned-events-card,
+      .schwarzes-brett-card {
+        min-height: auto;
+        max-height: 400px;
       }
     }
 
@@ -6842,34 +6868,25 @@
           </div>
         </div>
 
-        <!-- To-do Projects Section (NEW DESIGN) -->
-        <div style="grid-column: 1 / -1;">
-          <h3 class="container-section-title" style="margin-bottom: 12px;">To-do Projects</h3>
-
-          <!-- Two Column Layout -->
-          <div class="todo-projects-section">
-
-            <!-- Left: Recent Projects -->
-            <div class="container-section">
-              <h4 class="container-section-title">Recent Projects</h4>
-              <div class="todo-projects-left">
-                <div class="todo-projects-list" id="todoProjectsList">
-                  <div class="todo-empty-state">Lade Projekte...</div>
-                </div>
-                <button class="add-btn" id="todoAddProjectBtn">+ Add new</button>
-              </div>
+        <!-- Recent Projects Section -->
+        <div class="container-section">
+          <h3 class="container-section-title">Recent Projects</h3>
+          <div class="todo-projects-left">
+            <div class="todo-projects-list" id="todoProjectsList">
+              <div class="todo-empty-state">Lade Projekte...</div>
             </div>
+            <button class="add-btn" id="todoAddProjectBtn">+ Add new</button>
+          </div>
+        </div>
 
-            <!-- Right: Tasks -->
-            <div class="container-section">
-              <h4 class="container-section-title" id="todoTasksTitle">Select Project to view</h4>
-              <div class="todo-tasks-right">
-                <div class="todo-tasks-list" id="todoTasksList">
-                  <div class="todo-empty-state">Select Project to view</div>
-                </div>
-                <button class="add-btn" id="todoAddTaskBtn" style="display: none;">+ Add Task</button>
-              </div>
+        <!-- Tasks Section -->
+        <div class="container-section">
+          <h3 class="container-section-title" id="todoTasksTitle">Tasks</h3>
+          <div class="todo-tasks-right">
+            <div class="todo-tasks-list" id="todoTasksList">
+              <div class="todo-empty-state">Select Project to view</div>
             </div>
+            <button class="add-btn" id="todoAddTaskBtn" style="display: none;">+ Add Task</button>
           </div>
         </div>
       </div>
@@ -12377,6 +12394,10 @@
           }
 
           if (mode === 'add') {
+            console.log('=== CREATE PROJECT DEBUG ===');
+            console.log('User ID:', userId);
+            console.log('Title:', title);
+
             // Create new project
             const { data: project, error } = await supabase
               .from('task_projects')
@@ -12384,16 +12405,46 @@
               .select()
               .single();
 
-            if (error) throw error;
+            if (error) {
+              console.error('❌ Failed to create project:', error);
+              throw error;
+            }
 
-            // Add owner as collaborator
-            await supabase.from('project_collaborators').insert({ project_id: project.id, user_id: userId, role: 'owner' });
+            console.log('✅ Project created:', project.id);
+
+            // CRITICAL: Add owner as collaborator with error handling
+            console.log('📝 Adding owner as collaborator...');
+            const { data: ownerCollab, error: ownerError } = await supabase
+              .from('project_collaborators')
+              .insert({ project_id: project.id, user_id: userId, role: 'owner' })
+              .select();
+
+            if (ownerError) {
+              console.error('❌ CRITICAL: Failed to add owner as collaborator:', ownerError);
+              // Alert user about the issue
+              alert('Warnung: Owner konnte nicht als Collaborator hinzugefügt werden. Bitte versuche es erneut.');
+            } else {
+              console.log('✅ Owner added as collaborator:', ownerCollab);
+            }
+
+            // Verify owner was added
+            const { data: verifyOwner } = await supabase
+              .from('project_collaborators')
+              .select('*')
+              .eq('project_id', project.id)
+              .eq('user_id', userId);
+            console.log('Verification - Owner in project_collaborators:', verifyOwner);
 
             // Add other collaborators
             if (todoCollaborators.length > 0) {
               const collabs = todoCollaborators.map(c => ({ project_id: project.id, user_id: c.id, role: 'member' }));
-              await supabase.from('project_collaborators').insert(collabs);
+              const { error: membersError } = await supabase.from('project_collaborators').insert(collabs);
+              if (membersError) {
+                console.error('⚠️ Failed to add some collaborators:', membersError);
+              }
             }
+
+            console.log('=== END CREATE PROJECT ===');
           } else {
             // Update project
             const { error } = await supabase
@@ -12499,41 +12550,85 @@
           return;
         }
 
-        console.log('💾 Creating task...');
-        console.log('📁 Project ID:', selectedTodoProject.id);
-        console.log('📝 Task Title:', title);
-        console.log('👤 Assigned To:', assignedTo);
+        const projectId = selectedTodoProject.id;
+
+        console.log('=== TASK INSERT DEBUG ===');
+        console.log('Project ID:', projectId);
 
         try {
           // Get current user ID
           const currentUserId = await getTodoUserId();
-          console.log('🔑 Current User ID:', currentUserId);
+          console.log('Current User ID:', currentUserId);
 
-          // Check if user is collaborator
-          const userIsCollaborator = selectedTodoProject.project_collaborators?.some(
-            c => c.user_id === currentUserId
-          );
-          console.log('✅ User is collaborator:', userIsCollaborator);
+          // Check if user is collaborator (DATABASE CHECK)
+          const { data: collabCheck, error: collabCheckError } = await supabase
+            .from('project_collaborators')
+            .select('*')
+            .eq('project_id', projectId)
+            .eq('user_id', currentUserId);
 
-          if (!userIsCollaborator) {
-            console.warn('⚠️ User is NOT a collaborator of this project!');
-            console.log('📋 Project collaborators:', selectedTodoProject.project_collaborators);
+          console.log('User is collaborator (DB check):', collabCheck);
+          if (collabCheckError) console.error('Collab check error:', collabCheckError);
 
-            // Try to add user as collaborator first
-            console.log('🔧 Attempting to add user as collaborator...');
-            const { error: collabError } = await supabase
+          // Check if user is creator (DATABASE CHECK)
+          const { data: projectCheck, error: projectCheckError } = await supabase
+            .from('task_projects')
+            .select('created_by')
+            .eq('id', projectId)
+            .single();
+
+          console.log('Project created_by:', projectCheck?.created_by);
+          console.log('User is creator:', projectCheck?.created_by === currentUserId);
+          if (projectCheckError) console.error('Project check error:', projectCheckError);
+
+          // If user is neither collaborator nor creator, add as collaborator
+          const isCollaborator = collabCheck && collabCheck.length > 0;
+          const isCreator = projectCheck?.created_by === currentUserId;
+
+          console.log('Summary:');
+          console.log('  - Is Collaborator:', isCollaborator);
+          console.log('  - Is Creator:', isCreator);
+
+          if (!isCollaborator) {
+            console.warn('⚠️ User is NOT a collaborator! Adding now...');
+
+            const { data: insertedCollab, error: collabError } = await supabase
               .from('project_collaborators')
-              .upsert({
-                project_id: selectedTodoProject.id,
+              .insert({
+                project_id: projectId,
                 user_id: currentUserId,
-                role: 'owner'
-              }, { onConflict: 'project_id,user_id' });
+                role: isCreator ? 'owner' : 'member'
+              })
+              .select();
 
             if (collabError) {
               console.error('❌ Failed to add user as collaborator:', collabError);
+              // Try upsert as fallback
+              console.log('🔄 Trying upsert as fallback...');
+              const { error: upsertError } = await supabase
+                .from('project_collaborators')
+                .upsert({
+                  project_id: projectId,
+                  user_id: currentUserId,
+                  role: isCreator ? 'owner' : 'member'
+                }, { onConflict: 'project_id,user_id' });
+
+              if (upsertError) {
+                console.error('❌ Upsert also failed:', upsertError);
+              } else {
+                console.log('✅ User added via upsert');
+              }
             } else {
-              console.log('✅ User added as collaborator');
+              console.log('✅ User added as collaborator:', insertedCollab);
             }
+
+            // Verify the collaborator was added
+            const { data: verifyCollab } = await supabase
+              .from('project_collaborators')
+              .select('*')
+              .eq('project_id', projectId)
+              .eq('user_id', currentUserId);
+            console.log('Verification - User now collaborator:', verifyCollab);
           }
 
           // Get max order_index
