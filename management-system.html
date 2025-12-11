@@ -12043,10 +12043,19 @@
       // Load Projects
       async function loadTodoProjects() {
         const container = document.getElementById('todoProjectsList');
-        if (!container) return;
+        if (!container) {
+          console.warn('⚠️ todoProjectsList container not found');
+          return;
+        }
 
         try {
-          console.log('📋 Loading To-Do Projects (NEW)...');
+          console.log('📋 ========================================');
+          console.log('📋 Loading To-Do Projects...');
+          console.log('📋 ========================================');
+
+          // Get current user for debugging
+          const currentUserId = await getTodoUserId();
+          console.log('👤 Current User ID:', currentUserId);
 
           const { data: projects, error } = await supabase
             .from('task_projects')
@@ -12062,7 +12071,27 @@
             `)
             .order('created_at', { ascending: false });
 
-          if (error) throw error;
+          console.log('📦 Raw Supabase Response:');
+          console.log('  - Error:', error);
+          console.log('  - Projects count:', projects?.length || 0);
+
+          if (error) {
+            console.error('❌ Supabase error details:', JSON.stringify(error, null, 2));
+            throw error;
+          }
+
+          // Log each project with details
+          (projects || []).forEach((p, i) => {
+            console.log(`📁 Project ${i + 1}: "${p.title}" (ID: ${p.id})`);
+            console.log(`   - Created by: ${p.created_by}`);
+            console.log(`   - Tasks: ${p.project_tasks?.length || 0}`);
+            console.log(`   - Collaborators: ${p.project_collaborators?.length || 0}`);
+            if (p.project_collaborators?.length > 0) {
+              p.project_collaborators.forEach(c => {
+                console.log(`     • ${c.role}: ${c.profiles?.username || c.user_id}`);
+              });
+            }
+          });
 
           todoProjects = (projects || []).map(project => {
             const tasks = project.project_tasks || [];
@@ -12073,9 +12102,11 @@
           });
 
           renderTodoProjects();
-          console.log('✅ Projects loaded:', todoProjects.length);
+          console.log('✅ Projects loaded and rendered:', todoProjects.length);
+          console.log('📋 ========================================');
         } catch (err) {
           console.error('❌ Error loading projects:', err);
+          console.error('❌ Stack trace:', err.stack);
           container.innerHTML = '<div class="todo-empty-state">Fehler beim Laden</div>';
         }
       }
@@ -12425,7 +12456,14 @@
 
       // Open Add Task Modal
       function openTodoTaskModal() {
-        if (!selectedTodoProject) return;
+        if (!selectedTodoProject) {
+          console.warn('⚠️ No project selected');
+          return;
+        }
+
+        console.log('📝 Opening Add Task Modal');
+        console.log('📁 Selected Project:', selectedTodoProject.id, selectedTodoProject.title);
+        console.log('👥 Project Collaborators:', selectedTodoProject.project_collaborators);
 
         document.getElementById('todoTaskTitle').value = '';
         document.getElementById('todoTaskAssignee').value = '';
@@ -12434,11 +12472,17 @@
         const assigneeSelect = document.getElementById('todoTaskAssignee');
         const collabs = selectedTodoProject.project_collaborators || [];
 
+        console.log('👥 Collaborators count:', collabs.length);
+
         if (collabs.length > 0) {
           document.getElementById('todoTaskAssigneeGroup').style.display = 'block';
-          assigneeSelect.innerHTML = '<option value="">Niemand</option>' +
-            collabs.map(c => `<option value="${c.user_id}">${c.profiles?.username || 'Unknown'}</option>`).join('');
+          const options = collabs.map(c => {
+            console.log('  - Collaborator:', c.user_id, c.profiles?.username, c.role);
+            return `<option value="${c.user_id}">${c.profiles?.username || 'Unknown'} (${c.role})</option>`;
+          });
+          assigneeSelect.innerHTML = '<option value="">Niemand</option>' + options.join('');
         } else {
+          console.log('⚠️ No collaborators found - hiding dropdown');
           document.getElementById('todoTaskAssigneeGroup').style.display = 'none';
         }
 
@@ -12455,23 +12499,68 @@
           return;
         }
 
+        console.log('💾 Creating task...');
+        console.log('📁 Project ID:', selectedTodoProject.id);
+        console.log('📝 Task Title:', title);
+        console.log('👤 Assigned To:', assignedTo);
+
         try {
+          // Get current user ID
+          const currentUserId = await getTodoUserId();
+          console.log('🔑 Current User ID:', currentUserId);
+
+          // Check if user is collaborator
+          const userIsCollaborator = selectedTodoProject.project_collaborators?.some(
+            c => c.user_id === currentUserId
+          );
+          console.log('✅ User is collaborator:', userIsCollaborator);
+
+          if (!userIsCollaborator) {
+            console.warn('⚠️ User is NOT a collaborator of this project!');
+            console.log('📋 Project collaborators:', selectedTodoProject.project_collaborators);
+
+            // Try to add user as collaborator first
+            console.log('🔧 Attempting to add user as collaborator...');
+            const { error: collabError } = await supabase
+              .from('project_collaborators')
+              .upsert({
+                project_id: selectedTodoProject.id,
+                user_id: currentUserId,
+                role: 'owner'
+              }, { onConflict: 'project_id,user_id' });
+
+            if (collabError) {
+              console.error('❌ Failed to add user as collaborator:', collabError);
+            } else {
+              console.log('✅ User added as collaborator');
+            }
+          }
+
           // Get max order_index
           const maxOrder = selectedTodoProject.tasks.reduce((max, t) => Math.max(max, t.order_index || 0), -1);
 
+          const taskData = {
+            project_id: selectedTodoProject.id,
+            title,
+            assigned_to: assignedTo,
+            order_index: maxOrder + 1,
+            is_completed: false
+          };
+
+          console.log('📦 Task data:', taskData);
+
           const { data: task, error } = await supabase
             .from('project_tasks')
-            .insert({
-              project_id: selectedTodoProject.id,
-              title,
-              assigned_to: assignedTo,
-              order_index: maxOrder + 1,
-              is_completed: false
-            })
+            .insert(taskData)
             .select()
             .single();
 
-          if (error) throw error;
+          if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+          }
+
+          console.log('✅ Task created successfully:', task);
 
           // Update local state
           const projectIdx = todoProjects.findIndex(p => p.id === selectedTodoProject.id);
@@ -12489,8 +12578,9 @@
           renderTodoProjects();
           renderTodoTasks();
         } catch (err) {
-          console.error('Error creating task:', err);
-          alert('Fehler beim Erstellen des Tasks');
+          console.error('❌ Error creating task:', err);
+          console.error('Error details:', JSON.stringify(err, null, 2));
+          alert('Fehler beim Erstellen des Tasks: ' + (err.message || err));
         }
       }
 
