@@ -23897,6 +23897,13 @@
             // Update UI with complete profile data
             updateUIForUser(profile);
             await initializePermissions();
+
+            // Reload To-Do projects after session restore
+            console.log('✅ Session restored, reloading To-Do projects...');
+            if (typeof loadTodoProjects === 'function') {
+              await loadTodoProjects();
+              console.log('✅ To-Do projects reloaded after session restore');
+            }
             return;
           } else {
             console.log('⚠️ Saved user not found - clearing session');
@@ -24265,6 +24272,15 @@
       loadCurrentUserArtistId().then(() => {
         applyArtistUserRestrictions();
       });
+
+      // ═══════════════════════════════════════════════════════════════
+      // RELOAD TO-DO PROJECTS AFTER LOGIN
+      // ═══════════════════════════════════════════════════════════════
+      console.log('✅ Login successful, reloading To-Do projects...');
+      if (typeof loadTodoProjects === 'function') {
+        await loadTodoProjects();
+        console.log('✅ To-Do projects reloaded after login');
+      }
     }
 
     // Close login modal
