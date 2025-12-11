@@ -2638,22 +2638,39 @@
       gap: 24px;
     }
 
-    .dashboard-bottom-row {
+    /* Row 1: Pinned Events + Schwarzes Brett (2 columns) */
+    .dashboard-top-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 24px;
+      margin-bottom: 24px;
     }
 
-    /* All 4 containers should have same width */
-    .dashboard-bottom-row > .container-section {
+    .dashboard-top-row > .container-section {
       width: 100%;
       min-width: 0;
     }
 
-    .dashboard-bottom-row > .container-section .dashboard-card,
-    .dashboard-bottom-row > .container-section .todo-projects-left,
-    .dashboard-bottom-row > .container-section .todo-tasks-right {
+    .dashboard-top-row > .container-section .dashboard-card {
       min-width: 280px;
+    }
+
+    /* Row 2: To-Do Section (Full Width, 2 columns) */
+    .dashboard-todo-row {
+      display: flex;
+      width: 100%;
+      gap: 24px;
+    }
+
+    .dashboard-todo-row > .container-section {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dashboard-todo-row .todo-projects-left,
+    .dashboard-todo-row .todo-tasks-right {
+      min-width: 280px;
+      height: 100%;
     }
 
     .container-section {
@@ -4027,10 +4044,14 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
-    /* Responsive - Tablet (2x2 Grid) */
+    /* Responsive - Tablet */
     @media (max-width: 1200px) {
-      .dashboard-bottom-row {
+      .dashboard-top-row {
         grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dashboard-todo-row {
+        flex-direction: row;
       }
 
       .todo-projects-left,
@@ -4041,8 +4062,12 @@
 
     /* Responsive - Mobile (1 Column) */
     @media (max-width: 768px) {
-      .dashboard-bottom-row {
+      .dashboard-top-row {
         grid-template-columns: 1fr !important;
+      }
+
+      .dashboard-todo-row {
+        flex-direction: column !important;
       }
 
       .todo-projects-left,
@@ -6142,8 +6167,9 @@
         margin: 0 auto;
       }
 
-      /* Dashboard Bottom Row - Stack vertically on mobile */
-      .dashboard-bottom-row {
+      /* Dashboard Rows - Stack vertically on mobile */
+      .dashboard-top-row,
+      .dashboard-todo-row {
         display: flex !important;
         flex-direction: column !important;
         gap: 24px !important;
@@ -6826,8 +6852,8 @@
 
     <!-- Dashboard Grid Layout -->
     <div class="dashboard-grid" style="margin-top: 32px;">
-      <!-- Bottom Row: Pinned Events + Schwarzes Brett -->
-      <div class="dashboard-bottom-row">
+      <!-- Row 1: Pinned Events + Schwarzes Brett -->
+      <div class="dashboard-top-row">
         <!-- Pinned Events Section -->
         <div class="container-section">
           <h3 class="container-section-title">Pinned Events</h3>
@@ -6878,7 +6904,10 @@
             <button class="add-btn" id="addMessageBtn">+ Neue Nachricht</button>
           </div>
         </div>
+      </div>
 
+      <!-- Row 2: To-Do Section (Full Width) -->
+      <div class="dashboard-todo-row">
         <!-- Recent Projects Section -->
         <div class="container-section">
           <h3 class="container-section-title">Recent Projects</h3>
