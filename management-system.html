@@ -12070,9 +12070,15 @@
           console.log('📋 Loading To-Do Projects...');
           console.log('📋 ========================================');
 
+          // Check Supabase Auth session first
+          const { data: { session } } = await supabase.auth.getSession();
+          console.log('🔐 Auth Session:', session ? 'EXISTS' : 'NULL');
+          console.log('🔑 auth.uid():', session?.user?.id || 'NULL');
+          console.log('🎫 Access Token:', session?.access_token ? 'EXISTS' : 'NULL');
+
           // Get current user for debugging
           const currentUserId = await getTodoUserId();
-          console.log('👤 Current User ID:', currentUserId);
+          console.log('👤 Current User ID (from profile):', currentUserId);
 
           const { data: projects, error } = await supabase
             .from('task_projects')
@@ -12555,10 +12561,21 @@
         console.log('=== TASK INSERT DEBUG ===');
         console.log('Project ID:', projectId);
 
+        // Check Supabase Auth session
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('🔐 Auth Session:', session ? 'EXISTS' : 'NULL');
+        console.log('🔑 auth.uid():', session?.user?.id || 'NULL');
+        console.log('🎫 Access Token:', session?.access_token ? 'EXISTS' : 'NULL');
+
+        if (!session) {
+          console.error('❌ NO AUTH SESSION! RLS policies will fail!');
+          console.error('📝 User needs to re-login to create a Supabase Auth session');
+        }
+
         try {
           // Get current user ID
           const currentUserId = await getTodoUserId();
-          console.log('Current User ID:', currentUserId);
+          console.log('Current User ID (from profile):', currentUserId);
 
           // Check if user is collaborator (DATABASE CHECK)
           const { data: collabCheck, error: collabCheckError } = await supabase
@@ -23769,6 +23786,26 @@
     async function initAuth() {
       try {
         console.log('🔄 Initializing authentication...');
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 1: Check for existing Supabase Auth session
+        // ═══════════════════════════════════════════════════════════════
+        console.log('🔐 === AUTH SESSION CHECK ===');
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+
+        if (existingSession) {
+          console.log('✅ Supabase Auth session found');
+          console.log('🔑 Auth User ID:', existingSession.user?.id);
+          console.log('📧 Auth Email:', existingSession.user?.email);
+          console.log('🎫 Access Token:', existingSession.access_token ? 'EXISTS' : 'NULL');
+        } else {
+          console.log('⚠️ No Supabase Auth session found');
+        }
+        console.log('🔐 === END AUTH CHECK ===');
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 2: Check localStorage for saved user session
+        // ═══════════════════════════════════════════════════════════════
         const rememberMe = localStorage.getItem('rememberMe') === 'true';
         const savedUsername = localStorage.getItem('username');
 
@@ -23798,6 +23835,14 @@
               localStorage.setItem('avatarUrl', profile.avatar_url);
             } else {
               localStorage.removeItem('avatarUrl');
+            }
+
+            // Check if we need to restore Supabase Auth session
+            if (!existingSession && profile.email) {
+              console.log('⚠️ No Supabase Auth session but localStorage session exists');
+              console.log('📝 User needs to re-login for full RLS support');
+              // Note: We can't auto-restore Supabase Auth without the password
+              // The session will work but RLS policies requiring auth.uid() won't work
             }
 
             // Update UI with complete profile data
@@ -23968,6 +24013,97 @@
         console.log('✅ Login successful for:', profile.username);
         currentUser = profile;
 
+        // ═══════════════════════════════════════════════════════════════
+        // SUPABASE AUTH: Create authenticated session for RLS
+        // ═══════════════════════════════════════════════════════════════
+        console.log('🔐 === SUPABASE AUTH DEBUG ===');
+        console.log('🔐 Attempting Supabase Auth sign-in...');
+        console.log('📧 Email:', profile.email);
+
+        if (profile.email) {
+          try {
+            // Try to sign in with Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+              email: profile.email,
+              password: password
+            });
+
+            if (authError) {
+              console.warn('⚠️ Supabase Auth sign-in failed:', authError.message);
+
+              // If user doesn't exist in Auth, create them
+              if (authError.message.includes('Invalid login credentials') ||
+                  authError.message.includes('User not found')) {
+                console.log('📝 User not in Supabase Auth, creating account...');
+
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                  email: profile.email,
+                  password: password,
+                  options: {
+                    data: {
+                      username: profile.username,
+                      profile_id: profile.id
+                    }
+                  }
+                });
+
+                if (signUpError) {
+                  console.error('❌ Supabase Auth sign-up failed:', signUpError.message);
+                } else {
+                  console.log('✅ Supabase Auth account created:', signUpData);
+
+                  // Try sign-in again after sign-up
+                  const { data: retryAuth, error: retryError } = await supabase.auth.signInWithPassword({
+                    email: profile.email,
+                    password: password
+                  });
+
+                  if (retryError) {
+                    console.error('❌ Retry sign-in failed:', retryError.message);
+                  } else {
+                    console.log('✅ Supabase Auth session created:', retryAuth.session?.user?.id);
+                  }
+                }
+              }
+            } else {
+              console.log('✅ Supabase Auth session created successfully');
+              console.log('🔑 Auth User ID:', authData.session?.user?.id);
+              console.log('🎫 Access Token:', authData.session?.access_token ? 'EXISTS' : 'NULL');
+            }
+
+            // Verify session
+            const { data: { session } } = await supabase.auth.getSession();
+            console.log('=== AUTH SESSION VERIFICATION ===');
+            console.log('Session exists:', !!session);
+            console.log('Access Token:', session?.access_token ? 'EXISTS' : 'NULL');
+            console.log('Auth User ID:', session?.user?.id);
+            console.log('Profile User ID:', profile.id);
+            console.log('IDs match:', session?.user?.id === profile.id);
+
+            // IMPORTANT: Update profiles table with auth_user_id for RLS mapping
+            if (session?.user?.id && session.user.id !== profile.auth_user_id) {
+              console.log('📝 Updating profile with auth_user_id mapping...');
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ auth_user_id: session.user.id })
+                .eq('id', profile.id);
+
+              if (updateError) {
+                console.error('⚠️ Failed to update auth_user_id:', updateError.message);
+              } else {
+                console.log('✅ Profile auth_user_id updated successfully');
+                profile.auth_user_id = session.user.id;
+              }
+            }
+
+          } catch (authErr) {
+            console.error('💥 Supabase Auth error:', authErr);
+          }
+        } else {
+          console.warn('⚠️ No email for user, cannot create Supabase Auth session');
+        }
+        console.log('🔐 === END AUTH DEBUG ===');
+
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('username', profile.username);
@@ -24098,6 +24234,15 @@
     async function logout() {
       if (confirm('Möchtest du dich wirklich abmelden?')) {
         console.log('🚪 Logging out user:', currentUser?.username);
+
+        // Sign out from Supabase Auth
+        console.log('🔐 Signing out from Supabase Auth...');
+        const { error: signOutError } = await supabase.auth.signOut();
+        if (signOutError) {
+          console.error('⚠️ Supabase Auth sign-out error:', signOutError);
+        } else {
+          console.log('✅ Supabase Auth signed out');
+        }
 
         currentUser = null;
         localStorage.removeItem('rememberMe');
