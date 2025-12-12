@@ -8114,10 +8114,16 @@
         <!-- Locations will be loaded dynamically -->
       </select>
 
-      <!-- Add Slot Button -->
+      <!-- Add Slot Button (for Waitlist and Upcoming) -->
       <button id="addWaitlistSlotButton" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Add Slot</span>
+      </button>
+
+      <!-- Add Previous Spot Button (for Previous Guest Spots - initially hidden) -->
+      <button id="addPreviousSpotButton" onclick="openAddPreviousSpotModal()" class="btn-nav" style="background:#1d1d1f; color:white; display:none; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Add Previous</span>
       </button>
 
       <div id="waitlistTypeToggle" style="display:inline-flex; background:rgba(142, 142, 147, 0.12); border-radius:10px; padding:3px;">
@@ -23918,16 +23924,38 @@
     let selectedSlotArtist = null;
     let selectedSlotState = 'Available';
 
-    // Modal öffnen
-    function openAddSlotModal() {
+    // Modal öffnen (mit optionalem Mode: 'normal' oder 'previous')
+    function openAddSlotModal(mode = 'normal') {
       const modal = document.getElementById('addSlotModal');
       if (!modal) return;
+
+      // Setze Mode im Modal
+      modal.dataset.mode = mode;
+
+      // Update Title basierend auf Mode
+      const titleEl = modal.querySelector('h3');
+      if (titleEl) {
+        titleEl.textContent = mode === 'previous' ? 'Previous Guest Spot hinzufügen' : 'Neuen Slot erstellen';
+      }
 
       // Reset Form
       document.getElementById('slotArtistSearch').value = '';
       document.getElementById('slotArtistId').value = '';
-      document.getElementById('slotStartDate').value = formatDateKey(dienstplanCurrentYear, dienstplanCurrentMonth, 1);
-      document.getElementById('slotEndDate').value = formatDateKey(dienstplanCurrentYear, dienstplanCurrentMonth, 1);
+
+      // Default Datum basierend auf Mode
+      if (mode === 'previous') {
+        // Previous Mode: Default letzte Woche
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        const lastWeekStr = lastWeek.toISOString().split('T')[0];
+        document.getElementById('slotStartDate').value = lastWeekStr;
+        document.getElementById('slotEndDate').value = lastWeekStr;
+      } else {
+        // Normal Mode: Erster Tag des aktuellen Monats
+        document.getElementById('slotStartDate').value = formatDateKey(dienstplanCurrentYear, dienstplanCurrentMonth, 1);
+        document.getElementById('slotEndDate').value = formatDateKey(dienstplanCurrentYear, dienstplanCurrentMonth, 1);
+      }
+
       document.getElementById('slotStartTime').value = '10:00';
       document.getElementById('slotEndTime').value = '18:00';
       document.getElementById('slotArtistDropdown').style.display = 'none';
@@ -23938,6 +23966,11 @@
       renderStateButtons();
 
       modal.style.display = 'flex';
+    }
+
+    // Öffne Modal im "Previous" Mode
+    function openAddPreviousSpotModal() {
+      openAddSlotModal('previous');
     }
 
     // State Buttons rendern
@@ -24198,6 +24231,9 @@
 
     // Neuen Dienstplan-Slot speichern
     async function saveNewSlot() {
+      const modal = document.getElementById('addSlotModal');
+      const isPreviousMode = modal?.dataset?.mode === 'previous';
+
       const startDate = document.getElementById('slotStartDate').value;
       const endDate = document.getElementById('slotEndDate').value;
       const startTime = document.getElementById('slotStartTime').value;
@@ -24221,6 +24257,14 @@
         return;
       }
 
+      const today = new Date().toISOString().split('T')[0];
+
+      // Previous Mode: Validiere dass Enddatum in der Vergangenheit liegt
+      if (isPreviousMode && endDate >= today) {
+        showNotification('Für Previous Spots muss das Enddatum in der Vergangenheit liegen', 'error');
+        return;
+      }
+
       try {
         let insertData = {
           start_date: startDate,
@@ -24238,12 +24282,50 @@
           // Hole Artist-Details für role und location
           const { data: artist } = await supabase
             .from('artists')
-            .select('location_id, is_guest')
+            .select('location_id, is_guest, name, profile_picture_url')
             .eq('id', selectedSlotArtist.id)
             .single();
 
           insertData.role = artist?.is_guest ? 'Guest Artist' : 'Resident Artist';
           insertData.location_id = artist?.location_id || null;
+
+          // Für Previous Mode: auch in previous_guest_spots einfügen
+          if (isPreviousMode && artist?.is_guest) {
+            // Hole Location-Details
+            let locationName = null;
+            let locationCity = null;
+            if (artist.location_id) {
+              const { data: loc } = await supabase
+                .from('locations')
+                .select('name, city')
+                .eq('id', artist.location_id)
+                .single();
+              locationName = loc?.name || null;
+              locationCity = loc?.city || null;
+            }
+
+            const previousInsert = {
+              artist_name: artist.name || selectedSlotArtist.name,
+              date_from: startDate,
+              date_to: endDate,
+              status: 'completed',
+              location_id: artist.location_id || null,
+              location_name: locationName,
+              location_city: locationCity,
+              profile_picture_url: artist.profile_picture_url || null
+            };
+
+            console.log('Inserting previous guest spot:', previousInsert);
+
+            const { error: prevError } = await supabase
+              .from('previous_guest_spots')
+              .insert(previousInsert);
+
+            if (prevError) {
+              console.error('Error inserting previous guest spot:', prevError);
+              // Nicht abbrechen, Dienstplan-Eintrag trotzdem erstellen
+            }
+          }
 
         } else if (selectedSlotArtist.type === 'profile_only') {
           // Profile ohne Artist-Verknüpfung
@@ -24255,7 +24337,7 @@
 
         console.log('Inserting slot:', insertData);
 
-        // Insert neuen Slot
+        // Insert neuen Slot in Dienstplan
         const { data, error } = await supabase
           .from('dienstplan')
           .insert(insertData)
@@ -24265,13 +24347,23 @@
         if (error) throw error;
 
         console.log('Slot created:', data);
-        showNotification(`Slot für ${selectedSlotArtist.name} erstellt`, 'success');
+        showNotification(
+          isPreviousMode
+            ? `Previous Guest Spot für ${selectedSlotArtist.name} hinzugefügt`
+            : `Slot für ${selectedSlotArtist.name} erstellt`,
+          'success'
+        );
 
         // Modal schließen
         closeAddSlotModal();
 
         // Daten neu laden
         await loadDienstplanData();
+
+        // Bei Previous Mode auch Previous Guest Spots neu laden
+        if (isPreviousMode && typeof loadPreviousGuestSpots === 'function') {
+          await loadPreviousGuestSpots();
+        }
 
       } catch (err) {
         console.error('Error creating slot:', err);
@@ -24284,6 +24376,13 @@
       const modal = document.getElementById('addSlotModal');
       if (modal) {
         modal.style.display = 'none';
+        // Reset Mode
+        modal.dataset.mode = '';
+        // Reset Title
+        const titleEl = modal.querySelector('h3');
+        if (titleEl) {
+          titleEl.textContent = 'Neuen Slot erstellen';
+        }
       }
       // Reset state
       selectedSlotArtist = null;
@@ -24302,6 +24401,7 @@
 
     // Global verfügbar machen
     window.openAddSlotModal = openAddSlotModal;
+    window.openAddPreviousSpotModal = openAddPreviousSpotModal;
     window.closeAddSlotModal = closeAddSlotModal;
     window.renderStateButtons = renderStateButtons;
     window.selectSlotState = selectSlotState;
@@ -29491,6 +29591,21 @@
             btn.style.boxShadow = 'none';
           }
         });
+
+        // Show/Hide Add Buttons based on list type
+        const addSlotButton = document.getElementById('addWaitlistSlotButton');
+        const addPreviousButton = document.getElementById('addPreviousSpotButton');
+        if (addSlotButton && addPreviousButton) {
+          if (listType === 'previous') {
+            // Show Add Previous, hide Add Slot
+            addSlotButton.style.display = 'none';
+            addPreviousButton.style.display = 'flex';
+          } else {
+            // Show Add Slot, hide Add Previous
+            addSlotButton.style.display = 'flex';
+            addPreviousButton.style.display = 'none';
+          }
+        }
 
         // Update description text
         const descriptionEl = document.getElementById('listTypeDescription');
