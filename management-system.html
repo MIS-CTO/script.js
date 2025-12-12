@@ -7336,27 +7336,73 @@
       border: 1px solid rgba(0,0,0,0.05);
       flex-wrap: wrap;
     ">
-      <!-- Zeitraum -->
-      <div style="flex: 1; min-width: 180px;">
-        <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 6px;">Von</label>
-        <input type="date" id="dienstplanStartDate" onchange="loadDienstplanData()" style="
-          width: 100%;
-          padding: 8px 12px;
+      <!-- Monat-Navigation -->
+      <div style="flex: 2; min-width: 320px; display: flex; align-items: center; gap: 8px;">
+        <button onclick="navigateDienstplanMonth(-1)" style="
+          background: white;
           border: 1px solid rgba(0,0,0,0.1);
           border-radius: 8px;
+          padding: 8px 12px;
           font-size: 14px;
-        ">
-      </div>
+          cursor: pointer;
+          transition: all 0.2s;
+        " onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='white'">‹</button>
 
-      <div style="flex: 1; min-width: 180px;">
-        <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 6px;">Bis</label>
-        <input type="date" id="dienstplanEndDate" onchange="loadDienstplanData()" style="
-          width: 100%;
+        <select id="dienstplanMonthSelect" onchange="changeDienstplanMonth()" style="
           padding: 8px 12px;
           border: 1px solid rgba(0,0,0,0.1);
           border-radius: 8px;
           font-size: 14px;
+          font-weight: 600;
+          background: white;
+          cursor: pointer;
         ">
+          <option value="0">Januar</option>
+          <option value="1">Februar</option>
+          <option value="2">März</option>
+          <option value="3">April</option>
+          <option value="4">Mai</option>
+          <option value="5">Juni</option>
+          <option value="6">Juli</option>
+          <option value="7">August</option>
+          <option value="8">September</option>
+          <option value="9">Oktober</option>
+          <option value="10">November</option>
+          <option value="11">Dezember</option>
+        </select>
+
+        <select id="dienstplanYearSelect" onchange="changeDienstplanMonth()" style="
+          padding: 8px 12px;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          background: white;
+          cursor: pointer;
+        ">
+          <!-- Jahre werden dynamisch befüllt -->
+        </select>
+
+        <button onclick="goToDienstplanThisMonth()" style="
+          background: white;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 8px;
+          padding: 8px 12px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        " onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='white'">Today</button>
+
+        <button onclick="navigateDienstplanMonth(1)" style="
+          background: white;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 8px;
+          padding: 8px 12px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+        " onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='white'">›</button>
       </div>
 
       <!-- Rolle Filter -->
@@ -7371,14 +7417,12 @@
           background: white;
         ">
           <option value="all">Alle Rollen</option>
-          <option value="Geschäftsführung">Geschäftsführung</option>
-          <option value="Management">Management</option>
-          <option value="Booking Team">Booking Team</option>
-          <option value="Resident Artist">Resident Artist</option>
-          <option value="Guest Artist">Guest Artist</option>
-          <option value="Mediadepartment">Media Department</option>
-          <option value="other">Other</option>
-          <option value="null">Ohne Rolle</option>
+          <option value="Geschäftsführung">Administrator</option>
+          <option value="Management">Booking Manager</option>
+          <option value="Resident Artist">Resident</option>
+          <option value="Guest Artist">Guest</option>
+          <option value="Mediadepartment">Media</option>
+          <option value="null">Not defined</option>
         </select>
       </div>
 
@@ -22767,6 +22811,70 @@
     let workTrackingCache = [];
     let workTrackingStats = {};
 
+    // Global variables for month navigation
+    let dienstplanCurrentMonth = new Date().getMonth();
+    let dienstplanCurrentYear = new Date().getFullYear();
+
+    // Initialize month selectors
+    function initDienstplanMonthSelectors() {
+      const monthSelect = document.getElementById('dienstplanMonthSelect');
+      const yearSelect = document.getElementById('dienstplanYearSelect');
+
+      if (monthSelect) {
+        monthSelect.value = dienstplanCurrentMonth;
+      }
+
+      if (yearSelect) {
+        const currentYear = new Date().getFullYear();
+        yearSelect.innerHTML = '';
+        for (let y = currentYear - 1; y <= currentYear + 2; y++) {
+          yearSelect.innerHTML += `<option value="${y}" ${y === dienstplanCurrentYear ? 'selected' : ''}>${y}</option>`;
+        }
+      }
+    }
+
+    // Change month via dropdown
+    function changeDienstplanMonth() {
+      const monthSelect = document.getElementById('dienstplanMonthSelect');
+      const yearSelect = document.getElementById('dienstplanYearSelect');
+
+      if (monthSelect && yearSelect) {
+        dienstplanCurrentMonth = parseInt(monthSelect.value);
+        dienstplanCurrentYear = parseInt(yearSelect.value);
+        applyDienstplanFilters();
+      }
+    }
+
+    // Navigate to prev/next month
+    function navigateDienstplanMonth(direction) {
+      dienstplanCurrentMonth += direction;
+
+      if (dienstplanCurrentMonth > 11) {
+        dienstplanCurrentMonth = 0;
+        dienstplanCurrentYear++;
+      } else if (dienstplanCurrentMonth < 0) {
+        dienstplanCurrentMonth = 11;
+        dienstplanCurrentYear--;
+      }
+
+      initDienstplanMonthSelectors();
+      applyDienstplanFilters();
+    }
+
+    // Jump to current month
+    function goToDienstplanThisMonth() {
+      dienstplanCurrentMonth = new Date().getMonth();
+      dienstplanCurrentYear = new Date().getFullYear();
+      initDienstplanMonthSelectors();
+      applyDienstplanFilters();
+    }
+
+    // Make functions globally available
+    window.navigateDienstplanMonth = navigateDienstplanMonth;
+    window.changeDienstplanMonth = changeDienstplanMonth;
+    window.goToDienstplanThisMonth = goToDienstplanThisMonth;
+    window.initDienstplanMonthSelectors = initDienstplanMonthSelectors;
+
     // Helper function: Get role badge HTML
     function getRoleBadge(role) {
       const roleColors = {
@@ -22835,18 +22943,8 @@
       console.log('📅 Loading Dienstplan data...');
       console.log('🚨 BATCH LOADING ALL DIENSTPLAN DATA');
 
-      const startDateInput = document.getElementById('dienstplanStartDate');
-      const endDateInput = document.getElementById('dienstplanEndDate');
-
-      // Set default dates if not set (current month)
-      if (!startDateInput.value) {
-        const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        startDateInput.value = startDate.toISOString().split('T')[0];
-      }
-      if (!endDateInput.value) {
-        const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-        endDateInput.value = endDate.toISOString().split('T')[0];
-      }
+      // Initialize month selectors
+      initDienstplanMonthSelectors();
 
       try {
         // 🔥 BATCH LOADING: Load ALL dienstplan entries in batches of 1000
@@ -22913,23 +23011,22 @@
     function applyDienstplanFilters() {
       const roleFilter = document.getElementById('dienstplanRoleFilter')?.value || 'all';
       const statusFilter = document.getElementById('dienstplanStatusFilter')?.value || 'all';
-      const startDate = document.getElementById('dienstplanStartDate')?.value;
-      const endDate = document.getElementById('dienstplanEndDate')?.value;
 
-      console.log('🔍 Applying filters - Role:', roleFilter, 'Status:', statusFilter, 'Date:', startDate, '-', endDate);
+      // Use global month variables for date range
+      const daysInMonth = new Date(dienstplanCurrentYear, dienstplanCurrentMonth + 1, 0).getDate();
+      const startDateStr = `${dienstplanCurrentYear}-${String(dienstplanCurrentMonth + 1).padStart(2, '0')}-01`;
+      const endDateStr = `${dienstplanCurrentYear}-${String(dienstplanCurrentMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
+      console.log('🔍 Applying filters - Role:', roleFilter, 'Status:', statusFilter, 'Month:', startDateStr, 'to', endDateStr);
 
       dienstplanFiltered = dienstplanCache.filter(entry => {
-        // Date range filter
-        if (startDate && endDate) {
-          const entryStartDate = new Date(entry.start_date);
-          const entryEndDate = new Date(entry.end_date);
-          const filterStartDate = new Date(startDate);
-          const filterEndDate = new Date(endDate);
+        // Date range filter: entry overlaps with selected month
+        const entryStart = entry.start_date;
+        const entryEnd = entry.end_date;
 
-          // Check if entry overlaps with filter date range
-          const overlaps = entryStartDate <= filterEndDate && entryEndDate >= filterStartDate;
-          if (!overlaps) return false;
-        }
+        // Entry overlaps month if: entry.start <= monthEnd AND entry.end >= monthStart
+        const overlapsMonth = entryStart <= endDateStr && entryEnd >= startDateStr;
+        if (!overlapsMonth) return false;
 
         // Role filter
         if (roleFilter !== 'all') {
@@ -22975,11 +23072,9 @@
         return;
       }
 
-      // Monat aus Datumsfilter
-      const startDateInput = document.getElementById('dienstplanStartDate');
-      const startDate = startDateInput?.value ? new Date(startDateInput.value) : new Date();
-      const currentMonth = startDate.getMonth();
-      const currentYear = startDate.getFullYear();
+      // Nutze globale Monat-Variablen
+      const currentMonth = dienstplanCurrentMonth;
+      const currentYear = dienstplanCurrentYear;
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
       // Helper: Lokales Datum als YYYY-MM-DD String (ohne Zeitzonenverschiebung)
@@ -23177,54 +23272,75 @@
               </div>
           `;
 
-          // Zellen für jeden Tag - Track welche Tage bereits von Balken abgedeckt sind
-          const coveredDays = new Set();
+          // Erstelle Map für alle Tage dieses Artists (String-basierte Logik)
+          const dayMap = {}; // dayMap[dayNumber] = { entry, span } oder 'skip'
+          const monthStartStr = formatDateKey(currentYear, currentMonth, 1);
+          const monthEndStr = formatDateKey(currentYear, currentMonth, daysInMonth);
 
+          artistData.entries.forEach(entry => {
+            // Parse Start/End als Strings (YYYY-MM-DD)
+            const entryStartStr = entry.start_date;
+            const entryEndStr = entry.end_date;
+
+            // Berechne effektiven Start/End im aktuellen Monat
+            let effectiveStartDay = 1;
+            let effectiveEndDay = daysInMonth;
+
+            // Wenn Eintrag im oder nach Monatsstart beginnt
+            if (entryStartStr >= monthStartStr && entryStartStr <= monthEndStr) {
+              effectiveStartDay = parseInt(entryStartStr.split('-')[2]);
+            }
+
+            // Wenn Eintrag im oder vor Monatsende endet
+            if (entryEndStr >= monthStartStr && entryEndStr <= monthEndStr) {
+              effectiveEndDay = parseInt(entryEndStr.split('-')[2]);
+            }
+
+            // Wenn Eintrag vor dem Monat startet
+            if (entryStartStr < monthStartStr) {
+              effectiveStartDay = 1;
+            }
+
+            // Wenn Eintrag nach dem Monat endet
+            if (entryEndStr > monthEndStr) {
+              effectiveEndDay = daysInMonth;
+            }
+
+            const spanDays = effectiveEndDay - effectiveStartDay + 1;
+
+            // Speichere Entry am Start-Tag (überschreibe nicht existierende)
+            if (!dayMap[effectiveStartDay]) {
+              dayMap[effectiveStartDay] = {
+                entry: entry,
+                span: spanDays
+              };
+
+              // Markiere Folge-Tage als skip
+              for (let d = effectiveStartDay + 1; d <= effectiveEndDay; d++) {
+                if (!dayMap[d]) {
+                  dayMap[d] = 'skip';
+                }
+              }
+            }
+          });
+
+          // Rendere Tages-Zellen
           for (let day = 1; day <= daysInMonth; day++) {
-            // Skip wenn dieser Tag bereits von einem Balken abgedeckt ist
-            if (coveredDays.has(day)) continue;
-
-            const date = new Date(currentYear, currentMonth, day);
+            const cellData = dayMap[day];
             const dateKey = formatDateKey(currentYear, currentMonth, day);
-            const dayOfWeek = date.getDay();
+            const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
             const isToday = dateKey === today;
 
-            // Finde Eintrag der an diesem Tag beginnt oder diesen Tag enthält
-            const entry = artistData.entries.find(e => {
-              const start = new Date(e.start_date);
-              const end = new Date(e.end_date);
-              return date >= start && date <= end;
-            });
+            if (cellData === 'skip') {
+              // Zelle wird vom Balken überspannt - NICHT rendern
+              continue;
+            }
 
-            // Prüfe ob das der Start-Tag des Eintrags ist (innerhalb des Monats)
-            const isStartDay = entry && (() => {
-              const entryStart = new Date(entry.start_date);
-              const monthStart = new Date(currentYear, currentMonth, 1);
-              // Eintrag beginnt genau an diesem Tag ODER
-              // Eintrag hat vor dem Monat begonnen und dies ist der erste Tag des Monats
-              return dateKey === entry.start_date || (entryStart < monthStart && day === 1);
-            })();
-
-            if (entry && isStartDay) {
-              // Berechne Balken-Länge
-              const entryStart = new Date(entry.start_date);
-              const entryEnd = new Date(entry.end_date);
-              const monthEnd = new Date(currentYear, currentMonth + 1, 0);
-
-              // Start-Tag im aktuellen Monat
-              const effectiveStart = entryStart < new Date(currentYear, currentMonth, 1)
-                ? new Date(currentYear, currentMonth, 1)
-                : entryStart;
-              // End-Tag im aktuellen Monat
-              const effectiveEnd = entryEnd > monthEnd ? monthEnd : entryEnd;
-
-              const spanDays = Math.ceil((effectiveEnd - effectiveStart) / (1000 * 60 * 60 * 24)) + 1;
-
-              // Markiere alle Tage als abgedeckt
-              for (let i = day; i < day + spanDays && i <= daysInMonth; i++) {
-                coveredDays.add(i);
-              }
+            if (cellData && cellData.entry) {
+              // BALKEN rendern
+              const entry = cellData.entry;
+              const spanDays = cellData.span;
 
               const stateClass = entry.state?.toLowerCase() || 'available';
               const stateColors = {
@@ -23242,7 +23358,7 @@
                 ? `${entry.working_start.substring(0,5)}-${entry.working_end.substring(0,5)}`
                 : '';
 
-              const tooltipText = `${artistData.name}&#10;${entry.start_date} - ${entry.end_date}&#10;Status: ${entry.state || 'Available'}${workingHours ? '&#10;Zeit: ' + workingHours : ''}${entry.location?.name ? '&#10;Ort: ' + entry.location.name : ''}`;
+              const tooltipText = `${artistData.name}\n${entry.start_date} - ${entry.end_date}\nStatus: ${entry.state || 'Available'}${workingHours ? '\nZeit: ' + workingHours : ''}${entry.location?.name ? '\nOrt: ' + entry.location.name : ''}`;
 
               html += `
                 <div style="
@@ -23268,7 +23384,7 @@
                   ${spanDays > 2 ? (workingHours || stateLabels[stateClass] || '') : (stateLabels[stateClass] || '')}
                 </div>
               `;
-            } else if (!entry) {
+            } else {
               // Leere Zelle
               html += `
                 <div style="
@@ -23581,23 +23697,22 @@
     function calculateWorkTrackingStats() {
       console.log('📊 Calculating Work Tracking stats...');
 
-      const startDate = document.getElementById('dienstplanStartDate')?.value;
-      const endDate = document.getElementById('dienstplanEndDate')?.value;
+      // Use global month variables
+      const daysInMonth = new Date(dienstplanCurrentYear, dienstplanCurrentMonth + 1, 0).getDate();
+      const startDateStr = `${dienstplanCurrentYear}-${String(dienstplanCurrentMonth + 1).padStart(2, '0')}-01`;
+      const endDateStr = `${dienstplanCurrentYear}-${String(dienstplanCurrentMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
-      // Filter by date range first
-      let filteredEntries = workTrackingCache;
-      if (startDate && endDate) {
-        const filterStartDate = new Date(startDate);
-        const filterEndDate = new Date(endDate);
+      // Filter by date range
+      const filterStartDate = new Date(startDateStr);
+      const filterEndDate = new Date(endDateStr);
 
-        filteredEntries = workTrackingCache.filter(entry => {
-          if (!entry.date) return false;
-          const entryDate = new Date(entry.date);
-          return entryDate >= filterStartDate && entryDate <= filterEndDate;
-        });
+      const filteredEntries = workTrackingCache.filter(entry => {
+        if (!entry.date) return false;
+        const entryDate = new Date(entry.date);
+        return entryDate >= filterStartDate && entryDate <= filterEndDate;
+      });
 
-        console.log(`📅 Filtered work_tracking to date range: ${filteredEntries.length} of ${workTrackingCache.length} entries`);
-      }
+      console.log(`📅 Filtered work_tracking to month: ${filteredEntries.length} of ${workTrackingCache.length} entries`);
 
       // Group by user_email
       const userStats = {};
@@ -23777,18 +23892,8 @@
         </div>
       `;
 
-      // Load data with same date range as dienstplan (use current month if not set)
-      const startDateInput = document.getElementById('dienstplanStartDate');
-      const endDateInput = document.getElementById('dienstplanEndDate');
-
-      if (!startDateInput.value) {
-        const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        startDateInput.value = startDate.toISOString().split('T')[0];
-      }
-      if (!endDateInput.value) {
-        const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-        endDateInput.value = endDate.toISOString().split('T')[0];
-      }
+      // Initialize month selectors if needed
+      initDienstplanMonthSelectors();
 
       await loadWorkTrackingData();
 
