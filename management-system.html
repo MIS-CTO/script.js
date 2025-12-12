@@ -22981,7 +22981,13 @@
       const currentMonth = startDate.getMonth();
       const currentYear = startDate.getFullYear();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      const today = new Date().toISOString().split('T')[0];
+
+      // Helper: Lokales Datum als YYYY-MM-DD String (ohne Zeitzonenverschiebung)
+      const formatDateKey = (year, month, day) =>
+        `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+      const todayDate = new Date();
+      const today = formatDateKey(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
 
       // Toggle-Status
       const showOnlyWithEntries = document.getElementById('showOnlyWithEntries')?.checked ?? true;
@@ -23075,7 +23081,7 @@
       // Tage-Header
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
-        const dateKey = date.toISOString().split('T')[0];
+        const dateKey = formatDateKey(currentYear, currentMonth, day);
         const dayOfWeek = date.getDay();
         const isToday = dateKey === today;
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -23179,9 +23185,10 @@
             if (coveredDays.has(day)) continue;
 
             const date = new Date(currentYear, currentMonth, day);
-            const dateKey = date.toISOString().split('T')[0];
+            const dateKey = formatDateKey(currentYear, currentMonth, day);
             const dayOfWeek = date.getDay();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isToday = dateKey === today;
 
             // Finde Eintrag der an diesem Tag beginnt oder diesen Tag enthält
             const entry = artistData.entries.find(e => {
@@ -23265,10 +23272,13 @@
               // Leere Zelle
               html += `
                 <div style="
+                  position: relative;
                   background: ${isWeekend ? 'rgba(0,0,0,0.02)' : 'white'};
                   border-bottom: 1px solid rgba(0,0,0,0.05);
                   min-height: 36px;
-                "></div>
+                ">
+                  ${isToday ? '<div style="position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: #FF3B30; transform: translateX(-50%);"></div>' : ''}
+                </div>
               `;
             }
           }
