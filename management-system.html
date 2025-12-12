@@ -12044,17 +12044,42 @@
 
       // Helper: Get Current User ID
       async function getTodoUserId() {
+        console.log('🔍 getTodoUserId() called');
+        console.log('  - currentUser defined:', typeof currentUser !== 'undefined');
+        console.log('  - currentUser:', currentUser);
+
+        // PRIORITY 1: Use currentUser.id (this is always profiles.id)
         if (typeof currentUser !== 'undefined' && currentUser?.id) {
+          console.log('  ✅ Returning currentUser.id (profiles.id):', currentUser.id);
           return currentUser.id;
         }
+
+        // PRIORITY 2: If we have currentUser.email, look up profiles.id
+        if (typeof currentUser !== 'undefined' && currentUser?.email) {
+          console.log('  🔍 Looking up profile by email:', currentUser.email);
+          const { data: profile } = await supabase.from('profiles').select('id').eq('email', currentUser.email).single();
+          if (profile?.id) {
+            console.log('  ✅ Found profiles.id by email:', profile.id);
+            return profile.id;
+          }
+        }
+
+        // PRIORITY 3: Try to get profile from Supabase Auth session
         try {
           const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.id) return session.user.id;
-        } catch (e) {}
-        if (typeof currentUser !== 'undefined' && currentUser?.email) {
-          const { data: profile } = await supabase.from('profiles').select('id').eq('email', currentUser.email).single();
-          if (profile?.id) return profile.id;
+          if (session?.user?.email) {
+            console.log('  🔍 Looking up profile by auth email:', session.user.email);
+            const { data: profile } = await supabase.from('profiles').select('id').eq('email', session.user.email).single();
+            if (profile?.id) {
+              console.log('  ✅ Found profiles.id by auth email:', profile.id);
+              return profile.id;
+            }
+          }
+        } catch (e) {
+          console.warn('  ⚠️ Error getting auth session:', e);
         }
+
+        console.log('  ❌ No user ID found, returning null');
         return null;
       }
 
@@ -12155,6 +12180,33 @@
               });
             }
           });
+
+          // ═══════════════════════════════════════════════════════════════
+          // FILTER DEBUG - Detailed logging to diagnose filter issues
+          // ═══════════════════════════════════════════════════════════════
+          console.log('=== FILTER DEBUG ===');
+          console.log('Current User ID:', currentUserId);
+          console.log('Current User ID type:', typeof currentUserId);
+          console.log('All projects:', (projects || []).map(p => ({
+              id: p.id,
+              title: p.title,
+              created_by: p.created_by,
+              created_by_type: typeof p.created_by,
+              collaborators: p.project_collaborators?.map(c => ({ user_id: c.user_id, role: c.role }))
+          })));
+          console.log('Filter check for each project:');
+          (projects || []).forEach(p => {
+              const isCreator = p.created_by === currentUserId;
+              const isCollaborator = p.project_collaborators?.some(c => c.user_id === currentUserId);
+              console.log(`  "${p.title}": created_by=${p.created_by}, isCreator=${isCreator}, isCollaborator=${isCollaborator}`);
+              if (p.project_collaborators?.length > 0) {
+                  p.project_collaborators.forEach(c => {
+                      const match = c.user_id === currentUserId;
+                      console.log(`    - Collaborator: ${c.user_id} === ${currentUserId} ? ${match}`);
+                  });
+              }
+          });
+          console.log('=== END FILTER DEBUG ===');
 
           // FRONTEND FILTER: Only show projects where user is creator OR collaborator
           const filteredProjects = (projects || []).filter(project => {
