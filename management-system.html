@@ -23169,22 +23169,23 @@
           </label>
         </div>
 
-        <div style="overflow-x: auto; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); background: white;">
+        <div style="overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 300px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); background: white;">
           <div class="dienstplan-timeline" style="
             display: grid;
             grid-template-columns: 200px repeat(${daysInMonth}, minmax(36px, 1fr));
             min-width: max-content;
           ">
-            <!-- Header Row -->
+            <!-- Header Row - Resources (doppelt sticky: top + left) -->
             <div style="
               position: sticky;
+              top: 0;
               left: 0;
-              background: linear-gradient(180deg, #f5f5f7 0%, #ebebed 100%);
+              background: #f5f5f7;
               padding: 12px;
               font-weight: 600;
               font-size: 12px;
               border-bottom: 1px solid rgba(0,0,0,0.1);
-              z-index: 20;
+              z-index: 30;
               display: flex;
               align-items: center;
             ">
@@ -23192,7 +23193,7 @@
             </div>
       `;
 
-      // Tage-Header
+      // Tage-Header (sticky top)
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
         const dateKey = formatDateKey(currentYear, currentMonth, day);
@@ -23201,19 +23202,20 @@
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
         html += `
-          <div class="timeline-day-header ${isToday ? 'today-column' : ''}" data-date="${dateKey}" style="
-            position: relative;
-            padding: 10px 4px;
+          <div class="timeline-day-header" data-date="${dateKey}" style="
+            position: sticky;
+            top: 0;
+            padding: 8px 4px;
             text-align: center;
             font-size: 11px;
-            font-weight: 500;
-            background: ${isWeekend ? 'rgba(0,0,0,0.03)' : '#f5f5f7'};
-            color: ${isToday ? '#FF3B30' : isWeekend ? '#86868b' : '#1d1d1f'};
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            ${isToday ? 'font-weight: 600;' : ''}
+            font-weight: ${isToday ? '700' : '500'};
+            background: ${isToday ? '#FF3B30' : isWeekend ? 'rgba(0,0,0,0.03)' : '#f5f5f7'};
+            color: ${isToday ? 'white' : isWeekend ? '#86868b' : '#1d1d1f'};
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            z-index: 20;
+            ${isToday ? 'border-radius: 4px; margin: 2px;' : ''}
           ">
-            ${isToday ? '<div style="position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: #FF3B30; transform: translateX(-50%); z-index: 1;"></div>' : ''}
-            <span style="position: relative; z-index: 2;">${day} ${dayNames[dayOfWeek]}</span>
+            ${day} ${dayNames[dayOfWeek]}
           </div>
         `;
       }
@@ -23401,13 +23403,10 @@
               // Leere Zelle
               html += `
                 <div style="
-                  position: relative;
-                  background: ${isWeekend ? 'rgba(0,0,0,0.02)' : 'white'};
+                  background: ${isToday ? 'rgba(255, 59, 48, 0.05)' : isWeekend ? 'rgba(0,0,0,0.02)' : 'white'};
                   border-bottom: 1px solid rgba(0,0,0,0.05);
                   min-height: 36px;
-                ">
-                  ${isToday ? '<div style="position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: #FF3B30; transform: translateX(-50%);"></div>' : ''}
-                </div>
+                "></div>
               `;
             }
           }
