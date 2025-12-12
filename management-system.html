@@ -7335,7 +7335,29 @@
       border-radius: 12px;
       border: 1px solid rgba(0,0,0,0.05);
       flex-wrap: wrap;
+      align-items: flex-end;
     ">
+      <!-- Add Slot Button -->
+      <button onclick="openAddSlotModal()" style="
+        background: #1d1d1f;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        transition: all 0.2s;
+        white-space: nowrap;
+      " onmouseover="this.style.background='#333'" onmouseout="this.style.background='#1d1d1f'">
+        <span style="font-size: 18px; line-height: 1;">+</span>
+        <span>Add Slot</span>
+      </button>
+
       <!-- Monat-Navigation -->
       <div style="flex: 2; min-width: 320px; display: flex; align-items: center; gap: 8px;">
         <button onclick="navigateDienstplanMonth(-1)" style="
@@ -7456,6 +7478,204 @@
 
     <!-- Table 2: Work Tracking Stats -->
     <div id="workTrackingTableContainer"></div>
+
+    <!-- Add Slot Modal -->
+    <div id="addSlotModal" style="
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    " onclick="if(event.target === this) closeAddSlotModal()">
+      <div style="
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 480px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      " onclick="event.stopPropagation()">
+        <!-- Header -->
+        <div style="
+          padding: 20px 24px;
+          border-bottom: 1px solid rgba(0,0,0,0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        ">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Neuen Slot erstellen</h3>
+          <button onclick="closeAddSlotModal()" style="
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #86868b;
+            padding: 0;
+            line-height: 1;
+          ">&times;</button>
+        </div>
+
+        <!-- Form -->
+        <div style="padding: 24px;">
+          <!-- Artist Search -->
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
+              Artist / Mitarbeiter *
+            </label>
+            <div style="position: relative;">
+              <input
+                type="text"
+                id="slotArtistSearch"
+                placeholder="Name eingeben..."
+                oninput="searchArtistsForSlot(this.value)"
+                autocomplete="off"
+                style="
+                  width: 100%;
+                  padding: 12px 16px;
+                  border: 1px solid rgba(0,0,0,0.1);
+                  border-radius: 8px;
+                  font-size: 14px;
+                  box-sizing: border-box;
+                "
+              >
+              <input type="hidden" id="slotArtistId">
+              <!-- Dropdown für Suchergebnisse -->
+              <div id="slotArtistDropdown" style="
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                border: 1px solid rgba(0,0,0,0.1);
+                border-radius: 8px;
+                margin-top: 4px;
+                max-height: 240px;
+                overflow-y: auto;
+                z-index: 10;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              "></div>
+            </div>
+          </div>
+
+          <!-- Date Range -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
+                Start Datum *
+              </label>
+              <input
+                type="date"
+                id="slotStartDate"
+                style="
+                  width: 100%;
+                  padding: 12px 16px;
+                  border: 1px solid rgba(0,0,0,0.1);
+                  border-radius: 8px;
+                  font-size: 14px;
+                  box-sizing: border-box;
+                "
+              >
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
+                End Datum *
+              </label>
+              <input
+                type="date"
+                id="slotEndDate"
+                style="
+                  width: 100%;
+                  padding: 12px 16px;
+                  border: 1px solid rgba(0,0,0,0.1);
+                  border-radius: 8px;
+                  font-size: 14px;
+                  box-sizing: border-box;
+                "
+              >
+            </div>
+          </div>
+
+          <!-- Time Range -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
+                Start Zeit
+              </label>
+              <input
+                type="time"
+                id="slotStartTime"
+                value="10:00"
+                style="
+                  width: 100%;
+                  padding: 12px 16px;
+                  border: 1px solid rgba(0,0,0,0.1);
+                  border-radius: 8px;
+                  font-size: 14px;
+                  box-sizing: border-box;
+                "
+              >
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
+                End Zeit
+              </label>
+              <input
+                type="time"
+                id="slotEndTime"
+                value="18:00"
+                style="
+                  width: 100%;
+                  padding: 12px 16px;
+                  border: 1px solid rgba(0,0,0,0.1);
+                  border-radius: 8px;
+                  font-size: 14px;
+                  box-sizing: border-box;
+                "
+              >
+            </div>
+          </div>
+
+          <!-- State/Type Selection -->
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
+              Status / Typ *
+            </label>
+            <div id="slotStateGrid" style="
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 8px;
+            ">
+              <!-- State buttons werden dynamisch generiert -->
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button onclick="saveNewSlot()" style="
+            width: 100%;
+            padding: 14px 20px;
+            background: #1d1d1f;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          " onmouseover="this.style.background='#333'" onmouseout="this.style.background='#1d1d1f'">
+            Slot erstellen
+          </button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="artists-section">
@@ -23677,7 +23897,64 @@
 
     // Globale Variable für ausgewählten Slot-User
     let selectedSlotArtist = null;
-    let selectedSlotState = null;
+    let selectedSlotState = 'Available';
+
+    // Modal öffnen
+    function openAddSlotModal() {
+      const modal = document.getElementById('addSlotModal');
+      if (!modal) return;
+
+      // Reset Form
+      document.getElementById('slotArtistSearch').value = '';
+      document.getElementById('slotArtistId').value = '';
+      document.getElementById('slotStartDate').value = formatDateKey(dienstplanCurrentYear, dienstplanCurrentMonth, 1);
+      document.getElementById('slotEndDate').value = formatDateKey(dienstplanCurrentYear, dienstplanCurrentMonth, 1);
+      document.getElementById('slotStartTime').value = '10:00';
+      document.getElementById('slotEndTime').value = '18:00';
+      document.getElementById('slotArtistDropdown').style.display = 'none';
+      selectedSlotArtist = null;
+      selectedSlotState = 'Available';
+
+      // State Buttons generieren
+      renderStateButtons();
+
+      modal.style.display = 'flex';
+    }
+
+    // State Buttons rendern
+    function renderStateButtons() {
+      const container = document.getElementById('slotStateGrid');
+      if (!container) return;
+
+      container.innerHTML = Object.entries(stateConfig).map(([state, config]) => `
+        <button
+          type="button"
+          onclick="selectSlotState('${state}')"
+          data-state="${state}"
+          style="
+            padding: 10px 8px;
+            border: 2px solid ${selectedSlotState === state ? config.color : 'rgba(0,0,0,0.1)'};
+            border-radius: 8px;
+            background: ${selectedSlotState === state ? config.color + '15' : 'white'};
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+          "
+        >
+          <span style="color: ${config.color}; display: flex;">${config.icon}</span>
+          <span style="font-size: 11px; font-weight: 500; color: #1d1d1f;">${config.label}</span>
+        </button>
+      `).join('');
+    }
+
+    // State auswählen
+    function selectSlotState(state) {
+      selectedSlotState = state;
+      renderStateButtons();
+    }
 
     // Kombinierte Suche: Artists + Profiles
     async function searchArtistsForSlot(query) {
@@ -23985,21 +24262,34 @@
 
     // Add Slot Modal schließen
     function closeAddSlotModal() {
-      const modal = document.getElementById('addDienstplanSlotModal');
+      const modal = document.getElementById('addSlotModal');
       if (modal) {
-        modal.remove();
+        modal.style.display = 'none';
       }
       // Reset state
       selectedSlotArtist = null;
-      selectedSlotState = null;
+      selectedSlotState = 'Available';
     }
 
+    // Click outside dropdown to close
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('slotArtistDropdown');
+      const searchInput = document.getElementById('slotArtistSearch');
+
+      if (dropdown && searchInput && !searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
     // Global verfügbar machen
+    window.openAddSlotModal = openAddSlotModal;
+    window.closeAddSlotModal = closeAddSlotModal;
+    window.renderStateButtons = renderStateButtons;
+    window.selectSlotState = selectSlotState;
     window.searchArtistsForSlot = searchArtistsForSlot;
     window.selectSlotProfile = selectSlotProfile;
     window.selectSlotArtist = selectSlotArtist;
     window.saveNewSlot = saveNewSlot;
-    window.closeAddSlotModal = closeAddSlotModal;
 
     // Load Work Tracking Data from database with BATCH LOADING
     async function loadWorkTrackingData() {
