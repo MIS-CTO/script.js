@@ -12245,6 +12245,9 @@
         }
       }
 
+      // Make loadTodoProjects globally accessible for other script blocks
+      window.loadTodoProjects = loadTodoProjects;
+
       // Render Projects List
       function renderTodoProjects() {
         const container = document.getElementById('todoProjectsList');
@@ -23961,12 +23964,14 @@
             updateUIForUser(profile);
             await initializePermissions();
 
-            // Reload To-Do projects after session restore (wrapped in try/catch to prevent breaking auth)
+            // Reload To-Do projects after session restore (using window.loadTodoProjects for cross-scope access)
             try {
               console.log('✅ Session restored, reloading To-Do projects...');
-              if (typeof loadTodoProjects === 'function') {
-                await loadTodoProjects();
+              if (typeof window.loadTodoProjects === 'function') {
+                await window.loadTodoProjects();
                 console.log('✅ To-Do projects reloaded after session restore');
+              } else {
+                console.warn('⚠️ window.loadTodoProjects not available yet');
               }
             } catch (todoError) {
               console.warn('⚠️ Failed to load To-Do projects after session restore:', todoError);
@@ -24341,13 +24346,19 @@
       });
 
       // ═══════════════════════════════════════════════════════════════
-      // RELOAD TO-DO PROJECTS AFTER LOGIN (using .then() since function is not async)
+      // RELOAD TO-DO PROJECTS AFTER LOGIN (using window.loadTodoProjects for cross-scope access)
       // ═══════════════════════════════════════════════════════════════
       console.log('✅ Login successful, reloading To-Do projects...');
-      if (typeof loadTodoProjects === 'function') {
-        loadTodoProjects()
+      console.log('📋 DEBUG: typeof window.loadTodoProjects =', typeof window.loadTodoProjects);
+      console.log('📋 DEBUG: currentUser =', currentUser ? currentUser.username + ' (' + currentUser.id + ')' : 'NULL');
+
+      if (typeof window.loadTodoProjects === 'function') {
+        console.log('📋 DEBUG: Calling window.loadTodoProjects() NOW...');
+        window.loadTodoProjects()
           .then(() => console.log('✅ To-Do projects reloaded after login'))
           .catch(err => console.warn('⚠️ Failed to load To-Do projects after login:', err));
+      } else {
+        console.error('❌ window.loadTodoProjects is NOT a function! Make sure DOMContentLoaded has fired.');
       }
     }
 
