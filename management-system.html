@@ -23898,11 +23898,15 @@
             updateUIForUser(profile);
             await initializePermissions();
 
-            // Reload To-Do projects after session restore
-            console.log('✅ Session restored, reloading To-Do projects...');
-            if (typeof loadTodoProjects === 'function') {
-              await loadTodoProjects();
-              console.log('✅ To-Do projects reloaded after session restore');
+            // Reload To-Do projects after session restore (wrapped in try/catch to prevent breaking auth)
+            try {
+              console.log('✅ Session restored, reloading To-Do projects...');
+              if (typeof loadTodoProjects === 'function') {
+                await loadTodoProjects();
+                console.log('✅ To-Do projects reloaded after session restore');
+              }
+            } catch (todoError) {
+              console.warn('⚠️ Failed to load To-Do projects after session restore:', todoError);
             }
             return;
           } else {
@@ -24274,12 +24278,16 @@
       });
 
       // ═══════════════════════════════════════════════════════════════
-      // RELOAD TO-DO PROJECTS AFTER LOGIN
+      // RELOAD TO-DO PROJECTS AFTER LOGIN (wrapped in try/catch to prevent breaking login)
       // ═══════════════════════════════════════════════════════════════
-      console.log('✅ Login successful, reloading To-Do projects...');
-      if (typeof loadTodoProjects === 'function') {
-        await loadTodoProjects();
-        console.log('✅ To-Do projects reloaded after login');
+      try {
+        console.log('✅ Login successful, reloading To-Do projects...');
+        if (typeof loadTodoProjects === 'function') {
+          await loadTodoProjects();
+          console.log('✅ To-Do projects reloaded after login');
+        }
+      } catch (todoError) {
+        console.warn('⚠️ Failed to load To-Do projects after login:', todoError);
       }
     }
 
