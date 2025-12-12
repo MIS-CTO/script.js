@@ -23277,6 +23277,17 @@
       renderDienstplanTable();
     }
 
+    // ==========================================
+    // HELPER: Format Date Key (Global)
+    // ==========================================
+    /**
+     * Formatiert ein Datum als YYYY-MM-DD String ohne Timezone-Probleme
+     */
+    function formatDateKey(year, month, day) {
+      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    window.formatDateKey = formatDateKey;
+
     // Render Dienstplan Timeline (Horizontal View with Role Groups)
     function renderDienstplanTable() {
       const container = document.getElementById('dienstplanTableContainer');
@@ -23303,9 +23314,7 @@
       const currentYear = dienstplanCurrentYear;
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-      // Helper: Lokales Datum als YYYY-MM-DD String (ohne Zeitzonenverschiebung)
-      const formatDateKey = (year, month, day) =>
-        `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      // formatDateKey wird nun als globale Funktion verwendet
 
       const todayDate = new Date();
       const today = formatDateKey(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
