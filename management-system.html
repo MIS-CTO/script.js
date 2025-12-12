@@ -23671,6 +23671,336 @@
       }
     }
 
+    // ============================================
+    // Dienstplan Add Slot: Kombinierte Artist + Profile Suche
+    // ============================================
+
+    // Globale Variable für ausgewählten Slot-User
+    let selectedSlotArtist = null;
+    let selectedSlotState = null;
+
+    // Kombinierte Suche: Artists + Profiles
+    async function searchArtistsForSlot(query) {
+      const dropdown = document.getElementById('slotArtistDropdown');
+      if (!dropdown) return;
+
+      if (query.length < 2) {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      try {
+        // Parallel-Suche in beiden Tabellen
+        const [artistsResult, profilesResult] = await Promise.all([
+          // Suche Artists
+          supabase
+            .from('artists')
+            .select('id, name, email, is_guest, rank, user_id')
+            .ilike('name', `%${query}%`)
+            .limit(8),
+
+          // Suche Profiles (Team-Mitglieder)
+          supabase
+            .from('profiles')
+            .select('id, username, email, role')
+            .ilike('username', `%${query}%`)
+            .limit(8)
+        ]);
+
+        const artistsList = artistsResult.data || [];
+        const profiles = profilesResult.data || [];
+
+        // Kombiniere Ergebnisse
+        let html = '';
+
+        // Artists Section
+        if (artistsList.length > 0) {
+          html += `
+            <div style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: #86868b; background: #f5f5f7; text-transform: uppercase; letter-spacing: 0.5px;">
+              Artists
+            </div>
+          `;
+
+          artistsList.forEach(artist => {
+            const typeLabel = artist.is_guest ? 'Guest Artist' : 'Resident';
+            html += `
+              <div
+                onclick="selectSlotArtist('${artist.id}', '${artist.name.replace(/'/g, "\\'")}', '${artist.email || ''}', '${typeLabel}', 'artist')"
+                style="
+                  padding: 12px 16px;
+                  cursor: pointer;
+                  border-bottom: 1px solid rgba(0,0,0,0.05);
+                  transition: background 0.15s;
+                "
+                onmouseover="this.style.background='rgba(0,0,0,0.03)'"
+                onmouseout="this.style.background='white'"
+              >
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: ${artist.is_guest ? '#00C7BE' : '#34C759'};
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 12px;
+                    font-weight: 600;
+                  ">${artist.name.charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div style="font-weight: 500; font-size: 14px; color: #1d1d1f;">${artist.name}</div>
+                    <div style="font-size: 12px; color: #86868b;">
+                      ${typeLabel} ${artist.rank ? '• ' + artist.rank : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        // Profiles Section (Team-Mitglieder)
+        if (profiles.length > 0) {
+          html += `
+            <div style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: #86868b; background: #f5f5f7; text-transform: uppercase; letter-spacing: 0.5px;">
+              Team-Mitglieder
+            </div>
+          `;
+
+          profiles.forEach(profile => {
+            // Rolle formatieren
+            const roleLabel = profile.role || 'Team';
+            const roleColors = {
+              'Geschäftsführung': '#FFD60A',
+              'Management': '#007AFF',
+              'Booking Team': '#AF52DE',
+              'Mediadepartment': '#FF9500',
+              'Resident Artist': '#34C759',
+              'Guest Artist': '#00C7BE'
+            };
+            const roleColor = roleColors[profile.role] || '#8E8E93';
+
+            html += `
+              <div
+                onclick="selectSlotProfile('${profile.id}', '${profile.username.replace(/'/g, "\\'")}', '${profile.email || ''}', '${roleLabel}')"
+                style="
+                  padding: 12px 16px;
+                  cursor: pointer;
+                  border-bottom: 1px solid rgba(0,0,0,0.05);
+                  transition: background 0.15s;
+                "
+                onmouseover="this.style.background='rgba(0,0,0,0.03)'"
+                onmouseout="this.style.background='white'"
+              >
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: ${roleColor};
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 12px;
+                    font-weight: 600;
+                  ">${profile.username.charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div style="font-weight: 500; font-size: 14px; color: #1d1d1f;">${profile.username}</div>
+                    <div style="font-size: 12px; color: #86868b;">
+                      <span style="
+                        background: ${roleColor}20;
+                        color: ${roleColor};
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        font-weight: 500;
+                      ">${roleLabel}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        // Keine Ergebnisse
+        if (artistsList.length === 0 && profiles.length === 0) {
+          html = `
+            <div style="padding: 20px; text-align: center; color: #86868b; font-size: 14px;">
+              Keine Ergebnisse für "${query}"
+            </div>
+          `;
+        }
+
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+
+      } catch (err) {
+        console.error('Error searching:', err);
+        dropdown.innerHTML = `
+          <div style="padding: 16px; text-align: center; color: #FF3B30; font-size: 14px;">
+            Fehler bei der Suche
+          </div>
+        `;
+        dropdown.style.display = 'block';
+      }
+    }
+
+    // Profile (Team-Mitglied) auswählen
+    async function selectSlotProfile(profileId, username, email, role) {
+      // Prüfe ob es einen verknüpften Artist gibt
+      const { data: linkedArtist, error } = await supabase
+        .from('artists')
+        .select('id, name')
+        .eq('user_id', profileId)
+        .single();
+
+      if (linkedArtist) {
+        // Artist-Verknüpfung existiert → nutze artist_id
+        selectedSlotArtist = {
+          id: linkedArtist.id,
+          name: username,
+          email: email,
+          role: role,
+          type: 'profile_linked'
+        };
+        document.getElementById('slotArtistId').value = linkedArtist.id;
+        console.log('Profile mit Artist verknüpft:', linkedArtist.name);
+      } else {
+        // Keine Artist-Verknüpfung → speichere Profile-Daten direkt
+        selectedSlotArtist = {
+          id: null,  // Kein artist_id
+          profileId: profileId,
+          name: username,
+          email: email,
+          role: role,
+          type: 'profile_only'
+        };
+        document.getElementById('slotArtistId').value = '';
+        console.log('Profile ohne Artist-Verknüpfung:', username);
+      }
+
+      document.getElementById('slotArtistSearch').value = username;
+      document.getElementById('slotArtistDropdown').style.display = 'none';
+    }
+
+    // Artist auswählen
+    function selectSlotArtist(id, name, email, roleLabel, type) {
+      selectedSlotArtist = {
+        id: id,
+        name: name,
+        email: email,
+        role: roleLabel,
+        type: 'artist'
+      };
+      document.getElementById('slotArtistSearch').value = name;
+      document.getElementById('slotArtistId').value = id;
+      document.getElementById('slotArtistDropdown').style.display = 'none';
+    }
+
+    // Neuen Dienstplan-Slot speichern
+    async function saveNewSlot() {
+      const startDate = document.getElementById('slotStartDate').value;
+      const endDate = document.getElementById('slotEndDate').value;
+      const startTime = document.getElementById('slotStartTime').value;
+      const endTime = document.getElementById('slotEndTime').value;
+
+      // Validierung
+      if (!selectedSlotArtist) {
+        showNotification('Bitte wähle einen Artist oder Team-Mitglied aus', 'error');
+        return;
+      }
+      if (!startDate || !endDate) {
+        showNotification('Bitte wähle Start- und Enddatum aus', 'error');
+        return;
+      }
+      if (startDate > endDate) {
+        showNotification('Startdatum muss vor dem Enddatum liegen', 'error');
+        return;
+      }
+      if (!selectedSlotState) {
+        showNotification('Bitte wähle einen Status aus', 'error');
+        return;
+      }
+
+      try {
+        let insertData = {
+          start_date: startDate,
+          end_date: endDate,
+          working_start: startTime ? startTime + ':00' : null,
+          working_end: endTime ? endTime + ':00' : null,
+          state: selectedSlotState,
+          email: selectedSlotArtist.email || null
+        };
+
+        if (selectedSlotArtist.type === 'artist' || selectedSlotArtist.type === 'profile_linked') {
+          // Artist oder verknüpfter Profile-User
+          insertData.artist_id = selectedSlotArtist.id;
+
+          // Hole Artist-Details für role und location
+          const { data: artist } = await supabase
+            .from('artists')
+            .select('location_id, is_guest')
+            .eq('id', selectedSlotArtist.id)
+            .single();
+
+          insertData.role = artist?.is_guest ? 'Guest Artist' : 'Resident Artist';
+          insertData.location_id = artist?.location_id || null;
+
+        } else if (selectedSlotArtist.type === 'profile_only') {
+          // Profile ohne Artist-Verknüpfung
+          // artist_id bleibt NULL, aber wir setzen die Rolle aus dem Profile
+          insertData.artist_id = null;
+          insertData.role = selectedSlotArtist.role || 'Management';
+          insertData.location_id = null;
+        }
+
+        console.log('Inserting slot:', insertData);
+
+        // Insert neuen Slot
+        const { data, error } = await supabase
+          .from('dienstplan')
+          .insert(insertData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        console.log('Slot created:', data);
+        showNotification(`Slot für ${selectedSlotArtist.name} erstellt`, 'success');
+
+        // Modal schließen
+        closeAddSlotModal();
+
+        // Daten neu laden
+        await loadDienstplanData();
+
+      } catch (err) {
+        console.error('Error creating slot:', err);
+        showNotification('Fehler beim Erstellen: ' + err.message, 'error');
+      }
+    }
+
+    // Add Slot Modal schließen
+    function closeAddSlotModal() {
+      const modal = document.getElementById('addDienstplanSlotModal');
+      if (modal) {
+        modal.remove();
+      }
+      // Reset state
+      selectedSlotArtist = null;
+      selectedSlotState = null;
+    }
+
+    // Global verfügbar machen
+    window.searchArtistsForSlot = searchArtistsForSlot;
+    window.selectSlotProfile = selectSlotProfile;
+    window.selectSlotArtist = selectSlotArtist;
+    window.saveNewSlot = saveNewSlot;
+    window.closeAddSlotModal = closeAddSlotModal;
+
     // Load Work Tracking Data from database with BATCH LOADING
     async function loadWorkTrackingData() {
       console.log('⏰ Loading Work Tracking data...');
