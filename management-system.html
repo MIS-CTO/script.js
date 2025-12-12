@@ -23288,6 +23288,40 @@
     }
     window.formatDateKey = formatDateKey;
 
+    // ==========================================
+    // DIENSTPLAN STATE CONFIGURATION (GLOBAL)
+    // ==========================================
+
+    // SVG Icons für States (14x14, stroke="currentColor" für Farbvererbung)
+    const stateIcons = {
+      'Available': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+      'Vacation': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12c0-5.5 4.5-10 10-10s10 4.5 10 10H2z"></path></svg>`,
+      'Business trip': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>`,
+      'Guestspot': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>`,
+      'Sick': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path><path d="M12 11a1 1 0 0 0-1 1v3"></path></svg>`,
+      'Training': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M8 7h8M8 11h6"></path></svg>`,
+      'Convention': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2M13 17v2M13 11v2"></path></svg>`,
+      'Home office': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
+      'Other': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>`
+    };
+
+    // State-Konfiguration mit Farben und SVG-Icons
+    const stateConfig = {
+      'Available': { label: 'Available', color: '#34C759', icon: stateIcons['Available'] },
+      'Vacation': { label: 'Vacation', color: '#FF9500', icon: stateIcons['Vacation'] },
+      'Business trip': { label: 'Business Trip', color: '#007AFF', icon: stateIcons['Business trip'] },
+      'Other': { label: 'Other', color: '#8E8E93', icon: stateIcons['Other'] },
+      'Guestspot': { label: 'Guestspot', color: '#00C7BE', icon: stateIcons['Guestspot'] },
+      'Sick': { label: 'Sick', color: '#FF3B30', icon: stateIcons['Sick'] },
+      'Training': { label: 'Training', color: '#AF52DE', icon: stateIcons['Training'] },
+      'Convention': { label: 'Convention', color: '#FF2D55', icon: stateIcons['Convention'] },
+      'Home office': { label: 'Home Office', color: '#FFCC00', icon: stateIcons['Home office'] }
+    };
+
+    // Global verfügbar machen
+    window.stateIcons = stateIcons;
+    window.stateConfig = stateConfig;
+
     // Render Dienstplan Timeline (Horizontal View with Role Groups)
     function renderDienstplanTable() {
       const container = document.getElementById('dienstplanTableContainer');
@@ -23362,31 +23396,7 @@
         'Ohne Rolle'         // → Not defined (null values)
       ];
 
-      // SVG Icons als Template-Strings (weiß auf farbigem Hintergrund)
-      const stateIcons = {
-        'Available': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-        'Vacation': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12c0-5.5 4.5-10 10-10s10 4.5 10 10H2z"></path></svg>`,
-        'Business trip': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>`,
-        'Guestspot': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>`,
-        'Sick': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>`,
-        'Training': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
-        'Convention': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2M13 17v2M13 11v2"></path></svg>`,
-        'Home office': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
-        'Other': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>`
-      };
-
-      // State-Konfiguration mit Farben und SVG-Icons
-      const stateConfig = {
-        'Available': { label: 'Available', color: '#34C759', icon: stateIcons['Available'] },
-        'Vacation': { label: 'Vacation', color: '#FF9500', icon: stateIcons['Vacation'] },
-        'Business trip': { label: 'Business Trip', color: '#007AFF', icon: stateIcons['Business trip'] },
-        'Other': { label: 'Other', color: '#8E8E93', icon: stateIcons['Other'] },
-        'Guestspot': { label: 'Guestspot', color: '#00C7BE', icon: stateIcons['Guestspot'] },
-        'Sick': { label: 'Sick', color: '#FF3B30', icon: stateIcons['Sick'] },
-        'Training': { label: 'Training', color: '#AF52DE', icon: stateIcons['Training'] },
-        'Convention': { label: 'Convention', color: '#FF2D55', icon: stateIcons['Convention'] },
-        'Home office': { label: 'Home Office', color: '#FFCC00', icon: stateIcons['Home office'] }
-      };
+      // stateIcons und stateConfig werden als globale Variablen verwendet
 
       // Wochentag-Kürzel
       const dayNames = ['S', 'M', 'D', 'M', 'D', 'F', 'S'];
