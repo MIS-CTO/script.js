@@ -24278,16 +24278,13 @@
       });
 
       // ═══════════════════════════════════════════════════════════════
-      // RELOAD TO-DO PROJECTS AFTER LOGIN (wrapped in try/catch to prevent breaking login)
+      // RELOAD TO-DO PROJECTS AFTER LOGIN (using .then() since function is not async)
       // ═══════════════════════════════════════════════════════════════
-      try {
-        console.log('✅ Login successful, reloading To-Do projects...');
-        if (typeof loadTodoProjects === 'function') {
-          await loadTodoProjects();
-          console.log('✅ To-Do projects reloaded after login');
-        }
-      } catch (todoError) {
-        console.warn('⚠️ Failed to load To-Do projects after login:', todoError);
+      console.log('✅ Login successful, reloading To-Do projects...');
+      if (typeof loadTodoProjects === 'function') {
+        loadTodoProjects()
+          .then(() => console.log('✅ To-Do projects reloaded after login'))
+          .catch(err => console.warn('⚠️ Failed to load To-Do projects after login:', err));
       }
     }
 
