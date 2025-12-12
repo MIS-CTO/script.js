@@ -23006,8 +23006,31 @@
         artistsWithEntries.add(artistId);
       });
 
-      // Rollen-Reihenfolge
-      const roleOrder = ['Geschäftsführung', 'Management', 'Booking Team', 'Resident Artist', 'Guest Artist', 'Mediadepartment', 'other', 'Ohne Rolle'];
+      // Rollen-Konfiguration: DB-Wert → Display Label + Farbe
+      const roleConfig = {
+        'Geschäftsführung': { label: 'Administrator', color: '#FFD60A' },
+        'Management': { label: 'Booking Manager', color: '#007AFF' },
+        'Booking Team': { label: 'Booking Member', color: '#AF52DE' },
+        'Resident Artist': { label: 'Resident', color: '#34C759' },
+        'Guest Artist': { label: 'Guest', color: '#00C7BE' },
+        'Mediadepartment': { label: 'Media', color: '#FF9500' },
+        'Azubi': { label: 'Azubi', color: '#5856D6' },
+        'other': { label: 'Other', color: '#8E8E93' },
+        'Ohne Rolle': { label: 'Not defined', color: '#8E8E93' }
+      };
+
+      // Rollen-Reihenfolge für Anzeige
+      const roleOrder = [
+        'Geschäftsführung',  // → Administrator
+        'Management',        // → Booking Manager
+        'Booking Team',      // → Booking Member
+        'Resident Artist',   // → Resident
+        'Guest Artist',      // → Guest
+        'Mediadepartment',   // → Media
+        'Azubi',             // → Azubi
+        'other',             // → Other
+        'Ohne Rolle'         // → Not defined (null values)
+      ];
 
       // Wochentag-Kürzel
       const dayNames = ['S', 'M', 'D', 'M', 'D', 'F', 'S'];
@@ -23091,18 +23114,10 @@
         const isCollapsed = localStorage.getItem(`dienstplan_group_${role}`) === 'collapsed';
         const roleClass = role.replace(/\s+/g, '-').replace(/[äöü]/g, c => ({ä:'ae',ö:'oe',ü:'ue'}[c]));
 
-        // Rollen-Farben
-        const roleColorMap = {
-          'Geschäftsführung': '#B8860B',
-          'Management': '#007AFF',
-          'Booking Team': '#AF52DE',
-          'Resident Artist': '#34C759',
-          'Guest Artist': '#5AC8FA',
-          'Mediadepartment': '#FF9500',
-          'other': '#8E8E93',
-          'Ohne Rolle': '#8E8E93'
-        };
-        const roleColor = roleColorMap[role] || '#8E8E93';
+        // Nutze roleConfig für Farbe und Label
+        const config = roleConfig[role] || { label: role, color: '#8E8E93' };
+        const roleColor = config.color;
+        const roleLabel = config.label;
 
         html += `
           <!-- Role Group: ${role} -->
@@ -23127,7 +23142,7 @@
               border-radius: 50%;
               background: ${roleColor};
             "></span>
-            <span>${role}</span>
+            <span>${roleLabel}</span>
             <span style="color: #86868b; font-weight: 400; font-size: 12px;">(${artistCount} ${artistCount === 1 ? 'Person' : 'Personen'})</span>
           </div>
         `;
