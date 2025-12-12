@@ -2638,39 +2638,64 @@
       gap: 24px;
     }
 
-    /* Row 1: Pinned Events + Schwarzes Brett (2 columns) */
-    .dashboard-top-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      margin-bottom: 24px;
-    }
+    /* ========================================
+       NEW DASHBOARD LAYOUT - 30/70 Split
+       Left: Pinned Events + Schwarzes Brett (stacked)
+       Right: Projects + Tasks (side by side)
+       ======================================== */
 
-    .dashboard-top-row > .container-section {
-      width: 100%;
-      min-width: 0;
-    }
-
-    .dashboard-top-row > .container-section .dashboard-card {
-      min-width: 280px;
-    }
-
-    /* Row 2: To-Do Section (Full Width, 2 columns) */
-    .dashboard-todo-row {
+    .dashboard-container {
       display: flex;
       width: 100%;
+      min-height: 600px;
       gap: 24px;
     }
 
-    .dashboard-todo-row > .container-section {
+    /* Left Column (30%) - Pinned Events + Schwarzes Brett stacked */
+    .dashboard-left-column {
+      width: 30%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-width: 280px;
+    }
+
+    .dashboard-left-column .pinned-events-wrapper,
+    .dashboard-left-column .schwarzes-brett-wrapper {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .dashboard-left-column .pinned-events-wrapper .dashboard-card,
+    .dashboard-left-column .schwarzes-brett-wrapper .dashboard-card {
+      flex: 1;
+      overflow-y: auto;
+      max-height: none;
+    }
+
+    /* Right Columns (70%) - Projects + Tasks side by side */
+    .dashboard-right-columns {
+      width: 70%;
+      display: flex;
+      gap: 24px;
       min-width: 0;
     }
 
-    .dashboard-todo-row .todo-projects-left,
-    .dashboard-todo-row .todo-tasks-right {
-      min-width: 280px;
-      height: 100%;
+    .dashboard-right-columns .todo-projects-wrapper,
+    .dashboard-right-columns .todo-tasks-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .dashboard-right-columns .todo-projects-left,
+    .dashboard-right-columns .todo-tasks-right {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 300px;
     }
 
     .container-section {
@@ -4044,14 +4069,25 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
-    /* Responsive - Tablet */
-    @media (max-width: 1200px) {
-      .dashboard-top-row {
-        grid-template-columns: repeat(2, 1fr);
+    /* Responsive - Tablet (1024px) */
+    @media (max-width: 1024px) {
+      .dashboard-container {
+        flex-direction: column;
+        min-height: auto;
       }
 
-      .dashboard-todo-row {
+      .dashboard-left-column {
+        width: 100%;
         flex-direction: row;
+      }
+
+      .dashboard-left-column .pinned-events-wrapper,
+      .dashboard-left-column .schwarzes-brett-wrapper {
+        flex: 1;
+      }
+
+      .dashboard-right-columns {
+        width: 100%;
       }
 
       .todo-projects-left,
@@ -4060,13 +4096,19 @@
       }
     }
 
-    /* Responsive - Mobile (1 Column) */
+    /* Responsive - Mobile (768px) */
     @media (max-width: 768px) {
-      .dashboard-top-row {
-        grid-template-columns: 1fr !important;
+      .dashboard-container {
+        flex-direction: column !important;
       }
 
-      .dashboard-todo-row {
+      .dashboard-left-column {
+        width: 100% !important;
+        flex-direction: column !important;
+      }
+
+      .dashboard-right-columns {
+        width: 100% !important;
         flex-direction: column !important;
       }
 
@@ -6167,12 +6209,17 @@
         margin: 0 auto;
       }
 
-      /* Dashboard Rows - Stack vertically on mobile */
-      .dashboard-top-row,
-      .dashboard-todo-row {
+      /* Dashboard Container - Stack vertically on mobile */
+      .dashboard-container {
         display: flex !important;
         flex-direction: column !important;
         gap: 24px !important;
+      }
+
+      .dashboard-left-column,
+      .dashboard-right-columns {
+        width: 100% !important;
+        flex-direction: column !important;
       }
 
       /* Hide desktop calendar grid */
@@ -6850,12 +6897,12 @@
       <span id="versionBadge" style="background:rgba(0,113,227,0.1); color:var(--accent); padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; font-family:monospace; margin-left:auto;">v128</span>
     </div>
 
-    <!-- Dashboard Grid Layout -->
-    <div class="dashboard-grid" style="margin-top: 32px;">
-      <!-- Row 1: Pinned Events + Schwarzes Brett -->
-      <div class="dashboard-top-row">
+    <!-- Dashboard Grid Layout - New 30/70 Split -->
+    <div class="dashboard-container" style="margin-top: 32px;">
+      <!-- Left Column (30%) - Pinned Events + Schwarzes Brett -->
+      <div class="dashboard-left-column">
         <!-- Pinned Events Section -->
-        <div class="container-section">
+        <div class="container-section pinned-events-wrapper">
           <h3 class="container-section-title">Pinned Events</h3>
           <div class="dashboard-card pinned-events-card" id="pinnedEventsContainer">
             <div class="event-empty">Lade Events...</div>
@@ -6863,7 +6910,7 @@
         </div>
 
         <!-- Schwarzes Brett Section -->
-        <div class="container-section">
+        <div class="container-section schwarzes-brett-wrapper">
           <h3 class="container-section-title">Schwarzes Brett</h3>
           <div class="dashboard-card schwarzes-brett-card" id="schwarzesBrettContainer">
             <!-- New Message Popup -->
@@ -6906,10 +6953,10 @@
         </div>
       </div>
 
-      <!-- Row 2: To-Do Section (Full Width) -->
-      <div class="dashboard-todo-row">
+      <!-- Right Columns (70%) - To-Do Projects + Tasks -->
+      <div class="dashboard-right-columns">
         <!-- Recent Projects Section -->
-        <div class="container-section">
+        <div class="container-section todo-projects-wrapper">
           <h3 class="container-section-title">Recent Projects</h3>
           <div class="todo-projects-left">
             <div class="todo-projects-list" id="todoProjectsList">
@@ -6920,7 +6967,7 @@
         </div>
 
         <!-- Tasks Section -->
-        <div class="container-section">
+        <div class="container-section todo-tasks-wrapper">
           <h3 class="container-section-title" id="todoTasksTitle">Tasks</h3>
           <div class="todo-tasks-right">
             <div class="todo-tasks-list" id="todoTasksList">
