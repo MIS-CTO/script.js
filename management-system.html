@@ -12124,15 +12124,25 @@
 
       // Load Projects
       async function loadTodoProjects() {
+        console.log('📋 loadTodoProjects() called');
+        console.log('📋 currentUser at call time:', currentUser ? `${currentUser.username} (${currentUser.id})` : 'NULL');
+
         const container = document.getElementById('todoProjectsList');
         if (!container) {
           console.warn('⚠️ todoProjectsList container not found');
           return;
         }
 
+        // Skip loading if no user is logged in yet
+        if (!currentUser?.id) {
+          console.warn('⚠️ No currentUser set - skipping project load');
+          container.innerHTML = '<div class="todo-empty-state">Bitte einloggen...</div>';
+          return;
+        }
+
         try {
           console.log('📋 ========================================');
-          console.log('📋 Loading To-Do Projects...');
+          console.log('📋 Loading To-Do Projects for:', currentUser.username);
           console.log('📋 ========================================');
 
           // Check Supabase Auth session first
@@ -12816,10 +12826,11 @@
         if (e.target.id === 'todoTaskModal') e.target.classList.remove('active');
       });
 
-      // Load projects on dashboard
-      if (document.getElementById('todoProjectsList')) {
-        loadTodoProjects();
-      }
+      // NOTE: Projects are loaded AFTER login/session restore in:
+      // - initAuth() after session restore
+      // - updateUIForUser() after login
+      // DO NOT load here - currentUser is not set yet!
+      console.log('📋 To-Do system initialized. Projects will load after authentication.');
 
       // ============================================
       // PROJECT INVITATIONS INBOX
