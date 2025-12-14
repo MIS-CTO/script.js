@@ -29635,26 +29635,25 @@
 
         try {
           // Select appropriate VIEW based on currentListType
-          // Views have display_order (calculated) and all joined data
-          // WAITLIST = Artists available NOW (NO dates)
-          // UPCOMING = Artists with SPECIFIC dates (WITH dates)
+          // WAITLIST = Artists available NOW (NO dates) - uses ordered view
+          // UPCOMING = Artists with SPECIFIC dates - uses GROUPED view (backend grouping)
           const viewName = currentListType === 'waitlist'
-            ? 'waitlist_slots_ordered'    // ✅ Use VIEW (has display_order)
-            : 'upcoming_slots_ordered';   // ✅ Use VIEW (has display_order)
+            ? 'waitlist_slots_ordered'    // ✅ Waitlist: ordered view
+            : 'upcoming_slots_grouped';   // ✅ Upcoming: GROUPED view (backend grouping!)
 
           console.log(`   View: ${viewName}, Location filter: ${locationFilter || 'all'}`);
 
-          // Build query - views already have all joined data including display_order
+          // Build query - views already have all joined data
           let query = supabase
             .from(viewName)
-            .select('*')  // ✅ View has all fields including display_order and joined artist/location data
-            .in('status', ['waiting', 'active', 'upcoming']);
+            .select('*');
 
-          // Order by display_order for waitlist (NO dates), date_from for upcoming (WITH dates)
+          // For waitlist, filter by status
           if (currentListType === 'waitlist') {
+            query = query.in('status', ['waiting', 'active', 'upcoming']);
             query = query.order('display_order', { ascending: true });
           } else {
-            // For upcoming, filter to show only future/current dates
+            // For upcoming (grouped view), filter to show only future/current dates
             const today = new Date().toISOString().split('T')[0];
             query = query.gte('date_from', today).order('date_from', { ascending: true });
           }
@@ -29680,30 +29679,33 @@
           }
 
           // Transform data to match expected format
-          // Views return flat field names (artist_name, location_name, etc.)
-          // No need to flatten nested objects - views already have flat structure
+          // Grouped view provides: all_slot_ids, slot_count, date_from, date_to
           waitlistSlots = (data || []).map(slot => ({
             ...slot,
-            // Views already provide flat fields: artist_name, artist_email, artist_instagram, etc.
-            // Views already provide: location_name, location_city, etc.
-            // Map share_personal_data to share_paid for upcoming slots (for consistency)
-            share_paid: currentListType === 'upcoming' ? slot.share_personal_data : slot.share_paid
+            // Map share_personal_data to share_paid for consistency
+            share_paid: currentListType === 'upcoming' ? slot.share_personal_data : slot.share_paid,
+            // For grouped view: use all_slot_ids from backend, or fallback to single id
+            all_slot_ids: slot.all_slot_ids || [slot.id],
+            // For grouped view: use slot_count from backend, or fallback to 1
+            slot_count: slot.slot_count || 1
           }));
 
-          console.log(`✅ Loaded ${waitlistSlots.length} ${currentListType} slots`);
+          console.log(`✅ Loaded ${waitlistSlots.length} ${currentListType} slots (from ${viewName})`);
 
           // Log sample of first slot for debugging
           if (waitlistSlots.length > 0) {
             console.log('   First slot structure:', Object.keys(waitlistSlots[0]));
-            if (currentListType === 'upcoming' && waitlistSlots[0].date_from) {
-              console.log('   First slot dates:', {
+            if (currentListType === 'upcoming') {
+              console.log('   First slot:', {
                 date_from: waitlistSlots[0].date_from,
-                date_to: waitlistSlots[0].date_to
+                date_to: waitlistSlots[0].date_to,
+                slot_count: waitlistSlots[0].slot_count,
+                all_slot_ids: waitlistSlots[0].all_slot_ids
               });
             }
           }
 
-          // Render slots
+          // Render slots (no frontend grouping needed - backend does it!)
           renderWaitlistSlots(waitlistSlots);
 
           return waitlistSlots;
@@ -29723,14 +29725,14 @@
       }
 
       // ============================================
-      // Load Previous Guest Spots
+      // Load Previous Guest Spots (using grouped VIEW)
       // ============================================
       async function loadPreviousGuestSpots(locationFilter = 'all') {
-        console.log('📋 Loading Previous Guest Spots...');
+        console.log('📋 Loading Previous Guest Spots (grouped)...');
 
         try {
           let query = supabase
-            .from('previous_guest_spots')
+            .from('previous_guest_spots_grouped')
             .select('*')
             .order('date_from', { ascending: false });
 
@@ -29742,6 +29744,7 @@
 
           if (error) throw error;
 
+          console.log(`✅ Loaded ${data?.length || 0} grouped previous guest spots`);
           renderPreviousGuestSpots(data || []);
 
         } catch (error) {
@@ -29878,7 +29881,7 @@
       }
 
       // ============================================
-      // Render Waitlist Slots
+      // Render Waitlist Slots (uses backend-grouped data from VIEWs)
       // ============================================
       function renderWaitlistSlots(slots) {
         const container = document.getElementById('waitlistSlotsContainer');
@@ -29896,25 +29899,21 @@
         // Hide empty state
         if (emptyState) emptyState.style.display = 'none';
 
-        // For UPCOMING: Group consecutive slots by same artist
-        let slotsToRender = slots;
-        if (currentListType === 'upcoming') {
-          slotsToRender = groupConsecutiveSlots(slots);
-          console.log(`📊 Grouped ${slots.length} slots into ${slotsToRender.length} groups`);
-        }
+        // No frontend grouping needed - backend VIEW does it!
+        // Upcoming uses upcoming_slots_grouped which already groups consecutive slots
 
         // Render slots
-        container.innerHTML = slotsToRender.map((slot, index) => {
-          // Use display_order from grouping or database, otherwise use index + 1
+        container.innerHTML = slots.map((slot, index) => {
+          // Use display_order from VIEW, otherwise use index + 1
           const slotNumber = slot.display_order || (index + 1);
 
-          // For grouped slots, use grouped dates
-          const displayDateFrom = slot.grouped_date_from || slot.date_from;
-          const displayDateTo = slot.grouped_date_to || slot.date_to;
+          // Dates come directly from the VIEW (already grouped if applicable)
+          const displayDateFrom = slot.date_from;
+          const displayDateTo = slot.date_to;
 
-          // All slot IDs for cancel/delete (for grouped slots)
+          // All slot IDs for cancel/delete (from backend VIEW)
           const allSlotIds = slot.all_slot_ids || [slot.id];
-          const slotCount = allSlotIds.length;
+          const slotCount = slot.slot_count || allSlotIds.length;
 
           // Date calculations ONLY for UPCOMING (has dates)
           // WAITLIST has NO dates (artists available NOW)
