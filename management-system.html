@@ -25833,6 +25833,11 @@
             ? '<p style="color:var(--muted);font-size:12px;margin-top:4px;">Abgesagt von: ' + spot.canceled_by_username + '</p>'
             : '';
 
+          // View Profile Button
+          const viewProfileButton = spot.artist_id
+            ? '<button onclick="viewArtistProfile(\'' + spot.artist_id + '\')" style="padding:8px 16px;border:1px solid #007aff;border-radius:8px;background:transparent;color:#007aff;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background=\'#007aff\';this.style.color=\'white\';" onmouseout="this.style.background=\'transparent\';this.style.color=\'#007aff\';">👤 View Profile</button>'
+            : '';
+
           return '<div style="background:var(--macos-elevated, #fff);border-radius:16px;padding:24px;margin-bottom:16px;border:1px solid var(--border-color, #e0e0e0);opacity:' + (spot.status === 'canceled' ? '0.7' : '1') + ';">' +
             '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
               '<div style="flex:1;">' +
@@ -25841,6 +25846,7 @@
                 '<p style="margin:12px 0 8px 0;font-size:14px;"><strong>Zeitraum:</strong> ' + formatDateDE(spot.date_from) + ' - ' + formatDateDE(spot.date_to) + '</p>' +
                 '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' + statusBadge + paidBadge + '</div>' +
                 cancelInfo + canceledBy +
+                '<div style="margin-top:16px;">' + viewProfileButton + '</div>' +
               '</div>' +
               (spot.profile_picture_url ? '<img src="' + spot.profile_picture_url + '" alt="' + (spot.artist_name || '') + '" style="width:60px;height:60px;border-radius:12px;object-fit:cover;margin-left:16px;">' : '') +
             '</div>' +
@@ -26038,6 +26044,23 @@
 
                 <!-- Actions -->
                 <div style="display:flex; gap:8px;">
+                  <button
+                    onclick="viewArtistProfile('${slot.artist_id}')"
+                    style="
+                      padding:8px 12px;
+                      border:1px solid #007aff;
+                      border-radius:8px;
+                      background:var(--macos-elevated);
+                      cursor:pointer;
+                      color:#007aff;
+                      font-size:14px;
+                      transition:all 0.2s;
+                    "
+                    onmouseover="this.style.background='#007aff'; this.style.color='white';"
+                    onmouseout="this.style.background='var(--macos-elevated)'; this.style.color='#007aff';"
+                  >
+                    👤 Profile
+                  </button>
                   <button
                     class="edit-slot-button"
                     data-slot-ids='${JSON.stringify(allSlotIds)}'
