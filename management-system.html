@@ -25873,6 +25873,78 @@
       }
 
       // ============================================
+      // Group Consecutive Slots (Same Artist, Adjacent Dates)
+      // ============================================
+      function groupConsecutiveSlots(slots) {
+        if (!slots || slots.length === 0) return [];
+
+        // Sortiere nach artist_id, dann date_from
+        const sorted = [...slots].sort((a, b) => {
+          // Erst nach Artist sortieren
+          if (a.artist_id !== b.artist_id) {
+            return (a.artist_name || '').localeCompare(b.artist_name || '');
+          }
+          // Dann nach Datum
+          return new Date(a.date_from) - new Date(b.date_from);
+        });
+
+        const grouped = [];
+        let currentGroup = null;
+
+        for (const slot of sorted) {
+          const isConsecutive = currentGroup &&
+            currentGroup.artist_id === slot.artist_id &&
+            isNextDay(currentGroup.grouped_date_to, slot.date_from);
+
+          if (!currentGroup) {
+            // Erster Slot - neue Gruppe starten
+            currentGroup = createSlotGroup(slot);
+          } else if (isConsecutive) {
+            // Aufeinanderfolgend & gleicher Artist → zusammenfassen
+            currentGroup.grouped_date_to = slot.date_to;
+            currentGroup.original_slots.push(slot);
+            currentGroup.all_slot_ids.push(slot.id);
+          } else {
+            // Neuer Artist ODER Lücke → Gruppe abschließen, neue starten
+            grouped.push(currentGroup);
+            currentGroup = createSlotGroup(slot);
+          }
+        }
+
+        // Letzte Gruppe hinzufügen
+        if (currentGroup) {
+          grouped.push(currentGroup);
+        }
+
+        // Sortiere nach grouped_date_from und nummeriere neu
+        return grouped
+          .sort((a, b) => new Date(a.grouped_date_from) - new Date(b.grouped_date_from))
+          .map((group, index) => ({
+            ...group,
+            display_order: index + 1
+          }));
+      }
+
+      function createSlotGroup(slot) {
+        return {
+          ...slot,
+          grouped_date_from: slot.date_from,
+          grouped_date_to: slot.date_to,
+          original_slots: [slot],
+          all_slot_ids: [slot.id]
+        };
+      }
+
+      function isNextDay(date1, date2) {
+        const d1 = new Date(date1);
+        const d2 = new Date(date2);
+        const nextDay = new Date(d1);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        return nextDay.toISOString().split('T')[0] === new Date(d2).toISOString().split('T')[0];
+      }
+
+      // ============================================
       // Render Waitlist Slots
       // ============================================
       function renderWaitlistSlots(slots) {
@@ -25891,17 +25963,32 @@
         // Hide empty state
         if (emptyState) emptyState.style.display = 'none';
 
+        // For UPCOMING: Group consecutive slots by same artist
+        let slotsToRender = slots;
+        if (currentListType === 'upcoming') {
+          slotsToRender = groupConsecutiveSlots(slots);
+          console.log(`📊 Grouped ${slots.length} slots into ${slotsToRender.length} groups`);
+        }
+
         // Render slots
-        container.innerHTML = slots.map((slot, index) => {
-          // Use display_order from database if available, otherwise use index + 1
+        container.innerHTML = slotsToRender.map((slot, index) => {
+          // Use display_order from grouping or database, otherwise use index + 1
           const slotNumber = slot.display_order || (index + 1);
+
+          // For grouped slots, use grouped dates
+          const displayDateFrom = slot.grouped_date_from || slot.date_from;
+          const displayDateTo = slot.grouped_date_to || slot.date_to;
+
+          // All slot IDs for cancel/delete (for grouped slots)
+          const allSlotIds = slot.all_slot_ids || [slot.id];
+          const slotCount = allSlotIds.length;
 
           // Date calculations ONLY for UPCOMING (has dates)
           // WAITLIST has NO dates (artists available NOW)
           let fromDate, toDate, isActive, isUpcoming, daysRemaining, daysUntilStart;
-          if (currentListType === 'upcoming' && slot.date_from && slot.date_to) {
-            fromDate = new Date(slot.date_from);
-            toDate = new Date(slot.date_to);
+          if (currentListType === 'upcoming' && displayDateFrom && displayDateTo) {
+            fromDate = new Date(displayDateFrom);
+            toDate = new Date(displayDateTo);
             const today = new Date();
 
             // Calculate status
@@ -25990,7 +26077,7 @@
                   </button>
                   <button
                     class="delete-slot-button"
-                    data-slot-id="${slot.id}"
+                    data-slot-ids='${JSON.stringify(allSlotIds)}'
                     style="
                       padding:8px 12px;
                       border:1px solid #ff3b30;
@@ -26004,7 +26091,7 @@
                     onmouseover="this.style.background='rgba(255, 59, 48, 0.1)'"
                     onmouseout="this.style.background='var(--macos-elevated)'"
                   >
-                    Delete
+                    Delete${slotCount > 1 ? ` (${slotCount})` : ''}
                   </button>
                   <button
                     class="toggle-share-paid-button"
@@ -26029,7 +26116,7 @@
                   ${currentListType === 'upcoming' ? `
                   <button
                     class="cancel-slot-button"
-                    onclick="cancelUpcomingSlot('${slot.id}')"
+                    onclick="cancelUpcomingSlot(${JSON.stringify(allSlotIds)})"
                     style="
                       padding:8px 16px;
                       border:1px solid #ff3b30;
@@ -26044,7 +26131,7 @@
                     onmouseover="this.style.background='#ff3b30'; this.style.color='white';"
                     onmouseout="this.style.background='transparent'; this.style.color='#ff3b30';"
                   >
-                    Cancel
+                    Cancel${slotCount > 1 ? ` (${slotCount})` : ''}
                   </button>
                   ` : ''}
                 </div>
@@ -26734,10 +26821,17 @@
       }
 
       // ============================================
-      // Delete Slot (Supports Both Lists)
+      // Delete Slot (Supports Both Lists and Arrays)
       // ============================================
-      async function deleteWaitlistSlot(slotId) {
-        if (!confirm('Are you sure you want to delete this slot?')) {
+      async function deleteWaitlistSlot(slotIds) {
+        // Support both single ID and array of IDs
+        const idsArray = Array.isArray(slotIds) ? slotIds : [slotIds];
+
+        const confirmMsg = idsArray.length > 1
+          ? `${idsArray.length} zusammenhängende Slots wirklich löschen?`
+          : 'Slot wirklich löschen?';
+
+        if (!confirm(confirmMsg)) {
           return;
         }
 
@@ -26747,17 +26841,17 @@
             ? 'waitlist_slots'
             : 'upcoming_slots';
 
-          console.log(`🗑️ Deleting slot from ${tableName}: ${slotId}`);
+          console.log(`🗑️ Deleting ${idsArray.length} slot(s) from ${tableName}:`, idsArray);
 
           const { error } = await supabase
             .from(tableName)
             .delete()
-            .eq('id', slotId);
+            .in('id', idsArray);
 
           if (error) {
             console.error('❌ Database Error:', {
               table: tableName,
-              slotId: slotId,
+              slotIds: idsArray,
               error: error.message,
               details: error.details,
               hint: error.hint,
@@ -26766,14 +26860,17 @@
             throw error;
           }
 
-          console.log(`✅ ${currentListType} slot deleted successfully`);
-          showNotification('Slot deleted successfully', 'success');
+          const message = idsArray.length > 1
+            ? `${idsArray.length} Slots erfolgreich gelöscht`
+            : 'Slot erfolgreich gelöscht';
+          console.log(`✅ ${currentListType} slot(s) deleted successfully`);
+          showNotification(message, 'success');
 
           // Reload slots
           await loadWaitlistSlots(currentWaitlistLocation);
 
         } catch (error) {
-          console.error(`❌ Error deleting ${currentListType} slot:`, error);
+          console.error(`❌ Error deleting ${currentListType} slot(s):`, error);
           showNotification('Failed to delete slot: ' + error.message, 'error');
         }
       }
@@ -26829,12 +26926,22 @@
       }
 
       // ============================================
-      // Cancel Upcoming Slot
+      // Cancel Upcoming Slot (supports single ID or array of IDs)
       // ============================================
-      async function cancelUpcomingSlot(slotId) {
-        const reason = prompt('Grund für Absage (optional):');
+      async function cancelUpcomingSlot(slotIds) {
+        // Support both single ID and array of IDs
+        const idsArray = Array.isArray(slotIds) ? slotIds : [slotIds];
 
+        const confirmMsg = idsArray.length > 1
+          ? `${idsArray.length} zusammenhängende Slots wirklich stornieren?`
+          : 'Slot wirklich stornieren?';
+
+        if (!confirm(confirmMsg)) return;
+
+        const reason = prompt('Grund für Absage (optional):');
         if (reason === null) return; // User clicked browser Cancel
+
+        console.log('🚫 Canceling slots:', idsArray);
 
         try {
           const { error } = await supabase
@@ -26845,15 +26952,18 @@
               canceled_at: new Date().toISOString(),
               canceled_by: currentUser?.id || null
             })
-            .eq('id', slotId);
+            .in('id', idsArray);
 
           if (error) throw error;
 
-          showNotification('Guest Spot wurde abgesagt', 'success');
+          const message = idsArray.length > 1
+            ? `${idsArray.length} Guest Spots wurden abgesagt`
+            : 'Guest Spot wurde abgesagt';
+          showNotification(message, 'success');
           loadWaitlistSlots(currentWaitlistLocation);
 
         } catch (error) {
-          console.error('❌ Error canceling slot:', error);
+          console.error('❌ Error canceling slots:', error);
           showNotification('Fehler: ' + error.message, 'error');
         }
       }
@@ -26865,12 +26975,15 @@
       // Event Listeners
       // ============================================
       function attachWaitlistEventListeners() {
-        // Delete buttons
+        // Delete buttons (supports grouped slots with multiple IDs)
         document.querySelectorAll('.delete-slot-button').forEach(btn => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const slotId = btn.dataset.slotId;
-            deleteWaitlistSlot(slotId);
+            // Support both old single ID and new array format
+            const slotIds = btn.dataset.slotIds
+              ? JSON.parse(btn.dataset.slotIds)
+              : btn.dataset.slotId;
+            deleteWaitlistSlot(slotIds);
           });
         });
 
