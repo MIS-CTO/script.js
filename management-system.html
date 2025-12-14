@@ -17898,9 +17898,6 @@
 
         container.innerHTML = '<div style="text-align:center;padding:40px;">Lädt...</div>';
 
-        console.log('🔍 [DEBUG] loadArtistGuestSpots called with artistId:', artistId);
-        console.log('🔍 [DEBUG] artistId type:', typeof artistId);
-
         try {
           const { data, error } = await supabase
             .from('artist_guest_spots')
@@ -17909,31 +17906,8 @@
             .order('status_order', { ascending: true })
             .order('date_from', { ascending: false });
 
-          console.log('📊 [DEBUG] Query result:', {
-            data,
-            error,
-            count: data?.length,
-            firstRecord: data?.[0]
-          });
-
-          // DEBUG: Also check raw upcoming_slots for comparison
-          const { data: rawSlots, error: rawError } = await supabase
-            .from('upcoming_slots')
-            .select('*')
-            .eq('artist_id', artistId);
-          console.log('🔍 [DEBUG] Raw upcoming_slots for this artist:', {
-            rawSlots,
-            rawError,
-            count: rawSlots?.length
-          });
-
           if (error) {
-            console.error('❌ [DEBUG] Supabase error details:', {
-              message: error.message,
-              code: error.code,
-              details: error.details,
-              hint: error.hint
-            });
+            console.error('Error loading artist guest spots:', error);
             throw error;
           }
 
@@ -17955,11 +17929,19 @@
             const dateFrom = spot.date_from ? new Date(spot.date_from).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
             const dateTo = spot.date_to ? new Date(spot.date_to).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
 
+            // Show date range or single date
+            const dateDisplay = dateFrom === dateTo ? dateFrom : dateFrom + ' - ' + dateTo;
+
+            // Show slot count badge if grouped (more than 1 slot)
+            const slotCountBadge = spot.slot_count > 1
+              ? '<span style="background:#8e8e93;color:white;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">' + spot.slot_count + ' Tage</span>'
+              : '';
+
             return '<div style="padding:16px 20px;border:1px solid var(--border-color,#e0e0e0);border-radius:12px;margin-bottom:12px;">' +
               '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                 '<div>' +
-                  '<p style="margin:0;font-weight:600;font-size:15px;">' + (spot.location_name || 'Unknown Location') + '</p>' +
-                  '<p style="margin:6px 0 0 0;color:var(--muted);font-size:13px;">' + dateFrom + ' - ' + dateTo + '</p>' +
+                  '<p style="margin:0;font-weight:600;font-size:15px;">' + (spot.location_name || 'Unknown Location') + (spot.location_city ? ' (' + spot.location_city + ')' : '') + '</p>' +
+                  '<p style="margin:6px 0 0 0;color:var(--muted);font-size:13px;">' + dateDisplay + slotCountBadge + '</p>' +
                   (spot.cancel_reason ? '<p style="margin:8px 0 0 0;color:#ff3b30;font-size:13px;">Grund: ' + spot.cancel_reason + '</p>' : '') +
                 '</div>' +
                 '<span style="background:' + config.color + ';color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;">' + config.label + '</span>' +
