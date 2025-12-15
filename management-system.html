@@ -33346,7 +33346,6 @@
           const { data, error } = await supabase
             .from('wannado_collections')
             .select('*, artist:artists(id, name, profile_picture_url), wannados(*)')
-            .eq('is_active', true)
             .order('sort_order', { ascending: true });
           if (error) throw error;
           wannadoCollections = data || [];
@@ -33367,19 +33366,23 @@
           const wannados = c.wannados || [];
           const available = wannados.filter(w => w.status === 'available').length;
           const sold = wannados.filter(w => w.status === 'sold').length;
+          const isActive = c.is_active !== false;
+          const cardStyle = !isActive ? 'opacity: 0.5; filter: grayscale(30%);' : '';
           return `
-            <div class="wannado-collection-card" data-collection-id="${c.id}" draggable="true">
+            <div class="wannado-collection-card" data-collection-id="${c.id}" draggable="true" style="${cardStyle}">
               <div class="collection-header">
                 <div class="collection-header-left">
                   <span class="collection-drag-handle">⋮⋮</span>
                   <img src="${artist.profile_picture_url || 'https://via.placeholder.com/48'}" class="collection-artist-avatar" onerror="this.src='https://via.placeholder.com/48'">
                   <div class="collection-info">
-                    <h3>${c.name || artist.name + "'s Wannados"}</h3>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      <h3 style="margin:0;">${c.name || artist.name + "'s Wannados"}</h3>
+                      <button onclick="event.stopPropagation(); window.toggleCollectionVisibility('${c.id}', ${isActive})" style="padding:6px 12px;background:${isActive ? '#34c759' : '#8e8e93'};color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:500;">${isActive ? '● Sichtbar' : '○ Versteckt'}</button>
+                    </div>
                     <p>${artist.name} · ${available} verfügbar · ${sold} verkauft</p>
                   </div>
                 </div>
                 <div style="display:flex;gap:8px;">
-                  <button onclick="window.toggleCollectionVisibility('${c.id}', ${c.is_active !== false})" style="padding:8px 12px;background:${c.is_active !== false ? '#34c759' : '#ff3b30'};color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">${c.is_active !== false ? '👁 Sichtbar' : '👁‍🗨 Versteckt'}</button>
                   <button onclick="window.addWannadoToCollection('${c.id}','${c.artist_id}')" style="padding:8px 16px;background:rgba(0,113,227,0.1);color:#0071e3;border:none;border-radius:6px;font-size:13px;cursor:pointer;">+ Wannado</button>
                   <button onclick="window.deleteCollection('${c.id}')" style="padding:8px 12px;background:rgba(255,59,48,0.1);color:#ff3b30;border:none;border-radius:6px;cursor:pointer;">🗑️</button>
                 </div>
