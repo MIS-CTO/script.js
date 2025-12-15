@@ -8511,17 +8511,40 @@
        WANNADOS SECTION
        ========================================== -->
   <section id="wannados-section" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h2 style="margin:0;">Wannado Collections</h2>
-      <button onclick="window.openCreateCollectionModal()" style="padding:12px 24px; background:#0071e3; color:white; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
+    <!-- Header Row -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+      <h2 style="margin:0; font-size:24px; font-weight:600;">Wannado Collections</h2>
+      <button onclick="window.openCreateCollectionModal()" style="padding:12px 24px; background:#333; color:white; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit;">
         + Neue Collection
       </button>
     </div>
-    <div id="wannadoCollectionsList" style="display:flex; flex-direction:column; gap:24px;">
-      <div style="text-align:center; padding:60px 20px; color:#86868b;">
-        <div style="font-size:48px; margin-bottom:16px;">🎨</div>
-        <h3 style="font-weight:500; margin-bottom:8px;">Lade Collections...</h3>
+
+    <!-- Search & Filter Row -->
+    <div style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
+      <!-- Searchbar -->
+      <div style="flex:1; min-width:200px;">
+        <input type="text" id="wannadoSearchInput" placeholder="Collection oder Wannado suchen..."
+          oninput="window.filterWannadoCollections()"
+          style="width:100%; padding:12px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; font-family:inherit; box-sizing:border-box;">
       </div>
+
+      <!-- Artist Filter -->
+      <select id="wannadoArtistFilter" onchange="window.filterWannadoCollections()"
+        style="padding:12px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; font-family:inherit; background:white; min-width:150px; cursor:pointer;">
+        <option value="all">Alle Artists</option>
+      </select>
+
+      <!-- Date Sort -->
+      <select id="wannadoDateFilter" onchange="window.filterWannadoCollections()"
+        style="padding:12px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; font-family:inherit; background:white; min-width:150px; cursor:pointer;">
+        <option value="newest">Neueste zuerst</option>
+        <option value="oldest">Älteste zuerst</option>
+      </select>
+    </div>
+
+    <!-- Collections List -->
+    <div id="wannadoCollectionsList" style="display:flex; flex-direction:column; gap:24px;">
+      <!-- Collections werden hier geladen -->
     </div>
   </section>
 
@@ -8551,7 +8574,7 @@
         </div>
         <div style="display:flex; gap:12px; justify-content:flex-end; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
           <button type="button" onclick="window.closeCreateCollectionModal()" style="padding:12px 24px; background:#f5f5f7; color:#1d1d1f; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Abbrechen</button>
-          <button type="submit" id="saveCollectionBtn" style="padding:12px 24px; background:#0071e3; color:white; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Collection speichern</button>
+          <button type="submit" id="saveCollectionBtn" style="padding:12px 24px; background:#333; color:white; border:none; border-radius:8px; font-size:14px; cursor:pointer; font-family:inherit;">Collection speichern</button>
         </div>
       </form>
     </div>
@@ -33331,14 +33354,17 @@
       // ==========================================
 
       const WANNADO_ARTIST_IDS = [
-        '90cd70be-f1a4-409e-8570-7aa2699fc683',
-        '98b63cd4-7e2e-409c-94cd-ac259a0a2635',
-        '9c60a246-68f0-4d9a-968e-03f490f10e5f',
-        'a2b390b5-4898-4bd5-a6b3-8ea66878dcc9',
-        'eb67d5dc-2f6f-45e1-ba56-f8e513ef32ba'
+        '90cd70be-f1a4-409e-8570-7aa2699fc683', // Ata
+        '98b63cd4-7e2e-409c-94cd-ac259a0a2635', // Gil
+        '9c60a246-68f0-4d9a-968e-03f490f10e5f', // Luca
+        'a2b390b5-4898-4bd5-a6b3-8ea66878dcc9', // Mary
+        'eb67d5dc-2f6f-45e1-ba56-f8e513ef32ba', // Mela
+        '142c31dc-dd89-4d84-aad4-536052c9184b', // Silas
+        '1cb237a8-cd7e-44c0-b4b1-34b33ad18666'  // Ben
       ];
 
       let wannadoCollections = [];
+      let allWannadoCollections = [];
       let wannadoRowCount = 0;
 
       async function loadWannadoCollections() {
@@ -33349,19 +33375,74 @@
             .order('sort_order', { ascending: true });
           if (error) throw error;
           wannadoCollections = data || [];
-          renderWannadoCollections();
+          allWannadoCollections = data || [];
+
+          // Populate artist filter dropdown
+          const artistSelect = document.getElementById('wannadoArtistFilter');
+          if (artistSelect) {
+            const artists = [...new Map(allWannadoCollections.map(c => [c.artist_id, c.artist]).filter(([id, a]) => id && a)).values()];
+            artistSelect.innerHTML = `
+              <option value="all">Alle Artists</option>
+              ${artists.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}
+            `;
+          }
+
+          renderWannadoCollections(allWannadoCollections);
         } catch (err) {
           console.error('Error:', err);
         }
       }
 
-      function renderWannadoCollections() {
+      // Filter function for Wannado Collections
+      function filterWannadoCollections() {
+        const searchTerm = document.getElementById('wannadoSearchInput')?.value.toLowerCase() || '';
+        const artistFilter = document.getElementById('wannadoArtistFilter')?.value || 'all';
+        const dateFilter = document.getElementById('wannadoDateFilter')?.value || 'newest';
+
+        let filtered = [...allWannadoCollections];
+
+        // Artist Filter
+        if (artistFilter !== 'all') {
+          filtered = filtered.filter(c => c.artist_id === artistFilter);
+        }
+
+        // Search Filter
+        if (searchTerm) {
+          filtered = filtered.filter(c => {
+            const collectionName = (c.name || '').toLowerCase();
+            const artistName = (c.artist?.name || '').toLowerCase();
+            const wannadoNames = (c.wannados || []).map(w => w.name.toLowerCase()).join(' ');
+            return collectionName.includes(searchTerm) || artistName.includes(searchTerm) || wannadoNames.includes(searchTerm);
+          });
+        }
+
+        // Date Sort
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0);
+          const dateB = new Date(b.created_at || 0);
+          return dateFilter === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+        renderWannadoCollections(filtered);
+      }
+
+      window.filterWannadoCollections = filterWannadoCollections;
+
+      function renderWannadoCollections(collections) {
         const container = document.getElementById('wannadoCollectionsList');
-        if (!wannadoCollections.length) {
-          container.innerHTML = '<div style="text-align:center;padding:60px;color:#86868b;"><div style="font-size:48px;margin-bottom:16px;">🎨</div><h3>Keine Collections</h3><p>Erstelle deine erste Collection</p></div>';
+        if (!container) return;
+
+        if (!collections || collections.length === 0) {
+          container.innerHTML = `
+            <div style="text-align:center; padding:60px 20px; color:#86868b;">
+              <div style="font-size:48px; margin-bottom:16px;">🎨</div>
+              <h3 style="font-weight:500; margin-bottom:8px;">Keine Collections gefunden</h3>
+              <p style="margin:0;">Passe deine Suche oder Filter an</p>
+            </div>
+          `;
           return;
         }
-        container.innerHTML = wannadoCollections.map(c => {
+        container.innerHTML = collections.map(c => {
           const artist = c.artist || {};
           const wannados = c.wannados || [];
           const available = wannados.filter(w => w.status === 'available').length;
