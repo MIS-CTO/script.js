@@ -250,13 +250,41 @@
     async function loadArtistAvailability() {
       if (!selectedWannado?.artist?.id) return;
       try {
-        const today = new Date(), endDate = new Date(); endDate.setDate(endDate.getDate() + 60);
-        const { data, error } = await supabase.from('dienstplan').select('*').eq('artist_id', selectedWannado.artist.id).gte('date', today.toISOString().split('T')[0]).lte('date', endDate.toISOString().split('T')[0]);
+        const today = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + 60);
+        const todayStr = today.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+
+        const { data, error } = await supabase
+          .from('dienstplan')
+          .select('id, start_date, end_date, state, working_start, working_end')
+          .eq('artist_id', selectedWannado.artist.id)
+          .eq('state', 'Available')
+          .lte('start_date', endDateStr)
+          .gte('end_date', todayStr)
+          .order('start_date', { ascending: true });
+
         if (error) throw error;
+
+        // Erstelle availability map für jeden Tag im Zeitraum
         artistAvailability = {};
-        (data || []).forEach(e => { artistAvailability[e.date] = { working_start: e.working_start, working_end: e.working_end }; });
+        (data || []).forEach(entry => {
+          const start = new Date(entry.start_date);
+          const end = new Date(entry.end_date);
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            artistAvailability[dateStr] = {
+              working_start: entry.working_start?.substring(0,5) || '10:00',
+              working_end: entry.working_end?.substring(0,5) || '20:00'
+            };
+          }
+        });
+
         renderCalendar();
-      } catch (err) { console.error('Error:', err); }
+      } catch (err) {
+        console.error('Error loading availability:', err);
+      }
     }
 
     function renderCalendar() {
