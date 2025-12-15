@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wannado Booking</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f7; color: #1d1d1f; line-height: 1.5; min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+    .header p { color: #86868b; font-size: 16px; }
+    .filter-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; justify-content: center; }
+    .filter-tab { padding: 10px 20px; background: white; border: 1px solid rgba(0,0,0,0.1); border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+    .filter-tab:hover { border-color: #0071e3; }
+    .filter-tab.active { background: #0071e3; color: white; border-color: #0071e3; }
+    .wannado-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
+    .wannado-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.3s ease; }
+    .wannado-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
+    .wannado-image { width: 100%; aspect-ratio: 1; object-fit: cover; background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%); }
+    .wannado-image-placeholder { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%); display: flex; align-items: center; justify-content: center; font-size: 64px; }
+    .wannado-info { padding: 16px; }
+    .wannado-artist { font-size: 12px; color: #86868b; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .wannado-artist img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+    .wannado-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .wannado-meta { display: flex; justify-content: space-between; align-items: center; }
+    .wannado-price { font-size: 20px; font-weight: 700; color: #0071e3; }
+    .wannado-duration { font-size: 14px; color: #86868b; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #86868b; }
+    .empty-state-icon { font-size: 64px; margin-bottom: 16px; }
+    .loading { text-align: center; padding: 60px 20px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid #f0f0f0; border-top-color: #0071e3; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+    .modal-backdrop.active { display: flex; }
+    .modal { background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal-header { padding: 24px; border-bottom: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: flex-start; position: sticky; top: 0; background: white; z-index: 10; }
+    .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #86868b; line-height: 1; }
+    .modal-body { padding: 24px; }
+    .selected-wannado { display: flex; gap: 16px; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+    .selected-wannado img { width: 100px; height: 100px; border-radius: 12px; object-fit: cover; }
+    .selected-wannado-info { flex: 1; }
+    .selected-wannado-info h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .selected-wannado-info .artist { font-size: 14px; color: #86868b; margin-bottom: 8px; }
+    .selected-wannado-info .price { font-size: 24px; font-weight: 700; color: #0071e3; }
+    .steps { display: flex; gap: 8px; margin-bottom: 24px; }
+    .step { flex: 1; height: 4px; background: #e0e0e0; border-radius: 2px; }
+    .step.active { background: #0071e3; }
+    .step.completed { background: #34c759; }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-section h4 { font-size: 14px; font-weight: 600; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+    .calendar { background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .calendar-header h5 { font-size: 16px; font-weight: 600; }
+    .calendar-nav { display: flex; gap: 8px; }
+    .calendar-nav button { width: 32px; height: 32px; border: none; background: white; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
+    .calendar-weekdays span { text-align: center; font-size: 12px; color: #86868b; font-weight: 500; }
+    .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .calendar-day { aspect-ratio: 1; border: none; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; }
+    .calendar-day:hover:not(:disabled) { background: #0071e3; color: white; }
+    .calendar-day.selected { background: #0071e3; color: white; }
+    .calendar-day:disabled { background: #f0f0f0; color: #ccc; cursor: not-allowed; }
+    .calendar-day.other-month { color: #ccc; }
+    .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 24px; }
+    .time-slot { padding: 12px; border: 1px solid rgba(0,0,0,0.1); background: white; border-radius: 8px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; }
+    .time-slot:hover { border-color: #0071e3; }
+    .time-slot.selected { background: #0071e3; color: white; border-color: #0071e3; }
+    .no-slots { text-align: center; padding: 20px; color: #86868b; font-size: 14px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .form-group input { width: 100%; padding: 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 14px; font-family: inherit; transition: border-color 0.2s; }
+    .form-group input:focus { outline: none; border-color: #0071e3; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .btn-row { display: flex; gap: 12px; margin-top: 24px; }
+    .btn { flex: 1; padding: 14px 24px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s ease; }
+    .btn-secondary { background: #f5f5f7; color: #1d1d1f; }
+    .btn-secondary:hover { background: #e8e8ed; }
+    .btn-primary { background: #0071e3; color: white; }
+    .btn-primary:hover { background: #0077ed; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+    .booking-summary { background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
+    .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .summary-row.total { border-top: 1px solid rgba(0,0,0,0.1); margin-top: 8px; padding-top: 16px; font-size: 18px; font-weight: 700; }
+    .summary-row.total .value { color: #0071e3; }
+    @media (max-width: 600px) {
+      .container { padding: 16px; }
+      .header h1 { font-size: 24px; }
+      .wannado-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+      .wannado-info { padding: 12px; }
+      .wannado-name { font-size: 16px; }
+      .modal { border-radius: 16px 16px 0 0; max-height: 95vh; margin-top: auto; }
+      .selected-wannado { flex-direction: column; align-items: center; text-align: center; }
+      .form-row { grid-template-columns: 1fr; }
+      .time-slots { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Flash Tattoos</h1>
+      <p>Wähle dein Motiv und buche direkt deinen Termin</p>
+    </div>
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-artist="all">Alle</button>
+    </div>
+    <div id="wannadoGrid" class="wannado-grid">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Lade Motive...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="bookingModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div><h2>Termin buchen</h2></div>
+        <button class="modal-close" onclick="closeBookingModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="selected-wannado" id="selectedWannadoPreview"></div>
+        <div class="steps">
+          <div class="step active" data-step="1"></div>
+          <div class="step" data-step="2"></div>
+          <div class="step" data-step="3"></div>
+        </div>
+        <div class="form-section active" id="step1">
+          <h4>1. Wähle Datum & Uhrzeit</h4>
+          <div class="calendar">
+            <div class="calendar-header">
+              <button onclick="prevMonth()">‹</button>
+              <h5 id="calendarMonth">Dezember 2025</h5>
+              <button onclick="nextMonth()">›</button>
+            </div>
+            <div class="calendar-weekdays">
+              <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+          </div>
+          <h4 style="margin-top:24px;">Verfügbare Zeiten</h4>
+          <div class="time-slots" id="timeSlots">
+            <div class="no-slots">Wähle zuerst ein Datum</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="goToStep(2)" id="toStep2Btn" disabled>Weiter</button>
+          </div>
+        </div>
+        <div class="form-section" id="step2">
+          <h4>2. Deine Kontaktdaten</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Vorname *</label>
+              <input type="text" id="firstName" required placeholder="Max">
+            </div>
+            <div class="form-group">
+              <label>Nachname *</label>
+              <input type="text" id="lastName" required placeholder="Mustermann">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>E-Mail *</label>
+            <input type="email" id="email" required placeholder="max@beispiel.de">
+          </div>
+          <div class="form-group">
+            <label>Telefon *</label>
+            <input type="tel" id="phone" required placeholder="+49 170 1234567">
+          </div>
+          <div class="form-group">
+            <label>Instagram (optional)</label>
+            <input type="text" id="instagram" placeholder="@dein_name">
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goToStep(1)">Zurück</button>
+            <button class="btn btn-primary" onclick="goToStep(3)">Weiter</button>
+          </div>
+        </div>
+        <div class="form-section" id="step3">
+          <h4>3. Zusammenfassung</h4>
+          <div class="booking-summary" id="bookingSummary"></div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="goToStep(2)">Zurück</button>
+            <button class="btn btn-primary" onclick="proceedToPayment()" id="payBtn">Jetzt bezahlen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://auxxyehgzkozdjylhqnx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2MTY0MDMsImV4cCI6MjA1MDE5MjQwM30.KjGORVDeBrNl3cKbLrT8XgCmZlg4T2I0cocMqAKtqnE';
+    const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-wannado-checkout`;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allWannados = [], allArtists = [], selectedWannado = null, selectedDate = null, selectedTime = null, currentMonth = new Date(), artistAvailability = {};
+
+    document.addEventListener('DOMContentLoaded', async () => { await loadWannados(); renderCalendar(); });
+
+    async function loadWannados() {
+      try {
+        const { data, error } = await supabase.from('wannados').select('*, artist:artists(id, name, profile_picture_url), collection:wannado_collections(id, name)').eq('status', 'available').order('sort_order', { ascending: true });
+        if (error) throw error;
+        allWannados = data || [];
+        const artistMap = new Map();
+        allWannados.forEach(w => { if (w.artist) artistMap.set(w.artist.id, w.artist); });
+        allArtists = Array.from(artistMap.values());
+        renderFilterTabs();
+        renderWannados();
+      } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('wannadoGrid').innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><h3>Fehler beim Laden</h3><p>${err.message}</p></div>`;
+      }
+    }
+
+    function renderFilterTabs() {
+      document.getElementById('filterTabs').innerHTML = `<button class="filter-tab active" data-artist="all" onclick="filterByArtist('all')">Alle</button>${allArtists.map(a => `<button class="filter-tab" data-artist="${a.id}" onclick="filterByArtist('${a.id}')">${a.name}</button>`).join('')}`;
+    }
+
+    function renderWannados(filter = 'all') {
+      const container = document.getElementById('wannadoGrid');
+      let filtered = filter === 'all' ? allWannados : allWannados.filter(w => w.artist?.id === filter);
+      if (!filtered.length) { container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎨</div><h3>Keine Motive verfügbar</h3></div>`; return; }
+      container.innerHTML = filtered.map(w => `<div class="wannado-card" onclick="selectWannado('${w.id}')">${w.image_url ? `<img src="${w.image_url}" class="wannado-image" onerror="this.outerHTML='<div class=\\'wannado-image-placeholder\\'>🎨</div>'">` : `<div class="wannado-image-placeholder">🎨</div>`}<div class="wannado-info"><div class="wannado-artist">${w.artist?.profile_picture_url ? `<img src="${w.artist.profile_picture_url}">` : ''}${w.artist?.name || 'Artist'}</div><div class="wannado-name">${w.name}</div><div class="wannado-meta"><span class="wannado-price">${Number(w.price).toFixed(0)}€</span><span class="wannado-duration">ca. ${w.duration_hours}h</span></div></div></div>`).join('');
+    }
+
+    function filterByArtist(id) {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.artist === id));
+      renderWannados(id);
+    }
+
+    function selectWannado(id) {
+      selectedWannado = allWannados.find(w => w.id === id);
+      if (!selectedWannado) return;
+      selectedDate = null; selectedTime = null; currentMonth = new Date();
+      document.getElementById('selectedWannadoPreview').innerHTML = `${selectedWannado.image_url ? `<img src="${selectedWannado.image_url}">` : `<div style="width:100px;height:100px;background:#f0f0f0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;">🎨</div>`}<div class="selected-wannado-info"><h3>${selectedWannado.name}</h3><div class="artist">von ${selectedWannado.artist?.name || 'Artist'} · ca. ${selectedWannado.duration_hours}h</div><div class="price">${Number(selectedWannado.price).toFixed(0)}€</div></div>`;
+      goToStep(1);
+      document.getElementById('bookingModal').classList.add('active');
+      loadArtistAvailability();
+    }
+
+    function closeBookingModal() { document.getElementById('bookingModal').classList.remove('active'); }
+
+    async function loadArtistAvailability() {
+      if (!selectedWannado?.artist?.id) return;
+      try {
+        const today = new Date(), endDate = new Date(); endDate.setDate(endDate.getDate() + 60);
+        const { data, error } = await supabase.from('dienstplan').select('*').eq('artist_id', selectedWannado.artist.id).gte('date', today.toISOString().split('T')[0]).lte('date', endDate.toISOString().split('T')[0]);
+        if (error) throw error;
+        artistAvailability = {};
+        (data || []).forEach(e => { artistAvailability[e.date] = { working_start: e.working_start, working_end: e.working_end }; });
+        renderCalendar();
+      } catch (err) { console.error('Error:', err); }
+    }
+
+    function renderCalendar() {
+      const container = document.getElementById('calendarDays'), monthLabel = document.getElementById('calendarMonth');
+      const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
+      const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+      monthLabel.textContent = `${monthNames[month]} ${year}`;
+      const firstDay = new Date(year, month, 1), lastDay = new Date(year, month + 1, 0), totalDays = lastDay.getDate();
+      let startingDay = firstDay.getDay() - 1; if (startingDay < 0) startingDay = 6;
+      let html = ''; const today = new Date(); today.setHours(0,0,0,0);
+      for (let i = 0; i < startingDay; i++) html += `<button class="calendar-day other-month" disabled></button>`;
+      for (let day = 1; day <= totalDays; day++) {
+        const date = new Date(year, month, day), dateStr = date.toISOString().split('T')[0];
+        const isPast = date < today, hasAvail = artistAvailability[dateStr], isSelected = selectedDate === dateStr;
+        html += `<button class="calendar-day ${isSelected ? 'selected' : ''}" ${isPast || !hasAvail ? 'disabled' : ''} onclick="selectDate('${dateStr}')">${day}</button>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function prevMonth() { currentMonth.setMonth(currentMonth.getMonth() - 1); renderCalendar(); }
+    function nextMonth() { currentMonth.setMonth(currentMonth.getMonth() + 1); renderCalendar(); }
+
+    async function selectDate(dateStr) {
+      selectedDate = dateStr; selectedTime = null;
+      document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+      event.target.classList.add('selected');
+      await loadTimeSlots(dateStr);
+      document.getElementById('toStep2Btn').disabled = true;
+    }
+
+    async function loadTimeSlots(dateStr) {
+      const container = document.getElementById('timeSlots');
+      container.innerHTML = '<div class="no-slots">Lade Zeiten...</div>';
+      const avail = artistAvailability[dateStr];
+      if (!avail) { container.innerHTML = '<div class="no-slots">Keine Verfügbarkeit</div>'; return; }
+      try {
+        const { data, error } = await supabase.from('appointments').select('scheduled_start, scheduled_end').eq('artist_id', selectedWannado.artist.id).eq('scheduled_date', dateStr).in('status', ['scheduled', 'confirmed']);
+        if (error) throw error;
+        const slots = calculateSlots(avail.working_start, avail.working_end, data || [], selectedWannado.duration_hours);
+        if (!slots.length) { container.innerHTML = '<div class="no-slots">Keine freien Zeiten</div>'; return; }
+        container.innerHTML = slots.map(s => `<button class="time-slot" onclick="selectTimeSlot('${s.start}','${s.end}')">${s.start} - ${s.end}</button>`).join('');
+      } catch (err) { console.error('Error:', err); container.innerHTML = '<div class="no-slots">Fehler</div>'; }
+    }
+
+    function calculateSlots(workStart, workEnd, appointments, duration) {
+      const slots = [], durationMin = duration * 60;
+      const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+      const toTime = m => `${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}`;
+      const startMin = toMin(workStart), endMin = toMin(workEnd);
+      const booked = appointments.map(a => ({ start: toMin(a.scheduled_start), end: toMin(a.scheduled_end) })).sort((a,b) => a.start - b.start);
+      let curr = startMin;
+      for (const b of booked) {
+        let s = curr;
+        while (s + durationMin <= b.start) { slots.push({ start: toTime(s), end: toTime(s + durationMin) }); s += 60; }
+        curr = Math.max(curr, b.end);
+      }
+      let s = curr;
+      while (s + durationMin <= endMin) { slots.push({ start: toTime(s), end: toTime(s + durationMin) }); s += 60; }
+      return slots;
+    }
+
+    function selectTimeSlot(start, end) {
+      selectedTime = { start, end };
+      document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+      event.target.classList.add('selected');
+      document.getElementById('toStep2Btn').disabled = false;
+    }
+
+    function goToStep(step) {
+      document.querySelectorAll('.step').forEach((s,i) => { s.classList.remove('active','completed'); if (i+1 < step) s.classList.add('completed'); if (i+1 === step) s.classList.add('active'); });
+      document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+      document.getElementById(`step${step}`).classList.add('active');
+      if (step === 3) updateSummary();
+    }
+
+    function updateSummary() {
+      const dateStr = new Date(selectedDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('bookingSummary').innerHTML = `<div class="summary-row"><span>Motiv</span><span>${selectedWannado.name}</span></div><div class="summary-row"><span>Artist</span><span>${selectedWannado.artist?.name}</span></div><div class="summary-row"><span>Datum</span><span>${dateStr}</span></div><div class="summary-row"><span>Uhrzeit</span><span>${selectedTime.start} - ${selectedTime.end} Uhr</span></div><div class="summary-row"><span>Dauer</span><span>ca. ${selectedWannado.duration_hours}h</span></div><div class="summary-row total"><span>Gesamtpreis</span><span class="value">${Number(selectedWannado.price).toFixed(0)}€</span></div>`;
+    }
+
+    async function proceedToPayment() {
+      const btn = document.getElementById('payBtn');
+      btn.disabled = true; btn.textContent = 'Wird verarbeitet...';
+      try {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const instagram = document.getElementById('instagram').value.trim();
+        if (!firstName || !lastName || !email || !phone) { alert('Bitte alle Pflichtfelder ausfüllen.'); goToStep(2); btn.disabled = false; btn.textContent = 'Jetzt bezahlen'; return; }
+        const res = await fetch(EDGE_FUNCTION_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wannado_id: selectedWannado.id, customer_email: email, customer_first_name: firstName, customer_last_name: lastName, customer_phone: phone, customer_instagram: instagram || null, selected_date: selectedDate, selected_start_time: selectedTime.start, selected_end_time: selectedTime.end }) });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Fehler');
+        if (result.checkout_url) window.top.location.href = result.checkout_url;
+        else throw new Error('Keine Checkout-URL');
+      } catch (err) { console.error('Error:', err); alert('Fehler: ' + err.message); btn.disabled = false; btn.textContent = 'Jetzt bezahlen'; }
+    }
+
+    document.getElementById('bookingModal').addEventListener('click', e => { if (e.target.id === 'bookingModal') closeBookingModal(); });
+  </script>
+</body>
+</html>
