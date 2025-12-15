@@ -33512,7 +33512,10 @@
       }
 
       async function openCreateCollectionModal() {
-        const { data: artists } = await supabase.from('artists').select('id, name, profile_picture_url').in('id', WANNADO_ARTIST_IDS);
+        console.log('WANNADO_ARTIST_IDS:', WANNADO_ARTIST_IDS);
+        const { data: artists, error } = await supabase.from('artists').select('id, name, profile_picture_url').in('id', WANNADO_ARTIST_IDS);
+        console.log('Loaded artists:', artists);
+        if (error) console.error('Error loading artists:', error);
         document.getElementById('collectionArtistGrid').innerHTML = (artists || []).map(a => `
           <div class="artist-select-card" data-artist-id="${a.id}" onclick="window.selectCollectionArtist('${a.id}')">
             <img src="${a.profile_picture_url || 'https://via.placeholder.com/50'}" onerror="this.src='https://via.placeholder.com/50'">
