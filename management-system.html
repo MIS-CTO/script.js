@@ -33379,6 +33379,7 @@
                   </div>
                 </div>
                 <div style="display:flex;gap:8px;">
+                  <button onclick="window.toggleCollectionVisibility('${c.id}', ${c.is_active !== false})" style="padding:8px 12px;background:${c.is_active !== false ? '#34c759' : '#ff3b30'};color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">${c.is_active !== false ? '👁 Sichtbar' : '👁‍🗨 Versteckt'}</button>
                   <button onclick="window.addWannadoToCollection('${c.id}','${c.artist_id}')" style="padding:8px 16px;background:rgba(0,113,227,0.1);color:#0071e3;border:none;border-radius:6px;font-size:13px;cursor:pointer;">+ Wannado</button>
                   <button onclick="window.deleteCollection('${c.id}')" style="padding:8px 12px;background:rgba(255,59,48,0.1);color:#ff3b30;border:none;border-radius:6px;cursor:pointer;">🗑️</button>
                 </div>
@@ -33572,6 +33573,22 @@
         loadWannadoCollections();
       }
 
+      async function toggleCollectionVisibility(collectionId, currentState) {
+        try {
+          const newState = !currentState;
+          const { error } = await supabase
+            .from('wannado_collections')
+            .update({ is_active: newState })
+            .eq('id', collectionId);
+          if (error) throw error;
+          showNotification(newState ? 'Collection ist jetzt sichtbar' : 'Collection ist jetzt versteckt', 'success');
+          window.loadWannadoCollections();
+        } catch (err) {
+          console.error('Error toggling visibility:', err);
+          showNotification('Fehler: ' + err.message, 'error');
+        }
+      }
+
       // Wannado functions global verfügbar machen
       window.loadWannadoCollections = loadWannadoCollections;
       window.renderWannadoCollections = renderWannadoCollections;
@@ -33589,6 +33606,7 @@
       window.updateWannado = updateWannado;
       window.deleteWannadoFromEdit = deleteWannadoFromEdit;
       window.deleteCollection = deleteCollection;
+      window.toggleCollectionVisibility = toggleCollectionVisibility;
 
       // Initialize auth
       initAuth();

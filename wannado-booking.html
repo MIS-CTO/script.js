@@ -223,7 +223,12 @@
 
     async function loadWannados() {
       try {
-        const { data, error } = await supabase.from('wannados').select('*, artist:artists(id, name, profile_picture_url, instagram), collection:wannado_collections(id, name)').in('status', ['available', 'sold']).order('sort_order', { ascending: true });
+        const { data, error } = await supabase
+          .from('wannados')
+          .select('*, artist:artists(id, name, profile_picture_url, instagram), collection:wannado_collections!inner(id, name, is_active)')
+          .eq('collection.is_active', true)
+          .in('status', ['available', 'sold'])
+          .order('sort_order', { ascending: true });
         if (error) throw error;
         allWannados = data || [];
         const artistMap = new Map();
@@ -238,7 +243,13 @@
     }
 
     function renderFilterTabs() {
-      document.getElementById('filterTabs').innerHTML = `<button class="filter-tab active" data-artist="all" onclick="filterByArtist('all')">Alle</button>${allArtists.map(a => `<button class="filter-tab" data-artist="${a.id}" onclick="filterByArtist('${a.id}')">${a.name}</button>`).join('')}`;
+      const container = document.getElementById('filterTabs');
+      if (allArtists.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'flex';
+      container.innerHTML = `<button class="filter-tab active" data-artist="all" onclick="filterByArtist('all')">Alle</button>${allArtists.map(a => `<button class="filter-tab" data-artist="${a.id}" onclick="filterByArtist('${a.id}')">${a.name}</button>`).join('')}`;
     }
 
     function renderWannados(filter = 'all') {
