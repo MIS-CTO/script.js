@@ -6719,6 +6719,187 @@
     .selected-time-clear:hover {
       background: rgba(255,59,48,0.2);
     }
+
+    /* WANNADOS TAB STYLES */
+    .wannado-collection-card {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .wannado-collection-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .wannado-collection-card.dragging {
+      opacity: 0.5;
+    }
+    .collection-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      cursor: grab;
+    }
+    .collection-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .collection-drag-handle {
+      color: #ccc;
+      font-size: 20px;
+      user-select: none;
+    }
+    .collection-artist-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .collection-info h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .collection-info p {
+      font-size: 13px;
+      color: #86868b;
+      margin: 4px 0 0;
+    }
+    .collection-wannados {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      padding: 24px;
+    }
+    .wannado-card {
+      background: #fafafa;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+    .wannado-card:hover {
+      border-color: #0071e3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .wannado-card.sold {
+      opacity: 0.6;
+    }
+    .wannado-card .wannado-image {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: #eee;
+    }
+    .wannado-card .wannado-details {
+      padding: 12px;
+    }
+    .wannado-card .wannado-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wannado-card .wannado-meta {
+      display: flex;
+      justify-content: space-between;
+    }
+    .wannado-card .wannado-price {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0071e3;
+    }
+    .wannado-card .wannado-duration {
+      font-size: 12px;
+      color: #86868b;
+    }
+    .wannado-sold-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #ff3b30;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .artist-select-card {
+      border: 2px solid rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .artist-select-card:hover {
+      border-color: #0071e3;
+    }
+    .artist-select-card.selected {
+      border-color: #0071e3;
+      background: rgba(0,113,227,0.08);
+    }
+    .artist-select-card img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 8px;
+    }
+    .artist-select-card .name {
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .wannado-row {
+      background: #f8f9fa;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .wannado-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .wannado-row-number {
+      font-size: 12px;
+      font-weight: 600;
+      color: #86868b;
+    }
+    .wannado-row-delete {
+      background: none;
+      border: none;
+      color: #ff3b30;
+      cursor: pointer;
+      font-size: 20px;
+    }
+    .wannado-image-upload {
+      border: 2px dashed rgba(0,0,0,0.15);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      color: #86868b;
+    }
+    .wannado-image-upload:hover {
+      border-color: #0071e3;
+    }
+    .wannado-image-upload.has-image {
+      padding: 8px;
+    }
+    .wannado-image-upload.has-image img {
+      max-width: 100%;
+      max-height: 100px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -6901,6 +7082,7 @@
     <a class="nav-link" href="#" data-view="dienstplan" id="tab-dienstplan">Dienstplan</a>
     <a class="nav-link" href="#" data-view="agreements" id="tab-agreements">Agreements</a>
     <a class="nav-link" href="#" data-view="analytics" id="tab-analytics">Analytics</a>
+    <a class="nav-link" href="#" data-view="wannados" id="tab-wannados">Wannados</a>
   </nav>
 
   <!-- Navigation Bar - Account Settings (Desktop only) -->
@@ -8324,6 +8506,105 @@
       </div>
     </div>
   </section>
+
+  <!-- ==========================================
+       WANNADOS SECTION
+       ========================================== -->
+  <section id="wannados-section" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h2 style="margin:0;">Wannado Collections</h2>
+      <button onclick="openCreateCollectionModal()" style="padding:12px 24px; background:#0071e3; color:white; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
+        + Neue Collection
+      </button>
+    </div>
+    <div id="wannadoCollectionsList" style="display:flex; flex-direction:column; gap:24px;">
+      <div style="text-align:center; padding:60px 20px; color:#86868b;">
+        <div style="font-size:48px; margin-bottom:16px;">🎨</div>
+        <h3 style="font-weight:500; margin-bottom:8px;">Lade Collections...</h3>
+      </div>
+    </div>
+  </section>
+
+  <!-- Create Collection Modal -->
+  <div id="createCollectionModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; max-width:700px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="padding:24px; border-bottom:1px solid rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:20px; font-weight:600;">Neue Wannado Collection</h3>
+        <button onclick="closeCreateCollectionModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#86868b;">&times;</button>
+      </div>
+      <form id="createCollectionForm" onsubmit="saveCollection(event)" style="padding:24px;">
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:16px;">Artist auswählen *</h4>
+          <div id="collectionArtistGrid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:12px;"></div>
+          <input type="hidden" id="collectionArtistId" required>
+        </div>
+        <div style="margin-bottom:24px;">
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:8px;">Collection Name (optional)</label>
+          <input type="text" id="collectionName" placeholder="z.B. Winter Flash, Sommer Motive..." style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; margin:0;">Wannados</h4>
+            <button type="button" onclick="addWannadoRow()" style="padding:8px 16px; background:rgba(0,113,227,0.1); color:#0071e3; border:none; border-radius:6px; font-size:13px; cursor:pointer;">+ Wannado</button>
+          </div>
+          <div id="wannadoRowsContainer"></div>
+        </div>
+        <div style="display:flex; gap:12px; justify-content:flex-end; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+          <button type="button" onclick="closeCreateCollectionModal()" style="padding:12px 24px; background:#f5f5f7; color:#1d1d1f; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Abbrechen</button>
+          <button type="submit" id="saveCollectionBtn" style="padding:12px 24px; background:#0071e3; color:white; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Collection speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Wannado Modal -->
+  <div id="editWannadoModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; max-width:500px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="padding:24px; border-bottom:1px solid rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:20px; font-weight:600;">Wannado bearbeiten</h3>
+        <button onclick="closeEditWannadoModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#86868b;">&times;</button>
+      </div>
+      <form id="editWannadoForm" onsubmit="updateWannado(event)" style="padding:24px;">
+        <input type="hidden" id="editWannadoId">
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:8px;">Name *</label>
+          <input type="text" id="editWannadoName" required style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; box-sizing:border-box;">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div>
+            <label style="display:block; font-size:14px; font-weight:500; margin-bottom:8px;">Preis (€) *</label>
+            <input type="number" id="editWannadoPrice" min="1" step="0.01" required style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block; font-size:14px; font-weight:500; margin-bottom:8px;">Dauer (h) *</label>
+            <input type="number" id="editWannadoDuration" min="0.5" step="0.5" required style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:8px;">Bild</label>
+          <div id="editWannadoImagePreview" style="width:100%; height:150px; border:2px dashed rgba(0,0,0,0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; background:#f8f9fa; margin-bottom:8px; overflow:hidden;">
+            <span style="color:#86868b;">Kein Bild</span>
+          </div>
+          <input type="file" id="editWannadoImage" accept="image/*" onchange="previewEditWannadoImage(event)" style="width:100%;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:8px;">Status</label>
+          <select id="editWannadoStatus" style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+            <option value="available">Verfügbar</option>
+            <option value="inactive">Inaktiv</option>
+            <option value="sold">Verkauft</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:12px; justify-content:space-between; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+          <button type="button" onclick="deleteWannadoFromEdit()" style="padding:12px 24px; background:#ff3b30; color:white; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Löschen</button>
+          <div style="display:flex; gap:12px;">
+            <button type="button" onclick="closeEditWannadoModal()" style="padding:12px 24px; background:#f5f5f7; color:#1d1d1f; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Abbrechen</button>
+            <button type="submit" style="padding:12px 24px; background:#0071e3; color:white; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Speichern</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Account Settings View -->
   <section id="accountSettings-section" style="display: none; padding: 0; margin-top: 110px;">
@@ -11650,6 +11931,7 @@
           }
           else if (tabName === "artists") loadArtists();
           else if (tabName === "customers") loadCustomers();
+          else if (tabName === "wannados") loadWannadoCollections();
         }
       }
 
@@ -29411,6 +29693,17 @@
         });
       }
 
+      // Wannados Tab Click - Load wannado collections when tab is clicked
+      const wannadosTab = document.getElementById('tab-wannados');
+      if (wannadosTab) {
+        wannadosTab.addEventListener('click', async function() {
+          console.log('🎨 Wannados tab clicked');
+          setTimeout(async () => {
+            await loadWannadoCollections();
+          }, 100);
+        });
+      }
+
       // Waitlist Tab Click - Initialize waitlist when tab is clicked
       const waitlistTab = document.getElementById('tab-waitlist');
       if (waitlistTab) {
@@ -33027,6 +33320,252 @@
         document.querySelectorAll('.profile-dropdown, .notifications-dropdown, .feedback-dropdown').forEach(dropdown => {
           dropdown.classList.remove('active');
         });
+      }
+
+      // ==========================================
+      // WANNADOS TAB
+      // ==========================================
+
+      const WANNADO_ARTIST_IDS = [
+        '90cd70be-f1a4-409e-8570-7aa2699fc683',
+        '98b63cd4-7e2e-409c-94cd-ac259a0a2635',
+        '9c60a246-68f0-4d9a-968e-03f490f10e5f',
+        'a2b390b5-4898-4bd5-a6b3-8ea66878dcc9',
+        'eb67d5dc-2f6f-45e1-ba56-f8e513ef32ba'
+      ];
+
+      let wannadoCollections = [];
+      let wannadoRowCount = 0;
+
+      async function loadWannadoCollections() {
+        try {
+          const { data, error } = await supabase
+            .from('wannado_collections')
+            .select('*, artist:artists(id, name, profile_picture_url), wannados(*)')
+            .eq('is_active', true)
+            .order('sort_order', { ascending: true });
+          if (error) throw error;
+          wannadoCollections = data || [];
+          renderWannadoCollections();
+        } catch (err) {
+          console.error('Error:', err);
+        }
+      }
+
+      function renderWannadoCollections() {
+        const container = document.getElementById('wannadoCollectionsList');
+        if (!wannadoCollections.length) {
+          container.innerHTML = '<div style="text-align:center;padding:60px;color:#86868b;"><div style="font-size:48px;margin-bottom:16px;">🎨</div><h3>Keine Collections</h3><p>Erstelle deine erste Collection</p></div>';
+          return;
+        }
+        container.innerHTML = wannadoCollections.map(c => {
+          const artist = c.artist || {};
+          const wannados = c.wannados || [];
+          const available = wannados.filter(w => w.status === 'available').length;
+          const sold = wannados.filter(w => w.status === 'sold').length;
+          return `
+            <div class="wannado-collection-card" data-collection-id="${c.id}" draggable="true">
+              <div class="collection-header">
+                <div class="collection-header-left">
+                  <span class="collection-drag-handle">⋮⋮</span>
+                  <img src="${artist.profile_picture_url || 'https://via.placeholder.com/48'}" class="collection-artist-avatar" onerror="this.src='https://via.placeholder.com/48'">
+                  <div class="collection-info">
+                    <h3>${c.name || artist.name + "'s Wannados"}</h3>
+                    <p>${artist.name} · ${available} verfügbar · ${sold} verkauft</p>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <button onclick="addWannadoToCollection('${c.id}','${c.artist_id}')" style="padding:8px 16px;background:rgba(0,113,227,0.1);color:#0071e3;border:none;border-radius:6px;font-size:13px;cursor:pointer;">+ Wannado</button>
+                  <button onclick="deleteCollection('${c.id}')" style="padding:8px 12px;background:rgba(255,59,48,0.1);color:#ff3b30;border:none;border-radius:6px;cursor:pointer;">🗑️</button>
+                </div>
+              </div>
+              <div class="collection-wannados">
+                ${!wannados.length ? '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#86868b;">Noch keine Wannados</div>' :
+                  wannados.map(w => `
+                    <div class="wannado-card ${w.status === 'sold' ? 'sold' : ''}" onclick="openEditWannadoModal('${w.id}')">
+                      ${w.image_url ? `<img src="${w.image_url}" class="wannado-image" onerror="this.style.display='none'">` : ''}
+                      <div class="wannado-image" style="${w.image_url ? 'display:none;' : ''}display:flex;align-items:center;justify-content:center;font-size:32px;background:#f0f0f0;">🎨</div>
+                      <div class="wannado-details">
+                        <h4 class="wannado-name">${w.name}</h4>
+                        <div class="wannado-meta">
+                          <span class="wannado-price">${Number(w.price).toFixed(0)}€</span>
+                          <span class="wannado-duration">${w.duration_hours}h</span>
+                        </div>
+                      </div>
+                      ${w.status === 'sold' ? '<div class="wannado-sold-badge">SOLD</div>' : ''}
+                    </div>
+                  `).join('')}
+              </div>
+            </div>`;
+        }).join('');
+        initCollectionDragDrop();
+      }
+
+      function initCollectionDragDrop() {
+        const container = document.getElementById('wannadoCollectionsList');
+        let dragged = null;
+        container.querySelectorAll('.wannado-collection-card').forEach(card => {
+          card.addEventListener('dragstart', e => { dragged = card; card.classList.add('dragging'); });
+          card.addEventListener('dragend', () => { card.classList.remove('dragging'); dragged = null; });
+          card.addEventListener('dragover', e => e.preventDefault());
+          card.addEventListener('drop', async e => {
+            e.preventDefault();
+            if (dragged === card) return;
+            const cards = [...container.querySelectorAll('.wannado-collection-card')];
+            const di = cards.indexOf(dragged), ti = cards.indexOf(card);
+            di < ti ? card.after(dragged) : card.before(dragged);
+            const newCards = [...container.querySelectorAll('.wannado-collection-card')];
+            for (let i = 0; i < newCards.length; i++) {
+              await supabase.from('wannado_collections').update({ sort_order: i }).eq('id', newCards[i].dataset.collectionId);
+            }
+          });
+        });
+      }
+
+      async function openCreateCollectionModal() {
+        const { data: artists } = await supabase.from('artists').select('id, name, profile_picture_url').in('id', WANNADO_ARTIST_IDS);
+        document.getElementById('collectionArtistGrid').innerHTML = (artists || []).map(a => `
+          <div class="artist-select-card" data-artist-id="${a.id}" onclick="selectCollectionArtist('${a.id}')">
+            <img src="${a.profile_picture_url || 'https://via.placeholder.com/50'}" onerror="this.src='https://via.placeholder.com/50'">
+            <div class="name">${a.name}</div>
+          </div>
+        `).join('');
+        document.getElementById('collectionArtistId').value = '';
+        document.getElementById('collectionName').value = '';
+        document.getElementById('wannadoRowsContainer').innerHTML = '';
+        wannadoRowCount = 0;
+        addWannadoRow();
+        document.getElementById('createCollectionModal').style.display = 'flex';
+      }
+
+      function closeCreateCollectionModal() { document.getElementById('createCollectionModal').style.display = 'none'; }
+
+      function selectCollectionArtist(id) {
+        document.querySelectorAll('.artist-select-card').forEach(c => c.classList.remove('selected'));
+        document.querySelector(`.artist-select-card[data-artist-id="${id}"]`).classList.add('selected');
+        document.getElementById('collectionArtistId').value = id;
+      }
+
+      function addWannadoRow() {
+        wannadoRowCount++;
+        const r = wannadoRowCount;
+        document.getElementById('wannadoRowsContainer').innerHTML += `
+          <div class="wannado-row" data-row-id="${r}">
+            <div class="wannado-row-header">
+              <span class="wannado-row-number">Wannado #${r}</span>
+              <button type="button" class="wannado-row-delete" onclick="this.closest('.wannado-row').remove()">×</button>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div><label style="display:block;font-size:12px;margin-bottom:4px;">Name *</label><input type="text" name="wannado_name_${r}" required style="width:100%;padding:10px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;box-sizing:border-box;"></div>
+              <div><label style="display:block;font-size:12px;margin-bottom:4px;">Preis €</label><input type="number" name="wannado_price_${r}" min="1" required style="width:100%;padding:10px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;box-sizing:border-box;"></div>
+              <div><label style="display:block;font-size:12px;margin-bottom:4px;">Dauer h</label><input type="number" name="wannado_duration_${r}" min="0.5" step="0.5" required style="width:100%;padding:10px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;box-sizing:border-box;"></div>
+            </div>
+            <div><label style="display:block;font-size:12px;margin-bottom:4px;">Bild</label>
+              <div class="wannado-image-upload" id="wannadoUpload_${r}" onclick="document.getElementById('wannadoFile_${r}').click()">📷 Bild hochladen</div>
+              <input type="file" id="wannadoFile_${r}" name="wannado_file_${r}" accept="image/*" style="display:none" onchange="previewWannadoImage(${r},event)">
+            </div>
+          </div>`;
+      }
+
+      function previewWannadoImage(r, e) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const div = document.getElementById('wannadoUpload_' + r);
+          div.innerHTML = '<img src="' + ev.target.result + '">';
+          div.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function saveCollection(e) {
+        e.preventDefault();
+        const artistId = document.getElementById('collectionArtistId').value;
+        if (!artistId) { alert('Bitte Artist auswählen'); return; }
+        const btn = document.getElementById('saveCollectionBtn');
+        btn.disabled = true; btn.textContent = 'Speichert...';
+        try {
+          const { data: coll, error } = await supabase.from('wannado_collections').insert({ artist_id: artistId, name: document.getElementById('collectionName').value.trim() || null, sort_order: 0 }).select().single();
+          if (error) throw error;
+          await supabase.rpc('increment_collection_sort_order');
+          for (const row of document.querySelectorAll('.wannado-row')) {
+            const r = row.dataset.rowId;
+            const name = row.querySelector(`[name="wannado_name_${r}"]`).value.trim();
+            const price = parseFloat(row.querySelector(`[name="wannado_price_${r}"]`).value);
+            const duration = parseFloat(row.querySelector(`[name="wannado_duration_${r}"]`).value);
+            if (!name || !price || !duration) continue;
+            let imageUrl = null;
+            const fileInput = document.getElementById('wannadoFile_' + r);
+            if (fileInput && fileInput.files[0]) {
+              const file = fileInput.files[0];
+              const fileName = 'wannado_' + coll.id + '_' + Date.now() + '_' + r + '.' + file.name.split('.').pop();
+              const { error: upErr } = await supabase.storage.from('wannado-images').upload(fileName, file);
+              if (!upErr) imageUrl = supabase.storage.from('wannado-images').getPublicUrl(fileName).data.publicUrl;
+            }
+            await supabase.from('wannados').insert({ collection_id: coll.id, artist_id: artistId, name, price, duration_hours: duration, image_url: imageUrl, status: 'available' });
+          }
+          closeCreateCollectionModal();
+          loadWannadoCollections();
+        } catch (err) { alert('Fehler: ' + err.message); }
+        btn.disabled = false; btn.textContent = 'Collection speichern';
+      }
+
+      async function addWannadoToCollection(collId, artistId) {
+        const name = prompt('Wannado Name:'); if (!name) return;
+        const price = prompt('Preis (€):'); if (!price) return;
+        const duration = prompt('Dauer (h):'); if (!duration) return;
+        await supabase.from('wannados').insert({ collection_id: collId, artist_id: artistId, name, price: parseFloat(price), duration_hours: parseFloat(duration), status: 'available' });
+        loadWannadoCollections();
+      }
+
+      async function openEditWannadoModal(id) {
+        const { data: w } = await supabase.from('wannados').select('*').eq('id', id).single();
+        if (!w) return;
+        document.getElementById('editWannadoId').value = w.id;
+        document.getElementById('editWannadoName').value = w.name;
+        document.getElementById('editWannadoPrice').value = w.price;
+        document.getElementById('editWannadoDuration').value = w.duration_hours;
+        document.getElementById('editWannadoStatus').value = w.status;
+        document.getElementById('editWannadoImagePreview').innerHTML = w.image_url ? '<img src="' + w.image_url + '" style="max-width:100%;max-height:100%;object-fit:contain;">' : '<span style="color:#86868b;">Kein Bild</span>';
+        document.getElementById('editWannadoModal').style.display = 'flex';
+      }
+
+      function closeEditWannadoModal() { document.getElementById('editWannadoModal').style.display = 'none'; }
+
+      function previewEditWannadoImage(e) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => { document.getElementById('editWannadoImagePreview').innerHTML = '<img src="' + ev.target.result + '" style="max-width:100%;max-height:100%;object-fit:contain;">'; };
+        reader.readAsDataURL(file);
+      }
+
+      async function updateWannado(e) {
+        e.preventDefault();
+        const id = document.getElementById('editWannadoId').value;
+        const data = { name: document.getElementById('editWannadoName').value, price: parseFloat(document.getElementById('editWannadoPrice').value), duration_hours: parseFloat(document.getElementById('editWannadoDuration').value), status: document.getElementById('editWannadoStatus').value };
+        const fileInput = document.getElementById('editWannadoImage');
+        if (fileInput.files[0]) {
+          const file = fileInput.files[0];
+          const fileName = 'wannado_' + id + '_' + Date.now() + '.' + file.name.split('.').pop();
+          const { error } = await supabase.storage.from('wannado-images').upload(fileName, file);
+          if (!error) data.image_url = supabase.storage.from('wannado-images').getPublicUrl(fileName).data.publicUrl;
+        }
+        await supabase.from('wannados').update(data).eq('id', id);
+        closeEditWannadoModal();
+        loadWannadoCollections();
+      }
+
+      async function deleteWannadoFromEdit() {
+        if (!confirm('Wannado löschen?')) return;
+        await supabase.from('wannados').delete().eq('id', document.getElementById('editWannadoId').value);
+        closeEditWannadoModal();
+        loadWannadoCollections();
+      }
+
+      async function deleteCollection(id) {
+        if (!confirm('Collection und alle Wannados löschen?')) return;
+        await supabase.from('wannado_collections').delete().eq('id', id);
+        loadWannadoCollections();
       }
 
       // Initialize auth
