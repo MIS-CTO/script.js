@@ -320,13 +320,39 @@
       container.innerHTML = '<div class="no-slots">Lade Zeiten...</div>';
       const avail = artistAvailability[dateStr];
       if (!avail) { container.innerHTML = '<div class="no-slots">Keine Verfügbarkeit</div>'; return; }
+
       try {
-        const { data, error } = await supabase.from('appointments').select('scheduled_start, scheduled_end').eq('artist_id', selectedWannado.artist.id).eq('scheduled_date', dateStr).in('status', ['scheduled', 'confirmed']);
+        // Erstelle Start und Ende des Tages für die Abfrage
+        const dayStart = dateStr + 'T00:00:00';
+        const dayEnd = dateStr + 'T23:59:59';
+
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('start, end')
+          .eq('artist_id', selectedWannado.artist.id)
+          .gte('start', dayStart)
+          .lte('start', dayEnd)
+          .in('status', ['scheduled', 'confirmed']);
+
         if (error) throw error;
-        const slots = calculateSlots(avail.working_start, avail.working_end, data || [], selectedWannado.duration_hours);
+
+        // Konvertiere start/end zu Zeiten für die Slot-Berechnung
+        const appointments = (data || []).map(apt => {
+          const startDate = new Date(apt.start);
+          const endDate = new Date(apt.end);
+          return {
+            scheduled_start: startDate.getHours().toString().padStart(2,'0') + ':' + startDate.getMinutes().toString().padStart(2,'0'),
+            scheduled_end: endDate.getHours().toString().padStart(2,'0') + ':' + endDate.getMinutes().toString().padStart(2,'0')
+          };
+        });
+
+        const slots = calculateSlots(avail.working_start, avail.working_end, appointments, selectedWannado.duration_hours);
         if (!slots.length) { container.innerHTML = '<div class="no-slots">Keine freien Zeiten</div>'; return; }
         container.innerHTML = slots.map(s => `<button class="time-slot" onclick="selectTimeSlot('${s.start}','${s.end}')">${s.start} - ${s.end}</button>`).join('');
-      } catch (err) { console.error('Error:', err); container.innerHTML = '<div class="no-slots">Fehler</div>'; }
+      } catch (err) {
+        console.error('Error:', err);
+        container.innerHTML = '<div class="no-slots">Fehler beim Laden</div>';
+      }
     }
 
     function calculateSlots(workStart, workEnd, appointments, duration) {
