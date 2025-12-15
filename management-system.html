@@ -11905,13 +11905,17 @@
 
       function showSection(tab) {
         tabs.forEach(x => x.classList.remove("active"));
-        sections.forEach(s => s.classList.remove("active"));
+        sections.forEach(s => {
+          s.classList.remove("active");
+          s.style.display = "none";
+        });
         tab.classList.add("active");
-        
+
         const tabName = tab.id.replace("tab-", "");
         const target = document.getElementById(tabName + "-section");
         if (target) {
           target.classList.add("active");
+          target.style.display = "block";
           if (tabName === "dashboard") {
             loadDashboard();
             loadPinnedEvents();
@@ -11931,7 +11935,7 @@
           }
           else if (tabName === "artists") loadArtists();
           else if (tabName === "customers") loadCustomers();
-          else if (tabName === "wannados") loadWannadoCollections();
+          else if (tabName === "wannados") window.loadWannadoCollections();
         }
       }
 
