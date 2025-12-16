@@ -7659,7 +7659,7 @@
       </button>
 
       <!-- Mobile Profile Trigger (Mobile only) -->
-      <button class="mobile-profile-trigger" id="mobileProfileTrigger" style="display: none;">
+      <button class="mobile-profile-trigger" id="mobileProfileTrigger" style="display: none;" onclick="openMobileProfile()">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
           <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -7669,13 +7669,13 @@
   </div>
 
   <!-- Mobile Profile Panel Overlay -->
-  <div class="mobile-profile-overlay" id="mobileProfileOverlay"></div>
+  <div class="mobile-profile-overlay" id="mobileProfileOverlay" onclick="closeMobileProfile()"></div>
 
   <!-- Mobile Profile Panel -->
   <div class="mobile-profile-panel" id="mobileProfilePanel">
     <div class="mobile-profile-header">
       <span style="font-weight: 600; font-size: 16px;">Profil</span>
-      <button class="mobile-profile-close" id="mobileProfileClose">✕</button>
+      <button class="mobile-profile-close" id="mobileProfileClose" onclick="closeMobileProfile()">✕</button>
     </div>
 
     <div class="mobile-profile-user">
@@ -34550,26 +34550,32 @@
       // NAVBAR & MOBILE NAVIGATION SETUP
       // ==========================================
 
-      // Mobile Navigation Events
-      const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-      mobileNavItems.forEach(item => {
-        item.addEventListener('click', function() {
-          const viewName = this.dataset.mobileView;
+      // Mobile Navigation - Direct Click Handler
+      document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
 
-          // Update active state on mobile nav items
-          mobileNavItems.forEach(navItem => navItem.classList.remove('active'));
+          const viewName = this.dataset.mobileView;
+          if (!viewName) return;
+
+          console.log('Mobile nav clicked:', viewName);
+
+          // Update active state
+          document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
           this.classList.add('active');
 
-          // Hide all sections and show selected section
-          document.querySelectorAll('section[id$="-section"]').forEach(section => {
-            section.style.display = 'none';
-            section.classList.remove('active');
+          // Hide all sections
+          document.querySelectorAll('section[id$="-section"]').forEach(s => {
+            s.style.display = 'none';
+            s.classList.remove('active');
           });
 
-          const targetSection = document.getElementById(viewName + '-section');
-          if (targetSection) {
-            targetSection.style.display = 'block';
-            targetSection.classList.add('active');
+          // Show target section
+          const target = document.getElementById(viewName + '-section');
+          if (target) {
+            target.style.display = 'block';
+            target.classList.add('active');
           }
 
           // Update desktop nav if exists
@@ -34579,7 +34585,7 @@
           if (matchingNavLink) {
             matchingNavLink.classList.add('active');
           }
-        });
+        };
       });
 
       // Initialize navbar hover and mobile navigation
@@ -35930,6 +35936,24 @@
         if (!isMobile()) return;
         populateMobileSlider('pinnedEvents');
         populateMobileSlider('schwarzesBrett');
+      };
+
+      // === GLOBAL MOBILE PROFILE FUNCTIONS ===
+      window.openMobileProfile = function() {
+        if (!isMobile()) return;
+        const overlay = document.getElementById('mobileProfileOverlay');
+        const panel = document.getElementById('mobileProfilePanel');
+        if (overlay) overlay.classList.add('active');
+        if (panel) panel.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      };
+
+      window.closeMobileProfile = function() {
+        const overlay = document.getElementById('mobileProfileOverlay');
+        const panel = document.getElementById('mobileProfilePanel');
+        if (overlay) overlay.classList.remove('active');
+        if (panel) panel.classList.remove('active');
+        document.body.style.overflow = '';
       };
 
       // Initialize mobile features
