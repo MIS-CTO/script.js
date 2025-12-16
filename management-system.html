@@ -4809,30 +4809,24 @@
       visibility: hidden;
     }
 
-    /* Background Image */
+    /* Background Image Container */
     .loading-bg {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: url('https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/assets/Bildschirmfoto%202025-12-16%20um%2012.08.32.png');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      overflow: hidden;
       z-index: 1;
+      background-color: #1a1a1a; /* Fallback */
     }
 
-    /* Fallback gradient if image fails */
-    .loading-bg::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
+    /* Background Image - als IMG Tag für bessere Zuverlässigkeit */
+    .loading-bg-img {
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-      z-index: -1;
+      object-fit: cover;
+      object-position: center;
     }
 
     /* Logo */
@@ -7179,8 +7173,14 @@
   <!-- FULLSCREEN LOADING SCREEN WITH BACKGROUND IMAGE -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <div id="loadingScreen" class="loading-screen active">
-    <!-- Background Image -->
-    <div class="loading-bg"></div>
+    <!-- Background Image als IMG Tag (zuverlässiger) -->
+    <div class="loading-bg">
+      <img src="https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/assets/Bildschirmfoto%202025-12-16%20um%2012.08.32.png"
+           alt=""
+           class="loading-bg-img"
+           onload="console.log('✅ Background image loaded')"
+           onerror="console.error('❌ Background image failed to load')">
+    </div>
 
     <!-- Logo -->
     <div class="loading-logo">MOMMY I'M SORRY</div>
@@ -11590,20 +11590,26 @@
 
       // ═══════════════════════════════════════════════════════════════════════
       // BATCH LOADING CONFIGURATION
+      // Optimiert für Timeout-Vermeidung: kleinere Batches, weniger parallel
       // ═══════════════════════════════════════════════════════════════════════
       tableConfig: {
+        // Kleine Tabellen - schnell laden
         locations:     { batchSize: 100,  parallel: 1, relations: '*' },
         profiles:      { batchSize: 100,  parallel: 1, relations: '*' },
-        artists:       { batchSize: 1000, parallel: 2, relations: '*' },
-        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name), location:locations!appointments_location_id_fkey(id, name)' },
-        dienstplan:    { batchSize: 2000, parallel: 3, relations: '*, artist:artists!artist_id(name, email, instagram, rank, is_guest), location:locations!location_id(name, city)' },
-        work_tracking: { batchSize: 1000, parallel: 2, relations: '*' },
-        requests:      { batchSize: 2000, parallel: 4, relations: '*, customer:customers(id, first_name, last_name, email, phone, rank, instagram), artist:artists(id, name, email, instagram), location:locations!requests_location_id_fkey(id, name, city)' },
-        customers:     { batchSize: 3000, parallel: 4, relations: '*' },
-        projects:      { batchSize: 3000, parallel: 4, relations: 'id, project_number, state, payment_status, total_amount, deposit_amount, payment_amount, created_at, location_id, artist_id, customer_id' },
-        wannados:      { batchSize: 1000, parallel: 2, relations: '*' },
-        project_tasks: { batchSize: 1000, parallel: 2, relations: '*' },
-        task_projects: { batchSize: 500,  parallel: 1, relations: '*' }
+        task_projects: { batchSize: 100,  parallel: 1, relations: '*' },
+        wannados:      { batchSize: 500,  parallel: 1, relations: '*' },
+        project_tasks: { batchSize: 500,  parallel: 1, relations: '*' },
+        work_tracking: { batchSize: 500,  parallel: 1, relations: '*' },
+        artists:       { batchSize: 500,  parallel: 1, relations: '*' },
+
+        // Mittlere Tabellen - moderate Batches
+        dienstplan:    { batchSize: 1000, parallel: 2, relations: '*' },
+        appointments:  { batchSize: 1000, parallel: 1, relations: '*' },
+
+        // Große Tabellen - kleinere Batches, einfache Relations
+        customers:     { batchSize: 2000, parallel: 2, relations: '*' },
+        requests:      { batchSize: 1000, parallel: 2, relations: '*' },
+        projects:      { batchSize: 1000, parallel: 2, relations: 'id, project_number, state, payment_state, total_amount, deposit_amount, payment_amount, created_at, location_id, artist_id, customer_id' }
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -12392,7 +12398,12 @@
             }
           }, 100);
 
-          showNotification(`Willkommen zurück, ${profile.username}!`, 'success');
+          // Show notification (mit typeof check)
+          if (typeof showNotification === 'function') {
+            showNotification(`Willkommen zurück, ${profile.username}!`, 'success');
+          } else {
+            console.log(`✅ Willkommen zurück, ${profile.username}!`);
+          }
 
         } catch (err) {
           console.error('💥 Login failed:', err);
