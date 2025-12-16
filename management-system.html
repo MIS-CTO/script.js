@@ -6305,7 +6305,10 @@
     .mobile-content-tabs,
     .mobile-tabs-wrapper,
     .mobile-slide-indicator,
-    .mobile-slider-indicator {
+    .mobile-slider-indicator,
+    .mobile-calendar-view,
+    .mobile-dienstplan-view,
+    .mobile-cal-modal {
       display: none !important;
     }
 
@@ -7570,6 +7573,399 @@
       max-width: 100%;
       max-height: 100px;
       border-radius: 6px;
+    }
+
+    /* ==========================================
+       MOBILE CALENDAR & DIENSTPLAN VIEWS
+       Only visible on mobile < 768px
+       ========================================== */
+    @media (max-width: 768px) {
+      /* Mobile Calendar View - Apple Style */
+      .mobile-calendar-view {
+        display: none !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 72px;
+        background: var(--macos-bg, #f5f5f7);
+        z-index: 100;
+        overflow: hidden;
+        flex-direction: column;
+      }
+
+      .mobile-calendar-view.active {
+        display: flex !important;
+      }
+
+      .mobile-cal-header {
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+      }
+
+      .mobile-cal-week-dropdown {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: var(--macos-fill-tertiary, rgba(0,0,0,0.05));
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .mobile-cal-week-nav {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 12px;
+      }
+
+      .mobile-cal-nav-btn {
+        flex: 1;
+        padding: 10px;
+        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
+        border: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.1));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--macos-text-primary, #1d1d1f);
+        cursor: pointer;
+      }
+
+      .mobile-cal-today-btn {
+        flex: 2;
+        padding: 10px 20px;
+        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
+        border: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.1));
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--macos-text-primary, #1d1d1f);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .mobile-cal-weekdays {
+        display: flex;
+        padding: 0 8px;
+        gap: 4px;
+      }
+
+      .mobile-cal-day {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .mobile-cal-day-name {
+        font-size: 11px;
+        color: var(--macos-text-secondary, #86868b);
+        text-transform: uppercase;
+      }
+
+      .mobile-cal-day-num {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+        margin-top: 4px;
+      }
+
+      .mobile-cal-day.active {
+        background: var(--macos-accent-red, #ff3b30);
+      }
+
+      .mobile-cal-day.active .mobile-cal-day-name,
+      .mobile-cal-day.active .mobile-cal-day-num {
+        color: white;
+      }
+
+      .mobile-cal-day.today .mobile-cal-day-num {
+        background: var(--macos-accent-red, #ff3b30);
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 4px auto 0;
+      }
+
+      .mobile-cal-filter {
+        padding: 8px 16px;
+      }
+
+      .mobile-cal-filter select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.1));
+        border-radius: 8px;
+        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
+        font-size: 14px;
+        color: var(--macos-text-primary, #1d1d1f);
+        font-family: inherit;
+      }
+
+      .mobile-cal-timeline {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 16px 16px;
+      }
+
+      .mobile-cal-date-header {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+        padding: 12px 0;
+        position: sticky;
+        top: 0;
+        background: var(--macos-bg, #f5f5f7);
+        z-index: 1;
+      }
+
+      .mobile-cal-hours {
+        position: relative;
+      }
+
+      .mobile-cal-hour-row {
+        display: flex;
+        min-height: 60px;
+        border-top: 1px solid var(--macos-stroke-secondary, rgba(0,0,0,0.06));
+      }
+
+      .mobile-cal-hour-label {
+        width: 50px;
+        font-size: 12px;
+        color: var(--macos-text-secondary, #86868b);
+        padding-top: 4px;
+      }
+
+      .mobile-cal-hour-content {
+        flex: 1;
+        position: relative;
+      }
+
+      .mobile-cal-event {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        border-left: 3px solid;
+      }
+
+      .mobile-cal-event-title {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mobile-cal-event-time {
+        font-size: 11px;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      /* Event Category Colors */
+      .mobile-cal-event.consultation { background: #E3F2FD; border-color: #2196F3; color: #1565C0; }
+      .mobile-cal-event.new_tattoo { background: #E8F5E9; border-color: #4CAF50; color: #2E7D32; }
+      .mobile-cal-event.continuing_tattoo { background: #FFF3E0; border-color: #FF9800; color: #E65100; }
+      .mobile-cal-event.touch_up { background: #F3E5F5; border-color: #9C27B0; color: #6A1B9A; }
+      .mobile-cal-event.selfbooking { background: #E0F7FA; border-color: #00BCD4; color: #00838F; }
+      .mobile-cal-event.wannado { background: #FCE4EC; border-color: #E91E63; color: #AD1457; }
+      .mobile-cal-event.internal { background: #ECEFF1; border-color: #607D8B; color: #37474F; }
+      .mobile-cal-event.move { background: #FFF8E1; border-color: #FFC107; color: #FF8F00; }
+      .mobile-cal-event.reserved { background: #EFEBE9; border-color: #795548; color: #4E342E; }
+      .mobile-cal-event.no_show { background: #FFEBEE; border-color: #F44336; color: #C62828; }
+
+      /* Modal */
+      .mobile-cal-modal {
+        display: none !important;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+        align-items: flex-end;
+        justify-content: center;
+      }
+
+      .mobile-cal-modal.active {
+        display: flex !important;
+      }
+
+      .mobile-cal-modal-content {
+        width: 100%;
+        max-height: 70vh;
+        background: var(--macos-nav-bg, #ffffff);
+        border-radius: 20px 20px 0 0;
+        overflow: hidden;
+      }
+
+      .mobile-cal-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.1));
+        font-weight: 600;
+      }
+
+      .mobile-cal-modal-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: var(--macos-text-secondary, #86868b);
+        cursor: pointer;
+      }
+
+      .mobile-cal-modal-body {
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      /* Mobile Dienstplan View */
+      .mobile-dienstplan-view {
+        display: none !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 72px;
+        background: var(--macos-bg, #f5f5f7);
+        z-index: 100;
+        overflow: hidden;
+        flex-direction: column;
+      }
+
+      .mobile-dienstplan-view.active {
+        display: flex !important;
+      }
+
+      .mobile-dp-header {
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+      }
+
+      .mobile-dp-week-dropdown {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: var(--macos-fill-tertiary, rgba(0,0,0,0.05));
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .mobile-dp-week-nav {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 12px;
+      }
+
+      .mobile-dp-nav-btn {
+        flex: 1;
+        padding: 10px;
+        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
+        border: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.1));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--macos-text-primary, #1d1d1f);
+        cursor: pointer;
+      }
+
+      .mobile-dp-today-btn {
+        flex: 2;
+        padding: 10px 20px;
+        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
+        border: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.1));
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--macos-text-primary, #1d1d1f);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .mobile-dp-days {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 16px 16px;
+      }
+
+      .mobile-dp-day-card {
+        background: var(--macos-panel, #ffffff);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .mobile-dp-day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+      }
+
+      .mobile-dp-day-menu {
+        background: none;
+        border: none;
+        color: var(--macos-text-secondary, #86868b);
+        cursor: pointer;
+        font-size: 18px;
+      }
+
+      .mobile-dp-shift {
+        padding: 12px 16px;
+        background: #E3F2FD;
+        margin: 8px;
+        border-radius: 8px;
+        border-left: 3px solid #2196F3;
+      }
+
+      .mobile-dp-shift-title {
+        font-weight: 600;
+        color: #1565C0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mobile-dp-shift-info {
+        font-size: 13px;
+        color: #1976D2;
+        margin-top: 4px;
+      }
+
+      .mobile-dp-no-shift {
+        padding: 16px;
+        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
+        margin: 8px;
+        border-radius: 8px;
+        text-align: center;
+        color: var(--macos-text-secondary, #86868b);
+      }
     }
   </style>
 </head>
@@ -34565,55 +34961,6 @@
       // NAVBAR & MOBILE NAVIGATION SETUP
       // ==========================================
 
-      // ==========================================
-      // MOBILE FOOTER NAV - DIRECT BINDING
-      // ==========================================
-      setTimeout(() => {
-        document.querySelectorAll('.mobile-nav-item').forEach(item => {
-          // Remove any existing listeners by cloning
-          const newItem = item.cloneNode(true);
-          item.parentNode.replaceChild(newItem, item);
-
-          newItem.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const viewName = this.getAttribute('data-mobile-view');
-            console.log('📱 Mobile nav tapped:', viewName);
-
-            if (!viewName) {
-              console.error('No data-mobile-view attribute found');
-              return;
-            }
-
-            // Update active states
-            document.querySelectorAll('.mobile-nav-item').forEach(n => {
-              n.classList.remove('active');
-            });
-            this.classList.add('active');
-
-            // Hide ALL sections
-            document.querySelectorAll('section').forEach(s => {
-              s.style.display = 'none';
-              s.classList.remove('active');
-            });
-
-            // Show target section
-            const targetId = viewName + '-section';
-            const target = document.getElementById(targetId);
-
-            if (target) {
-              target.style.display = 'block';
-              target.classList.add('active');
-              console.log('✅ Switched to:', targetId);
-            } else {
-              console.error('❌ Section not found:', targetId);
-            }
-          }, { passive: false });
-        });
-        console.log('✅ Mobile nav handlers bound');
-      }, 100);
-
       // Initialize navbar hover and mobile navigation
       setupNavbarHover();
       setupMobileNavigation();
@@ -36020,12 +36367,579 @@
       // Initialize auth
       initAuth();
     });
+
+    // ==========================================
+    // MOBILE BOTTOM NAV - BULLETPROOF HANDLER
+    // ==========================================
+    (function initMobileNav() {
+      const items = document.querySelectorAll('.mobile-nav-item');
+
+      items.forEach(item => {
+        // Touch events für Mobile
+        item.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          handleMobileNavTap(this);
+        }, { passive: false });
+
+        // Click events als Fallback
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleMobileNavTap(this);
+        });
+      });
+
+      console.log('✅ Mobile nav initialized with', items.length, 'items');
+    })();
+
+    function handleMobileNavTap(element) {
+      const viewName = element.getAttribute('data-mobile-view');
+      console.log('📱 Mobile nav tapped:', viewName);
+
+      if (!viewName) return;
+
+      // Update active states
+      document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+      element.classList.add('active');
+
+      // Route to correct view
+      if (viewName === 'dashboard') {
+        showMobileDashboard();
+      } else if (viewName === 'calendar') {
+        showMobileCalendar();
+      } else if (viewName === 'dienstplan') {
+        showMobileDienstplan();
+      }
+    }
+
+    function showMobileDashboard() {
+      // Hide mobile-exclusive views
+      document.getElementById('mobileCalendarView')?.classList.remove('active');
+      document.getElementById('mobileDienstplanView')?.classList.remove('active');
+
+      // Show dashboard section
+      document.querySelectorAll('section').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+      });
+
+      const dashboard = document.getElementById('dashboard-section');
+      if (dashboard) {
+        dashboard.style.display = 'block';
+        dashboard.classList.add('active');
+      }
+      console.log('✅ Switched to Dashboard');
+    }
+
+    function showMobileCalendar() {
+      // Hide all sections
+      document.querySelectorAll('section').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+      });
+
+      // Hide mobile dienstplan
+      document.getElementById('mobileDienstplanView')?.classList.remove('active');
+
+      // Show mobile calendar
+      const mobileCalendar = document.getElementById('mobileCalendarView');
+      if (mobileCalendar) {
+        mobileCalendar.classList.add('active');
+        if (typeof loadMobileCalendarData === 'function') loadMobileCalendarData();
+      }
+      console.log('✅ Switched to Mobile Calendar');
+    }
+
+    function showMobileDienstplan() {
+      // Hide all sections
+      document.querySelectorAll('section').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+      });
+
+      // Hide mobile calendar
+      document.getElementById('mobileCalendarView')?.classList.remove('active');
+
+      // Show mobile dienstplan
+      const mobileDienstplan = document.getElementById('mobileDienstplanView');
+      if (mobileDienstplan) {
+        mobileDienstplan.classList.add('active');
+        if (typeof loadMobileDienstplanData === 'function') loadMobileDienstplanData();
+      }
+      console.log('✅ Switched to Mobile Dienstplan');
+    }
+
+    // ==========================================
+    // MOBILE CALENDAR - STATE & DATA
+    // ==========================================
+    const mobileCalState = {
+      currentWeekStart: getMonday(new Date()),
+      selectedDate: new Date(),
+      categoryFilter: 'all'
+    };
+
+    function getMonday(d) {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(date.setDate(diff));
+    }
+
+    function formatDateShort(date) {
+      return date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace(',', '');
+    }
+
+    function formatDateLong(date) {
+      return date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // Initialize Mobile Calendar
+    function initMobileCalendar() {
+      renderMobileCalWeekdays();
+      renderMobileCalTimeline();
+
+      // Event listeners
+      document.getElementById('mobileCalPrevWeek')?.addEventListener('click', () => {
+        mobileCalState.currentWeekStart.setDate(mobileCalState.currentWeekStart.getDate() - 7);
+        mobileCalState.selectedDate = new Date(mobileCalState.currentWeekStart);
+        renderMobileCalWeekdays();
+        loadMobileCalendarData();
+      });
+
+      document.getElementById('mobileCalNextWeek')?.addEventListener('click', () => {
+        mobileCalState.currentWeekStart.setDate(mobileCalState.currentWeekStart.getDate() + 7);
+        mobileCalState.selectedDate = new Date(mobileCalState.currentWeekStart);
+        renderMobileCalWeekdays();
+        loadMobileCalendarData();
+      });
+
+      document.getElementById('mobileCalToday')?.addEventListener('click', () => {
+        mobileCalState.currentWeekStart = getMonday(new Date());
+        mobileCalState.selectedDate = new Date();
+        renderMobileCalWeekdays();
+        loadMobileCalendarData();
+      });
+
+      document.getElementById('mobileCalCategoryFilter')?.addEventListener('change', (e) => {
+        mobileCalState.categoryFilter = e.target.value;
+        loadMobileCalendarData();
+      });
+
+      // Swipe support
+      let touchStartX = 0;
+      const timeline = document.getElementById('mobileCalTimeline');
+      timeline?.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+      timeline?.addEventListener('touchend', e => {
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) document.getElementById('mobileCalNextWeek')?.click();
+          else document.getElementById('mobileCalPrevWeek')?.click();
+        }
+      });
+    }
+
+    function renderMobileCalWeekdays() {
+      const container = document.getElementById('mobileCalWeekdays');
+      if (!container) return;
+
+      const weekEnd = new Date(mobileCalState.currentWeekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      const weekLabel = document.getElementById('mobileCalWeekLabel');
+      if (weekLabel) {
+        weekLabel.textContent = `${formatDateShort(mobileCalState.currentWeekStart)} - ${formatDateShort(weekEnd)}`;
+      }
+
+      const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      const today = new Date().toDateString();
+
+      container.innerHTML = '';
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(mobileCalState.currentWeekStart);
+        date.setDate(date.getDate() + i);
+
+        const isToday = date.toDateString() === today;
+        const isSelected = date.toDateString() === mobileCalState.selectedDate.toDateString();
+
+        const dayEl = document.createElement('div');
+        dayEl.className = `mobile-cal-day ${isToday ? 'today' : ''} ${isSelected ? 'active' : ''}`;
+        dayEl.innerHTML = `
+          <div class="mobile-cal-day-name">${days[i]}</div>
+          <div class="mobile-cal-day-num">${date.getDate()}</div>
+        `;
+        dayEl.addEventListener('click', () => {
+          mobileCalState.selectedDate = new Date(date);
+          renderMobileCalWeekdays();
+          loadMobileCalendarData();
+        });
+        container.appendChild(dayEl);
+      }
+    }
+
+    function renderMobileCalTimeline() {
+      const container = document.getElementById('mobileCalHours');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      for (let hour = 8; hour <= 22; hour++) {
+        const row = document.createElement('div');
+        row.className = 'mobile-cal-hour-row';
+        row.innerHTML = `
+          <div class="mobile-cal-hour-label">${hour.toString().padStart(2, '0')}:00</div>
+          <div class="mobile-cal-hour-content" data-hour="${hour}"></div>
+        `;
+        container.appendChild(row);
+      }
+    }
+
+    async function loadMobileCalendarData() {
+      const dateStr = mobileCalState.selectedDate.toISOString().split('T')[0];
+
+      const dateHeader = document.getElementById('mobileCalDateHeader');
+      if (dateHeader) {
+        dateHeader.textContent = formatDateLong(mobileCalState.selectedDate);
+      }
+
+      // Clear existing events
+      document.querySelectorAll('.mobile-cal-hour-content').forEach(el => {
+        el.querySelectorAll('.mobile-cal-event').forEach(ev => ev.remove());
+      });
+
+      // Check if supabase is available
+      if (typeof supabase === 'undefined') {
+        console.warn('Supabase not available for mobile calendar');
+        return;
+      }
+
+      // Build query
+      let query = supabase
+        .from('appointments')
+        .select('*')
+        .gte('date', dateStr)
+        .lt('date', dateStr + 'T23:59:59');
+
+      // Filter by user if they are an artist
+      if (typeof currentUser !== 'undefined' && currentUser?.id && currentUser?.role === 'artist') {
+        query = query.eq('user_id', currentUser.id);
+      }
+
+      const { data: appointments, error } = await query;
+
+      if (error) {
+        console.error('Error loading mobile calendar:', error);
+        return;
+      }
+
+      // Filter by category
+      let filtered = appointments || [];
+      if (mobileCalState.categoryFilter !== 'all') {
+        filtered = filtered.filter(a => a.category === mobileCalState.categoryFilter);
+      }
+
+      // Render events
+      filtered.forEach(apt => {
+        const startHour = parseInt(apt.start_time?.split(':')[0] || '9');
+        const endHour = parseInt(apt.end_time?.split(':')[0] || '10');
+        const startMin = parseInt(apt.start_time?.split(':')[1] || '0');
+
+        const container = document.querySelector(`.mobile-cal-hour-content[data-hour="${startHour}"]`);
+        if (!container) return;
+
+        const duration = endHour - startHour + (parseInt(apt.end_time?.split(':')[1] || '0') - startMin) / 60;
+        const topOffset = (startMin / 60) * 60;
+        const height = duration * 60 - 4;
+
+        const category = (apt.category || 'internal').toLowerCase().replace(' ', '_');
+
+        const eventEl = document.createElement('div');
+        eventEl.className = `mobile-cal-event ${category}`;
+        eventEl.style.top = `${topOffset}px`;
+        eventEl.style.height = `${Math.max(height, 30)}px`;
+        eventEl.innerHTML = `
+          <div class="mobile-cal-event-title">${apt.title || apt.customer_name || 'Termin'}</div>
+          <div class="mobile-cal-event-time">${apt.start_time} - ${apt.end_time}</div>
+        `;
+        eventEl.addEventListener('click', () => openMobileCalModal(apt));
+        container.appendChild(eventEl);
+      });
+    }
+
+    function openMobileCalModal(apt) {
+      const modal = document.getElementById('mobileCalModal');
+      const body = document.getElementById('mobileCalModalBody');
+
+      if (!modal || !body) return;
+
+      body.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 11px; color: var(--macos-text-secondary); text-transform: uppercase; margin-bottom: 4px;">Titel</div>
+          <div style="font-size: 16px; font-weight: 500;">${apt.title || apt.customer_name || 'Termin'}</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 11px; color: var(--macos-text-secondary); text-transform: uppercase; margin-bottom: 4px;">Zeit</div>
+          <div style="font-size: 16px;">${apt.start_time} - ${apt.end_time}</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 11px; color: var(--macos-text-secondary); text-transform: uppercase; margin-bottom: 4px;">Kategorie</div>
+          <div style="font-size: 16px;">${apt.category || 'Nicht angegeben'}</div>
+        </div>
+        ${apt.notes ? `
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 11px; color: var(--macos-text-secondary); text-transform: uppercase; margin-bottom: 4px;">Notizen</div>
+          <div style="font-size: 14px; color: var(--macos-text-secondary);">${apt.notes}</div>
+        </div>
+        ` : ''}
+      `;
+
+      modal.classList.add('active');
+    }
+
+    function closeMobileCalModal() {
+      document.getElementById('mobileCalModal')?.classList.remove('active');
+    }
+
+    // ==========================================
+    // MOBILE DIENSTPLAN
+    // ==========================================
+    const mobileDpState = {
+      currentWeekStart: getMonday(new Date())
+    };
+
+    function initMobileDienstplan() {
+      document.getElementById('mobileDpPrevWeek')?.addEventListener('click', () => {
+        mobileDpState.currentWeekStart.setDate(mobileDpState.currentWeekStart.getDate() - 7);
+        loadMobileDienstplanData();
+      });
+
+      document.getElementById('mobileDpNextWeek')?.addEventListener('click', () => {
+        mobileDpState.currentWeekStart.setDate(mobileDpState.currentWeekStart.getDate() + 7);
+        loadMobileDienstplanData();
+      });
+
+      document.getElementById('mobileDpToday')?.addEventListener('click', () => {
+        mobileDpState.currentWeekStart = getMonday(new Date());
+        loadMobileDienstplanData();
+      });
+    }
+
+    async function loadMobileDienstplanData() {
+      const container = document.getElementById('mobileDpDays');
+      if (!container) return;
+
+      const weekEnd = new Date(mobileDpState.currentWeekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      const weekLabel = document.getElementById('mobileDpWeekLabel');
+      if (weekLabel) {
+        weekLabel.textContent = `${formatDateShort(mobileDpState.currentWeekStart)} - ${formatDateShort(weekEnd)}`;
+      }
+
+      const startDate = mobileDpState.currentWeekStart.toISOString().split('T')[0];
+      const endDate = weekEnd.toISOString().split('T')[0];
+
+      // Check if supabase is available
+      if (typeof supabase === 'undefined') {
+        console.warn('Supabase not available for mobile dienstplan');
+        renderEmptyDienstplan(container);
+        return;
+      }
+
+      // Load user's shifts
+      let query = supabase
+        .from('dienstplan')
+        .select('*')
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      if (typeof currentUser !== 'undefined' && currentUser?.id) {
+        query = query.eq('user_id', currentUser.id);
+      }
+
+      const { data: shifts, error } = await query;
+
+      if (error) {
+        console.error('Error loading dienstplan:', error);
+        renderEmptyDienstplan(container);
+        return;
+      }
+
+      renderDienstplanDays(container, shifts || []);
+    }
+
+    function renderEmptyDienstplan(container) {
+      renderDienstplanDays(container, []);
+    }
+
+    function renderDienstplanDays(container, shifts) {
+      const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      container.innerHTML = '';
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(mobileDpState.currentWeekStart);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const dayShifts = shifts.filter(s => s.date === dateStr);
+
+        const card = document.createElement('div');
+        card.className = 'mobile-dp-day-card';
+        card.innerHTML = `
+          <div class="mobile-dp-day-header">
+            <span>${days[i]} ${date.getDate()}.${date.getMonth() + 1}.</span>
+            <button class="mobile-dp-day-menu">•••</button>
+          </div>
+          ${dayShifts.length > 0 ? dayShifts.map(shift => `
+            <div class="mobile-dp-shift">
+              <div class="mobile-dp-shift-title">
+                <span>🕐</span> ${shift.shift_type || 'Schicht'}
+              </div>
+              <div class="mobile-dp-shift-info">${shift.start_time || '09:00'} - ${shift.end_time || '18:00'}</div>
+            </div>
+          `).join('') : `
+            <div class="mobile-dp-no-shift">
+              <div style="font-weight: 500; color: #64B5F6;">Keine Schichten</div>
+              <div style="font-size: 12px; margin-top: 4px;">Am ${days[i]} ${date.getDate()}.${date.getMonth() + 1}. bist du nicht eingeteilt.</div>
+            </div>
+          `}
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    // Initialize on load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+          initMobileCalendar();
+          initMobileDienstplan();
+        }
+      });
+    } else {
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        initMobileCalendar();
+        initMobileDienstplan();
+      }
+    }
   </script>
 
   <!-- Image Modal for Reference Images -->
   <div id="imageModal" class="image-modal" onclick="closeImageModal()">
     <span class="image-modal-close">&times;</span>
     <img id="modalImage" src="" alt="Reference Image">
+  </div>
+
+  <!-- ==========================================
+       MOBILE CALENDAR VIEW (Apple Style)
+       Only visible on mobile < 768px
+       ========================================== -->
+  <div class="mobile-calendar-view" id="mobileCalendarView">
+    <!-- Week Selector Dropdown -->
+    <div class="mobile-cal-header">
+      <button class="mobile-cal-week-dropdown" id="mobileCalWeekDropdown">
+        <span id="mobileCalWeekLabel">Mo 16.12. - So 22.12.</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Week Navigation -->
+    <div class="mobile-cal-week-nav">
+      <button class="mobile-cal-nav-btn" id="mobileCalPrevWeek">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <button class="mobile-cal-today-btn" id="mobileCalToday">Heute</button>
+      <button class="mobile-cal-nav-btn" id="mobileCalNextWeek">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Week Days Bar -->
+    <div class="mobile-cal-weekdays" id="mobileCalWeekdays">
+      <!-- Will be populated by JS -->
+    </div>
+
+    <!-- Category Filter -->
+    <div class="mobile-cal-filter">
+      <select id="mobileCalCategoryFilter">
+        <option value="all">Alle Kategorien</option>
+        <option value="consultation">Consultation</option>
+        <option value="new_tattoo">New Tattoo</option>
+        <option value="continuing_tattoo">Continuing Tattoo</option>
+        <option value="touch_up">Touch Up</option>
+        <option value="selfbooking">Selfbooking</option>
+        <option value="wannado">WannaDo</option>
+        <option value="internal">Internal</option>
+        <option value="move">Move</option>
+        <option value="reserved">Reserved</option>
+        <option value="no_show">No Show</option>
+      </select>
+    </div>
+
+    <!-- Day Timeline View -->
+    <div class="mobile-cal-timeline" id="mobileCalTimeline">
+      <div class="mobile-cal-date-header" id="mobileCalDateHeader">
+        Dienstag - 16. Dez. 2025
+      </div>
+      <div class="mobile-cal-hours" id="mobileCalHours">
+        <!-- Hours 08:00 - 22:00 will be populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Calendar Event Detail Modal -->
+  <div class="mobile-cal-modal" id="mobileCalModal">
+    <div class="mobile-cal-modal-content">
+      <div class="mobile-cal-modal-header">
+        <span id="mobileCalModalTitle">Termin Details</span>
+        <button class="mobile-cal-modal-close" onclick="closeMobileCalModal()">✕</button>
+      </div>
+      <div class="mobile-cal-modal-body" id="mobileCalModalBody">
+        <!-- Content loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MOBILE DIENSTPLAN VIEW
+       Only visible on mobile < 768px
+       ========================================== -->
+  <div class="mobile-dienstplan-view" id="mobileDienstplanView">
+    <!-- Week Selector -->
+    <div class="mobile-dp-header">
+      <button class="mobile-dp-week-dropdown" id="mobileDpWeekDropdown">
+        <span id="mobileDpWeekLabel">Mo 16.12. - So 22.12.</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Week Navigation -->
+    <div class="mobile-dp-week-nav">
+      <button class="mobile-dp-nav-btn" id="mobileDpPrevWeek">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <button class="mobile-dp-today-btn" id="mobileDpToday">Heute</button>
+      <button class="mobile-dp-nav-btn" id="mobileDpNextWeek">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Days List -->
+    <div class="mobile-dp-days" id="mobileDpDays">
+      <!-- Will be populated by JS with user-specific shifts -->
+    </div>
   </div>
 
   <!-- Mobile Footer Navigation -->
