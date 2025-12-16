@@ -4780,40 +4780,307 @@
       }
     }
 
-    /* Initial Fullscreen Loader */
-    .initial-loader {
-      display: none;
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LOADING SCREEN - Fullscreen with Background Image
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .loading-screen {
       position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .loading-screen.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .loading-screen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Background Image */
+    .loading-bg {
+      position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: #f5f5f7 !important; /* Always light, no dark mode */
-      z-index: 1000000;
+      background-image: url('https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/assets/Bildschirmfoto%202025-12-16%20um%2012.08.32.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 1;
+    }
+
+    /* Fallback gradient if image fails */
+    .loading-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      z-index: -1;
+    }
+
+    /* Logo */
+    .loading-logo {
+      position: absolute;
+      bottom: 120px;
+      left: 48px;
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      color: #ffffff;
+      z-index: 10;
+    }
+
+    /* Progress Container */
+    .loading-progress-container {
+      position: relative;
+      z-index: 10;
+      padding: 0 48px 48px 48px;
+    }
+
+    .loading-status {
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Progress Bar */
+    .loading-progress-bar {
+      position: relative;
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 1px;
+      overflow: visible;
+    }
+
+    .loading-progress-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+      background: #ffffff;
+      border-radius: 1px;
+      transition: width 0.15s ease-out;
+    }
+
+    /* Percent Label - Sticky am Ende der Progress Bar */
+    .loading-progress-percent {
+      position: absolute;
+      top: -24px;
+      left: 0%;
+      transform: translateX(-50%);
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: #ffffff;
+      transition: left 0.15s ease-out;
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       GLASS OVERLAY - Animiert nach Loading
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .loading-glass-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      z-index: 50;
+      display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .initial-loader.active {
-      display: flex;
+
+    .loading-glass-overlay.active {
+      opacity: 1;
+      visibility: visible;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
-    .loader-content {
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LOGIN FORM - Auf dem Glass Layer
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .loading-login-form {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 48px;
+      width: 100%;
+      max-width: 400px;
+      transform: translateY(30px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+    }
+
+    .loading-glass-overlay.active .loading-login-form {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .loading-login-form h2 {
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0 0 8px 0;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    .loading-login-form p {
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      margin: 0 0 32px 0;
       text-align: center;
     }
-    .loader-spinner {
-      width: 48px;
-      height: 48px;
-      border: 3px solid rgba(120, 120, 128, 0.12) !important; /* Always light gray */
-      border-top-color: #0071e3 !important; /* Always blue */
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 20px;
+
+    .login-field {
+      margin-bottom: 20px;
     }
-    .loader-text {
-      color: #1d1d1f !important; /* Always dark text */
-      font-size: 15px;
+
+    .login-field label {
+      display: block;
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
       font-weight: 500;
-      color: var(--macos-text-secondary);
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 8px;
     }
+
+    .login-field input {
+      width: 100%;
+      padding: 14px 16px;
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .login-field input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .login-field input:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    }
+
+    .loading-login-form .login-remember {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .loading-login-form .login-remember input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #ffffff;
+      cursor: pointer;
+    }
+
+    .loading-login-form .login-remember label {
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+    }
+
+    .login-submit-btn {
+      width: 100%;
+      padding: 14px 24px;
+      font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #000000;
+      background: #ffffff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .login-submit-btn:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .login-submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .login-submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LOADING SCREEN RESPONSIVE
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    @media (max-width: 768px) {
+      .loading-logo {
+        bottom: 100px;
+        left: 24px;
+        font-size: 14px;
+      }
+
+      .loading-progress-container {
+        padding: 0 24px 32px 24px;
+      }
+
+      .loading-login-form {
+        margin: 24px;
+        padding: 32px 24px;
+      }
+
+      .loading-login-form h2 {
+        font-size: 24px;
+      }
+    }
+
+    /* Keep spin animation for other loaders */
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -6903,16 +7170,48 @@
   </style>
 </head>
 <body>
-  <!-- Fullscreen Initial Loading Indicator -->
-  <div id="initialLoader" class="initial-loader active">
-    <div class="loader-content">
-      <div class="loader-spinner"></div>
-      <div class="loader-text">Lade Daten...</div>
-      <div class="loader-progress" id="loaderProgress" style="
-        margin-top: 16px;
-        font-size: 12px;
-        color: rgba(255,255,255,0.6);
-      "></div>
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- FULLSCREEN LOADING SCREEN WITH BACKGROUND IMAGE -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div id="loadingScreen" class="loading-screen active">
+    <!-- Background Image -->
+    <div class="loading-bg"></div>
+
+    <!-- Logo -->
+    <div class="loading-logo">MOMMY I'M SORRY</div>
+
+    <!-- Progress Bar Container -->
+    <div class="loading-progress-container">
+      <div class="loading-status" id="loadingStatus">Initialisiere...</div>
+      <div class="loading-progress-bar">
+        <div class="loading-progress-fill" id="loadingProgressFill"></div>
+        <div class="loading-progress-percent" id="loadingProgressPercent">0%</div>
+      </div>
+    </div>
+
+    <!-- Glass Overlay (initially hidden) -->
+    <div class="loading-glass-overlay" id="loadingGlassOverlay">
+      <!-- Login Form -->
+      <div class="loading-login-form" id="loadingLoginForm">
+        <h2>Willkommen zurück!</h2>
+        <p>Bitte melde dich an, um fortzufahren</p>
+
+        <form id="loadingLoginFormElement">
+          <div class="login-field">
+            <label for="loadingUsername">Benutzername</label>
+            <input type="text" id="loadingUsername" autocomplete="username" required>
+          </div>
+          <div class="login-field">
+            <label for="loadingPassword">Passwort</label>
+            <input type="password" id="loadingPassword" autocomplete="current-password" required>
+          </div>
+          <div class="login-remember">
+            <input type="checkbox" id="loadingRememberMe">
+            <label for="loadingRememberMe">Angemeldet bleiben</label>
+          </div>
+          <button type="submit" class="login-submit-btn">Anmelden</button>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -11255,11 +11554,34 @@
         errors: []
       },
 
+      // Progress Tracking
+      progress: {
+        totalRecords: 0,
+        loadedRecords: 0,
+        currentPercent: 0
+      },
+
       // Realtime Subscriptions
       subscriptions: {},
 
       // UI Update Listeners (für Tab-Refreshes)
       listeners: {},
+
+      // Status Texts für jede Tabelle
+      statusTexts: {
+        locations: 'Lade Standorte...',
+        profiles: 'Lade Profile...',
+        artists: 'Lade Artists...',
+        appointments: 'Lade Termine...',
+        dienstplan: 'Lade Dienstplan...',
+        work_tracking: 'Lade Arbeitszeiten...',
+        requests: 'Lade Anfragen...',
+        customers: 'Lade Kunden...',
+        projects: 'Lade Projekte...',
+        wannados: 'Lade Wannados...',
+        project_tasks: 'Lade Aufgaben...',
+        task_projects: 'Lade Task-Projekte...'
+      },
 
       // ═══════════════════════════════════════════════════════════════════════
       // BATCH LOADING CONFIGURATION
@@ -11280,7 +11602,7 @@
       },
 
       // ═══════════════════════════════════════════════════════════════════════
-      // INITIAL LOAD - Alle Daten parallel laden
+      // INITIAL LOAD - Mit Smooth Progress Tracking
       // ═══════════════════════════════════════════════════════════════════════
       async initialLoad() {
         if (this.loadingStatus.isLoading) {
@@ -11292,56 +11614,79 @@
         console.log('🚀 CENTRAL DATA MANAGER - Starting initial load...');
 
         const startTime = Date.now();
-        const loaderText = document.querySelector('.loader-text');
-        const loaderProgress = document.getElementById('loaderProgress');
 
         try {
-          // Phase 1: Kleine Tabellen zuerst (schnell, werden oft referenziert)
-          if (loaderText) loaderText.textContent = 'Lade Stammdaten...';
-          if (loaderProgress) loaderProgress.textContent = 'Phase 1/4: Locations, Profiles, Artists';
-          await Promise.all([
-            this.loadTable('locations'),
-            this.loadTable('profiles'),
-            this.loadTable('artists')
-          ]);
+          // ═══════════════════════════════════════════════════════════════════
+          // STEP 1: Zähle alle Records für Progress-Berechnung
+          // ═══════════════════════════════════════════════════════════════════
+          LoadingScreen.updateProgress(0, 'Initialisiere...');
+
+          const tablesToLoad = Object.keys(this.tableConfig);
+          const counts = {};
+
+          console.log('📊 Counting records in all tables...');
+
+          await Promise.all(tablesToLoad.map(async (table) => {
+            try {
+              const { count, error } = await supabase
+                .from(table)
+                .select('*', { count: 'exact', head: true });
+
+              counts[table] = error ? 0 : (count || 0);
+            } catch (e) {
+              counts[table] = 0;
+            }
+          }));
+
+          this.progress.totalRecords = Object.values(counts).reduce((a, b) => a + b, 0);
+          this.progress.loadedRecords = 0;
+          this.progress.currentPercent = 0;
+
+          console.log('📊 Total records to load:', this.progress.totalRecords);
+          console.log('📊 Breakdown:', counts);
+
+          // ═══════════════════════════════════════════════════════════════════
+          // STEP 2: Lade alle Tabellen mit Progress Tracking
+          // ═══════════════════════════════════════════════════════════════════
+
+          // Kleine Tabellen zuerst (schnell, blockiert nicht)
+          await this.loadTableWithProgress('locations', counts.locations);
+          await this.loadTableWithProgress('profiles', counts.profiles);
+          await this.loadTableWithProgress('artists', counts.artists);
           console.log('✅ Phase 1 complete: Stammdaten geladen');
 
-          // Phase 2: Mittlere Tabellen
-          if (loaderText) loaderText.textContent = 'Lade Termine & Dienstplan...';
-          if (loaderProgress) loaderProgress.textContent = 'Phase 2/4: Appointments, Dienstplan, Work Tracking';
+          // Mittlere Tabellen parallel
           await Promise.all([
-            this.loadTable('appointments'),
-            this.loadTable('dienstplan'),
-            this.loadTable('work_tracking')
+            this.loadTableWithProgress('appointments', counts.appointments),
+            this.loadTableWithProgress('dienstplan', counts.dienstplan),
+            this.loadTableWithProgress('work_tracking', counts.work_tracking)
           ]);
           console.log('✅ Phase 2 complete: Termine & Dienstplan geladen');
 
-          // Phase 3: Große Tabellen (parallel mit Progress)
-          if (loaderText) loaderText.textContent = 'Lade Anfragen, Kunden & Projekte...';
-          if (loaderProgress) loaderProgress.textContent = 'Phase 3/4: Requests, Customers, Projects';
+          // Große Tabellen parallel
           await Promise.all([
-            this.loadTable('requests'),
-            this.loadTable('customers'),
-            this.loadTable('projects')
+            this.loadTableWithProgress('requests', counts.requests),
+            this.loadTableWithProgress('customers', counts.customers),
+            this.loadTableWithProgress('projects', counts.projects)
           ]);
           console.log('✅ Phase 3 complete: Anfragen, Kunden & Projekte geladen');
 
-          // Phase 4: Restliche Tabellen
-          if (loaderText) loaderText.textContent = 'Lade weitere Daten...';
-          if (loaderProgress) loaderProgress.textContent = 'Phase 4/4: Wannados, Tasks';
+          // Restliche Tabellen
           await Promise.all([
-            this.loadTable('wannados'),
-            this.loadTable('project_tasks'),
-            this.loadTable('task_projects')
+            this.loadTableWithProgress('wannados', counts.wannados),
+            this.loadTableWithProgress('project_tasks', counts.project_tasks),
+            this.loadTableWithProgress('task_projects', counts.task_projects)
           ]);
           console.log('✅ Phase 4 complete: Alle Daten geladen');
+
+          // ═══════════════════════════════════════════════════════════════════
+          // STEP 3: Finalisieren
+          // ═══════════════════════════════════════════════════════════════════
 
           // Sync mit globalen Variablen für Kompatibilität
           this.syncToGlobalVariables();
 
           // Setup Realtime Subscriptions
-          if (loaderText) loaderText.textContent = 'Aktiviere Live-Updates...';
-          if (loaderProgress) loaderProgress.textContent = 'Starte Realtime Subscriptions...';
           this.setupRealtimeSubscriptions();
 
           this.loadingStatus.isInitialLoadComplete = true;
@@ -11355,17 +11700,164 @@
             artists: this.data.artists.length,
             appointments: this.data.appointments.length,
             dienstplan: this.data.dienstplan.length,
-            locations: this.data.locations.length
+            locations: this.data.locations.length,
+            projects: this.data.projects.length
           });
 
-          if (loaderProgress) loaderProgress.textContent = `Fertig in ${duration}s`;
+          // Ensure we're at 100%
+          LoadingScreen.updateProgress(100, 'Fertig!');
+
+          // Check für gespeicherte Session
+          await this.checkSavedSession();
 
         } catch (error) {
           console.error('❌ CENTRAL DATA MANAGER - Initial load failed:', error);
           this.loadingStatus.errors.push(error);
           this.loadingStatus.isLoading = false;
+          LoadingScreen.updateProgress(0, 'Fehler beim Laden!');
           throw error;
         }
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // LOAD TABLE WITH PROGRESS - Smooth 1% Updates
+      // ═══════════════════════════════════════════════════════════════════════
+      async loadTableWithProgress(tableName, expectedCount) {
+        const config = this.tableConfig[tableName];
+        if (!config) {
+          console.warn(`⚠️ No config for table: ${tableName}`);
+          return;
+        }
+
+        const normalizedName = this.normalizeTableName(tableName);
+        const statusText = this.statusTexts[tableName] || `Lade ${tableName}...`;
+        console.log(`📥 Loading ${tableName} (expecting ${expectedCount} records)...`);
+
+        try {
+          if (expectedCount === 0) {
+            this.data[normalizedName] = [];
+            this.loadingStatus.loadedTables.add(tableName);
+            return;
+          }
+
+          // Kleine Tabellen: Single Request
+          if (expectedCount <= config.batchSize) {
+            LoadingScreen.updateProgress(this.progress.currentPercent, statusText);
+
+            const { data, error } = await supabase
+              .from(tableName)
+              .select(config.relations)
+              .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            this.data[normalizedName] = data || [];
+            this.progress.loadedRecords += expectedCount;
+            this.updateProgressSmooth(statusText);
+
+          } else {
+            // Große Tabellen: Batch Loading mit Progress pro Batch
+            const totalBatches = Math.ceil(expectedCount / config.batchSize);
+            let allData = [];
+
+            for (let i = 0; i < totalBatches; i += config.parallel) {
+              const batchPromises = [];
+
+              for (let j = 0; j < config.parallel && (i + j) < totalBatches; j++) {
+                const start = (i + j) * config.batchSize;
+                const end = start + config.batchSize - 1;
+
+                batchPromises.push(
+                  supabase
+                    .from(tableName)
+                    .select(config.relations)
+                    .order('created_at', { ascending: false })
+                    .range(start, end)
+                );
+              }
+
+              const results = await Promise.all(batchPromises);
+
+              let batchLoaded = 0;
+              results.forEach(({ data, error }) => {
+                if (error) {
+                  console.error(`Batch error for ${tableName}:`, error);
+                } else if (data) {
+                  allData = allData.concat(data);
+                  batchLoaded += data.length;
+                }
+              });
+
+              // Progress nach jedem Batch-Group Update
+              this.progress.loadedRecords += batchLoaded;
+              this.updateProgressSmooth(statusText);
+            }
+
+            this.data[normalizedName] = allData;
+          }
+
+          this.loadingStatus.loadedTables.add(tableName);
+          console.log(`✅ ${tableName}: ${this.data[normalizedName].length} records`);
+
+        } catch (error) {
+          console.error(`❌ Failed to load ${tableName}:`, error);
+          this.data[normalizedName] = [];
+          this.loadingStatus.errors.push({ table: tableName, error });
+        }
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // UPDATE PROGRESS SMOOTH - Berechnet % basierend auf geladenen Records
+      // ═══════════════════════════════════════════════════════════════════════
+      updateProgressSmooth(statusText) {
+        if (this.progress.totalRecords === 0) {
+          this.progress.currentPercent = 100;
+        } else {
+          // Berechne Prozent basierend auf geladenen Records
+          const rawPercent = (this.progress.loadedRecords / this.progress.totalRecords) * 100;
+
+          // Smooth: Nur erhöhen, nie senken, max 99% bis final
+          const newPercent = Math.min(99, Math.floor(rawPercent));
+
+          if (newPercent > this.progress.currentPercent) {
+            this.progress.currentPercent = newPercent;
+            LoadingScreen.updateProgress(this.progress.currentPercent, statusText);
+          }
+        }
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // CHECK SAVED SESSION
+      // ═══════════════════════════════════════════════════════════════════════
+      async checkSavedSession() {
+        const rememberMe = localStorage.getItem('rememberMe') === 'true';
+        const savedUsername = localStorage.getItem('username');
+
+        if (rememberMe && savedUsername) {
+          console.log('🔑 Checking saved session for:', savedUsername);
+
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username, email, role, password_hash, avatar_url')
+            .ilike('username', savedUsername);
+
+          if (profiles && profiles.length > 0) {
+            console.log('✅ Session restored for:', savedUsername);
+            currentUser = profiles[0];
+            updateUIForUser(currentUser);
+            LoadingScreen.hide();
+
+            await initializePermissions();
+            await loadEvents();
+            renderCalendar();
+
+            return true;
+          }
+        }
+
+        // Keine gespeicherte Session -> Login anzeigen
+        LoadingScreen.showLogin();
+        return false;
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -11671,6 +12163,197 @@
 
     // Global verfügbar machen
     window.CentralDataManager = CentralDataManager;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LOADING SCREEN CONTROLLER
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const LoadingScreen = {
+      elements: {
+        screen: null,
+        status: null,
+        progressFill: null,
+        progressPercent: null,
+        glassOverlay: null,
+        loginForm: null
+      },
+
+      currentProgress: 0,
+
+      init() {
+        this.elements.screen = document.getElementById('loadingScreen');
+        this.elements.status = document.getElementById('loadingStatus');
+        this.elements.progressFill = document.getElementById('loadingProgressFill');
+        this.elements.progressPercent = document.getElementById('loadingProgressPercent');
+        this.elements.glassOverlay = document.getElementById('loadingGlassOverlay');
+        this.elements.loginForm = document.getElementById('loadingLoginFormElement');
+
+        // Login Form Event Listener
+        if (this.elements.loginForm) {
+          this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+
+        console.log('🎬 LoadingScreen initialized');
+      },
+
+      // Update Progress
+      updateProgress(percent, statusText) {
+        this.currentProgress = Math.min(100, Math.max(0, percent));
+
+        if (this.elements.progressFill) {
+          this.elements.progressFill.style.width = `${this.currentProgress}%`;
+        }
+
+        if (this.elements.progressPercent) {
+          this.elements.progressPercent.textContent = `${Math.round(this.currentProgress)}%`;
+          this.elements.progressPercent.style.left = `${this.currentProgress}%`;
+        }
+
+        if (statusText && this.elements.status) {
+          this.elements.status.textContent = statusText;
+        }
+      },
+
+      // Loading Complete - Show Glass Overlay + Login
+      showLogin() {
+        console.log('🔐 Showing login overlay...');
+
+        // Ensure progress is at 100%
+        this.updateProgress(100, 'Fertig!');
+
+        // Kleine Verzögerung, dann Glass Overlay einblenden
+        setTimeout(() => {
+          if (this.elements.glassOverlay) {
+            this.elements.glassOverlay.classList.add('active');
+          }
+        }, 500);
+      },
+
+      // Hide Loading Screen completely
+      hide() {
+        console.log('🎬 Hiding loading screen...');
+
+        if (this.elements.screen) {
+          this.elements.screen.classList.add('fade-out');
+
+          setTimeout(() => {
+            this.elements.screen.classList.remove('active');
+            this.elements.screen.style.display = 'none';
+          }, 500);
+        }
+      },
+
+      // Handle Login Submit
+      async handleLogin(e) {
+        e.preventDefault();
+
+        const username = document.getElementById('loadingUsername').value.trim();
+        const password = document.getElementById('loadingPassword').value;
+        const rememberMe = document.getElementById('loadingRememberMe').checked;
+
+        if (!username || !password) {
+          alert('Bitte fülle alle Felder aus');
+          return;
+        }
+
+        const submitBtn = this.elements.loginForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Anmelden...';
+        submitBtn.disabled = true;
+
+        try {
+          console.log('🔑 Login attempt for:', username);
+
+          // Query user by username (case-insensitive)
+          const { data: profiles, error } = await supabase
+            .from('profiles')
+            .select('id, username, email, role, password_hash, avatar_url')
+            .ilike('username', username);
+
+          if (error) {
+            console.error('❌ Database error:', error);
+            alert('Datenbankfehler: ' + error.message);
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+          }
+
+          if (!profiles || profiles.length === 0) {
+            console.log('⚠️ User not found:', username);
+            alert('Benutzername nicht gefunden');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+          }
+
+          const profile = profiles[0];
+
+          // Check password
+          let passwordMatch = false;
+          if (profile.password_hash.startsWith('$2')) {
+            passwordMatch = await bcrypt.compare(password, profile.password_hash);
+          } else {
+            passwordMatch = profile.password_hash === password;
+          }
+
+          if (!passwordMatch) {
+            console.log('❌ Wrong password');
+            alert('Falsches Passwort');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+          }
+
+          // Login successful
+          console.log('✅ Login successful for:', profile.username);
+          currentUser = profile;
+
+          // Supabase Auth (optional, wie bisher)
+          if (profile.email) {
+            try {
+              await supabase.auth.signInWithPassword({
+                email: profile.email,
+                password: password
+              });
+            } catch (authErr) {
+              console.warn('⚠️ Supabase Auth error:', authErr);
+            }
+          }
+
+          // Remember Me
+          if (rememberMe) {
+            localStorage.setItem('rememberMe', 'true');
+            localStorage.setItem('username', profile.username);
+            localStorage.setItem('userRole', profile.role || 'user');
+            if (profile.avatar_url) {
+              localStorage.setItem('avatarUrl', profile.avatar_url);
+            }
+          }
+
+          // Update UI
+          updateUIForUser(profile);
+
+          // Hide Loading Screen
+          this.hide();
+
+          // Initialize remaining features
+          await initializePermissions();
+          await loadEvents();
+          renderCalendar();
+
+          showNotification(`Willkommen zurück, ${profile.username}!`, 'success');
+
+        } catch (err) {
+          console.error('💥 Login failed:', err);
+          alert('Ein Fehler ist aufgetreten: ' + err.message);
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+        }
+      }
+    };
+
+    // Global verfügbar machen
+    window.LoadingScreen = LoadingScreen;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // REALTIME UI UPDATE HANDLERS
@@ -12225,8 +12908,16 @@
       const sections = document.querySelectorAll("section");
 
       // ═══════════════════════════════════════════════════════════════
+      // STEP 0: INITIALIZE LOADING SCREEN
+      // ═══════════════════════════════════════════════════════════════
+      LoadingScreen.init();
+      console.log('🎬 LoadingScreen initialized');
+
+      // ═══════════════════════════════════════════════════════════════
       // STEP 1: CENTRAL DATA LOAD (VOR Login)
       // Alle Daten werden im Loading Screen geladen
+      // Der CentralDataManager ruft checkSavedSession() auf und zeigt
+      // entweder das Login-Formular oder versteckt den Loading Screen
       // ═══════════════════════════════════════════════════════════════
       console.log('🚀 Starting Central Data Load...');
 
@@ -12238,33 +12929,23 @@
         console.log('✅ Central Data Load complete');
       } catch (err) {
         console.error('❌ Central Data Load failed:', err);
-        // Fallback: Zeige Fehlermeldung
-        const loaderText = document.querySelector('.loader-text');
-        if (loaderText) {
-          loaderText.textContent = 'Fehler beim Laden. Bitte Seite neu laden.';
-          loaderText.style.color = '#ff3b30';
-        }
+        // Error wird bereits im CentralDataManager an LoadingScreen gesendet
       }
 
       // ═══════════════════════════════════════════════════════════════
       // STEP 2: UI INITIALIZATION (nach Daten-Load)
+      // Diese werden bereits nach erfolgreichem Login ausgeführt
       // ═══════════════════════════════════════════════════════════════
       try {
-        await Promise.all([
-          loadInitialData(), // Locations, Dropdowns, etc.
-          initializePermissions(),
-          loadBookingTeamMembers()
-        ]);
+        await loadInitialData(); // Locations, Dropdowns, etc.
+        await loadBookingTeamMembers();
         console.log('✅ UI initialization complete');
       } catch (err) {
         console.error('❌ UI initialization error:', err);
       }
 
-      // Hide initial loader after data is loaded
-      const initialLoader = document.getElementById('initialLoader');
-      if (initialLoader) {
-        initialLoader.classList.remove('active');
-      }
+      // Note: Der alte initialLoader wird nicht mehr verwendet.
+      // LoadingScreen wird durch checkSavedSession() oder handleLogin() versteckt.
 
       // Request tabs initialization function
       function initRequestTabs() {
