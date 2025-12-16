@@ -11243,7 +11243,8 @@
         profiles: [],
         wannados: [],
         projectTasks: [],
-        taskProjects: []
+        taskProjects: [],
+        projects: []  // NEU: Projects für Analytics
       },
 
       // Lade-Status
@@ -11267,15 +11268,15 @@
         requests:      { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name, email, phone, rank, instagram), artist:artists(id, name, email, instagram), location:locations!requests_location_id_fkey(id, name, city)' },
         customers:     { batchSize: 5000, parallel: 4, relations: '*' },
         artists:       { batchSize: 1000, parallel: 2, relations: '*' },
-        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name), location:locations!appointments_location_id_fkey(id, name)' },
+        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name, is_guest), location:locations!appointments_location_id_fkey(id, name)' },
         dienstplan:    { batchSize: 1000, parallel: 2, relations: '*, artist:artists!artist_id(name, email, instagram, rank, is_guest), location:locations!location_id(name, city)' },
         work_tracking: { batchSize: 1000, parallel: 2, relations: '*, profile:profiles!user_id(username, email, role, avatar_url, weekly_hours, vacation_days), location:locations!location_id(name, city)' },
         locations:     { batchSize: 100,  parallel: 1, relations: '*' },
         profiles:      { batchSize: 100,  parallel: 1, relations: '*' },
         wannados:      { batchSize: 1000, parallel: 2, relations: '*' },
         project_tasks: { batchSize: 1000, parallel: 2, relations: '*' },
-        task_projects: { batchSize: 500,  parallel: 1, relations: '*' }
-        // REMOVED: guest_slots, agreements (tables don't exist)
+        task_projects: { batchSize: 500,  parallel: 1, relations: '*' },
+        projects:      { batchSize: 3000, parallel: 4, relations: 'id, project_number, status, payment_status, total_amount, deposit_amount, payment_amount, created_at, location_id, artist_id, customer_id' }
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -11316,13 +11317,14 @@
           console.log('✅ Phase 2 complete: Termine & Dienstplan geladen');
 
           // Phase 3: Große Tabellen (parallel mit Progress)
-          if (loaderText) loaderText.textContent = 'Lade Anfragen & Kunden...';
-          if (loaderProgress) loaderProgress.textContent = 'Phase 3/4: Requests, Customers';
+          if (loaderText) loaderText.textContent = 'Lade Anfragen, Kunden & Projekte...';
+          if (loaderProgress) loaderProgress.textContent = 'Phase 3/4: Requests, Customers, Projects';
           await Promise.all([
             this.loadTable('requests'),
-            this.loadTable('customers')
+            this.loadTable('customers'),
+            this.loadTable('projects')
           ]);
-          console.log('✅ Phase 3 complete: Anfragen & Kunden geladen');
+          console.log('✅ Phase 3 complete: Anfragen, Kunden & Projekte geladen');
 
           // Phase 4: Restliche Tabellen
           if (loaderText) loaderText.textContent = 'Lade weitere Daten...';
@@ -11471,6 +11473,7 @@
         window.dienstplanCache = this.data.dienstplan;
         window.workTrackingCache = this.data.workTracking;
         window.artistsCache = this.data.artists;
+        window.projectsCache = this.data.projects;
 
         // Auch lokale Variablen setzen
         allRequests = this.data.requests;
@@ -11486,6 +11489,7 @@
         DataCache.set('artists', this.data.artists);
         DataCache.set('customers', this.data.customers);
         DataCache.set('appointments', this.data.appointments);
+        DataCache.set('projects', this.data.projects);
 
         console.log('✅ Global variables synced');
       },
@@ -11636,6 +11640,7 @@
       getLocations() { return this.data.locations; },
       getProfiles() { return this.data.profiles; },
       getWorkTracking() { return this.data.workTracking; },
+      getProjects() { return this.data.projects; },
 
       // Gefilterte Daten
       getRequestsByStatus(status) {
@@ -11648,6 +11653,14 @@
 
       getArtistsByLocation(locationId) {
         return this.data.artists.filter(a => a.location_id === locationId);
+      },
+
+      getProjectsByLocation(locationId) {
+        return this.data.projects.filter(p => p.location_id === locationId);
+      },
+
+      getProjectsByStatus(status) {
+        return this.data.projects.filter(p => p.status === status);
       },
 
       // Status Check
@@ -28000,48 +28013,26 @@
 
     // Load projects data for revenue analytics
     async function loadProjectsData(locationFilter = null) {
-      console.log('📊 Loading projects data...');
+      console.log('📊 Loading projects data from cache...');
 
       try {
-        // Load ALL projects with pagination
-        let allProjects = [];
-        let start = 0;
-        const batchSize = 1000;
-
-        while (true) {
-          let query = supabase
-            .from('projects')
-            .select(`
-              id,
-              project_number,
-              customer_email,
-              state,
-              price,
-              payment_state,
-              created_at,
-              updated_at,
-              location:locations!location_id(name)
-            `)
-            .order('created_at', { ascending: false })
-            .range(start, start + batchSize - 1);
-
-          if (locationFilter && locationFilter !== 'all' && locationFilter !== null) {
-            query = query.eq('location_id', locationFilter);
-          }
-
-          const { data, error } = await query;
-
-          if (error) throw error;
-          if (!data || data.length === 0) break;
-
-          allProjects = allProjects.concat(data);
-          console.log(`  ↳ Loaded ${allProjects.length} projects so far...`);
-
-          if (data.length < batchSize) break;
-          start += batchSize;
+        // ═══════════════════════════════════════════════════════════════════════
+        // USE CENTRAL CACHE - Kein separates Loading!
+        // ═══════════════════════════════════════════════════════════════════════
+        if (!CentralDataManager.isReady()) {
+          console.warn('⚠️ CentralDataManager not ready, waiting...');
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        console.log(`✅ Loaded ${allProjects.length} total projects`);
+        // Get projects from cache
+        let allProjects = CentralDataManager.getProjects();
+
+        // Apply location filter if needed
+        if (locationFilter && locationFilter !== 'all' && locationFilter !== null) {
+          allProjects = allProjects.filter(p => p.location_id === locationFilter);
+        }
+
+        console.log(`✅ Using ${allProjects.length} projects from cache`);
 
         // IMPORTANT: Store in global variable for filtering
         cachedProjects = allProjects;
@@ -29777,8 +29768,8 @@
         // Load NEW analytics components
         ProgressBar.updateProgress(60, 'Rendering status breakdowns...');
         await loadRequestStatus(filteredRequests);
-        await loadArtistDistribution(filteredAppointments);
-        await loadRevenueByPaymentStatus();
+        await loadArtistDistribution(cachedAppointments);  // Pass FULL cached appointments (not date filtered)
+        await loadRevenueByPaymentStatus(CentralDataManager.getProjects());  // Pass cached projects
 
         // Load Project-Based Analytics from cache
         ProgressBar.updateProgress(70, 'Loading project analytics...');
@@ -30037,52 +30028,22 @@
     // Load Artist Distribution (appointments by resident artists only)
     async function loadArtistDistribution(appointments) {
       try {
-        console.log('🎨 Loading artist distribution from appointments...');
+        console.log('🎨 Processing artist distribution from cached appointments...');
 
-        // Load ALL appointments with artist data (with pagination)
-        let appointmentsWithArtist = [];
-        let from = 0;
-        const batchSize = 1000;
-        let hasMore = true;
+        // ═══════════════════════════════════════════════════════════════════════
+        // USE PASSED APPOINTMENTS FROM CACHE - Kein separates Loading!
+        // ═══════════════════════════════════════════════════════════════════════
 
-        while (hasMore) {
-          const { data: batch, error } = await supabase
-            .from('appointments')
-            .select(`
-              id,
-              artist_id,
-              artist_email,
-              status,
-              artists!appointments_artist_id_fkey (
-                id,
-                email,
-                is_guest,
-                name
-              )
-            `)
-            .not('artist_id', 'is', null)
-            .range(from, from + batchSize - 1);
+        // Filter appointments that have artist data
+        const appointmentsWithArtist = (appointments || []).filter(apt =>
+          apt.artist_id !== null && apt.artist !== null
+        );
 
-          if (error) {
-            console.error('❌ Error loading appointments with artists:', error);
-            throw error;
-          }
-
-          if (batch && batch.length > 0) {
-            appointmentsWithArtist = appointmentsWithArtist.concat(batch);
-            from += batchSize;
-            hasMore = batch.length === batchSize;
-            console.log(`  ↳ Loaded ${appointmentsWithArtist.length} appointments with artists so far...`);
-          } else {
-            hasMore = false;
-          }
-        }
-
-        console.log(`🎨 Loaded ${appointmentsWithArtist?.length || 0} total appointments with artists`);
+        console.log(`🎨 Using ${appointmentsWithArtist.length} appointments with artists from cache`);
 
         // Filter for resident artists only (is_guest = false)
-        const residentAppointments = appointmentsWithArtist?.filter(apt =>
-          apt.artists && !apt.artists.is_guest
+        const residentAppointments = appointmentsWithArtist.filter(apt =>
+          apt.artist && !apt.artist.is_guest
         ) || [];
 
         console.log(`🎨 Filtered to ${residentAppointments.length} resident artist appointments`);
@@ -30093,7 +30054,7 @@
         let anyCount = 0;
 
         residentAppointments.forEach(apt => {
-          const artistName = apt.artists?.name || apt.artist_email?.split('@')[0] || 'Unknown';
+          const artistName = apt.artist?.name || apt.artist_email?.split('@')[0] || 'Unknown';
           artistCounts[artistName] = (artistCounts[artistName] || 0) + 1;
 
           if (apt.status === 'finished') {
@@ -30205,41 +30166,32 @@
     }
 
     // Load Revenue by Payment Status (projects.price + payment_state)
-    async function loadRevenueByPaymentStatus() {
-      console.log('💰 Loading revenue by payment status...');
+    async function loadRevenueByPaymentStatus(cachedProjects = null) {
+      console.log('💰 Processing revenue by payment status from cache...');
 
       try {
-        // Load ALL projects with pagination
-        let allProjects = [];
-        let start = 0;
-        const batchSize = 1000;
+        // ═══════════════════════════════════════════════════════════════════════
+        // USE CACHED PROJECTS - Kein separates Loading!
+        // ═══════════════════════════════════════════════════════════════════════
 
-        while (true) {
-          const { data, error } = await supabase
-            .from('projects')
-            .select('id, price, payment_state')
-            .not('price', 'is', null)
-            .range(start, start + batchSize - 1);
-
-          if (error) throw error;
-          if (!data || data.length === 0) break;
-
-          allProjects = allProjects.concat(data);
-          console.log(`  ↳ Loaded ${allProjects.length} projects with pricing so far...`);
-
-          if (data.length < batchSize) break;
-          start += batchSize;
+        // Use passed projects or get from CentralDataManager
+        let allProjects = cachedProjects;
+        if (!allProjects) {
+          allProjects = CentralDataManager.getProjects();
         }
 
-        console.log(`✅ Loaded ${allProjects.length} total projects with pricing`);
+        // Filter projects with valid price
+        allProjects = allProjects.filter(p => p.total_amount !== null && p.total_amount > 0);
 
-        // Group by payment_state
+        console.log(`✅ Using ${allProjects.length} projects with pricing from cache`);
+
+        // Group by payment_status
         const revenueByStatus = {};
         let totalRevenue = 0;
 
         allProjects.forEach(project => {
-          const status = project.payment_state || 'Unbekannt';
-          const price = parseFloat(project.price) || 0;
+          const status = project.payment_status || 'Unbekannt';
+          const price = parseFloat(project.total_amount) || 0;
 
           if (!revenueByStatus[status]) {
             revenueByStatus[status] = {
