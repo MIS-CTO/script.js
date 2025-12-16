@@ -4893,15 +4893,15 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       GLASS OVERLAY - Animiert nach Loading
+       GLASS OVERLAY - Animiert nach Loading (FULLSCREEN)
        ═══════════════════════════════════════════════════════════════════════════ */
 
     .loading-glass-overlay {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(0px);
       -webkit-backdrop-filter: blur(0px);
@@ -4948,7 +4948,7 @@
       font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 28px;
       font-weight: 600;
-      color: #ffffff;
+      color: #ffffff !important;
       margin: 0 0 8px 0;
       text-align: center;
       letter-spacing: -0.5px;
@@ -4957,7 +4957,7 @@
     .loading-login-form p {
       font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 14px;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.7);
       margin: 0 0 32px 0;
       text-align: center;
     }
@@ -11609,7 +11609,7 @@
         // Große Tabellen - kleinere Batches, einfache Relations
         customers:     { batchSize: 2000, parallel: 2, relations: '*' },
         requests:      { batchSize: 1000, parallel: 2, relations: '*' },
-        projects:      { batchSize: 1000, parallel: 2, relations: 'id, project_number, state, payment_state, total_amount, deposit_amount, payment_amount, created_at, location_id, artist_id, customer_id' }
+        projects:      { batchSize: 1000, parallel: 2, relations: '*' }
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -12018,9 +12018,12 @@
         DataCache.set('artists', this.data.artists);
         DataCache.set('customers', this.data.customers);
         DataCache.set('appointments', this.data.appointments);
+        DataCache.set('dienstplan', this.data.dienstplan);
         DataCache.set('projects', this.data.projects);
 
         console.log('✅ Global variables synced');
+        console.log('📅 dienstplanCache synced:', window.dienstplanCache?.length || 0);
+        console.log('⏰ workTrackingCache synced:', window.workTrackingCache?.length || 0);
       },
 
       // ═══════════════════════════════════════════════════════════════════════
