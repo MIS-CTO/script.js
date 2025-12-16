@@ -6455,6 +6455,388 @@
       }
 
       /* ========================================
+         MOBILE TAB SWITCHER - Pinned Events / Schwarzes Brett
+         ======================================== */
+
+      .mobile-content-tabs {
+        display: flex;
+        background: var(--card-bg, rgba(255,255,255,0.8));
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 12px;
+        gap: 4px;
+      }
+
+      .mobile-content-tab {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--macos-text-secondary, #86868b);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+
+      .mobile-content-tab.active {
+        background: var(--accent, #0071e3);
+        color: white;
+      }
+
+      .mobile-content-tab:not(.active):hover {
+        background: rgba(0,0,0,0.05);
+      }
+
+      [data-theme="dark"] .mobile-content-tab:not(.active):hover {
+        background: rgba(255,255,255,0.1);
+      }
+
+      /* Hide section titles on mobile - replaced by tabs */
+      .pinned-events-wrapper .container-section-title,
+      .schwarzes-brett-wrapper .container-section-title {
+        display: none !important;
+      }
+
+      /* Mobile Content Container */
+      .mobile-content-container {
+        position: relative;
+        min-height: 200px;
+      }
+
+      .mobile-content-pane {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      .mobile-content-pane.active {
+        display: block;
+        opacity: 1;
+      }
+
+      /* Hide original wrappers on mobile - content shown in tab container */
+      .pinned-events-wrapper,
+      .schwarzes-brett-wrapper {
+        display: none !important;
+      }
+
+      /* Mobile Tab Content Wrapper */
+      .mobile-tabs-wrapper {
+        display: block !important;
+        margin-bottom: 16px;
+      }
+
+      /* ========================================
+         MOBILE SLIDER STYLES
+         ======================================== */
+
+      .mobile-slider-container {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .mobile-slider-item {
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        pointer-events: none;
+      }
+
+      .mobile-slider-item.active {
+        opacity: 1;
+        position: relative;
+        pointer-events: auto;
+      }
+
+      .mobile-slider-indicator {
+        text-align: center;
+        padding: 12px 0 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--macos-text-secondary, #86868b);
+      }
+
+      .mobile-slider-indicator.paused::after {
+        content: ' ⏸';
+      }
+
+      /* ========================================
+         MOBILE PROFILE PANEL (Instagram DM Style)
+         ======================================== */
+
+      .mobile-profile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 9998;
+      }
+
+      .mobile-profile-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .mobile-profile-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 85vw;
+        max-width: 320px;
+        background: var(--card-bg, #ffffff);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-out;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      }
+
+      .mobile-profile-panel.active {
+        transform: translateX(0);
+      }
+
+      [data-theme="dark"] .mobile-profile-panel {
+        background: var(--card-bg, #1c1c1e);
+        box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+      }
+
+      .mobile-profile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1));
+      }
+
+      .mobile-profile-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: rgba(0,0,0,0.05);
+        border-radius: 50%;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--macos-text-primary, #1d1d1f);
+        transition: background 0.2s ease;
+      }
+
+      .mobile-profile-close:hover {
+        background: rgba(0,0,0,0.1);
+      }
+
+      [data-theme="dark"] .mobile-profile-close {
+        background: rgba(255,255,255,0.1);
+        color: #ffffff;
+      }
+
+      [data-theme="dark"] .mobile-profile-close:hover {
+        background: rgba(255,255,255,0.15);
+      }
+
+      .mobile-profile-user {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1));
+      }
+
+      .mobile-profile-username {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+        margin-bottom: 4px;
+      }
+
+      .mobile-profile-email {
+        font-size: 13px;
+        color: var(--macos-text-secondary, #86868b);
+      }
+
+      .mobile-profile-menu {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 0;
+      }
+
+      .mobile-profile-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        font-size: 15px;
+        color: var(--macos-text-primary, #1d1d1f);
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      .mobile-profile-item:hover {
+        background: rgba(0,0,0,0.03);
+      }
+
+      [data-theme="dark"] .mobile-profile-item:hover {
+        background: rgba(255,255,255,0.05);
+      }
+
+      .mobile-profile-item svg {
+        width: 20px;
+        height: 20px;
+        color: var(--macos-text-secondary, #86868b);
+      }
+
+      .mobile-profile-separator {
+        height: 1px;
+        background: var(--border-color, rgba(0,0,0,0.1));
+        margin: 8px 20px;
+      }
+
+      .mobile-profile-theme {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 20px;
+      }
+
+      .mobile-profile-theme span {
+        flex: 1;
+        font-size: 15px;
+        color: var(--macos-text-primary, #1d1d1f);
+      }
+
+      .mobile-theme-options {
+        display: flex;
+        gap: 6px;
+      }
+
+      .mobile-theme-btn {
+        width: 36px;
+        height: 36px;
+        border: 2px solid transparent;
+        background: rgba(0,0,0,0.05);
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .mobile-theme-btn.active {
+        border-color: var(--accent, #0071e3);
+        background: rgba(0,113,227,0.1);
+      }
+
+      .mobile-theme-btn svg {
+        width: 18px;
+        height: 18px;
+        color: var(--macos-text-primary, #1d1d1f);
+      }
+
+      [data-theme="dark"] .mobile-theme-btn {
+        background: rgba(255,255,255,0.1);
+      }
+
+      [data-theme="dark"] .mobile-theme-btn svg {
+        color: #ffffff;
+      }
+
+      .mobile-profile-logout {
+        margin: 12px 20px 20px;
+        padding: 14px;
+        background: var(--accent, #0071e3);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: opacity 0.2s ease;
+        font-family: inherit;
+      }
+
+      .mobile-profile-logout:hover {
+        opacity: 0.9;
+      }
+
+      .mobile-profile-logout svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Mobile Profile Trigger Button in Header */
+      .mobile-profile-trigger {
+        display: flex !important;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+      }
+
+      .mobile-profile-trigger:hover {
+        background: rgba(0,0,0,0.05);
+      }
+
+      .mobile-profile-trigger svg {
+        width: 20px;
+        height: 20px;
+        color: var(--macos-text-primary, #1d1d1f);
+      }
+
+      [data-theme="dark"] .mobile-profile-trigger svg {
+        color: #ffffff;
+      }
+
+      /* ========================================
+         TO-DO LISTS PADDING OPTIMIZATION (Mobile)
+         ======================================== */
+
+      .dashboard-left-column,
+      .dashboard-right-columns {
+        padding: 3vw !important;
+      }
+
+      .todo-projects-left,
+      .todo-tasks-right,
+      .pinned-events-card,
+      .schwarzes-brett-card {
+        width: 100% !important;
+        padding: 0 !important;
+      }
+
+      .todo-projects-list,
+      .todo-tasks-list {
+        width: 100% !important;
+      }
+
+      /* Remove horizontal padding from inner containers */
+      .container-section {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
+      /* ========================================
          Apple Calendar Mobile Design
          ======================================== */
 
@@ -7275,7 +7657,93 @@
           <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </button>
+
+      <!-- Mobile Profile Trigger (Mobile only) -->
+      <button class="mobile-profile-trigger" id="mobileProfileTrigger" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
+  </div>
+
+  <!-- Mobile Profile Panel Overlay -->
+  <div class="mobile-profile-overlay" id="mobileProfileOverlay"></div>
+
+  <!-- Mobile Profile Panel -->
+  <div class="mobile-profile-panel" id="mobileProfilePanel">
+    <div class="mobile-profile-header">
+      <span style="font-weight: 600; font-size: 16px;">Profil</span>
+      <button class="mobile-profile-close" id="mobileProfileClose">✕</button>
+    </div>
+
+    <div class="mobile-profile-user">
+      <div class="mobile-profile-username" id="mobileProfileUsername">User name</div>
+      <div class="mobile-profile-email" id="mobileProfileEmail">user@example.com</div>
+    </div>
+
+    <div class="mobile-profile-menu">
+      <div class="mobile-profile-item" id="mobileProfileDashboard">
+        <span>Dashboard</span>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+
+      <div class="mobile-profile-item" id="mobileProfileSettings">
+        <span>Account Settings</span>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M12 1V3M12 21V23M23 12H21M3 12H1M20.485 20.485L19.071 19.071M4.929 4.929L3.515 3.515M20.485 3.515L19.071 4.929M4.929 19.071L3.515 20.485" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="mobile-profile-separator"></div>
+
+      <div class="mobile-profile-theme">
+        <span>Theme</span>
+        <div class="mobile-theme-options">
+          <button class="mobile-theme-btn" id="mobileLightThemeBtn" data-theme="light">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M12 1V3M12 21V23M23 12H21M3 12H1M20.485 20.485L19.071 19.071M4.929 4.929L3.515 3.515M20.485 3.515L19.071 4.929M4.929 19.071L3.515 20.485" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="mobile-theme-btn" id="mobileDarkThemeBtn" data-theme="dark">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="mobile-profile-separator"></div>
+
+      <div class="mobile-profile-item" id="mobileProfileCommandMenu">
+        <span>Command Menu</span>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+
+      <div class="mobile-profile-item" id="mobileProfileHomePage">
+        <span>Home Page</span>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <button class="mobile-profile-logout" id="mobileProfileLogout">
+      <span>Log Out</span>
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
   </div>
 
   <!-- Project Invitations Dropdown -->
@@ -7429,6 +7897,30 @@
     <div class="dashboard-container" style="margin-top: 32px;">
       <!-- Left Column (30%) - Pinned Events + Schwarzes Brett -->
       <div class="dashboard-left-column">
+        <!-- Mobile Tab Switcher (only visible on mobile) -->
+        <div class="mobile-tabs-wrapper" id="mobileTabsWrapper" style="display: none;">
+          <div class="mobile-content-tabs">
+            <button class="mobile-content-tab active" data-tab="pinned-events">Pinned Events</button>
+            <button class="mobile-content-tab" data-tab="schwarzes-brett">Schwarzes Brett</button>
+          </div>
+          <div class="mobile-content-container">
+            <!-- Pinned Events Tab Content -->
+            <div class="mobile-content-pane active" id="mobilePinnedEventsPane">
+              <div class="mobile-slider-container" id="mobilePinnedEventsSlider">
+                <!-- Content will be dynamically populated -->
+              </div>
+              <div class="mobile-slider-indicator" id="mobilePinnedEventsIndicator">1 / 1</div>
+            </div>
+            <!-- Schwarzes Brett Tab Content -->
+            <div class="mobile-content-pane" id="mobileSchwarzesBrettPane">
+              <div class="mobile-slider-container" id="mobileSchwarzesBrettSlider">
+                <!-- Content will be dynamically populated -->
+              </div>
+              <div class="mobile-slider-indicator" id="mobileSchwarzesBrettIndicator">1 / 1</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Pinned Events Section -->
         <div class="container-section pinned-events-wrapper">
           <h3 class="container-section-title">Pinned Events</h3>
@@ -11192,14 +11684,8 @@
 
       if (isMobile && mobileFooterNav) {
         mobileFooterNav.style.display = 'flex';
-
-        // Add click event listeners to mobile nav items
-        const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-
-        mobileNavItems.forEach(item => {
-          // Use a named function to avoid duplicate listeners
-          item.addEventListener('click', handleMobileNavClick);
-        });
+        // Note: Click handlers are registered once in DOMContentLoaded (line ~34068)
+        // to avoid duplicate event listeners
       } else if (mobileFooterNav) {
         mobileFooterNav.style.display = 'none';
       }
@@ -35016,6 +35502,470 @@
       window.deleteWannadoFromEdit = deleteWannadoFromEdit;
       window.deleteCollection = deleteCollection;
       window.toggleCollectionVisibility = toggleCollectionVisibility;
+
+      // ==========================================
+      // MOBILE OPTIMIZATIONS
+      // ==========================================
+
+      // Mobile check helper
+      const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+      // Global slider state
+      window.mobileSliders = {
+        pinnedEvents: {
+          currentIndex: 0,
+          items: [],
+          interval: null,
+          paused: false
+        },
+        schwarzesBrett: {
+          currentIndex: 0,
+          items: [],
+          interval: null,
+          paused: false
+        }
+      };
+
+      // ==========================================
+      // MOBILE PROFILE PANEL
+      // ==========================================
+      function initMobileProfilePanel() {
+        const trigger = document.getElementById('mobileProfileTrigger');
+        const panel = document.getElementById('mobileProfilePanel');
+        const overlay = document.getElementById('mobileProfileOverlay');
+        const closeBtn = document.getElementById('mobileProfileClose');
+
+        if (!trigger || !panel || !overlay) return;
+
+        // Open panel
+        trigger.addEventListener('click', function(e) {
+          if (!isMobile()) return;
+          e.stopPropagation();
+          panel.classList.add('active');
+          overlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        });
+
+        // Close panel
+        function closePanel() {
+          panel.classList.remove('active');
+          overlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+
+        if (closeBtn) closeBtn.addEventListener('click', closePanel);
+        overlay.addEventListener('click', closePanel);
+
+        // Swipe to close
+        let touchStartX = 0;
+        let touchCurrentX = 0;
+        let isSwiping = false;
+
+        panel.addEventListener('touchstart', function(e) {
+          touchStartX = e.touches[0].clientX;
+          isSwiping = true;
+        }, { passive: true });
+
+        panel.addEventListener('touchmove', function(e) {
+          if (!isSwiping) return;
+          touchCurrentX = e.touches[0].clientX;
+          const diff = touchCurrentX - touchStartX;
+          if (diff > 0) {
+            panel.style.transform = `translateX(${diff}px)`;
+          }
+        }, { passive: true });
+
+        panel.addEventListener('touchend', function(e) {
+          if (!isSwiping) return;
+          isSwiping = false;
+          const diff = touchCurrentX - touchStartX;
+          if (diff > 100) {
+            closePanel();
+          }
+          panel.style.transform = '';
+        });
+
+        // Menu item actions
+        const dashboardBtn = document.getElementById('mobileProfileDashboard');
+        const settingsBtn = document.getElementById('mobileProfileSettings');
+        const commandMenuBtn = document.getElementById('mobileProfileCommandMenu');
+        const homePageBtn = document.getElementById('mobileProfileHomePage');
+        const logoutBtn = document.getElementById('mobileProfileLogout');
+
+        if (dashboardBtn) {
+          dashboardBtn.addEventListener('click', function() {
+            closePanel();
+            const dashboardSection = document.getElementById('dashboard-section');
+            if (dashboardSection) {
+              document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+              dashboardSection.classList.add('active');
+              dashboardSection.style.display = 'block';
+            }
+          });
+        }
+
+        if (settingsBtn) {
+          settingsBtn.addEventListener('click', function() {
+            closePanel();
+            const accountSection = document.getElementById('account-section');
+            if (accountSection) {
+              document.querySelectorAll('section').forEach(s => {
+                s.classList.remove('active');
+                s.style.display = 'none';
+              });
+              accountSection.classList.add('active');
+              accountSection.style.display = 'block';
+            }
+          });
+        }
+
+        if (commandMenuBtn) {
+          commandMenuBtn.addEventListener('click', function() {
+            closePanel();
+            const commandMenu = document.getElementById('commandMenu');
+            if (commandMenu) commandMenu.classList.add('active');
+          });
+        }
+
+        if (homePageBtn) {
+          homePageBtn.addEventListener('click', function() {
+            window.location.href = '/';
+          });
+        }
+
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', async function() {
+            closePanel();
+            if (typeof supabase !== 'undefined') {
+              await supabase.auth.signOut();
+            }
+            localStorage.clear();
+            window.location.reload();
+          });
+        }
+
+        // Theme buttons
+        const lightBtn = document.getElementById('mobileLightThemeBtn');
+        const darkBtn = document.getElementById('mobileDarkThemeBtn');
+
+        function updateMobileThemeButtons() {
+          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          if (lightBtn) lightBtn.classList.toggle('active', currentTheme === 'light');
+          if (darkBtn) darkBtn.classList.toggle('active', currentTheme === 'dark');
+        }
+
+        if (lightBtn) {
+          lightBtn.addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            updateMobileThemeButtons();
+            // Sync with desktop theme buttons
+            const desktopLight = document.getElementById('lightThemeBtn');
+            const desktopDark = document.getElementById('darkThemeBtn');
+            if (desktopLight) desktopLight.classList.add('active');
+            if (desktopDark) desktopDark.classList.remove('active');
+          });
+        }
+
+        if (darkBtn) {
+          darkBtn.addEventListener('click', function() {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            updateMobileThemeButtons();
+            // Sync with desktop theme buttons
+            const desktopLight = document.getElementById('lightThemeBtn');
+            const desktopDark = document.getElementById('darkThemeBtn');
+            if (desktopLight) desktopLight.classList.remove('active');
+            if (desktopDark) desktopDark.classList.add('active');
+          });
+        }
+
+        updateMobileThemeButtons();
+      }
+
+      // ==========================================
+      // MOBILE TAB SWITCHER
+      // ==========================================
+      function initMobileTabSwitcher() {
+        const tabs = document.querySelectorAll('.mobile-content-tab');
+        const pinnedPane = document.getElementById('mobilePinnedEventsPane');
+        const brettPane = document.getElementById('mobileSchwarzesBrettPane');
+
+        tabs.forEach(tab => {
+          tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+
+            // Update tab active state
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            // Switch panes
+            if (targetTab === 'pinned-events') {
+              pinnedPane.classList.add('active');
+              brettPane.classList.remove('active');
+              // Restart pinned events slider
+              stopMobileSlider('schwarzesBrett');
+              if (isMobile()) startMobileSlider('pinnedEvents');
+            } else {
+              pinnedPane.classList.remove('active');
+              brettPane.classList.add('active');
+              // Restart schwarzes brett slider
+              stopMobileSlider('pinnedEvents');
+              if (isMobile()) startMobileSlider('schwarzesBrett');
+            }
+          });
+        });
+      }
+
+      // ==========================================
+      // MOBILE SLIDERS
+      // ==========================================
+      function initMobileSliders() {
+        if (!isMobile()) return;
+
+        // Populate sliders with content
+        populateMobileSlider('pinnedEvents');
+        populateMobileSlider('schwarzesBrett');
+
+        // Start the active slider
+        const activeTab = document.querySelector('.mobile-content-tab.active');
+        if (activeTab) {
+          const tabType = activeTab.dataset.tab === 'pinned-events' ? 'pinnedEvents' : 'schwarzesBrett';
+          startMobileSlider(tabType);
+        }
+      }
+
+      function populateMobileSlider(type) {
+        const slider = window.mobileSliders[type];
+        let sourceContainer, targetContainer, indicator;
+
+        if (type === 'pinnedEvents') {
+          sourceContainer = document.getElementById('pinnedEventsContainer');
+          targetContainer = document.getElementById('mobilePinnedEventsSlider');
+          indicator = document.getElementById('mobilePinnedEventsIndicator');
+        } else {
+          sourceContainer = document.getElementById('brettMessages');
+          targetContainer = document.getElementById('mobileSchwarzesBrettSlider');
+          indicator = document.getElementById('mobileSchwarzesBrettIndicator');
+        }
+
+        if (!sourceContainer || !targetContainer) return;
+
+        // Get items from source
+        let items;
+        if (type === 'pinnedEvents') {
+          items = sourceContainer.querySelectorAll('.event-item, .pinned-event-card');
+        } else {
+          items = sourceContainer.querySelectorAll('.brett-message');
+        }
+
+        // Clear target
+        targetContainer.innerHTML = '';
+        slider.items = [];
+
+        if (items.length === 0) {
+          targetContainer.innerHTML = '<div class="mobile-slider-item active" style="padding: 20px; text-align: center; color: var(--macos-text-secondary);">Keine Einträge</div>';
+          if (indicator) indicator.textContent = '0 / 0';
+          return;
+        }
+
+        // Clone items to slider
+        items.forEach((item, index) => {
+          const clone = item.cloneNode(true);
+          clone.classList.add('mobile-slider-item');
+          if (index === 0) clone.classList.add('active');
+          clone.style.cssText = '';
+          targetContainer.appendChild(clone);
+          slider.items.push(clone);
+        });
+
+        slider.currentIndex = 0;
+        updateSliderIndicator(type);
+
+        // Add touch/tap handlers
+        setupSliderTouchHandlers(type, targetContainer);
+      }
+
+      function setupSliderTouchHandlers(type, container) {
+        const slider = window.mobileSliders[type];
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        // Tap to pause/resume
+        container.addEventListener('click', function(e) {
+          if (e.target.closest('a, button')) return; // Don't pause on links/buttons
+          slider.paused = !slider.paused;
+          const indicator = type === 'pinnedEvents'
+            ? document.getElementById('mobilePinnedEventsIndicator')
+            : document.getElementById('mobileSchwarzesBrettIndicator');
+          if (indicator) {
+            indicator.classList.toggle('paused', slider.paused);
+          }
+        });
+
+        // Swipe handlers
+        container.addEventListener('touchstart', function(e) {
+          touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        container.addEventListener('touchend', function(e) {
+          touchEndX = e.changedTouches[0].clientX;
+          const diff = touchStartX - touchEndX;
+
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) {
+              // Swipe left - next
+              goToSlide(type, slider.currentIndex + 1);
+            } else {
+              // Swipe right - previous
+              goToSlide(type, slider.currentIndex - 1);
+            }
+          }
+        }, { passive: true });
+      }
+
+      function startMobileSlider(type) {
+        if (!isMobile()) return;
+
+        const slider = window.mobileSliders[type];
+        if (slider.interval) clearInterval(slider.interval);
+
+        slider.interval = setInterval(() => {
+          if (!slider.paused && slider.items.length > 1) {
+            goToSlide(type, slider.currentIndex + 1);
+          }
+        }, 5000);
+      }
+
+      function stopMobileSlider(type) {
+        const slider = window.mobileSliders[type];
+        if (slider.interval) {
+          clearInterval(slider.interval);
+          slider.interval = null;
+        }
+      }
+
+      function goToSlide(type, index) {
+        const slider = window.mobileSliders[type];
+        if (slider.items.length === 0) return;
+
+        // Wrap around
+        if (index >= slider.items.length) index = 0;
+        if (index < 0) index = slider.items.length - 1;
+
+        // Update active state
+        slider.items.forEach((item, i) => {
+          item.classList.toggle('active', i === index);
+        });
+
+        slider.currentIndex = index;
+        updateSliderIndicator(type);
+      }
+
+      function updateSliderIndicator(type) {
+        const slider = window.mobileSliders[type];
+        const indicator = type === 'pinnedEvents'
+          ? document.getElementById('mobilePinnedEventsIndicator')
+          : document.getElementById('mobileSchwarzesBrettIndicator');
+
+        if (indicator) {
+          indicator.textContent = `${slider.currentIndex + 1} / ${slider.items.length}`;
+        }
+      }
+
+      // ==========================================
+      // MOBILE LAYOUT SETUP
+      // ==========================================
+      function setupMobileLayout() {
+        const mobileTabsWrapper = document.getElementById('mobileTabsWrapper');
+        const mobileProfileTrigger = document.getElementById('mobileProfileTrigger');
+        const profileButton = document.getElementById('profileButton');
+
+        if (isMobile()) {
+          // Show mobile elements
+          if (mobileTabsWrapper) mobileTabsWrapper.style.display = 'block';
+          if (mobileProfileTrigger) mobileProfileTrigger.style.display = 'flex';
+          if (profileButton) profileButton.style.display = 'none';
+
+          // Initialize sliders
+          initMobileSliders();
+
+          // Update mobile profile panel user info
+          updateMobileProfileInfo();
+        } else {
+          // Hide mobile elements, restore desktop
+          if (mobileTabsWrapper) mobileTabsWrapper.style.display = 'none';
+          if (mobileProfileTrigger) mobileProfileTrigger.style.display = 'none';
+          if (profileButton) profileButton.style.display = '';
+
+          // Stop all sliders
+          stopMobileSlider('pinnedEvents');
+          stopMobileSlider('schwarzesBrett');
+
+          // Close mobile panel if open
+          const panel = document.getElementById('mobileProfilePanel');
+          const overlay = document.getElementById('mobileProfileOverlay');
+          if (panel) panel.classList.remove('active');
+          if (overlay) overlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+
+      function updateMobileProfileInfo() {
+        const mobileUsername = document.getElementById('mobileProfileUsername');
+        const mobileEmail = document.getElementById('mobileProfileEmail');
+        const desktopUsername = document.getElementById('profileDropdownUsername');
+        const desktopEmail = document.getElementById('profileDropdownEmail');
+
+        if (mobileUsername && desktopUsername) {
+          mobileUsername.textContent = desktopUsername.textContent;
+        }
+        if (mobileEmail && desktopEmail) {
+          mobileEmail.textContent = desktopEmail.textContent;
+        }
+      }
+
+      // Refresh sliders when content updates
+      window.refreshMobileSliders = function() {
+        if (!isMobile()) return;
+        populateMobileSlider('pinnedEvents');
+        populateMobileSlider('schwarzesBrett');
+      };
+
+      // Initialize mobile features
+      initMobileProfilePanel();
+      initMobileTabSwitcher();
+      setupMobileLayout();
+
+      // Handle resize
+      let resizeTimeout;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+          setupMobileLayout();
+        }, 250);
+      });
+
+      // Observer to refresh sliders when content changes
+      const pinnedEventsObserver = new MutationObserver(function() {
+        if (isMobile()) {
+          setTimeout(() => populateMobileSlider('pinnedEvents'), 100);
+        }
+      });
+      const brettObserver = new MutationObserver(function() {
+        if (isMobile()) {
+          setTimeout(() => populateMobileSlider('schwarzesBrett'), 100);
+        }
+      });
+
+      const pinnedContainer = document.getElementById('pinnedEventsContainer');
+      const brettContainer = document.getElementById('brettMessages');
+      if (pinnedContainer) {
+        pinnedEventsObserver.observe(pinnedContainer, { childList: true, subtree: true });
+      }
+      if (brettContainer) {
+        brettObserver.observe(brettContainer, { childList: true, subtree: true });
+      }
 
       // Initialize auth
       initAuth();
