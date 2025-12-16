@@ -4790,6 +4790,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+      overflow: hidden;  /* Kein Scrollen */
       z-index: 99999;
       display: flex;
       flex-direction: column;
@@ -4906,6 +4907,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+      overflow: hidden;  /* Kein Scrollen */
       background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(0px);
       -webkit-backdrop-filter: blur(0px);
@@ -5035,19 +5037,22 @@
       transition: all 0.2s ease;
     }
 
-    .login-submit-btn:hover {
+    /* Submit Button - DISABLED (grau bis Input vorhanden) */
+    .login-submit-btn:disabled {
+      background: rgba(255, 255, 255, 0.3);
+      color: rgba(0, 0, 0, 0.4);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Submit Button - Enabled hover/active */
+    .login-submit-btn:not(:disabled):hover {
       background: rgba(255, 255, 255, 0.9);
       transform: translateY(-1px);
     }
 
-    .login-submit-btn:active {
+    .login-submit-btn:not(:disabled):active {
       transform: translateY(0);
-    }
-
-    .login-submit-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
@@ -7186,7 +7191,7 @@
     </div>
 
     <!-- Logo -->
-    <div class="loading-logo">MOMMY I'M SORRY</div>
+    <div class="loading-logo">Culture over Money Management</div>
 
     <!-- Progress Bar Container -->
     <div class="loading-progress-container">
@@ -7217,7 +7222,7 @@
             <input type="checkbox" id="loadingRememberMe">
             <label for="loadingRememberMe">Angemeldet bleiben</label>
           </div>
-          <button type="submit" class="login-submit-btn">Anmelden</button>
+          <button type="submit" class="login-submit-btn" disabled>Anmelden</button>
         </form>
       </div>
     </div>
@@ -12234,6 +12239,36 @@
         // Login Form Event Listener
         if (this.elements.loginForm) {
           this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+
+          // Input Validation für Button
+          const usernameInput = document.getElementById('loadingUsername');
+          const passwordInput = document.getElementById('loadingPassword');
+          const submitBtn = this.elements.loginForm.querySelector('button[type="submit"]');
+
+          // Button initial disabled
+          if (submitBtn) {
+            submitBtn.disabled = true;
+          }
+
+          // Check Inputs on every keystroke
+          const validateInputs = () => {
+            const hasUsername = usernameInput && usernameInput.value.trim().length > 0;
+            const hasPassword = passwordInput && passwordInput.value.length > 0;
+
+            if (submitBtn) {
+              submitBtn.disabled = !(hasUsername && hasPassword);
+            }
+          };
+
+          if (usernameInput) {
+            usernameInput.addEventListener('input', validateInputs);
+            usernameInput.addEventListener('change', validateInputs);
+          }
+
+          if (passwordInput) {
+            passwordInput.addEventListener('input', validateInputs);
+            passwordInput.addEventListener('change', validateInputs);
+          }
         }
 
         console.log('🎬 LoadingScreen initialized');
