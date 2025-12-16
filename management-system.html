@@ -5814,17 +5814,18 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 8px 16px 24px 16px;
+      padding: 8px 16px calc(8px + env(safe-area-inset-bottom)) 16px;
       justify-content: space-around;
-      z-index: 1000;
+      z-index: 99999;
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     }
 
     [data-theme="dark"] .mobile-footer-nav {
-      background: rgba(18, 18, 18, 0.95);
+      background: rgba(18, 18, 18, 0.98);
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
     }
@@ -5838,6 +5839,10 @@
       cursor: pointer;
       transition: all 0.2s ease;
       border-radius: 12px;
+      -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .mobile-nav-item:active {
@@ -27531,6 +27536,59 @@
   </style>
 
   <script>
+    // ==========================================
+    // MOBILE NAV HANDLER - GLOBAL FUNCTION
+    // ==========================================
+    function handleMobileNav(viewName, element) {
+      console.log('📱 Mobile nav clicked:', viewName);
+
+      // Visual feedback
+      element.style.transform = 'scale(0.95)';
+      setTimeout(() => element.style.transform = '', 150);
+
+      // Update active states
+      document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      element.classList.add('active');
+
+      // Route to correct view using helper functions
+      if (viewName === 'dashboard') {
+        if (typeof showMobileDashboard === 'function') {
+          showMobileDashboard();
+        } else {
+          // Fallback: show dashboard section
+          document.querySelectorAll('section[id$="-section"]').forEach(s => {
+            s.style.display = 'none';
+            s.classList.remove('active');
+          });
+          const dashboard = document.getElementById('dashboard-section');
+          if (dashboard) {
+            dashboard.style.display = 'block';
+            dashboard.classList.add('active');
+          }
+        }
+      } else if (viewName === 'calendar') {
+        if (typeof showMobileCalendar === 'function') {
+          showMobileCalendar();
+        }
+      } else if (viewName === 'dienstplan') {
+        if (typeof showMobileDienstplan === 'function') {
+          showMobileDienstplan();
+        }
+      }
+
+      // Update desktop nav too
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      const navLink = document.querySelector(`.nav-link[data-view="${viewName}"]`);
+      if (navLink) navLink.classList.add('active');
+
+      console.log('✅ Switched to:', viewName);
+    }
+
+    // Make it globally available
+    window.handleMobileNav = handleMobileNav;
+
     // ============================================
     // AUTH & PROFILE SYSTEM
     // ============================================
@@ -36369,49 +36427,8 @@
     });
 
     // ==========================================
-    // MOBILE BOTTOM NAV - BULLETPROOF HANDLER
+    // MOBILE VIEW HELPERS (called by handleMobileNav)
     // ==========================================
-    (function initMobileNav() {
-      const items = document.querySelectorAll('.mobile-nav-item');
-
-      items.forEach(item => {
-        // Touch events für Mobile
-        item.addEventListener('touchend', function(e) {
-          e.preventDefault();
-          handleMobileNavTap(this);
-        }, { passive: false });
-
-        // Click events als Fallback
-        item.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          handleMobileNavTap(this);
-        });
-      });
-
-      console.log('✅ Mobile nav initialized with', items.length, 'items');
-    })();
-
-    function handleMobileNavTap(element) {
-      const viewName = element.getAttribute('data-mobile-view');
-      console.log('📱 Mobile nav tapped:', viewName);
-
-      if (!viewName) return;
-
-      // Update active states
-      document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
-      element.classList.add('active');
-
-      // Route to correct view
-      if (viewName === 'dashboard') {
-        showMobileDashboard();
-      } else if (viewName === 'calendar') {
-        showMobileCalendar();
-      } else if (viewName === 'dienstplan') {
-        showMobileDienstplan();
-      }
-    }
-
     function showMobileDashboard() {
       // Hide mobile-exclusive views
       document.getElementById('mobileCalendarView')?.classList.remove('active');
@@ -36943,8 +36960,8 @@
   </div>
 
   <!-- Mobile Footer Navigation -->
-  <div class="mobile-footer-nav">
-    <div class="mobile-nav-item active" data-mobile-view="dashboard">
+  <div class="mobile-footer-nav" id="mobileFooterNav">
+    <div class="mobile-nav-item active" data-mobile-view="dashboard" onclick="handleMobileNav('dashboard', this)">
       <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
         <rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
@@ -36954,7 +36971,7 @@
       <span class="mobile-nav-label">Dashboard</span>
     </div>
 
-    <div class="mobile-nav-item" data-mobile-view="calendar">
+    <div class="mobile-nav-item" data-mobile-view="calendar" onclick="handleMobileNav('calendar', this)">
       <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
         <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -36962,7 +36979,7 @@
       <span class="mobile-nav-label">Calendar</span>
     </div>
 
-    <div class="mobile-nav-item" data-mobile-view="dienstplan">
+    <div class="mobile-nav-item" data-mobile-view="dienstplan" onclick="handleMobileNav('dienstplan', this)">
       <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
