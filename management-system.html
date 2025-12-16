@@ -36745,138 +36745,125 @@
     }
 
     async function loadMobileCalendarData() {
-      console.log('📅 Loading mobile calendar data...');
+      console.log('📅 loadMobileCalendarData called');
 
       const dateStr = mobileCalState.selectedDate.toISOString().split('T')[0];
       console.log('📅 Selected date:', dateStr);
 
-      // Update header
+      // Update date header
       const header = document.getElementById('mobileCalDateHeader');
       if (header) {
         header.textContent = mobileCalState.selectedDate.toLocaleDateString('de-DE', {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         });
       }
 
-      // Clear existing events
-      document.querySelectorAll('.mobile-cal-hour-content').forEach(el => {
-        el.querySelectorAll('.mobile-cal-event').forEach(ev => ev.remove());
-      });
+      // Render empty timeline first
+      renderMobileCalTimeline();
 
-      // FIXED: Check if logged in using multiple possible locations
-      const user = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
-      console.log('📅 User check:', user ? user.username || user.name : 'NOT FOUND');
+      // Get user - check all possible locations
+      const user = window.currentUser || currentUser;
+      console.log('📅 User:', user ? (user.username || user.name || 'found') : 'NOT FOUND');
 
       if (!user) {
-        console.log('⚠️ No user found, showing login message');
-        const timeline = document.getElementById('mobileCalTimeline');
-        if (timeline) {
-          timeline.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--macos-text-secondary);">Bitte erst anmelden um Termine zu sehen.</div>';
-        }
+        console.log('📅 No user, cannot load appointments');
         return;
       }
 
-      try {
-        // Try all possible cache locations
-        let appointments = window.appointmentsCache ||
-                           window.CentralDataManager?.data?.appointments ||
-                           (typeof appointmentsCache !== 'undefined' ? appointmentsCache : []) ||
-                           [];
-        console.log('📅 Cache sources checked:', {
-          windowAppointmentsCache: (window.appointmentsCache || []).length,
-          centralDataManager: (window.CentralDataManager?.data?.appointments || []).length,
-          localVar: (typeof appointmentsCache !== 'undefined' ? appointmentsCache.length : 0)
-        });
-        console.log('📅 Total cached appointments:', appointments.length);
-
-        // If still empty, try CentralDataManager.get()
-        if (appointments.length === 0 && window.CentralDataManager && typeof window.CentralDataManager.get === 'function') {
-          const cdmAppointments = window.CentralDataManager.get('appointments');
-          if (cdmAppointments && cdmAppointments.length > 0) {
-            console.log('📅 Found appointments in CentralDataManager.get():', cdmAppointments.length);
-            appointments = cdmAppointments;
-          }
-        }
-
-        if (appointments.length === 0) {
-          console.log('⚠️ No cached appointments found in any source');
-          return;
-        }
-
-        // Filter by selected date
-        appointments = appointments.filter(apt => {
-          const aptDate = (apt.date || apt.appointment_date || apt.start || '').split('T')[0];
-          return aptDate === dateStr;
-        });
-        console.log('📅 Appointments for', dateStr, ':', appointments.length);
-
-        // Filter by user if they are an artist (not management/booking)
-        const userEmail = user.email;
-        const userRole = user.role;
-        console.log('📅 User role:', userRole, 'Email:', userEmail);
-
-        if (userRole !== 'management' && userRole !== 'booking') {
-          const artistsCache = window.artistsCache || [];
-          const matchingArtist = artistsCache.find(a => a.email === userEmail);
-
-          if (matchingArtist) {
-            console.log('📅 Filtering to artist:', matchingArtist.name, matchingArtist.id);
-            appointments = appointments.filter(apt => apt.artist_id === matchingArtist.id);
-            console.log('📅 Artist appointments:', appointments.length);
-          }
-        }
-
-        // Filter by category if set
-        if (mobileCalState.categoryFilter !== 'all') {
-          appointments = appointments.filter(apt => {
-            const cat = (apt.category || apt.type || '').toLowerCase().replace(/\s+/g, '_');
-            return cat === mobileCalState.categoryFilter;
-          });
-        }
-
-        // Render timeline
-        renderMobileCalTimeline();
-
-        // Render events
-        appointments.forEach(apt => {
-          const startTime = apt.start_time || apt.time_start || (apt.start || '').split('T')[1]?.substring(0,5) || '09:00';
-          const endTime = apt.end_time || apt.time_end || (apt.end || '').split('T')[1]?.substring(0,5) || '10:00';
-
-          const startHour = parseInt(startTime.split(':')[0]);
-          const startMin = parseInt(startTime.split(':')[1] || '0');
-          const endHour = parseInt(endTime.split(':')[0]);
-          const endMin = parseInt(endTime.split(':')[1] || '0');
-
-          if (startHour < 8 || startHour > 22) return;
-
-          const container = document.querySelector(`.mobile-cal-hour-content[data-hour="${startHour}"]`);
-          if (!container) return;
-
-          const durationHours = (endHour + endMin/60) - (startHour + startMin/60);
-          const topOffset = (startMin / 60) * 60;
-          const height = Math.max(durationHours * 60 - 4, 30);
-
-          const category = (apt.category || apt.type || 'internal').toLowerCase().replace(/\s+/g, '_');
-
-          const eventEl = document.createElement('div');
-          eventEl.className = `mobile-cal-event ${category}`;
-          eventEl.style.cssText = `top: ${topOffset}px; height: ${height}px;`;
-          eventEl.innerHTML = `
-            <div class="mobile-cal-event-title">${apt.title || apt.customer_name || apt.name || 'Termin'}</div>
-            <div class="mobile-cal-event-time">${startTime} - ${endTime}</div>
-          `;
-          eventEl.onclick = () => openMobileCalModal(apt);
-          container.appendChild(eventEl);
-        });
-
-        console.log('✅ Mobile calendar rendered with', appointments.length, 'events');
-
-      } catch (err) {
-        console.error('❌ Error loading mobile calendar:', err);
+      // Get appointments from CentralDataManager
+      let allAppointments = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.isReady && CentralDataManager.isReady()) {
+        allAppointments = CentralDataManager.getAppointments() || [];
+        console.log('📅 Got appointments from CentralDataManager:', allAppointments.length);
+      } else if (window.CentralDataManager && window.CentralDataManager.isReady()) {
+        allAppointments = window.CentralDataManager.getAppointments() || [];
+        console.log('📅 Got appointments from window.CentralDataManager:', allAppointments.length);
       }
+
+      if (allAppointments.length === 0) {
+        console.log('📅 No appointments available');
+        return;
+      }
+
+      // Filter by date - try multiple date field names
+      let appointments = allAppointments.filter(apt => {
+        const aptDate = (apt.date || apt.appointment_date || apt.start || '').toString().split('T')[0];
+        return aptDate === dateStr;
+      });
+      console.log('📅 Appointments for', dateStr + ':', appointments.length);
+
+      // Get artists for filtering
+      let artistsCache = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
+        artistsCache = CentralDataManager.getArtists() || [];
+      } else if (window.CentralDataManager && window.CentralDataManager.getArtists) {
+        artistsCache = window.CentralDataManager.getArtists() || [];
+      }
+
+      // Filter by user if they are an artist (not management/booking)
+      const userRole = (user.role || '').toLowerCase();
+      console.log('📅 User role:', userRole);
+
+      if (!userRole.includes('management') && !userRole.includes('booking')) {
+        const matchingArtist = artistsCache.find(a => a.email === user.email);
+        if (matchingArtist) {
+          console.log('📅 Filtering to artist:', matchingArtist.name);
+          appointments = appointments.filter(apt => apt.artist_id === matchingArtist.id);
+          console.log('📅 Artist appointments:', appointments.length);
+        }
+      }
+
+      // Filter by category if set
+      if (mobileCalState.categoryFilter && mobileCalState.categoryFilter !== 'all') {
+        appointments = appointments.filter(apt => {
+          const cat = (apt.category || apt.type || '').toLowerCase().replace(/\s+/g, '_');
+          return cat === mobileCalState.categoryFilter;
+        });
+      }
+
+      // Render events
+      console.log('📅 Rendering', appointments.length, 'events');
+
+      appointments.forEach(apt => {
+        // Extract time - handle multiple formats
+        let startTime = apt.start_time || apt.time_start || '09:00';
+        let endTime = apt.end_time || apt.time_end || '10:00';
+
+        // If start/end are datetime strings, extract time
+        if (apt.start && apt.start.includes('T')) {
+          startTime = apt.start.split('T')[1]?.substring(0, 5) || startTime;
+        }
+        if (apt.end && apt.end.includes('T')) {
+          endTime = apt.end.split('T')[1]?.substring(0, 5) || endTime;
+        }
+
+        const startHour = parseInt(startTime.split(':')[0]);
+        const startMin = parseInt(startTime.split(':')[1] || '0');
+        const endHour = parseInt(endTime.split(':')[0]);
+
+        if (startHour < 8 || startHour > 22) return;
+
+        const container = document.querySelector(`.mobile-cal-hour-content[data-hour="${startHour}"]`);
+        if (!container) return;
+
+        const duration = Math.max((endHour - startHour) + ((parseInt(endTime.split(':')[1] || '0') - startMin) / 60), 0.5);
+        const top = (startMin / 60) * 60;
+        const height = Math.max(duration * 60 - 4, 30);
+
+        const category = (apt.category || apt.type || 'internal').toLowerCase().replace(/\s+/g, '_');
+
+        const el = document.createElement('div');
+        el.className = `mobile-cal-event ${category}`;
+        el.style.cssText = `top:${top}px;height:${height}px;`;
+        el.innerHTML = `
+          <div class="mobile-cal-event-title">${apt.title || apt.customer_name || apt.name || 'Termin'}</div>
+          <div class="mobile-cal-event-time">${startTime} - ${endTime}</div>
+        `;
+        el.onclick = () => openMobileCalModal(apt);
+        container.appendChild(el);
+      });
+
+      console.log('📅 ✅ Mobile calendar rendered');
     }
 
     function openMobileCalModal(apt) {
@@ -36943,172 +36930,142 @@
     }
 
     async function loadMobileDienstplanData() {
-      console.log('📋 Loading mobile dienstplan data...');
+      console.log('📋 loadMobileDienstplanData called');
 
       const container = document.getElementById('mobileDpDays');
-      if (!container) return;
+      if (!container) {
+        console.log('📋 Container not found');
+        return;
+      }
 
       const weekEnd = new Date(mobileDpState.currentWeekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
 
-      // Update week label
-      const weekLabel = document.getElementById('mobileDpWeekLabel');
-      if (weekLabel) {
-        const formatDate = (d) => `${d.getDate()}.${d.getMonth() + 1}.`;
-        weekLabel.textContent = `Mo ${formatDate(mobileDpState.currentWeekStart)} - So ${formatDate(weekEnd)}`;
-      }
-
-      // FIXED: Check if logged in using multiple possible locations
-      const user = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
-      console.log('📋 User check:', user ? user.username || user.name : 'NOT FOUND');
-
-      if (!user) {
-        container.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--macos-text-secondary);">Bitte erst anmelden um Dienstplan zu sehen.</div>';
-        return;
-      }
-
       const startDate = mobileDpState.currentWeekStart.toISOString().split('T')[0];
       const endDate = weekEnd.toISOString().split('T')[0];
 
-      try {
-        // Try all possible cache locations
-        let allShifts = window.dienstplanCache ||
-                        window.CentralDataManager?.data?.dienstplan ||
-                        (typeof dienstplanCache !== 'undefined' ? dienstplanCache : []) ||
-                        [];
-        console.log('📋 Cache sources checked:', {
-          windowDienstplanCache: (window.dienstplanCache || []).length,
-          centralDataManager: (window.CentralDataManager?.data?.dienstplan || []).length
+      // Update label
+      const label = document.getElementById('mobileDpWeekLabel');
+      if (label) {
+        const fmt = d => `${d.getDate()}.${d.getMonth() + 1}.`;
+        label.textContent = `Mo ${fmt(mobileDpState.currentWeekStart)} - So ${fmt(weekEnd)}`;
+      }
+
+      // Get user
+      const user = window.currentUser || currentUser;
+      console.log('📋 User:', user ? (user.username || user.name || 'found') : 'NOT FOUND');
+
+      if (!user) {
+        container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--macos-text-secondary);">Bitte anmelden</div>';
+        return;
+      }
+
+      // Get dienstplan from CentralDataManager or cache
+      let allShifts = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.data?.dienstplan) {
+        allShifts = CentralDataManager.data.dienstplan || [];
+        console.log('📋 Got shifts from CentralDataManager.data:', allShifts.length);
+      } else if (window.dienstplanCache) {
+        allShifts = window.dienstplanCache || [];
+        console.log('📋 Got shifts from window.dienstplanCache:', allShifts.length);
+      } else if (typeof dienstplanCache !== 'undefined') {
+        allShifts = dienstplanCache || [];
+        console.log('📋 Got shifts from dienstplanCache:', allShifts.length);
+      }
+
+      console.log('📋 Total shifts:', allShifts.length);
+      console.log('📋 Date range:', startDate, 'to', endDate);
+
+      // Debug: show first shift structure
+      if (allShifts.length > 0) {
+        console.log('📋 Sample shift:', JSON.stringify(allShifts[0], null, 2).substring(0, 500));
+      }
+
+      // Filter by date range
+      let shifts = allShifts.filter(s => {
+        const shiftDate = (s.date || s.work_date || '').toString().split('T')[0];
+        return shiftDate >= startDate && shiftDate <= endDate;
+      });
+      console.log('📋 Shifts in date range:', shifts.length);
+
+      // Get artists
+      let artistsCache = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
+        artistsCache = CentralDataManager.getArtists() || [];
+      } else if (window.CentralDataManager && window.CentralDataManager.getArtists) {
+        artistsCache = window.CentralDataManager.getArtists() || [];
+      }
+
+      // Find matching artist for user
+      const matchingArtist = artistsCache.find(a => a.email === user.email);
+      console.log('📋 User email:', user.email);
+      console.log('📋 Matching artist:', matchingArtist ? matchingArtist.name + ' (ID: ' + matchingArtist.id + ')' : 'NOT FOUND');
+
+      if (matchingArtist) {
+        // Filter shifts to this artist
+        const beforeCount = shifts.length;
+        shifts = shifts.filter(s => s.artist_id === matchingArtist.id);
+        console.log('📋 After artist filter:', shifts.length, '(was', beforeCount + ')');
+      }
+
+      // Render days
+      const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      container.innerHTML = '';
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(mobileDpState.currentWeekStart);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const dayShifts = shifts.filter(s => {
+          const sd = (s.date || s.work_date || '').toString().split('T')[0];
+          return sd === dateStr;
         });
-        console.log('📋 Total cached shifts:', allShifts.length);
 
-        // Debug: Show sample of data
-        if (allShifts.length > 0) {
-          console.log('📋 Sample shift date formats:', allShifts.slice(0, 3).map(s => ({
-            date: s.date,
-            work_date: s.work_date,
-            artist_id: s.artist_id,
-            user_id: s.user_id
-          })));
-        }
-        console.log('📋 Date range:', startDate, 'to', endDate);
+        const card = document.createElement('div');
+        card.className = 'mobile-dp-day-card';
 
-        // Filter by date range - handle multiple date formats
-        let shifts = allShifts.filter(s => {
-          const rawDate = s.date || s.work_date || '';
-          const d = rawDate.split('T')[0];
-          return d >= startDate && d <= endDate;
-        });
-        console.log('📋 Shifts in date range:', shifts.length);
+        let content = '';
+        if (dayShifts.length > 0) {
+          content = dayShifts.map(s => {
+            const shiftType = s.shift_type || s.type || s.category || 'Schicht';
+            const startTime = s.start_time || s.time_start || '09:00';
+            const endTime = s.end_time || s.time_end || '18:00';
+            const locationName = s.location?.name || s.location_name || '';
 
-        // Filter by user's artist - check multiple ID fields
-        const artistsCache = window.artistsCache ||
-                             window.CentralDataManager?.data?.artists ||
-                             (typeof artistsCache !== 'undefined' ? artistsCache : []) ||
-                             [];
+            // Color based on type
+            let icon = '🕐';
+            let bgColor = '#E3F2FD';
+            if (shiftType.toLowerCase().includes('urlaub')) { icon = '🏖️'; bgColor = '#FFF3E0'; }
+            if (shiftType.toLowerCase().includes('krank')) { icon = '🤒'; bgColor = '#FFEBEE'; }
+            if (shiftType.toLowerCase().includes('frei')) { icon = '🏠'; bgColor = '#F3E5F5'; }
 
-        console.log('📋 Looking for artist with email:', user.email);
-        const matchingArtist = artistsCache.find(a => a.email === user.email);
-
-        if (matchingArtist) {
-          console.log('📋 Found artist:', matchingArtist.name, 'ID:', matchingArtist.id);
-
-          // Check what artist_id field is used in shifts
-          if (shifts.length > 0) {
-            console.log('📋 Sample shift artist fields:', {
-              artist_id: shifts[0].artist_id,
-              user_id: shifts[0].user_id,
-              profile_id: shifts[0].profile_id
-            });
-          }
-
-          // Filter by artist - try multiple ID fields
-          const beforeFilter = shifts.length;
-          shifts = shifts.filter(s =>
-            s.artist_id === matchingArtist.id ||
-            s.user_id === matchingArtist.id ||
-            s.artist?.id === matchingArtist.id
-          );
-          console.log('📋 After artist filter:', shifts.length, '(was', beforeFilter, ')');
-        } else {
-          console.log('📋 No matching artist found for email:', user.email);
-        }
-
-        // Render days
-        const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-        container.innerHTML = '';
-
-        for (let i = 0; i < 7; i++) {
-          const date = new Date(mobileDpState.currentWeekStart);
-          date.setDate(date.getDate() + i);
-          const dateStr = date.toISOString().split('T')[0];
-
-          const dayShifts = shifts.filter(s => {
-            const shiftDate = (s.date || s.work_date || '').split('T')[0];
-            return shiftDate === dateStr;
-          });
-
-          const card = document.createElement('div');
-          card.className = 'mobile-dp-day-card';
-
-          let shiftsHtml = '';
-          if (dayShifts.length > 0) {
-            shiftsHtml = dayShifts.map(s => {
-              // Determine shift type and color
-              const shiftType = s.shift_type || s.type || s.category || 'Schicht';
-              const isVacation = shiftType.toLowerCase().includes('urlaub') || shiftType.toLowerCase().includes('vacation');
-              const isAvailability = shiftType.toLowerCase().includes('available') || shiftType.toLowerCase().includes('verfügbar');
-              const isSick = shiftType.toLowerCase().includes('krank') || shiftType.toLowerCase().includes('sick');
-
-              let bgColor = '#E3F2FD';
-              let borderColor = '#2196F3';
-              let textColor = '#1565C0';
-              let icon = '🕐';
-
-              if (isVacation) {
-                bgColor = '#FFF3E0'; borderColor = '#FF9800'; textColor = '#E65100'; icon = '🏖️';
-              } else if (isAvailability) {
-                bgColor = '#E8F5E9'; borderColor = '#4CAF50'; textColor = '#2E7D32'; icon = '✅';
-              } else if (isSick) {
-                bgColor = '#FFEBEE'; borderColor = '#F44336'; textColor = '#C62828'; icon = '🤒';
-              }
-
-              return `
-                <div class="mobile-dp-shift" style="background:${bgColor};border-left:3px solid ${borderColor};">
-                  <div class="mobile-dp-shift-title" style="color:${textColor};">
-                    <span>${icon}</span> ${shiftType}
-                  </div>
-                  <div class="mobile-dp-shift-info" style="color:${textColor};">
-                    ${s.start_time || s.time_start || '09:00'} - ${s.end_time || s.time_end || '18:00'}
-                    ${s.location?.name ? ` @ ${s.location.name}` : ''}
-                  </div>
-                </div>
-              `;
-            }).join('');
-          } else {
-            shiftsHtml = `
-              <div class="mobile-dp-no-shift">
-                <div style="font-weight:500;color:#64B5F6;">Keine Einträge</div>
-                <div style="font-size:12px;margin-top:4px;">Am ${days[i]} ${date.getDate()}.${date.getMonth()+1}. hast du keine Einträge.</div>
+            return `
+              <div class="mobile-dp-shift" style="background:${bgColor};">
+                <div class="mobile-dp-shift-title">${icon} ${shiftType}</div>
+                <div class="mobile-dp-shift-info">${startTime} - ${endTime}${locationName ? ' @ ' + locationName : ''}</div>
               </div>
             `;
-          }
-
-          card.innerHTML = `
-            <div class="mobile-dp-day-header">
-              <span>${days[i]} ${date.getDate()}.${date.getMonth() + 1}.</span>
-              <button class="mobile-dp-day-menu">•••</button>
+          }).join('');
+        } else {
+          content = `
+            <div class="mobile-dp-no-shift">
+              <div style="font-weight:500;color:#64B5F6;">Keine Einträge</div>
+              <div style="font-size:12px;margin-top:4px;">Am ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.</div>
             </div>
-            ${shiftsHtml}
           `;
-          container.appendChild(card);
         }
 
-        console.log('✅ Mobile dienstplan rendered');
-
-      } catch (err) {
-        console.error('❌ Error loading mobile dienstplan:', err);
+        card.innerHTML = `
+          <div class="mobile-dp-day-header">
+            <span>${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.</span>
+          </div>
+          ${content}
+        `;
+        container.appendChild(card);
       }
+
+      console.log('📋 ✅ Mobile dienstplan rendered');
     }
 
     function renderEmptyDienstplan(container) {
