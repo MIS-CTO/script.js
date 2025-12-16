@@ -11239,11 +11239,9 @@
         appointments: [],
         dienstplan: [],
         workTracking: [],
-        guestSlots: [],
         locations: [],
         profiles: [],
         wannados: [],
-        agreements: [],
         projectTasks: [],
         taskProjects: []
       },
@@ -11266,19 +11264,18 @@
       // BATCH LOADING CONFIGURATION
       // ═══════════════════════════════════════════════════════════════════════
       tableConfig: {
-        requests:      { batchSize: 5000, parallel: 4, relations: '*, customer:customers(id, first_name, last_name, email, phone, rank, instagram), artist:artists(id, name, email, instagram), location:locations!requests_location_id_fkey(id, name, city)' },
+        requests:      { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name, email, phone, rank, instagram), artist:artists(id, name, email, instagram), location:locations!requests_location_id_fkey(id, name, city)' },
         customers:     { batchSize: 5000, parallel: 4, relations: '*' },
-        artists:       { batchSize: 1000, parallel: 2, relations: '*, location:locations!location_id(id, name, city)' },
-        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name), location:locations(id, name)' },
+        artists:       { batchSize: 1000, parallel: 2, relations: '*' },
+        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name), location:locations!appointments_location_id_fkey(id, name)' },
         dienstplan:    { batchSize: 1000, parallel: 2, relations: '*, artist:artists!artist_id(name, email, instagram, rank, is_guest), location:locations!location_id(name, city)' },
         work_tracking: { batchSize: 1000, parallel: 2, relations: '*, profile:profiles!user_id(username, email, role, avatar_url, weekly_hours, vacation_days), location:locations!location_id(name, city)' },
-        guest_slots:   { batchSize: 1000, parallel: 2, relations: '*, artist:artists(id, name, instagram)' },
         locations:     { batchSize: 100,  parallel: 1, relations: '*' },
         profiles:      { batchSize: 100,  parallel: 1, relations: '*' },
         wannados:      { batchSize: 1000, parallel: 2, relations: '*' },
-        agreements:    { batchSize: 1000, parallel: 2, relations: '*' },
         project_tasks: { batchSize: 1000, parallel: 2, relations: '*' },
         task_projects: { batchSize: 500,  parallel: 1, relations: '*' }
+        // REMOVED: guest_slots, agreements (tables don't exist)
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -11314,8 +11311,7 @@
           await Promise.all([
             this.loadTable('appointments'),
             this.loadTable('dienstplan'),
-            this.loadTable('work_tracking'),
-            this.loadTable('guest_slots')
+            this.loadTable('work_tracking')
           ]);
           console.log('✅ Phase 2 complete: Termine & Dienstplan geladen');
 
@@ -11330,10 +11326,9 @@
 
           // Phase 4: Restliche Tabellen
           if (loaderText) loaderText.textContent = 'Lade weitere Daten...';
-          if (loaderProgress) loaderProgress.textContent = 'Phase 4/4: Wannados, Agreements, Tasks';
+          if (loaderProgress) loaderProgress.textContent = 'Phase 4/4: Wannados, Tasks';
           await Promise.all([
             this.loadTable('wannados'),
-            this.loadTable('agreements'),
             this.loadTable('project_tasks'),
             this.loadTable('task_projects')
           ]);
@@ -11507,9 +11502,7 @@
           'artists',
           'appointments',
           'dienstplan',
-          'guest_slots',
-          'wannados',
-          'agreements'
+          'wannados'
         ];
 
         tablesToWatch.forEach(table => {
@@ -11643,7 +11636,6 @@
       getLocations() { return this.data.locations; },
       getProfiles() { return this.data.profiles; },
       getWorkTracking() { return this.data.workTracking; },
-      getGuestSlots() { return this.data.guestSlots; },
 
       // Gefilterte Daten
       getRequestsByStatus(status) {
@@ -12888,40 +12880,22 @@
         console.log('📊 Loading Dashboard Statistics...');
 
         try {
-          // Show progress bar
-          ProgressBar.show('Starting to load dashboard...');
+          // ═══════════════════════════════════════════════════════════════════════
+          // USE CENTRAL CACHE - Kein separates Loading!
+          // ═══════════════════════════════════════════════════════════════════════
 
-          // 1. LOAD ALL REQUESTS WITH STATUS (Handle 34K+ rows with pagination)
-          console.log('📥 Loading all requests...');
-          ProgressBar.updateProgress(10, 'Loading requests...');
+          // Requests aus Cache holen
           let allRequests = [];
-          let from = 0;
-          const batchSize = 1000;
-          let hasMore = true;
+          let allAppointments = [];
 
-          while (hasMore) {
-            const { data: batch, error: reqError } = await supabase
-              .from('requests')
-              .select('status, created_at')
-              .range(from, from + batchSize - 1);
-
-            if (reqError) throw reqError;
-
-            if (batch && batch.length > 0) {
-              allRequests = allRequests.concat(batch);
-              from += batchSize;
-              hasMore = batch.length === batchSize;
-              console.log(`  ↳ Loaded ${allRequests.length} requests so far...`);
-              // Update progress (10% to 40%)
-              const requestProgress = 10 + Math.min(30, (allRequests.length / 1000) * 3);
-              ProgressBar.updateProgress(requestProgress, `Loading requests (${allRequests.length} loaded)...`);
-            } else {
-              hasMore = false;
-            }
+          if (CentralDataManager.isReady()) {
+            allRequests = CentralDataManager.getRequests();
+            allAppointments = CentralDataManager.getAppointments();
+            console.log('📊 Dashboard using cached requests:', allRequests.length);
+            console.log('📊 Dashboard using cached appointments:', allAppointments.length);
+          } else {
+            console.log('⚠️ CentralDataManager not ready, dashboard may have incomplete data');
           }
-
-          console.log('✅ Loaded', allRequests?.length || 0, 'total requests');
-          ProgressBar.updateProgress(40, 'Requests loaded. Loading appointments...');
 
           // 2. COUNT REQUESTS BY STATUS (INCLUDING ARCHIVED)
           const requestCounts = {
@@ -12930,7 +12904,7 @@
             scheduled: 0,
             finished: 0,
             canceled: 0,
-            archived: 0  // ← NEW STATUS
+            archived: 0
           };
 
           (allRequests || []).forEach(req => {
@@ -12940,36 +12914,6 @@
           });
 
           console.log('📊 Request counts:', requestCounts);
-
-          // 3. LOAD ALL APPOINTMENTS WITH STATUS AND DATES (Handle 1K+ rows with pagination)
-          console.log('📥 Loading all appointments...');
-          let allAppointments = [];
-          from = 0;
-          hasMore = true;
-
-          while (hasMore) {
-            const { data: batch, error: aptError } = await supabase
-              .from('appointments')
-              .select('status, start, end, created_at')
-              .range(from, from + batchSize - 1);
-
-            if (aptError) throw aptError;
-
-            if (batch && batch.length > 0) {
-              allAppointments = allAppointments.concat(batch);
-              from += batchSize;
-              hasMore = batch.length === batchSize;
-              console.log(`  ↳ Loaded ${allAppointments.length} appointments so far...`);
-              // Update progress (40% to 65%)
-              const appointmentProgress = 40 + Math.min(25, (allAppointments.length / 1000) * 25);
-              ProgressBar.updateProgress(appointmentProgress, `Loading appointments (${allAppointments.length} loaded)...`);
-            } else {
-              hasMore = false;
-            }
-          }
-
-          console.log('✅ Loaded', allAppointments?.length || 0, 'total appointments');
-          ProgressBar.updateProgress(70, 'Calculating statistics...');
 
           // 4. COUNT APPOINTMENTS BY STATUS
           const appointmentCounts = {
@@ -13008,14 +12952,13 @@
           console.log('📅 Appointment counts:', appointmentCounts);
           console.log('📅 Today\'s appointments:', todayAppointments);
 
-          // 5. LOAD CUSTOMERS & ARTISTS COUNTS
-          const { count: customerCount } = await supabase
-            .from('customers')
-            .select('*', { count: 'exact', head: true });
-
-          const { count: artistCount } = await supabase
-            .from('artists')
-            .select('*', { count: 'exact', head: true });
+          // 5. CUSTOMERS & ARTISTS COUNTS FROM CACHE
+          const customerCount = CentralDataManager.isReady()
+            ? CentralDataManager.getCustomers().length
+            : 0;
+          const artistCount = CentralDataManager.isReady()
+            ? CentralDataManager.getArtists().length
+            : 0;
 
           // 6. CALCULATE WEEKLY STATISTICS
           // Get start of current week (Monday)
@@ -29767,40 +29710,64 @@
       console.log('🎯 Initializing analytics...');
 
       try {
-        // Show progress bar
-        ProgressBar.show('Starting to load analytics...');
+        // ═══════════════════════════════════════════════════════════════════════
+        // USE CENTRAL CACHE - Kein separates Loading!
+        // ═══════════════════════════════════════════════════════════════════════
 
-        // Test Supabase connection first
-        ProgressBar.updateProgress(5, 'Testing connection...');
-        await testSupabaseConnection();
+        // Wait for CentralDataManager if not ready
+        if (!CentralDataManager.isReady()) {
+          console.log('⏳ Analytics waiting for CentralDataManager...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
 
         // Load location filter dropdown
+        ProgressBar.show('Preparing analytics...');
         ProgressBar.updateProgress(10, 'Loading filters...');
         await loadAnalyticsLocationFilter();
 
-        // Load and render initial charts
         const locationFilter = document.getElementById('analyticsLocationFilter')?.value || null;
 
-        // Load requests data for Origin Chart
-        ProgressBar.updateProgress(20, 'Loading requests data...');
-        requestsData = await loadRequestsData(locationFilter);
+        // ═══════════════════════════════════════════════════════════════════════
+        // GET DATA FROM CACHE (not from database!)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        ProgressBar.updateProgress(20, 'Processing cached requests data...');
+
+        // Requests aus Cache holen - optional nach Location filtern
+        let cachedRequests = CentralDataManager.getRequests();
+        if (locationFilter) {
+          cachedRequests = cachedRequests.filter(r => r.location_id === locationFilter);
+        }
+
+        // For origin chart: exclude canceled
+        requestsData = cachedRequests.filter(r => r.status !== 'canceled');
+        // For count display: include all
+        allRequestsData = cachedRequests;
+
+        console.log('📊 Analytics using cached requests:', requestsData.length);
+
         const filteredRequests = filterByDateRange(requestsData, 'created_at');
         await renderOriginsPieChart(filteredRequests);
 
-        // Load ALL requests data for Count Display (including canceled)
-        ProgressBar.updateProgress(30, 'Loading all requests data...');
-        allRequestsData = await loadAllRequestsData(locationFilter);
+        ProgressBar.updateProgress(30, 'Processing requests count...');
         const filteredAllRequestsForCount = filterByDateRange(allRequestsData, 'created_at');
         await renderRequestsCount(filteredAllRequestsForCount);
 
-        // Load appointments data for Timeline Chart
-        ProgressBar.updateProgress(40, 'Loading appointments data...');
-        appointmentsData = await loadAppointmentsData(locationFilter);
+        // Appointments aus Cache
+        ProgressBar.updateProgress(40, 'Processing cached appointments data...');
+        let cachedAppointments = CentralDataManager.getAppointments();
+        if (locationFilter) {
+          cachedAppointments = cachedAppointments.filter(a => a.location_id === locationFilter);
+        }
+        appointmentsData = cachedAppointments;
+
+        console.log('📊 Analytics using cached appointments:', appointmentsData.length);
+
         const filteredAppointments = filterByDateRange(appointmentsData, 'created_at');
         await renderBookingsTimeline(filteredAppointments, 'monthly');
         await renderAppointmentsCount(filteredAppointments);
 
-        // Load projects data for Revenue Analytics
+        // Load projects data for Revenue Analytics (small query, can stay)
         ProgressBar.updateProgress(50, 'Loading projects data...');
         projectsData = await loadProjectsData(locationFilter);
         const filteredProjects = filterByDateRange(projectsData, 'created_at');
@@ -29813,9 +29780,9 @@
         await loadArtistDistribution(filteredAppointments);
         await loadRevenueByPaymentStatus();
 
-        // Load Project-Based Analytics (moved from Dashboard)
+        // Load Project-Based Analytics from cache
         ProgressBar.updateProgress(70, 'Loading project analytics...');
-        await loadProjectAnalytics();
+        await loadProjectAnalyticsFromCache();
 
         // Calculate and render Pie Charts for Request and Appointment Status
         ProgressBar.updateProgress(80, 'Rendering pie charts...');
@@ -29874,10 +29841,78 @@
     }
 
     // ============================================
-    // PROJECT-BASED ANALYTICS (for Analytics Tab)
+    // PROJECT-BASED ANALYTICS FROM CACHE
+    // ============================================
+    async function loadProjectAnalyticsFromCache() {
+      console.log('📈 Loading Project-Based Analytics from cache...');
+
+      try {
+        // Get appointments from cache
+        const allAppointments = CentralDataManager.getAppointments();
+        const appointments = allAppointments.filter(apt =>
+          apt.project_number && apt.customer_id
+        );
+
+        console.log('📦 Using cached appointments for project analytics:', appointments.length);
+
+        // Calculate metrics
+        const metrics = window.calculateProjectMetrics(appointments || []);
+
+        // Update Analytics KPI cards
+        const analyticsKpiContainer = document.getElementById('analyticsProjectKPIs');
+        if (analyticsKpiContainer) {
+          analyticsKpiContainer.innerHTML = `
+            <div class="kpi-card">
+              <div class="kpi-icon">📦</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.totalProjects.toLocaleString()}</div>
+                <div class="kpi-label">Total Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card active">
+              <div class="kpi-icon">🔄</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.activeProjects.toLocaleString()}</div>
+                <div class="kpi-label">Active Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card completed">
+              <div class="kpi-icon">✅</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.completedProjects.toLocaleString()}</div>
+                <div class="kpi-label">Completed Projects</div>
+              </div>
+            </div>
+
+            <div class="kpi-card revenue">
+              <div class="kpi-icon">💰</div>
+              <div class="kpi-content">
+                <div class="kpi-value">€${metrics.totalRevenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</div>
+                <div class="kpi-label">Total Revenue</div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-icon">📊</div>
+              <div class="kpi-content">
+                <div class="kpi-value">${metrics.avgAppointmentsPerProject.toFixed(1)}</div>
+                <div class="kpi-label">Avg Sessions/Project</div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading project analytics from cache:', error);
+      }
+    }
+
+    // ============================================
+    // PROJECT-BASED ANALYTICS (for Analytics Tab) - FALLBACK
     // ============================================
     async function loadProjectAnalytics() {
-      console.log('📈 Loading Project-Based Analytics...');
+      console.log('📈 Loading Project-Based Analytics (fallback)...');
 
       try {
         // Fetch all appointments with full project info
