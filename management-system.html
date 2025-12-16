@@ -6788,7 +6788,7 @@
       .mobile-profile-logout {
         margin: 12px 20px 20px;
         padding: 14px;
-        background: var(--accent, #0071e3);
+        background: #ff3b30;
         color: white;
         border: none;
         border-radius: 10px;
@@ -8163,7 +8163,7 @@
       </div>
     </div>
 
-    <button class="mobile-profile-logout" id="mobileProfileLogout">
+    <button class="mobile-profile-logout" id="mobileProfileLogout" onclick="handleMobileLogout()">
       <span>Log Out</span>
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -28150,6 +28150,7 @@
         }
 
         currentUser = null;
+        window.currentUser = null;
         localStorage.removeItem('rememberMe');
         localStorage.removeItem('username');
         localStorage.removeItem('userRole');
@@ -28163,11 +28164,37 @@
           dashboardWelcome.style.display = 'none';
         }
 
+        // Body class aktualisieren
+        document.body.classList.remove('logged-in');
+        document.body.classList.add('logged-out');
+
+        // Mobile nav verstecken
+        document.querySelector('.mobile-footer-nav')?.classList.remove('visible');
+
+        // Zurück zum Dashboard
+        document.querySelectorAll('section').forEach(s => {
+          s.style.display = 'none';
+          s.classList.remove('active');
+        });
+        const dashboard = document.getElementById('dashboard-section');
+        if (dashboard) {
+          dashboard.style.display = 'block';
+          dashboard.classList.add('active');
+        }
+
+        // Hide mobile views
+        document.getElementById('mobileCalendarView')?.classList.remove('active');
+        document.getElementById('mobileDienstplanView')?.classList.remove('active');
+
         alert('Du wurdest abgemeldet');
 
         // Show login modal again
         setTimeout(() => {
-          document.getElementById('loginBackdrop').classList.add('active');
+          const loginBackdrop = document.getElementById('loginBackdrop');
+          if (loginBackdrop) {
+            loginBackdrop.classList.add('active');
+            console.log('🔐 Login overlay shown after logout');
+          }
         }, 100);
 
         console.log('✅ Logout complete');
@@ -36448,6 +36475,23 @@
         document.body.style.overflow = '';
       };
 
+      // Mobile logout handler
+      window.handleMobileLogout = function() {
+        console.log('🚪 Mobile logout triggered');
+        closeMobileProfile();
+
+        // Trigger the normal logout function
+        if (typeof handleLogout === 'function') {
+          handleLogout();
+        } else if (typeof logout === 'function') {
+          logout();
+        } else {
+          // Fallback: Find and click the logout button
+          const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('mobileProfileLogout');
+          if (logoutBtn && logoutBtn !== event?.target) logoutBtn.click();
+        }
+      };
+
       // Initialize mobile features
       initMobileProfilePanel();
       initMobileTabSwitcher();
@@ -36694,52 +36738,53 @@
         el.querySelectorAll('.mobile-cal-event').forEach(ev => ev.remove());
       });
 
-      // Check if logged in (check both variable locations)
-      const user = window.currentUser || currentUser;
+      // FIXED: Check if logged in using multiple possible locations
+      const user = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+      console.log('📅 User check:', user ? user.username || user.name : 'NOT FOUND');
+
       if (!user) {
-        console.log('⚠️ Not logged in yet, skipping calendar load');
+        console.log('⚠️ No user found, showing login message');
+        const timeline = document.getElementById('mobileCalTimeline');
+        if (timeline) {
+          timeline.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--macos-text-secondary);">Bitte erst anmelden um Termine zu sehen.</div>';
+        }
         return;
       }
 
       try {
-        // Use cached appointments if available
-        let appointments = [];
+        // Use cached appointments - they should already be loaded
+        let appointments = window.appointmentsCache || [];
+        console.log('📅 Total cached appointments:', appointments.length);
 
-        if (window.appointmentsCache && window.appointmentsCache.length > 0) {
-          console.log('📅 Using cached appointments:', window.appointmentsCache.length);
-          appointments = window.appointmentsCache.filter(apt => {
-            const aptDate = apt.date?.split('T')[0] || apt.appointment_date?.split('T')[0];
-            return aptDate === dateStr;
-          });
-        } else {
-          // Fallback to direct query
-          console.log('📅 Fetching appointments from database...');
-          const { data, error } = await supabase
-            .from('appointments')
-            .select('*')
-            .gte('date', dateStr + 'T00:00:00')
-            .lt('date', dateStr + 'T23:59:59');
-
-          if (error) throw error;
-          appointments = data || [];
+        if (appointments.length === 0) {
+          console.log('⚠️ No cached appointments, timeline empty');
+          return;
         }
 
+        // Filter by selected date
+        appointments = appointments.filter(apt => {
+          const aptDate = (apt.date || apt.appointment_date || apt.start || '').split('T')[0];
+          return aptDate === dateStr;
+        });
         console.log('📅 Appointments for', dateStr, ':', appointments.length);
 
-        // Filter by user if they are an artist
-        const userId = user?.id;
-        if (userId && user?.role !== 'management') {
-          // Try to find matching artist
-          const userEmail = user?.email;
-          const matchingArtist = window.artistsCache?.find(a => a.email === userEmail);
+        // Filter by user if they are an artist (not management/booking)
+        const userEmail = user.email;
+        const userRole = user.role;
+        console.log('📅 User role:', userRole, 'Email:', userEmail);
+
+        if (userRole !== 'management' && userRole !== 'booking') {
+          const artistsCache = window.artistsCache || [];
+          const matchingArtist = artistsCache.find(a => a.email === userEmail);
 
           if (matchingArtist) {
+            console.log('📅 Filtering to artist:', matchingArtist.name, matchingArtist.id);
             appointments = appointments.filter(apt => apt.artist_id === matchingArtist.id);
-            console.log('📅 Filtered to user appointments:', appointments.length);
+            console.log('📅 Artist appointments:', appointments.length);
           }
         }
 
-        // Filter by category
+        // Filter by category if set
         if (mobileCalState.categoryFilter !== 'all') {
           appointments = appointments.filter(apt => {
             const cat = (apt.category || apt.type || '').toLowerCase().replace(/\s+/g, '_');
@@ -36747,21 +36792,23 @@
           });
         }
 
+        // Render timeline
+        renderMobileCalTimeline();
+
         // Render events
         appointments.forEach(apt => {
-          const startTime = apt.start_time || apt.time_start || '09:00';
-          const endTime = apt.end_time || apt.time_end || '10:00';
+          const startTime = apt.start_time || apt.time_start || (apt.start || '').split('T')[1]?.substring(0,5) || '09:00';
+          const endTime = apt.end_time || apt.time_end || (apt.end || '').split('T')[1]?.substring(0,5) || '10:00';
 
           const startHour = parseInt(startTime.split(':')[0]);
           const startMin = parseInt(startTime.split(':')[1] || '0');
           const endHour = parseInt(endTime.split(':')[0]);
           const endMin = parseInt(endTime.split(':')[1] || '0');
 
+          if (startHour < 8 || startHour > 22) return;
+
           const container = document.querySelector(`.mobile-cal-hour-content[data-hour="${startHour}"]`);
-          if (!container) {
-            console.log('⚠️ No container for hour:', startHour);
-            return;
-          }
+          if (!container) return;
 
           const durationHours = (endHour + endMin/60) - (startHour + startMin/60);
           const topOffset = (startMin / 60) * 60;
@@ -36780,7 +36827,7 @@
           container.appendChild(eventEl);
         });
 
-        console.log('✅ Mobile calendar rendered');
+        console.log('✅ Mobile calendar rendered with', appointments.length, 'events');
 
       } catch (err) {
         console.error('❌ Error loading mobile calendar:', err);
@@ -36861,11 +36908,12 @@
         weekLabel.textContent = `Mo ${formatDate(mobileDpState.currentWeekStart)} - So ${formatDate(weekEnd)}`;
       }
 
-      // Check if logged in (check both variable locations)
-      const user = window.currentUser || currentUser;
+      // FIXED: Check if logged in using multiple possible locations
+      const user = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+      console.log('📋 User check:', user ? user.username || user.name : 'NOT FOUND');
+
       if (!user) {
-        console.log('⚠️ Not logged in yet, skipping dienstplan load');
-        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--macos-text-secondary);">Bitte erst anmelden...</div>';
+        container.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--macos-text-secondary);">Bitte erst anmelden um Dienstplan zu sehen.</div>';
         return;
       }
 
@@ -36873,36 +36921,25 @@
       const endDate = weekEnd.toISOString().split('T')[0];
 
       try {
-        // Use cached dienstplan if available
-        let shifts = [];
+        // Use cached dienstplan
+        let shifts = window.dienstplanCache || [];
+        console.log('📋 Total cached shifts:', shifts.length);
 
-        if (window.dienstplanCache && window.dienstplanCache.length > 0) {
-          console.log('📋 Using cached dienstplan:', window.dienstplanCache.length);
-          shifts = window.dienstplanCache.filter(shift => {
-            const shiftDate = shift.date?.split('T')[0];
-            return shiftDate >= startDate && shiftDate <= endDate;
-          });
-        } else {
-          // Fallback to direct query
-          console.log('📋 Fetching dienstplan from database...');
-          const { data, error } = await supabase
-            .from('dienstplan')
-            .select('*')
-            .gte('date', startDate)
-            .lte('date', endDate);
+        // Filter by date range
+        shifts = shifts.filter(shift => {
+          const shiftDate = (shift.date || '').split('T')[0];
+          return shiftDate >= startDate && shiftDate <= endDate;
+        });
+        console.log('📋 Shifts in range:', shifts.length);
 
-          if (error) throw error;
-          shifts = data || [];
-        }
-
-        // Filter to current user
-        const userId = user?.id;
-        const userEmail = user?.email;
-        const matchingArtist = window.artistsCache?.find(a => a.email === userEmail);
+        // Filter to current user's artist
+        const userEmail = user.email;
+        const artistsCache = window.artistsCache || [];
+        const matchingArtist = artistsCache.find(a => a.email === userEmail);
 
         if (matchingArtist) {
           shifts = shifts.filter(s => s.artist_id === matchingArtist.id);
-          console.log('📋 Filtered to user shifts:', shifts.length);
+          console.log('📋 User shifts:', shifts.length, 'for artist', matchingArtist.name);
         }
 
         // Render days
@@ -36914,7 +36951,7 @@
           date.setDate(date.getDate() + i);
           const dateStr = date.toISOString().split('T')[0];
 
-          const dayShifts = shifts.filter(s => s.date?.split('T')[0] === dateStr);
+          const dayShifts = shifts.filter(s => (s.date || '').split('T')[0] === dateStr);
 
           const card = document.createElement('div');
           card.className = 'mobile-dp-day-card';
@@ -36930,13 +36967,12 @@
                 </div>
                 <div class="mobile-dp-shift-info">
                   ${shift.start_time || shift.time_start || '09:00'} - ${shift.end_time || shift.time_end || '18:00'}
-                  ${shift.location?.name ? `@ ${shift.location.name}` : ''}
                 </div>
               </div>
             `).join('') : `
               <div class="mobile-dp-no-shift">
-                <div style="font-weight: 500; color: #64B5F6;">Keine Schichten</div>
-                <div style="font-size: 12px; margin-top: 4px;">Am ${days[i]} ${date.getDate()}.${date.getMonth() + 1}. bist du nicht eingeteilt.</div>
+                <div style="font-weight:500;color:#64B5F6;">Keine Schichten</div>
+                <div style="font-size:12px;margin-top:4px;">Am ${days[i]} ${date.getDate()}.${date.getMonth()+1}. bist du nicht eingeteilt.</div>
               </div>
             `}
           `;
@@ -36947,7 +36983,6 @@
 
       } catch (err) {
         console.error('❌ Error loading mobile dienstplan:', err);
-        container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff3b30;">Fehler beim Laden</div>';
       }
     }
 
