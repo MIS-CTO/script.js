@@ -36780,12 +36780,29 @@
       }
 
       try {
-        // Use cached appointments - they should already be loaded
-        let appointments = window.appointmentsCache || [];
+        // Try all possible cache locations
+        let appointments = window.appointmentsCache ||
+                           window.CentralDataManager?.data?.appointments ||
+                           (typeof appointmentsCache !== 'undefined' ? appointmentsCache : []) ||
+                           [];
+        console.log('📅 Cache sources checked:', {
+          windowAppointmentsCache: (window.appointmentsCache || []).length,
+          centralDataManager: (window.CentralDataManager?.data?.appointments || []).length,
+          localVar: (typeof appointmentsCache !== 'undefined' ? appointmentsCache.length : 0)
+        });
         console.log('📅 Total cached appointments:', appointments.length);
 
+        // If still empty, try CentralDataManager.get()
+        if (appointments.length === 0 && window.CentralDataManager && typeof window.CentralDataManager.get === 'function') {
+          const cdmAppointments = window.CentralDataManager.get('appointments');
+          if (cdmAppointments && cdmAppointments.length > 0) {
+            console.log('📅 Found appointments in CentralDataManager.get():', cdmAppointments.length);
+            appointments = cdmAppointments;
+          }
+        }
+
         if (appointments.length === 0) {
-          console.log('⚠️ No cached appointments, timeline empty');
+          console.log('⚠️ No cached appointments found in any source');
           return;
         }
 
@@ -36954,25 +36971,67 @@
       const endDate = weekEnd.toISOString().split('T')[0];
 
       try {
-        // Use cached dienstplan
-        let shifts = window.dienstplanCache || [];
-        console.log('📋 Total cached shifts:', shifts.length);
-
-        // Filter by date range
-        shifts = shifts.filter(shift => {
-          const shiftDate = (shift.date || '').split('T')[0];
-          return shiftDate >= startDate && shiftDate <= endDate;
+        // Try all possible cache locations
+        let allShifts = window.dienstplanCache ||
+                        window.CentralDataManager?.data?.dienstplan ||
+                        (typeof dienstplanCache !== 'undefined' ? dienstplanCache : []) ||
+                        [];
+        console.log('📋 Cache sources checked:', {
+          windowDienstplanCache: (window.dienstplanCache || []).length,
+          centralDataManager: (window.CentralDataManager?.data?.dienstplan || []).length
         });
-        console.log('📋 Shifts in range:', shifts.length);
+        console.log('📋 Total cached shifts:', allShifts.length);
 
-        // Filter to current user's artist
-        const userEmail = user.email;
-        const artistsCache = window.artistsCache || [];
-        const matchingArtist = artistsCache.find(a => a.email === userEmail);
+        // Debug: Show sample of data
+        if (allShifts.length > 0) {
+          console.log('📋 Sample shift date formats:', allShifts.slice(0, 3).map(s => ({
+            date: s.date,
+            work_date: s.work_date,
+            artist_id: s.artist_id,
+            user_id: s.user_id
+          })));
+        }
+        console.log('📋 Date range:', startDate, 'to', endDate);
+
+        // Filter by date range - handle multiple date formats
+        let shifts = allShifts.filter(s => {
+          const rawDate = s.date || s.work_date || '';
+          const d = rawDate.split('T')[0];
+          return d >= startDate && d <= endDate;
+        });
+        console.log('📋 Shifts in date range:', shifts.length);
+
+        // Filter by user's artist - check multiple ID fields
+        const artistsCache = window.artistsCache ||
+                             window.CentralDataManager?.data?.artists ||
+                             (typeof artistsCache !== 'undefined' ? artistsCache : []) ||
+                             [];
+
+        console.log('📋 Looking for artist with email:', user.email);
+        const matchingArtist = artistsCache.find(a => a.email === user.email);
 
         if (matchingArtist) {
-          shifts = shifts.filter(s => s.artist_id === matchingArtist.id);
-          console.log('📋 User shifts:', shifts.length, 'for artist', matchingArtist.name);
+          console.log('📋 Found artist:', matchingArtist.name, 'ID:', matchingArtist.id);
+
+          // Check what artist_id field is used in shifts
+          if (shifts.length > 0) {
+            console.log('📋 Sample shift artist fields:', {
+              artist_id: shifts[0].artist_id,
+              user_id: shifts[0].user_id,
+              profile_id: shifts[0].profile_id
+            });
+          }
+
+          // Filter by artist - try multiple ID fields
+          const beforeFilter = shifts.length;
+          shifts = shifts.filter(s =>
+            s.artist_id === matchingArtist.id ||
+            s.user_id === matchingArtist.id ||
+            s.artist?.id === matchingArtist.id
+          );
+          console.log('📋 After artist filter:', shifts.length, '(was', beforeFilter, ')');
+        } else {
+          console.log('📋 No matching artist found for email:', user.email);
         }
 
         // Render days
@@ -36984,30 +37043,63 @@
           date.setDate(date.getDate() + i);
           const dateStr = date.toISOString().split('T')[0];
 
-          const dayShifts = shifts.filter(s => (s.date || '').split('T')[0] === dateStr);
+          const dayShifts = shifts.filter(s => {
+            const shiftDate = (s.date || s.work_date || '').split('T')[0];
+            return shiftDate === dateStr;
+          });
 
           const card = document.createElement('div');
           card.className = 'mobile-dp-day-card';
+
+          let shiftsHtml = '';
+          if (dayShifts.length > 0) {
+            shiftsHtml = dayShifts.map(s => {
+              // Determine shift type and color
+              const shiftType = s.shift_type || s.type || s.category || 'Schicht';
+              const isVacation = shiftType.toLowerCase().includes('urlaub') || shiftType.toLowerCase().includes('vacation');
+              const isAvailability = shiftType.toLowerCase().includes('available') || shiftType.toLowerCase().includes('verfügbar');
+              const isSick = shiftType.toLowerCase().includes('krank') || shiftType.toLowerCase().includes('sick');
+
+              let bgColor = '#E3F2FD';
+              let borderColor = '#2196F3';
+              let textColor = '#1565C0';
+              let icon = '🕐';
+
+              if (isVacation) {
+                bgColor = '#FFF3E0'; borderColor = '#FF9800'; textColor = '#E65100'; icon = '🏖️';
+              } else if (isAvailability) {
+                bgColor = '#E8F5E9'; borderColor = '#4CAF50'; textColor = '#2E7D32'; icon = '✅';
+              } else if (isSick) {
+                bgColor = '#FFEBEE'; borderColor = '#F44336'; textColor = '#C62828'; icon = '🤒';
+              }
+
+              return `
+                <div class="mobile-dp-shift" style="background:${bgColor};border-left:3px solid ${borderColor};">
+                  <div class="mobile-dp-shift-title" style="color:${textColor};">
+                    <span>${icon}</span> ${shiftType}
+                  </div>
+                  <div class="mobile-dp-shift-info" style="color:${textColor};">
+                    ${s.start_time || s.time_start || '09:00'} - ${s.end_time || s.time_end || '18:00'}
+                    ${s.location?.name ? ` @ ${s.location.name}` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          } else {
+            shiftsHtml = `
+              <div class="mobile-dp-no-shift">
+                <div style="font-weight:500;color:#64B5F6;">Keine Einträge</div>
+                <div style="font-size:12px;margin-top:4px;">Am ${days[i]} ${date.getDate()}.${date.getMonth()+1}. hast du keine Einträge.</div>
+              </div>
+            `;
+          }
+
           card.innerHTML = `
             <div class="mobile-dp-day-header">
               <span>${days[i]} ${date.getDate()}.${date.getMonth() + 1}.</span>
               <button class="mobile-dp-day-menu">•••</button>
             </div>
-            ${dayShifts.length > 0 ? dayShifts.map(shift => `
-              <div class="mobile-dp-shift">
-                <div class="mobile-dp-shift-title">
-                  <span>🕐</span> ${shift.shift_type || shift.type || 'Schicht'}
-                </div>
-                <div class="mobile-dp-shift-info">
-                  ${shift.start_time || shift.time_start || '09:00'} - ${shift.end_time || shift.time_end || '18:00'}
-                </div>
-              </div>
-            `).join('') : `
-              <div class="mobile-dp-no-shift">
-                <div style="font-weight:500;color:#64B5F6;">Keine Schichten</div>
-                <div style="font-size:12px;margin-top:4px;">Am ${days[i]} ${date.getDate()}.${date.getMonth()+1}. bist du nicht eingeteilt.</div>
-              </div>
-            `}
+            ${shiftsHtml}
           `;
           container.appendChild(card);
         }
