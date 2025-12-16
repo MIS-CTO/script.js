@@ -5085,6 +5085,11 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Altes Login Modal deaktivieren - wird durch LoadingScreen ersetzt */
+    #loginBackdrop {
+      display: none !important;
+    }
+
     /* ========================================
        HEADER SECTION
        ======================================== */
@@ -11587,18 +11592,18 @@
       // BATCH LOADING CONFIGURATION
       // ═══════════════════════════════════════════════════════════════════════
       tableConfig: {
-        requests:      { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name, email, phone, rank, instagram), artist:artists(id, name, email, instagram), location:locations!requests_location_id_fkey(id, name, city)' },
-        customers:     { batchSize: 5000, parallel: 4, relations: '*' },
-        artists:       { batchSize: 1000, parallel: 2, relations: '*' },
-        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name, is_guest), location:locations!appointments_location_id_fkey(id, name)' },
-        dienstplan:    { batchSize: 1000, parallel: 2, relations: '*, artist:artists!artist_id(name, email, instagram, rank, is_guest), location:locations!location_id(name, city)' },
-        work_tracking: { batchSize: 1000, parallel: 2, relations: '*, profile:profiles!user_id(username, email, role, avatar_url, weekly_hours, vacation_days), location:locations!location_id(name, city)' },
         locations:     { batchSize: 100,  parallel: 1, relations: '*' },
         profiles:      { batchSize: 100,  parallel: 1, relations: '*' },
+        artists:       { batchSize: 1000, parallel: 2, relations: '*' },
+        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name), location:locations!appointments_location_id_fkey(id, name)' },
+        dienstplan:    { batchSize: 2000, parallel: 3, relations: '*, artist:artists!artist_id(name, email, instagram, rank, is_guest), location:locations!location_id(name, city)' },
+        work_tracking: { batchSize: 1000, parallel: 2, relations: '*' },
+        requests:      { batchSize: 2000, parallel: 4, relations: '*, customer:customers(id, first_name, last_name, email, phone, rank, instagram), artist:artists(id, name, email, instagram), location:locations!requests_location_id_fkey(id, name, city)' },
+        customers:     { batchSize: 3000, parallel: 4, relations: '*' },
+        projects:      { batchSize: 3000, parallel: 4, relations: 'id, project_number, state, payment_status, total_amount, deposit_amount, payment_amount, created_at, location_id, artist_id, customer_id' },
         wannados:      { batchSize: 1000, parallel: 2, relations: '*' },
         project_tasks: { batchSize: 1000, parallel: 2, relations: '*' },
-        task_projects: { batchSize: 500,  parallel: 1, relations: '*' },
-        projects:      { batchSize: 3000, parallel: 4, relations: 'id, project_number, status, payment_status, total_amount, deposit_amount, payment_amount, created_at, location_id, artist_id, customer_id' }
+        task_projects: { batchSize: 500,  parallel: 1, relations: '*' }
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -11844,12 +11849,38 @@
           if (profiles && profiles.length > 0) {
             console.log('✅ Session restored for:', savedUsername);
             currentUser = profiles[0];
-            updateUIForUser(currentUser);
+
+            // Update UI
+            if (typeof updateUIForUser === 'function') {
+              updateUIForUser(currentUser);
+            }
+
+            // Hide Loading Screen
             LoadingScreen.hide();
 
-            await initializePermissions();
-            await loadEvents();
-            renderCalendar();
+            // Post-login initialization mit Verzögerung
+            setTimeout(async () => {
+              try {
+                if (typeof initializePermissions === 'function') {
+                  await initializePermissions();
+                }
+                if (typeof loadInitialData === 'function') {
+                  await loadInitialData();
+                }
+                if (typeof loadEvents === 'function') {
+                  await loadEvents();
+                }
+                if (typeof renderCalendar === 'function') {
+                  renderCalendar();
+                }
+                if (typeof window.loadTodoProjects === 'function') {
+                  await window.loadTodoProjects();
+                }
+                console.log('✅ Post-session-restore initialization complete');
+              } catch (err) {
+                console.error('⚠️ Post-session-restore error:', err);
+              }
+            }, 100);
 
             return true;
           }
@@ -12290,7 +12321,7 @@
 
           // Check password
           let passwordMatch = false;
-          if (profile.password_hash.startsWith('$2')) {
+          if (profile.password_hash && profile.password_hash.startsWith('$2')) {
             passwordMatch = await bcrypt.compare(password, profile.password_hash);
           } else {
             passwordMatch = profile.password_hash === password;
@@ -12308,18 +12339,6 @@
           console.log('✅ Login successful for:', profile.username);
           currentUser = profile;
 
-          // Supabase Auth (optional, wie bisher)
-          if (profile.email) {
-            try {
-              await supabase.auth.signInWithPassword({
-                email: profile.email,
-                password: password
-              });
-            } catch (authErr) {
-              console.warn('⚠️ Supabase Auth error:', authErr);
-            }
-          }
-
           // Remember Me
           if (rememberMe) {
             localStorage.setItem('rememberMe', 'true');
@@ -12330,16 +12349,48 @@
             }
           }
 
-          // Update UI
-          updateUIForUser(profile);
+          // Update UI (diese Funktion existiert immer)
+          if (typeof updateUIForUser === 'function') {
+            updateUIForUser(profile);
+          }
 
-          // Hide Loading Screen
+          // Hide Loading Screen FIRST
           this.hide();
 
-          // Initialize remaining features
-          await initializePermissions();
-          await loadEvents();
-          renderCalendar();
+          // DANN die anderen Funktionen aufrufen (mit Verzögerung und Check)
+          setTimeout(async () => {
+            try {
+              // Initialize permissions
+              if (typeof initializePermissions === 'function') {
+                await initializePermissions();
+              }
+
+              // Load initial data (Dropdowns, etc.)
+              if (typeof loadInitialData === 'function') {
+                await loadInitialData();
+              }
+
+              // Load events for calendar
+              if (typeof loadEvents === 'function') {
+                await loadEvents();
+              }
+
+              // Render calendar
+              if (typeof renderCalendar === 'function') {
+                renderCalendar();
+              }
+
+              // Load To-Do projects
+              if (typeof window.loadTodoProjects === 'function') {
+                await window.loadTodoProjects();
+              }
+
+              console.log('✅ Post-login initialization complete');
+
+            } catch (postLoginErr) {
+              console.error('⚠️ Post-login initialization error:', postLoginErr);
+            }
+          }, 100);
 
           showNotification(`Willkommen zurück, ${profile.username}!`, 'success');
 
@@ -26609,102 +26660,14 @@
     window.loadCurrentUserArtistId = loadCurrentUserArtistId;
 
     // Check for saved session on page load
+    // ═══════════════════════════════════════════════════════════════════════
+    // DISABLED - Login wird jetzt vom LoadingScreen gehandelt
+    // Die Session-Prüfung macht jetzt CentralDataManager.checkSavedSession()
+    // Das alte Login-Modal (loginBackdrop) wird nicht mehr benötigt
+    // ═══════════════════════════════════════════════════════════════════════
     async function initAuth() {
-      try {
-        console.log('🔄 Initializing authentication...');
-
-        // ═══════════════════════════════════════════════════════════════
-        // STEP 1: Check for existing Supabase Auth session
-        // ═══════════════════════════════════════════════════════════════
-        console.log('🔐 === AUTH SESSION CHECK ===');
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
-
-        if (existingSession) {
-          console.log('✅ Supabase Auth session found');
-          console.log('🔑 Auth User ID:', existingSession.user?.id);
-          console.log('📧 Auth Email:', existingSession.user?.email);
-          console.log('🎫 Access Token:', existingSession.access_token ? 'EXISTS' : 'NULL');
-        } else {
-          console.log('⚠️ No Supabase Auth session found');
-        }
-        console.log('🔐 === END AUTH CHECK ===');
-
-        // ═══════════════════════════════════════════════════════════════
-        // STEP 2: Check localStorage for saved user session
-        // ═══════════════════════════════════════════════════════════════
-        const rememberMe = localStorage.getItem('rememberMe') === 'true';
-        const savedUsername = localStorage.getItem('username');
-
-        if (rememberMe && savedUsername) {
-          console.log('🔑 Found saved session for:', savedUsername);
-
-          // Verify user still exists and get fresh data (case-insensitive)
-          const { data: profiles, error } = await supabase
-            .from('profiles')
-            .select('id, username, email, role, password_hash, avatar_url')
-            .ilike('username', savedUsername);
-
-          if (error) {
-            console.error('❌ Database error during session restore:', error);
-            localStorage.removeItem('rememberMe');
-            localStorage.removeItem('username');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('avatarUrl');
-          } else if (profiles && profiles.length > 0) {
-            const profile = profiles[0];
-            console.log('✅ Session restored successfully for:', profile.username);
-            currentUser = profile;
-            localStorage.setItem('userRole', profile.role || 'user');
-
-            // Update localStorage with fresh avatar URL from database
-            if (profile.avatar_url) {
-              localStorage.setItem('avatarUrl', profile.avatar_url);
-            } else {
-              localStorage.removeItem('avatarUrl');
-            }
-
-            // Check if we need to restore Supabase Auth session
-            if (!existingSession && profile.email) {
-              console.log('⚠️ No Supabase Auth session but localStorage session exists');
-              console.log('📝 User needs to re-login for full RLS support');
-              // Note: We can't auto-restore Supabase Auth without the password
-              // The session will work but RLS policies requiring auth.uid() won't work
-            }
-
-            // Update UI with complete profile data
-            updateUIForUser(profile);
-            await initializePermissions();
-
-            // Reload To-Do projects after session restore (using window.loadTodoProjects for cross-scope access)
-            try {
-              console.log('✅ Session restored, reloading To-Do projects...');
-              if (typeof window.loadTodoProjects === 'function') {
-                await window.loadTodoProjects();
-                console.log('✅ To-Do projects reloaded after session restore');
-              } else {
-                console.warn('⚠️ window.loadTodoProjects not available yet');
-              }
-            } catch (todoError) {
-              console.warn('⚠️ Failed to load To-Do projects after session restore:', todoError);
-            }
-            return;
-          } else {
-            console.log('⚠️ Saved user not found - clearing session');
-            localStorage.removeItem('rememberMe');
-            localStorage.removeItem('username');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('avatarUrl');
-          }
-        }
-
-        // Show login modal if not logged in
-        console.log('📋 No session found - showing login modal');
-        setTimeout(() => {
-          document.getElementById('loginBackdrop').classList.add('active');
-        }, 500);
-      } catch (err) {
-        console.error('💥 Init auth failed:', err);
-      }
+      console.log('🔐 initAuth() - Skipped (handled by LoadingScreen)');
+      return;
     }
 
     // Test Database Connection (for debugging)
