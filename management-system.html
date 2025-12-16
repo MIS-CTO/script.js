@@ -6908,6 +6908,11 @@
     <div class="loader-content">
       <div class="loader-spinner"></div>
       <div class="loader-text">Lade Daten...</div>
+      <div class="loader-progress" id="loaderProgress" style="
+        margin-top: 16px;
+        font-size: 12px;
+        color: rgba(255,255,255,0.6);
+      "></div>
     </div>
   </div>
 
@@ -11220,6 +11225,590 @@
     // Make DataCache globally available
     window.DataCache = DataCache;
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CENTRAL DATA MANAGER - Einmaliges Laden & Realtime Updates
+    // Version: 2025-12-16
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const CentralDataManager = {
+      // Zentrale Datenspeicherung
+      data: {
+        requests: [],
+        artists: [],
+        customers: [],
+        appointments: [],
+        dienstplan: [],
+        workTracking: [],
+        guestSlots: [],
+        locations: [],
+        profiles: [],
+        wannados: [],
+        agreements: [],
+        projectTasks: [],
+        taskProjects: []
+      },
+
+      // Lade-Status
+      loadingStatus: {
+        isInitialLoadComplete: false,
+        isLoading: false,
+        loadedTables: new Set(),
+        errors: []
+      },
+
+      // Realtime Subscriptions
+      subscriptions: {},
+
+      // UI Update Listeners (für Tab-Refreshes)
+      listeners: {},
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // BATCH LOADING CONFIGURATION
+      // ═══════════════════════════════════════════════════════════════════════
+      tableConfig: {
+        requests:      { batchSize: 5000, parallel: 4, relations: '*, customer:customers(id, first_name, last_name, email, phone, rank, instagram), artist:artists(id, name, email, instagram), location:locations!requests_location_id_fkey(id, name, city)' },
+        customers:     { batchSize: 5000, parallel: 4, relations: '*' },
+        artists:       { batchSize: 1000, parallel: 2, relations: '*, location:locations!location_id(id, name, city)' },
+        appointments:  { batchSize: 2000, parallel: 3, relations: '*, customer:customers(id, first_name, last_name), artist:artists(id, name), location:locations(id, name)' },
+        dienstplan:    { batchSize: 1000, parallel: 2, relations: '*, artist:artists!artist_id(name, email, instagram, rank, is_guest), location:locations!location_id(name, city)' },
+        work_tracking: { batchSize: 1000, parallel: 2, relations: '*, profile:profiles!user_id(username, email, role, avatar_url, weekly_hours, vacation_days), location:locations!location_id(name, city)' },
+        guest_slots:   { batchSize: 1000, parallel: 2, relations: '*, artist:artists(id, name, instagram)' },
+        locations:     { batchSize: 100,  parallel: 1, relations: '*' },
+        profiles:      { batchSize: 100,  parallel: 1, relations: '*' },
+        wannados:      { batchSize: 1000, parallel: 2, relations: '*' },
+        agreements:    { batchSize: 1000, parallel: 2, relations: '*' },
+        project_tasks: { batchSize: 1000, parallel: 2, relations: '*' },
+        task_projects: { batchSize: 500,  parallel: 1, relations: '*' }
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // INITIAL LOAD - Alle Daten parallel laden
+      // ═══════════════════════════════════════════════════════════════════════
+      async initialLoad() {
+        if (this.loadingStatus.isLoading) {
+          console.log('⏳ Initial load already in progress...');
+          return;
+        }
+
+        this.loadingStatus.isLoading = true;
+        console.log('🚀 CENTRAL DATA MANAGER - Starting initial load...');
+
+        const startTime = Date.now();
+        const loaderText = document.querySelector('.loader-text');
+        const loaderProgress = document.getElementById('loaderProgress');
+
+        try {
+          // Phase 1: Kleine Tabellen zuerst (schnell, werden oft referenziert)
+          if (loaderText) loaderText.textContent = 'Lade Stammdaten...';
+          if (loaderProgress) loaderProgress.textContent = 'Phase 1/4: Locations, Profiles, Artists';
+          await Promise.all([
+            this.loadTable('locations'),
+            this.loadTable('profiles'),
+            this.loadTable('artists')
+          ]);
+          console.log('✅ Phase 1 complete: Stammdaten geladen');
+
+          // Phase 2: Mittlere Tabellen
+          if (loaderText) loaderText.textContent = 'Lade Termine & Dienstplan...';
+          if (loaderProgress) loaderProgress.textContent = 'Phase 2/4: Appointments, Dienstplan, Work Tracking';
+          await Promise.all([
+            this.loadTable('appointments'),
+            this.loadTable('dienstplan'),
+            this.loadTable('work_tracking'),
+            this.loadTable('guest_slots')
+          ]);
+          console.log('✅ Phase 2 complete: Termine & Dienstplan geladen');
+
+          // Phase 3: Große Tabellen (parallel mit Progress)
+          if (loaderText) loaderText.textContent = 'Lade Anfragen & Kunden...';
+          if (loaderProgress) loaderProgress.textContent = 'Phase 3/4: Requests, Customers';
+          await Promise.all([
+            this.loadTable('requests'),
+            this.loadTable('customers')
+          ]);
+          console.log('✅ Phase 3 complete: Anfragen & Kunden geladen');
+
+          // Phase 4: Restliche Tabellen
+          if (loaderText) loaderText.textContent = 'Lade weitere Daten...';
+          if (loaderProgress) loaderProgress.textContent = 'Phase 4/4: Wannados, Agreements, Tasks';
+          await Promise.all([
+            this.loadTable('wannados'),
+            this.loadTable('agreements'),
+            this.loadTable('project_tasks'),
+            this.loadTable('task_projects')
+          ]);
+          console.log('✅ Phase 4 complete: Alle Daten geladen');
+
+          // Sync mit globalen Variablen für Kompatibilität
+          this.syncToGlobalVariables();
+
+          // Setup Realtime Subscriptions
+          if (loaderText) loaderText.textContent = 'Aktiviere Live-Updates...';
+          if (loaderProgress) loaderProgress.textContent = 'Starte Realtime Subscriptions...';
+          this.setupRealtimeSubscriptions();
+
+          this.loadingStatus.isInitialLoadComplete = true;
+          this.loadingStatus.isLoading = false;
+
+          const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+          console.log(`🎉 CENTRAL DATA MANAGER - Initial load complete in ${duration}s`);
+          console.log('📊 Data counts:', {
+            requests: this.data.requests.length,
+            customers: this.data.customers.length,
+            artists: this.data.artists.length,
+            appointments: this.data.appointments.length,
+            dienstplan: this.data.dienstplan.length,
+            locations: this.data.locations.length
+          });
+
+          if (loaderProgress) loaderProgress.textContent = `Fertig in ${duration}s`;
+
+        } catch (error) {
+          console.error('❌ CENTRAL DATA MANAGER - Initial load failed:', error);
+          this.loadingStatus.errors.push(error);
+          this.loadingStatus.isLoading = false;
+          throw error;
+        }
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // LOAD TABLE - Mit Batch-Loading für große Tabellen
+      // ═══════════════════════════════════════════════════════════════════════
+      async loadTable(tableName) {
+        const config = this.tableConfig[tableName];
+        if (!config) {
+          console.warn(`⚠️ No config for table: ${tableName}`);
+          return;
+        }
+
+        console.log(`📥 Loading ${tableName}...`);
+        const startTime = Date.now();
+
+        try {
+          // Erst Count holen
+          const { count, error: countError } = await supabase
+            .from(tableName)
+            .select('*', { count: 'exact', head: true });
+
+          if (countError) throw countError;
+
+          const totalRecords = count || 0;
+
+          if (totalRecords === 0) {
+            this.data[this.normalizeTableName(tableName)] = [];
+            this.loadingStatus.loadedTables.add(tableName);
+            console.log(`✅ ${tableName}: 0 records`);
+            return;
+          }
+
+          // Kleine Tabellen: Single Request
+          if (totalRecords <= config.batchSize) {
+            const { data, error } = await supabase
+              .from(tableName)
+              .select(config.relations)
+              .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            this.data[this.normalizeTableName(tableName)] = data || [];
+          } else {
+            // Große Tabellen: Parallel Batch Loading
+            const totalBatches = Math.ceil(totalRecords / config.batchSize);
+            let allData = [];
+
+            for (let i = 0; i < totalBatches; i += config.parallel) {
+              const batchPromises = [];
+
+              for (let j = 0; j < config.parallel && (i + j) < totalBatches; j++) {
+                const start = (i + j) * config.batchSize;
+                const end = start + config.batchSize - 1;
+
+                batchPromises.push(
+                  supabase
+                    .from(tableName)
+                    .select(config.relations)
+                    .order('created_at', { ascending: false })
+                    .range(start, end)
+                );
+              }
+
+              const results = await Promise.all(batchPromises);
+
+              results.forEach(({ data, error }) => {
+                if (error) {
+                  console.error(`Batch error for ${tableName}:`, error);
+                } else if (data) {
+                  allData = allData.concat(data);
+                }
+              });
+            }
+
+            this.data[this.normalizeTableName(tableName)] = allData;
+          }
+
+          this.loadingStatus.loadedTables.add(tableName);
+          const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+          console.log(`✅ ${tableName}: ${this.data[this.normalizeTableName(tableName)].length} records in ${duration}s`);
+
+        } catch (error) {
+          console.error(`❌ Failed to load ${tableName}:`, error);
+          this.loadingStatus.errors.push({ table: tableName, error });
+          throw error;
+        }
+      },
+
+      // Normalisiere Tabellennamen (work_tracking -> workTracking)
+      normalizeTableName(name) {
+        return name.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // SYNC TO GLOBAL VARIABLES - Für Kompatibilität mit bestehendem Code
+      // ═══════════════════════════════════════════════════════════════════════
+      syncToGlobalVariables() {
+        console.log('🔄 Syncing to global variables...');
+
+        // Diese globalen Variablen werden im bestehenden Code verwendet
+        window.allRequests = this.data.requests;
+        window.allArtists = this.data.artists;
+        window.allCustomers = this.data.customers;
+        window.customersCache = this.data.customers;
+        window.allLocations = this.data.locations;
+        window.dienstplanCache = this.data.dienstplan;
+        window.workTrackingCache = this.data.workTracking;
+        window.artistsCache = this.data.artists;
+
+        // Auch lokale Variablen setzen
+        allRequests = this.data.requests;
+        allArtists = this.data.artists;
+        allCustomers = this.data.customers;
+        customersCache = this.data.customers;
+        allLocations = this.data.locations;
+        dienstplanCache = this.data.dienstplan;
+        artistsCache = this.data.artists;
+
+        // DataCache auch befüllen
+        DataCache.set('requests', this.data.requests);
+        DataCache.set('artists', this.data.artists);
+        DataCache.set('customers', this.data.customers);
+        DataCache.set('appointments', this.data.appointments);
+
+        console.log('✅ Global variables synced');
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // REALTIME SUBSCRIPTIONS - Für Live-Updates
+      // ═══════════════════════════════════════════════════════════════════════
+      setupRealtimeSubscriptions() {
+        console.log('📡 Setting up Realtime subscriptions...');
+
+        const tablesToWatch = [
+          'requests',
+          'customers',
+          'artists',
+          'appointments',
+          'dienstplan',
+          'guest_slots',
+          'wannados',
+          'agreements'
+        ];
+
+        tablesToWatch.forEach(table => {
+          const channelName = `central_${table}_changes`;
+
+          // Unsubscribe if already exists
+          if (this.subscriptions[table]) {
+            supabase.removeChannel(this.subscriptions[table]);
+          }
+
+          this.subscriptions[table] = supabase
+            .channel(channelName)
+            .on('postgres_changes',
+              { event: '*', schema: 'public', table: table },
+              (payload) => this.handleRealtimeUpdate(table, payload)
+            )
+            .subscribe((status) => {
+              if (status === 'SUBSCRIBED') {
+                console.log(`📡 Subscribed to ${table}`);
+              }
+            });
+        });
+
+        console.log('✅ Realtime subscriptions active for', tablesToWatch.length, 'tables');
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // HANDLE REALTIME UPDATE - Einzelne Änderungen verarbeiten
+      // ═══════════════════════════════════════════════════════════════════════
+      async handleRealtimeUpdate(table, payload) {
+        const normalizedTable = this.normalizeTableName(table);
+        console.log(`📡 Realtime ${payload.eventType} on ${table}:`, payload.new?.id || payload.old?.id);
+
+        try {
+          switch(payload.eventType) {
+            case 'INSERT':
+              // Bei INSERT: Volle Daten mit Relations laden
+              const newRecord = await this.fetchRecordWithRelations(table, payload.new.id);
+              if (newRecord) {
+                this.data[normalizedTable].unshift(newRecord); // Am Anfang einfügen
+              }
+              break;
+
+            case 'UPDATE':
+              // Bei UPDATE: Record aktualisieren
+              const updatedRecord = await this.fetchRecordWithRelations(table, payload.new.id);
+              if (updatedRecord) {
+                const idx = this.data[normalizedTable].findIndex(r => r.id === payload.new.id);
+                if (idx >= 0) {
+                  this.data[normalizedTable][idx] = updatedRecord;
+                }
+              }
+              break;
+
+            case 'DELETE':
+              // Bei DELETE: Record entfernen
+              this.data[normalizedTable] = this.data[normalizedTable].filter(
+                r => r.id !== payload.old.id
+              );
+              break;
+          }
+
+          // Globale Variablen aktualisieren
+          this.syncToGlobalVariables();
+
+          // UI Listeners benachrichtigen
+          this.notifyListeners(normalizedTable, payload.eventType, payload.new || payload.old);
+
+        } catch (error) {
+          console.error(`❌ Error handling realtime update for ${table}:`, error);
+        }
+      },
+
+      // Record mit Relations laden (für INSERT/UPDATE)
+      async fetchRecordWithRelations(table, id) {
+        const config = this.tableConfig[table];
+        if (!config) return null;
+
+        const { data, error } = await supabase
+          .from(table)
+          .select(config.relations)
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error(`Error fetching ${table} record:`, error);
+          return null;
+        }
+
+        return data;
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // LISTENER SYSTEM - Für UI Updates
+      // ═══════════════════════════════════════════════════════════════════════
+      addListener(table, callback) {
+        if (!this.listeners[table]) {
+          this.listeners[table] = [];
+        }
+        this.listeners[table].push(callback);
+        return () => {
+          this.listeners[table] = this.listeners[table].filter(cb => cb !== callback);
+        };
+      },
+
+      notifyListeners(table, eventType, record) {
+        if (this.listeners[table]) {
+          this.listeners[table].forEach(callback => {
+            try {
+              callback(eventType, record, this.data[table]);
+            } catch (error) {
+              console.error(`Listener error for ${table}:`, error);
+            }
+          });
+        }
+
+        // Global event für allgemeine Updates
+        window.dispatchEvent(new CustomEvent('centralDataUpdate', {
+          detail: { table, eventType, record }
+        }));
+      },
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // GETTER METHODS - Für Tab-Zugriff
+      // ═══════════════════════════════════════════════════════════════════════
+      getRequests() { return this.data.requests; },
+      getCustomers() { return this.data.customers; },
+      getArtists() { return this.data.artists; },
+      getAppointments() { return this.data.appointments; },
+      getDienstplan() { return this.data.dienstplan; },
+      getLocations() { return this.data.locations; },
+      getProfiles() { return this.data.profiles; },
+      getWorkTracking() { return this.data.workTracking; },
+      getGuestSlots() { return this.data.guestSlots; },
+
+      // Gefilterte Daten
+      getRequestsByStatus(status) {
+        return this.data.requests.filter(r => r.status === status);
+      },
+
+      getRequestsByLocation(locationId) {
+        return this.data.requests.filter(r => r.location_id === locationId);
+      },
+
+      getArtistsByLocation(locationId) {
+        return this.data.artists.filter(a => a.location_id === locationId);
+      },
+
+      // Status Check
+      isReady() {
+        return this.loadingStatus.isInitialLoadComplete;
+      }
+    };
+
+    // Global verfügbar machen
+    window.CentralDataManager = CentralDataManager;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // REALTIME UI UPDATE HANDLERS
+    // Automatische UI-Updates bei Datenänderungen
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Requests Tab - Auto-Refresh bei Änderungen
+    CentralDataManager.addListener('requests', (eventType, record, allData) => {
+      console.log(`🔄 Requests updated: ${eventType}`);
+
+      // Aktualisiere globale Variable
+      allRequests = allData;
+      window.allRequests = allData;
+
+      // Wenn Requests-Tab aktiv ist, neu rendern
+      const requestsSection = document.getElementById('requests-section');
+      if (requestsSection && requestsSection.classList.contains('active')) {
+        if (typeof filterAndRenderRequests === 'function') {
+          filterAndRenderRequests();
+        }
+        if (typeof showNotification === 'function') {
+          showNotification(`Request ${eventType === 'INSERT' ? 'hinzugefügt' : eventType === 'UPDATE' ? 'aktualisiert' : 'gelöscht'}`, 'info');
+        }
+      }
+
+      // Badge Counts aktualisieren
+      if (typeof updateRequestBadges === 'function') {
+        updateRequestBadges();
+      }
+    });
+
+    // Customers Tab - Auto-Refresh
+    CentralDataManager.addListener('customers', (eventType, record, allData) => {
+      console.log(`🔄 Customers updated: ${eventType}`);
+
+      customersCache = allData;
+      allCustomers = allData;
+
+      const customersSection = document.getElementById('customers-section');
+      if (customersSection && customersSection.classList.contains('active')) {
+        if (typeof applyCustomerFilters === 'function') {
+          applyCustomerFilters();
+          if (typeof loadCustomers === 'function') {
+            loadCustomers(currentCustomersPage || 1);
+          }
+        }
+      }
+    });
+
+    // Artists Tab - Auto-Refresh
+    CentralDataManager.addListener('artists', (eventType, record, allData) => {
+      console.log(`🔄 Artists updated: ${eventType}`);
+
+      allArtists = allData;
+      artistsCache = allData;
+
+      const artistsSection = document.getElementById('artists-section');
+      if (artistsSection && artistsSection.classList.contains('active')) {
+        if (typeof loadArtists === 'function') {
+          loadArtists(currentArtistsPage || 1);
+        }
+      }
+    });
+
+    // Appointments - Calendar Refresh
+    CentralDataManager.addListener('appointments', (eventType, record, allData) => {
+      console.log(`🔄 Appointments updated: ${eventType}`);
+
+      // Calendar neu laden wenn aktiv
+      const calendarSection = document.getElementById('calendar-section');
+      if (calendarSection && calendarSection.classList.contains('active')) {
+        if (typeof loadEvents === 'function' && typeof renderCalendar === 'function') {
+          loadEvents().then(() => renderCalendar());
+        }
+      }
+    });
+
+    // Dienstplan - Auto-Refresh
+    CentralDataManager.addListener('dienstplan', (eventType, record, allData) => {
+      console.log(`🔄 Dienstplan updated: ${eventType}`);
+
+      dienstplanCache = allData;
+
+      const dienstplanSection = document.getElementById('dienstplan-section');
+      if (dienstplanSection && dienstplanSection.classList.contains('active')) {
+        if (typeof applyDienstplanFilters === 'function') {
+          applyDienstplanFilters();
+        }
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // REQUEST BADGE UPDATE FUNCTION
+    // Berechnet Badge Counts aus dem Cache
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function updateRequestBadges() {
+      const requests = CentralDataManager.getRequests();
+      if (!requests || requests.length === 0) return;
+
+      // Open Requests Badge (letzte 7 Tage)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const openCount = requests.filter(r =>
+        r.status === 'open_request' &&
+        new Date(r.created_at) > sevenDaysAgo
+      ).length;
+
+      const openBadge = document.getElementById('openRequestsBadge');
+      if (openBadge) {
+        openBadge.textContent = openCount;
+        openBadge.style.display = openCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      // Pending Badge
+      const pendingCount = requests.filter(r => r.status === 'pending').length;
+      const pendingBadge = document.getElementById('pendingRequestsBadge');
+      if (pendingBadge) {
+        pendingBadge.textContent = pendingCount;
+        pendingBadge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      // My Requests Badge (assigned to current user)
+      if (typeof currentUser !== 'undefined' && currentUser) {
+        const myCount = requests.filter(r =>
+          r.assigned_to_user_id === currentUser.id &&
+          r.status !== 'finished'
+        ).length;
+
+        const myBadge = document.getElementById('myRequestsBadge');
+        if (myBadge) {
+          myBadge.textContent = myCount;
+          myBadge.style.display = myCount > 0 ? 'inline-flex' : 'none';
+        }
+      }
+
+      console.log('🏷️ Badges updated:', { openCount, pendingCount });
+    }
+
+    // Global verfügbar machen
+    window.updateRequestBadges = updateRequestBadges;
+
     // Google-inspirierte Farbschemata pro Location
     const locationColors = {
       'mommy': {
@@ -11631,20 +12220,39 @@
       const sections = document.querySelectorAll("section");
 
       // ═══════════════════════════════════════════════════════════════
-      // LOAD DATA AT PAGE LOAD (with Loading Screen)
-      // DataCache will prevent duplicate loads on tab switches
+      // STEP 1: CENTRAL DATA LOAD (VOR Login)
+      // Alle Daten werden im Loading Screen geladen
       // ═══════════════════════════════════════════════════════════════
-      console.log('🚀 Loading initial data...');
+      console.log('🚀 Starting Central Data Load...');
 
       try {
+        // Zentrale Daten laden (im Loading Screen)
+        await CentralDataManager.initialLoad();
+
+        // Nach dem Laden: UI initialisieren
+        console.log('✅ Central Data Load complete');
+      } catch (err) {
+        console.error('❌ Central Data Load failed:', err);
+        // Fallback: Zeige Fehlermeldung
+        const loaderText = document.querySelector('.loader-text');
+        if (loaderText) {
+          loaderText.textContent = 'Fehler beim Laden. Bitte Seite neu laden.';
+          loaderText.style.color = '#ff3b30';
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════
+      // STEP 2: UI INITIALIZATION (nach Daten-Load)
+      // ═══════════════════════════════════════════════════════════════
+      try {
         await Promise.all([
-          loadInitialData(),
+          loadInitialData(), // Locations, Dropdowns, etc.
           initializePermissions(),
           loadBookingTeamMembers()
         ]);
-        console.log('✅ All initial data loaded successfully');
+        console.log('✅ UI initialization complete');
       } catch (err) {
-        console.error('❌ Error loading initial data:', err);
+        console.error('❌ UI initialization error:', err);
       }
 
       // Hide initial loader after data is loaded
@@ -11980,40 +12588,32 @@
 
       async function loadInitialData() {
         try {
-          console.log('📥 Loading initial data with retry logic...');
+          console.log('🔧 Initializing UI with cached data...');
 
-          // Load data SEQUENTIALLY with retry logic to avoid network overload
-          // Artists
-          const artistsResult = await retryWithBackoff(() =>
-            supabase.from('artists').select('*')
-          );
-          allArtists = artistsResult.data || [];
-          console.log('✅ Artists loaded:', allArtists.length);
+          // Artists aus Cache (nicht neu laden!)
+          allArtists = CentralDataManager.getArtists();
+          console.log('✅ Artists from cache:', allArtists.length);
 
-          // Team Members
-          const teamMembersResult = await retryWithBackoff(() =>
-            supabase.from('dienstplan_resources')
-              .select('*')
-              .order('sort_order', { ascending: true })
-              .order('name', { ascending: true })
-          );
-          allTeamMembers = teamMembersResult.data || [];
+          // Team Members noch separat laden (nicht im CentralDataManager)
+          const { data: teamMembersResult } = await supabase
+            .from('dienstplan_resources')
+            .select('*')
+            .order('sort_order', { ascending: true })
+            .order('name', { ascending: true });
+          allTeamMembers = teamMembersResult || [];
           console.log('✅ Team members loaded:', allTeamMembers.length);
 
-          // Locations
-          const locationsResult = await retryWithBackoff(() =>
-            supabase.from('locations').select('*').order('name', { ascending: true })
-          );
-          const locations = locationsResult.data || [];
+          // Locations aus Cache
+          const locations = CentralDataManager.getLocations();
           allLocations = locations;
-          console.log('✅ Locations loaded:', allLocations.length);
-          
+          console.log('✅ Locations from cache:', allLocations.length);
+
           if (locations && locations.length > 0) {
             // Finde "mommy i'm sorry" oder nimm die erste Location
             const mommyLocation = locations.find(l => l.name.toLowerCase().includes("mommy"));
             selectedLocationId = mommyLocation ? mommyLocation.id : locations[0].id;
             selectedDienstplanLocationId = selectedLocationId;
-            
+
             // Set initial location name and theme
             const initialLocation = locations.find(l => l.id === selectedLocationId);
             if (initialLocation) {
@@ -12021,45 +12621,33 @@
               const colors = getLocationColors(currentLocationName);
               applyLocationTheme(colors);
             }
-            
+
             const locSelect = document.getElementById('locationDropdown');
-            locSelect.innerHTML = locations.map(l => 
-              `<option value="${l.id}" ${l.id === selectedLocationId ? 'selected' : ''}>${l.name}</option>`
-            ).join('');
-            
-            locSelect.onchange = async (e) => {
-              selectedLocationId = e.target.value;
-              console.log('Location changed to:', selectedLocationId);
-              
-              // Get location name and apply theme
-              const selectedLocation = locations.find(l => l.id === selectedLocationId);
-              if (selectedLocation) {
-                currentLocationName = selectedLocation.name;
-                const colors = getLocationColors(currentLocationName);
-                applyLocationTheme(colors);
-              }
-              
-              await loadEvents();
-              renderCalendar();
-            };
-            
-            // Dienstplan Location Dropdown - REMOVED (old system)
-            // const dienstplanLocSelect = document.getElementById('dienstplanLocationDropdown');
-            // if (dienstplanLocSelect) {
-            //   dienstplanLocSelect.innerHTML = locations.map(l =>
-            //     `<option value="${l.id}" ${l.id === selectedDienstplanLocationId ? 'selected' : ''}>${l.name}</option>`
-            //   ).join('');
-            //
-            //   dienstplanLocSelect.onchange = (e) => {
-            //     selectedDienstplanLocationId = e.target.value;
-            //     console.log('Dienstplan location changed to:', selectedDienstplanLocationId);
-            //   };
-            // }
+            if (locSelect) {
+              locSelect.innerHTML = locations.map(l =>
+                `<option value="${l.id}" ${l.id === selectedLocationId ? 'selected' : ''}>${l.name}</option>`
+              ).join('');
+
+              locSelect.onchange = async (e) => {
+                selectedLocationId = e.target.value;
+                console.log('Location changed to:', selectedLocationId);
+
+                // Get location name and apply theme
+                const selectedLocation = locations.find(l => l.id === selectedLocationId);
+                if (selectedLocation) {
+                  currentLocationName = selectedLocation.name;
+                  const colors = getLocationColors(currentLocationName);
+                  applyLocationTheme(colors);
+                }
+
+                await loadEvents();
+                renderCalendar();
+              };
+            }
 
             // Artist Location Filter Dropdown
             const artistLocFilter = document.getElementById('artistLocationFilter');
             if (artistLocFilter) {
-              // Keep existing options (Alle Locations, Ohne Location) and add dynamic locations
               const locationOptions = locations.map(l =>
                 `<option value="${l.id}">${l.name}</option>`
               ).join('');
@@ -12081,19 +12669,18 @@
                 ${locationOptions}
               `;
             }
-
           }
 
-          // Load events and dashboard in parallel
+          // Load events and dashboard (diese nutzen bereits cached Daten)
           await Promise.all([
             loadEvents(),
             loadDashboard(),
             loadPinnedEvents(),
             loadSchwarzesBrett()
           ]);
+
         } catch(err) {
           console.error("Load error:", err);
-          alert("Error loading data: " + err.message);
         }
       }
 
@@ -14577,8 +15164,28 @@
         const { forceReload = false } = options;
 
         // ═══════════════════════════════════════════════════════════════
-        // USE CENTRAL DATACACHE SYSTEM
+        // USE CENTRAL DATA MANAGER - Kein separates Loading mehr!
         // ═══════════════════════════════════════════════════════════════
+        if (CentralDataManager.isReady()) {
+          // Daten aus Cache holen
+          allRequests = CentralDataManager.getRequests();
+          window.allRequests = allRequests;
+
+          console.log(`📋 Using cached requests: ${allRequests.length} total`);
+
+          // Filter und Render (bestehende Logik)
+          filterAndRenderRequests();
+
+          // Update badge counts
+          if (typeof updateRequestBadges === 'function') {
+            updateRequestBadges();
+          }
+          return;
+        }
+
+        // Fallback: Falls CentralDataManager nicht bereit, alte Logik
+        console.log('⚠️ CentralDataManager not ready, using fallback loading...');
+
         if (!forceReload) {
           const cached = DataCache.get('requests');
           if (cached) {
@@ -14599,17 +15206,16 @@
         try {
           ProgressBar.show('Loading requests...');
           console.log('📋 Loading requests for status:', currentRequestStatus, 'location:', currentRequestLocation);
-          console.log('🚀 OPTIMIZED PARALLEL BATCH LOADING - Version 2025-12-05');
+          console.log('🚀 FALLBACK PARALLEL BATCH LOADING');
 
           // ═══════════════════════════════════════════════════════════════
-          // OPTIMIZED: Parallel batch loading for faster performance
+          // FALLBACK: Parallel batch loading
           // ═══════════════════════════════════════════════════════════════
-          const BATCH_SIZE = 5000;      // Larger batches
-          const PARALLEL_BATCHES = 4;   // 4 parallel requests
+          const BATCH_SIZE = 5000;
+          const PARALLEL_BATCHES = 4;
 
           ProgressBar.updateProgress(5, 'Getting total count...');
 
-          // First get the total count
           const { count, error: countError } = await supabase
             .from('requests')
             .select('*', { count: 'exact', head: true });
@@ -14618,13 +15224,12 @@
 
           const totalRecords = count || 0;
           const totalBatches = Math.ceil(totalRecords / BATCH_SIZE);
-          console.log(`📊 Total requests: ${totalRecords}, loading in ${totalBatches} batches (${PARALLEL_BATCHES} parallel)`);
+          console.log(`📊 Total requests: ${totalRecords}, loading in ${totalBatches} batches`);
 
           ProgressBar.updateProgress(10, `Loading ${totalRecords.toLocaleString()} requests...`);
 
           let allData = [];
 
-          // Load in parallel batch groups
           for (let i = 0; i < totalBatches; i += PARALLEL_BATCHES) {
             const batchPromises = [];
 
@@ -14656,17 +15261,15 @@
               }
             });
 
-            // Update progress (10% to 70%)
             const loaded = Math.min((i + PARALLEL_BATCHES) * BATCH_SIZE, totalRecords);
             const progressPercent = 10 + Math.round((loaded / totalRecords) * 60);
             ProgressBar.updateProgress(progressPercent, `Loading requests (${loaded.toLocaleString()}/${totalRecords.toLocaleString()})...`);
-            console.log(`📦 Loaded ${loaded.toLocaleString()}/${totalRecords.toLocaleString()} requests (${Math.round(loaded/totalRecords*100)}%)`);
           }
 
           allRequests = allData || [];
-          window.allRequests = allRequests; // Global für onclick Handler
-          DataCache.set('requests', allRequests); // Store in central cache
-          console.log(`✅ Loaded ${allRequests.length.toLocaleString()} total requests with parallel batching`);
+          window.allRequests = allRequests;
+          DataCache.set('requests', allRequests);
+          console.log(`✅ Loaded ${allRequests.length.toLocaleString()} total requests`);
           ProgressBar.updateProgress(70, 'Filtering and rendering...');
 
           // Filter by status
@@ -18035,10 +18638,16 @@
         console.log('👤 Loading artists (page ' + page + ')...');
 
         try {
-          ProgressBar.show('Loading artists...');
-
-          // Load from cache or database
-          if (artistsCache.length === 0) {
+          // ═══════════════════════════════════════════════════════════════
+          // USE CENTRAL DATA MANAGER
+          // ═══════════════════════════════════════════════════════════════
+          if (CentralDataManager.isReady()) {
+            artistsCache = CentralDataManager.getArtists();
+            allArtists = artistsCache;
+            console.log(`🎨 Using cached artists: ${artistsCache.length} total`);
+          } else if (artistsCache.length === 0) {
+            // Fallback: Load from database
+            ProgressBar.show('Loading artists...');
             ProgressBar.updateProgress(30, 'Fetching artists from database...');
             const { data, error } = await supabase
               .from('artists')
@@ -18054,7 +18663,6 @@
             console.log('✅ Loaded', artistsCache.length, 'artists into cache');
           }
 
-          ProgressBar.updateProgress(60, 'Applying filters...');
           // Apply filters
           applyArtistFilters();
 
@@ -18066,7 +18674,6 @@
           const endIndex = startIndex + artistsPageSize;
           const paginatedArtists = sorted.slice(startIndex, endIndex);
 
-          ProgressBar.updateProgress(80, 'Rendering table...');
           // Render table
           renderArtistsTable(paginatedArtists);
 
@@ -18247,10 +18854,16 @@
         console.log('👥 Loading customers (page ' + page + ')...');
 
         try {
-          ProgressBar.show('Loading customers...');
-
-          // Load from cache or database
-          if (customersCache.length === 0) {
+          // ═══════════════════════════════════════════════════════════════
+          // USE CENTRAL DATA MANAGER
+          // ═══════════════════════════════════════════════════════════════
+          if (CentralDataManager.isReady()) {
+            customersCache = CentralDataManager.getCustomers();
+            allCustomers = customersCache;
+            console.log(`👥 Using cached customers: ${customersCache.length} total`);
+          } else if (customersCache.length === 0) {
+            // Fallback: Load from database
+            ProgressBar.show('Loading customers...');
             console.log('🔄 Loading ALL customers from Supabase in batches...');
             ProgressBar.updateProgress(20, 'Fetching customers from database...');
 
@@ -18259,7 +18872,6 @@
             const batchSize = 1000;
             let hasMore = true;
 
-            // Load all customers in batches of 1000
             while (hasMore) {
               const { data, error, count } = await supabase
                 .from('customers')
@@ -18271,14 +18883,9 @@
 
               if (data && data.length > 0) {
                 allData = allData.concat(data);
-                console.log(`📦 Loaded batch: ${from + 1} to ${from + data.length} (Total so far: ${allData.length})`);
                 from += batchSize;
-
-                // Update progress (20% to 50%)
                 const customerProgress = 20 + Math.min(30, (allData.length / 1000) * 3);
                 ProgressBar.updateProgress(customerProgress, `Loading customers (${allData.length} loaded)...`);
-
-                // Check if we got less than batch size, meaning we're done
                 if (data.length < batchSize) {
                   hasMore = false;
                 }
@@ -18288,11 +18895,10 @@
             }
 
             customersCache = allData;
-            allCustomers = customersCache; // Keep for compatibility
+            allCustomers = customersCache;
             console.log('✅ Loaded ALL', customersCache.length, 'customers into cache');
           }
 
-          ProgressBar.updateProgress(60, 'Applying filters...');
           // Apply filters
           applyCustomerFilters();
 
@@ -18304,7 +18910,6 @@
           const endIndex = startIndex + customersPageSize;
           const paginatedCustomers = sorted.slice(startIndex, endIndex);
 
-          ProgressBar.updateProgress(80, 'Rendering table...');
           // Render table
           renderCustomersTable(paginatedCustomers);
 
@@ -23464,13 +24069,28 @@
     // Load Dienstplan Data from database with BATCH LOADING
     async function loadDienstplanData() {
       console.log('📅 Loading Dienstplan data...');
-      console.log('🚨 BATCH LOADING ALL DIENSTPLAN DATA');
 
       // Initialize month selectors
       initDienstplanMonthSelectors();
 
       try {
-        // 🔥 BATCH LOADING: Load ALL dienstplan entries in batches of 1000
+        // ═══════════════════════════════════════════════════════════════
+        // USE CENTRAL DATA MANAGER
+        // ═══════════════════════════════════════════════════════════════
+        if (CentralDataManager.isReady()) {
+          dienstplanCache = CentralDataManager.getDienstplan();
+          workTrackingCache = CentralDataManager.getWorkTracking();
+          console.log(`📅 Using cached dienstplan: ${dienstplanCache.length} entries`);
+          console.log(`⏰ Using cached work_tracking: ${workTrackingCache.length} entries`);
+
+          // Apply filters (which will filter by date range)
+          applyDienstplanFilters();
+          return;
+        }
+
+        // Fallback: Load from database
+        console.log('🚨 FALLBACK: BATCH LOADING ALL DIENSTPLAN DATA');
+
         let allData = [];
         let from = 0;
         const batchSize = 1000;
