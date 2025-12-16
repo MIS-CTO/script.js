@@ -5809,7 +5809,7 @@
        ======================================== */
 
     .mobile-footer-nav {
-      display: none;
+      display: none !important;
       position: fixed;
       bottom: 0;
       left: 0;
@@ -13147,6 +13147,10 @@
         this.elements.progressPercent = document.getElementById('loadingProgressPercent');
         this.elements.glassOverlay = document.getElementById('loadingGlassOverlay');
         this.elements.loginForm = document.getElementById('loadingLoginFormElement');
+
+        // Ensure mobile nav is hidden during loading
+        document.querySelector('.mobile-footer-nav')?.classList.remove('visible');
+        document.body.classList.add('logged-out');
 
         // Login Form Event Listener
         if (this.elements.loginForm) {
@@ -36690,8 +36694,9 @@
         el.querySelectorAll('.mobile-cal-event').forEach(ev => ev.remove());
       });
 
-      // Check if logged in
-      if (!window.currentUser) {
+      // Check if logged in (check both variable locations)
+      const user = window.currentUser || currentUser;
+      if (!user) {
         console.log('⚠️ Not logged in yet, skipping calendar load');
         return;
       }
@@ -36722,10 +36727,10 @@
         console.log('📅 Appointments for', dateStr, ':', appointments.length);
 
         // Filter by user if they are an artist
-        const userId = window.currentUser?.id;
-        if (userId && window.currentUser?.role !== 'management') {
+        const userId = user?.id;
+        if (userId && user?.role !== 'management') {
           // Try to find matching artist
-          const userEmail = window.currentUser?.email;
+          const userEmail = user?.email;
           const matchingArtist = window.artistsCache?.find(a => a.email === userEmail);
 
           if (matchingArtist) {
@@ -36856,8 +36861,9 @@
         weekLabel.textContent = `Mo ${formatDate(mobileDpState.currentWeekStart)} - So ${formatDate(weekEnd)}`;
       }
 
-      // Check if logged in
-      if (!window.currentUser) {
+      // Check if logged in (check both variable locations)
+      const user = window.currentUser || currentUser;
+      if (!user) {
         console.log('⚠️ Not logged in yet, skipping dienstplan load');
         container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--macos-text-secondary);">Bitte erst anmelden...</div>';
         return;
@@ -36890,8 +36896,8 @@
         }
 
         // Filter to current user
-        const userId = window.currentUser?.id;
-        const userEmail = window.currentUser?.email;
+        const userId = user?.id;
+        const userEmail = user?.email;
         const matchingArtist = window.artistsCache?.find(a => a.email === userEmail);
 
         if (matchingArtist) {
