@@ -4902,7 +4902,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(0px);
       -webkit-backdrop-filter: blur(0px);
       z-index: 50;
@@ -4922,18 +4922,16 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       LOGIN FORM - Auf dem Glass Layer
+       LOGIN FORM - Transparent, KEINE Box
        ═══════════════════════════════════════════════════════════════════════════ */
 
     .loading-login-form {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 48px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 40px;
       width: 100%;
-      max-width: 400px;
+      max-width: 380px;
       transform: translateY(30px);
       opacity: 0;
       transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
@@ -4971,8 +4969,8 @@
       font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 8px;
+      color: #ffffff;
+      margin-bottom: 6px;
     }
 
     .login-field input {
@@ -4996,14 +4994,13 @@
     .login-field input:focus {
       background: rgba(255, 255, 255, 0.15);
       border-color: rgba(255, 255, 255, 0.4);
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
     }
 
     .loading-login-form .login-remember {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .loading-login-form .login-remember input[type="checkbox"] {
@@ -24650,8 +24647,13 @@
       const monthSelect = document.getElementById('dienstplanMonthSelect');
       const yearSelect = document.getElementById('dienstplanYearSelect');
 
+      console.log('📅 initDienstplanMonthSelectors() - Setting month:', dienstplanCurrentMonth, 'year:', dienstplanCurrentYear);
+
       if (monthSelect) {
-        monthSelect.value = dienstplanCurrentMonth;
+        monthSelect.value = String(dienstplanCurrentMonth);
+        console.log('📅 Month selector set to:', monthSelect.value, '(option text:', monthSelect.options[monthSelect.selectedIndex]?.text, ')');
+      } else {
+        console.warn('⚠️ Month selector element not found!');
       }
 
       if (yearSelect) {
@@ -24660,6 +24662,9 @@
         for (let y = currentYear - 1; y <= currentYear + 2; y++) {
           yearSelect.innerHTML += `<option value="${y}" ${y === dienstplanCurrentYear ? 'selected' : ''}>${y}</option>`;
         }
+        console.log('📅 Year selector set to:', yearSelect.value);
+      } else {
+        console.warn('⚠️ Year selector element not found!');
       }
     }
 
@@ -26298,8 +26303,18 @@
 
     // Initialize Dienstplan when tab is opened
     function initializeDienstplan() {
+      console.log('📅 initializeDienstplan() - Current month:', dienstplanCurrentMonth, 'Year:', dienstplanCurrentYear);
+
+      // Always initialize month selectors when tab is opened
+      initDienstplanMonthSelectors();
+
       if (dienstplanCache.length === 0) {
+        // First time: Load data from CentralDataManager
         loadDienstplanData();
+      } else {
+        // Cache already populated: Just apply filters with current month
+        console.log('📅 Using existing cache:', dienstplanCache.length, 'entries');
+        applyDienstplanFilters();
       }
     }
 
