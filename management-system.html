@@ -6297,6 +6297,19 @@
     }
 
     /* ========================================
+       MOBILE-ONLY ELEMENTS - Hidden on Desktop
+       ======================================== */
+    .mobile-profile-panel,
+    .mobile-profile-overlay,
+    .mobile-profile-trigger,
+    .mobile-content-tabs,
+    .mobile-tabs-wrapper,
+    .mobile-slide-indicator,
+    .mobile-slider-indicator {
+      display: none !important;
+    }
+
+    /* ========================================
        MOBILE RESPONSIVE - ACCOUNT SETTINGS
        ======================================== */
 
@@ -6459,7 +6472,7 @@
          ======================================== */
 
       .mobile-content-tabs {
-        display: flex;
+        display: flex !important;
         background: var(--card-bg, rgba(255,255,255,0.8));
         border-radius: 12px;
         padding: 4px;
@@ -6555,6 +6568,7 @@
       }
 
       .mobile-slider-indicator {
+        display: block !important;
         text-align: center;
         padding: 12px 0 8px;
         font-size: 12px;
@@ -6571,6 +6585,7 @@
          ======================================== */
 
       .mobile-profile-overlay {
+        display: block !important;
         position: fixed;
         top: 0;
         left: 0;
@@ -6589,6 +6604,7 @@
       }
 
       .mobile-profile-panel {
+        display: flex !important;
         position: fixed;
         top: 0;
         right: 0;
@@ -6599,7 +6615,6 @@
         transform: translateX(100%);
         transition: transform 0.3s ease-out;
         z-index: 9999;
-        display: flex;
         flex-direction: column;
         box-shadow: -4px 0 20px rgba(0,0,0,0.15);
       }
@@ -34550,43 +34565,54 @@
       // NAVBAR & MOBILE NAVIGATION SETUP
       // ==========================================
 
-      // Mobile Navigation - Direct Click Handler
-      document.querySelectorAll('.mobile-nav-item').forEach(item => {
-        item.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
+      // ==========================================
+      // MOBILE FOOTER NAV - DIRECT BINDING
+      // ==========================================
+      setTimeout(() => {
+        document.querySelectorAll('.mobile-nav-item').forEach(item => {
+          // Remove any existing listeners by cloning
+          const newItem = item.cloneNode(true);
+          item.parentNode.replaceChild(newItem, item);
 
-          const viewName = this.dataset.mobileView;
-          if (!viewName) return;
+          newItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
 
-          console.log('Mobile nav clicked:', viewName);
+            const viewName = this.getAttribute('data-mobile-view');
+            console.log('📱 Mobile nav tapped:', viewName);
 
-          // Update active state
-          document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
-          this.classList.add('active');
+            if (!viewName) {
+              console.error('No data-mobile-view attribute found');
+              return;
+            }
 
-          // Hide all sections
-          document.querySelectorAll('section[id$="-section"]').forEach(s => {
-            s.style.display = 'none';
-            s.classList.remove('active');
-          });
+            // Update active states
+            document.querySelectorAll('.mobile-nav-item').forEach(n => {
+              n.classList.remove('active');
+            });
+            this.classList.add('active');
 
-          // Show target section
-          const target = document.getElementById(viewName + '-section');
-          if (target) {
-            target.style.display = 'block';
-            target.classList.add('active');
-          }
+            // Hide ALL sections
+            document.querySelectorAll('section').forEach(s => {
+              s.style.display = 'none';
+              s.classList.remove('active');
+            });
 
-          // Update desktop nav if exists
-          const navLinks = document.querySelectorAll('.nav-link');
-          navLinks.forEach(link => link.classList.remove('active'));
-          const matchingNavLink = document.querySelector(`.nav-link[data-view="${viewName}"]`);
-          if (matchingNavLink) {
-            matchingNavLink.classList.add('active');
-          }
-        };
-      });
+            // Show target section
+            const targetId = viewName + '-section';
+            const target = document.getElementById(targetId);
+
+            if (target) {
+              target.style.display = 'block';
+              target.classList.add('active');
+              console.log('✅ Switched to:', targetId);
+            } else {
+              console.error('❌ Section not found:', targetId);
+            }
+          }, { passive: false });
+        });
+        console.log('✅ Mobile nav handlers bound');
+      }, 100);
 
       // Initialize navbar hover and mobile navigation
       setupNavbarHover();
