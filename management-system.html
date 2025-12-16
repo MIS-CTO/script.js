@@ -11611,7 +11611,8 @@
         artists:       { batchSize: 500,  parallel: 1, relations: '*' },
 
         // Mittlere Tabellen - moderate Batches
-        dienstplan:    { batchSize: 1000, parallel: 2, relations: '*' },
+        // Dienstplan MIT Artist Relations für Namen-Anzeige
+        dienstplan:    { batchSize: 1000, parallel: 2, relations: '*, artist:artists!artist_id(id, name, email, instagram, rank, is_guest), location:locations!location_id(id, name, city)' },
         appointments:  { batchSize: 1000, parallel: 1, relations: '*' },
 
         // Große Tabellen - kleinere Batches, einfache Relations
