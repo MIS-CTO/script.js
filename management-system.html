@@ -13363,6 +13363,11 @@
                   console.log('✅ Mobile nav shown');
                 }
 
+                // Update mobile profile with user data
+                if (typeof updateMobileProfileData === 'function') {
+                  updateMobileProfileData();
+                }
+
                 // Pre-initialize mobile calendar/dienstplan
                 if (typeof initMobileCalendar === 'function') initMobileCalendar();
                 if (typeof initMobileDienstplan === 'function') initMobileDienstplan();
@@ -28111,6 +28116,11 @@
           console.log('✅ Mobile nav shown');
         }
 
+        // Update mobile profile with user data
+        if (typeof updateMobileProfileData === 'function') {
+          updateMobileProfileData();
+        }
+
         // Pre-initialize mobile calendar/dienstplan
         if (typeof initMobileCalendar === 'function') {
           initMobileCalendar();
@@ -36492,6 +36502,20 @@
         }
       };
 
+      // Update mobile profile with user data
+      window.updateMobileProfileData = function() {
+        const user = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+        if (!user) return;
+
+        const mobileUsername = document.getElementById('mobileProfileUsername');
+        const mobileEmail = document.getElementById('mobileProfileEmail');
+
+        if (mobileUsername) mobileUsername.textContent = user.username || user.name || 'User';
+        if (mobileEmail) mobileEmail.textContent = user.email || '';
+
+        console.log('📱 Mobile profile data updated:', user.username || user.name);
+      };
+
       // Initialize mobile features
       initMobileProfilePanel();
       initMobileTabSwitcher();
@@ -36617,6 +36641,7 @@
 
     // Initialize Mobile Calendar
     function initMobileCalendar() {
+      console.log('📅 Initializing mobile calendar...');
       renderMobileCalWeekdays();
       renderMobileCalTimeline();
 
@@ -36658,6 +36683,9 @@
           else document.getElementById('mobileCalPrevWeek')?.click();
         }
       });
+
+      // Load initial data
+      loadMobileCalendarData();
     }
 
     function renderMobileCalWeekdays() {
@@ -36876,6 +36904,8 @@
     };
 
     function initMobileDienstplan() {
+      console.log('📋 Initializing mobile dienstplan...');
+
       document.getElementById('mobileDpPrevWeek')?.addEventListener('click', () => {
         mobileDpState.currentWeekStart.setDate(mobileDpState.currentWeekStart.getDate() - 7);
         loadMobileDienstplanData();
@@ -36890,6 +36920,9 @@
         mobileDpState.currentWeekStart = getMonday(new Date());
         loadMobileDienstplanData();
       });
+
+      // Load initial data
+      loadMobileDienstplanData();
     }
 
     async function loadMobileDienstplanData() {
