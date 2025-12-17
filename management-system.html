@@ -36891,15 +36891,19 @@
 
       // Event listeners
       document.getElementById('mobileCalPrevWeek')?.addEventListener('click', () => {
-        mobileCalState.currentWeekStart.setDate(mobileCalState.currentWeekStart.getDate() - 7);
-        mobileCalState.selectedDate = new Date(mobileCalState.currentWeekStart);
+        const newWeekStart = new Date(mobileCalState.currentWeekStart);
+        newWeekStart.setDate(newWeekStart.getDate() - 7);
+        mobileCalState.currentWeekStart = newWeekStart;
+        mobileCalState.selectedDate = new Date(newWeekStart);
         renderMobileCalWeekdays();
         loadMobileCalendarData();
       });
 
       document.getElementById('mobileCalNextWeek')?.addEventListener('click', () => {
-        mobileCalState.currentWeekStart.setDate(mobileCalState.currentWeekStart.getDate() + 7);
-        mobileCalState.selectedDate = new Date(mobileCalState.currentWeekStart);
+        const newWeekStart = new Date(mobileCalState.currentWeekStart);
+        newWeekStart.setDate(newWeekStart.getDate() + 7);
+        mobileCalState.currentWeekStart = newWeekStart;
+        mobileCalState.selectedDate = new Date(newWeekStart);
         renderMobileCalWeekdays();
         loadMobileCalendarData();
       });
@@ -37317,12 +37321,16 @@
       console.log('📋 Initializing mobile dienstplan...');
 
       document.getElementById('mobileDpPrevWeek')?.addEventListener('click', () => {
-        mobileDpState.currentWeekStart.setDate(mobileDpState.currentWeekStart.getDate() - 7);
+        const newDate = new Date(mobileDpState.currentWeekStart);
+        newDate.setDate(newDate.getDate() - 7);
+        mobileDpState.currentWeekStart = newDate;
         loadMobileDienstplanData();
       });
 
       document.getElementById('mobileDpNextWeek')?.addEventListener('click', () => {
-        mobileDpState.currentWeekStart.setDate(mobileDpState.currentWeekStart.getDate() + 7);
+        const newDate = new Date(mobileDpState.currentWeekStart);
+        newDate.setDate(newDate.getDate() + 7);
+        mobileDpState.currentWeekStart = newDate;
         loadMobileDienstplanData();
       });
 
@@ -37579,97 +37587,147 @@
         const card = document.createElement('div');
         card.className = 'mobile-dp-day-card';
 
+        // SVG Icons for shift types
+        const shiftIcons = {
+          available: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+          vacation: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
+          sick: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+          business: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+          guestspot: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+          training: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+          convention: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+          homeoffice: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+          other: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+          default: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+        };
+
         let content = '';
         if (dayShifts.length > 0) {
           content = dayShifts.map(s => {
-            // Get shift type from various possible fields
             const shiftType = s.state || s.role || s.type || s.category || 'Schicht';
             const startTime = s.working_start || s.start_time || '';
             const endTime = s.working_end || s.end_time || '';
             const locationName = s.location?.name || '';
 
-            // Color and icon based on type
-            let icon = '🕐';
+            // Determine styling based on type
+            let icon = shiftIcons.default;
             let bgColor = '#E3F2FD';
             let textColor = '#1565C0';
+            let borderColor = '#2196F3';
 
             const typeLower = shiftType.toLowerCase();
 
-            // Available / Working
             if (typeLower.includes('available') || typeLower.includes('verfügbar') || typeLower === 'approved') {
-              icon = '✅'; bgColor = '#E8F5E9'; textColor = '#2E7D32';
-            }
-            // Vacation / Urlaub
-            else if (typeLower.includes('vacation') || typeLower.includes('urlaub')) {
-              icon = '🏖️'; bgColor = '#FFF3E0'; textColor = '#E65100';
-            }
-            // Sick / Krank
-            else if (typeLower.includes('sick') || typeLower.includes('krank')) {
-              icon = '🤒'; bgColor = '#FFEBEE'; textColor = '#C62828';
-            }
-            // Business Trip / Dienstreise
-            else if (typeLower.includes('business') || typeLower.includes('dienstreise')) {
-              icon = '✈️'; bgColor = '#E3F2FD'; textColor = '#1565C0';
-            }
-            // Guestspot
-            else if (typeLower.includes('guest')) {
-              icon = '🌟'; bgColor = '#F3E5F5'; textColor = '#6A1B9A';
-            }
-            // Training / Schulung
-            else if (typeLower.includes('training') || typeLower.includes('schulung')) {
-              icon = '📚'; bgColor = '#E0F7FA'; textColor = '#00838F';
-            }
-            // Convention / Messe
-            else if (typeLower.includes('convention') || typeLower.includes('messe')) {
-              icon = '🎪'; bgColor = '#FCE4EC'; textColor = '#AD1457';
-            }
-            // Home Office
-            else if (typeLower.includes('home') || typeLower.includes('remote')) {
-              icon = '🏠'; bgColor = '#ECEFF1'; textColor = '#37474F';
-            }
-            // Other
-            else if (typeLower.includes('other') || typeLower.includes('sonstig')) {
-              icon = '📝'; bgColor = '#FFF8E1'; textColor = '#FF8F00';
-            }
-            // Free / Frei
-            else if (typeLower.includes('frei') || typeLower.includes('off') || typeLower.includes('free')) {
-              icon = '🏠'; bgColor = '#F5F5F5'; textColor = '#757575';
+              icon = shiftIcons.available;
+              bgColor = '#E8F5E9'; textColor = '#2E7D32'; borderColor = '#4CAF50';
+            } else if (typeLower.includes('vacation') || typeLower.includes('urlaub')) {
+              icon = shiftIcons.vacation;
+              bgColor = '#FFF3E0'; textColor = '#E65100'; borderColor = '#FF9800';
+            } else if (typeLower.includes('sick') || typeLower.includes('krank')) {
+              icon = shiftIcons.sick;
+              bgColor = '#FFEBEE'; textColor = '#C62828'; borderColor = '#F44336';
+            } else if (typeLower.includes('business') || typeLower.includes('dienstreise')) {
+              icon = shiftIcons.business;
+              bgColor = '#E3F2FD'; textColor = '#1565C0'; borderColor = '#2196F3';
+            } else if (typeLower.includes('guest')) {
+              icon = shiftIcons.guestspot;
+              bgColor = '#F3E5F5'; textColor = '#6A1B9A'; borderColor = '#9C27B0';
+            } else if (typeLower.includes('training') || typeLower.includes('schulung')) {
+              icon = shiftIcons.training;
+              bgColor = '#E0F7FA'; textColor = '#00838F'; borderColor = '#00BCD4';
+            } else if (typeLower.includes('convention') || typeLower.includes('messe')) {
+              icon = shiftIcons.convention;
+              bgColor = '#FCE4EC'; textColor = '#AD1457'; borderColor = '#E91E63';
+            } else if (typeLower.includes('home') || typeLower.includes('remote')) {
+              icon = shiftIcons.homeoffice;
+              bgColor = '#ECEFF1'; textColor = '#37474F'; borderColor = '#607D8B';
+            } else if (typeLower.includes('other') || typeLower.includes('sonstig')) {
+              icon = shiftIcons.other;
+              bgColor = '#FFF8E1'; textColor = '#FF8F00'; borderColor = '#FFC107';
+            } else if (typeLower.includes('frei') || typeLower.includes('off') || typeLower.includes('free')) {
+              icon = shiftIcons.homeoffice;
+              bgColor = '#F5F5F5'; textColor = '#757575'; borderColor = '#9E9E9E';
             }
 
-            // Format times
+            // Format time display
             let timeDisplay = '';
             if (startTime || endTime) {
               timeDisplay = `${startTime || '?'}${endTime ? ' - ' + endTime : ''}`;
             }
 
+            // Return full-color card
             return `
-              <div class="mobile-dp-shift" style="background:${bgColor};padding:12px;border-radius:10px;margin-top:8px;border-left:4px solid ${textColor};">
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span style="font-size:18px;">${icon}</span>
-                  <div>
-                    <div style="font-weight:600;font-size:14px;color:${textColor};">${shiftType}</div>
-                    ${timeDisplay ? `<div style="font-size:12px;color:#666;margin-top:2px;">${timeDisplay}</div>` : ''}
-                    ${locationName ? `<div style="font-size:11px;color:#999;margin-top:2px;">📍 ${locationName}</div>` : ''}
+              <div style="
+                background: ${bgColor};
+                border-radius: 12px;
+                padding: 14px 16px;
+                margin-top: 10px;
+                border-left: 4px solid ${borderColor};
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+              ">
+                <div style="display:flex;align-items:flex-start;gap:12px;">
+                  <div style="color:${textColor};flex-shrink:0;margin-top:2px;">
+                    ${icon}
+                  </div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:15px;color:${textColor};">
+                      ${shiftType}
+                    </div>
+                    ${timeDisplay ? `
+                      <div style="font-size:13px;color:${textColor};opacity:0.8;margin-top:4px;">
+                        🕐 ${timeDisplay}
+                      </div>
+                    ` : ''}
+                    ${locationName ? `
+                      <div style="font-size:12px;color:${textColor};opacity:0.7;margin-top:3px;">
+                        📍 ${locationName}
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
               </div>
             `;
           }).join('');
         } else {
+          // Empty state
           content = `
-            <div class="mobile-dp-no-shift" style="background:#f8f9fa;padding:20px;border-radius:10px;text-align:center;margin-top:8px;">
-              <div style="font-size:24px;margin-bottom:8px;">📅</div>
-              <div style="font-weight:500;color:#64B5F6;font-size:14px;">Keine Einträge</div>
-              <div style="font-size:12px;color:#999;margin-top:4px;">Am ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.</div>
+            <div style="
+              background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+              border-radius: 12px;
+              padding: 24px 16px;
+              margin-top: 10px;
+              text-align: center;
+            ">
+              <div style="font-size:32px;margin-bottom:8px;opacity:0.5;">📅</div>
+              <div style="font-weight:500;color:#6c757d;font-size:14px;">Keine Einträge</div>
+              <div style="font-size:12px;color:#adb5bd;margin-top:4px;">
+                Am ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.
+              </div>
             </div>
           `;
         }
 
+        card.style.cssText = `
+          background: white;
+          border-radius: 16px;
+          padding: 16px;
+          margin-bottom: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        `;
+
         card.innerHTML = `
-          <div style="font-weight:600;font-size:14px;padding:12px 0 4px 0;">${dayNames[i]} ${date.getDate()}.${date.getMonth() + 1}.</div>
+          <div style="
+            font-weight:700;
+            font-size:15px;
+            color:#1a1a1a;
+            padding-bottom:8px;
+            border-bottom:1px solid #f0f0f0;
+            margin-bottom:4px;
+          ">
+            ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.
+          </div>
           ${content}
         `;
-        card.style.cssText = 'background:white;border-radius:12px;padding:4px 12px 12px 12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);';
         container.appendChild(card);
       }
     }
