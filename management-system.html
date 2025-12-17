@@ -8217,6 +8217,13 @@
         pointer-events: none; /* Not clickable */
       }
 
+      .mobile-dp-day-cell.empty {
+        background: transparent;
+        pointer-events: none;
+        min-height: 40px;
+        opacity: 0;
+      }
+
       .mobile-dp-day-cell.other-month .mobile-dp-day-events {
         display: none; /* Hide events in other months */
       }
@@ -37541,26 +37548,9 @@
       });
       console.log('📅 Appointments for', dateStr + ':', appointments.length);
 
-      // Get artists for filtering
-      let artistsCache = [];
-      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
-        artistsCache = CentralDataManager.getArtists() || [];
-      } else if (window.CentralDataManager && window.CentralDataManager.getArtists) {
-        artistsCache = window.CentralDataManager.getArtists() || [];
-      }
-
-      // Filter by user if they are an artist (not management/booking)
-      const userRole = (user.role || '').toLowerCase();
-      console.log('📅 User role:', userRole);
-
-      if (!userRole.includes('management') && !userRole.includes('booking')) {
-        const matchingArtist = artistsCache.find(a => a.email === user.email);
-        if (matchingArtist) {
-          console.log('📅 Filtering to artist:', matchingArtist.name);
-          appointments = appointments.filter(apt => apt.artist_id === matchingArtist.id);
-          console.log('📅 Artist appointments:', appointments.length);
-        }
-      }
+      // KRITISCH: Zentrale Artist-Filter Funktion nutzen (erkennt alle Admin-Rollen korrekt)
+      appointments = filterAppointmentsByArtist(appointments);
+      console.log('📅 After artist filter:', appointments.length);
 
       // Filter by category if set
       if (mobileCalState.categoryFilter && mobileCalState.categoryFilter !== 'all') {
@@ -38367,11 +38357,9 @@
       // Build days array with padding
       const days = [];
 
-      // Previous month padding
-      const prevMonth = new Date(year, month, 0);
-      const prevMonthDays = prevMonth.getDate();
-      for (let i = startDay - 1; i >= 0; i--) {
-        days.push({ day: prevMonthDays - i, month: month - 1, year, otherMonth: true });
+      // Previous month padding - EMPTY cells for grid alignment only (no day numbers)
+      for (let i = 0; i < startDay; i++) {
+        days.push({ day: null, otherMonth: true, empty: true });
       }
 
       // Current month days
@@ -38379,11 +38367,7 @@
         days.push({ day: d, month, year, otherMonth: false });
       }
 
-      // Next month padding
-      const remaining = 42 - days.length; // 6 rows * 7 days
-      for (let i = 1; i <= remaining; i++) {
-        days.push({ day: i, month: month + 1, year, otherMonth: true });
-      }
+      // Next month padding - REMOVED: month ends at last day, no padding cells
 
       // Get today for highlighting
       const today = new Date();
@@ -38391,6 +38375,11 @@
 
       // Render days
       const daysHtml = days.map((d, idx) => {
+        // Handle empty padding cells (previous month grid alignment)
+        if (d.empty) {
+          return `<div class="mobile-dp-day-cell other-month empty"></div>`;
+        }
+
         const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
         const actualYear = d.month < 0 ? year - 1 : (d.month > 11 ? year + 1 : year);
         const dateStr = `${actualYear}-${String(actualMonth + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
@@ -38567,11 +38556,9 @@
       // Build days array with padding
       const days = [];
 
-      // Previous month padding
-      const prevMonth = new Date(year, month, 0);
-      const prevMonthDays = prevMonth.getDate();
-      for (let i = startDay - 1; i >= 0; i--) {
-        days.push({ day: prevMonthDays - i, month: month - 1, year, otherMonth: true });
+      // Previous month padding - EMPTY cells for grid alignment only (no day numbers)
+      for (let i = 0; i < startDay; i++) {
+        days.push({ day: null, otherMonth: true, empty: true });
       }
 
       // Current month days
@@ -38579,11 +38566,7 @@
         days.push({ day: d, month, year, otherMonth: false });
       }
 
-      // Next month padding (fill to complete last row)
-      const remaining = 42 - days.length;
-      for (let i = 1; i <= remaining; i++) {
-        days.push({ day: i, month: month + 1, year, otherMonth: true });
-      }
+      // Next month padding - REMOVED: month ends at last day, no padding cells
 
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -38602,6 +38585,11 @@
 
       // Render day cells
       const dayCells = days.map((d, idx) => {
+        // Handle empty padding cells (previous month grid alignment)
+        if (d.empty) {
+          return `<div class="mobile-dp-day-cell other-month empty"></div>`;
+        }
+
         const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
         const actualYear = d.month < 0 ? year - 1 : (d.month > 11 ? year + 1 : year);
         const dateStr = `${actualYear}-${String(actualMonth + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
