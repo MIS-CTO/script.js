@@ -8140,41 +8140,45 @@
 
       .mobile-dp-months-scroll {
         flex: 1;
-        overflow-x: auto;
-        overflow-y: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
         display: flex;
-        scroll-snap-type: x mandatory;
+        flex-direction: column;
         -webkit-overflow-scrolling: touch;
+        padding: 0 16px 100px 16px;
       }
 
       .mobile-dp-month-container {
-        min-width: 100%;
-        scroll-snap-align: start;
-        padding: 16px;
-        overflow-y: auto;
+        width: 100%;
+        padding: 0;
+        margin-bottom: 24px;
       }
 
       .mobile-dp-month-name {
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 700;
         color: #1a1a1a;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
+        padding-top: 16px;
         position: sticky;
         top: 0;
-        background: var(--macos-bg, #f5f5f7);
-        padding: 8px 0;
+        background: linear-gradient(to bottom, #f5f5f7 80%, transparent);
+        z-index: 10;
       }
 
       .mobile-dp-weekday-header {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
-        margin-bottom: 8px;
+        gap: 1px;
+        margin-bottom: 0;
+        background: #f5f5f7;
+        padding: 6px 0;
+        border-radius: 8px 8px 0 0;
       }
 
       .mobile-dp-weekday-label {
         text-align: center;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 600;
         color: #8e8e93;
         text-transform: uppercase;
@@ -8183,39 +8187,55 @@
       .mobile-dp-month-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
+        gap: 1px;
+        background: rgba(0,0,0,0.05);
+        border-radius: 0 0 12px 12px;
+        overflow: hidden;
       }
 
       .mobile-dp-day-cell {
-        aspect-ratio: 1;
+        aspect-ratio: auto;
         min-height: 70px;
+        max-height: 90px;
         background: white;
-        border-radius: 8px;
-        padding: 4px;
+        padding: 3px;
         cursor: pointer;
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid rgba(0,0,0,0.05);
+        border: none;
+        position: relative;
       }
 
       .mobile-dp-day-cell:active {
-        background: #f0f0f0;
+        background: #f0f0f5;
       }
 
       .mobile-dp-day-cell.other-month {
-        opacity: 0.3;
+        opacity: 0.35;
+        background: #fafafa;
       }
 
       .mobile-dp-day-cell.today {
-        border: 2px solid #007AFF;
+        background: #f0f7ff;
+      }
+
+      .mobile-dp-day-cell.today .mobile-dp-day-number {
+        background: #007AFF;
+        color: white;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .mobile-dp-day-number {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         color: #1a1a1a;
-        margin-bottom: 2px;
+        margin-bottom: 1px;
       }
 
       .mobile-dp-day-cell.weekend .mobile-dp-day-number {
@@ -8227,33 +8247,53 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 1px;
       }
 
       .mobile-dp-mini-event {
-        font-size: 9px;
+        font-size: 8px;
         font-weight: 500;
-        padding: 2px 4px;
-        border-radius: 3px;
+        padding: 1px 3px;
+        border-radius: 2px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-height: 1.2;
       }
 
-      .mobile-dp-mini-event.available { background: #E8F5E9; color: #2E7D32; }
-      .mobile-dp-mini-event.vacation { background: #FFF3E0; color: #E65100; }
-      .mobile-dp-mini-event.sick { background: #FFEBEE; color: #C62828; }
-      .mobile-dp-mini-event.training { background: #E0F7FA; color: #00838F; }
-      .mobile-dp-mini-event.homeoffice { background: #ECEFF1; color: #37474F; }
-      .mobile-dp-mini-event.guestspot { background: #F3E5F5; color: #6A1B9A; }
-      .mobile-dp-mini-event.business { background: #E3F2FD; color: #1565C0; }
-      .mobile-dp-mini-event.convention { background: #FCE4EC; color: #AD1457; }
-      .mobile-dp-mini-event.other { background: #FFF8E1; color: #FF8F00; }
+      .mobile-dp-mini-event.available { background: #d4edda; color: #155724; }
+      .mobile-dp-mini-event.vacation { background: #ffe8cc; color: #c45000; }
+      .mobile-dp-mini-event.sick { background: #f8d7da; color: #721c24; }
+      .mobile-dp-mini-event.training { background: #d1ecf1; color: #0c5460; }
+      .mobile-dp-mini-event.homeoffice { background: #e2e3e5; color: #383d41; }
+      .mobile-dp-mini-event.guestspot { background: #e2d5f0; color: #4a1a7a; }
+      .mobile-dp-mini-event.business { background: #cce5ff; color: #004085; }
+      .mobile-dp-mini-event.convention { background: #f5c6cb; color: #721c24; }
+      .mobile-dp-mini-event.other { background: #fff3cd; color: #856404; }
 
       .mobile-dp-more-events {
-        font-size: 9px;
-        color: #8e8e93;
+        font-size: 8px;
+        color: #6c757d;
         text-align: center;
+        padding: 0;
+        line-height: 1;
+      }
+
+      /* Mobile Calendar Month View */
+      .mobile-cal-month-view {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--macos-bg, #f5f5f7);
+        z-index: 10000;
+        flex-direction: column;
+      }
+
+      .mobile-cal-month-view.active {
+        display: flex;
       }
 
       /* Mobile Event Detail View - Full Frame Compact */
@@ -38201,11 +38241,11 @@
         allArtists = CentralDataManager.getArtists() || [];
       }
 
-      // Render 14 months: previous month through 12 months ahead
+      /// Render 12 months: current month + 11 future months
       const today = new Date();
       const months = [];
 
-      for (let offset = -1; offset <= 12; offset++) {
+      for (let offset = 0; offset <= 11; offset++) {
         const monthDate = new Date(today.getFullYear(), today.getMonth() + offset, 1);
         months.push({
           month: monthDate.getMonth(),
@@ -38215,12 +38255,9 @@
 
       container.innerHTML = months.map(m => renderSingleDpMonth(m.month, m.year, allShifts, allArtists)).join('');
 
-      // Scroll to current month (index 1)
+      // Current month is now at index 0 - scroll to top
       setTimeout(() => {
-        const currentMonthEl = container.children[1];
-        if (currentMonthEl) {
-          currentMonthEl.scrollIntoView({ behavior: 'instant', inline: 'start' });
-        }
+        container.scrollTop = 0;
       }, 100);
     }
 
@@ -38349,6 +38386,176 @@
     window.closeMobileDpMonthView = closeMobileDpMonthView;
     window.selectDayFromMonthView = selectDayFromMonthView;
 
+    // ==========================================
+    // MOBILE CALENDAR MONTH VIEW
+    // ==========================================
+    function toggleMobileCalMonthView() {
+      const view = document.getElementById('mobileCalMonthView');
+      if (view) {
+        view.classList.add('active');
+        renderMobileCalMonthView();
+      }
+    }
+
+    function closeMobileCalMonthView() {
+      document.getElementById('mobileCalMonthView')?.classList.remove('active');
+    }
+
+    function renderMobileCalMonthView() {
+      const container = document.getElementById('mobileCalMonthsScroll');
+      if (!container) return;
+
+      // Get all events from calendar
+      let allEvents = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.data?.events) {
+        allEvents = CentralDataManager.data.events || [];
+      }
+
+      // Render 12 months: current month + 11 future months
+      const today = new Date();
+      const months = [];
+
+      for (let offset = 0; offset <= 11; offset++) {
+        const monthDate = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+        months.push({
+          month: monthDate.getMonth(),
+          year: monthDate.getFullYear()
+        });
+      }
+
+      container.innerHTML = months.map(m => renderSingleCalMonth(m.month, m.year, allEvents)).join('');
+
+      // Current month is now at index 0 - scroll to top
+      setTimeout(() => {
+        container.scrollTop = 0;
+      }, 100);
+    }
+
+    function renderSingleCalMonth(month, year, allEvents) {
+      const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                          'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+      const dayLabels = ['M', 'D', 'M', 'D', 'F', 'S', 'S'];
+
+      // Get first day of month and number of days
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+
+      // Get day of week for first day (0 = Sunday, convert to Monday = 0)
+      let startDay = firstDay.getDay() - 1;
+      if (startDay < 0) startDay = 6;
+
+      // Build days array with padding
+      const days = [];
+
+      // Previous month padding
+      const prevMonth = new Date(year, month, 0);
+      const prevMonthDays = prevMonth.getDate();
+      for (let i = startDay - 1; i >= 0; i--) {
+        days.push({ day: prevMonthDays - i, month: month - 1, year, otherMonth: true });
+      }
+
+      // Current month days
+      for (let d = 1; d <= daysInMonth; d++) {
+        days.push({ day: d, month, year, otherMonth: false });
+      }
+
+      // Next month padding (fill to complete last row)
+      const remaining = 7 - (days.length % 7);
+      if (remaining < 7) {
+        for (let i = 1; i <= remaining; i++) {
+          days.push({ day: i, month: month + 1, year, otherMonth: true });
+        }
+      }
+
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      // Render day cells
+      const dayCells = days.map(d => {
+        const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
+        const actualYear = d.month < 0 ? year - 1 : (d.month > 11 ? year + 1 : year);
+        const dateStr = `${actualYear}-${String(actualMonth + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
+        const isToday = dateStr === todayStr;
+
+        // Get events for this day
+        const dayEvents = allEvents.filter(e => {
+          const eventDate = e.start_date || (e.scheduled_at ? e.scheduled_at.split('T')[0] : '');
+          return eventDate === dateStr;
+        });
+
+        // Create mini event dots (show up to 4)
+        let eventsHtml = '';
+        const maxEvents = 4;
+        dayEvents.slice(0, maxEvents).forEach(ev => {
+          const category = ev.category || 'default';
+          const categoryColors = {
+            'consultation': '#007AFF',
+            'new_tattoo': '#34C759',
+            'continuing_tattoo': '#FF9500',
+            'touch_up': '#AF52DE',
+            'selfbooking': '#5AC8FA',
+            'wannado': '#FF2D55',
+            'internal': '#8E8E93',
+            'move': '#FFD60A',
+            'reserved': '#AC8E68',
+            'no_show': '#FF3B30',
+            'default': '#8E8E93'
+          };
+          const color = categoryColors[category] || '#8E8E93';
+          const title = ev.title || ev.customer_name || '';
+          eventsHtml += `<div class="mobile-dp-mini-event" style="background:${color}20;color:${color};">${title}</div>`;
+        });
+
+        if (dayEvents.length > maxEvents) {
+          eventsHtml += `<div class="mobile-dp-mini-event" style="background:#f0f0f0;color:#666;">+${dayEvents.length - maxEvents}</div>`;
+        }
+
+        return `
+          <div class="mobile-dp-day-cell ${d.otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}"
+               onclick="selectDayFromCalMonthView('${dateStr}')">
+            <div class="mobile-dp-day-number">${d.day}</div>
+            <div class="mobile-dp-day-events">${eventsHtml}</div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="mobile-dp-month-container">
+          <div class="mobile-dp-month-name">${monthNames[month]} ${year}</div>
+          <div class="mobile-dp-weekday-header">
+            ${dayLabels.map(l => `<div class="mobile-dp-weekday-label">${l}</div>`).join('')}
+          </div>
+          <div class="mobile-dp-month-grid">${dayCells}</div>
+        </div>
+      `;
+    }
+
+    function selectDayFromCalMonthView(dateStr) {
+      // Parse the date
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const selectedDate = new Date(year, month - 1, day);
+
+      // Update calendar state
+      if (typeof mobileCalState !== 'undefined') {
+        mobileCalState.currentDate = selectedDate;
+      }
+
+      // Close month view
+      closeMobileCalMonthView();
+
+      // Reload calendar day view
+      if (typeof renderMobileCalendar === 'function') {
+        renderMobileCalendar();
+      }
+      updateMobileHeaderTitle('calendar');
+    }
+
+    // Expose calendar month view functions
+    window.toggleMobileCalMonthView = toggleMobileCalMonthView;
+    window.closeMobileCalMonthView = closeMobileCalMonthView;
+    window.selectDayFromCalMonthView = selectDayFromCalMonthView;
+
     function renderEmptyDienstplan(container) {
       renderDienstplanDays(container, []);
     }
@@ -38428,6 +38635,15 @@
 
     <!-- Week Navigation -->
     <div class="mobile-cal-week-nav">
+      <!-- Month View Button -->
+      <button class="mobile-cal-nav-btn" id="mobileCalMonthViewBtn" onclick="toggleMobileCalMonthView()" style="flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </button>
       <button class="mobile-cal-nav-btn" id="mobileCalPrevWeek">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 18l-6-6 6-6"/>
@@ -38471,6 +38687,22 @@
       <div class="mobile-cal-hours" id="mobileCalHours">
         <!-- Hours 08:00 - 22:00 will be populated by JS -->
       </div>
+    </div>
+  </div>
+
+  <!-- Mobile Calendar Month View -->
+  <div class="mobile-cal-month-view" id="mobileCalMonthView">
+    <div class="mobile-dp-month-header">
+      <button class="mobile-dp-month-back" onclick="closeMobileCalMonthView()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        Zurück
+      </button>
+      <h2>Monatsübersicht</h2>
+    </div>
+    <div class="mobile-dp-months-scroll" id="mobileCalMonthsScroll">
+      <!-- Months rendered by JS -->
     </div>
   </div>
 
