@@ -35362,7 +35362,7 @@
       // ==========================================
 
       // Initialize navbar hover and mobile navigation
-      // setupNavbarHover(); // Disabled - function may not exist
+      setupNavbarHover();
       setupMobileNavigation();
 
       // Header Title - Return to Dashboard
@@ -35631,7 +35631,7 @@
 
       // Re-init bei Resize
       window.addEventListener('resize', function() {
-        // setupNavbarHover(); // Disabled - function may not exist
+        setupNavbarHover();
         setupMobileNavigation();
       });
 
@@ -37382,6 +37382,27 @@
       }
       mobileDebug('Total shifts in system', allShifts.length);
 
+      // Show ACTUAL date values from shifts
+      if (allShifts.length > 0) {
+        const sampleShift = allShifts[0];
+        mobileDebug('Sample shift RAW dates', {
+          start_date: sampleShift.start_date,
+          end_date: sampleShift.end_date,
+          start_date_type: typeof sampleShift.start_date
+        });
+
+        // Try to find ANY shift in December 2025
+        const decemberShifts = allShifts.filter(s => {
+          const sd = (s.start_date || '').toString();
+          return sd.includes('2025-12');
+        });
+        mobileDebug('Shifts in December 2025', decemberShifts.length);
+
+        if (decemberShifts.length > 0) {
+          mobileDebug('First December shift date', decemberShifts[0].start_date);
+        }
+      }
+
       // Show sample shift structure
       if (allShifts.length > 0) {
         mobileDebug('Sample shift keys', Object.keys(allShifts[0]));
@@ -37429,14 +37450,36 @@
         mobileDebug('Sample artist emails', allArtists.slice(0, 5).map(a => a.email));
       }
 
-      // Filter by date range first
+      // Find shifts for the matching artist (if found)
+      if (matchingArtist && allShifts.length > 0) {
+        const artistShifts = allShifts.filter(s => s.artist_id === matchingArtist.id);
+        mobileDebug('Total shifts for artist ' + matchingArtist.name, artistShifts.length);
+
+        if (artistShifts.length > 0) {
+          mobileDebug('Artist shift dates (first 5)', artistShifts.slice(0,5).map(s => s.start_date));
+        }
+      }
+
+      // Filter by date range - with flexible date parsing
       mobileDebug('Date range', { start: startDate, end: endDate });
 
       let shifts = allShifts.filter(s => {
-        const shiftDate = (s.start_date || s.work_date || '').toString().split('T')[0];
-        return shiftDate >= startDate && shiftDate <= endDate;
+        const rawDate = s.start_date || s.date || '';
+
+        // Handle various date formats
+        let dateOnly;
+        if (typeof rawDate === 'string') {
+          // "2025-12-15" or "2025-12-15T00:00:00" or "2025-12-15T00:00:00.000Z"
+          dateOnly = rawDate.split('T')[0];
+        } else if (rawDate instanceof Date) {
+          dateOnly = rawDate.toISOString().split('T')[0];
+        } else {
+          return false;
+        }
+
+        return dateOnly >= startDate && dateOnly <= endDate;
       });
-      mobileDebug('Shifts in date range', shifts.length);
+      mobileDebug('Shifts in date range (after flexible parse)', shifts.length);
 
       // Now filter by artist
       if (matchingArtist && shifts.length > 0) {
@@ -37468,6 +37511,33 @@
           }).map(s => s.artist_id))];
           mobileDebug('Artist IDs in this week', uniqueIds.slice(0, 10));
           mobileDebug('Looking for', { artistId: matchingArtist.id, userId: user.id });
+        }
+      }
+
+      // TEMPORARY DEBUG: Show all shifts for this week, not filtered by artist
+      if (shifts.length === 0) {
+        mobileDebug('🔴 NO SHIFTS FOUND - Showing unfiltered data for debugging');
+
+        // Re-filter without artist constraint
+        shifts = allShifts.filter(s => {
+          const rawDate = s.start_date || s.date || '';
+          const dateOnly = rawDate.toString().split('T')[0];
+          return dateOnly >= startDate && dateOnly <= endDate;
+        });
+
+        mobileDebug('Unfiltered shifts in date range', shifts.length);
+
+        if (shifts.length > 0) {
+          // Show who these shifts belong to
+          const artistIds = [...new Set(shifts.map(s => s.artist_id))];
+          mobileDebug('Artist IDs with shifts this week', artistIds.slice(0, 10));
+
+          // Get artist names
+          const artistNames = artistIds.slice(0, 5).map(id => {
+            const a = allArtists.find(art => art.id === id);
+            return a ? a.name : id;
+          });
+          mobileDebug('Artists with shifts', artistNames);
         }
       }
 
