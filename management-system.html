@@ -8150,6 +8150,77 @@
       .mobile-event-category-badge.move { background: #FFF8E1; color: #FF8F00; }
       .mobile-event-category-badge.reserved { background: #EFEBE9; color: #4E342E; }
       .mobile-event-category-badge.no_show { background: #FFEBEE; color: #C62828; }
+
+      /* Mobile Debug Popup */
+      .mobile-debug-popup {
+        display: none;
+        position: fixed;
+        bottom: 80px;
+        left: 10px;
+        right: 10px;
+        max-height: 60vh;
+        background: #1a1a1a;
+        border-radius: 12px;
+        z-index: 99999;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+
+      .mobile-debug-popup.active {
+        display: block;
+      }
+
+      .mobile-debug-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #2a2a2a;
+        color: #fff;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .mobile-debug-header button {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px 8px;
+      }
+
+      .mobile-debug-content {
+        padding: 12px 16px;
+        color: #0f0;
+        font-family: 'SF Mono', Monaco, monospace;
+        font-size: 11px;
+        line-height: 1.4;
+        max-height: 50vh;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      /* Debug trigger button */
+      .mobile-debug-trigger {
+        position: fixed;
+        bottom: 140px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
+        border-radius: 22px;
+        background: #ff9500;
+        color: white;
+        border: none;
+        font-size: 20px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(255,149,0,0.4);
+        z-index: 9999;
+        cursor: pointer;
+      }
     }
   </style>
 </head>
@@ -37188,6 +37259,51 @@
     }
 
     // ==========================================
+    // MOBILE DEBUG POPUP
+    // ==========================================
+    let mobileDebugLog = [];
+
+    function mobileDebug(message, data = null) {
+      const timestamp = new Date().toLocaleTimeString();
+      let logEntry = `[${timestamp}] ${message}`;
+      if (data !== null) {
+        try {
+          logEntry += '\n  → ' + JSON.stringify(data, null, 2).substring(0, 500);
+        } catch(e) {
+          logEntry += '\n  → [Object]';
+        }
+      }
+      mobileDebugLog.push(logEntry);
+      console.log('📱 ' + message, data);
+      if (mobileDebugLog.length > 50) {
+        mobileDebugLog = mobileDebugLog.slice(-50);
+      }
+    }
+
+    function showMobileDebug() {
+      const popup = document.getElementById('mobileDebugPopup');
+      const content = document.getElementById('mobileDebugContent');
+      if (popup && content) {
+        content.textContent = mobileDebugLog.join('\n\n') || 'No debug info yet';
+        popup.classList.add('active');
+      }
+    }
+
+    function closeMobileDebug() {
+      document.getElementById('mobileDebugPopup')?.classList.remove('active');
+    }
+
+    function clearMobileDebug() {
+      mobileDebugLog = [];
+      const content = document.getElementById('mobileDebugContent');
+      if (content) content.textContent = 'Cleared';
+    }
+
+    window.mobileDebug = mobileDebug;
+    window.showMobileDebug = showMobileDebug;
+    window.closeMobileDebug = closeMobileDebug;
+
+    // ==========================================
     // MOBILE DIENSTPLAN
     // ==========================================
     const mobileDpState = {
@@ -37217,21 +37333,24 @@
     }
 
     async function loadMobileDienstplanData() {
-      console.log('📋 ============ DIENSTPLAN DEBUG ============');
+      mobileDebug('============ DIENSTPLAN DEBUG ============');
 
       const container = document.getElementById('mobileDpDays');
       if (!container) {
-        console.log('📋 ERROR: Container #mobileDpDays not found');
+        mobileDebug('ERROR: Container #mobileDpDays not found');
         return;
       }
 
+      // Show debug button
+      const debugBtn = document.getElementById('mobileDebugTrigger');
+      if (debugBtn) debugBtn.style.display = 'flex';
+
       // Get user
       const user = window.currentUser || currentUser;
-      console.log('📋 User:', user ? user.username : 'NOT FOUND');
-      console.log('📋 User ID:', user?.id);
-      console.log('📋 User Email:', user?.email);
+      mobileDebug('User', { name: user?.username, id: user?.id, email: user?.email });
 
       if (!user) {
+        mobileDebug('No user - showing login message');
         container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--macos-text-secondary);">Bitte anmelden</div>';
         return;
       }
@@ -37258,17 +37377,16 @@
           allShifts = dienstplanCache;
         }
       }
-      console.log('📋 Total shifts in system:', allShifts.length);
+      mobileDebug('Total shifts in system', allShifts.length);
 
       // Show sample shift structure
       if (allShifts.length > 0) {
-        console.log('📋 Sample shift structure:', Object.keys(allShifts[0]));
-        console.log('📋 Sample shift:', {
+        mobileDebug('Sample shift keys', Object.keys(allShifts[0]));
+        mobileDebug('Sample shift', {
           artist_id: allShifts[0].artist_id,
           user_id: allShifts[0].user_id,
           profile_id: allShifts[0].profile_id,
-          date: allShifts[0].date,
-          artist: allShifts[0].artist
+          date: allShifts[0].date
         });
       }
 
@@ -37277,7 +37395,7 @@
       if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
         allArtists = CentralDataManager.getArtists() || [];
       }
-      console.log('📋 Total artists:', allArtists.length);
+      mobileDebug('Total artists', allArtists.length);
 
       // Find artist for current user - try multiple methods
       let matchingArtist = null;
@@ -37289,7 +37407,7 @@
       );
 
       if (matchingArtist) {
-        console.log('📋 Found artist by email:', matchingArtist.name, 'ID:', matchingArtist.id);
+        mobileDebug('Found artist by email', { name: matchingArtist.name, id: matchingArtist.id });
       } else {
         // Method 2: Match by name
         matchingArtist = allArtists.find(a =>
@@ -37297,35 +37415,33 @@
           a.name.toLowerCase().trim() === user.username.toLowerCase().trim()
         );
         if (matchingArtist) {
-          console.log('📋 Found artist by name:', matchingArtist.name, 'ID:', matchingArtist.id);
+          mobileDebug('Found artist by name', { name: matchingArtist.name, id: matchingArtist.id });
         }
       }
 
       if (!matchingArtist) {
-        console.log('📋 No matching artist found!');
-        console.log('📋 User email:', user.email);
-        console.log('📋 User name:', user.username);
-        console.log('📋 Available artist emails:', allArtists.slice(0, 10).map(a => a.email));
-        console.log('📋 Available artist names:', allArtists.slice(0, 10).map(a => a.name));
+        mobileDebug('No matching artist found!');
+        mobileDebug('User email', user.email);
+        mobileDebug('User name', user.username);
+        mobileDebug('Sample artist emails', allArtists.slice(0, 5).map(a => a.email));
       }
 
       // Filter by date range first
-      console.log('📋 Date range:', startDate, 'to', endDate);
+      mobileDebug('Date range', { start: startDate, end: endDate });
 
       let shifts = allShifts.filter(s => {
         const shiftDate = (s.date || s.work_date || '').toString().split('T')[0];
         return shiftDate >= startDate && shiftDate <= endDate;
       });
-      console.log('📋 Shifts in date range:', shifts.length);
+      mobileDebug('Shifts in date range', shifts.length);
 
       // Now filter by artist
       if (matchingArtist && shifts.length > 0) {
         // Check what ID field the shifts use
         const sampleShift = shifts[0];
-        console.log('📋 Shift ID fields:', {
+        mobileDebug('Shift ID fields', {
           artist_id: sampleShift.artist_id,
-          user_id: sampleShift.user_id,
-          'artist.id': sampleShift.artist?.id
+          user_id: sampleShift.user_id
         });
 
         const beforeCount = shifts.length;
@@ -37339,7 +37455,7 @@
           s.user_id === user.id
         );
 
-        console.log('📋 After artist filter:', shifts.length, '(was', beforeCount, ')');
+        mobileDebug('After artist filter', { now: shifts.length, was: beforeCount });
 
         // If still 0, show what artist_ids exist
         if (shifts.length === 0) {
@@ -37347,16 +37463,12 @@
             const sd = (s.date || '').split('T')[0];
             return sd >= startDate && sd <= endDate;
           }).map(s => s.artist_id))];
-          console.log('📋 Artist IDs in this week:', uniqueIds);
-          console.log('📋 Looking for:', matchingArtist.id, 'or', user.id);
-
-          // Check if there's a nested artist object
-          const withNestedArtist = allShifts.find(s => s.artist && typeof s.artist === 'object');
-          if (withNestedArtist) {
-            console.log('📋 Nested artist example:', withNestedArtist.artist);
-          }
+          mobileDebug('Artist IDs in this week', uniqueIds.slice(0, 10));
+          mobileDebug('Looking for', { artistId: matchingArtist.id, userId: user.id });
         }
       }
+
+      mobileDebug('============ END DEBUG ============');
 
       // Render days
       const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -37415,8 +37527,6 @@
         card.style.cssText = 'background:white;border-radius:12px;padding:4px 12px 12px 12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);';
         container.appendChild(card);
       }
-
-      console.log('📋 ============ END DIENSTPLAN DEBUG ============');
     }
 
     function renderEmptyDienstplan(container) {
@@ -37653,6 +37763,20 @@
       <!-- Content loaded dynamically -->
     </div>
   </div>
+
+  <!-- Mobile Debug Popup -->
+  <div class="mobile-debug-popup" id="mobileDebugPopup">
+    <div class="mobile-debug-header">
+      <span>🔧 Debug Info</span>
+      <button onclick="closeMobileDebug()">✕</button>
+    </div>
+    <div class="mobile-debug-content" id="mobileDebugContent">
+      <!-- Debug content loaded here -->
+    </div>
+  </div>
+
+  <!-- Mobile Debug Trigger Button -->
+  <button class="mobile-debug-trigger" id="mobileDebugTrigger" onclick="showMobileDebug()">🔧</button>
 
 </body>
 </html><!-- VERSION: v128 - Removed weekly statistics badges, moved version indicator to welcome banner -->
