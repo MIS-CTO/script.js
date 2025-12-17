@@ -7594,6 +7594,20 @@
        Only visible on mobile < 768px
        ========================================== */
     @media (max-width: 768px) {
+      /* Prevent iOS overscroll/bounce */
+      html, body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Lock the body when mobile views are active */
+      body.mobile-view-active {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+      }
+
       /* Mobile Calendar View - Apple Style */
       .mobile-calendar-view {
         display: none !important;
@@ -7606,6 +7620,9 @@
         z-index: 100;
         overflow: hidden;
         flex-direction: column;
+        padding-top: 0;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
       }
 
       .mobile-calendar-view.active {
@@ -7861,10 +7878,34 @@
         z-index: 100;
         overflow: hidden;
         flex-direction: column;
+        padding-top: 0;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
       }
 
       .mobile-dienstplan-view.active {
         display: flex !important;
+      }
+
+      /* Scrollable content areas */
+      .mobile-cal-timeline,
+      #mobileDpDays {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+
+      #mobileDpDays {
+        padding: 12px 16px;
+        padding-bottom: 20px;
+      }
+
+      #mobileCalTimeline {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 20px;
       }
 
       .mobile-dp-header {
@@ -7981,7 +8022,7 @@
         color: var(--macos-text-secondary, #86868b);
       }
 
-      /* Mobile Event Detail View - Full Frame */
+      /* Mobile Event Detail View - Full Frame Compact */
       .mobile-event-detail {
         display: none;
         position: fixed;
@@ -7993,6 +8034,7 @@
         z-index: 10000;
         flex-direction: column;
         overflow: hidden;
+        overscroll-behavior: contain;
       }
 
       .mobile-event-detail.active {
@@ -8003,62 +8045,72 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px;
-        padding-top: max(16px, env(safe-area-inset-top));
+        padding: 12px 16px;
+        padding-top: max(12px, env(safe-area-inset-top));
         border-bottom: 1px solid var(--macos-stroke-primary);
         background: var(--macos-nav-bg);
+        min-height: 44px;
       }
 
       .mobile-event-back {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 2px;
         background: none;
         border: none;
         color: var(--macos-accent-blue);
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 500;
         cursor: pointer;
-        padding: 8px 0;
+        padding: 6px 0;
+      }
+
+      .mobile-event-back svg {
+        width: 20px;
+        height: 20px;
       }
 
       .mobile-event-category-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 10px;
         font-weight: 600;
         text-transform: uppercase;
+        letter-spacing: 0.3px;
       }
 
       .mobile-event-detail-content {
         flex: 1;
         overflow-y: auto;
-        padding: 20px 16px;
-        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        padding: 12px 16px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
       }
 
       .mobile-event-section {
-        margin-bottom: 24px;
+        margin-bottom: 16px;
       }
 
       .mobile-event-section-title {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
+        gap: 6px;
+        font-size: 11px;
         font-weight: 600;
         color: var(--macos-text-secondary);
-        margin-bottom: 12px;
+        margin-bottom: 8px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
       }
 
       .mobile-event-field {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        padding: 12px 0;
+        padding: 8px 0;
         border-bottom: 1px solid var(--macos-stroke-secondary);
+        gap: 12px;
       }
 
       .mobile-event-field:last-child {
@@ -8066,24 +8118,25 @@
       }
 
       .mobile-event-label {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 600;
         color: var(--macos-text-tertiary);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
+        flex-shrink: 0;
       }
 
       .mobile-event-value {
-        font-size: 15px;
+        font-size: 13px;
         color: var(--macos-text-primary);
         text-align: right;
-        max-width: 60%;
         word-break: break-word;
       }
 
       .mobile-event-value.empty {
         color: var(--macos-text-tertiary);
         font-style: italic;
+        font-size: 12px;
       }
 
       /* Category Badge Colors */
@@ -37164,17 +37217,28 @@
     }
 
     async function loadMobileDienstplanData() {
-      console.log('📋 loadMobileDienstplanData called');
+      console.log('📋 ============ DIENSTPLAN DEBUG ============');
 
       const container = document.getElementById('mobileDpDays');
       if (!container) {
-        console.log('📋 Container not found');
+        console.log('📋 ERROR: Container #mobileDpDays not found');
         return;
       }
 
+      // Get user
+      const user = window.currentUser || currentUser;
+      console.log('📋 User:', user ? user.username : 'NOT FOUND');
+      console.log('📋 User ID:', user?.id);
+      console.log('📋 User Email:', user?.email);
+
+      if (!user) {
+        container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--macos-text-secondary);">Bitte anmelden</div>';
+        return;
+      }
+
+      // Calculate date range
       const weekEnd = new Date(mobileDpState.currentWeekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
-
       const startDate = mobileDpState.currentWeekStart.toISOString().split('T')[0];
       const endDate = weekEnd.toISOString().split('T')[0];
 
@@ -37185,80 +37249,113 @@
         label.textContent = `Mo ${fmt(mobileDpState.currentWeekStart)} - So ${fmt(weekEnd)}`;
       }
 
-      // Get user
-      const user = window.currentUser || currentUser;
-      console.log('📋 User:', user ? (user.username || user.name || 'found') : 'NOT FOUND');
-
-      if (!user) {
-        container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--macos-text-secondary);">Bitte anmelden</div>';
-        return;
-      }
-
-      // Get dienstplan from CentralDataManager or cache
+      // Get ALL dienstplan data
       let allShifts = [];
-      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.data?.dienstplan) {
-        allShifts = CentralDataManager.data.dienstplan || [];
-        console.log('📋 Got shifts from CentralDataManager.data:', allShifts.length);
-      } else if (window.dienstplanCache) {
-        allShifts = window.dienstplanCache || [];
-        console.log('📋 Got shifts from window.dienstplanCache:', allShifts.length);
-      } else if (typeof dienstplanCache !== 'undefined') {
-        allShifts = dienstplanCache || [];
-        console.log('📋 Got shifts from dienstplanCache:', allShifts.length);
+      if (typeof CentralDataManager !== 'undefined') {
+        if (CentralDataManager.data?.dienstplan) {
+          allShifts = CentralDataManager.data.dienstplan;
+        } else if (typeof dienstplanCache !== 'undefined') {
+          allShifts = dienstplanCache;
+        }
+      }
+      console.log('📋 Total shifts in system:', allShifts.length);
+
+      // Show sample shift structure
+      if (allShifts.length > 0) {
+        console.log('📋 Sample shift structure:', Object.keys(allShifts[0]));
+        console.log('📋 Sample shift:', {
+          artist_id: allShifts[0].artist_id,
+          user_id: allShifts[0].user_id,
+          profile_id: allShifts[0].profile_id,
+          date: allShifts[0].date,
+          artist: allShifts[0].artist
+        });
       }
 
-      console.log('📋 Total shifts:', allShifts.length);
+      // Get artists
+      let allArtists = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
+        allArtists = CentralDataManager.getArtists() || [];
+      }
+      console.log('📋 Total artists:', allArtists.length);
+
+      // Find artist for current user - try multiple methods
+      let matchingArtist = null;
+
+      // Method 1: Match by email
+      matchingArtist = allArtists.find(a =>
+        a.email && user.email &&
+        a.email.toLowerCase().trim() === user.email.toLowerCase().trim()
+      );
+
+      if (matchingArtist) {
+        console.log('📋 Found artist by email:', matchingArtist.name, 'ID:', matchingArtist.id);
+      } else {
+        // Method 2: Match by name
+        matchingArtist = allArtists.find(a =>
+          a.name && user.username &&
+          a.name.toLowerCase().trim() === user.username.toLowerCase().trim()
+        );
+        if (matchingArtist) {
+          console.log('📋 Found artist by name:', matchingArtist.name, 'ID:', matchingArtist.id);
+        }
+      }
+
+      if (!matchingArtist) {
+        console.log('📋 No matching artist found!');
+        console.log('📋 User email:', user.email);
+        console.log('📋 User name:', user.username);
+        console.log('📋 Available artist emails:', allArtists.slice(0, 10).map(a => a.email));
+        console.log('📋 Available artist names:', allArtists.slice(0, 10).map(a => a.name));
+      }
+
+      // Filter by date range first
       console.log('📋 Date range:', startDate, 'to', endDate);
 
-      // Debug: show first shift structure
-      if (allShifts.length > 0) {
-        console.log('📋 Sample shift:', JSON.stringify(allShifts[0], null, 2).substring(0, 500));
-      }
-
-      // Filter by date range
       let shifts = allShifts.filter(s => {
         const shiftDate = (s.date || s.work_date || '').toString().split('T')[0];
         return shiftDate >= startDate && shiftDate <= endDate;
       });
       console.log('📋 Shifts in date range:', shifts.length);
 
-      // Get artists
-      let allArtists = [];
-      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
-        allArtists = CentralDataManager.getArtists() || [];
-      } else if (window.CentralDataManager && window.CentralDataManager.getArtists) {
-        allArtists = window.CentralDataManager.getArtists() || [];
-      }
-      console.log('📋 Total artists:', allArtists.length);
+      // Now filter by artist
+      if (matchingArtist && shifts.length > 0) {
+        // Check what ID field the shifts use
+        const sampleShift = shifts[0];
+        console.log('📋 Shift ID fields:', {
+          artist_id: sampleShift.artist_id,
+          user_id: sampleShift.user_id,
+          'artist.id': sampleShift.artist?.id
+        });
 
-      // Find artist by EMAIL (case-insensitive)
-      const matchingArtist = allArtists.find(a =>
-        a.email && user.email &&
-        a.email.toLowerCase() === user.email.toLowerCase()
-      );
-      console.log('📋 User email:', user.email);
-
-      if (matchingArtist) {
-        console.log('📋 Found artist by email:', matchingArtist.name, 'Artist ID:', matchingArtist.id);
-
-        // Filter shifts to this artist
         const beforeCount = shifts.length;
-        shifts = shifts.filter(s => s.artist_id === matchingArtist.id);
+
+        // Try matching on multiple possible ID fields
+        shifts = shifts.filter(s =>
+          s.artist_id === matchingArtist.id ||
+          s.user_id === matchingArtist.id ||
+          s.artist?.id === matchingArtist.id ||
+          s.artist_id === user.id ||
+          s.user_id === user.id
+        );
+
         console.log('📋 After artist filter:', shifts.length, '(was', beforeCount, ')');
 
-        // If still 0, show what artist_ids exist in the filtered shifts
-        if (shifts.length === 0 && beforeCount > 0) {
-          const uniqueArtistIds = [...new Set(allShifts.filter(s => {
-            const sd = (s.date || '').toString().split('T')[0];
+        // If still 0, show what artist_ids exist
+        if (shifts.length === 0) {
+          const uniqueIds = [...new Set(allShifts.filter(s => {
+            const sd = (s.date || '').split('T')[0];
             return sd >= startDate && sd <= endDate;
           }).map(s => s.artist_id))];
-          console.log('📋 Artist IDs in this week:', uniqueArtistIds.slice(0, 10));
-          console.log('📋 Looking for artist_id:', matchingArtist.id);
+          console.log('📋 Artist IDs in this week:', uniqueIds);
+          console.log('📋 Looking for:', matchingArtist.id, 'or', user.id);
+
+          // Check if there's a nested artist object
+          const withNestedArtist = allShifts.find(s => s.artist && typeof s.artist === 'object');
+          if (withNestedArtist) {
+            console.log('📋 Nested artist example:', withNestedArtist.artist);
+          }
         }
-      } else {
-        console.log('📋 No artist found for email:', user.email);
-        // Debug: show some artist emails
-        console.log('📋 Sample artist emails:', allArtists.slice(0, 5).map(a => a.email));
       }
 
       // Render days
@@ -37281,44 +37378,45 @@
         let content = '';
         if (dayShifts.length > 0) {
           content = dayShifts.map(s => {
-            const shiftType = s.shift_type || s.type || s.category || 'Schicht';
-            const startTime = s.start_time || s.time_start || '09:00';
-            const endTime = s.end_time || s.time_end || '18:00';
+            const shiftType = s.shift_type || s.type || s.category || s.status || 'Schicht';
+            const startTime = s.start_time || s.time_start || s.start?.split('T')[1]?.substring(0, 5) || '';
+            const endTime = s.end_time || s.time_end || s.end?.split('T')[1]?.substring(0, 5) || '';
             const locationName = s.location?.name || s.location_name || '';
 
-            // Color based on type
+            // Determine icon and color
             let icon = '🕐';
             let bgColor = '#E3F2FD';
-            if (shiftType.toLowerCase().includes('urlaub')) { icon = '🏖️'; bgColor = '#FFF3E0'; }
-            if (shiftType.toLowerCase().includes('krank')) { icon = '🤒'; bgColor = '#FFEBEE'; }
-            if (shiftType.toLowerCase().includes('frei')) { icon = '🏠'; bgColor = '#F3E5F5'; }
+            const typeLower = shiftType.toLowerCase();
+            if (typeLower.includes('urlaub') || typeLower.includes('vacation')) { icon = '🏖️'; bgColor = '#FFF3E0'; }
+            if (typeLower.includes('krank') || typeLower.includes('sick')) { icon = '🤒'; bgColor = '#FFEBEE'; }
+            if (typeLower.includes('frei') || typeLower.includes('off')) { icon = '🏠'; bgColor = '#F3E5F5'; }
+            if (typeLower.includes('available') || typeLower.includes('verfügbar')) { icon = '✅'; bgColor = '#E8F5E9'; }
 
             return `
-              <div class="mobile-dp-shift" style="background:${bgColor};">
-                <div class="mobile-dp-shift-title">${icon} ${shiftType}</div>
-                <div class="mobile-dp-shift-info">${startTime} - ${endTime}${locationName ? ' @ ' + locationName : ''}</div>
+              <div class="mobile-dp-shift" style="background:${bgColor};padding:10px;border-radius:8px;margin-top:8px;">
+                <div style="font-weight:500;font-size:13px;">${icon} ${shiftType}</div>
+                ${startTime || endTime ? `<div style="font-size:12px;color:#666;margin-top:2px;">${startTime}${endTime ? ' - ' + endTime : ''}${locationName ? ' @ ' + locationName : ''}</div>` : ''}
               </div>
             `;
           }).join('');
         } else {
           content = `
-            <div class="mobile-dp-no-shift">
-              <div style="font-weight:500;color:#64B5F6;">Keine Einträge</div>
-              <div style="font-size:12px;margin-top:4px;">Am ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.</div>
+            <div class="mobile-dp-no-shift" style="background:#f5f5f5;padding:16px;border-radius:8px;text-align:center;margin-top:8px;">
+              <div style="font-weight:500;color:#64B5F6;font-size:13px;">Keine Einträge</div>
+              <div style="font-size:11px;color:#999;margin-top:4px;">Am ${dayNames[i]} ${date.getDate()}.${date.getMonth() + 1}.</div>
             </div>
           `;
         }
 
         card.innerHTML = `
-          <div class="mobile-dp-day-header">
-            <span>${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.</span>
-          </div>
+          <div style="font-weight:600;font-size:14px;padding:12px 0 4px 0;">${dayNames[i]} ${date.getDate()}.${date.getMonth() + 1}.</div>
           ${content}
         `;
+        card.style.cssText = 'background:white;border-radius:12px;padding:4px 12px 12px 12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);';
         container.appendChild(card);
       }
 
-      console.log('📋 ✅ Mobile dienstplan rendered');
+      console.log('📋 ============ END DIENSTPLAN DEBUG ============');
     }
 
     function renderEmptyDienstplan(container) {
