@@ -8212,8 +8212,17 @@
       }
 
       .mobile-dp-day-cell.other-month {
-        opacity: 0.35;
-        background: #fafafa;
+        opacity: 0.3;
+        background: transparent;
+        pointer-events: none; /* Not clickable */
+      }
+
+      .mobile-dp-day-cell.other-month .mobile-dp-day-events {
+        display: none; /* Hide events in other months */
+      }
+
+      .mobile-dp-day-cell.other-month .mobile-dp-day-number {
+        color: #ccc;
       }
 
       .mobile-dp-day-cell.today {
@@ -38241,7 +38250,33 @@
         allArtists = CentralDataManager.getArtists() || [];
       }
 
-      /// Render 12 months: current month + 11 future months
+      // ========================================
+      // ARTIST FILTER - Same logic as week view
+      // ========================================
+      const user = window.currentUser;
+      const userRole = user?.role || user?.user_role || '';
+      const canSeeAllShifts = ['admin', 'owner', 'management', 'manager', 'booking'].some(r =>
+        userRole.toLowerCase().includes(r)
+      );
+
+      // If user cannot see all shifts, filter to only their own
+      if (!canSeeAllShifts && user) {
+        const matchingArtist = allArtists.find(a =>
+          a.email && user.email &&
+          a.email.toLowerCase().trim() === user.email.toLowerCase().trim()
+        );
+
+        if (matchingArtist) {
+          console.log('📅 Month view filtering for artist:', matchingArtist.name);
+          allShifts = allShifts.filter(s => s.artist_id === matchingArtist.id);
+        } else {
+          console.log('📅 No matching artist found, showing no shifts');
+          allShifts = [];
+        }
+      }
+      // ========================================
+
+      // Render 12 months: current month + 11 future months
       const today = new Date();
       const months = [];
 
@@ -38309,37 +38344,46 @@
         const isToday = dateStr === todayStr;
         const isWeekend = idx % 7 >= 5;
 
-        // Get shifts for this day
-        const dayShifts = allShifts.filter(s => {
-          const sd = (s.start_date || '').toString().split('T')[0];
-          return sd === dateStr;
-        });
+        // ========================================
+        // SHIFTS FOR THIS DAY - Only for current month
+        // ========================================
+        let eventsHtml = '';
+        let moreHtml = '';
 
-        // Render mini events (max 3)
-        const eventsHtml = dayShifts.slice(0, 3).map(s => {
-          const type = (s.state || s.role || 'other').toLowerCase();
-          let typeClass = 'other';
-          if (type.includes('available') || type.includes('approved')) typeClass = 'available';
-          else if (type.includes('vacation') || type.includes('urlaub')) typeClass = 'vacation';
-          else if (type.includes('sick') || type.includes('krank')) typeClass = 'sick';
-          else if (type.includes('training')) typeClass = 'training';
-          else if (type.includes('home')) typeClass = 'homeoffice';
-          else if (type.includes('guest')) typeClass = 'guestspot';
-          else if (type.includes('business')) typeClass = 'business';
-          else if (type.includes('convention')) typeClass = 'convention';
+        if (!d.otherMonth) {
+          // Get shifts for this day
+          const dayShifts = allShifts.filter(s => {
+            const sd = (s.start_date || s.date || '').toString().split('T')[0];
+            return sd === dateStr;
+          });
 
-          const artistName = s.artist?.name || '';
-          const displayText = artistName ? artistName.substring(0, 6) : (s.state || '').substring(0, 6);
+          // Render mini events (max 4)
+          eventsHtml = dayShifts.slice(0, 4).map(s => {
+            const type = (s.state || s.role || 'other').toLowerCase();
+            let typeClass = 'other';
+            if (type.includes('available') || type.includes('approved')) typeClass = 'available';
+            else if (type.includes('vacation') || type.includes('urlaub')) typeClass = 'vacation';
+            else if (type.includes('sick') || type.includes('krank')) typeClass = 'sick';
+            else if (type.includes('training')) typeClass = 'training';
+            else if (type.includes('home')) typeClass = 'homeoffice';
+            else if (type.includes('guest')) typeClass = 'guestspot';
+            else if (type.includes('business')) typeClass = 'business';
+            else if (type.includes('convention')) typeClass = 'convention';
 
-          return `<div class="mobile-dp-mini-event ${typeClass}">${displayText}</div>`;
-        }).join('');
+            const artistName = s.artist?.name || '';
+            const displayText = artistName ? artistName.substring(0, 6) : (s.state || 'Event').substring(0, 6);
 
-        const moreCount = dayShifts.length - 3;
-        const moreHtml = moreCount > 0 ? `<div class="mobile-dp-more-events">+${moreCount}</div>` : '';
+            return `<div class="mobile-dp-mini-event ${typeClass}">${displayText}</div>`;
+          }).join('');
+
+          const moreCount = dayShifts.length - 4;
+          moreHtml = moreCount > 0 ? `<div class="mobile-dp-more-events">+${moreCount}</div>` : '';
+        }
+        // ========================================
 
         return `
           <div class="mobile-dp-day-cell ${d.otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}"
-               onclick="selectDayFromMonthView('${dateStr}')">
+               onclick="${d.otherMonth ? '' : `selectDayFromMonthView('${dateStr}')`}">
             <div class="mobile-dp-day-number">${d.day}</div>
             <div class="mobile-dp-day-events">
               ${eventsHtml}
@@ -38405,11 +38449,58 @@
       const container = document.getElementById('mobileCalMonthsScroll');
       if (!container) return;
 
-      // Get all events from calendar
-      let allEvents = [];
-      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.data?.events) {
-        allEvents = CentralDataManager.data.events || [];
+      // ========================================
+      // APPOINTMENTS LADEN
+      // ========================================
+      let allAppointments = [];
+
+      // Method 1: CentralDataManager
+      if (typeof CentralDataManager !== 'undefined') {
+        if (typeof CentralDataManager.getAppointments === 'function') {
+          allAppointments = CentralDataManager.getAppointments() || [];
+        } else if (CentralDataManager.data?.appointments) {
+          allAppointments = CentralDataManager.data.appointments || [];
+        }
       }
+
+      // Method 2: Fallback to global variable
+      if (allAppointments.length === 0 && typeof window.allAppointments !== 'undefined') {
+        allAppointments = window.allAppointments || [];
+      }
+
+      console.log('📅 Calendar Month View - Total appointments:', allAppointments.length);
+
+      // ========================================
+      // ARTIST FILTER for Calendar
+      // ========================================
+      const user = window.currentUser;
+      const userRole = user?.role || user?.user_role || '';
+      const canSeeAll = ['admin', 'owner', 'management', 'manager', 'booking'].some(r =>
+        userRole.toLowerCase().includes(r)
+      );
+
+      if (!canSeeAll && user) {
+        let allArtists = [];
+        if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
+          allArtists = CentralDataManager.getArtists() || [];
+        }
+
+        const matchingArtist = allArtists.find(a =>
+          a.email && user.email &&
+          a.email.toLowerCase().trim() === user.email.toLowerCase().trim()
+        );
+
+        if (matchingArtist) {
+          console.log('📅 Calendar month filtering for artist:', matchingArtist.name);
+          allAppointments = allAppointments.filter(apt =>
+            apt.artist_id === matchingArtist.id ||
+            apt.artist?.id === matchingArtist.id
+          );
+        }
+      }
+
+      console.log('📅 Calendar Month View - Filtered appointments:', allAppointments.length);
+      // ========================================
 
       // Render 12 months: current month + 11 future months
       const today = new Date();
@@ -38423,7 +38514,7 @@
         });
       }
 
-      container.innerHTML = months.map(m => renderSingleCalMonth(m.month, m.year, allEvents)).join('');
+      container.innerHTML = months.map(m => renderSingleCalMonth(m.month, m.year, allAppointments)).join('');
 
       // Current month is now at index 0 - scroll to top
       setTimeout(() => {
@@ -38431,7 +38522,7 @@
       }, 100);
     }
 
-    function renderSingleCalMonth(month, year, allEvents) {
+    function renderSingleCalMonth(month, year, allAppointments) {
       const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
                           'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
       const dayLabels = ['M', 'D', 'M', 'D', 'F', 'S', 'S'];
@@ -38461,61 +38552,90 @@
       }
 
       // Next month padding (fill to complete last row)
-      const remaining = 7 - (days.length % 7);
-      if (remaining < 7) {
-        for (let i = 1; i <= remaining; i++) {
-          days.push({ day: i, month: month + 1, year, otherMonth: true });
-        }
+      const remaining = 42 - days.length;
+      for (let i = 1; i <= remaining; i++) {
+        days.push({ day: i, month: month + 1, year, otherMonth: true });
       }
 
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+      // Category colors
+      const categoryColors = {
+        consultation: { bg: '#E3F2FD', color: '#1565C0' },
+        new_tattoo: { bg: '#E8F5E9', color: '#2E7D32' },
+        continuing_tattoo: { bg: '#FFF3E0', color: '#E65100' },
+        touch_up: { bg: '#F3E5F5', color: '#6A1B9A' },
+        selfbooking: { bg: '#FFFDE7', color: '#F57F17' },
+        wannado: { bg: '#FCE4EC', color: '#AD1457' },
+        internal: { bg: '#ECEFF1', color: '#37474F' },
+        default: { bg: '#E8F5E9', color: '#2E7D32' }
+      };
+
       // Render day cells
-      const dayCells = days.map(d => {
+      const dayCells = days.map((d, idx) => {
         const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
         const actualYear = d.month < 0 ? year - 1 : (d.month > 11 ? year + 1 : year);
         const dateStr = `${actualYear}-${String(actualMonth + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
         const isToday = dateStr === todayStr;
+        const isWeekend = idx % 7 >= 5;
 
-        // Get events for this day
-        const dayEvents = allEvents.filter(e => {
-          const eventDate = e.start_date || (e.scheduled_at ? e.scheduled_at.split('T')[0] : '');
-          return eventDate === dateStr;
-        });
-
-        // Create mini event dots (show up to 4)
+        // ========================================
+        // APPOINTMENTS FOR THIS DAY - Only for current month
+        // ========================================
         let eventsHtml = '';
-        const maxEvents = 4;
-        dayEvents.slice(0, maxEvents).forEach(ev => {
-          const category = ev.category || 'default';
-          const categoryColors = {
-            'consultation': '#007AFF',
-            'new_tattoo': '#34C759',
-            'continuing_tattoo': '#FF9500',
-            'touch_up': '#AF52DE',
-            'selfbooking': '#5AC8FA',
-            'wannado': '#FF2D55',
-            'internal': '#8E8E93',
-            'move': '#FFD60A',
-            'reserved': '#AC8E68',
-            'no_show': '#FF3B30',
-            'default': '#8E8E93'
-          };
-          const color = categoryColors[category] || '#8E8E93';
-          const title = ev.title || ev.customer_name || '';
-          eventsHtml += `<div class="mobile-dp-mini-event" style="background:${color}20;color:${color};">${title}</div>`;
-        });
+        let moreHtml = '';
 
-        if (dayEvents.length > maxEvents) {
-          eventsHtml += `<div class="mobile-dp-mini-event" style="background:#f0f0f0;color:#666;">+${dayEvents.length - maxEvents}</div>`;
+        if (!d.otherMonth) {
+          // Get appointments for this day - check multiple date fields
+          const dayAppts = allAppointments.filter(apt => {
+            const aptDate = (
+              apt.date ||
+              apt.appointment_date ||
+              apt.start ||
+              apt.start_time ||
+              apt.scheduled_date ||
+              ''
+            ).toString().split('T')[0];
+            return aptDate === dateStr;
+          });
+
+          // Render mini events (max 4)
+          eventsHtml = dayAppts.slice(0, 4).map(apt => {
+            let category = (apt.category || apt.type || apt.booking_type || 'default').toLowerCase().replace(/\s+/g, '_');
+
+            // Normalize category
+            if (category.includes('consult')) category = 'consultation';
+            else if (category.includes('new')) category = 'new_tattoo';
+            else if (category.includes('continu')) category = 'continuing_tattoo';
+            else if (category.includes('touch')) category = 'touch_up';
+            else if (category.includes('self')) category = 'selfbooking';
+            else if (category.includes('wanna')) category = 'wannado';
+            else if (category.includes('internal')) category = 'internal';
+
+            const colors = categoryColors[category] || categoryColors.default;
+
+            // Display text: Customer name or artist name
+            const customerName = apt.customer?.first_name || apt.customer_name || '';
+            const artistName = apt.artist?.name || apt.artist_name || '';
+            const displayText = customerName ? customerName.substring(0, 6) : (artistName ? artistName.substring(0, 6) : category.substring(0, 6));
+
+            return `<div class="mobile-dp-mini-event" style="background:${colors.bg};color:${colors.color};">${displayText}</div>`;
+          }).join('');
+
+          const moreCount = dayAppts.length - 4;
+          moreHtml = moreCount > 0 ? `<div class="mobile-dp-more-events">+${moreCount}</div>` : '';
         }
+        // ========================================
 
         return `
-          <div class="mobile-dp-day-cell ${d.otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}"
-               onclick="selectDayFromCalMonthView('${dateStr}')">
+          <div class="mobile-dp-day-cell ${d.otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}"
+               onclick="${d.otherMonth ? '' : `selectDayFromCalMonthView('${dateStr}')`}">
             <div class="mobile-dp-day-number">${d.day}</div>
-            <div class="mobile-dp-day-events">${eventsHtml}</div>
+            <div class="mobile-dp-day-events">
+              ${eventsHtml}
+              ${moreHtml}
+            </div>
           </div>
         `;
       }).join('');
