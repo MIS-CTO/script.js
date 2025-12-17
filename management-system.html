@@ -11603,7 +11603,8 @@
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    // Use window.supabaseClient to avoid conflict with CDN global
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -11611,6 +11612,8 @@
         storage: window.localStorage
       }
     });
+    // Alias for backwards compatibility
+    window.supabase = supabaseClient;
 
     // ========================================
     // GLOBAL CHART INSTANCES (Declared early to avoid TDZ errors)
@@ -35359,7 +35362,7 @@
       // ==========================================
 
       // Initialize navbar hover and mobile navigation
-      setupNavbarHover();
+      // setupNavbarHover(); // Disabled - function may not exist
       setupMobileNavigation();
 
       // Header Title - Return to Dashboard
@@ -35628,7 +35631,7 @@
 
       // Re-init bei Resize
       window.addEventListener('resize', function() {
-        setupNavbarHover();
+        // setupNavbarHover(); // Disabled - function may not exist
         setupMobileNavigation();
       });
 
@@ -37386,7 +37389,7 @@
           artist_id: allShifts[0].artist_id,
           user_id: allShifts[0].user_id,
           profile_id: allShifts[0].profile_id,
-          date: allShifts[0].date
+          start_date: allShifts[0].start_date
         });
       }
 
@@ -37430,7 +37433,7 @@
       mobileDebug('Date range', { start: startDate, end: endDate });
 
       let shifts = allShifts.filter(s => {
-        const shiftDate = (s.date || s.work_date || '').toString().split('T')[0];
+        const shiftDate = (s.start_date || s.work_date || '').toString().split('T')[0];
         return shiftDate >= startDate && shiftDate <= endDate;
       });
       mobileDebug('Shifts in date range', shifts.length);
@@ -37460,7 +37463,7 @@
         // If still 0, show what artist_ids exist
         if (shifts.length === 0) {
           const uniqueIds = [...new Set(allShifts.filter(s => {
-            const sd = (s.date || '').split('T')[0];
+            const sd = (s.start_date || '').split('T')[0];
             return sd >= startDate && sd <= endDate;
           }).map(s => s.artist_id))];
           mobileDebug('Artist IDs in this week', uniqueIds.slice(0, 10));
@@ -37480,7 +37483,7 @@
         const dateStr = date.toISOString().split('T')[0];
 
         const dayShifts = shifts.filter(s => {
-          const sd = (s.date || s.work_date || '').toString().split('T')[0];
+          const sd = (s.start_date || s.work_date || '').toString().split('T')[0];
           return sd === dateStr;
         });
 
@@ -37490,9 +37493,9 @@
         let content = '';
         if (dayShifts.length > 0) {
           content = dayShifts.map(s => {
-            const shiftType = s.shift_type || s.type || s.category || s.status || 'Schicht';
-            const startTime = s.start_time || s.time_start || s.start?.split('T')[1]?.substring(0, 5) || '';
-            const endTime = s.end_time || s.time_end || s.end?.split('T')[1]?.substring(0, 5) || '';
+            const shiftType = s.state || s.role || s.shift_type || s.type || s.category || s.status || 'Schicht';
+            const startTime = s.working_start || s.start_time || s.time_start || s.start?.split('T')[1]?.substring(0, 5) || '';
+            const endTime = s.working_end || s.end_time || s.time_end || s.end?.split('T')[1]?.substring(0, 5) || '';
             const locationName = s.location?.name || s.location_name || '';
 
             // Determine icon and color
@@ -37542,7 +37545,7 @@
         date.setDate(date.getDate() + i);
         const dateStr = date.toISOString().split('T')[0];
 
-        const dayShifts = shifts.filter(s => s.date === dateStr);
+        const dayShifts = shifts.filter(s => s.start_date === dateStr);
 
         const card = document.createElement('div');
         card.className = 'mobile-dp-day-card';
@@ -37554,9 +37557,9 @@
           ${dayShifts.length > 0 ? dayShifts.map(shift => `
             <div class="mobile-dp-shift">
               <div class="mobile-dp-shift-title">
-                <span>🕐</span> ${shift.shift_type || 'Schicht'}
+                <span>🕐</span> ${shift.state || shift.role || shift.shift_type || 'Schicht'}
               </div>
-              <div class="mobile-dp-shift-info">${shift.start_time || '09:00'} - ${shift.end_time || '18:00'}</div>
+              <div class="mobile-dp-shift-info">${shift.working_start || shift.start_time || '09:00'} - ${shift.working_end || shift.end_time || '18:00'}</div>
             </div>
           `).join('') : `
             <div class="mobile-dp-no-shift">
