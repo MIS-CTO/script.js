@@ -6698,6 +6698,14 @@
         padding-bottom: max(16px, env(safe-area-inset-bottom));
       }
 
+      /* Hide mobile notification panel on desktop */
+      @media (min-width: 769px) {
+        .mobile-notification-panel,
+        #mobileNotificationPanel {
+          display: none !important;
+        }
+      }
+
       .mobile-profile-header {
         display: flex;
         align-items: center;
@@ -6780,6 +6788,11 @@
         width: 20px;
         height: 20px;
         color: var(--macos-text-secondary, #86868b);
+      }
+
+      /* Hide Home Page button on mobile */
+      #mobileProfileHomePage {
+        display: none !important;
       }
 
       .mobile-profile-separator {
@@ -7688,7 +7701,7 @@
       }
 
       .mobile-cal-week-dropdown {
-        display: flex;
+        display: none; /* Hidden - week info now shown in header */
         align-items: center;
         gap: 8px;
         padding: 12px 16px;
@@ -7967,7 +7980,7 @@
       }
 
       .mobile-dp-week-dropdown {
-        display: flex;
+        display: none; /* Hidden - week info now shown in header */
         align-items: center;
         gap: 8px;
         padding: 12px 16px;
@@ -36987,22 +37000,35 @@
 
     // Update mobile header title based on current page
     function updateMobileHeaderTitle(page) {
-      const headerTitle = document.querySelector('.mobile-header-title') || document.querySelector('header h1');
-      if (!headerTitle) return;
+      // Try multiple possible selectors
+      const headerTitle = document.querySelector('.header-title')
+        || document.querySelector('.mobile-header-title')
+        || document.querySelector('header h1')
+        || document.querySelector('[class*="header"] [class*="title"]');
+
+      console.log('📱 updateMobileHeaderTitle:', page, 'Element found:', !!headerTitle);
+
+      if (!headerTitle) {
+        console.log('📱 Header title element not found!');
+        return;
+      }
+
+      // Only update on mobile
+      if (window.innerWidth > 768) return;
+
+      const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
       if (page === 'dashboard') {
-        headerTitle.textContent = 'Culture over Money Dashboard';
-      } else if (page === 'calendar') {
+        headerTitle.textContent = 'Culture over Money';
+      } else if (page === 'calendar' && typeof mobileCalState !== 'undefined') {
         const start = mobileCalState.currentWeekStart;
         const end = new Date(start);
         end.setDate(end.getDate() + 6);
-        const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
         headerTitle.textContent = `${dayNames[start.getDay()]} ${start.getDate()}.${start.getMonth()+1}. - ${dayNames[end.getDay()]} ${end.getDate()}.${end.getMonth()+1}.`;
-      } else if (page === 'dienstplan') {
+      } else if (page === 'dienstplan' && typeof mobileDpState !== 'undefined') {
         const start = mobileDpState.currentWeekStart;
         const end = new Date(start);
         end.setDate(end.getDate() + 6);
-        const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
         headerTitle.textContent = `${dayNames[start.getDay()]} ${start.getDate()}.${start.getMonth()+1}. - ${dayNames[end.getDay()]} ${end.getDate()}.${end.getMonth()+1}.`;
       }
     }
