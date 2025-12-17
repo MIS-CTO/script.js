@@ -6428,6 +6428,12 @@
         display: none;
       }
 
+      /* Hide welcome message on mobile */
+      .dashboard-welcome,
+      #dashboardWelcome {
+        display: none !important;
+      }
+
       .icon-button {
         width: 32px;
         height: 32px;
@@ -8469,10 +8475,10 @@
     </div>
 
     <button class="mobile-profile-logout" id="mobileProfileLogout" onclick="handleMobileLogout()">
-      <span>Log Out</span>
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
+      <span>Abmelden</span>
     </button>
   </div>
 
@@ -36996,6 +37002,18 @@
       return date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
     }
 
+    // Helper to update active day indicator in mobile calendar weekdays
+    function updateMobileCalActiveDay() {
+      const weekdays = document.querySelectorAll('.mobile-day-item');
+      weekdays.forEach(day => {
+        const dateStr = day.dataset.date;
+        if (dateStr && mobileCalState.selectedDate) {
+          const selectedStr = mobileCalState.selectedDate.toISOString().split('T')[0];
+          day.classList.toggle('active', dateStr === selectedStr);
+        }
+      });
+    }
+
     // Update mobile header title based on current page
     function updateMobileHeaderTitle(page) {
       // Try multiple possible selectors
@@ -37015,15 +37033,16 @@
       if (window.innerWidth > 768) return;
 
       const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+      const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
       if (page === 'dashboard') {
         headerTitle.textContent = 'Culture over Money';
       } else if (page === 'calendar' && typeof mobileCalState !== 'undefined') {
-        const start = mobileCalState.currentWeekStart;
-        const end = new Date(start);
-        end.setDate(end.getDate() + 6);
-        headerTitle.textContent = `${dayNames[start.getDay()]} ${start.getDate()}.${start.getMonth()+1}. - ${dayNames[end.getDay()]} ${end.getDate()}.${end.getMonth()+1}.`;
+        // Show single selected date for calendar
+        const d = mobileCalState.selectedDate;
+        headerTitle.textContent = `${dayNames[d.getDay()]} ${d.getDate()}. ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
       } else if (page === 'dienstplan' && typeof mobileDpState !== 'undefined') {
+        // Show week range for dienstplan
         const start = mobileDpState.currentWeekStart;
         const end = new Date(start);
         end.setDate(end.getDate() + 6);
@@ -37044,29 +37063,47 @@
       const todayBtn = document.getElementById('mobileCalToday');
       const categoryFilter = document.getElementById('mobileCalCategoryFilter');
 
+      // Prev Day Button (changed from week to day navigation)
       if (prevBtn) {
         const newPrev = prevBtn.cloneNode(true);
         prevBtn.parentNode.replaceChild(newPrev, prevBtn);
         newPrev.addEventListener('click', () => {
-          const newDate = new Date(mobileCalState.currentWeekStart);
-          newDate.setDate(newDate.getDate() - 7);
-          mobileCalState.currentWeekStart = newDate;
-          mobileCalState.selectedDate = new Date(newDate);
-          renderMobileCalWeekdays();
+          const newDate = new Date(mobileCalState.selectedDate);
+          newDate.setDate(newDate.getDate() - 1);
+          mobileCalState.selectedDate = newDate;
+
+          // Update week start if we moved to previous week
+          const monday = getMonday(newDate);
+          if (monday.getTime() !== mobileCalState.currentWeekStart.getTime()) {
+            mobileCalState.currentWeekStart = monday;
+            renderMobileCalWeekdays();
+          } else {
+            updateMobileCalActiveDay();
+          }
+
           loadMobileCalendarData();
           updateMobileHeaderTitle('calendar');
         });
       }
 
+      // Next Day Button (changed from week to day navigation)
       if (nextBtn) {
         const newNext = nextBtn.cloneNode(true);
         nextBtn.parentNode.replaceChild(newNext, nextBtn);
         newNext.addEventListener('click', () => {
-          const newDate = new Date(mobileCalState.currentWeekStart);
-          newDate.setDate(newDate.getDate() + 7);
-          mobileCalState.currentWeekStart = newDate;
-          mobileCalState.selectedDate = new Date(newDate);
-          renderMobileCalWeekdays();
+          const newDate = new Date(mobileCalState.selectedDate);
+          newDate.setDate(newDate.getDate() + 1);
+          mobileCalState.selectedDate = newDate;
+
+          // Update week start if we moved to next week
+          const monday = getMonday(newDate);
+          if (monday.getTime() !== mobileCalState.currentWeekStart.getTime()) {
+            mobileCalState.currentWeekStart = monday;
+            renderMobileCalWeekdays();
+          } else {
+            updateMobileCalActiveDay();
+          }
+
           loadMobileCalendarData();
           updateMobileHeaderTitle('calendar');
         });
@@ -37946,9 +37983,17 @@
           }).join('');
         }
 
+        // Get username from current user
+        const username = (window.currentUser?.username || window.currentUser?.name || user?.username || user?.name || 'User');
+
         card.innerHTML = `
-          <div style="font-weight:700;font-size:15px;color:${titleColor};padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.08);">
-            ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.08);">
+            <span style="font-weight:700;font-size:15px;color:${titleColor};">
+              ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.
+            </span>
+            <span style="font-size:13px;font-weight:500;color:${titleColor};opacity:0.7;">
+              ${username}
+            </span>
           </div>
           ${content}
         `;
