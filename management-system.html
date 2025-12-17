@@ -7612,7 +7612,7 @@
       .mobile-calendar-view {
         display: none !important;
         position: fixed;
-        top: 0;
+        top: 60px; /* Below main header */
         left: 0;
         right: 0;
         bottom: 72px;
@@ -7870,7 +7870,7 @@
       .mobile-dienstplan-view {
         display: none !important;
         position: fixed;
-        top: 0;
+        top: 60px; /* Below main header */
         left: 0;
         right: 0;
         bottom: 72px;
@@ -37541,6 +37541,25 @@
         }
       }
 
+      // Count shifts by type
+      if (shifts.length > 0) {
+        const typeCounts = {};
+        shifts.forEach(s => {
+          const type = s.state || s.role || 'unknown';
+          typeCounts[type] = (typeCounts[type] || 0) + 1;
+        });
+        mobileDebug('Shift type counts', typeCounts);
+
+        // Log detailed shift types for debugging
+        const shiftTypes = shifts.map(s => ({
+          state: s.state,
+          role: s.role,
+          type: s.type,
+          category: s.category
+        }));
+        mobileDebug('Shift types found', shiftTypes.slice(0, 5));
+      }
+
       mobileDebug('============ END DEBUG ============');
 
       // Render days
@@ -37563,32 +37582,85 @@
         let content = '';
         if (dayShifts.length > 0) {
           content = dayShifts.map(s => {
-            const shiftType = s.state || s.role || s.shift_type || s.type || s.category || s.status || 'Schicht';
-            const startTime = s.working_start || s.start_time || s.time_start || s.start?.split('T')[1]?.substring(0, 5) || '';
-            const endTime = s.working_end || s.end_time || s.time_end || s.end?.split('T')[1]?.substring(0, 5) || '';
-            const locationName = s.location?.name || s.location_name || '';
+            // Get shift type from various possible fields
+            const shiftType = s.state || s.role || s.type || s.category || 'Schicht';
+            const startTime = s.working_start || s.start_time || '';
+            const endTime = s.working_end || s.end_time || '';
+            const locationName = s.location?.name || '';
 
-            // Determine icon and color
+            // Color and icon based on type
             let icon = '🕐';
             let bgColor = '#E3F2FD';
+            let textColor = '#1565C0';
+
             const typeLower = shiftType.toLowerCase();
-            if (typeLower.includes('urlaub') || typeLower.includes('vacation')) { icon = '🏖️'; bgColor = '#FFF3E0'; }
-            if (typeLower.includes('krank') || typeLower.includes('sick')) { icon = '🤒'; bgColor = '#FFEBEE'; }
-            if (typeLower.includes('frei') || typeLower.includes('off')) { icon = '🏠'; bgColor = '#F3E5F5'; }
-            if (typeLower.includes('available') || typeLower.includes('verfügbar')) { icon = '✅'; bgColor = '#E8F5E9'; }
+
+            // Available / Working
+            if (typeLower.includes('available') || typeLower.includes('verfügbar') || typeLower === 'approved') {
+              icon = '✅'; bgColor = '#E8F5E9'; textColor = '#2E7D32';
+            }
+            // Vacation / Urlaub
+            else if (typeLower.includes('vacation') || typeLower.includes('urlaub')) {
+              icon = '🏖️'; bgColor = '#FFF3E0'; textColor = '#E65100';
+            }
+            // Sick / Krank
+            else if (typeLower.includes('sick') || typeLower.includes('krank')) {
+              icon = '🤒'; bgColor = '#FFEBEE'; textColor = '#C62828';
+            }
+            // Business Trip / Dienstreise
+            else if (typeLower.includes('business') || typeLower.includes('dienstreise')) {
+              icon = '✈️'; bgColor = '#E3F2FD'; textColor = '#1565C0';
+            }
+            // Guestspot
+            else if (typeLower.includes('guest')) {
+              icon = '🌟'; bgColor = '#F3E5F5'; textColor = '#6A1B9A';
+            }
+            // Training / Schulung
+            else if (typeLower.includes('training') || typeLower.includes('schulung')) {
+              icon = '📚'; bgColor = '#E0F7FA'; textColor = '#00838F';
+            }
+            // Convention / Messe
+            else if (typeLower.includes('convention') || typeLower.includes('messe')) {
+              icon = '🎪'; bgColor = '#FCE4EC'; textColor = '#AD1457';
+            }
+            // Home Office
+            else if (typeLower.includes('home') || typeLower.includes('remote')) {
+              icon = '🏠'; bgColor = '#ECEFF1'; textColor = '#37474F';
+            }
+            // Other
+            else if (typeLower.includes('other') || typeLower.includes('sonstig')) {
+              icon = '📝'; bgColor = '#FFF8E1'; textColor = '#FF8F00';
+            }
+            // Free / Frei
+            else if (typeLower.includes('frei') || typeLower.includes('off') || typeLower.includes('free')) {
+              icon = '🏠'; bgColor = '#F5F5F5'; textColor = '#757575';
+            }
+
+            // Format times
+            let timeDisplay = '';
+            if (startTime || endTime) {
+              timeDisplay = `${startTime || '?'}${endTime ? ' - ' + endTime : ''}`;
+            }
 
             return `
-              <div class="mobile-dp-shift" style="background:${bgColor};padding:10px;border-radius:8px;margin-top:8px;">
-                <div style="font-weight:500;font-size:13px;">${icon} ${shiftType}</div>
-                ${startTime || endTime ? `<div style="font-size:12px;color:#666;margin-top:2px;">${startTime}${endTime ? ' - ' + endTime : ''}${locationName ? ' @ ' + locationName : ''}</div>` : ''}
+              <div class="mobile-dp-shift" style="background:${bgColor};padding:12px;border-radius:10px;margin-top:8px;border-left:4px solid ${textColor};">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:18px;">${icon}</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px;color:${textColor};">${shiftType}</div>
+                    ${timeDisplay ? `<div style="font-size:12px;color:#666;margin-top:2px;">${timeDisplay}</div>` : ''}
+                    ${locationName ? `<div style="font-size:11px;color:#999;margin-top:2px;">📍 ${locationName}</div>` : ''}
+                  </div>
+                </div>
               </div>
             `;
           }).join('');
         } else {
           content = `
-            <div class="mobile-dp-no-shift" style="background:#f5f5f5;padding:16px;border-radius:8px;text-align:center;margin-top:8px;">
-              <div style="font-weight:500;color:#64B5F6;font-size:13px;">Keine Einträge</div>
-              <div style="font-size:11px;color:#999;margin-top:4px;">Am ${dayNames[i]} ${date.getDate()}.${date.getMonth() + 1}.</div>
+            <div class="mobile-dp-no-shift" style="background:#f8f9fa;padding:20px;border-radius:10px;text-align:center;margin-top:8px;">
+              <div style="font-size:24px;margin-bottom:8px;">📅</div>
+              <div style="font-weight:500;color:#64B5F6;font-size:14px;">Keine Einträge</div>
+              <div style="font-size:12px;color:#999;margin-top:4px;">Am ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.</div>
             </div>
           `;
         }
