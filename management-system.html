@@ -37207,6 +37207,80 @@
       return new Date(date.setDate(diff));
     }
 
+    // ========================================
+    // ARTIST FILTER HELPER - KRITISCH WICHTIG
+    // ========================================
+    function getUserArtistFilter() {
+      const user = window.currentUser;
+      if (!user) return { canSeeAll: false, artistId: null, artistName: null };
+
+      const userRole = (user.role || user.user_role || '').toLowerCase();
+
+      // These roles can see ALL entries
+      const adminRoles = ['admin', 'owner', 'management', 'manager', 'booking', 'superadmin'];
+      const canSeeAll = adminRoles.some(r => userRole.includes(r));
+
+      if (canSeeAll) {
+        console.log('👤 User can see all entries (Role:', userRole, ')');
+        return { canSeeAll: true, artistId: null, artistName: null };
+      }
+
+      // For normal users (Artists): Find artist_id via email
+      let allArtists = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
+        allArtists = CentralDataManager.getArtists() || [];
+      }
+
+      const matchingArtist = allArtists.find(a =>
+        a.email && user.email &&
+        a.email.toLowerCase().trim() === user.email.toLowerCase().trim()
+      );
+
+      if (matchingArtist) {
+        console.log('👤 Artist found:', matchingArtist.name, '(ID:', matchingArtist.id, ')');
+        return { canSeeAll: false, artistId: matchingArtist.id, artistName: matchingArtist.name };
+      }
+
+      console.log('⚠️ No matching artist found for:', user.email);
+      return { canSeeAll: false, artistId: null, artistName: null };
+    }
+
+    function filterShiftsByArtist(shifts) {
+      const filter = getUserArtistFilter();
+
+      if (filter.canSeeAll) {
+        return shifts; // Admin/Management sees all
+      }
+
+      if (!filter.artistId) {
+        return []; // No artist found = no entries
+      }
+
+      // Filter to ONLY own entries
+      return shifts.filter(s => s.artist_id === filter.artistId);
+    }
+
+    function filterAppointmentsByArtist(appointments) {
+      const filter = getUserArtistFilter();
+
+      if (filter.canSeeAll) {
+        return appointments;
+      }
+
+      if (!filter.artistId) {
+        return [];
+      }
+
+      return appointments.filter(apt =>
+        apt.artist_id === filter.artistId ||
+        apt.artist?.id === filter.artistId
+      );
+    }
+
+    window.getUserArtistFilter = getUserArtistFilter;
+    window.filterShiftsByArtist = filterShiftsByArtist;
+    window.filterAppointmentsByArtist = filterAppointmentsByArtist;
+
     function formatDateShort(date) {
       return date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace(',', '');
     }
@@ -38251,30 +38325,10 @@
       }
 
       // ========================================
-      // ARTIST FILTER - Same logic as week view
+      // KRITISCH: ARTIST FILTER ANWENDEN
       // ========================================
-      const user = window.currentUser;
-      const userRole = user?.role || user?.user_role || '';
-      const canSeeAllShifts = ['admin', 'owner', 'management', 'manager', 'booking'].some(r =>
-        userRole.toLowerCase().includes(r)
-      );
-
-      // If user cannot see all shifts, filter to only their own
-      if (!canSeeAllShifts && user) {
-        const matchingArtist = allArtists.find(a =>
-          a.email && user.email &&
-          a.email.toLowerCase().trim() === user.email.toLowerCase().trim()
-        );
-
-        if (matchingArtist) {
-          console.log('📅 Month view filtering for artist:', matchingArtist.name);
-          allShifts = allShifts.filter(s => s.artist_id === matchingArtist.id);
-        } else {
-          console.log('📅 No matching artist found, showing no shifts');
-          allShifts = [];
-        }
-      }
-      // ========================================
+      allShifts = filterShiftsByArtist(allShifts);
+      console.log('📅 Dienstplan Monat - Gefilterte Shifts:', allShifts.length);
 
       // Render 12 months: current month + 11 future months
       const today = new Date();
@@ -38471,36 +38525,10 @@
       console.log('📅 Calendar Month View - Total appointments:', allAppointments.length);
 
       // ========================================
-      // ARTIST FILTER for Calendar
+      // KRITISCH: ARTIST FILTER ANWENDEN
       // ========================================
-      const user = window.currentUser;
-      const userRole = user?.role || user?.user_role || '';
-      const canSeeAll = ['admin', 'owner', 'management', 'manager', 'booking'].some(r =>
-        userRole.toLowerCase().includes(r)
-      );
-
-      if (!canSeeAll && user) {
-        let allArtists = [];
-        if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
-          allArtists = CentralDataManager.getArtists() || [];
-        }
-
-        const matchingArtist = allArtists.find(a =>
-          a.email && user.email &&
-          a.email.toLowerCase().trim() === user.email.toLowerCase().trim()
-        );
-
-        if (matchingArtist) {
-          console.log('📅 Calendar month filtering for artist:', matchingArtist.name);
-          allAppointments = allAppointments.filter(apt =>
-            apt.artist_id === matchingArtist.id ||
-            apt.artist?.id === matchingArtist.id
-          );
-        }
-      }
-
+      allAppointments = filterAppointmentsByArtist(allAppointments);
       console.log('📅 Calendar Month View - Filtered appointments:', allAppointments.length);
-      // ========================================
 
       // Render 12 months: current month + 11 future months
       const today = new Date();
