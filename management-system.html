@@ -121,6 +121,22 @@
     }
 
     /* ========================================
+       Desktop: Mobile Month Views KOMPLETT ausblenden
+       ======================================== */
+    @media (min-width: 769px) {
+      .mobile-dp-month-view,
+      .mobile-cal-month-view,
+      #mobileDpMonthView,
+      #mobileCalMonthView,
+      .mobile-dp-month-header,
+      .mobile-cal-month-header {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    }
+
+    /* ========================================
        Dark Mode Support
        ======================================== */
     [data-theme="dark"] {
@@ -38379,9 +38395,9 @@
 
       // Render days
       const daysHtml = days.map((d, idx) => {
-        // Leere Padding-Zellen am Monatsanfang - komplett unsichtbar
+        // Unsichtbare Platzhalter-Zellen für Grid-Alignment
         if (d.isEmpty) {
-          return `<div class="mobile-dp-day-cell mobile-dp-empty-cell"></div>`;
+          return `<div style="min-height:60px;visibility:hidden;"></div>`;
         }
 
         const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
@@ -38589,9 +38605,9 @@
 
       // Render day cells
       const dayCells = days.map((d, idx) => {
-        // Leere Padding-Zellen am Monatsanfang - komplett unsichtbar
+        // Unsichtbare Platzhalter-Zellen für Grid-Alignment
         if (d.isEmpty) {
-          return `<div class="mobile-dp-day-cell mobile-dp-empty-cell"></div>`;
+          return `<div style="min-height:60px;visibility:hidden;"></div>`;
         }
 
         const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
