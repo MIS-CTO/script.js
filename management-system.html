@@ -8217,11 +8217,15 @@
         pointer-events: none; /* Not clickable */
       }
 
-      .mobile-dp-day-cell.empty {
-        background: transparent;
-        pointer-events: none;
-        min-height: 40px;
-        opacity: 0;
+      .mobile-dp-empty-cell {
+        background: transparent !important;
+        border: none !important;
+        pointer-events: none !important;
+        min-height: 60px;
+      }
+
+      .mobile-dp-empty-cell * {
+        display: none !important;
       }
 
       .mobile-dp-day-cell.other-month .mobile-dp-day-events {
@@ -38357,14 +38361,14 @@
       // Build days array with padding
       const days = [];
 
-      // Previous month padding - EMPTY cells for grid alignment only (no day numbers)
+      // Previous month padding - leere Platzhalter für Grid-Alignment (KEINE Tageszahlen)
       for (let i = 0; i < startDay; i++) {
-        days.push({ day: null, otherMonth: true, empty: true });
+        days.push({ day: '', month: null, year: null, otherMonth: true, isEmpty: true });
       }
 
-      // Current month days
+      // Current month days - NUR diese werden angezeigt
       for (let d = 1; d <= daysInMonth; d++) {
-        days.push({ day: d, month, year, otherMonth: false });
+        days.push({ day: d, month, year, otherMonth: false, isEmpty: false });
       }
 
       // Next month padding - REMOVED: month ends at last day, no padding cells
@@ -38375,9 +38379,9 @@
 
       // Render days
       const daysHtml = days.map((d, idx) => {
-        // Handle empty padding cells (previous month grid alignment)
-        if (d.empty) {
-          return `<div class="mobile-dp-day-cell other-month empty"></div>`;
+        // Leere Padding-Zellen am Monatsanfang - komplett unsichtbar
+        if (d.isEmpty) {
+          return `<div class="mobile-dp-day-cell mobile-dp-empty-cell"></div>`;
         }
 
         const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
@@ -38556,14 +38560,14 @@
       // Build days array with padding
       const days = [];
 
-      // Previous month padding - EMPTY cells for grid alignment only (no day numbers)
+      // Previous month padding - leere Platzhalter für Grid-Alignment (KEINE Tageszahlen)
       for (let i = 0; i < startDay; i++) {
-        days.push({ day: null, otherMonth: true, empty: true });
+        days.push({ day: '', month: null, year: null, otherMonth: true, isEmpty: true });
       }
 
-      // Current month days
+      // Current month days - NUR diese werden angezeigt
       for (let d = 1; d <= daysInMonth; d++) {
-        days.push({ day: d, month, year, otherMonth: false });
+        days.push({ day: d, month, year, otherMonth: false, isEmpty: false });
       }
 
       // Next month padding - REMOVED: month ends at last day, no padding cells
@@ -38585,9 +38589,9 @@
 
       // Render day cells
       const dayCells = days.map((d, idx) => {
-        // Handle empty padding cells (previous month grid alignment)
-        if (d.empty) {
-          return `<div class="mobile-dp-day-cell other-month empty"></div>`;
+        // Leere Padding-Zellen am Monatsanfang - komplett unsichtbar
+        if (d.isEmpty) {
+          return `<div class="mobile-dp-day-cell mobile-dp-empty-cell"></div>`;
         }
 
         const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
