@@ -36889,48 +36889,73 @@
       renderMobileCalWeekdays();
       renderMobileCalTimeline();
 
-      // Event listeners
-      document.getElementById('mobileCalPrevWeek')?.addEventListener('click', () => {
-        const newWeekStart = new Date(mobileCalState.currentWeekStart);
-        newWeekStart.setDate(newWeekStart.getDate() - 7);
-        mobileCalState.currentWeekStart = newWeekStart;
-        mobileCalState.selectedDate = new Date(newWeekStart);
-        renderMobileCalWeekdays();
-        loadMobileCalendarData();
-      });
+      // REMOVE old listeners by cloning elements
+      const prevBtn = document.getElementById('mobileCalPrevWeek');
+      const nextBtn = document.getElementById('mobileCalNextWeek');
+      const todayBtn = document.getElementById('mobileCalToday');
+      const categoryFilter = document.getElementById('mobileCalCategoryFilter');
 
-      document.getElementById('mobileCalNextWeek')?.addEventListener('click', () => {
-        const newWeekStart = new Date(mobileCalState.currentWeekStart);
-        newWeekStart.setDate(newWeekStart.getDate() + 7);
-        mobileCalState.currentWeekStart = newWeekStart;
-        mobileCalState.selectedDate = new Date(newWeekStart);
-        renderMobileCalWeekdays();
-        loadMobileCalendarData();
-      });
+      if (prevBtn) {
+        const newPrev = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrev, prevBtn);
+        newPrev.addEventListener('click', () => {
+          const newDate = new Date(mobileCalState.currentWeekStart);
+          newDate.setDate(newDate.getDate() - 7);
+          mobileCalState.currentWeekStart = newDate;
+          mobileCalState.selectedDate = new Date(newDate);
+          renderMobileCalWeekdays();
+          loadMobileCalendarData();
+        });
+      }
 
-      document.getElementById('mobileCalToday')?.addEventListener('click', () => {
-        mobileCalState.currentWeekStart = getMonday(new Date());
-        mobileCalState.selectedDate = new Date();
-        renderMobileCalWeekdays();
-        loadMobileCalendarData();
-      });
+      if (nextBtn) {
+        const newNext = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNext, nextBtn);
+        newNext.addEventListener('click', () => {
+          const newDate = new Date(mobileCalState.currentWeekStart);
+          newDate.setDate(newDate.getDate() + 7);
+          mobileCalState.currentWeekStart = newDate;
+          mobileCalState.selectedDate = new Date(newDate);
+          renderMobileCalWeekdays();
+          loadMobileCalendarData();
+        });
+      }
 
-      document.getElementById('mobileCalCategoryFilter')?.addEventListener('change', (e) => {
-        mobileCalState.categoryFilter = e.target.value;
-        loadMobileCalendarData();
-      });
+      if (todayBtn) {
+        const newToday = todayBtn.cloneNode(true);
+        todayBtn.parentNode.replaceChild(newToday, todayBtn);
+        newToday.addEventListener('click', () => {
+          mobileCalState.currentWeekStart = getMonday(new Date());
+          mobileCalState.selectedDate = new Date();
+          renderMobileCalWeekdays();
+          loadMobileCalendarData();
+        });
+      }
+
+      if (categoryFilter) {
+        const newFilter = categoryFilter.cloneNode(true);
+        categoryFilter.parentNode.replaceChild(newFilter, categoryFilter);
+        newFilter.addEventListener('change', (e) => {
+          mobileCalState.categoryFilter = e.target.value;
+          loadMobileCalendarData();
+        });
+      }
 
       // Swipe support
       let touchStartX = 0;
       const timeline = document.getElementById('mobileCalTimeline');
-      timeline?.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
-      timeline?.addEventListener('touchend', e => {
-        const diff = touchStartX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 50) {
-          if (diff > 0) document.getElementById('mobileCalNextWeek')?.click();
-          else document.getElementById('mobileCalPrevWeek')?.click();
-        }
-      });
+      if (timeline) {
+        const newTimeline = timeline.cloneNode(true);
+        timeline.parentNode.replaceChild(newTimeline, timeline);
+        newTimeline.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+        newTimeline.addEventListener('touchend', e => {
+          const diff = touchStartX - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) document.getElementById('mobileCalNextWeek')?.click();
+            else document.getElementById('mobileCalPrevWeek')?.click();
+          }
+        });
+      }
 
       // Load initial data
       loadMobileCalendarData();
@@ -37320,24 +37345,42 @@
     function initMobileDienstplan() {
       console.log('📋 Initializing mobile dienstplan...');
 
-      document.getElementById('mobileDpPrevWeek')?.addEventListener('click', () => {
-        const newDate = new Date(mobileDpState.currentWeekStart);
-        newDate.setDate(newDate.getDate() - 7);
-        mobileDpState.currentWeekStart = newDate;
-        loadMobileDienstplanData();
-      });
+      // REMOVE old listeners by cloning elements
+      const prevBtn = document.getElementById('mobileDpPrevWeek');
+      const nextBtn = document.getElementById('mobileDpNextWeek');
+      const todayBtn = document.getElementById('mobileDpToday');
 
-      document.getElementById('mobileDpNextWeek')?.addEventListener('click', () => {
-        const newDate = new Date(mobileDpState.currentWeekStart);
-        newDate.setDate(newDate.getDate() + 7);
-        mobileDpState.currentWeekStart = newDate;
-        loadMobileDienstplanData();
-      });
+      // Clone and replace to remove all event listeners
+      if (prevBtn) {
+        const newPrev = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrev, prevBtn);
+        newPrev.addEventListener('click', () => {
+          const newDate = new Date(mobileDpState.currentWeekStart);
+          newDate.setDate(newDate.getDate() - 7);
+          mobileDpState.currentWeekStart = newDate;
+          loadMobileDienstplanData();
+        });
+      }
 
-      document.getElementById('mobileDpToday')?.addEventListener('click', () => {
-        mobileDpState.currentWeekStart = getMonday(new Date());
-        loadMobileDienstplanData();
-      });
+      if (nextBtn) {
+        const newNext = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNext, nextBtn);
+        newNext.addEventListener('click', () => {
+          const newDate = new Date(mobileDpState.currentWeekStart);
+          newDate.setDate(newDate.getDate() + 7);
+          mobileDpState.currentWeekStart = newDate;
+          loadMobileDienstplanData();
+        });
+      }
+
+      if (todayBtn) {
+        const newToday = todayBtn.cloneNode(true);
+        todayBtn.parentNode.replaceChild(newToday, todayBtn);
+        newToday.addEventListener('click', () => {
+          mobileDpState.currentWeekStart = getMonday(new Date());
+          loadMobileDienstplanData();
+        });
+      }
 
       // Load initial data
       loadMobileDienstplanData();
@@ -37574,160 +37617,189 @@
       const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
       container.innerHTML = '';
 
+      // SVG Icons for shift types
+      const shiftIcons = {
+        available: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+        vacation: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
+        sick: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+        business: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+        guestspot: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+        training: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+        convention: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        homeoffice: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+        other: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        default: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+      };
+
       for (let i = 0; i < 7; i++) {
         const date = new Date(mobileDpState.currentWeekStart);
         date.setDate(date.getDate() + i);
         const dateStr = date.toISOString().split('T')[0];
 
         const dayShifts = shifts.filter(s => {
-          const sd = (s.start_date || s.work_date || '').toString().split('T')[0];
+          const sd = (s.start_date || '').toString().split('T')[0];
           return sd === dateStr;
         });
 
+        // Determine card background color
+        let cardBgColor = 'white';
+        let cardBorderColor = 'transparent';
+        let titleColor = '#1a1a1a';
+
+        // If exactly one shift, use its color for the whole card
+        if (dayShifts.length === 1) {
+          const shiftType = (dayShifts[0].state || dayShifts[0].role || '').toLowerCase();
+
+          if (shiftType.includes('available') || shiftType.includes('approved')) {
+            cardBgColor = '#E8F5E9'; cardBorderColor = '#4CAF50'; titleColor = '#2E7D32';
+          } else if (shiftType.includes('vacation') || shiftType.includes('urlaub')) {
+            cardBgColor = '#FFF3E0'; cardBorderColor = '#FF9800'; titleColor = '#E65100';
+          } else if (shiftType.includes('sick') || shiftType.includes('krank')) {
+            cardBgColor = '#FFEBEE'; cardBorderColor = '#F44336'; titleColor = '#C62828';
+          } else if (shiftType.includes('business')) {
+            cardBgColor = '#E3F2FD'; cardBorderColor = '#2196F3'; titleColor = '#1565C0';
+          } else if (shiftType.includes('guest')) {
+            cardBgColor = '#F3E5F5'; cardBorderColor = '#9C27B0'; titleColor = '#6A1B9A';
+          } else if (shiftType.includes('training')) {
+            cardBgColor = '#E0F7FA'; cardBorderColor = '#00BCD4'; titleColor = '#00838F';
+          } else if (shiftType.includes('convention')) {
+            cardBgColor = '#FCE4EC'; cardBorderColor = '#E91E63'; titleColor = '#AD1457';
+          } else if (shiftType.includes('home') || shiftType.includes('remote')) {
+            cardBgColor = '#ECEFF1'; cardBorderColor = '#607D8B'; titleColor = '#37474F';
+          } else if (shiftType.includes('other')) {
+            cardBgColor = '#FFF8E1'; cardBorderColor = '#FFC107'; titleColor = '#FF8F00';
+          } else if (shiftType.includes('frei') || shiftType.includes('off')) {
+            cardBgColor = '#F5F5F5'; cardBorderColor = '#9E9E9E'; titleColor = '#757575';
+          }
+        }
+
         const card = document.createElement('div');
         card.className = 'mobile-dp-day-card';
+        card.style.cssText = `
+          background: ${cardBgColor};
+          border-radius: 16px;
+          padding: 16px;
+          margin-bottom: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          border-left: 4px solid ${cardBorderColor};
+        `;
 
-        // SVG Icons for shift types
-        const shiftIcons = {
-          available: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
-          vacation: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
-          sick: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
-          business: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
-          guestspot: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-          training: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
-          convention: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-          homeoffice: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-          other: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
-          default: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-        };
-
+        // Build content
         let content = '';
-        if (dayShifts.length > 0) {
-          content = dayShifts.map(s => {
-            const shiftType = s.state || s.role || s.type || s.category || 'Schicht';
-            const startTime = s.working_start || s.start_time || '';
-            const endTime = s.working_end || s.end_time || '';
-            const locationName = s.location?.name || '';
 
-            // Determine styling based on type
-            let icon = shiftIcons.default;
-            let bgColor = '#E3F2FD';
-            let textColor = '#1565C0';
-            let borderColor = '#2196F3';
-
-            const typeLower = shiftType.toLowerCase();
-
-            if (typeLower.includes('available') || typeLower.includes('verfügbar') || typeLower === 'approved') {
-              icon = shiftIcons.available;
-              bgColor = '#E8F5E9'; textColor = '#2E7D32'; borderColor = '#4CAF50';
-            } else if (typeLower.includes('vacation') || typeLower.includes('urlaub')) {
-              icon = shiftIcons.vacation;
-              bgColor = '#FFF3E0'; textColor = '#E65100'; borderColor = '#FF9800';
-            } else if (typeLower.includes('sick') || typeLower.includes('krank')) {
-              icon = shiftIcons.sick;
-              bgColor = '#FFEBEE'; textColor = '#C62828'; borderColor = '#F44336';
-            } else if (typeLower.includes('business') || typeLower.includes('dienstreise')) {
-              icon = shiftIcons.business;
-              bgColor = '#E3F2FD'; textColor = '#1565C0'; borderColor = '#2196F3';
-            } else if (typeLower.includes('guest')) {
-              icon = shiftIcons.guestspot;
-              bgColor = '#F3E5F5'; textColor = '#6A1B9A'; borderColor = '#9C27B0';
-            } else if (typeLower.includes('training') || typeLower.includes('schulung')) {
-              icon = shiftIcons.training;
-              bgColor = '#E0F7FA'; textColor = '#00838F'; borderColor = '#00BCD4';
-            } else if (typeLower.includes('convention') || typeLower.includes('messe')) {
-              icon = shiftIcons.convention;
-              bgColor = '#FCE4EC'; textColor = '#AD1457'; borderColor = '#E91E63';
-            } else if (typeLower.includes('home') || typeLower.includes('remote')) {
-              icon = shiftIcons.homeoffice;
-              bgColor = '#ECEFF1'; textColor = '#37474F'; borderColor = '#607D8B';
-            } else if (typeLower.includes('other') || typeLower.includes('sonstig')) {
-              icon = shiftIcons.other;
-              bgColor = '#FFF8E1'; textColor = '#FF8F00'; borderColor = '#FFC107';
-            } else if (typeLower.includes('frei') || typeLower.includes('off') || typeLower.includes('free')) {
-              icon = shiftIcons.homeoffice;
-              bgColor = '#F5F5F5'; textColor = '#757575'; borderColor = '#9E9E9E';
-            }
-
-            // Format time display
-            let timeDisplay = '';
-            if (startTime || endTime) {
-              timeDisplay = `${startTime || '?'}${endTime ? ' - ' + endTime : ''}`;
-            }
-
-            // Return full-color card
-            return `
-              <div style="
-                background: ${bgColor};
-                border-radius: 12px;
-                padding: 14px 16px;
-                margin-top: 10px;
-                border-left: 4px solid ${borderColor};
-                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-              ">
-                <div style="display:flex;align-items:flex-start;gap:12px;">
-                  <div style="color:${textColor};flex-shrink:0;margin-top:2px;">
-                    ${icon}
-                  </div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-weight:600;font-size:15px;color:${textColor};">
-                      ${shiftType}
-                    </div>
-                    ${timeDisplay ? `
-                      <div style="font-size:13px;color:${textColor};opacity:0.8;margin-top:4px;">
-                        🕐 ${timeDisplay}
-                      </div>
-                    ` : ''}
-                    ${locationName ? `
-                      <div style="font-size:12px;color:${textColor};opacity:0.7;margin-top:3px;">
-                        📍 ${locationName}
-                      </div>
-                    ` : ''}
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
-        } else {
+        if (dayShifts.length === 0) {
           // Empty state
           content = `
             <div style="
               background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
               border-radius: 12px;
               padding: 24px 16px;
-              margin-top: 10px;
               text-align: center;
             ">
               <div style="font-size:32px;margin-bottom:8px;opacity:0.5;">📅</div>
               <div style="font-weight:500;color:#6c757d;font-size:14px;">Keine Einträge</div>
-              <div style="font-size:12px;color:#adb5bd;margin-top:4px;">
-                Am ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.
+              <div style="font-size:12px;color:#adb5bd;margin-top:4px;">Am ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.</div>
+            </div>
+          `;
+        } else if (dayShifts.length === 1) {
+          // Single shift - show compact version (card is already colored)
+          const s = dayShifts[0];
+          const shiftType = s.state || s.role || 'Schicht';
+          const startTime = s.working_start || '';
+          const endTime = s.working_end || '';
+          const locationName = s.location?.name || '';
+
+          // Get icon
+          const typeLower = shiftType.toLowerCase();
+          let icon = shiftIcons.default;
+          if (typeLower.includes('available') || typeLower.includes('approved')) icon = shiftIcons.available;
+          else if (typeLower.includes('vacation') || typeLower.includes('urlaub')) icon = shiftIcons.vacation;
+          else if (typeLower.includes('sick') || typeLower.includes('krank')) icon = shiftIcons.sick;
+          else if (typeLower.includes('business')) icon = shiftIcons.business;
+          else if (typeLower.includes('guest')) icon = shiftIcons.guestspot;
+          else if (typeLower.includes('training')) icon = shiftIcons.training;
+          else if (typeLower.includes('convention')) icon = shiftIcons.convention;
+          else if (typeLower.includes('home') || typeLower.includes('remote')) icon = shiftIcons.homeoffice;
+          else if (typeLower.includes('other')) icon = shiftIcons.other;
+
+          let timeDisplay = '';
+          if (startTime || endTime) {
+            timeDisplay = `${startTime}${endTime ? ' - ' + endTime : ''}`;
+          }
+
+          content = `
+            <div style="display:flex;align-items:center;gap:12px;padding-top:8px;">
+              <div style="color:${titleColor};flex-shrink:0;">
+                ${icon}
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:15px;color:${titleColor};">${shiftType}</div>
+                ${timeDisplay ? `<div style="font-size:13px;color:${titleColor};opacity:0.8;margin-top:2px;">🕐 ${timeDisplay}</div>` : ''}
+                ${locationName ? `<div style="font-size:12px;color:${titleColor};opacity:0.7;margin-top:2px;">📍 ${locationName}</div>` : ''}
               </div>
             </div>
           `;
+        } else {
+          // Multiple shifts - render each with its own color
+          content = dayShifts.map(s => {
+            const shiftType = s.state || s.role || 'Schicht';
+            const startTime = s.working_start || '';
+            const endTime = s.working_end || '';
+            const locationName = s.location?.name || '';
+
+            const typeLower = shiftType.toLowerCase();
+            let icon = shiftIcons.default;
+            let bgColor = '#E3F2FD';
+            let textColor = '#1565C0';
+            let borderColor = '#2196F3';
+
+            if (typeLower.includes('available') || typeLower.includes('approved')) {
+              icon = shiftIcons.available; bgColor = '#E8F5E9'; textColor = '#2E7D32'; borderColor = '#4CAF50';
+            } else if (typeLower.includes('vacation') || typeLower.includes('urlaub')) {
+              icon = shiftIcons.vacation; bgColor = '#FFF3E0'; textColor = '#E65100'; borderColor = '#FF9800';
+            } else if (typeLower.includes('sick') || typeLower.includes('krank')) {
+              icon = shiftIcons.sick; bgColor = '#FFEBEE'; textColor = '#C62828'; borderColor = '#F44336';
+            } else if (typeLower.includes('business')) {
+              icon = shiftIcons.business; bgColor = '#E3F2FD'; textColor = '#1565C0'; borderColor = '#2196F3';
+            } else if (typeLower.includes('guest')) {
+              icon = shiftIcons.guestspot; bgColor = '#F3E5F5'; textColor = '#6A1B9A'; borderColor = '#9C27B0';
+            } else if (typeLower.includes('training')) {
+              icon = shiftIcons.training; bgColor = '#E0F7FA'; textColor = '#00838F'; borderColor = '#00BCD4';
+            } else if (typeLower.includes('convention')) {
+              icon = shiftIcons.convention; bgColor = '#FCE4EC'; textColor = '#AD1457'; borderColor = '#E91E63';
+            } else if (typeLower.includes('home') || typeLower.includes('remote')) {
+              icon = shiftIcons.homeoffice; bgColor = '#ECEFF1'; textColor = '#37474F'; borderColor = '#607D8B';
+            } else if (typeLower.includes('other')) {
+              icon = shiftIcons.other; bgColor = '#FFF8E1'; textColor = '#FF8F00'; borderColor = '#FFC107';
+            }
+
+            let timeDisplay = '';
+            if (startTime || endTime) {
+              timeDisplay = `${startTime}${endTime ? ' - ' + endTime : ''}`;
+            }
+
+            return `
+              <div style="background:${bgColor};border-radius:12px;padding:14px 16px;margin-top:10px;border-left:4px solid ${borderColor};">
+                <div style="display:flex;align-items:flex-start;gap:12px;">
+                  <div style="color:${textColor};flex-shrink:0;margin-top:2px;">${icon}</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:600;font-size:15px;color:${textColor};">${shiftType}</div>
+                    ${timeDisplay ? `<div style="font-size:13px;color:${textColor};opacity:0.8;margin-top:4px;">🕐 ${timeDisplay}</div>` : ''}
+                    ${locationName ? `<div style="font-size:12px;color:${textColor};opacity:0.7;margin-top:3px;">📍 ${locationName}</div>` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
         }
 
-        card.style.cssText = `
-          background: white;
-          border-radius: 16px;
-          padding: 16px;
-          margin-bottom: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        `;
-
         card.innerHTML = `
-          <div style="
-            font-weight:700;
-            font-size:15px;
-            color:#1a1a1a;
-            padding-bottom:8px;
-            border-bottom:1px solid #f0f0f0;
-            margin-bottom:4px;
-          ">
+          <div style="font-weight:700;font-size:15px;color:${titleColor};padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.08);">
             ${dayNames[i]} ${date.getDate()}.${date.getMonth()+1}.
           </div>
           ${content}
         `;
+
         container.appendChild(card);
       }
     }
