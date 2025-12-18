@@ -7703,22 +7703,16 @@
       /* Mobile Calendar View - Apple Style */
       .mobile-calendar-view {
         display: none !important;
-        position: fixed;
-        top: 60px; /* Below main header */
-        left: 0;
-        right: 0;
-        bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* Navbar + safe area */
         background: var(--macos-bg, #f5f5f7);
-        z-index: 100;
-        overflow-y: auto; /* Scroll im Container */
-        overflow-x: hidden;
         flex-direction: column;
-        padding-top: 0;
-        overscroll-behavior: none; /* Verhindert white-space overscroll */
-        -webkit-overflow-scrolling: touch;
-        border-radius: 0 !important; /* Überschreibt andere Regeln */
+        /* Height auto - scrollt mit der Seite */
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        padding-top: 60px; /* Platz für fixed header */
+        padding-bottom: 83px; /* Platz für fixed navbar */
+        border-radius: 0 !important;
         border: none !important;
-        touch-action: pan-y; /* iOS touch handling */
       }
 
       .mobile-calendar-view.active {
@@ -7970,19 +7964,26 @@
         opacity: 1;
       }
 
-      /* Grid Wrapper - normales Flex-Layout, KEIN overflow */
+      /* Grid Wrapper - width 100vw, height auto */
       .mobile-cal-grid-wrapper {
+        width: 100vw;
+        height: auto !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
         display: flex;
         flex-direction: row;
         background: var(--macos-bg, #f5f5f7);
       }
 
-      /* Zeitleiste - normale Spalte, NICHT sticky */
+      /* Zeitleiste links - aligned mit Terminen */
       .mobile-cal-time-column {
         width: 55px;
         flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
         background: var(--macos-bg, #f5f5f7);
         border-right: 1px solid rgba(0,0,0,0.1);
+        /* KEINE feste Höhe - passt sich an */
       }
 
       /* Zeit-Header */
@@ -7992,9 +7993,8 @@
         border-bottom: 1px solid rgba(0,0,0,0.1);
       }
 
-      /* Zeit-Slots */
+      /* Zeit-Slots - Höhe wird dynamisch via JS gesetzt */
       .mobile-cal-time-slot {
-        height: 60px;
         display: flex;
         align-items: flex-start;
         justify-content: center;
@@ -8002,6 +8002,8 @@
         font-size: 11px;
         color: var(--macos-text-secondary, #86868b);
         border-bottom: 1px solid rgba(0,0,0,0.05);
+        /* height wird via JS gesetzt basierend auf Terminen */
+        min-height: 60px;
       }
 
       .mobile-cal-artist-header-spacer {
@@ -8011,10 +8013,10 @@
 
       /* Artist-Scroll - NUR horizontaler Scroll */
       .mobile-cal-artists-scroll {
-        display: flex;
         flex: 1;
+        display: flex;
         overflow-x: auto;
-        overflow-y: visible;
+        overflow-y: visible !important;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;
       }
@@ -8057,21 +8059,22 @@
         text-overflow: ellipsis;
       }
 
-      /* Stunden-Grid */
+      /* Stunden-Grid - KEINE feste Höhe, wird durch Inhalt bestimmt */
       .mobile-cal-hour-grid {
         position: relative;
-        min-height: 840px; /* 14 Stunden × 60px */
-        height: 840px; /* Explizite Höhe für alle 14 Stunden (09-22) */
+        /* height wird durch Hour-Rows bestimmt */
       }
 
-      /* Hour Row im Artist-Grid */
+      /* Hour Row - Höhe wird dynamisch via JS gesetzt */
       .mobile-cal-hour-row {
-        height: 60px;
+        min-height: 60px;
+        /* Tatsächliche Höhe basiert auf Terminen */
         border-bottom: 1px solid rgba(0,0,0,0.05);
+        position: relative;
       }
 
       .mobile-cal-hour-row-grid {
-        height: 60px;
+        min-height: 60px;
         border-bottom: 1px solid rgba(0,0,0,0.05);
         position: relative;
       }
@@ -38056,6 +38059,96 @@
       }).join('');
 
       console.log('📅 ✅ Multi-artist calendar grid rendered');
+
+      // Dynamische Höhen synchronisieren
+      syncMobileCalHourHeights();
+    }
+
+    // ==========================================
+    // DYNAMISCHE HÖHEN FÜR ZEITLEISTE
+    // ==========================================
+
+    function calculateHourHeights(appointments) {
+      // Standard-Höhe pro Stunde
+      const hourHeights = {};
+      for (let h = 9; h <= 22; h++) {
+        hourHeights[h] = 60; // Minimum 60px
+      }
+
+      // Prüfe jeden Termin
+      appointments.forEach(apt => {
+        let startTime = apt.start_time || apt.time_start || '09:00';
+        let endTime = apt.end_time || apt.time_end || '10:00';
+
+        if (apt.start && apt.start.includes('T')) {
+          startTime = apt.start.split('T')[1]?.substring(0, 5) || startTime;
+        }
+        if (apt.end && apt.end.includes('T')) {
+          endTime = apt.end.split('T')[1]?.substring(0, 5) || endTime;
+        }
+
+        const startHour = parseInt(startTime.split(':')[0]);
+        const endHour = parseInt(endTime.split(':')[0]);
+        const endMin = parseInt(endTime.split(':')[1] || '0');
+
+        // Berechne Höhe für die Startstunde basierend auf Termin-Dauer
+        const durationMinutes = (endHour - startHour) * 60 + endMin - parseInt(startTime.split(':')[1] || '0');
+        const requiredHeight = Math.max(durationMinutes, 60);
+
+        // Verteile die Höhe auf die betroffenen Stunden
+        for (let h = startHour; h < endHour + (endMin > 0 ? 1 : 0) && h <= 22; h++) {
+          hourHeights[h] = Math.max(hourHeights[h], 60);
+        }
+      });
+
+      return hourHeights;
+    }
+
+    function syncMobileCalHourHeights() {
+      // Finde alle Hour-Rows und deren tatsächliche Höhen
+      const hourRows = document.querySelectorAll('.mobile-cal-hour-row-grid');
+      const timeSlots = document.querySelectorAll('.mobile-cal-time-slot');
+
+      if (hourRows.length === 0 || timeSlots.length === 0) return;
+
+      // Berechne die maximale Höhe für jede Stunde basierend auf den Artist-Spalten
+      const hourHeights = {};
+      for (let h = 9; h <= 22; h++) {
+        hourHeights[h] = 60; // Minimum
+      }
+
+      // Prüfe alle Termine und deren tatsächliche Höhen
+      const appointments = document.querySelectorAll('.mobile-cal-appointment');
+      appointments.forEach(apt => {
+        const top = parseInt(apt.style.top) || 0;
+        const height = parseInt(apt.style.height) || 60;
+        const startHour = Math.floor(top / 60) + 9;
+        const endPixel = top + height;
+        const endHour = Math.floor(endPixel / 60) + 9;
+
+        // Alle betroffenen Stunden müssen mindestens 60px haben
+        for (let h = startHour; h <= Math.min(endHour, 22); h++) {
+          hourHeights[h] = Math.max(hourHeights[h], 60);
+        }
+      });
+
+      // Setze Höhen auf Zeit-Slots
+      timeSlots.forEach(slot => {
+        const hour = parseInt(slot.dataset.hour);
+        if (hourHeights[hour]) {
+          slot.style.height = hourHeights[hour] + 'px';
+        }
+      });
+
+      // Setze Höhen auf Hour-Rows
+      hourRows.forEach(row => {
+        const hour = parseInt(row.dataset.hour);
+        if (hourHeights[hour]) {
+          row.style.height = hourHeights[hour] + 'px';
+        }
+      });
+
+      console.log('📅 Hour heights synchronized');
     }
 
     // Wochenleiste rendern
@@ -39377,23 +39470,23 @@
     <!-- Hauptbereich: Zeitleiste + Artist-Spalten -->
     <div class="mobile-cal-grid-wrapper">
 
-      <!-- Zeitleiste links -->
+      <!-- Zeitleiste links - aligned mit Terminen -->
       <div class="mobile-cal-time-column">
         <div class="mobile-cal-time-header"></div>
-        <div class="mobile-cal-time-slot">09:00</div>
-        <div class="mobile-cal-time-slot">10:00</div>
-        <div class="mobile-cal-time-slot">11:00</div>
-        <div class="mobile-cal-time-slot">12:00</div>
-        <div class="mobile-cal-time-slot">13:00</div>
-        <div class="mobile-cal-time-slot">14:00</div>
-        <div class="mobile-cal-time-slot">15:00</div>
-        <div class="mobile-cal-time-slot">16:00</div>
-        <div class="mobile-cal-time-slot">17:00</div>
-        <div class="mobile-cal-time-slot">18:00</div>
-        <div class="mobile-cal-time-slot">19:00</div>
-        <div class="mobile-cal-time-slot">20:00</div>
-        <div class="mobile-cal-time-slot">21:00</div>
-        <div class="mobile-cal-time-slot">22:00</div>
+        <div class="mobile-cal-time-slot" data-hour="9">09:00</div>
+        <div class="mobile-cal-time-slot" data-hour="10">10:00</div>
+        <div class="mobile-cal-time-slot" data-hour="11">11:00</div>
+        <div class="mobile-cal-time-slot" data-hour="12">12:00</div>
+        <div class="mobile-cal-time-slot" data-hour="13">13:00</div>
+        <div class="mobile-cal-time-slot" data-hour="14">14:00</div>
+        <div class="mobile-cal-time-slot" data-hour="15">15:00</div>
+        <div class="mobile-cal-time-slot" data-hour="16">16:00</div>
+        <div class="mobile-cal-time-slot" data-hour="17">17:00</div>
+        <div class="mobile-cal-time-slot" data-hour="18">18:00</div>
+        <div class="mobile-cal-time-slot" data-hour="19">19:00</div>
+        <div class="mobile-cal-time-slot" data-hour="20">20:00</div>
+        <div class="mobile-cal-time-slot" data-hour="21">21:00</div>
+        <div class="mobile-cal-time-slot" data-hour="22">22:00</div>
       </div>
 
       <!-- Horizontal scrollbarer Artist-Bereich -->
