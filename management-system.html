@@ -7707,7 +7707,7 @@
         top: 60px; /* Below main header */
         left: 0;
         right: 0;
-        bottom: 72px;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* Navbar + safe area */
         background: var(--macos-bg, #f5f5f7);
         z-index: 100;
         overflow-y: auto; /* Scroll im Container */
@@ -8169,7 +8169,7 @@
         top: 60px; /* Below main header */
         left: 0;
         right: 0;
-        bottom: 72px;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* Navbar + safe area */
         background: var(--macos-bg, #f5f5f7);
         z-index: 100;
         overflow-y: auto; /* Scroll im Container */
@@ -37976,15 +37976,19 @@
           const top = ((startHour - 9) * 60 + startMin);
           const height = Math.max(((endHour - startHour) * 60 + (endMin - startMin)), 30);
 
-          // Kategorie
-          let category = (apt.category || apt.type || apt.booking_type || 'consultation').toLowerCase().replace(/\s+/g, '_');
-          if (category.includes('consult')) category = 'consultation';
-          else if (category.includes('new')) category = 'new_tattoo';
-          else if (category.includes('continu')) category = 'continuing_tattoo';
-          else if (category.includes('touch')) category = 'touch_up';
-          else if (category.includes('self')) category = 'selfbooking';
-          else if (category.includes('wanna')) category = 'wannado';
-          else if (category.includes('internal')) category = 'internal';
+          // Kategorie aus work_process (primär) oder Fallbacks
+          let rawCategory = apt.work_process || apt.category || apt.type || apt.booking_type || '';
+          let category = rawCategory.toLowerCase().trim().replace(/\s+/g, '_');
+
+          // Normalisiere zu bekannten Kategorien
+          if (category.includes('consult') || category === 'consultation') category = 'consultation';
+          else if (category.includes('new') || category.includes('neu') || category === 'new_tattoo') category = 'new_tattoo';
+          else if (category.includes('continu') || category.includes('weiter') || category === 'continuing_tattoo') category = 'continuing_tattoo';
+          else if (category.includes('touch') || category === 'touch_up') category = 'touch_up';
+          else if (category.includes('self') || category === 'selfbooking') category = 'selfbooking';
+          else if (category.includes('wanna') || category === 'wannado') category = 'wannado';
+          else if (category.includes('internal') || category.includes('intern')) category = 'internal';
+          else category = category || 'consultation'; // Fallback
 
           const config = mobileCalCategoryConfig[category] || mobileCalCategoryConfig.consultation;
 
@@ -39151,16 +39155,19 @@
 
           // Render mini events (max 4)
           eventsHtml = dayAppts.slice(0, 4).map(apt => {
-            let category = (apt.category || apt.type || apt.booking_type || 'default').toLowerCase().replace(/\s+/g, '_');
+            // Kategorie aus work_process (primär) oder Fallbacks
+            let rawCategory = apt.work_process || apt.category || apt.type || apt.booking_type || '';
+            let category = rawCategory.toLowerCase().trim().replace(/\s+/g, '_');
 
             // Normalize category
-            if (category.includes('consult')) category = 'consultation';
-            else if (category.includes('new')) category = 'new_tattoo';
-            else if (category.includes('continu')) category = 'continuing_tattoo';
-            else if (category.includes('touch')) category = 'touch_up';
-            else if (category.includes('self')) category = 'selfbooking';
-            else if (category.includes('wanna')) category = 'wannado';
-            else if (category.includes('internal')) category = 'internal';
+            if (category.includes('consult') || category === 'consultation') category = 'consultation';
+            else if (category.includes('new') || category.includes('neu') || category === 'new_tattoo') category = 'new_tattoo';
+            else if (category.includes('continu') || category.includes('weiter') || category === 'continuing_tattoo') category = 'continuing_tattoo';
+            else if (category.includes('touch') || category === 'touch_up') category = 'touch_up';
+            else if (category.includes('self') || category === 'selfbooking') category = 'selfbooking';
+            else if (category.includes('wanna') || category === 'wannado') category = 'wannado';
+            else if (category.includes('internal') || category.includes('intern')) category = 'internal';
+            else category = category || 'consultation'; // Fallback
 
             const colors = categoryColors[category] || categoryColors.default;
 
