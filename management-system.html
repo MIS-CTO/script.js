@@ -37842,11 +37842,11 @@
       const dateStr = mobileCalState.selectedDate.toISOString().split('T')[0];
       console.log('📅 Selected date:', dateStr);
 
-      // Update date header in top navbar
+      // Update date header in top navbar (kurzes Format)
       const header = document.getElementById('mobileCalNavDate');
       if (header) {
         header.textContent = mobileCalState.selectedDate.toLocaleDateString('de-DE', {
-          weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
         });
       }
 
@@ -38284,12 +38284,12 @@
       updateMobileCalHeaderDate();
     }
 
-    // Header-Datum aktualisieren (in Top-Navbar)
+    // Header-Datum aktualisieren (in Top-Navbar, kurzes Format)
     function updateMobileCalHeaderDate() {
       const header = document.getElementById('mobileCalNavDate');
       if (header) {
         header.textContent = mobileCalState.selectedDate.toLocaleDateString('de-DE', {
-          weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
         });
       }
     }
@@ -39220,12 +39220,16 @@
           view.style.display = 'none';
         }, 300);
       } else {
-        // Öffnen mit Animation
+        // Sofortiges Öffnen - keine Verzögerung
         view.style.display = 'flex';
-        // Force reflow für Animation
-        void view.offsetWidth;
+        void view.offsetWidth; // Force reflow für Animation
         view.classList.add('active');
-        renderMobileCalMonthView();
+
+        // Nur rendern wenn noch nicht vorhanden (preload sollte bereits geladen haben)
+        const container = document.getElementById('mobileCalMonthsScroll');
+        if (!container || !container.innerHTML || container.innerHTML.trim() === '') {
+          renderMobileCalMonthView();
+        }
       }
     }
 
