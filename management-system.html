@@ -7939,8 +7939,23 @@
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s;
+        background: transparent;
+        color: var(--macos-text-primary, #1d1d1f);
       }
 
+      /* HEUTE (aktueller Echtzeit-Tag) - ROT */
+      .mobile-cal-week-day.today {
+        background: #FF3B30 !important;
+        color: white !important;
+      }
+
+      /* AUSGEWÄHLT aber NICHT heute - DUNKELGRAU */
+      .mobile-cal-week-day.selected:not(.today) {
+        background: #3a3a3c !important;
+        color: white !important;
+      }
+
+      /* Legacy: .active wird wie .today.selected behandelt */
       .mobile-cal-week-day.active {
         background: #FF3B30;
         color: white;
@@ -7958,10 +7973,51 @@
         font-weight: 600;
       }
 
+      .mobile-cal-week-day.today .mobile-cal-week-day-name,
+      .mobile-cal-week-day.today .mobile-cal-week-day-num,
+      .mobile-cal-week-day.selected .mobile-cal-week-day-name,
+      .mobile-cal-week-day.selected .mobile-cal-week-day-num,
       .mobile-cal-week-day.active .mobile-cal-week-day-name,
       .mobile-cal-week-day.active .mobile-cal-week-day-num {
         color: white;
         opacity: 1;
+      }
+
+      /* === HEUTE BUTTON === */
+      .mobile-cal-today-btn {
+        flex: 2;
+        padding: 10px 20px;
+        background: #e5e5ea;
+        color: #1d1d1f;
+        border: none;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 15px;
+        transition: all 0.2s ease;
+      }
+
+      /* Dunkelgrau mit weißer Schrift (wenn NICHT heute ausgewählt) */
+      .mobile-cal-today-btn.highlight {
+        background: #3a3a3c !important;
+        color: white !important;
+      }
+
+      /* === KALENDER-ICON (Monatsansicht Button) === */
+      .mobile-cal-month-btn {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .mobile-cal-month-btn svg {
+        width: 24px;
+        height: 24px;
+        stroke: #1d1d1f;
       }
 
       /* Grid Wrapper - width 100vw, height auto */
@@ -8253,17 +8309,66 @@
         cursor: pointer;
       }
 
+      /* Kalender-Icon Button ohne Wrapper-Hintergrund */
+      .mobile-dp-nav-btn:first-child,
+      .mobile-dp-month-btn {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        flex: 0 0 auto;
+        padding: 8px;
+      }
+
+      /* === DIENSTPLAN HEUTE BUTTON === */
       .mobile-dp-today-btn {
         flex: 2;
         padding: 10px 20px;
-        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
-        border: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.1));
-        border-radius: 8px;
+        background: #e5e5ea;
+        color: #1d1d1f;
+        border: none;
+        border-radius: 10px;
         font-size: 15px;
         font-weight: 500;
-        color: var(--macos-text-primary, #1d1d1f);
         cursor: pointer;
         font-family: inherit;
+        transition: all 0.2s ease;
+      }
+
+      /* Dunkelgrau mit weißer Schrift (wenn NICHT heute ausgewählt) */
+      .mobile-dp-today-btn.highlight {
+        background: #3a3a3c !important;
+        color: white !important;
+      }
+
+      /* === DIENSTPLAN WEEK-DAY STYLING === */
+      .mobile-dp-week-day {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: transparent;
+        color: var(--macos-text-primary, #1d1d1f);
+      }
+
+      /* HEUTE (aktueller Echtzeit-Tag) - ROT */
+      .mobile-dp-week-day.today {
+        background: #FF3B30 !important;
+        color: white !important;
+      }
+
+      /* AUSGEWÄHLT aber NICHT heute - DUNKELGRAU */
+      .mobile-dp-week-day.selected:not(.today) {
+        background: #3a3a3c !important;
+        color: white !important;
+      }
+
+      .mobile-dp-week-day.today *,
+      .mobile-dp-week-day.selected * {
+        color: white;
+        opacity: 1;
       }
 
       .mobile-dp-days {
@@ -38152,12 +38257,13 @@
       console.log('📅 Hour heights synchronized');
     }
 
-    // Wochenleiste rendern
+    // Wochenleiste rendern mit today/selected Klassen
     function renderMobileCalWeekStrip() {
       const container = document.getElementById('mobileCalWeekStrip');
       if (!container) return;
 
       const selectedDate = mobileCalState.selectedDate;
+      const today = new Date();
       const monday = getMonday(selectedDate);
 
       const dayNames = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'];
@@ -38167,10 +38273,18 @@
         const date = new Date(monday);
         date.setDate(date.getDate() + i);
 
-        const isActive = date.toDateString() === selectedDate.toDateString();
+        // Prüfe ob dieser Tag HEUTE ist
+        const isToday = date.toDateString() === today.toDateString();
+        // Prüfe ob dieser Tag AUSGEWÄHLT ist
+        const isSelected = date.toDateString() === selectedDate.toDateString();
+
+        // Klassen zusammenstellen
+        let classes = 'mobile-cal-week-day';
+        if (isToday) classes += ' today';
+        if (isSelected) classes += ' selected';
 
         html += `
-          <div class="mobile-cal-week-day ${isActive ? 'active' : ''}" onclick="selectMobileCalDate('${date.toISOString().split('T')[0]}')">
+          <div class="${classes}" onclick="selectMobileCalDate('${date.toISOString().split('T')[0]}')">
             <span class="mobile-cal-week-day-name">${dayNames[i]}</span>
             <span class="mobile-cal-week-day-num">${date.getDate()}</span>
           </div>
@@ -38178,6 +38292,28 @@
       }
 
       container.innerHTML = html;
+
+      // Heute-Button Styling aktualisieren
+      updateCalTodayButtonStyle();
+    }
+
+    // Heute-Button Styling für Calendar
+    function updateCalTodayButtonStyle() {
+      const todayBtn = document.querySelector('.mobile-cal-today-btn');
+      if (!todayBtn) return;
+
+      const selectedDate = mobileCalState.selectedDate;
+      const today = new Date();
+
+      const isSelectedToday = selectedDate.toDateString() === today.toDateString();
+
+      if (isSelectedToday) {
+        // Heute ist ausgewählt - hellgrau
+        todayBtn.classList.remove('highlight');
+      } else {
+        // Anderer Tag ausgewählt - dunkelgrau
+        todayBtn.classList.add('highlight');
+      }
     }
 
     // Datum aus Wochenleiste auswählen
@@ -38185,7 +38321,7 @@
       const [year, month, day] = dateStr.split('-').map(Number);
       mobileCalState.selectedDate = new Date(year, month - 1, day);
 
-      // UI aktualisieren
+      // UI aktualisieren (inkl. Heute-Button Styling)
       renderMobileCalWeekStrip();
       renderMobileCalendarGrid();
       updateMobileCalHeaderDate();
@@ -38483,6 +38619,7 @@
           mobileDpState.currentWeekStart = newDate;
           loadMobileDienstplanData();
           updateMobileHeaderTitle('dienstplan');
+          updateDpTodayButtonStyle();
         });
       }
 
@@ -38495,6 +38632,7 @@
           mobileDpState.currentWeekStart = newDate;
           loadMobileDienstplanData();
           updateMobileHeaderTitle('dienstplan');
+          updateDpTodayButtonStyle();
         });
       }
 
@@ -38505,11 +38643,36 @@
           mobileDpState.currentWeekStart = getMonday(new Date());
           loadMobileDienstplanData();
           updateMobileHeaderTitle('dienstplan');
+          updateDpTodayButtonStyle();
         });
       }
 
+      // Initial Heute-Button Styling
+      updateDpTodayButtonStyle();
+
       // Load initial data
       loadMobileDienstplanData();
+    }
+
+    // Heute-Button Styling für Dienstplan
+    function updateDpTodayButtonStyle() {
+      const todayBtn = document.getElementById('mobileDpToday');
+      if (!todayBtn) return;
+
+      const today = new Date();
+      const currentWeekMonday = getMonday(today);
+      const displayedWeekMonday = mobileDpState.currentWeekStart;
+
+      // Prüfe ob die angezeigte Woche die aktuelle Woche ist
+      const isCurrentWeek = currentWeekMonday.toDateString() === displayedWeekMonday.toDateString();
+
+      if (isCurrentWeek) {
+        // Aktuelle Woche wird angezeigt - hellgrau
+        todayBtn.classList.remove('highlight');
+      } else {
+        // Andere Woche wird angezeigt - dunkelgrau
+        todayBtn.classList.add('highlight');
+      }
     }
 
     async function loadMobileDienstplanData() {
@@ -39462,9 +39625,16 @@
 
     <!-- Navigation Buttons (UNTER der Wochenleiste) -->
     <div class="mobile-cal-week-nav" style="padding:8px 16px;">
-      <button class="mobile-cal-nav-btn" onclick="toggleMobileCalMonthView()" style="flex:0 0 auto;padding:8px 12px;">📅</button>
+      <button class="mobile-cal-month-btn" onclick="toggleMobileCalMonthView()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </button>
       <button class="mobile-cal-nav-btn" onclick="mobileCalPrevDay()" style="flex:1;">←</button>
-      <button class="mobile-cal-today-btn" onclick="mobileCalToday()" style="flex:2;">Heute</button>
+      <button class="mobile-cal-today-btn" onclick="mobileCalToday()">Heute</button>
       <button class="mobile-cal-nav-btn" onclick="mobileCalNextDay()" style="flex:1;">→</button>
     </div>
 
