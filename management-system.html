@@ -7958,47 +7958,32 @@
         opacity: 1;
       }
 
-      /* Haupt Grid-Wrapper */
+      /* Haupt Grid-Wrapper - normales Flex-Layout */
       .mobile-cal-grid-wrapper {
         display: flex;
-        flex: 1;
-        min-height: 0; /* Wichtig für Flex-Overflow */
-        overflow: hidden;
-        position: relative;
+        flex-direction: row;
         background: var(--macos-bg, #f5f5f7);
       }
 
-      /* Container für vertikales Scrollen (Zeitleiste + Artists zusammen) */
+      /* Container entfernt - nur für Kompatibilität falls noch im HTML */
       .mobile-cal-scroll-container {
         display: flex;
-        flex: 1;
-        min-height: 0; /* Wichtig für Flex-Overflow */
-        overflow-y: auto;
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: none;
+        flex-direction: row;
       }
 
-      /* Fixe Zeitleiste links - sticky horizontal, scrollt vertikal mit */
+      /* Zeitleiste - normale Spalte, NICHT sticky */
       .mobile-cal-time-column {
-        width: 50px;
+        width: 55px;
         flex-shrink: 0;
         background: var(--macos-bg, #f5f5f7);
         border-right: 1px solid rgba(0,0,0,0.1);
-        position: sticky;
-        left: 0;
-        z-index: 100; /* ERHÖHT - Zeitleiste über Artist-Spalten */
-        min-height: calc(44px + 14 * 60px); /* Header + 14 Stunden (09-22) */
       }
 
-      /* Zeitleiste Header (sticky oben) */
+      /* Zeit-Header - NICHT mehr sticky */
       .mobile-cal-time-header {
         height: 44px;
         background: var(--macos-bg, #f5f5f7);
         border-bottom: 1px solid rgba(0,0,0,0.1);
-        position: sticky;
-        top: 0;
-        z-index: 101; /* ERHÖHT - Header über allem */
       }
 
       .mobile-cal-time-slot {
@@ -8017,39 +8002,34 @@
         border-bottom: 1px solid rgba(0,0,0,0.1);
       }
 
-      /* Horizontal scrollbarer Artist-Bereich */
+      /* Artist-Scroll - NUR horizontaler Scroll */
       .mobile-cal-artists-scroll {
         display: flex;
-        overflow-x: auto;
-        overflow-y: visible; /* GEÄNDERT: Nicht abschneiden! */
         flex: 1;
+        overflow-x: auto;
+        overflow-y: visible;
         -webkit-overflow-scrolling: touch;
-        overscroll-behavior-x: none;
+        overscroll-behavior-x: contain;
       }
 
-      /* Einzelne Artist-Spalte */
+      /* Artist-Spalte - normale Höhe */
       .mobile-cal-artist-column {
-        min-width: 150px;
+        min-width: 160px;
         flex-shrink: 0;
         border-right: 1px solid rgba(0,0,0,0.1);
         position: relative;
         background: white;
-        z-index: 1; /* Niedriger als Zeitleiste */
-        min-height: calc(44px + 14 * 60px); /* Header + 14 Stunden (09-22) */
       }
 
-      /* Artist Header - sticky oben */
+      /* Artist Header - NICHT mehr sticky */
       .mobile-cal-artist-header {
         height: 44px;
-        padding: 6px 8px;
+        padding: 8px;
         display: flex;
         align-items: center;
         gap: 8px;
         background: white;
         border-bottom: 1px solid rgba(0,0,0,0.1);
-        position: sticky;
-        top: 0;
-        z-index: 5;
       }
 
       .mobile-cal-artist-avatar {
@@ -38142,70 +38122,17 @@
       updateMobileCalHeaderDate();
     }
 
-    // Scroll-Synchronisation initialisieren (Overscroll verhindern)
+    // Vereinfachte Scroll-Funktion - nur horizontaler Overscroll für Artist-Bereich
     function initMobileCalScrollSync() {
-      const scrollContainer = document.getElementById('mobileCalScrollContainer');
       const artistsScroll = document.getElementById('mobileCalArtistsScroll');
 
-      if (!scrollContainer || !artistsScroll) return;
+      if (!artistsScroll) return;
 
-      // Touch-Handler für iOS Overscroll-Prevention
-      let touchStartY = 0;
-      let touchStartX = 0;
-
-      // Vertikales Scrollen - Touch-Events
-      scrollContainer.addEventListener('touchstart', function(e) {
-        touchStartY = e.touches[0].clientY;
-      }, { passive: true });
-
-      scrollContainer.addEventListener('touchmove', function(e) {
-        const touchY = e.touches[0].clientY;
-        const scrollTop = this.scrollTop;
-        const scrollHeight = this.scrollHeight;
-        const clientHeight = this.clientHeight;
-        const isAtTop = scrollTop <= 0;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight;
-        const isScrollingUp = touchY > touchStartY;
-        const isScrollingDown = touchY < touchStartY;
-
-        // Prevent overscroll at boundaries
-        if ((isAtTop && isScrollingUp) || (isAtBottom && isScrollingDown)) {
-          e.preventDefault();
-        }
-      }, { passive: false });
-
-      // Horizontales Scrollen - Touch-Events
-      artistsScroll.addEventListener('touchstart', function(e) {
-        touchStartX = e.touches[0].clientX;
-      }, { passive: true });
-
-      artistsScroll.addEventListener('touchmove', function(e) {
-        const touchX = e.touches[0].clientX;
-        const scrollLeft = this.scrollLeft;
-        const scrollWidth = this.scrollWidth;
-        const clientWidth = this.clientWidth;
-        const isAtLeft = scrollLeft <= 0;
-        const isAtRight = scrollLeft + clientWidth >= scrollWidth;
-        const isScrollingLeft = touchX > touchStartX;
-        const isScrollingRight = touchX < touchStartX;
-
-        // Prevent overscroll at boundaries
-        if ((isAtLeft && isScrollingLeft) || (isAtRight && isScrollingRight)) {
-          e.preventDefault();
-        }
-      }, { passive: false });
-
-      // Scroll-Events für Boundary-Clamping
+      // Nur horizontalen Overscroll verhindern (CSS macht das meiste mit overscroll-behavior-x: contain)
       artistsScroll.addEventListener('scroll', function() {
-        const maxScrollLeft = this.scrollWidth - this.clientWidth;
         if (this.scrollLeft < 0) this.scrollLeft = 0;
+        const maxScrollLeft = this.scrollWidth - this.clientWidth;
         if (this.scrollLeft > maxScrollLeft) this.scrollLeft = maxScrollLeft;
-      }, { passive: true });
-
-      scrollContainer.addEventListener('scroll', function() {
-        const maxScrollTop = this.scrollHeight - this.clientHeight;
-        if (this.scrollTop < 0) this.scrollTop = 0;
-        if (this.scrollTop > maxScrollTop) this.scrollTop = maxScrollTop;
       }, { passive: true });
 
       console.log('📅 Mobile calendar scroll sync initialized');
@@ -39386,37 +39313,32 @@
       <button class="mobile-cal-nav-btn" onclick="mobileCalNextDay()" style="flex:1;">→</button>
     </div>
 
-    <!-- Hauptbereich: Zeitleiste + Artist-Spalten -->
+    <!-- Hauptbereich: Zeitleiste + Artist-Spalten (scrollt mit der Seite) -->
     <div class="mobile-cal-grid-wrapper">
 
-      <!-- Scroll-Container für vertikales Scrollen (Zeitleiste + Artists zusammen) -->
-      <div class="mobile-cal-scroll-container" id="mobileCalScrollContainer">
+      <!-- Zeitleiste links (scrollt mit der Seite) -->
+      <div class="mobile-cal-time-column">
+        <div class="mobile-cal-time-header"></div>
+        <div class="mobile-cal-time-slot">09:00</div>
+        <div class="mobile-cal-time-slot">10:00</div>
+        <div class="mobile-cal-time-slot">11:00</div>
+        <div class="mobile-cal-time-slot">12:00</div>
+        <div class="mobile-cal-time-slot">13:00</div>
+        <div class="mobile-cal-time-slot">14:00</div>
+        <div class="mobile-cal-time-slot">15:00</div>
+        <div class="mobile-cal-time-slot">16:00</div>
+        <div class="mobile-cal-time-slot">17:00</div>
+        <div class="mobile-cal-time-slot">18:00</div>
+        <div class="mobile-cal-time-slot">19:00</div>
+        <div class="mobile-cal-time-slot">20:00</div>
+        <div class="mobile-cal-time-slot">21:00</div>
+        <div class="mobile-cal-time-slot">22:00</div>
+      </div>
 
-        <!-- Fixe Zeitleiste links (sticky horizontal, scrollt vertikal mit) -->
-        <div class="mobile-cal-time-column">
-          <div class="mobile-cal-time-header"></div>
-          <div class="mobile-cal-time-slot">09:00</div>
-          <div class="mobile-cal-time-slot">10:00</div>
-          <div class="mobile-cal-time-slot">11:00</div>
-          <div class="mobile-cal-time-slot">12:00</div>
-          <div class="mobile-cal-time-slot">13:00</div>
-          <div class="mobile-cal-time-slot">14:00</div>
-          <div class="mobile-cal-time-slot">15:00</div>
-          <div class="mobile-cal-time-slot">16:00</div>
-          <div class="mobile-cal-time-slot">17:00</div>
-          <div class="mobile-cal-time-slot">18:00</div>
-          <div class="mobile-cal-time-slot">19:00</div>
-          <div class="mobile-cal-time-slot">20:00</div>
-          <div class="mobile-cal-time-slot">21:00</div>
-          <div class="mobile-cal-time-slot">22:00</div>
-        </div>
-
-        <!-- Horizontal scrollbarer Artist-Bereich -->
-        <div class="mobile-cal-artists-scroll" id="mobileCalArtistsScroll">
-          <!-- Artist-Spalten werden via JS gefüllt -->
-        </div>
-
-      </div> <!-- Ende mobile-cal-scroll-container -->
+      <!-- Horizontal scrollbarer Artist-Bereich -->
+      <div class="mobile-cal-artists-scroll" id="mobileCalArtistsScroll">
+        <!-- Artist-Spalten werden via JS gefüllt -->
+      </div>
 
     </div> <!-- Ende mobile-cal-grid-wrapper -->
 
