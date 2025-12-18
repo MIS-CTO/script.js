@@ -7970,37 +7970,40 @@
         opacity: 1;
       }
 
-      /* Haupt Grid-Wrapper - normales Flex-Layout */
+      /* Grid Wrapper - enthält Zeitleiste + Artist-Bereich */
       .mobile-cal-grid-wrapper {
         display: flex;
-        flex-direction: row;
         flex: 1;
-        min-height: 0;
-        overflow-y: auto;
+        position: relative;
+        overflow: hidden;
+        padding-bottom: 100px; /* Platz für Bottom-Navbar */
         background: var(--macos-bg, #f5f5f7);
       }
 
-      /* Container entfernt - nur für Kompatibilität falls noch im HTML */
-      .mobile-cal-scroll-container {
-        display: flex;
-        flex-direction: row;
-      }
-
-      /* Zeitleiste - normale Spalte, NICHT sticky */
+      /* Zeitleiste links - sticky/fixed beim horizontalen Scrollen */
       .mobile-cal-time-column {
         width: 55px;
         flex-shrink: 0;
         background: var(--macos-bg, #f5f5f7);
         border-right: 1px solid rgba(0,0,0,0.1);
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
       }
 
-      /* Zeit-Header - NICHT mehr sticky */
+      /* Time Header Spacer - gleiche Höhe wie Artist-Header */
       .mobile-cal-time-header {
         height: 44px;
         background: var(--macos-bg, #f5f5f7);
         border-bottom: 1px solid rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 15;
       }
 
+      /* Zeit-Slots */
       .mobile-cal-time-slot {
         height: 60px;
         display: flex;
@@ -8017,26 +8020,38 @@
         border-bottom: 1px solid rgba(0,0,0,0.1);
       }
 
-      /* Artist-Scroll - NUR horizontaler Scroll */
-      .mobile-cal-artists-scroll {
-        display: flex;
+      /* Artist Viewport - scrollt horizontal */
+      .mobile-cal-artist-viewport {
         flex: 1;
         overflow-x: auto;
-        overflow-y: visible;
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;
       }
 
-      /* Artist-Spalte - normale Höhe */
+      /* Artist Track - enthält alle Artist-Spalten */
+      .mobile-cal-artist-track {
+        display: flex;
+        min-width: min-content;
+      }
+
+      /* Legacy Kompatibilität */
+      .mobile-cal-artists-scroll {
+        display: flex;
+        min-width: min-content;
+      }
+
+      /* Artist Spalte */
       .mobile-cal-artist-column {
         min-width: 160px;
+        width: 160px;
         flex-shrink: 0;
         border-right: 1px solid rgba(0,0,0,0.1);
         position: relative;
         background: white;
       }
 
-      /* Artist Header - NICHT mehr sticky */
+      /* Artist Header - sticky oben */
       .mobile-cal-artist-header {
         height: 44px;
         padding: 8px;
@@ -8045,6 +8060,9 @@
         gap: 8px;
         background: white;
         border-bottom: 1px solid rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 5;
       }
 
       .mobile-cal-artist-avatar {
@@ -8070,6 +8088,12 @@
         position: relative;
         min-height: 840px; /* 14 Stunden × 60px */
         height: 840px; /* Explizite Höhe für alle 14 Stunden (09-22) */
+      }
+
+      /* Hour Row im Artist-Grid */
+      .mobile-cal-hour-row {
+        height: 60px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
       }
 
       .mobile-cal-hour-row-grid {
@@ -8548,10 +8572,22 @@
         background: var(--macos-bg, #f5f5f7);
         z-index: 10000;
         flex-direction: column;
+        /* Animation vorbereiten */
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
       }
 
       .mobile-cal-month-view.active {
         display: flex;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Für Animation beim Schließen */
+      .mobile-cal-month-view.closing {
+        opacity: 0;
+        transform: translateY(-20px);
       }
 
       /* Mobile Event Detail View - Full Frame Compact */
@@ -39031,14 +39067,34 @@
     // ==========================================
     function toggleMobileCalMonthView() {
       const view = document.getElementById('mobileCalMonthView');
-      if (view) {
+      if (!view) return;
+
+      if (view.classList.contains('active')) {
+        // Schließen mit Animation
+        view.classList.add('closing');
+        setTimeout(() => {
+          view.classList.remove('active', 'closing');
+          view.style.display = 'none';
+        }, 300);
+      } else {
+        // Öffnen mit Animation
+        view.style.display = 'flex';
+        // Force reflow für Animation
+        void view.offsetWidth;
         view.classList.add('active');
         renderMobileCalMonthView();
       }
     }
 
     function closeMobileCalMonthView() {
-      document.getElementById('mobileCalMonthView')?.classList.remove('active');
+      const view = document.getElementById('mobileCalMonthView');
+      if (!view) return;
+
+      view.classList.add('closing');
+      setTimeout(() => {
+        view.classList.remove('active', 'closing');
+        view.style.display = 'none';
+      }, 300);
     }
 
     function renderMobileCalMonthView() {
@@ -39344,10 +39400,10 @@
       <button class="mobile-cal-nav-btn" onclick="mobileCalNextDay()" style="flex:1;">→</button>
     </div>
 
-    <!-- Hauptbereich: Zeitleiste + Artist-Spalten (scrollt mit der Seite) -->
+    <!-- Hauptbereich: Zeitleiste + Artist-Spalten -->
     <div class="mobile-cal-grid-wrapper">
 
-      <!-- Zeitleiste links (scrollt mit der Seite) -->
+      <!-- Zeitleiste links - sticky/fixed beim horizontalen Scrollen -->
       <div class="mobile-cal-time-column">
         <div class="mobile-cal-time-header"></div>
         <div class="mobile-cal-time-slot">09:00</div>
@@ -39366,9 +39422,11 @@
         <div class="mobile-cal-time-slot">22:00</div>
       </div>
 
-      <!-- Horizontal scrollbarer Artist-Bereich -->
-      <div class="mobile-cal-artists-scroll" id="mobileCalArtistsScroll">
-        <!-- Artist-Spalten werden via JS gefüllt -->
+      <!-- Artist Viewport - horizontal scrollbar -->
+      <div class="mobile-cal-artist-viewport">
+        <div class="mobile-cal-artist-track" id="mobileCalArtistsScroll">
+          <!-- Artist-Spalten werden via JS gefüllt -->
+        </div>
       </div>
 
     </div> <!-- Ende mobile-cal-grid-wrapper -->
