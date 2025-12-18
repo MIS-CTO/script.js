@@ -7912,6 +7912,200 @@
       .mobile-cal-event.reserved { background: #EFEBE9; border-color: #795548; color: #4E342E; }
       .mobile-cal-event.no_show { background: #FFEBEE; border-color: #F44336; color: #C62828; }
 
+      /* ==========================================
+         MULTI-ARTIST CALENDAR GRID LAYOUT
+         ========================================== */
+
+      /* Wochenleiste (oben) */
+      .mobile-cal-week-strip {
+        display: flex;
+        justify-content: space-around;
+        padding: 8px;
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+      }
+
+      .mobile-cal-week-day {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .mobile-cal-week-day.active {
+        background: #FF3B30;
+        color: white;
+      }
+
+      .mobile-cal-week-day-name {
+        font-size: 10px;
+        font-weight: 500;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+
+      .mobile-cal-week-day-num {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .mobile-cal-week-day.active .mobile-cal-week-day-name,
+      .mobile-cal-week-day.active .mobile-cal-week-day-num {
+        color: white;
+        opacity: 1;
+      }
+
+      /* Haupt Grid-Wrapper */
+      .mobile-cal-grid-wrapper {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        background: var(--macos-bg, #f5f5f7);
+      }
+
+      /* Fixe Zeitleiste links */
+      .mobile-cal-time-column {
+        width: 50px;
+        flex-shrink: 0;
+        background: var(--macos-bg, #f5f5f7);
+        border-right: 1px solid rgba(0,0,0,0.1);
+        z-index: 10;
+      }
+
+      .mobile-cal-time-slot {
+        height: 60px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 4px;
+        font-size: 11px;
+        color: var(--macos-text-secondary, #86868b);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+      }
+
+      .mobile-cal-artist-header-spacer {
+        height: 44px;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+      }
+
+      /* Horizontal scrollbarer Artist-Bereich */
+      .mobile-cal-artists-scroll {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: auto;
+        flex: 1;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+      }
+
+      /* Einzelne Artist-Spalte */
+      .mobile-cal-artist-column {
+        min-width: 150px;
+        flex-shrink: 0;
+        border-right: 1px solid rgba(0,0,0,0.1);
+        position: relative;
+        background: white;
+      }
+
+      /* Artist Header */
+      .mobile-cal-artist-header {
+        height: 44px;
+        padding: 6px 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
+
+      .mobile-cal-artist-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #e0e0e0;
+        flex-shrink: 0;
+      }
+
+      .mobile-cal-artist-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Stunden-Grid */
+      .mobile-cal-hour-grid {
+        position: relative;
+      }
+
+      .mobile-cal-hour-row-grid {
+        height: 60px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        position: relative;
+      }
+
+      /* Termin-Card */
+      .mobile-cal-appointment {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        border-radius: 6px;
+        padding: 4px 6px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        cursor: pointer;
+        z-index: 2;
+      }
+
+      .mobile-cal-apt-time {
+        font-size: 9px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+
+      .mobile-cal-apt-customer {
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mobile-cal-apt-category {
+        font-size: 9px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        opacity: 0.85;
+      }
+
+      .mobile-cal-apt-category svg {
+        width: 10px;
+        height: 10px;
+        flex-shrink: 0;
+      }
+
+      /* Keine Termine Nachricht */
+      .mobile-cal-no-appointments {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--macos-text-secondary, #86868b);
+        font-size: 14px;
+      }
+
       /* Modal */
       .mobile-cal-modal {
         display: none !important;
@@ -37372,7 +37566,20 @@
 
     // Initialize Mobile Calendar
     function initMobileCalendar() {
-      console.log('📅 Initializing mobile calendar...');
+      console.log('📅 Initializing mobile calendar (Multi-Artist Grid)...');
+
+      // Initialize new Multi-Artist Calendar Grid
+      if (typeof renderMobileCalWeekStrip === 'function') {
+        renderMobileCalWeekStrip();
+      }
+      if (typeof renderMobileCalendarGrid === 'function') {
+        renderMobileCalendarGrid();
+      }
+      if (typeof updateMobileCalHeaderDate === 'function') {
+        updateMobileCalHeaderDate();
+      }
+
+      // Legacy: Also call old functions for backwards compatibility
       renderMobileCalWeekdays();
       renderMobileCalTimeline();
 
@@ -37641,6 +37848,278 @@
 
       console.log('📅 ✅ Mobile calendar rendered');
     }
+
+    // ==========================================
+    // MULTI-ARTIST CALENDAR GRID (NEW)
+    // ==========================================
+
+    // Kategorie-Farben und Icons für Multi-Artist Calendar
+    const mobileCalCategoryConfig = {
+      consultation: {
+        bg: '#FFEBEE', color: '#C62828',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+      },
+      new_tattoo: {
+        bg: '#E8F5E9', color: '#2E7D32',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>'
+      },
+      continuing_tattoo: {
+        bg: '#FFF3E0', color: '#E65100',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>'
+      },
+      touch_up: {
+        bg: '#F3E5F5', color: '#6A1B9A',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>'
+      },
+      selfbooking: {
+        bg: '#FFFDE7', color: '#F57F17',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>'
+      },
+      wannado: {
+        bg: '#FCE4EC', color: '#AD1457',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+      },
+      internal: {
+        bg: '#ECEFF1', color: '#37474F',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>'
+      }
+    };
+
+    // Render Multi-Artist Calendar Grid
+    function renderMobileCalendarGrid() {
+      const container = document.getElementById('mobileCalArtistsScroll');
+      if (!container) {
+        console.log('📅 mobileCalArtistsScroll container not found');
+        return;
+      }
+
+      const selectedDate = mobileCalState.selectedDate;
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      console.log('📅 renderMobileCalendarGrid for:', dateStr);
+
+      // 1. Alle Appointments für diesen Tag laden
+      let allAppointments = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getAppointments) {
+        allAppointments = CentralDataManager.getAppointments() || [];
+      }
+
+      const dayAppointments = allAppointments.filter(apt => {
+        const aptDate = (apt.date || apt.appointment_date || apt.start || '').toString().split('T')[0];
+        return aptDate === dateStr;
+      });
+      console.log('📅 Day appointments:', dayAppointments.length);
+
+      // 2. Alle Artists mit Terminen an diesem Tag finden
+      const artistIds = [...new Set(dayAppointments.map(apt => apt.artist_id).filter(Boolean))];
+
+      let allArtists = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
+        allArtists = CentralDataManager.getArtists() || [];
+      }
+
+      const artistsWithAppointments = artistIds.map(id => allArtists.find(a => a.id === id)).filter(Boolean);
+      console.log('📅 Artists with appointments:', artistsWithAppointments.length);
+
+      // Falls keine Artists mit Terminen
+      if (artistsWithAppointments.length === 0) {
+        container.innerHTML = `<div class="mobile-cal-no-appointments">Keine Termine für diesen Tag</div>`;
+        return;
+      }
+
+      // 3. Artist-Spalten rendern
+      container.innerHTML = artistsWithAppointments.map(artist => {
+        const artistApts = dayAppointments.filter(apt => apt.artist_id === artist.id);
+
+        // Artist Header mit Bild
+        const avatarUrl = artist.profile_picture_url || '';
+        const avatarHtml = avatarUrl
+          ? `<img src="${avatarUrl}" class="mobile-cal-artist-avatar" alt="${artist.name}" onerror="this.outerHTML='<div class=\\'mobile-cal-artist-avatar\\' style=\\'display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;\\'>${(artist.name || '?').charAt(0)}</div>';">`
+          : `<div class="mobile-cal-artist-avatar" style="display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">${(artist.name || '?').charAt(0)}</div>`;
+
+        // Stunden-Grid (09:00 - 22:00)
+        let hoursHtml = '';
+        for (let hour = 9; hour <= 22; hour++) {
+          hoursHtml += `<div class="mobile-cal-hour-row-grid" data-hour="${hour}"></div>`;
+        }
+
+        // Appointments als Cards positionieren
+        let appointmentsHtml = artistApts.map(apt => {
+          // Zeit parsen
+          let startTime = apt.start_time || apt.time_start || '09:00';
+          let endTime = apt.end_time || apt.time_end || '10:00';
+
+          if (apt.start && apt.start.includes('T')) {
+            startTime = apt.start.split('T')[1]?.substring(0, 5) || startTime;
+          }
+          if (apt.end && apt.end.includes('T')) {
+            endTime = apt.end.split('T')[1]?.substring(0, 5) || endTime;
+          }
+
+          const startHour = parseInt(startTime.split(':')[0]);
+          const startMin = parseInt(startTime.split(':')[1] || '0');
+          const endHour = parseInt(endTime.split(':')[0]);
+          const endMin = parseInt(endTime.split(':')[1] || '0');
+
+          // Position berechnen (relativ zu 09:00, +44px für Artist Header)
+          const top = ((startHour - 9) * 60 + startMin) + 44;
+          const height = Math.max(((endHour - startHour) * 60 + (endMin - startMin)), 30);
+
+          // Kategorie
+          let category = (apt.category || apt.type || apt.booking_type || 'consultation').toLowerCase().replace(/\s+/g, '_');
+          if (category.includes('consult')) category = 'consultation';
+          else if (category.includes('new')) category = 'new_tattoo';
+          else if (category.includes('continu')) category = 'continuing_tattoo';
+          else if (category.includes('touch')) category = 'touch_up';
+          else if (category.includes('self')) category = 'selfbooking';
+          else if (category.includes('wanna')) category = 'wannado';
+          else if (category.includes('internal')) category = 'internal';
+
+          const config = mobileCalCategoryConfig[category] || mobileCalCategoryConfig.consultation;
+
+          // Kunden-Name
+          const customerName = apt.customer
+            ? `${apt.customer.first_name || ''} ${apt.customer.last_name || ''}`.trim() || 'Kunde'
+            : apt.customer_name || apt.title || 'Kunde';
+
+          // Kategorie-Label formatieren
+          const categoryLabel = category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+          return `
+            <div class="mobile-cal-appointment" style="
+              top: ${top}px;
+              height: ${height}px;
+              background: ${config.bg};
+              color: ${config.color};
+              border: 1px solid ${config.color}40;
+            " onclick="openMobileCalModal && openMobileCalModal(${JSON.stringify(apt).replace(/"/g, '&quot;')})">
+              <div class="mobile-cal-apt-time">${startTime} - ${endTime}</div>
+              <div class="mobile-cal-apt-customer">${customerName}</div>
+              <div class="mobile-cal-apt-category">${config.icon} ${categoryLabel}</div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="mobile-cal-artist-column">
+            <div class="mobile-cal-artist-header">
+              ${avatarHtml}
+              <span class="mobile-cal-artist-name">${artist.name || 'Artist'}</span>
+            </div>
+            <div class="mobile-cal-hour-grid" style="position:relative;">
+              ${hoursHtml}
+              ${appointmentsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      console.log('📅 ✅ Multi-artist calendar grid rendered');
+    }
+
+    // Wochenleiste rendern
+    function renderMobileCalWeekStrip() {
+      const container = document.getElementById('mobileCalWeekStrip');
+      if (!container) return;
+
+      const selectedDate = mobileCalState.selectedDate;
+      const monday = getMonday(selectedDate);
+
+      const dayNames = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'];
+
+      let html = '';
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(date.getDate() + i);
+
+        const isActive = date.toDateString() === selectedDate.toDateString();
+
+        html += `
+          <div class="mobile-cal-week-day ${isActive ? 'active' : ''}" onclick="selectMobileCalDate('${date.toISOString().split('T')[0]}')">
+            <span class="mobile-cal-week-day-name">${dayNames[i]}</span>
+            <span class="mobile-cal-week-day-num">${date.getDate()}</span>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // Datum aus Wochenleiste auswählen
+    function selectMobileCalDate(dateStr) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      mobileCalState.selectedDate = new Date(year, month - 1, day);
+
+      // UI aktualisieren
+      renderMobileCalWeekStrip();
+      renderMobileCalendarGrid();
+      updateMobileCalHeaderDate();
+    }
+
+    // Header-Datum aktualisieren
+    function updateMobileCalHeaderDate() {
+      const header = document.getElementById('mobileCalHeaderDate');
+      if (header) {
+        header.textContent = mobileCalState.selectedDate.toLocaleDateString('de-DE', {
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+        });
+      }
+    }
+
+    // Navigation: Vorheriger Tag
+    function mobileCalPrevDay() {
+      const newDate = new Date(mobileCalState.selectedDate);
+      newDate.setDate(newDate.getDate() - 1);
+      mobileCalState.selectedDate = newDate;
+
+      // Prüfen ob Woche gewechselt hat
+      const newMonday = getMonday(newDate);
+      if (newMonday.getTime() !== getMonday(mobileCalState.currentWeekStart).getTime()) {
+        mobileCalState.currentWeekStart = newMonday;
+      }
+
+      renderMobileCalWeekStrip();
+      renderMobileCalendarGrid();
+      updateMobileCalHeaderDate();
+    }
+
+    // Navigation: Nächster Tag
+    function mobileCalNextDay() {
+      const newDate = new Date(mobileCalState.selectedDate);
+      newDate.setDate(newDate.getDate() + 1);
+      mobileCalState.selectedDate = newDate;
+
+      const newMonday = getMonday(newDate);
+      if (newMonday.getTime() !== getMonday(mobileCalState.currentWeekStart).getTime()) {
+        mobileCalState.currentWeekStart = newMonday;
+      }
+
+      renderMobileCalWeekStrip();
+      renderMobileCalendarGrid();
+      updateMobileCalHeaderDate();
+    }
+
+    // Navigation: Heute
+    function mobileCalToday() {
+      mobileCalState.selectedDate = new Date();
+      mobileCalState.currentWeekStart = getMonday(new Date());
+
+      renderMobileCalWeekStrip();
+      renderMobileCalendarGrid();
+      updateMobileCalHeaderDate();
+    }
+
+    // Global verfügbar machen
+    window.renderMobileCalendarGrid = renderMobileCalendarGrid;
+    window.renderMobileCalWeekStrip = renderMobileCalWeekStrip;
+    window.selectMobileCalDate = selectMobileCalDate;
+    window.updateMobileCalHeaderDate = updateMobileCalHeaderDate;
+    window.mobileCalPrevDay = mobileCalPrevDay;
+    window.mobileCalNextDay = mobileCalNextDay;
+    window.mobileCalToday = mobileCalToday;
+
+    // ==========================================
+    // END MULTI-ARTIST CALENDAR GRID
+    // ==========================================
 
     async function openMobileEventDetail(apt) {
       console.log('📅 Opening event detail:', apt);
@@ -38780,75 +39259,62 @@
   </div>
 
   <!-- ==========================================
-       MOBILE CALENDAR VIEW (Apple Style)
+       MOBILE CALENDAR VIEW (Multi-Artist Grid)
        Only visible on mobile < 768px
        ========================================== -->
-  <div class="mobile-calendar-view" id="mobileCalendarView">
-    <!-- Week Selector Dropdown -->
-    <div class="mobile-cal-header">
-      <button class="mobile-cal-week-dropdown" id="mobileCalWeekDropdown">
-        <span id="mobileCalWeekLabel">Mo 16.12. - So 22.12.</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 9l6 6 6-6"/>
-        </svg>
-      </button>
+  <div class="mobile-calendar-view" id="mobileCalendarView" style="display:flex;flex-direction:column;height:100%;">
+
+    <!-- Header mit Datum -->
+    <div class="mobile-cal-header" style="padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.1);">
+      <span id="mobileCalHeaderDate" style="font-size:17px;font-weight:600;">Do 18. Dez 2025</span>
     </div>
 
-    <!-- Week Navigation -->
-    <div class="mobile-cal-week-nav">
-      <!-- Month View Button -->
-      <button class="mobile-cal-nav-btn" id="mobileCalMonthViewBtn" onclick="toggleMobileCalMonthView()" style="flex-shrink:0;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-      </button>
-      <button class="mobile-cal-nav-btn" id="mobileCalPrevWeek">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
-      </button>
-      <button class="mobile-cal-today-btn" id="mobileCalToday">Heute</button>
-      <button class="mobile-cal-nav-btn" id="mobileCalNextWeek">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 18l6-6-6-6"/>
-        </svg>
-      </button>
+    <!-- Wochenleiste (OBEN) -->
+    <div class="mobile-cal-week-strip" id="mobileCalWeekStrip">
+      <!-- Wird via JS gefüllt -->
     </div>
 
-    <!-- Week Days Bar -->
-    <div class="mobile-cal-weekdays" id="mobileCalWeekdays">
-      <!-- Will be populated by JS -->
+    <!-- Navigation Buttons (UNTER der Wochenleiste) -->
+    <div class="mobile-cal-week-nav" style="padding:8px 16px;">
+      <button class="mobile-cal-nav-btn" onclick="toggleMobileCalMonthView()" style="flex:0 0 auto;padding:8px 12px;">📅</button>
+      <button class="mobile-cal-nav-btn" onclick="mobileCalPrevDay()" style="flex:1;">←</button>
+      <button class="mobile-cal-today-btn" onclick="mobileCalToday()" style="flex:2;">Heute</button>
+      <button class="mobile-cal-nav-btn" onclick="mobileCalNextDay()" style="flex:1;">→</button>
     </div>
 
-    <!-- Category Filter -->
-    <div class="mobile-cal-filter">
-      <select id="mobileCalCategoryFilter">
-        <option value="all">Alle Kategorien</option>
-        <option value="consultation">Consultation</option>
-        <option value="new_tattoo">New Tattoo</option>
-        <option value="continuing_tattoo">Continuing Tattoo</option>
-        <option value="touch_up">Touch Up</option>
-        <option value="selfbooking">Selfbooking</option>
-        <option value="wannado">WannaDo</option>
-        <option value="internal">Internal</option>
-        <option value="move">Move</option>
-        <option value="reserved">Reserved</option>
-        <option value="no_show">No Show</option>
-      </select>
-    </div>
+    <!-- Hauptbereich: Zeitleiste + Artist-Spalten -->
+    <div class="mobile-cal-grid-wrapper">
 
-    <!-- Day Timeline View -->
-    <div class="mobile-cal-timeline" id="mobileCalTimeline">
-      <div class="mobile-cal-date-header" id="mobileCalDateHeader">
-        Dienstag - 16. Dez. 2025
+      <!-- Fixe Zeitleiste links -->
+      <div class="mobile-cal-time-column">
+        <div class="mobile-cal-artist-header-spacer"></div>
+        <div class="mobile-cal-time-slot">09:00</div>
+        <div class="mobile-cal-time-slot">10:00</div>
+        <div class="mobile-cal-time-slot">11:00</div>
+        <div class="mobile-cal-time-slot">12:00</div>
+        <div class="mobile-cal-time-slot">13:00</div>
+        <div class="mobile-cal-time-slot">14:00</div>
+        <div class="mobile-cal-time-slot">15:00</div>
+        <div class="mobile-cal-time-slot">16:00</div>
+        <div class="mobile-cal-time-slot">17:00</div>
+        <div class="mobile-cal-time-slot">18:00</div>
+        <div class="mobile-cal-time-slot">19:00</div>
+        <div class="mobile-cal-time-slot">20:00</div>
+        <div class="mobile-cal-time-slot">21:00</div>
+        <div class="mobile-cal-time-slot">22:00</div>
       </div>
-      <div class="mobile-cal-hours" id="mobileCalHours">
-        <!-- Hours 08:00 - 22:00 will be populated by JS -->
+
+      <!-- Scrollbarer Artist-Bereich -->
+      <div class="mobile-cal-artists-scroll" id="mobileCalArtistsScroll">
+        <!-- Artist-Spalten werden via JS gefüllt -->
       </div>
+
     </div>
+
+    <!-- Legacy containers for backwards compatibility -->
+    <div id="mobileCalWeekdays" style="display:none;"></div>
+    <div id="mobileCalHours" style="display:none;"></div>
+    <div id="mobileCalDateHeader" style="display:none;"></div>
   </div>
 
   <!-- Mobile Calendar Month View -->
