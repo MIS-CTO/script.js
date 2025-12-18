@@ -7962,6 +7962,7 @@
       .mobile-cal-grid-wrapper {
         display: flex;
         flex: 1;
+        min-height: 0; /* Wichtig für Flex-Overflow */
         overflow: hidden;
         position: relative;
         background: var(--macos-bg, #f5f5f7);
@@ -7971,10 +7972,11 @@
       .mobile-cal-scroll-container {
         display: flex;
         flex: 1;
+        min-height: 0; /* Wichtig für Flex-Overflow */
         overflow-y: auto;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: contain;
+        overscroll-behavior-y: none;
       }
 
       /* Fixe Zeitleiste links - sticky horizontal, scrollt vertikal mit */
@@ -7985,7 +7987,7 @@
         border-right: 1px solid rgba(0,0,0,0.1);
         position: sticky;
         left: 0;
-        z-index: 10;
+        z-index: 100; /* ERHÖHT - Zeitleiste über Artist-Spalten */
       }
 
       /* Zeitleiste Header (sticky oben) */
@@ -7995,7 +7997,7 @@
         border-bottom: 1px solid rgba(0,0,0,0.1);
         position: sticky;
         top: 0;
-        z-index: 15;
+        z-index: 101; /* ERHÖHT - Header über allem */
       }
 
       .mobile-cal-time-slot {
@@ -8021,7 +8023,7 @@
         overflow-y: hidden;
         flex: 1;
         -webkit-overflow-scrolling: touch;
-        overscroll-behavior-x: contain;
+        overscroll-behavior-x: none;
       }
 
       /* Einzelne Artist-Spalte */
@@ -8031,6 +8033,7 @@
         border-right: 1px solid rgba(0,0,0,0.1);
         position: relative;
         background: white;
+        z-index: 1; /* Niedriger als Zeitleiste */
       }
 
       /* Artist Header - sticky oben */
@@ -8068,6 +8071,7 @@
       /* Stunden-Grid */
       .mobile-cal-hour-grid {
         position: relative;
+        min-height: calc(14 * 60px); /* 14 Stunden (09-22) à 60px */
       }
 
       .mobile-cal-hour-row-grid {
@@ -38142,14 +38146,59 @@
 
       if (!scrollContainer || !artistsScroll) return;
 
-      // Overscroll verhindern für horizontales Scrollen
+      // Touch-Handler für iOS Overscroll-Prevention
+      let touchStartY = 0;
+      let touchStartX = 0;
+
+      // Vertikales Scrollen - Touch-Events
+      scrollContainer.addEventListener('touchstart', function(e) {
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+
+      scrollContainer.addEventListener('touchmove', function(e) {
+        const touchY = e.touches[0].clientY;
+        const scrollTop = this.scrollTop;
+        const scrollHeight = this.scrollHeight;
+        const clientHeight = this.clientHeight;
+        const isAtTop = scrollTop <= 0;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight;
+        const isScrollingUp = touchY > touchStartY;
+        const isScrollingDown = touchY < touchStartY;
+
+        // Prevent overscroll at boundaries
+        if ((isAtTop && isScrollingUp) || (isAtBottom && isScrollingDown)) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // Horizontales Scrollen - Touch-Events
+      artistsScroll.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+      }, { passive: true });
+
+      artistsScroll.addEventListener('touchmove', function(e) {
+        const touchX = e.touches[0].clientX;
+        const scrollLeft = this.scrollLeft;
+        const scrollWidth = this.scrollWidth;
+        const clientWidth = this.clientWidth;
+        const isAtLeft = scrollLeft <= 0;
+        const isAtRight = scrollLeft + clientWidth >= scrollWidth;
+        const isScrollingLeft = touchX > touchStartX;
+        const isScrollingRight = touchX < touchStartX;
+
+        // Prevent overscroll at boundaries
+        if ((isAtLeft && isScrollingLeft) || (isAtRight && isScrollingRight)) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // Scroll-Events für Boundary-Clamping
       artistsScroll.addEventListener('scroll', function() {
         const maxScrollLeft = this.scrollWidth - this.clientWidth;
         if (this.scrollLeft < 0) this.scrollLeft = 0;
         if (this.scrollLeft > maxScrollLeft) this.scrollLeft = maxScrollLeft;
       }, { passive: true });
 
-      // Overscroll verhindern für vertikales Scrollen
       scrollContainer.addEventListener('scroll', function() {
         const maxScrollTop = this.scrollHeight - this.clientHeight;
         if (this.scrollTop < 0) this.scrollTop = 0;
