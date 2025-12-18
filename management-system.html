@@ -7967,13 +7967,35 @@
         background: var(--macos-bg, #f5f5f7);
       }
 
-      /* Fixe Zeitleiste links */
+      /* Container für vertikales Scrollen (Zeitleiste + Artists zusammen) */
+      .mobile-cal-scroll-container {
+        display: flex;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+      }
+
+      /* Fixe Zeitleiste links - sticky horizontal, scrollt vertikal mit */
       .mobile-cal-time-column {
         width: 50px;
         flex-shrink: 0;
         background: var(--macos-bg, #f5f5f7);
         border-right: 1px solid rgba(0,0,0,0.1);
+        position: sticky;
+        left: 0;
         z-index: 10;
+      }
+
+      /* Zeitleiste Header (sticky oben) */
+      .mobile-cal-time-header {
+        height: 44px;
+        background: var(--macos-bg, #f5f5f7);
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 15;
       }
 
       .mobile-cal-time-slot {
@@ -7996,10 +8018,10 @@
       .mobile-cal-artists-scroll {
         display: flex;
         overflow-x: auto;
-        overflow-y: auto;
+        overflow-y: hidden;
         flex: 1;
         -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x proximity;
+        overscroll-behavior-x: contain;
       }
 
       /* Einzelne Artist-Spalte */
@@ -8011,7 +8033,7 @@
         background: white;
       }
 
-      /* Artist Header */
+      /* Artist Header - sticky oben */
       .mobile-cal-artist-header {
         height: 44px;
         padding: 6px 8px;
@@ -37579,6 +37601,11 @@
         updateMobileCalHeaderDate();
       }
 
+      // Initialize scroll sync for the new grid
+      if (typeof initMobileCalScrollSync === 'function') {
+        initMobileCalScrollSync();
+      }
+
       // Legacy: Also call old functions for backwards compatibility
       renderMobileCalWeekdays();
       renderMobileCalTimeline();
@@ -37960,8 +37987,8 @@
           const endHour = parseInt(endTime.split(':')[0]);
           const endMin = parseInt(endTime.split(':')[1] || '0');
 
-          // Position berechnen (relativ zu 09:00, +44px für Artist Header)
-          const top = ((startHour - 9) * 60 + startMin) + 44;
+          // Position berechnen (relativ zu 09:00, innerhalb des hour-grid)
+          const top = ((startHour - 9) * 60 + startMin);
           const height = Math.max(((endHour - startHour) * 60 + (endMin - startMin)), 30);
 
           // Kategorie
@@ -38108,8 +38135,33 @@
       updateMobileCalHeaderDate();
     }
 
+    // Scroll-Synchronisation initialisieren (Overscroll verhindern)
+    function initMobileCalScrollSync() {
+      const scrollContainer = document.getElementById('mobileCalScrollContainer');
+      const artistsScroll = document.getElementById('mobileCalArtistsScroll');
+
+      if (!scrollContainer || !artistsScroll) return;
+
+      // Overscroll verhindern für horizontales Scrollen
+      artistsScroll.addEventListener('scroll', function() {
+        const maxScrollLeft = this.scrollWidth - this.clientWidth;
+        if (this.scrollLeft < 0) this.scrollLeft = 0;
+        if (this.scrollLeft > maxScrollLeft) this.scrollLeft = maxScrollLeft;
+      }, { passive: true });
+
+      // Overscroll verhindern für vertikales Scrollen
+      scrollContainer.addEventListener('scroll', function() {
+        const maxScrollTop = this.scrollHeight - this.clientHeight;
+        if (this.scrollTop < 0) this.scrollTop = 0;
+        if (this.scrollTop > maxScrollTop) this.scrollTop = maxScrollTop;
+      }, { passive: true });
+
+      console.log('📅 Mobile calendar scroll sync initialized');
+    }
+
     // Global verfügbar machen
     window.renderMobileCalendarGrid = renderMobileCalendarGrid;
+    window.initMobileCalScrollSync = initMobileCalScrollSync;
     window.renderMobileCalWeekStrip = renderMobileCalWeekStrip;
     window.selectMobileCalDate = selectMobileCalDate;
     window.updateMobileCalHeaderDate = updateMobileCalHeaderDate;
@@ -39285,31 +39337,36 @@
     <!-- Hauptbereich: Zeitleiste + Artist-Spalten -->
     <div class="mobile-cal-grid-wrapper">
 
-      <!-- Fixe Zeitleiste links -->
-      <div class="mobile-cal-time-column">
-        <div class="mobile-cal-artist-header-spacer"></div>
-        <div class="mobile-cal-time-slot">09:00</div>
-        <div class="mobile-cal-time-slot">10:00</div>
-        <div class="mobile-cal-time-slot">11:00</div>
-        <div class="mobile-cal-time-slot">12:00</div>
-        <div class="mobile-cal-time-slot">13:00</div>
-        <div class="mobile-cal-time-slot">14:00</div>
-        <div class="mobile-cal-time-slot">15:00</div>
-        <div class="mobile-cal-time-slot">16:00</div>
-        <div class="mobile-cal-time-slot">17:00</div>
-        <div class="mobile-cal-time-slot">18:00</div>
-        <div class="mobile-cal-time-slot">19:00</div>
-        <div class="mobile-cal-time-slot">20:00</div>
-        <div class="mobile-cal-time-slot">21:00</div>
-        <div class="mobile-cal-time-slot">22:00</div>
-      </div>
+      <!-- Scroll-Container für vertikales Scrollen (Zeitleiste + Artists zusammen) -->
+      <div class="mobile-cal-scroll-container" id="mobileCalScrollContainer">
 
-      <!-- Scrollbarer Artist-Bereich -->
-      <div class="mobile-cal-artists-scroll" id="mobileCalArtistsScroll">
-        <!-- Artist-Spalten werden via JS gefüllt -->
-      </div>
+        <!-- Fixe Zeitleiste links (sticky horizontal, scrollt vertikal mit) -->
+        <div class="mobile-cal-time-column">
+          <div class="mobile-cal-time-header"></div>
+          <div class="mobile-cal-time-slot">09:00</div>
+          <div class="mobile-cal-time-slot">10:00</div>
+          <div class="mobile-cal-time-slot">11:00</div>
+          <div class="mobile-cal-time-slot">12:00</div>
+          <div class="mobile-cal-time-slot">13:00</div>
+          <div class="mobile-cal-time-slot">14:00</div>
+          <div class="mobile-cal-time-slot">15:00</div>
+          <div class="mobile-cal-time-slot">16:00</div>
+          <div class="mobile-cal-time-slot">17:00</div>
+          <div class="mobile-cal-time-slot">18:00</div>
+          <div class="mobile-cal-time-slot">19:00</div>
+          <div class="mobile-cal-time-slot">20:00</div>
+          <div class="mobile-cal-time-slot">21:00</div>
+          <div class="mobile-cal-time-slot">22:00</div>
+        </div>
 
-    </div>
+        <!-- Horizontal scrollbarer Artist-Bereich -->
+        <div class="mobile-cal-artists-scroll" id="mobileCalArtistsScroll">
+          <!-- Artist-Spalten werden via JS gefüllt -->
+        </div>
+
+      </div> <!-- Ende mobile-cal-scroll-container -->
+
+    </div> <!-- Ende mobile-cal-grid-wrapper -->
 
     <!-- Legacy containers for backwards compatibility -->
     <div id="mobileCalWeekdays" style="display:none;"></div>
