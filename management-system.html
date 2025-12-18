@@ -39220,13 +39220,16 @@
           view.style.display = 'none';
         }, 300);
       } else {
-        // Sofortiges Öffnen - keine Verzögerung
+        // Sofortiges Öffnen
         view.style.display = 'flex';
         void view.offsetWidth; // Force reflow für Animation
         view.classList.add('active');
 
-        // Immer rendern um aktuelle Daten zu zeigen
-        renderMobileCalMonthView();
+        // NUR rendern wenn Container leer ist (preload sollte bereits geladen haben)
+        const container = document.getElementById('mobileCalMonthsScroll');
+        if (!container || !container.querySelector('.mobile-dp-month-container')) {
+          renderMobileCalMonthView();
+        }
       }
     }
 
@@ -39243,38 +39246,41 @@
 
     // Preload Monatsansicht bei App-Start für schnelleres Öffnen
     function preloadMobileCalMonthView() {
-      // Prüfe ob Mobile
+      // Nur auf Mobile ausführen
       if (window.innerWidth > 768) return;
 
+      console.log('📅 Starting month view preload...');
+
+      // Warte bis CentralDataManager bereit ist
+      const checkReady = setInterval(() => {
+        if (typeof CentralDataManager !== 'undefined' &&
+            CentralDataManager.isReady &&
+            CentralDataManager.isReady()) {
+          clearInterval(checkReady);
+
+          console.log('📅 CentralDataManager ready, pre-rendering month view...');
+
+          // Render die Monatsansicht im Hintergrund (bleibt unsichtbar)
+          const container = document.getElementById('mobileCalMonthsScroll');
+          if (container && !container.querySelector('.mobile-dp-month-container')) {
+            renderMobileCalMonthView();
+            console.log('✅ Month view pre-rendered');
+          } else {
+            console.log('📅 Month view already rendered');
+          }
+        }
+      }, 500);
+
+      // Timeout nach 10 Sekunden
       setTimeout(() => {
-        console.log('📅 Preloading month view...');
-
-        // Cache die Daten für Monatsansicht
-        let allAppointments = [];
-        if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getAppointments) {
-          allAppointments = CentralDataManager.getAppointments() || [];
-        }
-
-        let allArtists = [];
-        if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
-          allArtists = CentralDataManager.getArtists() || [];
-        }
-
-        window.monthViewCache = {
-          appointments: allAppointments,
-          artists: allArtists,
-          loaded: true,
-          timestamp: Date.now()
-        };
-
-        // Render die Monatsansicht versteckt vor
+        clearInterval(checkReady);
+        // Trotzdem versuchen zu rendern falls CentralDataManager nie ready wird
         const container = document.getElementById('mobileCalMonthsScroll');
         if (container && !container.querySelector('.mobile-dp-month-container')) {
           renderMobileCalMonthView();
+          console.log('✅ Month view pre-rendered (timeout fallback)');
         }
-
-        console.log('✅ Month view preloaded');
-      }, 1500); // 1.5 Sekunden nach Login
+      }, 10000);
     }
 
     // Expose preload function
