@@ -7727,6 +7727,15 @@
         border-radius: 0;
       }
 
+      /* Datum in der Top-Navbar */
+      .mobile-cal-nav-date {
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--macos-text-primary, #1d1d1f);
+        display: block;
+        text-align: left;
+      }
+
       .mobile-cal-week-dropdown {
         display: none; /* Hidden - week info now shown in header */
         align-items: center;
@@ -37833,11 +37842,11 @@
       const dateStr = mobileCalState.selectedDate.toISOString().split('T')[0];
       console.log('📅 Selected date:', dateStr);
 
-      // Update date header
-      const header = document.getElementById('mobileCalDateHeader');
+      // Update date header in top navbar
+      const header = document.getElementById('mobileCalNavDate');
       if (header) {
         header.textContent = mobileCalState.selectedDate.toLocaleDateString('de-DE', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+          weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
         });
       }
 
@@ -38275,12 +38284,12 @@
       updateMobileCalHeaderDate();
     }
 
-    // Header-Datum aktualisieren
+    // Header-Datum aktualisieren (in Top-Navbar)
     function updateMobileCalHeaderDate() {
-      const header = document.getElementById('mobileCalHeaderDate');
+      const header = document.getElementById('mobileCalNavDate');
       if (header) {
         header.textContent = mobileCalState.selectedDate.toLocaleDateString('de-DE', {
-          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+          weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
         });
       }
     }
@@ -39557,7 +39566,7 @@
 
     <!-- Header mit Datum -->
     <div class="mobile-cal-header" style="padding:12px 16px;">
-      <span id="mobileCalHeaderDate" style="font-size:17px;font-weight:600;">Do 18. Dez 2025</span>
+      <span id="mobileCalNavDate" class="mobile-cal-nav-date"></span>
     </div>
 
     <!-- Wochenleiste (OBEN) -->
@@ -39620,7 +39629,6 @@
     <!-- Legacy containers for backwards compatibility -->
     <div id="mobileCalWeekdays" style="display:none;"></div>
     <div id="mobileCalHours" style="display:none;"></div>
-    <div id="mobileCalDateHeader" style="display:none;"></div>
   </div>
 
   <!-- Mobile Calendar Month View -->
