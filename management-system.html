@@ -7716,6 +7716,9 @@
         padding-top: 0;
         overscroll-behavior: none; /* Verhindert white-space overscroll */
         -webkit-overflow-scrolling: touch;
+        border-radius: 0 !important; /* Überschreibt andere Regeln */
+        border: none !important;
+        touch-action: pan-y; /* iOS touch handling */
       }
 
       .mobile-calendar-view.active {
@@ -8185,6 +8188,9 @@
         padding-top: 0;
         overscroll-behavior: none; /* Verhindert white-space overscroll */
         -webkit-overflow-scrolling: touch;
+        border-radius: 0 !important;
+        border: none !important;
+        touch-action: pan-y; /* iOS touch handling */
       }
 
       .mobile-dienstplan-view.active {
@@ -39063,23 +39069,31 @@
       allAppointments = filterAppointmentsByArtist(allAppointments);
       console.log('📅 Calendar Month View - Filtered appointments:', allAppointments.length);
 
-      // Render 12 months: current month + 11 future months
-      const today = new Date();
+      // Render months from January 2024 to December 2026 (36 months)
       const months = [];
+      const startYear = 2024;
+      const startMonth = 0; // Januar
+      const endYear = 2026;
+      const endMonth = 11; // Dezember
 
-      for (let offset = 0; offset <= 11; offset++) {
-        const monthDate = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-        months.push({
-          month: monthDate.getMonth(),
-          year: monthDate.getFullYear()
-        });
+      for (let year = startYear; year <= endYear; year++) {
+        const monthStart = (year === startYear) ? startMonth : 0;
+        const monthEnd = (year === endYear) ? endMonth : 11;
+        for (let month = monthStart; month <= monthEnd; month++) {
+          months.push({ month, year });
+        }
       }
 
       container.innerHTML = months.map(m => renderSingleCalMonth(m.month, m.year, allAppointments)).join('');
 
-      // Current month is now at index 0 - scroll to top
+      // Scroll to current month
+      const today = new Date();
+      const currentMonthIndex = months.findIndex(m => m.year === today.getFullYear() && m.month === today.getMonth());
       setTimeout(() => {
-        container.scrollTop = 0;
+        const monthElements = container.querySelectorAll('.mobile-dp-single-month');
+        if (monthElements[currentMonthIndex]) {
+          monthElements[currentMonthIndex].scrollIntoView({ behavior: 'auto', block: 'start' });
+        }
       }, 100);
     }
 
