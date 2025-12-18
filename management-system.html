@@ -136,7 +136,8 @@
       .mobile-dashboard-profile,
       #mobileDashboardProfile,
       .mobile-appearance-section,
-      .mobile-profile-swipe-container {
+      .mobile-profile-swipe-container,
+      .mobile-logout-section {
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;
@@ -6833,6 +6834,160 @@
         height: 24px;
       }
 
+      /* ========================================
+         MOBILE LOGOUT SECTION
+         ======================================== */
+      .mobile-logout-section {
+        padding: 24px 2vw;
+      }
+
+      .mobile-logout-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 20px;
+        background: transparent;
+        border: 1px solid var(--macos-accent-red, #ff3b30);
+        border-radius: 12px;
+        color: var(--macos-accent-red, #ff3b30);
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s ease;
+      }
+
+      .mobile-logout-btn:active {
+        background: var(--macos-accent-red, #ff3b30);
+        color: white;
+      }
+
+      .mobile-logout-btn svg {
+        flex-shrink: 0;
+      }
+
+      /* ========================================
+         MOBILE PROJECTS ACCORDION
+         ======================================== */
+      .todo-projects-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 0 2vw;
+      }
+
+      .todo-project-card {
+        background: white;
+        border-radius: 0 !important;
+        padding: 16px;
+        border: none !important;
+        border-bottom: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.08)) !important;
+        cursor: pointer;
+        box-shadow: none !important;
+      }
+
+      .todo-project-card:first-child {
+        border-top: 1px solid var(--macos-stroke-primary, rgba(0,0,0,0.08)) !important;
+      }
+
+      .todo-project-card.selected {
+        background: white !important;
+        border-color: transparent !important;
+      }
+
+      .todo-project-card.selected .todo-project-title,
+      .todo-project-card.selected .todo-project-percent {
+        color: var(--macos-text-primary, #1d1d1f) !important;
+      }
+
+      /* Accordion Arrow */
+      .todo-project-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .mobile-project-arrow {
+        width: 20px;
+        height: 20px;
+        color: var(--macos-text-secondary, #86868b);
+        transition: transform 0.3s ease;
+        flex-shrink: 0;
+        margin-left: 12px;
+      }
+
+      .todo-project-card.expanded .mobile-project-arrow {
+        transform: rotate(180deg);
+      }
+
+      /* Tasks Accordion Content */
+      .mobile-project-tasks {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        margin-top: 0;
+      }
+
+      .todo-project-card.expanded .mobile-project-tasks {
+        max-height: 500px;
+        margin-top: 12px;
+      }
+
+      .mobile-task-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-top: 1px solid var(--macos-stroke-secondary, rgba(0,0,0,0.04));
+      }
+
+      .mobile-task-checkbox {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--macos-text-tertiary, #86868b);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+      }
+
+      .mobile-task-checkbox.completed {
+        background: var(--macos-accent-green, #34c759);
+        border-color: var(--macos-accent-green, #34c759);
+      }
+
+      .mobile-task-checkbox.completed::after {
+        content: '✓';
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .mobile-task-title {
+        font-size: 14px;
+        color: var(--macos-text-primary, #1d1d1f);
+        flex: 1;
+      }
+
+      .mobile-task-item.completed .mobile-task-title {
+        text-decoration: line-through;
+        color: var(--macos-text-tertiary, #86868b);
+      }
+
+      /* Hide Edit Button and Tasks Right Panel on Mobile */
+      .todo-edit-btn,
+      .todo-tasks-right {
+        display: none !important;
+      }
+
+      .todo-project-footer {
+        display: none !important;
+      }
+
       /* Mobile Tab Content Wrapper - hidden, profile replaces it */
       .mobile-tabs-wrapper.legacy {
         display: block !important;
@@ -9469,6 +9624,18 @@
           </svg>
         </button>
       </div>
+    </div>
+
+    <!-- Mobile Logout Section -->
+    <div class="mobile-logout-section">
+      <button class="mobile-logout-btn" onclick="handleMobileLogout()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Abmelden
+      </button>
     </div>
 
     <!-- Welcome Banner (shown when logged in) -->
@@ -16353,6 +16520,8 @@
         const container = document.getElementById('todoProjectsList');
         if (!container) return;
 
+        const isMobileView = window.innerWidth <= 768;
+
         if (todoProjects.length === 0) {
           container.innerHTML = '<div class="todo-empty-state">Keine Projekte vorhanden</div>';
           return;
@@ -16363,6 +16532,22 @@
           const dueBadge = formatDueBadge(project.deadline);
           const collabText = formatCollaboratorsText(project.project_collaborators);
 
+          // Mobile: Include tasks inside card for accordion
+          const tasks = project.tasks || [];
+          const tasksHtml = isMobileView ? tasks.map(task => `
+            <div class="mobile-task-item ${task.is_completed ? 'completed' : ''}" data-task-id="${task.id}">
+              <span class="mobile-task-checkbox ${task.is_completed ? 'completed' : ''}" onclick="event.stopPropagation(); toggleMobileTask('${task.id}', ${!task.is_completed}, '${project.id}')"></span>
+              <span class="mobile-task-title">${task.title}</span>
+            </div>
+          `).join('') : '';
+
+          // Mobile arrow icon
+          const arrowHtml = isMobileView ? `
+            <svg class="mobile-project-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          ` : '';
+
           return `
             <div class="todo-project-card ${isSelected ? 'selected' : ''}" data-project-id="${project.id}">
               <div class="todo-project-header">
@@ -16371,6 +16556,7 @@
                   ${dueBadge}
                   <span class="todo-project-percent">${project.progress}%</span>
                 </div>
+                ${arrowHtml}
               </div>
               <div class="todo-progress-container">
                 <div class="todo-progress-bar" style="width: ${project.progress}%"></div>
@@ -16379,18 +16565,74 @@
                 <span class="todo-project-collaborators">${collabText}</span>
                 <button class="todo-edit-btn" onclick="event.stopPropagation(); openTodoEditModal('${project.id}')">Edit</button>
               </div>
+              ${isMobileView ? `<div class="mobile-project-tasks">${tasksHtml || '<div style="padding:12px 0;color:#86868b;font-size:14px;">Keine Tasks</div>'}</div>` : ''}
             </div>
           `;
         }).join('');
 
-        // Add click handlers for project selection
+        // Add click handlers for project selection / accordion toggle
         container.querySelectorAll('.todo-project-card').forEach(card => {
           card.addEventListener('click', () => {
             const projectId = card.dataset.projectId;
-            selectTodoProject(projectId);
+            const isMobileView = window.innerWidth <= 768;
+
+            if (isMobileView) {
+              // Mobile: Toggle accordion
+              toggleMobileProjectAccordion(card);
+            } else {
+              // Desktop: Select project
+              selectTodoProject(projectId);
+            }
           });
         });
       }
+
+      // Mobile: Toggle project accordion
+      function toggleMobileProjectAccordion(card) {
+        // Close other expanded cards
+        document.querySelectorAll('.todo-project-card.expanded').forEach(c => {
+          if (c !== card) c.classList.remove('expanded');
+        });
+        // Toggle current card
+        card.classList.toggle('expanded');
+      }
+      window.toggleMobileProjectAccordion = toggleMobileProjectAccordion;
+
+      // Mobile: Toggle task completion
+      window.toggleMobileTask = async function(taskId, isCompleted, projectId) {
+        try {
+          const userId = await getTodoUserId();
+          const { error } = await supabase
+            .from('project_tasks')
+            .update({
+              is_completed: isCompleted,
+              completed_by: isCompleted ? userId : null,
+              completed_at: isCompleted ? new Date().toISOString() : null
+            })
+            .eq('id', taskId);
+
+          if (error) throw error;
+
+          // Update local state
+          const projectIdx = todoProjects.findIndex(p => p.id === projectId);
+          if (projectIdx !== -1) {
+            const taskIdx = todoProjects[projectIdx].tasks?.findIndex(t => t.id === taskId);
+            if (taskIdx !== -1 && todoProjects[projectIdx].tasks) {
+              todoProjects[projectIdx].tasks[taskIdx].is_completed = isCompleted;
+              // Recalculate progress
+              const tasks = todoProjects[projectIdx].tasks;
+              const completed = tasks.filter(t => t.is_completed).length;
+              todoProjects[projectIdx].progress = Math.round((completed / tasks.length) * 100);
+            }
+          }
+
+          // Re-render to show updated state
+          renderTodoProjects();
+          console.log('✅ Mobile task toggled:', taskId, isCompleted);
+        } catch (err) {
+          console.error('❌ Error toggling mobile task:', err);
+        }
+      };
 
       // Select Project
       function selectTodoProject(projectId) {
@@ -29362,9 +29604,11 @@
         roleEl.textContent = role.charAt(0).toUpperCase() + role.slice(1);
       }
 
-      // Set email for swipe container
-      if (emailEl && profile?.email) {
-        emailEl.textContent = profile.email;
+      // Set email for swipe container - check multiple sources
+      if (emailEl) {
+        const user = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+        const email = profile?.email || user?.email || '';
+        emailEl.textContent = email || 'Keine Email';
       }
 
       if (avatarInitials) {
