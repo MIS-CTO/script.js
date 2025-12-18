@@ -7108,8 +7108,8 @@
         background: var(--macos-panel);
         backdrop-filter: var(--macos-blur-medium);
         -webkit-backdrop-filter: var(--macos-blur-medium);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
+        border: none;
+        border-radius: 0;
         overflow: hidden;
       }
 
@@ -7974,6 +7974,9 @@
       .mobile-cal-grid-wrapper {
         display: flex;
         flex-direction: row;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
         background: var(--macos-bg, #f5f5f7);
       }
 
@@ -39043,7 +39046,7 @@
       if (!container) return;
 
       // ========================================
-      // APPOINTMENTS LADEN
+      // APPOINTMENTS LADEN - OHNE FILTER
       // ========================================
       let allAppointments = [];
 
@@ -39061,13 +39064,15 @@
         allAppointments = window.allAppointments || [];
       }
 
-      console.log('📅 Calendar Month View - Total appointments:', allAppointments.length);
+      console.log('📅 Monatsübersicht - Alle Appointments:', allAppointments.length);
 
-      // ========================================
-      // KRITISCH: ARTIST FILTER ANWENDEN
-      // ========================================
-      allAppointments = filterAppointmentsByArtist(allAppointments);
-      console.log('📅 Calendar Month View - Filtered appointments:', allAppointments.length);
+      // Artists laden für Namen-Lookup
+      let allArtists = [];
+      if (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists) {
+        allArtists = CentralDataManager.getArtists() || [];
+      }
+
+      // KEIN Artist-Filter - zeige ALLE Termine
 
       // Render months from January 2024 to December 2026 (36 months)
       const months = [];
@@ -39084,20 +39089,20 @@
         }
       }
 
-      container.innerHTML = months.map(m => renderSingleCalMonth(m.month, m.year, allAppointments)).join('');
+      container.innerHTML = months.map(m => renderSingleCalMonth(m.month, m.year, allAppointments, allArtists)).join('');
 
       // Scroll to current month
       const today = new Date();
       const currentMonthIndex = months.findIndex(m => m.year === today.getFullYear() && m.month === today.getMonth());
       setTimeout(() => {
-        const monthElements = container.querySelectorAll('.mobile-dp-single-month');
+        const monthElements = container.querySelectorAll('.mobile-dp-month-container');
         if (monthElements[currentMonthIndex]) {
           monthElements[currentMonthIndex].scrollIntoView({ behavior: 'auto', block: 'start' });
         }
       }, 100);
     }
 
-    function renderSingleCalMonth(month, year, allAppointments) {
+    function renderSingleCalMonth(month, year, allAppointments, allArtists) {
       const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
                           'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
       const dayLabels = ['M', 'D', 'M', 'D', 'F', 'S', 'S'];
@@ -39114,31 +39119,29 @@
       // Build days array with padding
       const days = [];
 
-      // Previous month padding - leere Platzhalter für Grid-Alignment (KEINE Tageszahlen)
+      // Previous month padding - leere Platzhalter für Grid-Alignment
       for (let i = 0; i < startDay; i++) {
         days.push({ day: '', month: null, year: null, otherMonth: true, isEmpty: true });
       }
 
-      // Current month days - NUR diese werden angezeigt
+      // Current month days
       for (let d = 1; d <= daysInMonth; d++) {
         days.push({ day: d, month, year, otherMonth: false, isEmpty: false });
       }
-
-      // Next month padding - REMOVED: month ends at last day, no padding cells
 
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
       // Category colors
       const categoryColors = {
-        consultation: { bg: '#E3F2FD', color: '#1565C0' },
+        consultation: { bg: '#FFEBEE', color: '#C62828' },
         new_tattoo: { bg: '#E8F5E9', color: '#2E7D32' },
         continuing_tattoo: { bg: '#FFF3E0', color: '#E65100' },
         touch_up: { bg: '#F3E5F5', color: '#6A1B9A' },
         selfbooking: { bg: '#FFFDE7', color: '#F57F17' },
         wannado: { bg: '#FCE4EC', color: '#AD1457' },
         internal: { bg: '#ECEFF1', color: '#37474F' },
-        default: { bg: '#E8F5E9', color: '#2E7D32' }
+        default: { bg: '#E3F2FD', color: '#1565C0' }
       };
 
       // Render day cells
@@ -39148,20 +39151,15 @@
           return `<div style="min-height:60px;visibility:hidden;"></div>`;
         }
 
-        const actualMonth = d.month < 0 ? 11 : (d.month > 11 ? 0 : d.month);
-        const actualYear = d.month < 0 ? year - 1 : (d.month > 11 ? year + 1 : year);
-        const dateStr = `${actualYear}-${String(actualMonth + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
+        const dateStr = `${d.year}-${String(d.month + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
         const isToday = dateStr === todayStr;
         const isWeekend = idx % 7 >= 5;
 
-        // ========================================
-        // APPOINTMENTS FOR THIS DAY - Only for current month
-        // ========================================
+        // Appointments für diesen Tag finden
         let eventsHtml = '';
         let moreHtml = '';
 
         if (!d.otherMonth) {
-          // Get appointments for this day - check multiple date fields
           const dayAppts = allAppointments.filter(apt => {
             const aptDate = (
               apt.date ||
@@ -39174,42 +39172,49 @@
             return aptDate === dateStr;
           });
 
-          // Render mini events (max 4)
-          eventsHtml = dayAppts.slice(0, 4).map(apt => {
-            // Kategorie aus work_process (primär) oder Fallbacks
+          // Render mini events (max 3) mit Artist-Namen
+          eventsHtml = dayAppts.slice(0, 3).map(apt => {
+            // Artist-Name finden
+            let artistName = '';
+            if (apt.artist_id && allArtists) {
+              const artist = allArtists.find(a => a.id === apt.artist_id);
+              if (artist) artistName = artist.name || '';
+            }
+            if (!artistName && apt.artist?.name) {
+              artistName = apt.artist.name;
+            }
+            if (!artistName) {
+              artistName = apt.customer?.first_name || apt.customer_name || 'Event';
+            }
+
+            // Kategorie für Farbe
             let rawCategory = apt.work_process || apt.category || apt.type || apt.booking_type || '';
             let category = rawCategory.toLowerCase().trim().replace(/\s+/g, '_');
 
-            // Normalize category
-            if (category.includes('consult') || category === 'consultation') category = 'consultation';
-            else if (category.includes('new') || category.includes('neu') || category === 'new_tattoo') category = 'new_tattoo';
-            else if (category.includes('continu') || category.includes('weiter') || category === 'continuing_tattoo') category = 'continuing_tattoo';
-            else if (category.includes('touch') || category === 'touch_up') category = 'touch_up';
-            else if (category.includes('self') || category === 'selfbooking') category = 'selfbooking';
-            else if (category.includes('wanna') || category === 'wannado') category = 'wannado';
+            if (category.includes('consult')) category = 'consultation';
+            else if (category.includes('new') || category.includes('neu')) category = 'new_tattoo';
+            else if (category.includes('continu') || category.includes('weiter')) category = 'continuing_tattoo';
+            else if (category.includes('touch')) category = 'touch_up';
+            else if (category.includes('self')) category = 'selfbooking';
+            else if (category.includes('wanna')) category = 'wannado';
             else if (category.includes('internal') || category.includes('intern')) category = 'internal';
-            else category = category || 'consultation'; // Fallback
+            else category = 'default';
 
             const colors = categoryColors[category] || categoryColors.default;
 
-            // Display text: Customer name or artist name
-            const customerName = apt.customer?.first_name || apt.customer_name || '';
-            const artistName = apt.artist?.name || apt.artist_name || '';
-            const displayText = customerName ? customerName.substring(0, 6) : (artistName ? artistName.substring(0, 6) : category.substring(0, 6));
-
-            return `<div class="mobile-dp-mini-event" style="background:${colors.bg};color:${colors.color};">${displayText}</div>`;
+            return `<div class="mobile-dp-mini-event" style="background:${colors.bg};color:${colors.color};font-size:9px;padding:1px 3px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${artistName.substring(0, 8)}</div>`;
           }).join('');
 
-          const moreCount = dayAppts.length - 4;
-          moreHtml = moreCount > 0 ? `<div class="mobile-dp-more-events">+${moreCount}</div>` : '';
+          const moreCount = dayAppts.length - 3;
+          moreHtml = moreCount > 0 ? `<div style="font-size:8px;color:#86868b;text-align:center;">+${moreCount}</div>` : '';
         }
-        // ========================================
 
         return `
           <div class="mobile-dp-day-cell ${d.otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}"
+               style="min-height:60px;padding:4px;border:1px solid rgba(0,0,0,0.05);display:flex;flex-direction:column;${isToday ? 'background:rgba(0,122,255,0.1);' : ''}"
                onclick="${d.otherMonth ? '' : `selectDayFromCalMonthView('${dateStr}')`}">
-            <div class="mobile-dp-day-number">${d.day}</div>
-            <div class="mobile-dp-day-events">
+            <div class="mobile-dp-day-number" style="font-size:14px;font-weight:500;margin-bottom:2px;">${d.day}</div>
+            <div class="mobile-dp-day-events" style="flex:1;display:flex;flex-direction:column;gap:1px;overflow:hidden;">
               ${eventsHtml}
               ${moreHtml}
             </div>
