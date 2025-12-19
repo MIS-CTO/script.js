@@ -14201,33 +14201,70 @@
       },
 
       // ═══════════════════════════════════════════════════════════════════════
-      // CHECK SAVED SESSION
+      // CHECK SAVED SESSION - SECURE SUPABASE AUTH VERSION
       // ═══════════════════════════════════════════════════════════════════════
       async checkSavedSession() {
-        const rememberMe = localStorage.getItem('rememberMe') === 'true';
-        const savedUsername = localStorage.getItem('username');
+        console.log('🔍 Checking for existing session...');
 
-        if (rememberMe && savedUsername) {
-          console.log('🔑 Checking saved session for:', savedUsername);
+        try {
+          // ZUERST: Supabase Auth Session prüfen
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, username, email, role, password_hash, avatar_url')
-            .ilike('username', savedUsername);
+          if (sessionError) {
+            console.error('❌ Session check error:', sessionError.message);
+            LoadingScreen.showLogin();
+            return false;
+          }
 
-          if (profiles && profiles.length > 0) {
-            console.log('✅ Session restored for:', savedUsername);
-            currentUser = profiles[0];
+          if (session && session.user) {
+            console.log('✅ Active Supabase Auth session found:', session.user.id);
+
+            // Profile via auth_user_id laden
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, username, email, role, avatar_url, location_id, is_active, auth_user_id')
+              .eq('auth_user_id', session.user.id)
+              .single();
+
+            if (profileError || !profile) {
+              console.warn('⚠️ No profile found for auth user, signing out...');
+              await supabase.auth.signOut();
+              this.clearLocalStorage();
+              LoadingScreen.showLogin();
+              return false;
+            }
+
+            // Prüfen ob User aktiv ist
+            if (profile.is_active === false) {
+              console.log('⚠️ User is deactivated:', profile.username);
+              await supabase.auth.signOut();
+              this.clearLocalStorage();
+              LoadingScreen.showLogin();
+              return false;
+            }
+
+            // Session gültig!
+            console.log('✅ Session restored for:', profile.username);
+            currentUser = profile;
+            window.currentUser = profile;
+
+            // LocalStorage aktualisieren
+            localStorage.setItem('rememberMe', 'true');
+            localStorage.setItem('username', profile.username);
+            localStorage.setItem('userRole', profile.role || 'user');
+            if (profile.avatar_url) {
+              localStorage.setItem('avatarUrl', profile.avatar_url);
+            }
 
             // Update UI
             if (typeof updateUIForUser === 'function') {
-              updateUIForUser(currentUser);
+              updateUIForUser(profile);
             }
 
             // Hide Loading Screen
             LoadingScreen.hide();
 
-            // Post-login initialization mit Verzögerung
+            // Post-login initialization
             setTimeout(async () => {
               try {
                 if (typeof initializePermissions === 'function') {
@@ -14245,6 +14282,18 @@
                 if (typeof window.loadTodoProjects === 'function') {
                   await window.loadTodoProjects();
                 }
+
+                // Mobile UI
+                if (window.matchMedia('(max-width: 768px)').matches) {
+                  document.body.classList.add('logged-in');
+                  document.body.classList.remove('logged-out');
+                  const mobileNav = document.querySelector('.mobile-footer-nav');
+                  if (mobileNav) mobileNav.classList.add('visible');
+                  if (typeof updateMobileProfileData === 'function') updateMobileProfileData();
+                  if (typeof initMobileCalendar === 'function') initMobileCalendar();
+                  if (typeof initMobileDienstplan === 'function') initMobileDienstplan();
+                }
+
                 console.log('✅ Post-session-restore initialization complete');
               } catch (err) {
                 console.error('⚠️ Post-session-restore error:', err);
@@ -14253,11 +14302,26 @@
 
             return true;
           }
-        }
 
-        // Keine gespeicherte Session -> Login anzeigen
-        LoadingScreen.showLogin();
-        return false;
+          // Keine aktive Session
+          console.log('ℹ️ No active session found');
+          this.clearLocalStorage();
+          LoadingScreen.showLogin();
+          return false;
+
+        } catch (err) {
+          console.error('💥 Session check failed:', err);
+          LoadingScreen.showLogin();
+          return false;
+        }
+      },
+
+      // Helper: LocalStorage leeren
+      clearLocalStorage() {
+        localStorage.removeItem('rememberMe');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('avatarUrl');
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -14680,7 +14744,7 @@
         }
       },
 
-      // Handle Login Submit
+      // Handle Login Submit - SECURE SUPABASE AUTH VERSION
       async handleLogin(e) {
         e.preventDefault();
 
@@ -14701,21 +14765,14 @@
         try {
           console.log('🔑 Login attempt for:', username);
 
-          // Query user by username (case-insensitive)
-          const { data: profiles, error } = await supabase
+          // SCHRITT 1: Email für Username holen (KEINE sensiblen Daten!)
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('id, username, email, role, password_hash, avatar_url')
-            .ilike('username', username);
+            .select('id, email, auth_user_id')
+            .ilike('username', username)
+            .single();
 
-          if (error) {
-            console.error('❌ Database error:', error);
-            alert('Datenbankfehler: ' + error.message);
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-            return;
-          }
-
-          if (!profiles || profiles.length === 0) {
+          if (profileError || !profileData) {
             console.log('⚠️ User not found:', username);
             alert('Benutzername nicht gefunden');
             submitBtn.textContent = originalText;
@@ -14723,111 +14780,145 @@
             return;
           }
 
-          const profile = profiles[0];
-
-          // Check password
-          let passwordMatch = false;
-          if (profile.password_hash && profile.password_hash.startsWith('$2')) {
-            passwordMatch = await bcrypt.compare(password, profile.password_hash);
-          } else {
-            passwordMatch = profile.password_hash === password;
-          }
-
-          if (!passwordMatch) {
-            console.log('❌ Wrong password');
-            alert('Falsches Passwort');
+          // Prüfen ob Profile mit Auth verknüpft ist
+          if (!profileData.auth_user_id) {
+            console.error('❌ Profile not linked to auth.users:', username);
+            alert('Dein Account ist noch nicht aktiviert. Bitte kontaktiere einen Administrator.');
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
             return;
           }
 
-          // Login successful
-          console.log('✅ Login successful for:', profile.username);
-          currentUser = profile;
+          // SCHRITT 2: Mit Supabase Auth einloggen
+          console.log('🔐 Attempting Supabase Auth sign-in for:', profileData.email);
 
-          // Remember Me
+          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email: profileData.email,
+            password: password
+          });
+
+          if (authError) {
+            console.error('❌ Auth error:', authError.message);
+
+            if (authError.message.includes('Invalid login credentials')) {
+              alert('Falsches Passwort');
+            } else if (authError.message.includes('Email not confirmed')) {
+              alert('Email noch nicht bestätigt. Bitte prüfe dein Postfach.');
+            } else {
+              alert('Anmeldefehler: ' + authError.message);
+            }
+
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+          }
+
+          console.log('✅ Supabase Auth successful, user ID:', authData.user.id);
+
+          // SCHRITT 3: Vollständiges Profile laden
+          const { data: fullProfile, error: fullProfileError } = await supabase
+            .from('profiles')
+            .select('id, username, email, role, avatar_url, location_id, is_active, auth_user_id')
+            .eq('auth_user_id', authData.user.id)
+            .single();
+
+          if (fullProfileError || !fullProfile) {
+            console.error('❌ Could not load profile for auth user:', authData.user.id);
+            alert('Profil konnte nicht geladen werden.');
+            await supabase.auth.signOut();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+          }
+
+          // Prüfen ob User aktiv ist
+          if (fullProfile.is_active === false) {
+            console.log('⚠️ User is deactivated:', fullProfile.username);
+            alert('Dein Account ist deaktiviert. Bitte kontaktiere einen Administrator.');
+            await supabase.auth.signOut();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+          }
+
+          // Login erfolgreich!
+          console.log('✅ Login successful for:', fullProfile.username);
+          currentUser = fullProfile;
+          window.currentUser = fullProfile;
+
+          // Remember Me - speichere Auth Session Info
           if (rememberMe) {
             localStorage.setItem('rememberMe', 'true');
-            localStorage.setItem('username', profile.username);
-            localStorage.setItem('userRole', profile.role || 'user');
-            if (profile.avatar_url) {
-              localStorage.setItem('avatarUrl', profile.avatar_url);
+            localStorage.setItem('username', fullProfile.username);
+            localStorage.setItem('userRole', fullProfile.role || 'user');
+            if (fullProfile.avatar_url) {
+              localStorage.setItem('avatarUrl', fullProfile.avatar_url);
             }
           }
 
-          // Update UI (diese Funktion existiert immer)
+          // Update last_login_at in profiles
+          supabase
+            .from('profiles')
+            .update({ last_login_at: new Date().toISOString() })
+            .eq('id', fullProfile.id)
+            .then(({ error }) => {
+              if (error) console.warn('⚠️ Could not update last_login_at:', error.message);
+            });
+
+          // Update UI
           if (typeof updateUIForUser === 'function') {
-            updateUIForUser(profile);
+            updateUIForUser(fullProfile);
           }
 
-          // Hide Loading Screen FIRST
+          // Hide Loading Screen
           this.hide();
 
-          // DANN die anderen Funktionen aufrufen (mit Verzögerung und Check)
+          // Post-login initialization
           setTimeout(async () => {
             try {
-              // Initialize permissions
               if (typeof initializePermissions === 'function') {
                 await initializePermissions();
               }
-
-              // Load initial data (Dropdowns, etc.)
               if (typeof loadInitialData === 'function') {
                 await loadInitialData();
               }
-
-              // Load events for calendar
               if (typeof loadEvents === 'function') {
                 await loadEvents();
               }
-
-              // Render calendar
               if (typeof renderCalendar === 'function') {
                 renderCalendar();
               }
-
-              // Load To-Do projects
               if (typeof window.loadTodoProjects === 'function') {
                 await window.loadTodoProjects();
               }
 
-              // MOBILE: Show mobile nav and initialize mobile views
+              // Mobile UI initialization
               if (window.matchMedia('(max-width: 768px)').matches) {
                 console.log('📱 Mobile device detected, initializing mobile UI...');
-
-                // Add logged-in class to body for CSS
                 document.body.classList.add('logged-in');
                 document.body.classList.remove('logged-out');
 
-                // Show mobile nav
                 const mobileNav = document.querySelector('.mobile-footer-nav');
                 if (mobileNav) {
                   mobileNav.classList.add('visible');
-                  console.log('✅ Mobile nav shown');
                 }
 
-                // Update mobile profile with user data
                 if (typeof updateMobileProfileData === 'function') {
                   updateMobileProfileData();
                 }
-
-                // Pre-initialize mobile calendar/dienstplan
                 if (typeof initMobileCalendar === 'function') initMobileCalendar();
                 if (typeof initMobileDienstplan === 'function') initMobileDienstplan();
               }
 
               console.log('✅ Post-login initialization complete');
-
             } catch (postLoginErr) {
               console.error('⚠️ Post-login initialization error:', postLoginErr);
             }
           }, 100);
 
-          // Show notification (mit typeof check)
+          // Show notification
           if (typeof showNotification === 'function') {
-            showNotification(`Willkommen zurück, ${profile.username}!`, 'success');
-          } else {
-            console.log(`✅ Willkommen zurück, ${profile.username}!`);
+            showNotification(`Willkommen zurück, ${fullProfile.username}!`, 'success');
           }
 
         } catch (err) {
@@ -29396,7 +29487,7 @@
       }
     }
 
-    // Login function
+    // Login function - SECURE SUPABASE AUTH VERSION
     async function handleLogin(e) {
       e.preventDefault();
 
@@ -29409,182 +29500,107 @@
         return;
       }
 
-      // Visual feedback
       const submitButton = e.target.querySelector('button[type="submit"]');
       const originalText = submitButton.textContent;
       submitButton.textContent = 'Anmelden...';
       submitButton.disabled = true;
 
       try {
-        console.log('🔐 Login attempt for:', username);
+        console.log('🔑 Login attempt for:', username);
 
-        // Query user by username (case-insensitive)
-        const { data: profiles, error } = await supabase
+        // SCHRITT 1: Email für Username holen
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, username, email, role, password_hash, avatar_url')
-          .ilike('username', username);
+          .select('id, email, auth_user_id')
+          .ilike('username', username)
+          .single();
 
-        console.log('📊 Query result:', { profiles, error, count: profiles?.length });
-
-        if (error) {
-          console.error('❌ Database error:', error);
-          alert('Datenbankfehler: ' + error.message);
-          submitButton.textContent = originalText;
-          submitButton.disabled = false;
-          return;
-        }
-
-        if (!profiles || profiles.length === 0) {
+        if (profileError || !profileData) {
           console.log('⚠️ User not found:', username);
-          // Try to see all profiles for debugging (remove in production)
-          const { data: allProfiles } = await supabase.from('profiles').select('username');
-          console.log('📋 Available usernames:', allProfiles?.map(p => p.username));
           alert('Benutzername nicht gefunden');
           submitButton.textContent = originalText;
           submitButton.disabled = false;
           return;
         }
 
-        const profile = profiles[0];
-        console.log('👤 Found user:', profile.username, '| Role:', profile.role);
-
-        // Check if password_hash exists
-        if (!profile.password_hash) {
-          console.error('❌ No password set for user:', username);
-          alert('Kein Passwort für diesen Benutzer gesetzt. Bitte kontaktiere einen Administrator.');
+        if (!profileData.auth_user_id) {
+          console.error('❌ Profile not linked to auth.users:', username);
+          alert('Dein Account ist noch nicht aktiviert. Bitte kontaktiere einen Administrator.');
           submitButton.textContent = originalText;
           submitButton.disabled = false;
           return;
         }
 
-        // Check password using bcrypt for hashed passwords
-        let passwordMatch = false;
+        // SCHRITT 2: Supabase Auth Login
+        console.log('🔐 Attempting Supabase Auth sign-in...');
 
-        // Check if password_hash looks like a bcrypt hash (starts with $2a$, $2b$, $2y$)
-        if (profile.password_hash.startsWith('$2')) {
-          // Use bcrypt to compare
-          console.log('🔐 Comparing password using bcrypt...');
-          passwordMatch = await bcrypt.compare(password, profile.password_hash);
-        } else {
-          // Direct comparison for plain-text passwords (development/testing only)
-          console.log('⚠️ Using direct password comparison (not recommended for production)');
-          passwordMatch = profile.password_hash === password;
-        }
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: profileData.email,
+          password: password
+        });
 
-        if (!passwordMatch) {
-          console.log('❌ Wrong password for:', username);
-          alert('Falsches Passwort');
+        if (authError) {
+          console.error('❌ Auth error:', authError.message);
+
+          if (authError.message.includes('Invalid login credentials')) {
+            alert('Falsches Passwort');
+          } else if (authError.message.includes('Email not confirmed')) {
+            alert('Email noch nicht bestätigt. Bitte prüfe dein Postfach.');
+          } else {
+            alert('Anmeldefehler: ' + authError.message);
+          }
+
           submitButton.textContent = originalText;
           submitButton.disabled = false;
           return;
         }
 
-        // Login successful
+        console.log('✅ Supabase Auth successful');
+
+        // SCHRITT 3: Vollständiges Profile laden
+        const { data: profile, error: fullProfileError } = await supabase
+          .from('profiles')
+          .select('id, username, email, role, avatar_url, location_id, is_active, auth_user_id')
+          .eq('auth_user_id', authData.user.id)
+          .single();
+
+        if (fullProfileError || !profile) {
+          console.error('❌ Could not load profile');
+          alert('Profil konnte nicht geladen werden.');
+          await supabase.auth.signOut();
+          submitButton.textContent = originalText;
+          submitButton.disabled = false;
+          return;
+        }
+
+        if (profile.is_active === false) {
+          alert('Dein Account ist deaktiviert.');
+          await supabase.auth.signOut();
+          submitButton.textContent = originalText;
+          submitButton.disabled = false;
+          return;
+        }
+
+        // Login erfolgreich!
         console.log('✅ Login successful for:', profile.username);
         currentUser = profile;
+        window.currentUser = profile;
 
-        // ═══════════════════════════════════════════════════════════════
-        // SUPABASE AUTH: Create authenticated session for RLS
-        // ═══════════════════════════════════════════════════════════════
-        console.log('🔐 === SUPABASE AUTH DEBUG ===');
-        console.log('🔐 Attempting Supabase Auth sign-in...');
-        console.log('📧 Email:', profile.email);
-
-        if (profile.email) {
-          try {
-            // Try to sign in with Supabase Auth
-            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-              email: profile.email,
-              password: password
-            });
-
-            if (authError) {
-              console.warn('⚠️ Supabase Auth sign-in failed:', authError.message);
-
-              // If user doesn't exist in Auth, create them
-              if (authError.message.includes('Invalid login credentials') ||
-                  authError.message.includes('User not found')) {
-                console.log('📝 User not in Supabase Auth, creating account...');
-
-                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                  email: profile.email,
-                  password: password,
-                  options: {
-                    data: {
-                      username: profile.username,
-                      profile_id: profile.id
-                    }
-                  }
-                });
-
-                if (signUpError) {
-                  console.error('❌ Supabase Auth sign-up failed:', signUpError.message);
-                } else {
-                  console.log('✅ Supabase Auth account created:', signUpData);
-
-                  // Try sign-in again after sign-up
-                  const { data: retryAuth, error: retryError } = await supabase.auth.signInWithPassword({
-                    email: profile.email,
-                    password: password
-                  });
-
-                  if (retryError) {
-                    console.error('❌ Retry sign-in failed:', retryError.message);
-                  } else {
-                    console.log('✅ Supabase Auth session created:', retryAuth.session?.user?.id);
-                  }
-                }
-              }
-            } else {
-              console.log('✅ Supabase Auth session created successfully');
-              console.log('🔑 Auth User ID:', authData.session?.user?.id);
-              console.log('🎫 Access Token:', authData.session?.access_token ? 'EXISTS' : 'NULL');
-            }
-
-            // Verify session
-            const { data: { session } } = await supabase.auth.getSession();
-            console.log('=== AUTH SESSION VERIFICATION ===');
-            console.log('Session exists:', !!session);
-            console.log('Access Token:', session?.access_token ? 'EXISTS' : 'NULL');
-            console.log('Auth User ID:', session?.user?.id);
-            console.log('Profile User ID:', profile.id);
-            console.log('IDs match:', session?.user?.id === profile.id);
-
-            // IMPORTANT: Update profiles table with auth_user_id for RLS mapping
-            if (session?.user?.id && session.user.id !== profile.auth_user_id) {
-              console.log('📝 Updating profile with auth_user_id mapping...');
-              const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ auth_user_id: session.user.id })
-                .eq('id', profile.id);
-
-              if (updateError) {
-                console.error('⚠️ Failed to update auth_user_id:', updateError.message);
-              } else {
-                console.log('✅ Profile auth_user_id updated successfully');
-                profile.auth_user_id = session.user.id;
-              }
-            }
-
-          } catch (authErr) {
-            console.error('💥 Supabase Auth error:', authErr);
-          }
-        } else {
-          console.warn('⚠️ No email for user, cannot create Supabase Auth session');
-        }
-        console.log('🔐 === END AUTH DEBUG ===');
-
+        // Remember Me
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('username', profile.username);
           localStorage.setItem('userRole', profile.role || 'user');
           if (profile.avatar_url) {
             localStorage.setItem('avatarUrl', profile.avatar_url);
-            console.log('💾 Session saved to localStorage (including avatar)');
-          } else {
-            console.log('💾 Session saved to localStorage');
           }
         }
+
+        // Update last_login_at
+        supabase
+          .from('profiles')
+          .update({ last_login_at: new Date().toISOString() })
+          .eq('id', profile.id);
 
         // Update UI
         updateUIForUser(profile);
@@ -29592,14 +29608,11 @@
 
         alert(`Willkommen zurück, ${profile.username}!`);
 
-        // ═══════════════════════════════════════════════════════════════
-        // DATA ALREADY LOADED AT PAGE LOAD - Just refresh UI
-        // ═══════════════════════════════════════════════════════════════
+        // Post-login initialization
         await initializePermissions();
         await loadEvents();
         renderCalendar();
 
-        // Reset button state
         submitButton.textContent = originalText;
         submitButton.disabled = false;
 
@@ -30743,46 +30756,45 @@
       }
     }
 
-    // Test login with username/password
+    // Test login with username/password - SECURE SUPABASE AUTH VERSION
     async function debugTestLogin(username, password) {
       console.log('🧪 Testing login for:', username);
       try {
-        // Query user by username (case-insensitive)
-        const { data: profiles, error } = await supabase
+        // Get email for username
+        const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
-          .ilike('username', username);
+          .select('email, auth_user_id')
+          .ilike('username', username)
+          .single();
+
+        if (!profile) {
+          console.log('⚠️ User not found');
+          return false;
+        }
+
+        if (!profile.auth_user_id) {
+          console.log('⚠️ User not linked to auth.users');
+          return false;
+        }
+
+        // Try auth login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: profile.email,
+          password: password
+        });
 
         if (error) {
-          console.error('❌ Database error:', error);
+          console.log('❌ Auth failed:', error.message);
           return false;
         }
 
-        if (!profiles || profiles.length === 0) {
-          console.log('⚠️ User not found:', username);
-          return false;
-        }
+        console.log('✅ Login would succeed!');
+        // Sign out again (this was just a test)
+        await supabase.auth.signOut();
+        return true;
 
-        const profile = profiles[0];
-        console.log('👤 Found user:', profile.username);
-        console.log('🔑 Has password_hash:', !!profile.password_hash);
-        console.log('🎭 Role:', profile.role);
-
-        if (!profile.password_hash) {
-          console.error('❌ No password set for user');
-          return false;
-        }
-
-        const passwordMatch = profile.password_hash === password;
-        if (passwordMatch) {
-          console.log('✅ Password matches!');
-        } else {
-          console.log('❌ Password does not match');
-        }
-
-        return passwordMatch;
       } catch (err) {
-        console.error('💥 Debug login test failed:', err);
+        console.error('💥 Test failed:', err);
         return false;
       }
     }
