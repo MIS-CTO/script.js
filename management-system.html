@@ -5918,13 +5918,13 @@
     }
 
     .mobile-nav-item.active .mobile-nav-icon {
-      stroke: #007AFF;
-      color: #007AFF;
+      stroke: #1d1d1f;
+      color: #1d1d1f;
     }
 
     [data-theme="dark"] .mobile-nav-item.active .mobile-nav-icon {
-      stroke: #0A84FF;
-      color: #0A84FF;
+      stroke: #f5f5f7;
+      color: #f5f5f7;
     }
 
     /* Fill/Outline Icon Toggle */
@@ -5958,17 +5958,18 @@
       color: white;
     }
 
-    /* Aktiver Dashboard: Ring um Avatar */
+    /* Aktiver Dashboard: KEIN Ring um Avatar */
     .mobile-nav-item.active .mobile-nav-avatar {
-      box-shadow: 0 0 0 2px #007AFF;
+      box-shadow: none;
     }
 
     [data-theme="dark"] .mobile-nav-item.active .mobile-nav-avatar {
-      box-shadow: 0 0 0 2px #0A84FF;
+      box-shadow: none;
     }
 
     [data-theme="dark"] .mobile-nav-item.active .mobile-nav-icon {
-      stroke: rgba(255, 255, 255, 0.9);
+      stroke: #f5f5f7;
+      color: #f5f5f7;
     }
 
     .mobile-nav-label {
@@ -6786,7 +6787,7 @@
          MOBILE ERSCHEINUNGSBILD SECTION
          ======================================== */
       .mobile-appearance-section {
-        padding: 0 16px;
+        padding: 0 1vw;
         margin-top: 24px;
       }
 
@@ -6807,10 +6808,6 @@
         gap: 4px;
       }
 
-      [data-theme="dark"] .mobile-appearance-toggle {
-        background: rgba(255,255,255,0.1);
-      }
-
       .mobile-theme-btn {
         flex: 1;
         display: flex;
@@ -6821,34 +6818,6 @@
         border-radius: 10px;
         cursor: pointer;
         transition: all 0.2s ease;
-        background: white;
-        color: var(--macos-text-secondary, #86868b);
-      }
-
-      /* Aktiver Button = greyed out (bereits gewählt) */
-      .mobile-theme-btn.active {
-        background: transparent;
-        color: var(--macos-text-tertiary, #c7c7cc);
-        cursor: default;
-        box-shadow: none;
-      }
-
-      /* Inaktiver Button = hervorgehoben, klickbar */
-      .mobile-theme-btn:not(.active) {
-        background: white;
-        color: var(--macos-text-secondary, #86868b);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      }
-
-      /* Dark Mode Overrides */
-      [data-theme="dark"] .mobile-theme-btn:not(.active) {
-        background: rgba(255,255,255,0.9);
-        color: var(--macos-text-secondary, #86868b);
-      }
-
-      [data-theme="dark"] .mobile-theme-btn.active {
-        background: transparent;
-        color: rgba(255,255,255,0.3);
       }
 
       .mobile-theme-btn svg {
@@ -6856,11 +6825,43 @@
         height: 24px;
       }
 
+      /* ===== LIGHT MODE (default) ===== */
+      /* Sonnen-Button AKTIV = greyed out */
+      #mobileLightModeBtn.active {
+        background: transparent;
+        color: var(--macos-text-tertiary, #c7c7cc);
+        cursor: default;
+      }
+
+      /* Mond-Button INAKTIV = dunkelgrau mit weißem Icon */
+      #mobileDarkModeBtn:not(.active) {
+        background: #3a3a3c;
+        color: white;
+      }
+
+      /* ===== DARK MODE ===== */
+      [data-theme="dark"] .mobile-appearance-toggle {
+        background: rgba(255,255,255,0.1);
+      }
+
+      /* Sonnen-Button INAKTIV = weiß mit grauem Icon */
+      [data-theme="dark"] #mobileLightModeBtn:not(.active) {
+        background: white;
+        color: #86868b;
+      }
+
+      /* Mond-Button AKTIV = greyed out */
+      [data-theme="dark"] #mobileDarkModeBtn.active {
+        background: transparent;
+        color: rgba(255,255,255,0.3);
+        cursor: default;
+      }
+
       /* ========================================
          MOBILE LOGOUT SECTION
          ======================================== */
       .mobile-logout-section {
-        padding: 24px 2vw;
+        padding: 24px 1vw;
       }
 
       .mobile-logout-btn {
@@ -6897,7 +6898,7 @@
         display: flex;
         flex-direction: column;
         gap: 0;
-        padding: 0 2vw;
+        padding: 0 1vw;
       }
 
       .todo-project-card {
@@ -7008,6 +7009,33 @@
 
       .todo-project-footer {
         display: none !important;
+      }
+
+      /* Add Task Button in Accordion */
+      .mobile-add-task-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        background: transparent;
+        border: 1px dashed var(--macos-stroke-primary, rgba(0,0,0,0.15));
+        border-radius: 8px;
+        color: var(--macos-text-secondary, #86868b);
+        font-size: 14px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .mobile-add-task-btn:active {
+        background: var(--macos-fill-quaternary, rgba(0,0,0,0.03));
+      }
+
+      .mobile-add-task-btn svg {
+        flex-shrink: 0;
       }
 
       /* Mobile Tab Content Wrapper - hidden, profile replaces it */
@@ -16629,7 +16657,16 @@
                 <span class="todo-project-collaborators">${collabText}</span>
                 <button class="todo-edit-btn" onclick="event.stopPropagation(); openTodoEditModal('${project.id}')">Edit</button>
               </div>
-              ${isMobileView ? `<div class="mobile-project-tasks">${tasksHtml || '<div style="padding:12px 0;color:#86868b;font-size:14px;">Keine Tasks</div>'}</div>` : ''}
+              ${isMobileView ? `<div class="mobile-project-tasks">
+                ${tasksHtml || '<div style="padding:12px 0;color:#86868b;font-size:14px;">Keine Tasks</div>'}
+                <button class="mobile-add-task-btn" onclick="event.stopPropagation(); openAddTaskModal('${project.id}')">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Task hinzufügen
+                </button>
+              </div>` : ''}
             </div>
           `;
         }).join('');
@@ -16697,6 +16734,21 @@
           console.error('❌ Error toggling mobile task:', err);
         }
       };
+
+      // Mobile: Open Add Task Modal
+      function openAddTaskModal(projectId) {
+        // TODO: Implementiere Task-Erstellung Modal
+        console.log('Add task to project:', projectId);
+        // For now, use the existing todo add task functionality if available
+        if (typeof openTodoAddTaskModal === 'function') {
+          // Select the project first
+          selectedTodoProject = todoProjects.find(p => p.id === projectId) || null;
+          openTodoAddTaskModal();
+        } else {
+          alert('Task hinzufügen für Projekt: ' + projectId);
+        }
+      }
+      window.openAddTaskModal = openAddTaskModal;
 
       // Select Project
       function selectTodoProject(projectId) {
