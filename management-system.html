@@ -14719,15 +14719,36 @@
       showLogin() {
         console.log('🔐 Showing login overlay...');
 
-        // Ensure progress is at 100%
-        this.updateProgress(100, 'Fertig!');
+        // WICHTIG: LoadingScreen wieder sichtbar machen (falls durch hide() versteckt)
+        if (this.elements.screen) {
+          this.elements.screen.style.display = 'flex';
+          this.elements.screen.classList.remove('fade-out');
+          this.elements.screen.classList.add('active');
+        }
 
-        // Kleine Verzögerung, dann Glass Overlay einblenden
-        setTimeout(() => {
-          if (this.elements.glassOverlay) {
-            this.elements.glassOverlay.classList.add('active');
-          }
-        }, 500);
+        // Progress Bar verstecken (nicht relevant für Login nach Logout)
+        if (this.elements.progress) {
+          this.elements.progress.style.display = 'none';
+        }
+        if (this.elements.status) {
+          this.elements.status.style.display = 'none';
+        }
+
+        // Glass Overlay (Login-Formular) sofort einblenden
+        if (this.elements.glassOverlay) {
+          this.elements.glassOverlay.classList.add('active');
+        }
+
+        // Login-Formular Felder zurücksetzen
+        const usernameInput = document.getElementById('loadingUsername');
+        const passwordInput = document.getElementById('loadingPassword');
+        const rememberCheckbox = document.getElementById('loadingRememberMe');
+
+        if (usernameInput) usernameInput.value = '';
+        if (passwordInput) passwordInput.value = '';
+        if (rememberCheckbox) rememberCheckbox.checked = false;
+
+        console.log('✅ Login overlay shown');
       },
 
       // Hide Loading Screen completely
