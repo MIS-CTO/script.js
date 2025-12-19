@@ -667,23 +667,23 @@
     .slot-cell.half-hour { border-right:1px solid rgba(0,0,0,0.04); }
     .slot-cell:hover { background:rgba(0,113,227,0.02); }
     .event {
-      background:rgba(255,255,255,0.95);
-      color:#1d1d1f;
-      padding:8px 10px;
-      border-radius:6px;
-      font-size:13px;
-      font-weight:500;
-      cursor:pointer;
-      transition:all 0.2s ease;
-      word-break:break-word;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-start;
-      align-items:flex-start;
-      border-left:4px solid var(--location-primary);
-      box-shadow:0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-      overflow:hidden;
-      line-height:1.3;
+      background: #fff;
+      color: #1d1d1f;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      word-break: break-word;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+      border-left: 4px solid var(--location-primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      overflow: hidden;
+      line-height: 1.4;
     }
     .event:hover {
       box-shadow:0 4px 12px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.06);
@@ -700,46 +700,57 @@
       border-left-color:#5856D6;
     }
     
-    /* Booking Type Colors - Light backgrounds with colored borders */
+    /* Booking Type Colors - Material Design (matching mobile) */
     .event[data-type="consultation"] {
-      background:rgba(102, 187, 106, 0.15);
-      border-left-color:#43A047;
+      background: #FFEBEE;
+      border-left-color: #C62828;
+      color: #C62828;
     }
     .event[data-type="new_tattoo"] {
-      background:rgba(236, 64, 122, 0.15);
-      border-left-color:#C2185B;
+      background: #E8F5E9;
+      border-left-color: #2E7D32;
+      color: #2E7D32;
     }
     .event[data-type="continuing_tattoo"] {
-      background:rgba(66, 165, 245, 0.15);
-      border-left-color:#1976D2;
+      background: #FFF3E0;
+      border-left-color: #E65100;
+      color: #E65100;
     }
     .event[data-type="touch_up"] {
-      background:rgba(255, 235, 59, 0.25);
-      border-left-color:#FBC02D;
+      background: #F3E5F5;
+      border-left-color: #6A1B9A;
+      color: #6A1B9A;
     }
     .event[data-type="selfbooking"] {
-      background:rgba(141, 110, 99, 0.15);
-      border-left-color:#5D4037;
+      background: #FFFDE7;
+      border-left-color: #F57F17;
+      color: #F57F17;
     }
     .event[data-type="wannado"] {
-      background:rgba(171, 71, 188, 0.15);
-      border-left-color:#7B1FA2;
+      background: #FCE4EC;
+      border-left-color: #AD1457;
+      color: #AD1457;
     }
     .event[data-type="internal"] {
-      background:rgba(239, 83, 80, 0.15);
-      border-left-color:#C62828;
+      background: #ECEFF1;
+      border-left-color: #37474F;
+      color: #37474F;
     }
     .event[data-type="move"] {
-      background:rgba(38, 198, 218, 0.15);
-      border-left-color:#00838F;
+      background: #E3F2FD;
+      border-left-color: #1565C0;
+      color: #1565C0;
     }
     .event[data-type="reserved"] {
-      background:rgba(120, 144, 156, 0.15);
-      border-left-color:#455A64;
+      background: #EFEBE9;
+      border-left-color: #4E342E;
+      color: #4E342E;
     }
     .event[data-type="no_show"] {
-      background:rgba(189, 189, 189, 0.1);
-      border-left-color:#757575;
+      background: #FFEBEE;
+      border-left-color: #C62828;
+      color: #C62828;
+      opacity: 0.7;
     }
     
     /* ========================================
@@ -23449,22 +23460,67 @@
                       // Artist Info: Compact display with just notice text
                       content = `<div style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cell.event.title}</div>`;
                     } else if (cat === 'events') {
-                      // For events: time, title, and type
+                      // For events: SVG icon + time, title, and type
+                      const catConfig = (typeof calendarCategoryConfig !== 'undefined' ? calendarCategoryConfig : window.calendarCategoryConfig || {})[cell.event.type] || {};
+                      const typeIcon = catConfig.icon || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+
                       const titleContent = cell.event.artistId
-                        ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.title}</div>`
-                        : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;">${cell.event.title}</div>`;
+                        ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline; font-weight:600;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.title}</div>`
+                        : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; font-weight:600;">${cell.event.title}</div>`;
 
                       content = `
-                        <div style="font-weight:600; font-size:12px; margin-bottom:3px;">${timeStr}</div>
+                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                          <span style="display:inline-flex; align-items:center;">${typeIcon}</span>
+                          <span style="font-weight:600; font-size:12px;">${timeStr}</span>
+                        </div>
                         ${titleContent}
-                        ${typeLabel ? `<div style="font-size:10px; color:rgba(0,0,0,0.5); font-weight:500; text-transform:uppercase; letter-spacing:0.3px;">${typeLabel}</div>` : ''}
+                        ${typeLabel ? `<div style="font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:0.3px; opacity:0.8;">${typeLabel}</div>` : ''}
                       `;
                     } else {
-                      // For bookings: time + name in one line, then type, payment status, work_process
+                      // For bookings: SVG Icon + Type, Time + Name, Payment Badge
                       const customerName = cell.event.customerName || 'Kunde';
                       const customerLink = cell.event.customerId
                         ? `<span style="cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${customerName}</span>`
                         : customerName;
+
+                      // Get category config for icon (uses calendarCategoryConfig or window.calendarCategoryConfig)
+                      const catConfig = (typeof calendarCategoryConfig !== 'undefined' ? calendarCategoryConfig : window.calendarCategoryConfig || {})[cell.event.type] || {};
+                      const typeIcon = catConfig.icon || '';
+
+                      // Payment status badge with SVG icons
+                      const paymentBadges = {
+                        'paid': {
+                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>',
+                          label: 'Bezahlt', bg: 'rgba(46, 125, 50, 0.15)', color: '#2E7D32'
+                        },
+                        'fully_paid': {
+                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>',
+                          label: 'Bezahlt', bg: 'rgba(46, 125, 50, 0.15)', color: '#2E7D32'
+                        },
+                        'deposit_paid': {
+                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+                          label: 'Anzahlung', bg: 'rgba(21, 101, 192, 0.15)', color: '#1565C0'
+                        },
+                        'pending': {
+                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+                          label: 'Offen', bg: 'rgba(245, 127, 23, 0.15)', color: '#F57F17'
+                        },
+                        'failed': {
+                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+                          label: 'Fehlgeschlagen', bg: 'rgba(198, 40, 40, 0.15)', color: '#C62828'
+                        },
+                        'refunded': {
+                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M3 10h10a5 5 0 0 1 0 10H3"/><path d="M7 6l-4 4 4 4"/></svg>',
+                          label: 'Erstattet', bg: 'rgba(69, 90, 100, 0.15)', color: '#455A64'
+                        },
+                        'unpaid': {
+                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>',
+                          label: 'Unbezahlt', bg: 'rgba(198, 40, 40, 0.1)', color: '#C62828'
+                        }
+                      };
+                      const paymentInfo = cell.event.isAppointment && cell.event.paymentStatus
+                        ? paymentBadges[cell.event.paymentStatus] || paymentBadges['unpaid']
+                        : null;
 
                       // Work process label
                       const workProcessLabel = cell.event.workProcess
@@ -23472,12 +23528,20 @@
                         : '';
 
                       content = `
-                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; gap:6px;">
-                          <span style="font-weight:600; font-size:11px; color:rgba(0,0,0,0.7); white-space:nowrap;">${timeStr}</span>
-                          <span style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:right;">${customerLink}</span>
+                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+                          ${typeIcon ? `<span style="display:inline-flex; align-items:center;">${typeIcon}</span>` : ''}
+                          <span style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; opacity:0.9;">${typeLabel}</span>
                         </div>
-                        ${typeLabel ? `<div style="font-size:10px; font-weight:500; margin-bottom:2px; opacity:0.8;">${typeLabel}</div>` : ''}
-                        ${paymentLabel ? `<div style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; color:rgba(0,0,0,0.6); margin-bottom:2px;">${paymentLabel}</div>` : ''}
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; gap:6px; width:100%;">
+                          <span style="font-weight:600; font-size:11px; opacity:0.8; white-space:nowrap;">${timeStr}</span>
+                          <span style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:right;">${customerLink}</span>
+                        </div>
+                        ${paymentInfo ? `
+                          <div style="display:inline-flex; align-items:center; gap:3px; padding:2px 6px; border-radius:4px; background:${paymentInfo.bg}; margin-top:2px;">
+                            <span style="display:inline-flex; color:${paymentInfo.color};">${paymentInfo.icon}</span>
+                            <span style="font-size:9px; font-weight:600; color:${paymentInfo.color}; text-transform:uppercase;">${paymentInfo.label}</span>
+                          </div>
+                        ` : ''}
                         ${workProcessLabel}
                       `;
                     }
@@ -38905,37 +38969,65 @@
     // MULTI-ARTIST CALENDAR GRID (NEW)
     // ==========================================
 
-    // Kategorie-Farben und Icons für Multi-Artist Calendar
-    const mobileCalCategoryConfig = {
+    // Kategorie-Farben und SVG-Icons für Calendar (Desktop + Mobile)
+    const calendarCategoryConfig = {
       consultation: {
         bg: '#FFEBEE', color: '#C62828',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        label: 'Beratung'
       },
       new_tattoo: {
         bg: '#E8F5E9', color: '#2E7D32',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M12 5v14M5 12h14"/></svg>',
+        label: 'Neustechen'
       },
       continuing_tattoo: {
         bg: '#FFF3E0', color: '#E65100',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+        label: 'Weiterstechen'
       },
       touch_up: {
         bg: '#F3E5F5', color: '#6A1B9A',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>',
+        label: 'Nachstechen'
       },
       selfbooking: {
         bg: '#FFFDE7', color: '#F57F17',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+        label: 'Selfbooking'
       },
       wannado: {
         bg: '#FCE4EC', color: '#AD1457',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+        label: 'WannaDo'
       },
       internal: {
         bg: '#ECEFF1', color: '#37474F',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>',
+        label: 'Intern'
+      },
+      move: {
+        bg: '#E3F2FD', color: '#1565C0',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>',
+        label: 'Verschiebung'
+      },
+      reserved: {
+        bg: '#EFEBE9', color: '#4E342E',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+        label: 'Reserviert'
+      },
+      no_show: {
+        bg: '#FFEBEE', color: '#C62828',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+        label: 'No Show'
       }
     };
+
+    // Alias für Mobile-Kompatibilität (falls irgendwo noch mobileCalCategoryConfig verwendet wird)
+    const mobileCalCategoryConfig = calendarCategoryConfig;
+
+    // Global verfügbar machen für Desktop-Rendering
+    window.calendarCategoryConfig = calendarCategoryConfig;
 
     // Render Multi-Artist Calendar Grid
     function renderMobileCalendarGrid() {
