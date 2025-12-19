@@ -799,7 +799,21 @@
       border: 1px solid #9E9E9E;
       color: #616161;
     }
-    
+
+    /* === EVENTS KATEGORIE - Orange für normal, Rot für Anwesenheitspflicht === */
+    .event[data-type="event"],
+    .event.events:not([data-attendance="required"]) {
+      background: rgba(255, 152, 0, 0.1);
+      border: 1px solid #FF9800;
+      color: #E65100;
+    }
+    .event[data-attendance="required"],
+    .event.events[data-attendance="required"] {
+      background: rgba(244, 67, 54, 0.1);
+      border: 1px solid #F44336;
+      color: #C62828;
+    }
+
     /* ========================================
        Dienstplan Grid - Frosted Glass
        ======================================== */
@@ -12885,6 +12899,154 @@
     let revenueTimelineChart = null;
     let artistDistributionChartInstance = null;
     let revenueByStatusChartInstance = null;
+
+    // ==========================================
+    // CALENDAR CATEGORY CONFIG (Declared early for Desktop rendering)
+    // ==========================================
+    // Kategorie-Farben und SVG-Icons für Calendar (Desktop + Mobile)
+    // WICHTIG: Matching auf work_process (deutsch, lowercase) UND booking_type (englisch)
+    const calendarCategoryConfig = {
+      // === WORK_PROCESS MAPPINGS (deutsch, lowercase) ===
+      'neustechen': {
+        bg: 'rgba(233, 30, 99, 0.1)', color: '#E91E63', textColor: '#AD1457',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M12 5v14M5 12h14"/></svg>',
+        label: 'Neustechen'
+      },
+      'weiterstechen': {
+        bg: 'rgba(33, 150, 243, 0.1)', color: '#2196F3', textColor: '#1565C0',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+        label: 'Weiterstechen'
+      },
+      'nachstechen': {
+        bg: 'rgba(255, 193, 7, 0.15)', color: '#FFC107', textColor: '#F57F17',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>',
+        label: 'Nachstechen'
+      },
+      'beratung': {
+        bg: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', textColor: '#2E7D32',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        label: 'Beratung'
+      },
+
+      // === BOOKING_TYPE MAPPINGS (englisch) ===
+      'consultation': {
+        bg: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', textColor: '#2E7D32',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        label: 'Beratung'
+      },
+      'new_tattoo': {
+        bg: 'rgba(233, 30, 99, 0.1)', color: '#E91E63', textColor: '#AD1457',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M12 5v14M5 12h14"/></svg>',
+        label: 'Neustechen'
+      },
+      'continuing_tattoo': {
+        bg: 'rgba(33, 150, 243, 0.1)', color: '#2196F3', textColor: '#1565C0',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+        label: 'Weiterstechen'
+      },
+      'touch_up': {
+        bg: 'rgba(255, 193, 7, 0.15)', color: '#FFC107', textColor: '#F57F17',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>',
+        label: 'Nachstechen'
+      },
+      'selfbooking': {
+        bg: 'rgba(121, 85, 72, 0.1)', color: '#795548', textColor: '#5D4037',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+        label: 'Selfbooking'
+      },
+      'wannado': {
+        bg: 'rgba(156, 39, 176, 0.1)', color: '#9C27B0', textColor: '#7B1FA2',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+        label: 'WannaDo'
+      },
+      'internal': {
+        bg: 'rgba(244, 67, 54, 0.1)', color: '#F44336', textColor: '#C62828',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>',
+        label: 'Intern'
+      },
+      'move': {
+        bg: 'rgba(0, 188, 212, 0.1)', color: '#00BCD4', textColor: '#00838F',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>',
+        label: 'Verschiebung'
+      },
+      'reserved': {
+        bg: 'rgba(158, 158, 158, 0.1)', color: '#9E9E9E', textColor: '#616161',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+        label: 'Reserviert'
+      },
+      'no_show': {
+        bg: 'rgba(255, 255, 255, 0.9)', color: '#BDBDBD', textColor: '#757575',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+        label: 'No Show'
+      },
+
+      // === STATUS-BASIERTE MAPPINGS ===
+      'finished': {
+        bg: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', textColor: '#2E7D32',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 6L9 17l-5-5"/></svg>',
+        label: 'Abgeschlossen'
+      },
+      'canceled': {
+        bg: 'rgba(244, 67, 54, 0.1)', color: '#F44336', textColor: '#C62828',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+        label: 'Storniert'
+      },
+      'rescheduled': {
+        bg: 'rgba(0, 188, 212, 0.1)', color: '#00BCD4', textColor: '#00838F',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+        label: 'Verschoben'
+      },
+      'scheduled': {
+        bg: 'rgba(33, 150, 243, 0.1)', color: '#2196F3', textColor: '#1565C0',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+        label: 'Geplant'
+      },
+      'unknown': {
+        bg: 'rgba(158, 158, 158, 0.1)', color: '#9E9E9E', textColor: '#616161',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
+        label: 'Unbekannt'
+      },
+
+      // === EVENTS KATEGORIE ===
+      'event': {
+        bg: 'rgba(255, 152, 0, 0.1)', color: '#FF9800', textColor: '#E65100',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+        label: 'Event'
+      },
+      'event_required': {
+        bg: 'rgba(244, 67, 54, 0.1)', color: '#F44336', textColor: '#C62828',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+        label: 'Event (Pflicht)'
+      }
+    };
+
+    // Global verfügbar machen
+    window.calendarCategoryConfig = calendarCategoryConfig;
+
+    // === HELPER FUNCTION: Typ aus Appointment ermitteln ===
+    function getAppointmentCategory(apt) {
+      if (!apt) return 'unknown';
+      // Priorität: work_process > booking_type > status > 'unknown'
+      const workProcess = (apt.work_process || apt.workProcess || '').toLowerCase().trim();
+      const bookingType = (apt.booking_type || apt.bookingType || apt.type || '').toLowerCase().trim();
+      const status = (apt.status || '').toLowerCase().trim();
+
+      // Wannado Prefix erkennen
+      if (workProcess.startsWith('wannado')) return 'wannado';
+
+      // work_process direkt matchen
+      if (calendarCategoryConfig[workProcess]) return workProcess;
+
+      // booking_type matchen
+      if (calendarCategoryConfig[bookingType]) return bookingType;
+
+      // status als Fallback
+      if (calendarCategoryConfig[status]) return status;
+
+      return 'unknown';
+    }
+
+    window.getAppointmentCategory = getAppointmentCategory;
 
     // ==========================================
     // BOOKING TEAM MEMBERS (Dynamic Loading)
@@ -39015,142 +39177,11 @@
     // ==========================================
     // MULTI-ARTIST CALENDAR GRID (NEW)
     // ==========================================
-
-    // Kategorie-Farben und SVG-Icons für Calendar (Desktop + Mobile)
-    // WICHTIG: Matching auf work_process (deutsch, lowercase) UND booking_type (englisch)
-    const calendarCategoryConfig = {
-      // === WORK_PROCESS MAPPINGS (deutsch, lowercase) ===
-      'neustechen': {
-        bg: 'rgba(233, 30, 99, 0.1)', color: '#E91E63', textColor: '#AD1457',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M12 5v14M5 12h14"/></svg>',
-        label: 'Neustechen'
-      },
-      'weiterstechen': {
-        bg: 'rgba(33, 150, 243, 0.1)', color: '#2196F3', textColor: '#1565C0',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
-        label: 'Weiterstechen'
-      },
-      'nachstechen': {
-        bg: 'rgba(255, 193, 7, 0.15)', color: '#FFC107', textColor: '#F57F17',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>',
-        label: 'Nachstechen'
-      },
-      'beratung': {
-        bg: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', textColor: '#2E7D32',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-        label: 'Beratung'
-      },
-
-      // === BOOKING_TYPE MAPPINGS (englisch) ===
-      'consultation': {
-        bg: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', textColor: '#2E7D32',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-        label: 'Beratung'
-      },
-      'new_tattoo': {
-        bg: 'rgba(233, 30, 99, 0.1)', color: '#E91E63', textColor: '#AD1457',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M12 5v14M5 12h14"/></svg>',
-        label: 'Neustechen'
-      },
-      'continuing_tattoo': {
-        bg: 'rgba(33, 150, 243, 0.1)', color: '#2196F3', textColor: '#1565C0',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
-        label: 'Weiterstechen'
-      },
-      'touch_up': {
-        bg: 'rgba(255, 193, 7, 0.15)', color: '#FFC107', textColor: '#F57F17',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>',
-        label: 'Nachstechen'
-      },
-      'selfbooking': {
-        bg: 'rgba(121, 85, 72, 0.1)', color: '#795548', textColor: '#5D4037',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-        label: 'Selfbooking'
-      },
-      'wannado': {
-        bg: 'rgba(156, 39, 176, 0.1)', color: '#9C27B0', textColor: '#7B1FA2',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-        label: 'WannaDo'
-      },
-      'internal': {
-        bg: 'rgba(244, 67, 54, 0.1)', color: '#F44336', textColor: '#C62828',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>',
-        label: 'Intern'
-      },
-      'move': {
-        bg: 'rgba(0, 188, 212, 0.1)', color: '#00BCD4', textColor: '#00838F',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>',
-        label: 'Verschiebung'
-      },
-      'reserved': {
-        bg: 'rgba(158, 158, 158, 0.1)', color: '#9E9E9E', textColor: '#616161',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
-        label: 'Reserviert'
-      },
-      'no_show': {
-        bg: 'rgba(255, 255, 255, 0.9)', color: '#BDBDBD', textColor: '#757575',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
-        label: 'No Show'
-      },
-
-      // === STATUS-BASIERTE MAPPINGS ===
-      'finished': {
-        bg: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', textColor: '#2E7D32',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 6L9 17l-5-5"/></svg>',
-        label: 'Abgeschlossen'
-      },
-      'canceled': {
-        bg: 'rgba(244, 67, 54, 0.1)', color: '#F44336', textColor: '#C62828',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
-        label: 'Storniert'
-      },
-      'rescheduled': {
-        bg: 'rgba(0, 188, 212, 0.1)', color: '#00BCD4', textColor: '#00838F',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
-        label: 'Verschoben'
-      },
-      'scheduled': {
-        bg: 'rgba(33, 150, 243, 0.1)', color: '#2196F3', textColor: '#1565C0',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
-        label: 'Geplant'
-      },
-      'unknown': {
-        bg: 'rgba(158, 158, 158, 0.1)', color: '#9E9E9E', textColor: '#616161',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
-        label: 'Unbekannt'
-      }
-    };
+    // NOTE: calendarCategoryConfig and getAppointmentCategory are declared early
+    // in the file (after chart instances) to ensure Desktop rendering works correctly
 
     // Alias für Mobile-Kompatibilität
     const mobileCalCategoryConfig = calendarCategoryConfig;
-
-    // Global verfügbar machen
-    window.calendarCategoryConfig = calendarCategoryConfig;
-
-    // === HELPER FUNCTION: Typ aus Appointment ermitteln ===
-    function getAppointmentCategory(apt) {
-      if (!apt) return 'unknown';
-      // Priorität: work_process > booking_type > status > 'unknown'
-      const workProcess = (apt.work_process || apt.workProcess || '').toLowerCase().trim();
-      const bookingType = (apt.booking_type || apt.bookingType || apt.type || '').toLowerCase().trim();
-      const status = (apt.status || '').toLowerCase().trim();
-
-      // Wannado Prefix erkennen
-      if (workProcess.startsWith('wannado')) return 'wannado';
-
-      // work_process direkt matchen
-      if (calendarCategoryConfig[workProcess]) return workProcess;
-
-      // booking_type matchen
-      if (calendarCategoryConfig[bookingType]) return bookingType;
-
-      // status als Fallback
-      if (calendarCategoryConfig[status]) return status;
-
-      return 'unknown';
-    }
-
-    window.getAppointmentCategory = getAppointmentCategory;
 
     // Render Multi-Artist Calendar Grid
     function renderMobileCalendarGrid() {
