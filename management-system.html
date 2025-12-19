@@ -29949,6 +29949,7 @@
           console.log('✅ Supabase Auth signed out');
         }
 
+        // Clear user data
         currentUser = null;
         window.currentUser = null;
         localStorage.removeItem('rememberMe');
@@ -29956,7 +29957,7 @@
         localStorage.removeItem('userRole');
         localStorage.removeItem('avatarUrl');
 
-        console.log('🗑️ Session data cleared (including avatar)');
+        console.log('🗑️ Session data cleared');
 
         // Reset UI
         const dashboardWelcome = document.getElementById('dashboardWelcome');
@@ -29971,31 +29972,25 @@
         // Mobile nav verstecken
         document.querySelector('.mobile-footer-nav')?.classList.remove('visible');
 
-        // Zurück zum Dashboard
-        document.querySelectorAll('section').forEach(s => {
-          s.style.display = 'none';
-          s.classList.remove('active');
-        });
-        const dashboard = document.getElementById('dashboard-section');
-        if (dashboard) {
-          dashboard.style.display = 'block';
-          dashboard.classList.add('active');
-        }
-
         // Hide mobile views
         document.getElementById('mobileCalendarView')?.classList.remove('active');
         document.getElementById('mobileDienstplanView')?.classList.remove('active');
 
-        alert('Du wurdest abgemeldet');
+        // Alle Sections verstecken
+        document.querySelectorAll('section').forEach(s => {
+          s.style.display = 'none';
+          s.classList.remove('active');
+        });
 
-        // Show login modal again
-        setTimeout(() => {
-          const loginBackdrop = document.getElementById('loginBackdrop');
-          if (loginBackdrop) {
-            loginBackdrop.classList.add('active');
-            console.log('🔐 Login overlay shown after logout');
-          }
-        }, 100);
+        // WICHTIG: LoadingScreen mit Login anzeigen (nicht loginBackdrop!)
+        if (typeof LoadingScreen !== 'undefined' && LoadingScreen.showLogin) {
+          console.log('🔑 Showing LoadingScreen login...');
+          LoadingScreen.showLogin();
+        } else {
+          // Fallback: Seite neu laden
+          console.log('🔄 Reloading page for login...');
+          window.location.reload();
+        }
 
         console.log('✅ Logout complete');
       }
