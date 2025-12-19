@@ -137,7 +137,6 @@
       #mobileDashboardProfile,
       .mobile-appearance-section,
       .mobile-profile-swipe-container,
-      .mobile-logout-section,
       .mobile-inbox-btn,
       .mobile-inbox-panel {
         display: none !important;
@@ -5850,11 +5849,14 @@
       background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 8px 16px calc(8px + env(safe-area-inset-bottom)) 16px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      padding-top: 12px;
+      padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
+      padding-left: 16px;
+      padding-right: 16px;
       justify-content: space-around;
+      align-items: flex-start;
       z-index: 99999;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     }
 
     /* Mobile nav hidden during loading/login */
@@ -6677,16 +6679,16 @@
       }
 
       .mobile-profile-avatar {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
         overflow: hidden;
-        background: linear-gradient(135deg, #3a3a3c, #636366);
+        background: #e5e5ea;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        /* Kein box-shadow, kein gradient */
       }
 
       .mobile-profile-avatar img {
@@ -6858,37 +6860,18 @@
       }
 
       /* ========================================
-         MOBILE LOGOUT SECTION
+         MOBILE LOGOUT BUTTON (inline in profile)
          ======================================== */
-      .mobile-logout-section {
-        padding: 24px 1vw;
-      }
-
-      .mobile-logout-btn {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 14px 20px;
+      .mobile-logout-btn-inline {
+        margin-top: 24px;
+        padding: 10px 32px;
         background: transparent;
-        border: 1px solid var(--macos-accent-red, #ff3b30);
-        border-radius: 12px;
-        color: var(--macos-accent-red, #ff3b30);
-        font-size: 16px;
+        border: none;
+        color: #ff3b30;
+        font-size: 15px;
         font-weight: 500;
         cursor: pointer;
         font-family: inherit;
-        transition: all 0.2s ease;
-      }
-
-      .mobile-logout-btn:active {
-        background: var(--macos-accent-red, #ff3b30);
-        color: white;
-      }
-
-      .mobile-logout-btn svg {
-        flex-shrink: 0;
       }
 
       /* ========================================
@@ -7036,6 +7019,19 @@
 
       .mobile-add-task-btn svg {
         flex-shrink: 0;
+      }
+
+      /* Task Modal auf Mobile - von unten einschieben */
+      .todo-task-modal {
+        align-items: flex-end !important;
+      }
+
+      .todo-task-modal-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 16px 16px 0 0 !important;
+        margin: 0 !important;
+        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
       }
 
       /* Mobile Tab Content Wrapper - hidden, profile replaces it */
@@ -9691,6 +9687,11 @@
           <span class="mobile-profile-indicator" data-index="1"></span>
         </div>
       </div>
+
+      <!-- Inline Logout Button -->
+      <button class="mobile-logout-btn-inline" onclick="handleMobileLogout()">
+        Abmelden
+      </button>
     </div>
 
     <!-- Mobile Erscheinungsbild Section -->
@@ -9716,18 +9717,6 @@
           </svg>
         </button>
       </div>
-    </div>
-
-    <!-- Mobile Logout Section -->
-    <div class="mobile-logout-section">
-      <button class="mobile-logout-btn" onclick="handleMobileLogout()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        Abmelden
-      </button>
     </div>
 
     <!-- Welcome Banner (shown when logged in) -->
@@ -16736,16 +16725,72 @@
       };
 
       // Mobile: Open Add Task Modal
-      function openAddTaskModal(projectId) {
-        // TODO: Implementiere Task-Erstellung Modal
-        console.log('Add task to project:', projectId);
-        // For now, use the existing todo add task functionality if available
-        if (typeof openTodoAddTaskModal === 'function') {
-          // Select the project first
-          selectedTodoProject = todoProjects.find(p => p.id === projectId) || null;
-          openTodoAddTaskModal();
-        } else {
-          alert('Task hinzufügen für Projekt: ' + projectId);
+      async function openAddTaskModal(projectId) {
+        console.log('📝 openAddTaskModal called for project:', projectId);
+
+        // Finde das Projekt in den geladenen Daten
+        let project = null;
+
+        // Method 1: Global todoProjects
+        if (typeof todoProjects !== 'undefined' && todoProjects) {
+          project = todoProjects.find(p => p.id === projectId);
+        }
+
+        // Method 2: CentralDataManager
+        if (!project && typeof CentralDataManager !== 'undefined' && CentralDataManager.getProjects) {
+          const projects = CentralDataManager.getProjects() || [];
+          project = projects.find(p => p.id === projectId);
+        }
+
+        // Method 3: Fetch from Supabase
+        if (!project && typeof supabase !== 'undefined') {
+          try {
+            const { data } = await supabase
+              .from('task_projects')
+              .select('*, project_collaborators(user_id, role, profiles(username))')
+              .eq('id', projectId)
+              .single();
+            project = data;
+          } catch (err) {
+            console.error('Supabase fetch error:', err);
+          }
+        }
+
+        if (!project) {
+          console.error('❌ Projekt nicht gefunden:', projectId);
+          alert('Projekt nicht gefunden');
+          return;
+        }
+
+        // WICHTIG: selectedTodoProject setzen (wird von saveTodoTask verwendet)
+        selectedTodoProject = project;
+        console.log('✅ selectedTodoProject gesetzt:', project.title);
+
+        // Modal Inputs zurücksetzen
+        const titleInput = document.getElementById('todoTaskTitle');
+        const assigneeSelect = document.getElementById('todoTaskAssignee');
+        const assigneeGroup = document.getElementById('todoTaskAssigneeGroup');
+
+        if (titleInput) titleInput.value = '';
+        if (assigneeSelect) assigneeSelect.value = '';
+
+        // Collaborators Dropdown befüllen
+        const collabs = project.project_collaborators || [];
+        if (collabs.length > 0 && assigneeGroup && assigneeSelect) {
+          assigneeGroup.style.display = 'block';
+          const options = collabs.map(c =>
+            `<option value="${c.user_id}">${c.profiles?.username || 'Unknown'} (${c.role})</option>`
+          );
+          assigneeSelect.innerHTML = '<option value="">Niemand</option>' + options.join('');
+        } else if (assigneeGroup) {
+          assigneeGroup.style.display = 'none';
+        }
+
+        // Modal öffnen
+        const modal = document.getElementById('todoTaskModal');
+        if (modal) {
+          modal.classList.add('active');
+          if (titleInput) setTimeout(() => titleInput.focus(), 100);
         }
       }
       window.openAddTaskModal = openAddTaskModal;
