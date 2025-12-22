@@ -18,7 +18,11 @@
     .filter-tab { padding: 0 24px; height: 50px; line-height: 50px; background: white; border: 1px solid rgba(0,0,0,0.1); border-radius: 0; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
     .filter-tab:hover { border-color: #333; }
     .filter-tab.active { background: #333; color: white; border-color: #333; }
-    .wannado-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 32px; align-items: stretch; height: auto !important; max-height: none !important; overflow: visible !important; }
+    .wannado-grid { display: flex; flex-direction: column; gap: 32px; margin-bottom: 32px; height: auto !important; max-height: none !important; overflow: visible !important; }
+    .collection-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; width: 100%; }
+    .collection-header { width: 100%; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .collection-title { font-size: 14px; font-weight: 500; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .collection-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; width: 100%; }
     .wannado-card { width: 100%; aspect-ratio: 2/3; border-radius: 0; background: white; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.3s ease; }
     .wannado-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
     .wannado-image { width: 100%; flex: 1; object-fit: contain; background: #f5f5f5; border-radius: 0; min-height: 0; }
@@ -88,7 +92,8 @@
     .summary-row.total { border-top: 1px solid rgba(0,0,0,0.1); margin-top: 8px; padding-top: 16px; font-size: 18px; font-weight: 700; }
     .summary-row.total .value { color: #333; }
     /* Artist Profile Card */
-    .artist-profile-card { aspect-ratio: 4/3; position: relative; width: 100%; overflow: hidden; cursor: pointer; grid-column: auto; grid-row: auto; }
+    .artist-profile-card { aspect-ratio: 2/3; position: relative; width: 100%; overflow: hidden; cursor: pointer; }
+    .artist-profile-card img { width: 100%; height: 100%; object-fit: cover; }
     /* Sold Out Overlay */
     .wannado-card.sold-out { pointer-events: none; }
     .wannado-card.sold-out .wannado-image, .wannado-card.sold-out .wannado-image-placeholder { opacity: 0.5; filter: grayscale(50%); }
@@ -103,12 +108,10 @@
     .visit-profile-btn:hover { background: rgba(255,255,255,0.1); }
     .visit-profile-btn .arrow { font-size: 18px; }
     @media (max-width: 900px) {
-      .wannado-grid { grid-template-columns: 1fr 1fr; }
-      .artist-profile-card { grid-column: span 2; aspect-ratio: 16/9; }
+      .collection-cards { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
     }
     @media (max-width: 500px) {
-      .wannado-grid { grid-template-columns: 1fr; }
-      .artist-profile-card { grid-column: span 1; aspect-ratio: 4/3; }
+      .collection-cards { grid-template-columns: 1fr 1fr; }
       .container { padding: 16px; }
       .header h1 { font-size: 24px; }
       .wannado-info { padding: 12px; }
@@ -258,27 +261,41 @@
       let filtered = filter === 'all' ? allWannados : allWannados.filter(w => w.artist?.id === filter);
 
       if (!filtered.length) {
-        container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🎨</div><h3>Keine Motive verfügbar</h3></div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎨</div><h3>Keine Motive verfügbar</h3></div>`;
         return;
       }
 
-      // Gruppiere nach Artist
-      const byArtist = {};
+      // Group wannados by collection_id
+      const collections = {};
       filtered.forEach(w => {
-        const artistId = w.artist?.id || 'unknown';
-        if (!byArtist[artistId]) {
-          byArtist[artistId] = { artist: w.artist, wannados: [] };
+        const colId = w.collection?.id || 'uncategorized';
+        if (!collections[colId]) {
+          collections[colId] = {
+            name: w.collection?.name || 'Collection',
+            artist: w.artist,
+            items: []
+          };
         }
-        byArtist[artistId].wannados.push(w);
+        collections[colId].items.push(w);
       });
 
       let html = '';
 
-      Object.values(byArtist).forEach(group => {
-        const artist = group.artist;
-        const wannados = group.wannados;
+      // Render each collection as its own row
+      Object.values(collections).forEach(collection => {
+        const artist = collection.artist;
 
-        // Artist Profile Card
+        html += `<div class="collection-row">`;
+
+        // Collection header with artist info
+        html += `<div class="collection-header">
+          <div class="collection-title">${collection.name} · ${artist?.name || 'Artist'}</div>
+        </div>`;
+
+        // Cards container
+        html += `<div class="collection-cards">`;
+
+        // Artist Profile Card (first in each collection)
         html += `
           <div class="artist-profile-card" onclick="window.open('${artist?.instagram ? 'https://instagram.com/' + artist.instagram.replace('@','') : '#'}', '_blank')">
             <img src="${artist?.profile_picture_url || ''}" alt="${artist?.name}" class="artist-profile-bg">
@@ -296,9 +313,8 @@
         `;
 
         // Wannado Cards
-        wannados.forEach(w => {
+        collection.items.forEach(w => {
           const isSold = w.status === 'sold';
-          const collectionName = w.collection?.name || 'Wannado Collection';
 
           html += `
             <div class="wannado-card ${isSold ? 'sold-out' : ''}" ${!isSold ? `onclick="selectWannado('${w.id}')"` : ''}>
@@ -308,7 +324,6 @@
                 : `<div class="wannado-image-placeholder">🎨</div>`
               }
               <div class="wannado-info">
-                <div class="wannado-collection">${collectionName}</div>
                 <div class="wannado-name">${w.name}</div>
                 <div class="wannado-meta">
                   <span class="wannado-price">${Number(w.price).toFixed(0)}€</span>
@@ -318,6 +333,9 @@
             </div>
           `;
         });
+
+        html += `</div>`; // Close collection-cards
+        html += `</div>`; // Close collection-row
       });
 
       container.innerHTML = html;
