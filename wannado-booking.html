@@ -507,6 +507,28 @@
     }
 
     document.getElementById('bookingModal').addEventListener('click', e => { if (e.target.id === 'bookingModal') closeBookingModal(); });
+
+    // ==========================================
+    // IFRAME HEIGHT COMMUNICATION
+    // ==========================================
+    function sendHeight() {
+      const height = document.body.scrollHeight;
+      window.parent.postMessage({ type: 'resize', height: height }, '*');
+    }
+
+    // Send height on load
+    window.addEventListener('load', sendHeight);
+
+    // Send height after wannados are loaded (after any async data fetch)
+    // Add a small delay to ensure content is rendered
+    setTimeout(sendHeight, 500);
+    setTimeout(sendHeight, 1500);
+
+    // Also observe DOM changes
+    const resizeObserver = new ResizeObserver(() => {
+      sendHeight();
+    });
+    resizeObserver.observe(document.body);
   </script>
 </body>
 </html>
