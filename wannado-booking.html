@@ -215,7 +215,7 @@
     const SUPABASE_URL = 'https://auxxyehgzkozdjylhqnx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA';
     const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-wannado-checkout`;
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allWannados = [], allArtists = [], selectedWannado = null, selectedDate = null, selectedTime = null, currentMonth = new Date(), artistAvailability = {};
 
@@ -223,7 +223,7 @@
 
     async function loadWannados() {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('wannados')
           .select('*, artist:artists(id, name, profile_picture_url, instagram), collection:wannado_collections!inner(id, name, is_active)')
           .eq('collection.is_active', true)
@@ -352,7 +352,7 @@
         const todayStr = today.toISOString().split('T')[0];
         const endDateStr = endDate.toISOString().split('T')[0];
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('dienstplan')
           .select('id, start_date, end_date, state, working_start, working_end')
           .eq('artist_id', selectedWannado.artist.id)
@@ -422,7 +422,7 @@
         const dayStart = dateStr + 'T00:00:00';
         const dayEnd = dateStr + 'T23:59:59';
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('appointments')
           .select('start, end')
           .eq('artist_id', selectedWannado.artist.id)
