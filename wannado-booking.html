@@ -111,6 +111,9 @@
     @media (max-width: 1024px) {
       .collection-cards { grid-template-columns: repeat(3, 1fr); }
     }
+    /* Mobile text row styles */
+    .name-price-row { display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%; }
+    .artist-mobile-info { display: none; }
     @media (max-width: 768px) {
       .collection-cards { grid-template-columns: repeat(2, 1fr); }
       .container { padding: 16px; }
@@ -118,10 +121,23 @@
       .wannado-card { aspect-ratio: unset; }
       .wannado-image { aspect-ratio: 2/3; width: 100%; height: auto; object-fit: cover; flex: none; }
       .wannado-image-placeholder { aspect-ratio: 2/3; flex: none; }
-      /* Mobile: Horizontal text row with space-between */
-      .wannado-info { display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 8px 0; }
-      .wannado-name { flex: 1; margin-bottom: 0; }
-      .wannado-meta { flex-shrink: 0; }
+      /* Mobile: 2-row text layout for wannado cards */
+      .wannado-info { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+      .wannado-duration { font-size: 0.75rem; color: #86868b; order: -1; }
+      .wannado-name { font-size: 0.875rem; font-weight: 500; margin-bottom: 0; }
+      .wannado-price { font-size: 0.875rem; font-weight: 400; }
+      .wannado-meta { display: none; }
+      .name-price-row { display: flex; }
+      /* Mobile: Artist card 2-row text layout */
+      .artist-profile-card { aspect-ratio: unset; display: flex; flex-direction: column; }
+      .artist-profile-card .artist-profile-bg { position: relative; aspect-ratio: 2/3; width: 100%; height: auto; }
+      .artist-profile-overlay { display: none; }
+      .artist-profile-content { display: none; }
+      .artist-mobile-info { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+      .artist-mobile-label { font-size: 0.75rem; color: #86868b; }
+      .artist-mobile-row { display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%; }
+      .artist-mobile-name { font-size: 0.875rem; font-weight: 500; color: #1d1d1f; }
+      .artist-mobile-type { font-size: 0.875rem; font-weight: 400; color: #86868b; }
       .modal { border-radius: 12px; max-height: 95vh; margin-top: auto; }
       .selected-wannado { flex-direction: column; align-items: center; text-align: center; }
       .form-row { grid-template-columns: 1fr; }
@@ -317,6 +333,12 @@
                 <span class="visit-profile-btn">Visit profile <span class="arrow">→</span></span>
               </div>
             </div>
+            <div class="artist-mobile-info">
+              <div class="artist-mobile-row">
+                <span class="artist-mobile-name">${artist?.name || 'Artist'}</span>
+                <span class="artist-mobile-type">Resident</span>
+              </div>
+            </div>
           </div>
         `;
 
@@ -332,10 +354,10 @@
                 : `<div class="wannado-image-placeholder">🎨</div>`
               }
               <div class="wannado-info">
-                <div class="wannado-name">${w.name}</div>
-                <div class="wannado-meta">
+                <span class="wannado-duration">ca. ${w.duration_hours}h</span>
+                <div class="name-price-row">
+                  <span class="wannado-name">${w.name}</span>
                   <span class="wannado-price">${Number(w.price).toFixed(0)}€</span>
-                  <span class="wannado-duration">ca. ${w.duration_hours}h</span>
                 </div>
               </div>
             </div>
