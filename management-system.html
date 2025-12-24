@@ -2809,10 +2809,16 @@
 
     /* Laptop Breakpoint - Fixed height for left column containers */
     @media (min-width: 1024px) {
-      .dashboard-left-column .pinned-events-wrapper,
-      .dashboard-left-column .schwarzes-brett-wrapper {
-        height: 30vh;
+      .dashboard-left-column .pinned-events-wrapper {
+        height: auto;
+        max-height: 35vh;
         flex: none;
+        overflow-y: auto;
+      }
+
+      .dashboard-left-column .schwarzes-brett-wrapper {
+        flex: 1;
+        min-height: 300px;
         overflow-y: auto;
       }
 
@@ -2975,16 +2981,15 @@
     }
 
     .brett-item:hover {
-      background: transparent;
+      background: rgba(0,0,0,0.02);
     }
 
     [data-theme="dark"] .brett-item:hover {
-      background: rgba(72, 72, 74, 0.6);
-      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .brett-item:last-child {
-      margin-bottom: 0;
+      border-bottom: none;
     }
 
     .brett-header {
@@ -16707,7 +16712,6 @@
                 <div style="font-size:12px; opacity:0.8;">
                   📅 ${formattedDate} · ${formattedTime}
                 </div>
-                ${event.badge ? `<div style="margin-top:6px;"><span style="font-size:11px; background:rgba(0,0,0,0.1); padding:3px 8px; border-radius:4px;">${event.badge}</span></div>` : ''}
               </div>
             `;
           }).join('');
@@ -16748,31 +16752,37 @@
           // Store messages globally for edit function
           window.schwarzesBrettMessages = messages;
 
+          // Get all profiles for avatar lookup
+          const allProfiles = window.centralDataManager?.data?.profiles || [];
+
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
             const timeAgo = getTimeAgo(createdDate);
 
-            // Load avatar from profiles - check currentUser first, then centralDataManager
+            // Load avatar from profiles table based on author_id
             let avatarUrl = null;
             let authorName = msg.author || 'User';
 
             if (msg.author_id) {
+              // Check if it's current user first (faster)
               if (msg.author_id === currentUser?.id && currentUser?.avatar_url) {
                 avatarUrl = currentUser.avatar_url;
-                authorName = currentUser.name || currentUser.username || msg.author || 'User';
+                authorName = currentUser.username || msg.author;
               } else {
-                const profile = window.centralDataManager?.data?.profiles?.find(p => p.id === msg.author_id);
+                // Look up in allProfiles cache
+                const profile = allProfiles.find(p => p.id === msg.author_id);
                 if (profile) {
                   avatarUrl = profile.avatar_url;
-                  authorName = profile.name || profile.username || msg.author || 'User';
+                  authorName = profile.username || msg.author || 'User';
                 }
               }
             }
 
-            // Fallback to generated avatar
-            if (!avatarUrl) {
-              avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=f0f0f0&color=666&size=80`;
-            }
+            // Fallback to generated avatar with initials
+            const initials = authorName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+            const avatarHtml = avatarUrl
+              ? `<img src="${avatarUrl}" alt="${authorName}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.outerHTML='<div style=\\'width:100%; height:100%; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;\\'>${initials}</div>'">`
+              : `<div style="width:100%; height:100%; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;">${initials}</div>`;
 
             const isOwnMessage = msg.author_id === currentUser?.id;
 
@@ -16780,7 +16790,7 @@
               <div class="brett-item" data-id="${msg.id}">
                 <div style="display:flex; gap:12px;">
                   <div style="flex-shrink:0; width:40px; height:40px;">
-                    <img src="${avatarUrl}" alt="${authorName}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=f0f0f0&color=666'">
+                    ${avatarHtml}
                   </div>
                   <div style="flex:1; min-width:0;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
@@ -16790,15 +16800,15 @@
                       </div>
                       ${isOwnMessage ? `
                         <div class="brett-menu" style="position:relative;">
-                          <button onclick="toggleBrettMenu('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:18px; line-height:1;">
+                          <button onclick="toggleBrettMenu('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:20px; line-height:1;">
                             ⋯
                           </button>
-                          <div class="brett-menu-dropdown" id="brettMenu-${msg.id}" style="display:none; position:absolute; right:0; top:100%; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:140px; z-index:1000; overflow:hidden;">
-                            <button onclick="editBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:8px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#1d1d1f;">
+                          <div class="brett-menu-dropdown" id="brettMenu-${msg.id}" style="display:none; position:absolute; right:0; top:100%; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:150px; z-index:1000; overflow:hidden;">
+                            <button onclick="editBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#1d1d1f; transition:background 0.15s;" onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='none'">
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                               Bearbeiten
                             </button>
-                            <button onclick="deleteBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:8px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#ff3b30;">
+                            <button onclick="deleteBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#ff3b30; transition:background 0.15s;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='none'">
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                               Löschen
                             </button>
@@ -16809,7 +16819,6 @@
                     <div style="font-size:15px; line-height:1.5; color:var(--macos-text-primary, #1d1d1f); margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                       <span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:var(--macos-text-secondary, #666);">${msg.category || 'Info'}</span>
-                      ${msg.location && msg.location !== 'All Locations' ? `<span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:var(--macos-text-secondary, #666);">📍 ${msg.location}</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -16827,10 +16836,13 @@
       }
 
       // ============================================
-      // BRETT MENU FUNCTIONS
+      // BRETT MENU FUNCTIONS (Twitter-style dropdown)
       // ============================================
       function toggleBrettMenu(messageId) {
+        event.stopPropagation();
         const menu = document.getElementById(`brettMenu-${messageId}`);
+        if (!menu) return;
+
         // Close all other menus first
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => {
           if (m.id !== `brettMenu-${messageId}`) m.style.display = 'none';
@@ -16846,7 +16858,8 @@
       });
 
       async function editBrettMessage(messageId) {
-        toggleBrettMenu(messageId); // Close menu first
+        event.stopPropagation();
+        document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
         const message = window.schwarzesBrettMessages?.find(m => m.id === messageId);
         if (!message) {
@@ -16855,11 +16868,11 @@
         }
 
         const newContent = prompt('Nachricht bearbeiten:', message.content);
-        if (newContent && newContent !== message.content) {
+        if (newContent && newContent.trim() && newContent !== message.content) {
           try {
             const { error } = await supabase
               .from('schwarzes_brett')
-              .update({ content: newContent, updated_at: new Date().toISOString() })
+              .update({ content: newContent.trim(), updated_at: new Date().toISOString() })
               .eq('id', messageId);
 
             if (error) throw error;
@@ -16874,7 +16887,8 @@
       }
 
       async function deleteBrettMessage(messageId) {
-        toggleBrettMenu(messageId); // Close menu first
+        event.stopPropagation();
+        document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
         if (!confirm('Nachricht wirklich löschen?')) return;
 
