@@ -17090,6 +17090,20 @@
       // IMMEDIATELY expose to window - MUST be right after function definition
       window.loadTodoProjects = loadTodoProjects;
 
+      // Listen for authentication event to load projects
+      window.addEventListener('user-authenticated', async (event) => {
+        console.log('📋 user-authenticated event received:', event.detail);
+        if (typeof loadTodoProjects === 'function') {
+          await loadTodoProjects();
+        }
+      });
+
+      // Also check if user is already authenticated when this script runs
+      if (typeof currentUser !== 'undefined' && currentUser?.id) {
+        console.log('📋 User already authenticated, loading projects immediately...');
+        loadTodoProjects();
+      }
+
       // Render Projects List
       function renderTodoProjects() {
         const container = document.getElementById('todoProjectsList');
@@ -30191,23 +30205,13 @@
       });
 
       // ═══════════════════════════════════════════════════════════════
-      // RELOAD TO-DO PROJECTS AFTER LOGIN (using window.loadTodoProjects for cross-scope access)
+      // RELOAD TO-DO PROJECTS AFTER LOGIN
+      // Use custom event to handle async script loading order
       // ═══════════════════════════════════════════════════════════════
-      console.log('✅ Login successful, reloading To-Do projects...');
-      console.log('📋 DEBUG: typeof window.loadTodoProjects =', typeof window.loadTodoProjects);
-      console.log('📋 DEBUG: currentUser =', currentUser ? currentUser.username + ' (' + currentUser.id + ')' : 'NULL');
-
-      // Delay to ensure DOMContentLoaded has completed and all functions are defined
-      setTimeout(() => {
-        if (typeof window.loadTodoProjects === 'function') {
-          console.log('📋 DEBUG: Calling window.loadTodoProjects() NOW (after delay)...');
-          window.loadTodoProjects()
-            .then(() => console.log('✅ To-Do projects reloaded after login'))
-            .catch(err => console.warn('⚠️ Failed to load To-Do projects after login:', err));
-        } else {
-          console.warn('⚠️ loadTodoProjects still not available after delay');
-        }
-      }, 100);
+      console.log('📋 Triggering todo-reload event...');
+      window.dispatchEvent(new CustomEvent('user-authenticated', {
+        detail: { userId: currentUser.id, username: currentUser.username }
+      }));
 
       // ═══════════════════════════════════════════════════════════════
       // MOBILE: Show mobile nav and initialize mobile views after login
