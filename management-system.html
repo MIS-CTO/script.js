@@ -112,8 +112,8 @@
       --input-bg: #ffffff;
       --input-border: rgba(0, 0, 0, 0.1);
       --input-focus-border: rgba(0, 113, 227, 0.5);
-      --button-primary-bg: #0071e3;
-      --button-primary-hover: #0077ed;
+      --button-primary-bg: #1d1d1f;
+      --button-primary-hover: #333333;
       --button-primary-text: #ffffff;
       --button-secondary-bg: #ffffff;
       --button-secondary-hover: #f5f5f7;
@@ -364,7 +364,7 @@
        Buttons - macOS Style
        ======================================== */
     .btn, .btn-primary {
-      background: var(--macos-accent-blue);
+      background: #1d1d1f;
       color: #ffffff;
       border: none;
       padding: 8px 20px;
@@ -379,9 +379,9 @@
     }
 
     .btn-primary:hover, .btn:hover {
-      background: #0077ed;
+      background: #333333;
       transform: translateY(-0.5px);
-      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     .btn-primary:active, .btn:active {
@@ -424,10 +424,13 @@
       background: #f5f5f7;
     }
 
-    .btn-danger {
-      background: var(--macos-accent-red);
-      color: #ffffff;
-      border: none;
+    .btn-danger,
+    .delete-btn,
+    button.delete,
+    [class*="delete-btn"] {
+      background: #ff3b30 !important;
+      color: #ffffff !important;
+      border: none !important;
       padding: 8px 20px;
       border-radius: var(--radius-md);
       font-weight: 500;
@@ -437,8 +440,10 @@
       font-family: inherit;
     }
 
-    .btn-danger:hover {
-      background: #ff453a;
+    .btn-danger:hover,
+    .delete-btn:hover,
+    button.delete:hover {
+      background: #e6352b !important;
     }
 
     /* ========================================
@@ -6703,6 +6708,29 @@
       /* Raum für Mobile Footer */
       body.logged-in {
         padding-bottom: 80px;
+      }
+
+      /* Schwarzes Brett Mobile Styles */
+      .brett-item {
+        padding: 12px 0 !important;
+      }
+
+      .brett-item img {
+        width: 36px !important;
+        height: 36px !important;
+      }
+
+      .message-menu-btn {
+        padding: 4px !important;
+      }
+
+      .message-menu-dropdown {
+        min-width: 100px !important;
+      }
+
+      .message-menu-dropdown button {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
       }
 
       /* Dropdowns Anpassung für Mobile */
@@ -16717,6 +16745,9 @@
             return;
           }
 
+          // Store messages globally for edit function
+          window.schwarzesBrettMessages = messages;
+
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
             const timeAgo = getTimeAgo(createdDate);
@@ -16724,6 +16755,19 @@
             const avatarUrl = (msg.author_id === currentUser?.id && currentUser?.avatar_url)
               ? currentUser.avatar_url
               : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.author || 'User') + '&background=random&size=40';
+
+            const isOwnMessage = msg.author_id === currentUser?.id;
+            const menuHtml = isOwnMessage ? `
+              <div class="message-menu" style="position:relative;margin-left:auto;">
+                <button class="message-menu-btn" onclick="toggleMessageMenu('${msg.id}')" style="background:none;border:none;cursor:pointer;padding:8px;font-size:18px;color:#86868b;line-height:1;">
+                  ⋯
+                </button>
+                <div class="message-menu-dropdown" id="messageMenu-${msg.id}" style="display:none;position:absolute;right:0;top:100%;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:120px;z-index:100;overflow:hidden;">
+                  <button onclick="editMessage('${msg.id}')" style="display:block;width:100%;padding:10px 16px;text-align:left;border:none;background:none;cursor:pointer;font-size:14px;">Bearbeiten</button>
+                  <button onclick="deleteMessage('${msg.id}')" style="display:block;width:100%;padding:10px 16px;text-align:left;border:none;background:none;cursor:pointer;color:#ff3b30;font-size:14px;">Löschen</button>
+                </div>
+              </div>
+            ` : '';
 
             return `
               <div class="brett-item" style="display:flex; gap:12px; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.06);" data-id="${msg.id}">
@@ -16736,13 +16780,7 @@
                       <span style="font-weight:700; font-size:14px; color:var(--macos-text-primary, #1d1d1f);">${msg.author}</span>
                       <span style="font-size:13px; color:var(--macos-text-tertiary, #86868b);">· ${timeAgo}</span>
                     </div>
-                    ${msg.author_id === currentUser?.id ? `
-                      <button onclick="deleteMessage('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:4px; opacity:0.5;" title="Löschen">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-                        </svg>
-                      </button>
-                    ` : ''}
+                    ${menuHtml}
                   </div>
                   <div style="font-size:14px; line-height:1.4; color:var(--macos-text-primary, #1d1d1f); margin-bottom:6px;">${msg.content}</div>
                   <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -16764,8 +16802,48 @@
       }
 
       // ============================================
-      // DELETE MESSAGE FROM SCHWARZES BRETT
+      // SCHWARZES BRETT - MESSAGE MENU FUNCTIONS
       // ============================================
+      function toggleMessageMenu(messageId) {
+        const menu = document.getElementById(`messageMenu-${messageId}`);
+        // Close all other menus
+        document.querySelectorAll('.message-menu-dropdown').forEach(m => {
+          if (m.id !== `messageMenu-${messageId}`) m.style.display = 'none';
+        });
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      }
+
+      // Click outside closes menu
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.message-menu')) {
+          document.querySelectorAll('.message-menu-dropdown').forEach(m => m.style.display = 'none');
+        }
+      });
+
+      async function editMessage(messageId) {
+        const message = window.schwarzesBrettMessages?.find(m => m.id === messageId);
+        if (!message) return;
+
+        const newContent = prompt('Nachricht bearbeiten:', message.content);
+        if (newContent && newContent !== message.content) {
+          try {
+            const { error } = await supabase
+              .from('schwarzes_brett')
+              .update({ content: newContent, updated_at: new Date().toISOString() })
+              .eq('id', messageId);
+
+            if (error) throw error;
+
+            console.log('✅ Message updated');
+            await loadSchwarzesBrett();
+          } catch (err) {
+            console.error('❌ Error updating message:', err);
+            alert('Fehler beim Speichern: ' + err.message);
+          }
+        }
+        toggleMessageMenu(messageId);
+      }
+
       async function deleteMessage(messageId) {
         if (!confirm('Nachricht wirklich löschen?')) return;
 
@@ -16785,7 +16863,9 @@
         }
       }
 
-      // Expose to window for onclick handler
+      // Expose to window for onclick handlers
+      window.toggleMessageMenu = toggleMessageMenu;
+      window.editMessage = editMessage;
       window.deleteMessage = deleteMessage;
 
       // ============================================
