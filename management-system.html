@@ -2809,21 +2809,37 @@
 
     /* Laptop Breakpoint - Fixed height for left column containers */
     @media (min-width: 1024px) {
+      /* Left Column - Pinned Events + Schwarzes Brett */
+      .dashboard-left-column {
+        height: calc(70vh + 50px);
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
       .dashboard-left-column .pinned-events-wrapper {
         height: auto;
-        max-height: 35vh;
-        flex: none;
+        max-height: 200px;
+        flex-shrink: 0;
         overflow-y: auto;
       }
 
       .dashboard-left-column .schwarzes-brett-wrapper {
         flex: 1;
-        min-height: 300px;
-        overflow-y: auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
 
-      .dashboard-left-column .pinned-events-wrapper .dashboard-card,
       .dashboard-left-column .schwarzes-brett-wrapper .dashboard-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .dashboard-left-column .pinned-events-wrapper .dashboard-card {
         height: 100%;
         max-height: none;
       }
@@ -2832,7 +2848,9 @@
       .dashboard-right-columns .todo-projects-wrapper,
       .dashboard-right-columns .todo-tasks-wrapper {
         height: 70vh;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
 
       .dashboard-right-columns .todo-projects-left,
@@ -2840,6 +2858,28 @@
         height: 100%;
         max-height: none;
       }
+    }
+
+    /* Hide scrollbars but keep scroll functionality */
+    .pinned-events-card,
+    .schwarzes-brett-card,
+    .todo-projects-left,
+    .todo-tasks-right,
+    #brettMessages,
+    #todoProjectsList,
+    #todoTasksList {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .pinned-events-card::-webkit-scrollbar,
+    .schwarzes-brett-card::-webkit-scrollbar,
+    .todo-projects-left::-webkit-scrollbar,
+    .todo-tasks-right::-webkit-scrollbar,
+    #brettMessages::-webkit-scrollbar,
+    #todoProjectsList::-webkit-scrollbar,
+    #todoTasksList::-webkit-scrollbar {
+      display: none;
     }
 
     .container-section {
@@ -9976,8 +10016,8 @@
         <!-- Schwarzes Brett Section -->
         <div class="container-section schwarzes-brett-wrapper">
           <h3 class="container-section-title">Schwarzes Brett</h3>
-          <div class="dashboard-card schwarzes-brett-card" id="schwarzesBrettContainer">
-            <!-- New Message Popup -->
+          <div class="dashboard-card schwarzes-brett-card" id="schwarzesBrettContainer" style="display:flex; flex-direction:column; overflow:hidden;">
+            <!-- New Message Popup (hidden by default) -->
             <div class="new-message-popup" id="newMessagePopup">
               <div class="popup-header">
                 <h4 class="popup-title">Neue Nachricht</h4>
@@ -10001,18 +10041,22 @@
                   <option value="Paris">Paris</option>
                 </select>
               </div>
-              <button id="submitMessageBtn" style="width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;">
+              <button id="submitMessageBtn" style="width: 100%; padding: 12px; background: #1d1d1f; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;">
                 Veröffentlichen
               </button>
             </div>
 
-            <!-- Messages Container -->
-            <div id="brettMessages">
+            <!-- Messages scroll area -->
+            <div id="brettMessages" style="flex:1; overflow-y:auto; padding:16px;">
               <div class="brett-empty">Lade Nachrichten...</div>
             </div>
 
-            <!-- Add Button -->
-            <button class="add-btn" id="addMessageBtn">+ Neue Nachricht</button>
+            <!-- Fixed input at bottom -->
+            <div class="brett-input-container" style="flex-shrink:0; padding:12px 16px; border-top:1px solid rgba(0,0,0,0.06); background:#fff;">
+              <button id="addMessageBtn" style="width:100%; padding:12px 16px; background:#1d1d1f; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
+                + Neue Nachricht
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -16755,6 +16799,8 @@
           // Get all profiles for avatar lookup
           const allProfiles = window.centralDataManager?.data?.profiles || [];
 
+          console.log('🔍 Current user ID for menu check:', currentUser?.id);
+
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
             const timeAgo = getTimeAgo(createdDate);
@@ -16764,12 +16810,10 @@
             let authorName = msg.author || 'User';
 
             if (msg.author_id) {
-              // Check if it's current user first (faster)
               if (msg.author_id === currentUser?.id && currentUser?.avatar_url) {
                 avatarUrl = currentUser.avatar_url;
                 authorName = currentUser.username || msg.author;
               } else {
-                // Look up in allProfiles cache
                 const profile = allProfiles.find(p => p.id === msg.author_id);
                 if (profile) {
                   avatarUrl = profile.avatar_url;
@@ -16778,48 +16822,48 @@
               }
             }
 
-            // Fallback to generated avatar with initials
-            const initials = authorName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+            // Fallback to initials
+            const initials = authorName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
             const avatarHtml = avatarUrl
-              ? `<img src="${avatarUrl}" alt="${authorName}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.outerHTML='<div style=\\'width:100%; height:100%; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;\\'>${initials}</div>'">`
-              : `<div style="width:100%; height:100%; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;">${initials}</div>`;
+              ? `<img src="${avatarUrl}" alt="${authorName}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">`
+              : `<div style="width:40px; height:40px; border-radius:50%; background:#e5e5e5; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;">${initials}</div>`;
 
+            // WICHTIG: Check ob eigene Nachricht
             const isOwnMessage = msg.author_id === currentUser?.id;
+            console.log(`📝 Message "${msg.content?.substring(0,20)}..." by ${msg.author_id} - isOwn: ${isOwnMessage} (currentUser: ${currentUser?.id})`);
 
             return `
-              <div class="brett-item" data-id="${msg.id}">
-                <div style="display:flex; gap:12px;">
-                  <div style="flex-shrink:0; width:40px; height:40px;">
-                    ${avatarHtml}
-                  </div>
-                  <div style="flex:1; min-width:0;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
-                      <div style="display:flex; align-items:center; gap:6px;">
-                        <span style="font-weight:600; font-size:14px; color:var(--macos-text-primary, #1d1d1f);">${authorName}</span>
-                        <span style="font-size:13px; color:var(--macos-text-tertiary, #86868b);">· ${timeAgo}</span>
-                      </div>
-                      ${isOwnMessage ? `
-                        <div class="brett-menu" style="position:relative;">
-                          <button onclick="toggleBrettMenu('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:20px; line-height:1;">
-                            ⋯
+              <div class="brett-item" data-id="${msg.id}" style="display:flex; gap:12px; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.06);">
+                <div style="flex-shrink:0;">
+                  ${avatarHtml}
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span style="font-weight:600; font-size:14px; color:#1d1d1f;">${authorName}</span>
+                      <span style="font-size:13px; color:#86868b;">· ${timeAgo}</span>
+                    </div>
+                    ${isOwnMessage ? `
+                      <div class="brett-menu" style="position:relative;">
+                        <button onclick="event.stopPropagation(); toggleBrettMenu('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:20px; line-height:1; border-radius:50%;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
+                          ⋯
+                        </button>
+                        <div class="brett-menu-dropdown" id="brettMenu-${msg.id}" style="display:none; position:absolute; right:0; top:100%; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:150px; z-index:1000; overflow:hidden;">
+                          <button onclick="event.stopPropagation(); editBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#1d1d1f;" onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='none'">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            Bearbeiten
                           </button>
-                          <div class="brett-menu-dropdown" id="brettMenu-${msg.id}" style="display:none; position:absolute; right:0; top:100%; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:150px; z-index:1000; overflow:hidden;">
-                            <button onclick="editBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#1d1d1f; transition:background 0.15s;" onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='none'">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                              Bearbeiten
-                            </button>
-                            <button onclick="deleteBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#ff3b30; transition:background 0.15s;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='none'">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                              Löschen
-                            </button>
-                          </div>
+                          <button onclick="event.stopPropagation(); deleteBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#ff3b30;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='none'">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            Löschen
+                          </button>
                         </div>
-                      ` : ''}
-                    </div>
-                    <div style="font-size:15px; line-height:1.5; color:var(--macos-text-primary, #1d1d1f); margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                      <span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:var(--macos-text-secondary, #666);">${msg.category || 'Info'}</span>
-                    </div>
+                      </div>
+                    ` : ''}
+                  </div>
+                  <div style="font-size:15px; line-height:1.5; color:#1d1d1f; margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
+                  <div style="display:flex; gap:8px;">
+                    <span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:#666;">${msg.category || 'Info'}</span>
                   </div>
                 </div>
               </div>
@@ -16836,18 +16880,22 @@
       }
 
       // ============================================
-      // BRETT MENU FUNCTIONS (Twitter-style dropdown)
+      // BRETT MENU FUNCTIONS
       // ============================================
       function toggleBrettMenu(messageId) {
-        event.stopPropagation();
         const menu = document.getElementById(`brettMenu-${messageId}`);
-        if (!menu) return;
+        if (!menu) {
+          console.error('Menu not found for:', messageId);
+          return;
+        }
 
         // Close all other menus first
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => {
           if (m.id !== `brettMenu-${messageId}`) m.style.display = 'none';
         });
+
         menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        console.log('Toggle menu:', messageId, menu.style.display);
       }
 
       // Close menu on outside click
@@ -16858,7 +16906,6 @@
       });
 
       async function editBrettMessage(messageId) {
-        event.stopPropagation();
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
         const message = window.schwarzesBrettMessages?.find(m => m.id === messageId);
@@ -16887,7 +16934,6 @@
       }
 
       async function deleteBrettMessage(messageId) {
-        event.stopPropagation();
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
         if (!confirm('Nachricht wirklich löschen?')) return;
