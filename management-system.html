@@ -16720,22 +16720,34 @@
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
             const timeAgo = getTimeAgo(createdDate);
-            const avatarUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.author || 'User') + '&background=random&size=48';
+            // Use currentUser's avatar if this is their message, otherwise generate
+            const avatarUrl = (msg.author_id === currentUser?.id && currentUser?.avatar_url)
+              ? currentUser.avatar_url
+              : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.author || 'User') + '&background=random&size=40';
 
             return `
-              <div class="brett-item twitter-style" data-id="${msg.id}">
-                <div class="brett-avatar">
-                  <img src="${avatarUrl}" alt="${msg.author}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(msg.author || 'User')}&background=random'">
+              <div class="brett-item" style="display:flex; gap:12px; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.06);" data-id="${msg.id}">
+                <div style="flex-shrink:0; width:40px; height:40px;">
+                  <img src="${avatarUrl}" alt="${msg.author}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(msg.author || 'User')}&background=random'">
                 </div>
-                <div class="brett-content-wrap">
-                  <div class="brett-header">
-                    <span class="brett-author">${msg.author}</span>
-                    <span class="brett-time">· ${timeAgo}</span>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span style="font-weight:700; font-size:14px; color:var(--macos-text-primary, #1d1d1f);">${msg.author}</span>
+                      <span style="font-size:13px; color:var(--macos-text-tertiary, #86868b);">· ${timeAgo}</span>
+                    </div>
+                    ${msg.author_id === currentUser?.id ? `
+                      <button onclick="deleteMessage('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:4px; opacity:0.5;" title="Löschen">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+                        </svg>
+                      </button>
+                    ` : ''}
                   </div>
-                  <div class="brett-text">${msg.content}</div>
-                  <div class="brett-footer">
-                    <span class="brett-tag">${msg.category || 'Allgemein'}</span>
-                    ${msg.location ? `<span class="brett-tag">📍 ${msg.location}</span>` : ''}
+                  <div style="font-size:14px; line-height:1.4; color:var(--macos-text-primary, #1d1d1f); margin-bottom:6px;">${msg.content}</div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:11px; padding:3px 8px; background:rgba(0,0,0,0.04); border-radius:12px; color:var(--macos-text-secondary, #666);">${msg.category || 'Allgemein'}</span>
+                    ${msg.location ? `<span style="font-size:11px; padding:3px 8px; background:rgba(0,0,0,0.04); border-radius:12px; color:var(--macos-text-secondary, #666);">📍 ${msg.location}</span>` : ''}
                   </div>
                 </div>
               </div>
@@ -16750,6 +16762,31 @@
           container.innerHTML = '<div class="brett-empty">Fehler beim Laden der Nachrichten</div>';
         }
       }
+
+      // ============================================
+      // DELETE MESSAGE FROM SCHWARZES BRETT
+      // ============================================
+      async function deleteMessage(messageId) {
+        if (!confirm('Nachricht wirklich löschen?')) return;
+
+        try {
+          const { error } = await supabase
+            .from('schwarzes_brett')
+            .delete()
+            .eq('id', messageId);
+
+          if (error) throw error;
+
+          console.log('✅ Message deleted');
+          await loadSchwarzesBrett();
+        } catch (err) {
+          console.error('❌ Error deleting message:', err);
+          alert('Fehler beim Löschen: ' + err.message);
+        }
+      }
+
+      // Expose to window for onclick handler
+      window.deleteMessage = deleteMessage;
 
       // ============================================
       // HELPER: TIME AGO
@@ -16784,14 +16821,8 @@
             return;
           }
 
-          // Get user profile for author name
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', user.id)
-            .single();
-
-          const authorName = profile?.name || 'Anonymous';
+          // Use currentUser from global state instead of querying profiles
+          const authorName = currentUser?.name || currentUser?.username || 'Anonymous';
 
           const { error } = await supabase
             .from('schwarzes_brett')
