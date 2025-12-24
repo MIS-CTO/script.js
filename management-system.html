@@ -1992,10 +1992,10 @@
     }
 
     .toggle-btn.active {
-      background: #0071e3;
+      background: #1d1d1f;
       color: white;
-      border-color: #0071e3;
-      box-shadow: 0 2px 4px rgba(0, 113, 227, 0.2);
+      border-color: #1d1d1f;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     }
 
     /* Customer Project Timeline Styles */
@@ -2960,22 +2960,22 @@
     }
 
     .brett-item {
-      padding: 16px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      margin-bottom: 12px;
+      padding: 12px 0;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      border-radius: 0;
+      margin-bottom: 0;
       transition: all 0.2s ease;
     }
 
     [data-theme="dark"] .brett-item {
-      background: rgba(58, 58, 60, 0.5);
-      border-color: rgba(255, 255, 255, 0.1);
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.08);
     }
 
     .brett-item:hover {
-      background: var(--hover-bg-light);
-      border-color: var(--border-color-strong);
+      background: transparent;
     }
 
     [data-theme="dark"] .brett-item:hover {
@@ -4224,7 +4224,7 @@
     .todo-btn-save {
       flex: 1;
       padding: 12px;
-      background: #007AFF;
+      background: #1d1d1f;
       border: none;
       border-radius: 8px;
       font-size: 14px;
@@ -4235,23 +4235,23 @@
     }
 
     .todo-btn-save:hover {
-      background: #0066dd;
+      background: #333333;
     }
 
     .todo-btn-delete {
       padding: 12px;
-      background: transparent;
-      border: 1px solid #ef4444;
+      background: #ff3b30;
+      border: none;
       border-radius: 8px;
       font-size: 14px;
       font-weight: 500;
-      color: #ef4444;
+      color: #ffffff;
       cursor: pointer;
       font-family: inherit;
     }
 
     .todo-btn-delete:hover {
-      background: #fef2f2;
+      background: #e6352b;
     }
 
     /* Add Task Modal */
@@ -16751,41 +16751,66 @@
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
             const timeAgo = getTimeAgo(createdDate);
-            // Use currentUser's avatar if this is their message, otherwise generate
-            const avatarUrl = (msg.author_id === currentUser?.id && currentUser?.avatar_url)
-              ? currentUser.avatar_url
-              : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.author || 'User') + '&background=random&size=40';
+
+            // Load avatar from profiles - check currentUser first, then centralDataManager
+            let avatarUrl = null;
+            let authorName = msg.author || 'User';
+
+            if (msg.author_id) {
+              if (msg.author_id === currentUser?.id && currentUser?.avatar_url) {
+                avatarUrl = currentUser.avatar_url;
+                authorName = currentUser.name || currentUser.username || msg.author || 'User';
+              } else {
+                const profile = window.centralDataManager?.data?.profiles?.find(p => p.id === msg.author_id);
+                if (profile) {
+                  avatarUrl = profile.avatar_url;
+                  authorName = profile.name || profile.username || msg.author || 'User';
+                }
+              }
+            }
+
+            // Fallback to generated avatar
+            if (!avatarUrl) {
+              avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=f0f0f0&color=666&size=80`;
+            }
 
             const isOwnMessage = msg.author_id === currentUser?.id;
-            const menuHtml = isOwnMessage ? `
-              <div class="message-menu" style="position:relative;margin-left:auto;">
-                <button class="message-menu-btn" onclick="toggleMessageMenu('${msg.id}')" style="background:none;border:none;cursor:pointer;padding:8px;font-size:18px;color:#86868b;line-height:1;">
-                  ⋯
-                </button>
-                <div class="message-menu-dropdown" id="messageMenu-${msg.id}" style="display:none;position:absolute;right:0;top:100%;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:120px;z-index:100;overflow:hidden;">
-                  <button onclick="editMessage('${msg.id}')" style="display:block;width:100%;padding:10px 16px;text-align:left;border:none;background:none;cursor:pointer;font-size:14px;">Bearbeiten</button>
-                  <button onclick="deleteMessage('${msg.id}')" style="display:block;width:100%;padding:10px 16px;text-align:left;border:none;background:none;cursor:pointer;color:#ff3b30;font-size:14px;">Löschen</button>
-                </div>
-              </div>
-            ` : '';
 
             return `
-              <div class="brett-item" style="display:flex; gap:12px; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.06);" data-id="${msg.id}">
-                <div style="flex-shrink:0; width:40px; height:40px;">
-                  <img src="${avatarUrl}" alt="${msg.author}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(msg.author || 'User')}&background=random'">
-                </div>
-                <div style="flex:1; min-width:0;">
-                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                      <span style="font-weight:700; font-size:14px; color:var(--macos-text-primary, #1d1d1f);">${msg.author}</span>
-                      <span style="font-size:13px; color:var(--macos-text-tertiary, #86868b);">· ${timeAgo}</span>
-                    </div>
-                    ${menuHtml}
+              <div class="brett-item" data-id="${msg.id}">
+                <div style="display:flex; gap:12px;">
+                  <div style="flex-shrink:0; width:40px; height:40px;">
+                    <img src="${avatarUrl}" alt="${authorName}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=f0f0f0&color=666'">
                   </div>
-                  <div style="font-size:14px; line-height:1.4; color:var(--macos-text-primary, #1d1d1f); margin-bottom:6px;">${msg.content}</div>
-                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:11px; padding:3px 8px; background:rgba(0,0,0,0.04); border-radius:12px; color:var(--macos-text-secondary, #666);">${msg.category || 'Allgemein'}</span>
-                    ${msg.location ? `<span style="font-size:11px; padding:3px 8px; background:rgba(0,0,0,0.04); border-radius:12px; color:var(--macos-text-secondary, #666);">📍 ${msg.location}</span>` : ''}
+                  <div style="flex:1; min-width:0;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
+                      <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-weight:600; font-size:14px; color:var(--macos-text-primary, #1d1d1f);">${authorName}</span>
+                        <span style="font-size:13px; color:var(--macos-text-tertiary, #86868b);">· ${timeAgo}</span>
+                      </div>
+                      ${isOwnMessage ? `
+                        <div class="brett-menu" style="position:relative;">
+                          <button onclick="toggleBrettMenu('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:18px; line-height:1;">
+                            ⋯
+                          </button>
+                          <div class="brett-menu-dropdown" id="brettMenu-${msg.id}" style="display:none; position:absolute; right:0; top:100%; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:140px; z-index:1000; overflow:hidden;">
+                            <button onclick="editBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:8px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#1d1d1f;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              Bearbeiten
+                            </button>
+                            <button onclick="deleteBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:8px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#ff3b30;">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              Löschen
+                            </button>
+                          </div>
+                        </div>
+                      ` : ''}
+                    </div>
+                    <div style="font-size:15px; line-height:1.5; color:var(--macos-text-primary, #1d1d1f); margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                      <span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:var(--macos-text-secondary, #666);">${msg.category || 'Info'}</span>
+                      ${msg.location && msg.location !== 'All Locations' ? `<span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:var(--macos-text-secondary, #666);">📍 ${msg.location}</span>` : ''}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -16802,27 +16827,32 @@
       }
 
       // ============================================
-      // SCHWARZES BRETT - MESSAGE MENU FUNCTIONS
+      // BRETT MENU FUNCTIONS
       // ============================================
-      function toggleMessageMenu(messageId) {
-        const menu = document.getElementById(`messageMenu-${messageId}`);
-        // Close all other menus
-        document.querySelectorAll('.message-menu-dropdown').forEach(m => {
-          if (m.id !== `messageMenu-${messageId}`) m.style.display = 'none';
+      function toggleBrettMenu(messageId) {
+        const menu = document.getElementById(`brettMenu-${messageId}`);
+        // Close all other menus first
+        document.querySelectorAll('.brett-menu-dropdown').forEach(m => {
+          if (m.id !== `brettMenu-${messageId}`) m.style.display = 'none';
         });
         menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
       }
 
-      // Click outside closes menu
+      // Close menu on outside click
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('.message-menu')) {
-          document.querySelectorAll('.message-menu-dropdown').forEach(m => m.style.display = 'none');
+        if (!e.target.closest('.brett-menu')) {
+          document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
         }
       });
 
-      async function editMessage(messageId) {
+      async function editBrettMessage(messageId) {
+        toggleBrettMenu(messageId); // Close menu first
+
         const message = window.schwarzesBrettMessages?.find(m => m.id === messageId);
-        if (!message) return;
+        if (!message) {
+          alert('Nachricht nicht gefunden');
+          return;
+        }
 
         const newContent = prompt('Nachricht bearbeiten:', message.content);
         if (newContent && newContent !== message.content) {
@@ -16841,10 +16871,11 @@
             alert('Fehler beim Speichern: ' + err.message);
           }
         }
-        toggleMessageMenu(messageId);
       }
 
-      async function deleteMessage(messageId) {
+      async function deleteBrettMessage(messageId) {
+        toggleBrettMenu(messageId); // Close menu first
+
         if (!confirm('Nachricht wirklich löschen?')) return;
 
         try {
@@ -16863,10 +16894,10 @@
         }
       }
 
-      // Expose to window for onclick handlers
-      window.toggleMessageMenu = toggleMessageMenu;
-      window.editMessage = editMessage;
-      window.deleteMessage = deleteMessage;
+      // Expose to window
+      window.toggleBrettMenu = toggleBrettMenu;
+      window.editBrettMessage = editBrettMessage;
+      window.deleteBrettMessage = deleteBrettMessage;
 
       // ============================================
       // HELPER: TIME AGO
