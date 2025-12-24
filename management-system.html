@@ -16705,10 +16705,7 @@
         try {
           const { data: messages, error } = await supabase
             .from('schwarzes_brett')
-            .select(`
-              *,
-              profile:profiles(id, name, avatar_url)
-            `)
+            .select('*')
             .eq('is_active', true)
             .order('created_at', { ascending: false })
             .limit(10);
@@ -16723,7 +16720,7 @@
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
             const timeAgo = getTimeAgo(createdDate);
-            const avatarUrl = msg.profile?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.author || 'User') + '&background=random';
+            const avatarUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.author || 'User') + '&background=random&size=48';
 
             return `
               <div class="brett-item twitter-style" data-id="${msg.id}">
@@ -17059,8 +17056,7 @@
           container.innerHTML = '<div class="todo-empty-state">Fehler beim Laden</div>';
         }
       }
-
-      // Make loadTodoProjects globally accessible for other script blocks
+      // IMMEDIATELY expose to window - MUST be right after function definition
       window.loadTodoProjects = loadTodoProjects;
 
       // Render Projects List
