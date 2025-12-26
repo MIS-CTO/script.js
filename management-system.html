@@ -26725,20 +26725,28 @@
             const startMin = Math.round((startHour % 1) * 60);
             const eventDateTime = `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`;
 
-            const { error: pinError } = await supabase.from('pinned_events').insert({
-              title: title,
-              date: eventDateTime,
-              badge: type,
-              event_id: data[0].id,
-              attendance_required: attendanceRequired,
-              is_active: true,
-              author_id: (await supabase.auth.getUser()).data.user?.id || null
-            });
+            // Get current auth user ID for author_id (required field)
+            const { data: { user: authUser } } = await supabase.auth.getUser();
 
-            if (pinError) {
-              console.warn('Could not pin event:', pinError);
+            if (!authUser?.id) {
+              console.error('❌ Cannot pin event: No authenticated user');
             } else {
-              loadPinnedEvents(); // Refresh pinned events
+              const { error: pinError } = await supabase.from('pinned_events').insert({
+                title: title,
+                date: eventDateTime,
+                badge: type,
+                event_id: data[0].id,
+                attendance_required: attendanceRequired,
+                is_active: true,
+                author_id: authUser.id
+              });
+
+              if (pinError) {
+                console.error('❌ Could not pin event:', pinError);
+              } else {
+                console.log('✅ Event pinned to dashboard');
+                await loadPinnedEvents(); // Refresh pinned events
+              }
             }
           }
 
