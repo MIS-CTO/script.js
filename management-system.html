@@ -17040,6 +17040,56 @@
       window.deleteBrettMessage = deleteBrettMessage;
 
       // ============================================
+      // ADMIN: DELETE SAMPLE DATA
+      // ============================================
+      async function deleteSampleData() {
+        if (!confirm('Alle Sample-Daten (Posts ohne Author und Sample-Events) wirklich löschen?')) {
+          return;
+        }
+
+        console.log('🗑️ Deleting sample data...');
+
+        try {
+          // Delete sample posts from schwarzes_brett (author_id is NULL)
+          const { error: brettError, count: brettCount } = await supabase
+            .from('schwarzes_brett')
+            .delete()
+            .is('author_id', null);
+
+          if (brettError) {
+            console.error('Error deleting brett samples:', brettError);
+          } else {
+            console.log('✅ Deleted sample brett posts');
+          }
+
+          // Delete sample events from pinned_events (author_id is NULL)
+          const { error: eventsError, count: eventsCount } = await supabase
+            .from('pinned_events')
+            .delete()
+            .is('author_id', null);
+
+          if (eventsError) {
+            console.error('Error deleting sample events:', eventsError);
+          } else {
+            console.log('✅ Deleted sample pinned events');
+          }
+
+          // Reload both sections
+          await loadPinnedEvents();
+          await loadSchwarzesBrett();
+
+          alert('Sample-Daten wurden gelöscht!');
+
+        } catch (err) {
+          console.error('❌ Error deleting sample data:', err);
+          alert('Fehler: ' + err.message);
+        }
+      }
+
+      // Expose to window for console access
+      window.deleteSampleData = deleteSampleData;
+
+      // ============================================
       // HELPER: TIME AGO
       // ============================================
       function getTimeAgo(date) {
@@ -26681,7 +26731,8 @@
               badge: type,
               event_id: data[0].id,
               attendance_required: attendanceRequired,
-              is_active: true
+              is_active: true,
+              author_id: (await supabase.auth.getUser()).data.user?.id || null
             });
 
             if (pinError) {
