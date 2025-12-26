@@ -2760,7 +2760,11 @@
       gap: 24px;
     }
 
-    /* Left Column (30%) - Pinned Events + Schwarzes Brett stacked */
+    /* ========================================
+       Dashboard 3-Column Layout (Left | Center | Right)
+       ======================================== */
+
+    /* Left Column (30%) - Pinned Events + Schwarzes Brett */
     .dashboard-left-column {
       width: 30%;
       display: flex;
@@ -2769,7 +2773,10 @@
       min-width: 280px;
     }
 
-    .dashboard-left-column .pinned-events-wrapper,
+    .dashboard-left-column .pinned-events-wrapper {
+      flex-shrink: 0;
+    }
+
     .dashboard-left-column .schwarzes-brett-wrapper {
       flex: 1;
       display: flex;
@@ -2777,11 +2784,11 @@
       min-height: 0;
     }
 
-    .dashboard-left-column .pinned-events-wrapper .dashboard-card,
     .dashboard-left-column .schwarzes-brett-wrapper .dashboard-card {
       flex: 1;
-      overflow-y: auto;
-      max-height: none;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     /* Right Columns (70%) - Projects + Tasks side by side */
@@ -2800,63 +2807,53 @@
       min-width: 0;
     }
 
-    .dashboard-right-columns .todo-projects-left,
-    .dashboard-right-columns .todo-tasks-right {
-      flex: 1;
-      overflow-y: auto;
-      min-height: 300px;
-    }
-
-    /* Laptop Breakpoint - Fixed height for left column containers */
+    /* Laptop+ Breakpoint - Fixed heights for alignment */
     @media (min-width: 1024px) {
-      /* Left Column - Pinned Events + Schwarzes Brett */
-      .dashboard-left-column {
-        height: calc(70vh + 50px);
+      /* Main dashboard row should align all columns */
+      .dashboard-main-row {
         display: flex;
-        flex-direction: column;
         gap: 24px;
+        align-items: stretch;
+      }
+
+      /* Left column total height = Projects/Tasks height */
+      .dashboard-left-column {
+        max-height: 720px;
       }
 
       .dashboard-left-column .pinned-events-wrapper {
-        height: auto;
-        max-height: 200px;
-        flex-shrink: 0;
+        max-height: 220px;
+        overflow: hidden;
+      }
+
+      .dashboard-left-column .pinned-events-wrapper .dashboard-card {
+        max-height: 100%;
         overflow-y: auto;
       }
 
       .dashboard-left-column .schwarzes-brett-wrapper {
         flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
+        min-height: 300px;
         overflow: hidden;
       }
 
       .dashboard-left-column .schwarzes-brett-wrapper .dashboard-card {
-        flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
-      }
-
-      .dashboard-left-column .pinned-events-wrapper .dashboard-card {
-        height: 100%;
-        max-height: none;
       }
 
       /* Right column - Projects and Tasks containers */
       .dashboard-right-columns .todo-projects-wrapper,
       .dashboard-right-columns .todo-tasks-wrapper {
-        height: 70vh;
-        display: flex;
-        flex-direction: column;
+        max-height: 720px;
         overflow: hidden;
       }
 
       .dashboard-right-columns .todo-projects-left,
       .dashboard-right-columns .todo-tasks-right {
-        height: 100%;
-        max-height: none;
+        flex: 1;
+        overflow-y: auto;
       }
     }
 
@@ -2867,7 +2864,7 @@
     .todo-tasks-right,
     #brettMessages,
     #todoProjectsList,
-    #todoTasksList {
+    #pinnedEventsList {
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -2878,7 +2875,7 @@
     .todo-tasks-right::-webkit-scrollbar,
     #brettMessages::-webkit-scrollbar,
     #todoProjectsList::-webkit-scrollbar,
-    #todoTasksList::-webkit-scrollbar {
+    #pinnedEventsList::-webkit-scrollbar {
       display: none;
     }
 
@@ -3012,24 +3009,23 @@
       border-bottom: 1px solid rgba(0,0,0,0.06);
       border-radius: 0;
       margin-bottom: 0;
-      transition: all 0.2s ease;
+      transition: background 0.15s ease;
     }
 
-    [data-theme="dark"] .brett-item {
-      background: transparent;
-      border-color: rgba(255, 255, 255, 0.08);
+    .brett-item:last-child {
+      border-bottom: none;
     }
 
     .brett-item:hover {
       background: rgba(0,0,0,0.02);
     }
 
-    [data-theme="dark"] .brett-item:hover {
-      background: rgba(255, 255, 255, 0.04);
+    [data-theme="dark"] .brett-item {
+      border-bottom-color: rgba(255,255,255,0.06);
     }
 
-    .brett-item:last-child {
-      border-bottom: none;
+    [data-theme="dark"] .brett-item:hover {
+      background: rgba(255,255,255,0.02);
     }
 
     .brett-header {
@@ -16754,7 +16750,7 @@
                   ${isRequired ? '<span style="font-size:10px; background:#F44336; color:white; padding:2px 6px; border-radius:4px; font-weight:600;">PFLICHT</span>' : ''}
                 </div>
                 <div style="font-size:12px; opacity:0.8;">
-                  📅 ${formattedDate} · ${formattedTime}
+                  ${formattedDate} · ${formattedTime}
                 </div>
               </div>
             `;
@@ -16770,7 +16766,7 @@
       }
 
       // ============================================
-      // SCHWARZES BRETT - LOAD FROM SUPABASE (Twitter-Style)
+      // SCHWARZES BRETT - LOAD FROM SUPABASE
       // ============================================
       async function loadSchwarzesBrett() {
         console.log('📋 Loading Schwarzes Brett...');
@@ -16784,12 +16780,12 @@
             .select('*')
             .eq('is_active', true)
             .order('created_at', { ascending: false })
-            .limit(10);
+            .limit(20);
 
           if (error) throw error;
 
           if (!messages || messages.length === 0) {
-            container.innerHTML = '<div class="brett-empty">Keine Nachrichten vorhanden</div>';
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#86868b;">Keine Nachrichten vorhanden</div>';
             return;
           }
 
@@ -16798,8 +16794,6 @@
 
           // Get all profiles for avatar lookup
           const allProfiles = window.centralDataManager?.data?.profiles || [];
-
-          console.log('🔍 Current user ID for menu check:', currentUser?.id);
 
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
@@ -16810,10 +16804,12 @@
             let authorName = msg.author || 'User';
 
             if (msg.author_id) {
+              // Check if it's current user first
               if (msg.author_id === currentUser?.id && currentUser?.avatar_url) {
                 avatarUrl = currentUser.avatar_url;
                 authorName = currentUser.username || msg.author;
               } else {
+                // Look up in allProfiles cache
                 const profile = allProfiles.find(p => p.id === msg.author_id);
                 if (profile) {
                   avatarUrl = profile.avatar_url;
@@ -16822,38 +16818,65 @@
               }
             }
 
-            // Fallback to initials
+            // Create initials for fallback
             const initials = authorName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'U';
+
+            // Avatar HTML - either image or initials circle
             const avatarHtml = avatarUrl
-              ? `<img src="${avatarUrl}" alt="${authorName}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">`
+              ? `<img src="${avatarUrl}" alt="${authorName}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                 <div style="display:none; width:40px; height:40px; border-radius:50%; background:#e5e5e5; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;">${initials}</div>`
               : `<div style="width:40px; height:40px; border-radius:50%; background:#e5e5e5; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;">${initials}</div>`;
 
-            // WICHTIG: Check ob eigene Nachricht
+            // Check if this is the current user's message (for showing edit menu)
             const isOwnMessage = msg.author_id === currentUser?.id;
-            console.log(`📝 Message "${msg.content?.substring(0,20)}..." by ${msg.author_id} - isOwn: ${isOwnMessage} (currentUser: ${currentUser?.id})`);
 
+            // Build the message HTML
             return `
               <div class="brett-item" data-id="${msg.id}" style="display:flex; gap:12px; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.06);">
+                <!-- Avatar -->
                 <div style="flex-shrink:0;">
                   ${avatarHtml}
                 </div>
+
+                <!-- Content -->
                 <div style="flex:1; min-width:0;">
+                  <!-- Header Row: Name, Time, Menu -->
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
                     <div style="display:flex; align-items:center; gap:6px;">
                       <span style="font-weight:600; font-size:14px; color:#1d1d1f;">${authorName}</span>
                       <span style="font-size:13px; color:#86868b;">· ${timeAgo}</span>
                     </div>
+
+                    <!-- 3-Dot Menu (only for own messages) -->
                     ${isOwnMessage ? `
                       <div class="brett-menu" style="position:relative;">
-                        <button onclick="event.stopPropagation(); toggleBrettMenu('${msg.id}')" style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:20px; line-height:1; border-radius:50%;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
-                          ⋯
-                        </button>
-                        <div class="brett-menu-dropdown" id="brettMenu-${msg.id}" style="display:none; position:absolute; right:0; top:100%; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:150px; z-index:1000; overflow:hidden;">
-                          <button onclick="event.stopPropagation(); editBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#1d1d1f;" onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='none'">
+                        <button
+                          onclick="event.stopPropagation(); toggleBrettMenu('${msg.id}')"
+                          style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:18px; line-height:1; border-radius:50%; transition:background 0.15s;"
+                          onmouseover="this.style.background='rgba(0,0,0,0.05)'"
+                          onmouseout="this.style.background='none'"
+                          title="Optionen"
+                        >⋯</button>
+                        <div
+                          class="brett-menu-dropdown"
+                          id="brettMenu-${msg.id}"
+                          style="display:none; position:absolute; right:0; top:100%; background:#fff; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:150px; z-index:1000; overflow:hidden;"
+                        >
+                          <button
+                            onclick="event.stopPropagation(); editBrettMessage('${msg.id}')"
+                            style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#1d1d1f; transition:background 0.15s;"
+                            onmouseover="this.style.background='#f5f5f7'"
+                            onmouseout="this.style.background='none'"
+                          >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             Bearbeiten
                           </button>
-                          <button onclick="event.stopPropagation(); deleteBrettMessage('${msg.id}')" style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#ff3b30;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='none'">
+                          <button
+                            onclick="event.stopPropagation(); deleteBrettMessage('${msg.id}')"
+                            style="display:flex; align-items:center; gap:10px; width:100%; padding:12px 16px; text-align:left; border:none; background:none; cursor:pointer; font-size:14px; color:#ff3b30; transition:background 0.15s;"
+                            onmouseover="this.style.background='#fff5f5'"
+                            onmouseout="this.style.background='none'"
+                          >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             Löschen
                           </button>
@@ -16861,7 +16884,11 @@
                       </div>
                     ` : ''}
                   </div>
+
+                  <!-- Message Content -->
                   <div style="font-size:15px; line-height:1.5; color:#1d1d1f; margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
+
+                  <!-- Category Tag -->
                   <div style="display:flex; gap:8px;">
                     <span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:#666;">${msg.category || 'Info'}</span>
                   </div>
@@ -16875,57 +16902,81 @@
 
         } catch (err) {
           console.error('❌ Error loading schwarzes brett:', err);
-          container.innerHTML = '<div class="brett-empty">Fehler beim Laden der Nachrichten</div>';
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff3b30;">Fehler beim Laden der Nachrichten</div>';
         }
       }
 
       // ============================================
       // BRETT MENU FUNCTIONS
       // ============================================
+
+      /**
+       * Toggle the dropdown menu for a specific message
+       */
       function toggleBrettMenu(messageId) {
         const menu = document.getElementById(`brettMenu-${messageId}`);
         if (!menu) {
-          console.error('Menu not found for:', messageId);
+          console.error('❌ Menu not found for message:', messageId);
           return;
         }
 
-        // Close all other menus first
+        // Close all other open menus first
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => {
-          if (m.id !== `brettMenu-${messageId}`) m.style.display = 'none';
+          if (m.id !== `brettMenu-${messageId}`) {
+            m.style.display = 'none';
+          }
         });
 
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-        console.log('Toggle menu:', messageId, menu.style.display);
+        // Toggle this menu
+        const isVisible = menu.style.display === 'block';
+        menu.style.display = isVisible ? 'none' : 'block';
       }
 
-      // Close menu on outside click
+      /**
+       * Close all menus when clicking outside
+       */
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.brett-menu')) {
-          document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
+          document.querySelectorAll('.brett-menu-dropdown').forEach(m => {
+            m.style.display = 'none';
+          });
         }
       });
 
+      /**
+       * Edit a message - opens prompt with current content
+       */
       async function editBrettMessage(messageId) {
+        // Close the menu
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
+        // Find the message in our cached array
         const message = window.schwarzesBrettMessages?.find(m => m.id === messageId);
         if (!message) {
           alert('Nachricht nicht gefunden');
           return;
         }
 
+        // Prompt for new content
         const newContent = prompt('Nachricht bearbeiten:', message.content);
-        if (newContent && newContent.trim() && newContent !== message.content) {
+
+        // Only update if content changed and is not empty
+        if (newContent && newContent.trim() && newContent.trim() !== message.content) {
           try {
             const { error } = await supabase
               .from('schwarzes_brett')
-              .update({ content: newContent.trim(), updated_at: new Date().toISOString() })
+              .update({
+                content: newContent.trim(),
+                updated_at: new Date().toISOString()
+              })
               .eq('id', messageId);
 
             if (error) throw error;
 
-            console.log('✅ Message updated');
+            console.log('✅ Message updated successfully');
+            // Reload the messages to show the update
             await loadSchwarzesBrett();
+
           } catch (err) {
             console.error('❌ Error updating message:', err);
             alert('Fehler beim Speichern: ' + err.message);
@@ -16933,10 +16984,17 @@
         }
       }
 
+      /**
+       * Delete a message - with confirmation
+       */
       async function deleteBrettMessage(messageId) {
+        // Close the menu
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
-        if (!confirm('Nachricht wirklich löschen?')) return;
+        // Confirm deletion
+        if (!confirm('Möchtest du diese Nachricht wirklich löschen?')) {
+          return;
+        }
 
         try {
           const { error } = await supabase
@@ -16946,15 +17004,19 @@
 
           if (error) throw error;
 
-          console.log('✅ Message deleted');
+          console.log('✅ Message deleted successfully');
+          // Reload the messages to reflect the deletion
           await loadSchwarzesBrett();
+
         } catch (err) {
           console.error('❌ Error deleting message:', err);
           alert('Fehler beim Löschen: ' + err.message);
         }
       }
 
-      // Expose to window
+      // ============================================
+      // EXPOSE FUNCTIONS TO WINDOW (for onclick handlers)
+      // ============================================
       window.toggleBrettMenu = toggleBrettMenu;
       window.editBrettMessage = editBrettMessage;
       window.deleteBrettMessage = deleteBrettMessage;
