@@ -26659,7 +26659,11 @@
         const startHour = parseFloat(document.getElementById('createEventStartTime').value);
         const endHour = parseFloat(document.getElementById('createEventEndTime').value);
         const attendanceRequired = document.getElementById('createEventAttendanceRequired').checked;
-        const isPinned = document.getElementById('createEventPinned')?.checked || false;
+        const isPinnedCheckbox = document.getElementById('createEventPinned')?.checked || false;
+        // Events mit Anwesenheitspflicht werden automatisch gepinnt
+        const isPinned = isPinnedCheckbox || attendanceRequired;
+
+        console.log('📌 Event creation - attendanceRequired:', attendanceRequired, 'isPinnedCheckbox:', isPinnedCheckbox, 'isPinned:', isPinned);
 
         // Collect selected groups
         const selectedGroups = [];
