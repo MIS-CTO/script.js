@@ -26728,6 +26728,10 @@
             // Get current auth user ID for author_id (required field)
             const { data: { user: authUser } } = await supabase.auth.getUser();
 
+            // Get current location name for the pinned event
+            const currentLocationId = document.getElementById('locationSelect')?.value;
+            const currentLocationName = window.centralDataManager?.data?.locations?.find(l => l.id === currentLocationId)?.name || 'Stuttgart';
+
             if (!authUser?.id) {
               console.error('❌ Cannot pin event: No authenticated user');
             } else {
@@ -26738,7 +26742,8 @@
                 event_id: data[0].id,
                 attendance_required: attendanceRequired,
                 is_active: true,
-                author_id: authUser.id
+                author_id: authUser.id,
+                location: currentLocationName
               });
 
               if (pinError) {
