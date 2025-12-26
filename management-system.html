@@ -2753,16 +2753,17 @@
        Right: Projects + Tasks (side by side)
        ======================================== */
 
-    .dashboard-container {
-      display: flex;
-      width: 100%;
-      min-height: 600px;
-      gap: 24px;
-    }
-
     /* ========================================
        Dashboard 3-Column Layout (Left | Center | Right)
        ======================================== */
+
+    /* Dashboard Container - Flex Row */
+    .dashboard-container {
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+      min-height: 600px;
+    }
 
     /* Left Column (30%) - Pinned Events + Schwarzes Brett */
     .dashboard-left-column {
@@ -2791,6 +2792,17 @@
       overflow: hidden;
     }
 
+    #brettMessages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px;
+    }
+
+    #schwarzesBrettContainer .add-btn {
+      flex-shrink: 0;
+      margin: 12px 16px 16px;
+    }
+
     /* Right Columns (70%) - Projects + Tasks side by side */
     .dashboard-right-columns {
       width: 70%;
@@ -2807,53 +2819,63 @@
       min-width: 0;
     }
 
+    .dashboard-right-columns .todo-projects-left,
+    .dashboard-right-columns .todo-tasks-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      min-height: 300px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
     /* Laptop+ Breakpoint - Fixed heights for alignment */
     @media (min-width: 1024px) {
-      /* Main dashboard row should align all columns */
-      .dashboard-main-row {
-        display: flex;
-        gap: 24px;
-        align-items: stretch;
+      .dashboard-container {
+        min-height: calc(100vh - 200px);
+        max-height: calc(100vh - 150px);
       }
 
-      /* Left column total height = Projects/Tasks height */
+      /* Left column should stretch to match right column */
       .dashboard-left-column {
-        max-height: 720px;
+        height: 100%;
       }
 
       .dashboard-left-column .pinned-events-wrapper {
+        flex: 0 0 auto;
         max-height: 220px;
-        overflow: hidden;
       }
 
       .dashboard-left-column .pinned-events-wrapper .dashboard-card {
-        max-height: 100%;
+        max-height: 180px;
         overflow-y: auto;
       }
 
       .dashboard-left-column .schwarzes-brett-wrapper {
         flex: 1;
-        min-height: 300px;
-        overflow: hidden;
+        min-height: 0;
       }
 
       .dashboard-left-column .schwarzes-brett-wrapper .dashboard-card {
         height: 100%;
-        display: flex;
-        flex-direction: column;
       }
 
       /* Right column - Projects and Tasks containers */
+      .dashboard-right-columns {
+        height: 100%;
+      }
+
       .dashboard-right-columns .todo-projects-wrapper,
       .dashboard-right-columns .todo-tasks-wrapper {
-        max-height: 720px;
-        overflow: hidden;
+        height: 100%;
       }
 
       .dashboard-right-columns .todo-projects-left,
       .dashboard-right-columns .todo-tasks-right {
-        flex: 1;
-        overflow-y: auto;
+        height: 100%;
+        max-height: none;
       }
     }
 
@@ -16775,6 +16797,13 @@
         if (!container) return;
 
         try {
+          // Get current auth session to compare author_id correctly
+          const { data: { session } } = await supabase.auth.getSession();
+          const currentAuthUserId = session?.user?.id;
+
+          console.log('🔑 Current Auth User ID:', currentAuthUserId);
+          console.log('👤 Current User Profile ID:', currentUser?.id);
+
           const { data: messages, error } = await supabase
             .from('schwarzes_brett')
             .select('*')
@@ -16789,9 +16818,6 @@
             return;
           }
 
-          // Store messages globally for edit function
-          window.schwarzesBrettMessages = messages;
-
           // Get all profiles for avatar lookup
           const allProfiles = window.centralDataManager?.data?.profiles || [];
 
@@ -16803,19 +16829,15 @@
             let avatarUrl = null;
             let authorName = msg.author || 'User';
 
-            if (msg.author_id) {
-              // Check if it's current user first
-              if (msg.author_id === currentUser?.id && currentUser?.avatar_url) {
-                avatarUrl = currentUser.avatar_url;
-                authorName = currentUser.username || msg.author;
-              } else {
-                // Look up in allProfiles cache
-                const profile = allProfiles.find(p => p.id === msg.author_id);
-                if (profile) {
-                  avatarUrl = profile.avatar_url;
-                  authorName = profile.username || msg.author || 'User';
-                }
-              }
+            // Look up profile by author_id (which is the auth.uid)
+            const authorProfile = allProfiles.find(p => p.auth_uid === msg.author_id);
+            if (authorProfile) {
+              avatarUrl = authorProfile.avatar_url;
+              authorName = authorProfile.username || msg.author || 'User';
+            } else if (msg.author_id === currentAuthUserId && currentUser?.avatar_url) {
+              // Fallback: If it's current user, use their avatar
+              avatarUrl = currentUser.avatar_url;
+              authorName = currentUser.username || msg.author;
             }
 
             // Create initials for fallback
@@ -16827,8 +16849,9 @@
                  <div style="display:none; width:40px; height:40px; border-radius:50%; background:#e5e5e5; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;">${initials}</div>`
               : `<div style="width:40px; height:40px; border-radius:50%; background:#e5e5e5; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:#666;">${initials}</div>`;
 
-            // Check if this is the current user's message (for showing edit menu)
-            const isOwnMessage = msg.author_id === currentUser?.id;
+            // CRITICAL: Compare msg.author_id with Auth UID (not profiles.id!)
+            const isOwnMessage = msg.author_id === currentAuthUserId;
+            console.log(`📝 Message "${msg.content.substring(0,20)}..." by ${msg.author_id} - isOwn: ${isOwnMessage}`);
 
             // Build the message HTML
             return `
@@ -16847,12 +16870,12 @@
                       <span style="font-size:13px; color:#86868b;">· ${timeAgo}</span>
                     </div>
 
-                    <!-- 3-Dot Menu (only for own messages) -->
+                    <!-- 3-Dot Menu (horizontal ⋯) - only for own messages -->
                     ${isOwnMessage ? `
                       <div class="brett-menu" style="position:relative;">
                         <button
                           onclick="event.stopPropagation(); toggleBrettMenu('${msg.id}')"
-                          style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:18px; line-height:1; border-radius:50%; transition:background 0.15s;"
+                          style="background:none; border:none; cursor:pointer; padding:8px; color:#86868b; font-size:20px; line-height:1; border-radius:50%; transition:background 0.15s;"
                           onmouseover="this.style.background='rgba(0,0,0,0.05)'"
                           onmouseout="this.style.background='none'"
                           title="Optionen"
@@ -16902,13 +16925,16 @@
 
         } catch (err) {
           console.error('❌ Error loading schwarzes brett:', err);
-          container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff3b30;">Fehler beim Laden der Nachrichten</div>';
+          container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff3b30;">Fehler beim Laden</div>';
         }
       }
 
       // ============================================
       // BRETT MENU FUNCTIONS
       // ============================================
+
+      // Store messages for edit function
+      window.schwarzesBrettMessages = [];
 
       /**
        * Toggle the dropdown menu for a specific message
@@ -16950,18 +16976,15 @@
         // Close the menu
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
-        // Find the message in our cached array
-        const message = window.schwarzesBrettMessages?.find(m => m.id === messageId);
-        if (!message) {
-          alert('Nachricht nicht gefunden');
-          return;
-        }
+        // Find the message element and get current content
+        const messageEl = document.querySelector(`.brett-item[data-id="${messageId}"]`);
+        const currentContent = messageEl?.querySelector('div[style*="white-space:pre-wrap"]')?.textContent || '';
 
         // Prompt for new content
-        const newContent = prompt('Nachricht bearbeiten:', message.content);
+        const newContent = prompt('Nachricht bearbeiten:', currentContent);
 
         // Only update if content changed and is not empty
-        if (newContent && newContent.trim() && newContent.trim() !== message.content) {
+        if (newContent && newContent.trim() && newContent.trim() !== currentContent) {
           try {
             const { error } = await supabase
               .from('schwarzes_brett')
@@ -16974,7 +16997,6 @@
             if (error) throw error;
 
             console.log('✅ Message updated successfully');
-            // Reload the messages to show the update
             await loadSchwarzesBrett();
 
           } catch (err) {
@@ -16991,7 +17013,6 @@
         // Close the menu
         document.querySelectorAll('.brett-menu-dropdown').forEach(m => m.style.display = 'none');
 
-        // Confirm deletion
         if (!confirm('Möchtest du diese Nachricht wirklich löschen?')) {
           return;
         }
@@ -17005,7 +17026,6 @@
           if (error) throw error;
 
           console.log('✅ Message deleted successfully');
-          // Reload the messages to reflect the deletion
           await loadSchwarzesBrett();
 
         } catch (err) {
@@ -17014,9 +17034,7 @@
         }
       }
 
-      // ============================================
-      // EXPOSE FUNCTIONS TO WINDOW (for onclick handlers)
-      // ============================================
+      // Expose functions to window for onclick handlers
       window.toggleBrettMenu = toggleBrettMenu;
       window.editBrettMessage = editBrettMessage;
       window.deleteBrettMessage = deleteBrettMessage;
