@@ -2894,7 +2894,7 @@
       font-weight: 500;
       color: var(--text-primary);
       margin: 0;
-      padding-left: 4px;
+      padding: 10px;
     }
 
     [data-theme="dark"] .container-section-title {
@@ -2905,7 +2905,7 @@
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 24px;
+      padding: 10px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     }
 
@@ -3797,7 +3797,7 @@
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 24px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -3850,10 +3850,18 @@
       opacity: 0.8;
     }
 
-    .todo-project-card.selected .todo-edit-btn {
-      background: #1d1d1f;
-      color: white;
-      border-color: #1d1d1f;
+    /* Edit Button - IMMER Outline Style */
+    .todo-project-card.selected .todo-edit-btn,
+    .todo-project-card:hover .todo-edit-btn {
+      background: transparent !important;
+      border: 1px solid #86868b !important;
+      color: #1d1d1f !important;
+    }
+
+    [data-theme="dark"] .todo-project-card.selected .todo-edit-btn,
+    [data-theme="dark"] .todo-project-card:hover .todo-edit-btn {
+      border-color: #636366 !important;
+      color: #f5f5f7 !important;
     }
 
     .todo-project-card.selected .todo-progress-container {
@@ -3912,11 +3920,19 @@
     .todo-project-percent {
       font-size: 14px;
       font-weight: 600;
-      color: #374151;
+      color: #1d1d1f !important;
     }
 
-    .todo-project-card.selected .todo-project-percent {
-      color: white;
+    /* Project Percentage - IMMER dunkle Farbe */
+    .todo-project-card.selected .todo-project-percent,
+    .todo-project-card:hover .todo-project-percent {
+      color: #1d1d1f !important;
+    }
+
+    [data-theme="dark"] .todo-project-percent,
+    [data-theme="dark"] .todo-project-card.selected .todo-project-percent,
+    [data-theme="dark"] .todo-project-card:hover .todo-project-percent {
+      color: #f5f5f7 !important;
     }
 
     /* Progress Bar - NEW */
@@ -3971,7 +3987,7 @@
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 24px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -4167,6 +4183,148 @@
       width: 14px;
       height: 14px;
       flex-shrink: 0;
+    }
+
+    /* ========================================
+       Task Edit Popup (wie Schwarzes Brett)
+       ======================================== */
+
+    .task-edit-popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+    }
+
+    .task-edit-popup {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    [data-theme="dark"] .task-edit-popup {
+      background: #2c2c2e;
+    }
+
+    .task-edit-popup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    [data-theme="dark"] .task-edit-popup-header {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .task-edit-popup-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #86868b;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background-color 0.15s ease;
+    }
+
+    .task-edit-popup-close:hover {
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+
+    [data-theme="dark"] .task-edit-popup-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f5f5f7;
+    }
+
+    .task-edit-popup-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 16px 20px;
+      border: none;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      background: transparent;
+      color: var(--text-primary);
+      box-sizing: border-box;
+    }
+
+    .task-edit-popup-textarea:focus {
+      outline: none;
+    }
+
+    .task-edit-popup-textarea::placeholder {
+      color: #86868b;
+    }
+
+    .task-edit-popup-actions {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      justify-content: flex-end;
+    }
+
+    [data-theme="dark"] .task-edit-popup-actions {
+      border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .task-edit-popup-cancel {
+      background: transparent;
+      border: 1px solid #d1d1d6;
+      color: #1d1d1f;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .task-edit-popup-cancel:hover {
+      border-color: #86868b;
+    }
+
+    [data-theme="dark"] .task-edit-popup-cancel {
+      border-color: #48484a;
+      color: #f5f5f7;
+    }
+
+    .task-edit-popup-save {
+      background: #1d1d1f;
+      border: none;
+      color: #fff;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .task-edit-popup-save:hover {
+      background: #333;
+    }
+
+    [data-theme="dark"] .task-edit-popup-save {
+      background: #0a84ff;
+    }
+
+    [data-theme="dark"] .task-edit-popup-save:hover {
+      background: #409cff;
     }
 
     /* Empty State */
@@ -17925,35 +18083,100 @@
 
         // Finde die Task-Daten
         const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
-        const taskText = taskElement?.querySelector('.todo-task-title')?.textContent?.trim();
+        const taskTextElement = taskElement?.querySelector('.todo-task-title');
+        const currentText = taskTextElement?.textContent?.trim() || '';
 
-        const newText = prompt('Task bearbeiten:', taskText);
+        // Erstelle das Edit-Popup (wie Schwarzes Brett)
+        const existingPopup = document.getElementById('taskEditPopup');
+        if (existingPopup) existingPopup.remove();
 
-        if (newText !== null && newText.trim() !== '' && newText !== taskText) {
-          try {
-            const { error } = await supabase
-              .from('project_tasks')
-              .update({ title: newText.trim() })
-              .eq('id', taskId);
+        const popup = document.createElement('div');
+        popup.id = 'taskEditPopup';
+        popup.className = 'task-edit-popup-overlay';
+        popup.innerHTML = `
+          <div class="task-edit-popup">
+            <div class="task-edit-popup-header">
+              <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Task bearbeiten</h4>
+              <button class="task-edit-popup-close" onclick="closeTaskEditPopup()">✕</button>
+            </div>
+            <textarea class="task-edit-popup-textarea" id="taskEditTextarea" placeholder="Task beschreiben...">${currentText}</textarea>
+            <div class="task-edit-popup-actions">
+              <button class="task-edit-popup-cancel" onclick="closeTaskEditPopup()">Abbrechen</button>
+              <button class="task-edit-popup-save" onclick="saveTaskEdit('${taskId}')">Speichern</button>
+            </div>
+          </div>
+        `;
 
-            if (error) throw error;
+        document.body.appendChild(popup);
 
-            console.log('✅ Task updated:', taskId);
-
-            // Update local state and refresh
-            if (selectedTodoProject) {
-              const taskIdx = selectedTodoProject.tasks?.findIndex(t => t.id === taskId);
-              if (taskIdx !== -1) {
-                selectedTodoProject.tasks[taskIdx].title = newText.trim();
-              }
-            }
-            renderTodoTasks();
-          } catch (err) {
-            console.error('❌ Error updating task:', err);
-            alert('Fehler beim Aktualisieren der Task');
+        // Focus auf Textarea
+        setTimeout(() => {
+          const textarea = document.getElementById('taskEditTextarea');
+          if (textarea) {
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
           }
+        }, 100);
+
+        // Schließen bei Klick auf Overlay
+        popup.addEventListener('click', (e) => {
+          if (e.target === popup) {
+            closeTaskEditPopup();
+          }
+        });
+
+        // Schließen bei Escape
+        const escHandler = (e) => {
+          if (e.key === 'Escape') {
+            closeTaskEditPopup();
+            document.removeEventListener('keydown', escHandler);
+          }
+        };
+        document.addEventListener('keydown', escHandler);
+      }
+
+      function closeTaskEditPopup() {
+        const popup = document.getElementById('taskEditPopup');
+        if (popup) popup.remove();
+      }
+
+      async function saveTaskEdit(taskId) {
+        const textarea = document.getElementById('taskEditTextarea');
+        const newText = textarea?.value?.trim();
+
+        if (!newText) {
+          alert('Task-Text darf nicht leer sein');
+          return;
+        }
+
+        try {
+          const { error } = await supabase
+            .from('project_tasks')
+            .update({ title: newText })
+            .eq('id', taskId);
+
+          if (error) throw error;
+
+          console.log('✅ Task updated:', taskId);
+          closeTaskEditPopup();
+
+          // Update local state and refresh
+          if (selectedTodoProject) {
+            const taskIdx = selectedTodoProject.tasks?.findIndex(t => t.id === taskId);
+            if (taskIdx !== -1) {
+              selectedTodoProject.tasks[taskIdx].title = newText;
+            }
+          }
+          renderTodoTasks();
+        } catch (err) {
+          console.error('❌ Error updating task:', err);
+          alert('Fehler beim Aktualisieren der Task');
         }
       }
+
+      // Expose popup functions to window
+      window.closeTaskEditPopup = closeTaskEditPopup;
+      window.saveTaskEdit = saveTaskEdit;
 
       async function deleteTask(taskId) {
         // Schließe das Menü
