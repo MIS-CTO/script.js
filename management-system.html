@@ -12538,14 +12538,6 @@
           <p style="font-size:12px; color:var(--muted); margin:4px 0 0 24px;">Markieren Sie dieses Event als verpflichtend für alle ausgewählten Gruppen</p>
         </div>
 
-        <div class="form-group">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
-            <input type="checkbox" id="createEventPinned" style="width:auto; padding:0;">
-            <span style="font-weight:500;">📌 Event pinnen (Dashboard anzeigen)</span>
-          </label>
-          <p style="font-size:12px; color:var(--muted); margin:4px 0 0 24px;">Pinned Events werden auf dem Dashboard angezeigt</p>
-        </div>
-
         <div style="display:grid; grid-template-columns:1fr; gap:16px;">
           <div class="form-group">
             <label>Date</label>
@@ -16367,6 +16359,9 @@
             loadSchwarzesBrett()
           ]);
 
+          // Start auto-refresh for pinned events
+          startPinnedEventsAutoRefresh();
+
         } catch(err) {
           console.error("Load error:", err);
         }
@@ -16720,60 +16715,102 @@
       }
 
       // ============================================
-      // PINNED EVENTS - LOAD FROM SUPABASE
+      // PINNED EVENTS - LOAD FROM EVENTS TABLE
+      // Zeigt Events mit Anwesenheitspflicht die noch nicht vorbei sind
       // ============================================
+
+      let pinnedEventsInterval = null;
+
       async function loadPinnedEvents() {
-        console.log('📍 Loading Pinned Events...');
+        console.log('📍 Loading Pinned Events from events table...');
 
         const container = document.getElementById('pinnedEventsContainer');
-        if (!container) return;
+        if (!container) {
+          console.warn('⚠️ pinnedEventsContainer not found');
+          return;
+        }
 
         try {
+          // Aktuelle Zeit für den Filter
+          const now = new Date().toISOString();
+
+          // Lade Events mit Anwesenheitspflicht die noch nicht vorbei sind
           const { data: events, error } = await supabase
-            .from('pinned_events')
+            .from('events')
             .select('*')
-            .eq('is_active', true)
-            .order('date', { ascending: true });
+            .eq('attendance_required', true)
+            .gt('end_time', now)
+            .order('start_time', { ascending: true });
 
           if (error) throw error;
 
+          console.log('📍 Found', events?.length || 0, 'upcoming required events');
+
           if (!events || events.length === 0) {
-            container.innerHTML = '<div class="event-empty">Keine Events vorhanden</div>';
+            container.innerHTML = '<div class="event-empty" style="padding: 20px; text-align: center; color: #86868b; font-size: 14px;">Keine anstehenden Pflicht-Events</div>';
             return;
           }
 
           const eventsHTML = events.map(event => {
-            const eventDate = new Date(event.date);
-            const formattedDate = eventDate.toLocaleDateString('de-DE', {
+            const startDate = new Date(event.start_time);
+            const endDate = new Date(event.end_time);
+
+            const formattedDate = startDate.toLocaleDateString('de-DE', {
               day: '2-digit',
               month: '2-digit',
               year: 'numeric'
             });
-            const formattedTime = eventDate.toLocaleTimeString('de-DE', {
+
+            const formattedStartTime = startDate.toLocaleTimeString('de-DE', {
               hour: '2-digit',
               minute: '2-digit'
             });
 
-            // Determine color based on attendance_required
-            const isRequired = event.attendance_required;
-            const cardStyle = isRequired
-              ? 'background: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; color: #C62828;'
-              : 'background: rgba(255, 152, 0, 0.1); border: 1px solid #FF9800; color: #E65100;';
+            const formattedEndTime = endDate.toLocaleTimeString('de-DE', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
 
-            const icon = isRequired
-              ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
-              : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+            // Berechne wie viel Zeit noch bis zum Event
+            const nowMs = Date.now();
+            const startMs = startDate.getTime();
+            const diffMs = startMs - nowMs;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            let urgencyBadge = '';
+            let cardStyle = 'background: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; color: #C62828;';
+
+            if (diffMs < 0) {
+              // Event läuft gerade
+              urgencyBadge = '<span style="font-size:10px; background:#4CAF50; color:white; padding:2px 6px; border-radius:4px; font-weight:600; margin-left:8px;">JETZT</span>';
+              cardStyle = 'background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; color: #2E7D32;';
+            } else if (diffHours < 1) {
+              // Weniger als 1 Stunde
+              urgencyBadge = '<span style="font-size:10px; background:#FF5722; color:white; padding:2px 6px; border-radius:4px; font-weight:600; margin-left:8px;">BALD</span>';
+            } else if (diffDays === 0) {
+              // Heute
+              urgencyBadge = '<span style="font-size:10px; background:#FF9800; color:white; padding:2px 6px; border-radius:4px; font-weight:600; margin-left:8px;">HEUTE</span>';
+            } else if (diffDays === 1) {
+              // Morgen
+              urgencyBadge = '<span style="font-size:10px; background:#FFC107; color:#333; padding:2px 6px; border-radius:4px; font-weight:600; margin-left:8px;">MORGEN</span>';
+            }
+
+            // Icon für Pflicht-Event (Personen-Icon)
+            const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
 
             return `
               <div class="pinned-event-card" style="${cardStyle} padding:12px; border-radius:8px; margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
                   <span style="display:inline-flex;">${icon}</span>
-                  <span style="font-weight:700; font-size:14px;">${event.title}</span>
-                  ${isRequired ? '<span style="font-size:10px; background:#F44336; color:white; padding:2px 6px; border-radius:4px; font-weight:600;">PFLICHT</span>' : ''}
+                  <span style="font-weight:600; font-size:14px;">${event.title || 'Event'}</span>
+                  <span style="font-size:10px; background:#F44336; color:white; padding:2px 6px; border-radius:4px; font-weight:600;">PFLICHT</span>
+                  ${urgencyBadge}
                 </div>
                 <div style="font-size:12px; opacity:0.8;">
-                  ${formattedDate} · ${formattedTime}
+                  ${formattedDate} · ${formattedStartTime} - ${formattedEndTime}
                 </div>
+                ${event.location ? `<div style="margin-top:6px;"><span style="font-size:11px; background:rgba(0,0,0,0.1); padding:3px 8px; border-radius:4px;">📍 ${event.location}</span></div>` : ''}
               </div>
             `;
           }).join('');
@@ -16783,9 +16820,40 @@
 
         } catch (err) {
           console.error('❌ Error loading pinned events:', err);
-          container.innerHTML = '<div class="event-empty">Fehler beim Laden der Events</div>';
+          container.innerHTML = '<div class="event-empty" style="padding: 20px; text-align: center; color: #ff3b30; font-size: 14px;">Fehler beim Laden der Events</div>';
         }
       }
+
+      // ============================================
+      // PINNED EVENTS - AUTO-REFRESH (alle 60 Sekunden)
+      // ============================================
+      function startPinnedEventsAutoRefresh() {
+        // Stoppe existierenden Interval falls vorhanden
+        if (pinnedEventsInterval) {
+          clearInterval(pinnedEventsInterval);
+        }
+
+        // Starte neuen Interval - alle 60 Sekunden
+        pinnedEventsInterval = setInterval(async () => {
+          console.log('🔄 Auto-refreshing pinned events...');
+          await loadPinnedEvents();
+        }, 60000); // 60 Sekunden
+
+        console.log('⏰ Pinned events auto-refresh started (every 60s)');
+      }
+
+      function stopPinnedEventsAutoRefresh() {
+        if (pinnedEventsInterval) {
+          clearInterval(pinnedEventsInterval);
+          pinnedEventsInterval = null;
+          console.log('⏹️ Pinned events auto-refresh stopped');
+        }
+      }
+
+      // Expose functions to window
+      window.loadPinnedEvents = loadPinnedEvents;
+      window.startPinnedEventsAutoRefresh = startPinnedEventsAutoRefresh;
+      window.stopPinnedEventsAutoRefresh = stopPinnedEventsAutoRefresh;
 
       // ============================================
       // SCHWARZES BRETT - LOAD FROM SUPABASE
@@ -17062,20 +17130,7 @@
             console.log('✅ Deleted sample brett posts');
           }
 
-          // Delete sample events from pinned_events (author_id is NULL)
-          const { error: eventsError, count: eventsCount } = await supabase
-            .from('pinned_events')
-            .delete()
-            .is('author_id', null);
-
-          if (eventsError) {
-            console.error('Error deleting sample events:', eventsError);
-          } else {
-            console.log('✅ Deleted sample pinned events');
-          }
-
-          // Reload both sections
-          await loadPinnedEvents();
+          // Reload Schwarzes Brett
           await loadSchwarzesBrett();
 
           alert('Sample-Daten wurden gelöscht!');
@@ -26659,11 +26714,9 @@
         const startHour = parseFloat(document.getElementById('createEventStartTime').value);
         const endHour = parseFloat(document.getElementById('createEventEndTime').value);
         const attendanceRequired = document.getElementById('createEventAttendanceRequired').checked;
-        const isPinnedCheckbox = document.getElementById('createEventPinned')?.checked || false;
-        // Events mit Anwesenheitspflicht werden automatisch gepinnt
-        const isPinned = isPinnedCheckbox || attendanceRequired;
+        // Pinned Events werden automatisch aus events mit attendance_required=true geladen
 
-        console.log('📌 Event creation - attendanceRequired:', attendanceRequired, 'isPinnedCheckbox:', isPinnedCheckbox, 'isPinned:', isPinned);
+        console.log('📌 Event creation - attendanceRequired:', attendanceRequired);
 
         // Collect selected groups
         const selectedGroups = [];
@@ -26724,41 +26777,6 @@
             artist_id: null
           });
 
-          // If pinned, also add to pinned_events
-          if (isPinned && data?.[0]?.id) {
-            const startMin = Math.round((startHour % 1) * 60);
-            const eventDateTime = `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`;
-
-            // Get current auth user ID for author_id (required field)
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-
-            // Get current location name for the pinned event
-            const currentLocationId = document.getElementById('locationSelect')?.value;
-            const currentLocationName = window.centralDataManager?.data?.locations?.find(l => l.id === currentLocationId)?.name || 'Stuttgart';
-
-            if (!authUser?.id) {
-              console.error('❌ Cannot pin event: No authenticated user');
-            } else {
-              const { error: pinError } = await supabase.from('pinned_events').insert({
-                title: title,
-                date: eventDateTime,
-                badge: type,
-                event_id: data[0].id,
-                attendance_required: attendanceRequired,
-                is_active: true,
-                author_id: authUser.id,
-                location: currentLocationName
-              });
-
-              if (pinError) {
-                console.error('❌ Could not pin event:', pinError);
-              } else {
-                console.log('✅ Event pinned to dashboard');
-                await loadPinnedEvents(); // Refresh pinned events
-              }
-            }
-          }
-
           // Close modal and reset form
           document.getElementById('createEventModal').classList.remove('active');
           document.getElementById('createEventForm').reset();
@@ -26772,7 +26790,12 @@
           // Reload events and refresh calendar
           await loadEvents();
           renderCalendar();
-          
+
+          // Refresh pinned events falls es ein Pflicht-Event ist
+          if (attendanceRequired) {
+            await loadPinnedEvents();
+          }
+
           alert('Event created successfully!');
         } catch (err) {
           console.error('Error creating event:', err);
