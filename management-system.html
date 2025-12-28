@@ -1603,52 +1603,94 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
-    /* Request Card Header (ID · Rang · Status) */
+    /* Request Card Header - ID links, Badges rechts */
     .request-card-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
       margin-bottom: 8px;
-      font-size: 13px;
-      color: #86868b;
+      font-size: 12px;
     }
     .request-card-id {
       font-weight: 400;
       color: #86868b;
+      font-size: 12px;
     }
     [data-theme="dark"] .request-card-id {
       color: #98989d;
     }
-    .request-card-separator {
-      color: #d1d1d6;
+
+    /* Badge Container - Rang und Status nebeneinander */
+    .request-card-badges {
+      display: flex;
+      gap: 0;
     }
+
+    /* Rang Badge - linke Ecken gerundet */
     .request-card-rank {
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 8px;
+      border-radius: 6px 0 0 6px;
+      color: white;
     }
-    /* Rang Farben */
-    .request-card-rank.platinum,
-    .request-card-rank.Platinum {
-      color: #5856D6;
+
+    /* Status Badge - rechte Ecken gerundet */
+    .request-card-status {
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 8px;
+      border-radius: 0 6px 6px 0;
+      color: white;
     }
-    .request-card-rank.gold,
-    .request-card-rank.Gold {
-      color: #FF9500;
+
+    /* Rang Farben mit Gradients */
+    .request-card-rank.neukunde,
+    .request-card-rank.Neukunde,
+    .request-card-rank.new-customer {
+      background: #1e3a5f;
+    }
+    .request-card-rank.bronze,
+    .request-card-rank.Bronze {
+      background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
     }
     .request-card-rank.silver,
     .request-card-rank.Silver,
     .request-card-rank.silber,
     .request-card-rank.Silber {
-      color: #8E8E93;
+      background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
     }
-    .request-card-rank.bronze,
-    .request-card-rank.Bronze {
-      color: #CD7F32;
+    .request-card-rank.gold,
+    .request-card-rank.Gold {
+      background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
     }
-    .request-card-rank.neukunde,
-    .request-card-rank.Neukunde,
-    .request-card-rank.new-customer {
-      color: #34C759;
+    .request-card-rank.platinum,
+    .request-card-rank.Platinum {
+      background: linear-gradient(135deg, #9C27B0 0%, #6A1B9A 100%);
     }
+
+    /* Status Farben */
+    .request-card-status.new,
+    .request-card-status.open_request {
+      background: #1B5E20;
+    }
+    .request-card-status.pending {
+      background: #E65100;
+    }
+    .request-card-status.scheduled {
+      background: #0277BD;
+    }
+    .request-card-status.finished {
+      background: #616161;
+    }
+    .request-card-status.canceled {
+      background: #C62828;
+    }
+
     /* Request Tab Hover Styles */
     .request-tab:hover:not(.active) {
       color: #1d1d1f !important;
@@ -1727,28 +1769,6 @@
       background: rgba(255, 255, 255, 0.1) !important;
     }
 
-    .request-card-status {
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 11px;
-      letter-spacing: 0.5px;
-    }
-    .request-card-status.new,
-    .request-card-status.open_request {
-      color: #FF3B30;
-    }
-    .request-card-status.pending {
-      color: #FF9500;
-    }
-    .request-card-status.scheduled {
-      color: #34C759;
-    }
-    .request-card-status.finished {
-      color: #8E8E93;
-    }
-    .request-card-status.canceled {
-      color: #FF3B30;
-    }
     /* Request Card Body */
     .request-card-name {
       font-size: 16px;
@@ -21411,11 +21431,11 @@
           return `
             <div class="request-item ${oldStatusClass}" data-id="${req.id}">
               <div class="request-card-header">
-                <span class="request-card-id">#${requestNumber}</span>
-                <span class="request-card-separator">·</span>
-                <span class="request-card-rank ${rankClass}">${rankDisplay}</span>
-                <span class="request-card-separator">·</span>
-                <span class="request-card-status ${statusClass}">${statusDisplay}</span>
+                <span class="request-card-id">${requestNumber}</span>
+                <div class="request-card-badges">
+                  <span class="request-card-rank ${rankClass}">${rankDisplay}</span>
+                  <span class="request-card-status ${statusClass}">${statusDisplay}</span>
+                </div>
               </div>
               <div class="request-card-name">${customerName}</div>
               ${locationName ? `<div class="request-card-location">${locationName}</div>` : ''}
