@@ -1615,8 +1615,6 @@
     .request-card-id {
       font-weight: 400;
       color: #86868b;
-      font-family: monospace;
-      font-size: 12px;
     }
     [data-theme="dark"] .request-card-id {
       color: #98989d;
@@ -1627,23 +1625,29 @@
     .request-card-rank {
       font-weight: 500;
     }
-    .request-card-rank.platin,
-    .request-card-rank.platinum {
+    /* Rang Farben */
+    .request-card-rank.platinum,
+    .request-card-rank.Platinum {
       color: #5856D6;
     }
-    .request-card-rank.gold {
+    .request-card-rank.gold,
+    .request-card-rank.Gold {
       color: #FF9500;
     }
+    .request-card-rank.silver,
+    .request-card-rank.Silver,
     .request-card-rank.silber,
-    .request-card-rank.silver {
+    .request-card-rank.Silber {
       color: #8E8E93;
     }
+    .request-card-rank.bronze,
+    .request-card-rank.Bronze {
+      color: #CD7F32;
+    }
     .request-card-rank.neukunde,
+    .request-card-rank.Neukunde,
     .request-card-rank.new-customer {
       color: #34C759;
-    }
-    .request-card-rank.bronze {
-      color: #CD7F32;
     }
     /* Request Tab Hover Styles */
     .request-tab:hover:not(.active) {
@@ -1654,6 +1658,75 @@
       color: #f5f5f7 !important;
       background: rgba(255, 255, 255, 0.08);
     }
+
+    /* Request Cards - Hover/Selected für ALLE Sub-Tabs inkl. New Requests */
+    .request-card,
+    .request-item,
+    .request-list-item,
+    #newRequestsList .request-card,
+    #openRequestsList .request-card,
+    #pendingRequestsList .request-card,
+    #scheduledRequestsList .request-card,
+    #finishedRequestsList .request-card,
+    #canceledRequestsList .request-card,
+    [data-tab="new"] .request-card,
+    [data-tab="open_request"] .request-card,
+    .requests-list .request-card {
+      background: #fff !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .request-card:hover,
+    .request-item:hover,
+    .request-list-item:hover,
+    #newRequestsList .request-card:hover,
+    #openRequestsList .request-card:hover,
+    #pendingRequestsList .request-card:hover,
+    #scheduledRequestsList .request-card:hover,
+    #finishedRequestsList .request-card:hover,
+    #canceledRequestsList .request-card:hover,
+    [data-tab="new"] .request-card:hover,
+    [data-tab="open_request"] .request-card:hover,
+    .requests-list .request-card:hover {
+      background: #f5f5f7 !important;
+    }
+
+    .request-card.active,
+    .request-card.selected,
+    .request-item.active,
+    .request-item.selected,
+    #newRequestsList .request-card.active,
+    #newRequestsList .request-card.selected,
+    #openRequestsList .request-card.active,
+    #openRequestsList .request-card.selected,
+    [data-tab="new"] .request-card.active,
+    [data-tab="open_request"] .request-card.active,
+    .requests-list .request-card.active,
+    .requests-list .request-card.selected {
+      background: #e8e8ed !important;
+    }
+
+    /* Dark Mode */
+    [data-theme="dark"] .request-card,
+    [data-theme="dark"] #newRequestsList .request-card,
+    [data-theme="dark"] .requests-list .request-card {
+      background: #1c1c1e !important;
+    }
+
+    [data-theme="dark"] .request-card:hover,
+    [data-theme="dark"] #newRequestsList .request-card:hover,
+    [data-theme="dark"] .requests-list .request-card:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    [data-theme="dark"] .request-card.active,
+    [data-theme="dark"] .request-card.selected,
+    [data-theme="dark"] #newRequestsList .request-card.active,
+    [data-theme="dark"] #newRequestsList .request-card.selected {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+
     .request-card-status {
       font-weight: 600;
       text-transform: uppercase;
@@ -11775,8 +11848,9 @@
 
       <!-- Rank Filter -->
       <select id="customerRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
-        <option value="">Alle Ranks</option>
-        <option value="Bronze">Neukunde</option>
+        <option value="">Alle Ränge</option>
+        <option value="Neukunde">Neukunde</option>
+        <option value="Bronze">Bronze</option>
         <option value="Silver">Silver</option>
         <option value="Gold">Gold</option>
         <option value="Platinum">Platinum</option>
@@ -13212,7 +13286,8 @@
           <label>Rank</label>
           <select id="addCustomerRank">
             <option value="">-- No Rank --</option>
-            <option value="Bronze">Neukunde</option>
+            <option value="Neukunde">Neukunde</option>
+            <option value="Bronze">Bronze</option>
             <option value="Silver">Silver</option>
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
@@ -13255,7 +13330,8 @@
           <label>Rank</label>
           <select id="editCustomerRank">
             <option value="">-- No Rank --</option>
-            <option value="Bronze">Neukunde</option>
+            <option value="Neukunde">Neukunde</option>
+            <option value="Bronze">Bronze</option>
             <option value="Silver">Silver</option>
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
@@ -13308,7 +13384,8 @@
             <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Rank</label>
             <select id="profileCustomerRank" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
               <option value="">-- No Rank --</option>
-              <option value="Bronze">Neukunde</option>
+              <option value="Neukunde">Neukunde</option>
+              <option value="Bronze">Bronze</option>
               <option value="Silver">Silver</option>
               <option value="Gold">Gold</option>
               <option value="Platinum">Platinum</option>
@@ -21261,34 +21338,34 @@
           'no_show': 'NO SHOW'
         };
 
-        // Rank display names mapping
+        // Rank display names mapping (mit Großschreibung wie in DB)
         const rankNames = {
-          'platin': 'Platin',
-          'platinum': 'Platin',
+          'Platinum': 'Platinum',
+          'platinum': 'Platinum',
+          'Gold': 'Gold',
           'gold': 'Gold',
-          'silber': 'Silber',
-          'silver': 'Silber',
+          'Silver': 'Silver',
+          'silver': 'Silver',
+          'Silber': 'Silver',
+          'silber': 'Silver',
+          'Bronze': 'Bronze',
           'bronze': 'Bronze',
-          'neukunde': 'Neukunde'
+          'Neukunde': 'Neukunde',
+          'neukunde': 'Neukunde',
+          'new_customer': 'Neukunde',
+          '': 'Neukunde',
+          'null': 'Neukunde',
+          'undefined': 'Neukunde'
         };
 
         listEl.innerHTML = requests.map(req => {
           // Get customer name directly from requests table (first_name, last_name columns)
           const customerName = `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
 
-          // Customer rank - Logik: 0 Termine = Neukunde, 1+ Termine = Bronze (außer höherer Rang)
-          let rank = req.customer?.rank || '';
-          const rankLower = rank.toLowerCase();
-          const appointmentCount = req.customer?.appointment_count || req.appointment_count || 0;
-
-          // Nur für nicht-premium Ränge die automatische Logik anwenden
-          let effectiveRank = rankLower;
-          if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
-            effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
-          }
-
-          const rankDisplay = rankNames[effectiveRank] || 'Neukunde';
-          const rankClass = effectiveRank;
+          // Customer rank - direkt aus Datenbank (bereits korrekt gesetzt)
+          const rank = req.customer?.rank || req.rank || '';
+          const rankDisplay = rankNames[rank] || 'Neukunde';
+          const rankClass = rank?.toLowerCase() || 'neukunde';
 
           // Location
           const locationName = req.location?.name || '';
@@ -24658,16 +24735,12 @@
         }
 
         tbody.innerHTML = customers.map(customer => {
-          // Rank badge - Logik: 0 Termine = Neukunde, 1+ Termine = Bronze
-          const rankLower = (customer.rank || '').toLowerCase();
-          const appointmentCount = customer.appointment_count || 0;
-          let effectiveRank = rankLower;
-          if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
-            effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
-          }
-          const rankDisplayMap = { 'platin': 'Platin', 'platinum': 'Platin', 'gold': 'Gold', 'silber': 'Silber', 'silver': 'Silber', 'bronze': 'Bronze', 'neukunde': 'Neukunde' };
-          const rankDisplay = rankDisplayMap[effectiveRank] || 'Neukunde';
-          const rankBadge = `<span class="rank-badge rank-${effectiveRank}">${rankDisplay}</span>`;
+          // Rank badge - direkt aus Datenbank (bereits korrekt gesetzt)
+          const rank = customer.rank || '';
+          const rankDisplayMap = { 'Platinum': 'Platinum', 'platinum': 'Platinum', 'Gold': 'Gold', 'gold': 'Gold', 'Silver': 'Silver', 'silver': 'Silver', 'Silber': 'Silver', 'silber': 'Silver', 'Bronze': 'Bronze', 'bronze': 'Bronze', 'Neukunde': 'Neukunde', 'neukunde': 'Neukunde', 'new_customer': 'Neukunde', '': 'Neukunde' };
+          const rankDisplay = rankDisplayMap[rank] || 'Neukunde';
+          const rankClass = rank?.toLowerCase() || 'neukunde';
+          const rankBadge = `<span class="rank-badge rank-${rankClass}">${rankDisplay}</span>`;
 
           // Blacklist badge
           const blacklistBadge = customer.blacklisted
@@ -27632,17 +27705,12 @@
         document.getElementById('customerProfileName').textContent =
           `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unnamed Customer';
 
-        // Render rank badge with Neukunde/Bronze logic based on appointments
-        const rankLower = customer.rank?.toLowerCase() || '';
-        const appointmentCount = appointments?.length || 0;
-        let effectiveRank = rankLower;
-        // If no rank, bronze, or neukunde - determine by appointment count
-        if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
-          effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
-        }
-        const rankNames = { 'platin': 'Platin', 'platinum': 'Platin', 'gold': 'Gold', 'silber': 'Silber', 'silver': 'Silber', 'bronze': 'Bronze', 'neukunde': 'Neukunde' };
-        const rankDisplayText = rankNames[effectiveRank] || 'Neukunde';
-        const rankBadge = `<span class="rank-badge rank-${effectiveRank}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${rankDisplayText}</span>`;
+        // Render rank badge - direkt aus Datenbank (bereits korrekt gesetzt)
+        const rank = customer.rank || '';
+        const rankNames = { 'Platinum': 'Platinum', 'platinum': 'Platinum', 'Gold': 'Gold', 'gold': 'Gold', 'Silver': 'Silver', 'silver': 'Silver', 'Silber': 'Silver', 'silber': 'Silver', 'Bronze': 'Bronze', 'bronze': 'Bronze', 'Neukunde': 'Neukunde', 'neukunde': 'Neukunde', 'new_customer': 'Neukunde', '': 'Neukunde' };
+        const rankDisplayText = rankNames[rank] || 'Neukunde';
+        const rankClass = rank?.toLowerCase() || 'neukunde';
+        const rankBadge = `<span class="rank-badge rank-${rankClass}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${rankDisplayText}</span>`;
         document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
 
         // Fill form fields
@@ -28076,21 +28144,12 @@
             document.getElementById('customerProfileName').textContent =
               `${updatedCustomer.first_name || ''} ${updatedCustomer.last_name || ''}`.trim();
 
-            // Fetch appointments to determine correct rank
-            const { data: appointments } = await supabase
-              .from('appointments')
-              .select('id')
-              .eq('customer_id', currentCustomerProfileId);
-
-            const rankLower = updatedCustomer.rank?.toLowerCase() || '';
-            const appointmentCount = appointments?.length || 0;
-            let effectiveRank = rankLower;
-            if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
-              effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
-            }
-            const rankNames = { 'platin': 'Platin', 'platinum': 'Platin', 'gold': 'Gold', 'silber': 'Silber', 'silver': 'Silber', 'bronze': 'Bronze', 'neukunde': 'Neukunde' };
-            const updatedRankDisplay = rankNames[effectiveRank] || 'Neukunde';
-            const rankBadge = `<span class="rank-badge rank-${effectiveRank}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${updatedRankDisplay}</span>`;
+            // Rang direkt aus Datenbank (bereits korrekt gesetzt)
+            const rank = updatedCustomer.rank || '';
+            const rankNames = { 'Platinum': 'Platinum', 'platinum': 'Platinum', 'Gold': 'Gold', 'gold': 'Gold', 'Silver': 'Silver', 'silver': 'Silver', 'Silber': 'Silver', 'silber': 'Silver', 'Bronze': 'Bronze', 'bronze': 'Bronze', 'Neukunde': 'Neukunde', 'neukunde': 'Neukunde', 'new_customer': 'Neukunde', '': 'Neukunde' };
+            const updatedRankDisplay = rankNames[rank] || 'Neukunde';
+            const rankClass = rank?.toLowerCase() || 'neukunde';
+            const rankBadge = `<span class="rank-badge rank-${rankClass}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${updatedRankDisplay}</span>`;
             document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
           }
 
