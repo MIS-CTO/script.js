@@ -30098,15 +30098,78 @@
               </div>
           `;
 
+          // ============================================
+          // GRUPPIERE AUFEINANDERFOLGENDE SLOTS MIT GLEICHEM STATUS
+          // ============================================
+          // Sortiere Einträge nach start_date
+          const sortedEntries = [...artistData.entries].sort((a, b) => {
+            return a.start_date.localeCompare(b.start_date);
+          });
+
+          // Gruppiere aufeinanderfolgende Tage mit gleichem Status
+          const groupedEntries = [];
+          let currentGroup = null;
+
+          sortedEntries.forEach(entry => {
+            const entryDate = entry.start_date;
+            const entryState = entry.state || 'Other';
+
+            if (!currentGroup) {
+              // Erste Gruppe starten
+              currentGroup = {
+                start_date: entry.start_date,
+                end_date: entry.end_date || entry.start_date,
+                state: entryState,
+                working_start: entry.working_start,
+                working_end: entry.working_end,
+                location: entry.location,
+                slot_ids: [entry.id],
+                original_entries: [entry]
+              };
+            } else {
+              // Prüfe ob dieser Eintrag direkt nach dem vorherigen kommt
+              const lastEndDate = new Date(currentGroup.end_date);
+              const thisStartDate = new Date(entry.start_date);
+              const diffDays = Math.round((thisStartDate - lastEndDate) / (1000 * 60 * 60 * 24));
+
+              // Wenn gleicher Status und aufeinanderfolgend (max 1 Tag Abstand)
+              if (entryState === currentGroup.state && diffDays <= 1) {
+                // Erweitere die Gruppe
+                currentGroup.end_date = entry.end_date || entry.start_date;
+                currentGroup.slot_ids.push(entry.id);
+                currentGroup.original_entries.push(entry);
+              } else {
+                // Speichere vorherige Gruppe und starte neue
+                groupedEntries.push(currentGroup);
+                currentGroup = {
+                  start_date: entry.start_date,
+                  end_date: entry.end_date || entry.start_date,
+                  state: entryState,
+                  working_start: entry.working_start,
+                  working_end: entry.working_end,
+                  location: entry.location,
+                  slot_ids: [entry.id],
+                  original_entries: [entry]
+                };
+              }
+            }
+          });
+
+          // Letzte Gruppe hinzufügen
+          if (currentGroup) {
+            groupedEntries.push(currentGroup);
+          }
+
           // Erstelle Map für alle Tage dieses Artists (String-basierte Logik)
           const dayMap = {}; // dayMap[dayNumber] = { entry, span } oder 'skip'
           const monthStartStr = formatDateKey(currentYear, currentMonth, 1);
           const monthEndStr = formatDateKey(currentYear, currentMonth, daysInMonth);
 
-          artistData.entries.forEach(entry => {
+          // Verwende gruppierte Einträge statt Original-Einträge
+          groupedEntries.forEach(entry => {
             // Parse Start/End als Strings (YYYY-MM-DD)
             const entryStartStr = entry.start_date;
-            const entryEndStr = entry.end_date;
+            const entryEndStr = entry.end_date || entry.start_date;
 
             // Berechne effektiven Start/End im aktuellen Monat
             let effectiveStartDay = 1;
@@ -30180,17 +30243,17 @@
 
               const tooltipText = `${stateLabel}: ${artistData.name}\n${entry.start_date} - ${entry.end_date}${workingHours ? '\nZeit: ' + workingHours : ''}${entry.location?.name ? '\nOrt: ' + entry.location.name : ''}`;
 
-              // Erstelle slotData für das Popup
+              // Erstelle slotData für das Popup (nutze slot_ids aus gruppiertem Eintrag)
               const slotData = {
-                id: entry.id,
+                id: entry.slot_ids ? entry.slot_ids[0] : entry.id,
                 artist_id: artistId,
                 artist_name: artistData.name,
                 start_date: entry.start_date,
-                end_date: entry.end_date,
+                end_date: entry.end_date || entry.start_date,
                 start_time: entry.working_start ? entry.working_start.substring(0,5) : '10:00',
                 end_time: entry.working_end ? entry.working_end.substring(0,5) : '18:00',
                 type: entry.state,
-                slot_ids: [entry.id]
+                slot_ids: entry.slot_ids || [entry.id]
               };
               const slotDataStr = JSON.stringify(slotData).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
