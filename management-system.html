@@ -1613,13 +1613,13 @@
       color: #86868b;
     }
     .request-card-id {
-      font-weight: 600;
-      color: #1d1d1f;
+      font-weight: 400;
+      color: #86868b;
       font-family: monospace;
       font-size: 12px;
     }
     [data-theme="dark"] .request-card-id {
-      color: #f5f5f7;
+      color: #98989d;
     }
     .request-card-separator {
       color: #d1d1d6;
@@ -1638,9 +1638,21 @@
     .request-card-rank.silver {
       color: #8E8E93;
     }
-    .request-card-rank.new-customer,
-    .request-card-rank.bronze {
+    .request-card-rank.neukunde,
+    .request-card-rank.new-customer {
       color: #34C759;
+    }
+    .request-card-rank.bronze {
+      color: #CD7F32;
+    }
+    /* Request Tab Hover Styles */
+    .request-tab:hover:not(.active) {
+      color: #1d1d1f !important;
+      background: rgba(0, 0, 0, 0.04);
+    }
+    [data-theme="dark"] .request-tab:hover:not(.active) {
+      color: #f5f5f7 !important;
+      background: rgba(255, 255, 255, 0.08);
     }
     .request-card-status {
       font-weight: 600;
@@ -11764,7 +11776,7 @@
       <!-- Rank Filter -->
       <select id="customerRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
         <option value="">Alle Ranks</option>
-        <option value="Bronze">New Customer</option>
+        <option value="Bronze">Neukunde</option>
         <option value="Silver">Silver</option>
         <option value="Gold">Gold</option>
         <option value="Platinum">Platinum</option>
@@ -13200,7 +13212,7 @@
           <label>Rank</label>
           <select id="addCustomerRank">
             <option value="">-- No Rank --</option>
-            <option value="Bronze">New Customer</option>
+            <option value="Bronze">Neukunde</option>
             <option value="Silver">Silver</option>
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
@@ -13243,7 +13255,7 @@
           <label>Rank</label>
           <select id="editCustomerRank">
             <option value="">-- No Rank --</option>
-            <option value="Bronze">New Customer</option>
+            <option value="Bronze">Neukunde</option>
             <option value="Silver">Silver</option>
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
@@ -13296,7 +13308,7 @@
             <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Rank</label>
             <select id="profileCustomerRank" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
               <option value="">-- No Rank --</option>
-              <option value="Bronze">New Customer</option>
+              <option value="Bronze">Neukunde</option>
               <option value="Silver">Silver</option>
               <option value="Gold">Gold</option>
               <option value="Platinum">Platinum</option>
@@ -21249,28 +21261,34 @@
           'no_show': 'NO SHOW'
         };
 
-        // Rank display names mapping (Bronze → New Customer)
+        // Rank display names mapping
         const rankNames = {
           'platin': 'Platin',
           'platinum': 'Platin',
           'gold': 'Gold',
           'silber': 'Silber',
           'silver': 'Silber',
-          'bronze': 'New Customer',
-          '': 'New Customer',
-          'null': 'New Customer',
-          'undefined': 'New Customer'
+          'bronze': 'Bronze',
+          'neukunde': 'Neukunde'
         };
 
         listEl.innerHTML = requests.map(req => {
           // Get customer name directly from requests table (first_name, last_name columns)
           const customerName = `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
 
-          // Customer rank - map bronze to new-customer class
-          const rank = req.customer?.rank || '';
+          // Customer rank - Logik: 0 Termine = Neukunde, 1+ Termine = Bronze (außer höherer Rang)
+          let rank = req.customer?.rank || '';
           const rankLower = rank.toLowerCase();
-          const rankDisplay = rankNames[rankLower] || 'New Customer';
-          const rankClass = rankLower === 'bronze' || !rankLower ? 'new-customer' : rankLower;
+          const appointmentCount = req.customer?.appointment_count || req.appointment_count || 0;
+
+          // Nur für nicht-premium Ränge die automatische Logik anwenden
+          let effectiveRank = rankLower;
+          if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
+            effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
+          }
+
+          const rankDisplay = rankNames[effectiveRank] || 'Neukunde';
+          const rankClass = effectiveRank;
 
           // Location
           const locationName = req.location?.name || '';
@@ -24640,11 +24658,16 @@
         }
 
         tbody.innerHTML = customers.map(customer => {
-          // Rank badge (Bronze → New Customer)
-          const rankDisplay = customer.rank?.toLowerCase() === 'bronze' ? 'New Customer' : customer.rank;
-          const rankBadge = customer.rank
-            ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}">${rankDisplay}</span>`
-            : '-';
+          // Rank badge - Logik: 0 Termine = Neukunde, 1+ Termine = Bronze
+          const rankLower = (customer.rank || '').toLowerCase();
+          const appointmentCount = customer.appointment_count || 0;
+          let effectiveRank = rankLower;
+          if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
+            effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
+          }
+          const rankDisplayMap = { 'platin': 'Platin', 'platinum': 'Platin', 'gold': 'Gold', 'silber': 'Silber', 'silver': 'Silber', 'bronze': 'Bronze', 'neukunde': 'Neukunde' };
+          const rankDisplay = rankDisplayMap[effectiveRank] || 'Neukunde';
+          const rankBadge = `<span class="rank-badge rank-${effectiveRank}">${rankDisplay}</span>`;
 
           // Blacklist badge
           const blacklistBadge = customer.blacklisted
@@ -27609,11 +27632,17 @@
         document.getElementById('customerProfileName').textContent =
           `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unnamed Customer';
 
-        // Render rank badge (Bronze → New Customer)
-        const rankDisplayText = customer.rank?.toLowerCase() === 'bronze' ? 'New Customer' : customer.rank;
-        const rankBadge = customer.rank
-          ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${rankDisplayText}</span>`
-          : '';
+        // Render rank badge with Neukunde/Bronze logic based on appointments
+        const rankLower = customer.rank?.toLowerCase() || '';
+        const appointmentCount = appointments?.length || 0;
+        let effectiveRank = rankLower;
+        // If no rank, bronze, or neukunde - determine by appointment count
+        if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
+          effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
+        }
+        const rankNames = { 'platin': 'Platin', 'platinum': 'Platin', 'gold': 'Gold', 'silber': 'Silber', 'silver': 'Silber', 'bronze': 'Bronze', 'neukunde': 'Neukunde' };
+        const rankDisplayText = rankNames[effectiveRank] || 'Neukunde';
+        const rankBadge = `<span class="rank-badge rank-${effectiveRank}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${rankDisplayText}</span>`;
         document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
 
         // Fill form fields
@@ -28047,10 +28076,21 @@
             document.getElementById('customerProfileName').textContent =
               `${updatedCustomer.first_name || ''} ${updatedCustomer.last_name || ''}`.trim();
 
-            const updatedRankDisplay = updatedCustomer.rank?.toLowerCase() === 'bronze' ? 'New Customer' : updatedCustomer.rank;
-            const rankBadge = updatedCustomer.rank
-              ? `<span class="rank-badge rank-${updatedCustomer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${updatedRankDisplay}</span>`
-              : '';
+            // Fetch appointments to determine correct rank
+            const { data: appointments } = await supabase
+              .from('appointments')
+              .select('id')
+              .eq('customer_id', currentCustomerProfileId);
+
+            const rankLower = updatedCustomer.rank?.toLowerCase() || '';
+            const appointmentCount = appointments?.length || 0;
+            let effectiveRank = rankLower;
+            if (!rankLower || rankLower === 'bronze' || rankLower === 'neukunde' || rankLower === 'new_customer') {
+              effectiveRank = appointmentCount === 0 ? 'neukunde' : 'bronze';
+            }
+            const rankNames = { 'platin': 'Platin', 'platinum': 'Platin', 'gold': 'Gold', 'silber': 'Silber', 'silver': 'Silber', 'bronze': 'Bronze', 'neukunde': 'Neukunde' };
+            const updatedRankDisplay = rankNames[effectiveRank] || 'Neukunde';
+            const rankBadge = `<span class="rank-badge rank-${effectiveRank}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${updatedRankDisplay}</span>`;
             document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
           }
 
