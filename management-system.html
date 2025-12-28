@@ -1537,62 +1537,148 @@
     
     /* Request Management Styles */
     .request-item {
-      padding:16px;
-      border-radius:10px;
-      margin-bottom:8px;
-      cursor:pointer;
-      transition:all 0.2s;
-      border:1px solid rgba(0,0,0,0.06);
-      background:white;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      border: none;
+      background: #fff;
     }
     [data-theme="dark"] .request-item {
-      background:rgba(44, 44, 46, 0.5);
-      border-color:rgba(255, 255, 255, 0.1);
+      background: #1c1c1e;
     }
     .request-item:hover {
-      background:rgba(0,113,227,0.04);
-      border-color:var(--accent);
-      transform:translateX(2px);
+      background: #f5f5f7;
     }
     [data-theme="dark"] .request-item:hover {
-      background:rgba(72, 72, 74, 0.6);
-      border-color:rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
     }
-    .request-item.active {
-      background:rgba(0,113,227,0.08);
-      border-color:var(--accent);
-      box-shadow:0 2px 8px rgba(0,113,227,0.15);
+    .request-item.active,
+    .request-item.selected {
+      background: #e8e8ed;
     }
-    [data-theme="dark"] .request-item.active {
-      background:rgba(0,113,227,0.2);
-      border-color:var(--accent);
-      box-shadow:0 2px 8px rgba(0,113,227,0.3);
+    [data-theme="dark"] .request-item.active,
+    [data-theme="dark"] .request-item.selected {
+      background: rgba(255, 255, 255, 0.1);
     }
     .request-item.new-status {
-      background:#fff3cd;
-      border-color:#ffc107;
+      background: #fff3cd;
     }
     [data-theme="dark"] .request-item.new-status {
-      background:rgba(255, 193, 7, 0.2);
-      border-color:rgba(255, 193, 7, 0.5);
+      background: rgba(255, 193, 7, 0.2);
     }
     .request-item.old-status {
-      background:#e8e8ed;
-      border-color:#c7c7cc;
+      background: #e8e8ed;
     }
     [data-theme="dark"] .request-item.old-status {
-      background:#2c2c2e;
-      border-color:#48484a;
+      background: #2c2c2e;
     }
 
-    /* Request Card Styles (used in projects/analytics sections) */
+    /* Request Card Styles */
     .request-card {
-      background:rgba(255,255,255,0.7) !important;
-      border:1px solid rgba(0,0,0,0.1) !important;
+      background: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    .request-card:hover {
+      background: #f5f5f7;
+    }
+    .request-card.active,
+    .request-card.selected {
+      background: #e8e8ed;
     }
     [data-theme="dark"] .request-card {
-      background:rgba(44, 44, 46, 0.5) !important;
-      border-color:rgba(255, 255, 255, 0.1) !important;
+      background: #1c1c1e;
+    }
+    [data-theme="dark"] .request-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    [data-theme="dark"] .request-card.active,
+    [data-theme="dark"] .request-card.selected {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Request Card Header (ID · Rang · Status) */
+    .request-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #86868b;
+    }
+    .request-card-id {
+      font-weight: 600;
+      color: #1d1d1f;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    [data-theme="dark"] .request-card-id {
+      color: #f5f5f7;
+    }
+    .request-card-separator {
+      color: #d1d1d6;
+    }
+    .request-card-rank {
+      font-weight: 500;
+    }
+    .request-card-rank.platin,
+    .request-card-rank.platinum {
+      color: #5856D6;
+    }
+    .request-card-rank.gold {
+      color: #FF9500;
+    }
+    .request-card-rank.silber,
+    .request-card-rank.silver {
+      color: #8E8E93;
+    }
+    .request-card-rank.new-customer,
+    .request-card-rank.bronze {
+      color: #34C759;
+    }
+    .request-card-status {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    .request-card-status.new,
+    .request-card-status.open_request {
+      color: #FF3B30;
+    }
+    .request-card-status.pending {
+      color: #FF9500;
+    }
+    .request-card-status.scheduled {
+      color: #34C759;
+    }
+    .request-card-status.finished {
+      color: #8E8E93;
+    }
+    .request-card-status.canceled {
+      color: #FF3B30;
+    }
+    /* Request Card Body */
+    .request-card-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary, #1d1d1f);
+      margin-bottom: 4px;
+    }
+    .request-card-location {
+      font-size: 14px;
+      color: #86868b;
+      margin-bottom: 4px;
+    }
+    .request-card-date {
+      font-size: 13px;
+      color: #aeaeb2;
     }
 
     .request-header {
@@ -11678,7 +11764,7 @@
       <!-- Rank Filter -->
       <select id="customerRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
         <option value="">Alle Ranks</option>
-        <option value="Bronze">Bronze</option>
+        <option value="Bronze">New Customer</option>
         <option value="Silver">Silver</option>
         <option value="Gold">Gold</option>
         <option value="Platinum">Platinum</option>
@@ -13114,7 +13200,7 @@
           <label>Rank</label>
           <select id="addCustomerRank">
             <option value="">-- No Rank --</option>
-            <option value="Bronze">Bronze</option>
+            <option value="Bronze">New Customer</option>
             <option value="Silver">Silver</option>
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
@@ -13157,7 +13243,7 @@
           <label>Rank</label>
           <select id="editCustomerRank">
             <option value="">-- No Rank --</option>
-            <option value="Bronze">Bronze</option>
+            <option value="Bronze">New Customer</option>
             <option value="Silver">Silver</option>
             <option value="Gold">Gold</option>
             <option value="Platinum">Platinum</option>
@@ -13210,7 +13296,7 @@
             <label style="font-size:13px; color:var(--macos-text-secondary); display:block; margin-bottom:6px;">Rank</label>
             <select id="profileCustomerRank" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.2); border-radius:8px; font-size:14px;">
               <option value="">-- No Rank --</option>
-              <option value="Bronze">Bronze</option>
+              <option value="Bronze">New Customer</option>
               <option value="Silver">Silver</option>
               <option value="Gold">Gold</option>
               <option value="Platinum">Platinum</option>
@@ -21155,93 +21241,70 @@
         
         // Status display names mapping
         const statusNames = {
-          'open_request': 'New',
-          'pending': 'Pending',
-          'scheduled': 'Scheduled',
-          'finished': 'Finished',
-          'canceled': 'Canceled'
+          'open_request': 'NEW',
+          'pending': 'PENDING',
+          'scheduled': 'SCHEDULED',
+          'finished': 'FINISHED',
+          'canceled': 'CANCELED',
+          'no_show': 'NO SHOW'
         };
-        
+
+        // Rank display names mapping (Bronze → New Customer)
+        const rankNames = {
+          'platin': 'Platin',
+          'platinum': 'Platin',
+          'gold': 'Gold',
+          'silber': 'Silber',
+          'silver': 'Silber',
+          'bronze': 'New Customer',
+          '': 'New Customer',
+          'null': 'New Customer',
+          'undefined': 'New Customer'
+        };
+
         listEl.innerHTML = requests.map(req => {
           // Get customer name directly from requests table (first_name, last_name columns)
           const customerName = `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
 
-          // Customer rank badge
-          const rankBadge = req.customer?.rank
-            ? `<span class="rank-badge rank-${req.customer.rank.toLowerCase()}">${req.customer.rank}</span>`
-            : '';
+          // Customer rank - map bronze to new-customer class
+          const rank = req.customer?.rank || '';
+          const rankLower = rank.toLowerCase();
+          const rankDisplay = rankNames[rankLower] || 'New Customer';
+          const rankClass = rankLower === 'bronze' || !rankLower ? 'new-customer' : rankLower;
 
-          // Location badge
-          const locationBadge = req.location?.name
-            ? `<span style="font-size:11px; color:var(--muted);">${req.location.name}</span>`
-            : '';
+          // Location
+          const locationName = req.location?.name || '';
 
           // Request number or ID
-          const requestNumber = req.request_number || `#${req.id.substring(0, 8).toUpperCase()}`;
+          const requestNumber = req.request_number || `R${req.id.substring(0, 8).toUpperCase()}`;
 
-          // Priority badge
-          const priorityBadge = req.priority && req.priority !== 'normal'
-            ? `<span class="priority-badge ${req.priority}">
-                ${req.priority === 'urgent' ? '🔥' : req.priority === 'high' ? '⚡' : req.priority === 'low' ? '💤' : ''}
-                ${req.priority.toUpperCase()}
-              </span>`
-            : '';
+          // Status
+          const status = req.status || 'open_request';
+          const statusDisplay = statusNames[status] || status.toUpperCase();
+          const statusClass = status.replace('open_request', 'new');
 
-          // Instagram badge (from customer relation or request field)
-          const instagram = req.customer?.instagram || req.instagram;
-          const instagramBadge = instagram
-            ? `<span style="font-size:11px; color:var(--muted);">📷 @${instagram.replace('@', '')}</span>`
-            : '';
-
-          // Reference images indicator
-          const hasImages = req.reference_images && req.reference_images.length > 0;
-          const imagesBadge = hasImages
-            ? `<span style="font-size:11px; color:var(--accent);">🖼️ ${req.reference_images.length} ${req.reference_images.length === 1 ? 'Bild' : 'Bilder'}</span>`
-            : '';
-
-          // Artist preference tags
-          const artistPreferenceTags = req.artist_preference && req.artist_preference.trim()
-            ? req.artist_preference.split(',')
-                .map(name => name.trim())
-                .filter(name => name.length > 0)
-                .map(name => `<span class="artist-tag-small">${name}</span>`)
-                .join('')
-            : '';
-
-          // Check if request is older than 7 days
+          // Format date
           const createdAt = new Date(req.created_at);
+          const dateStr = createdAt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+                          ', ' + createdAt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+          // Check if request is older than 7 days (for background color)
           const now = new Date();
           const daysDiff = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
-          const statusClass = req.status === 'open_request'
-            ? (daysDiff < 7 ? 'new-status' : 'old-status')
-            : '';
+          const oldStatusClass = req.status === 'open_request' && daysDiff >= 7 ? 'old-status' : '';
 
           return `
-            <div class="request-item ${statusClass}" data-id="${req.id}">
-              <div class="request-header">
-                <div class="request-id">${requestNumber}</div>
-                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                  ${priorityBadge}
-                  <div class="request-badge ${req.status}">${statusNames[req.status] || req.status}</div>
-                  ${getCardStatusIndicator(req)}
-                </div>
+            <div class="request-item ${oldStatusClass}" data-id="${req.id}">
+              <div class="request-card-header">
+                <span class="request-card-id">#${requestNumber}</span>
+                <span class="request-card-separator">·</span>
+                <span class="request-card-rank ${rankClass}">${rankDisplay}</span>
+                <span class="request-card-separator">·</span>
+                <span class="request-card-status ${statusClass}">${statusDisplay}</span>
               </div>
-              <div class="request-name">
-                ${customerName}
-                ${rankBadge}
-              </div>
-              ${req.placement ? `<div style="font-size:12px; color:var(--muted); margin-top:4px;">${req.placement}</div>` : ''}
-              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
-                ${locationBadge}
-                ${instagramBadge}
-                ${imagesBadge}
-              </div>
-              ${artistPreferenceTags ? `
-                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
-                  ${artistPreferenceTags}
-                </div>
-              ` : ''}
-              <div class="request-date">${new Date(req.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              <div class="request-card-name">${customerName}</div>
+              ${locationName ? `<div class="request-card-location">${locationName}</div>` : ''}
+              <div class="request-card-date">${dateStr}</div>
               ${getDeletedCountdown(req)}
             </div>
           `;
@@ -24577,9 +24640,10 @@
         }
 
         tbody.innerHTML = customers.map(customer => {
-          // Rank badge
+          // Rank badge (Bronze → New Customer)
+          const rankDisplay = customer.rank?.toLowerCase() === 'bronze' ? 'New Customer' : customer.rank;
           const rankBadge = customer.rank
-            ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}">${customer.rank}</span>`
+            ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}">${rankDisplay}</span>`
             : '-';
 
           // Blacklist badge
@@ -27545,9 +27609,10 @@
         document.getElementById('customerProfileName').textContent =
           `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unnamed Customer';
 
-        // Render rank badge
+        // Render rank badge (Bronze → New Customer)
+        const rankDisplayText = customer.rank?.toLowerCase() === 'bronze' ? 'New Customer' : customer.rank;
         const rankBadge = customer.rank
-          ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${customer.rank}</span>`
+          ? `<span class="rank-badge rank-${customer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${rankDisplayText}</span>`
           : '';
         document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
 
@@ -27982,8 +28047,9 @@
             document.getElementById('customerProfileName').textContent =
               `${updatedCustomer.first_name || ''} ${updatedCustomer.last_name || ''}`.trim();
 
+            const updatedRankDisplay = updatedCustomer.rank?.toLowerCase() === 'bronze' ? 'New Customer' : updatedCustomer.rank;
             const rankBadge = updatedCustomer.rank
-              ? `<span class="rank-badge rank-${updatedCustomer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${updatedCustomer.rank}</span>`
+              ? `<span class="rank-badge rank-${updatedCustomer.rank.toLowerCase()}" style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;">${updatedRankDisplay}</span>`
               : '';
             document.getElementById('customerProfileRankBadge').innerHTML = rankBadge;
           }
