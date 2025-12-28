@@ -15340,7 +15340,8 @@
 
         // Große Tabellen - kleinere Batches, einfache Relations
         customers:     { batchSize: 2000, parallel: 2, relations: '*' },
-        requests:      { batchSize: 1000, parallel: 2, relations: '*, customer:customers(id, first_name, last_name, email, phone), artist:artists(id, name, email, is_guest), location:locations(id, name, city)' },
+        // ✅ WICHTIG: Requests von View laden für korrekten customer_rank
+        requests:      { batchSize: 2000, parallel: 2, relations: '*', viewName: 'request_cards_view' },
         projects:      { batchSize: 1000, parallel: 2, relations: '*' }
       },
 
@@ -15474,7 +15475,10 @@
 
         const normalizedName = this.normalizeTableName(tableName);
         const statusText = this.statusTexts[tableName] || `Lade ${tableName}...`;
-        console.log(`📥 Loading ${tableName} (expecting ${expectedCount} records)...`);
+
+        // ✅ NEU: Verwende View wenn konfiguriert (z.B. request_cards_view für requests)
+        const sourceTable = config.viewName || tableName;
+        console.log(`📥 Loading ${tableName} from ${sourceTable} (expecting ${expectedCount} records)...`);
 
         try {
           if (expectedCount === 0) {
@@ -15488,7 +15492,7 @@
             LoadingScreen.updateProgress(this.progress.currentPercent, statusText);
 
             const { data, error } = await supabase
-              .from(tableName)
+              .from(sourceTable)
               .select(config.relations)
               .order('created_at', { ascending: false });
 
@@ -15497,6 +15501,12 @@
             this.data[normalizedName] = data || [];
             this.progress.loadedRecords += expectedCount;
             this.updateProgressSmooth(statusText);
+
+            // ✅ Debug für requests
+            if (tableName === 'requests' && data?.length > 0) {
+              console.log('📊 Sample request with customer_rank:', data[0]);
+              console.log('📊 Unique ranks in requests:', [...new Set(data.map(r => r.customer_rank))]);
+            }
 
           } else {
             // Große Tabellen: Batch Loading mit Progress pro Batch
@@ -15512,7 +15522,7 @@
 
                 batchPromises.push(
                   supabase
-                    .from(tableName)
+                    .from(sourceTable)
                     .select(config.relations)
                     .order('created_at', { ascending: false })
                     .range(start, end)
@@ -15537,6 +15547,12 @@
             }
 
             this.data[normalizedName] = allData;
+
+            // ✅ Debug für requests
+            if (tableName === 'requests' && allData?.length > 0) {
+              console.log('📊 Sample request with customer_rank:', allData[0]);
+              console.log('📊 Unique ranks in requests:', [...new Set(allData.map(r => r.customer_rank))]);
+            }
           }
 
           this.loadingStatus.loadedTables.add(tableName);
@@ -20940,15 +20956,16 @@
 
           ProgressBar.updateProgress(5, 'Getting total count...');
 
+          // ✅ WICHTIG: Von request_cards_view laden für korrekten customer_rank
           const { count, error: countError } = await supabase
-            .from('requests')
+            .from('request_cards_view')
             .select('*', { count: 'exact', head: true });
 
           if (countError) throw countError;
 
           const totalRecords = count || 0;
           const totalBatches = Math.ceil(totalRecords / BATCH_SIZE);
-          console.log(`📊 Total requests: ${totalRecords}, loading in ${totalBatches} batches`);
+          console.log(`📊 Total requests from view: ${totalRecords}, loading in ${totalBatches} batches`);
 
           ProgressBar.updateProgress(10, `Loading ${totalRecords.toLocaleString()} requests...`);
 
@@ -20961,15 +20978,11 @@
               const start = (i + j) * BATCH_SIZE;
               const end = start + BATCH_SIZE - 1;
 
+              // ✅ View enthält bereits alle gejointen Felder (customer_rank, customer_name, location)
               batchPromises.push(
                 supabase
-                  .from('requests')
-                  .select(`
-                    *,
-                    customer:customers(id, first_name, last_name, email, phone, rank, instagram),
-                    artist:artists(id, name, email, instagram),
-                    location:locations!requests_location_id_fkey(id, name, city)
-                  `)
+                  .from('request_cards_view')
+                  .select('*')
                   .order('created_at', { ascending: false })
                   .range(start, end)
               );
@@ -20993,7 +21006,13 @@
           allRequests = allData || [];
           window.allRequests = allRequests;
           DataCache.set('requests', allRequests);
-          console.log(`✅ Loaded ${allRequests.length.toLocaleString()} total requests`);
+          console.log(`✅ Loaded ${allRequests.length.toLocaleString()} total requests from view`);
+
+          // ✅ Debug: Zeige vorhandene Ränge
+          if (allRequests.length > 0) {
+            console.log('📊 Sample request:', allRequests[0]);
+            console.log('📊 Unique customer_ranks:', [...new Set(allRequests.map(r => r.customer_rank))]);
+          }
           ProgressBar.updateProgress(70, 'Filtering and rendering...');
 
           // Filter by status
@@ -21359,19 +21378,20 @@
         };
 
         listEl.innerHTML = requests.map(req => {
-          // Get customer name directly from requests table (first_name, last_name columns)
-          const customerName = `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
+          // ✅ NEU: Felder direkt aus request_cards_view
+          // customer_name ist bereits gejoint in der View
+          const customerName = req.customer_name || `${req.first_name || ''} ${req.last_name || ''}`.trim() || 'Unbekannt';
 
-          // Customer rank - direkt aus Datenbank (bereits korrekt gesetzt)
-          const rank = req.customer?.rank || req.rank || '';
+          // ✅ customer_rank direkt aus View (Neukunde, Bronze, Silver, Gold, Platinum)
+          const rank = req.customer_rank || '';
           const rankDisplay = rankNames[rank] || 'Neukunde';
           const rankClass = rank?.toLowerCase() || 'neukunde';
 
-          // Location
-          const locationName = req.location?.name || '';
+          // ✅ location direkt aus View (bereits als String)
+          const locationName = req.location || req.location?.name || '';
 
-          // Request number or ID
-          const requestNumber = req.request_number || `R${req.id.substring(0, 8).toUpperCase()}`;
+          // ✅ request_id aus View (= request_number)
+          const requestNumber = req.request_id || req.request_number || `R${req.id?.substring(0, 8).toUpperCase() || ''}`;
 
           // Status
           const status = req.status || 'open_request';
