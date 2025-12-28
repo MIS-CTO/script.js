@@ -18352,6 +18352,13 @@
                   <div class="task-attachment-size">${formatFileSize(att.file_size)}</div>
                 </div>
                 <div class="task-attachment-actions">
+                  <a href="${att.file_url}" download="${att.file_name}" class="task-attachment-btn" title="Herunterladen">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </a>
                   <a href="${att.file_url}" target="_blank" class="task-attachment-btn" title="Öffnen">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -18558,6 +18565,13 @@
               <div class="task-attachment-size">${formatFileSize(att.file_size)}</div>
             </div>
             <div class="task-attachment-actions">
+              <a href="${att.file_url}" download="${att.file_name}" class="task-attachment-btn" title="Herunterladen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </a>
               <a href="${att.file_url}" target="_blank" class="task-attachment-btn" title="Öffnen">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -18728,24 +18742,34 @@
           }
 
           // 3. Upload neue Dateien
+          console.log('📎 Uploading to bucket: task-attachments');
+          console.log('📎 Files to upload:', pendingAttachments.length);
+
           const { data: { user } } = await supabase.auth.getUser();
 
           for (const file of pendingAttachments) {
             const fileExt = file.name.split('.').pop();
             const fileName = `${currentEditTaskId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            console.log('📎 Uploading file:', file.name, 'as:', fileName);
 
-            const { error: uploadError } = await supabase.storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
               .from('task-attachments')
               .upload(fileName, file);
 
+            console.log('📎 Upload result:', { uploadData, uploadError });
+
             if (uploadError) {
-              console.error('Upload error:', uploadError);
+              console.error('📎 Upload error details:', uploadError);
+              alert(`Fehler beim Hochladen von ${file.name}: ${uploadError.message}`);
               continue;
             }
 
-            const { data: { publicUrl } } = supabase.storage
+            const { data: urlData } = supabase.storage
               .from('task-attachments')
               .getPublicUrl(fileName);
+
+            console.log('📎 Public URL data:', urlData);
+            const publicUrl = urlData.publicUrl;
 
             await supabase.from('task_attachments').insert({
               task_id: currentEditTaskId,
@@ -18755,6 +18779,7 @@
               file_type: file.type,
               uploaded_by: user?.id
             });
+            console.log('📎 Attachment saved to database');
           }
 
           console.log('✅ Task updated successfully');
