@@ -4186,10 +4186,10 @@
     }
 
     /* ========================================
-       Task Edit Popup (wie Schwarzes Brett)
+       Task Popups (View, Edit, Add)
        ======================================== */
 
-    .task-edit-popup-overlay {
+    .task-popup-overlay {
       position: fixed;
       top: 0;
       left: 0;
@@ -4203,128 +4203,354 @@
       padding: 20px;
     }
 
-    .task-edit-popup {
+    .task-popup {
       background: #fff;
-      border-radius: 12px;
+      border-radius: 16px;
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
+      max-width: 480px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     }
 
-    [data-theme="dark"] .task-edit-popup {
-      background: #2c2c2e;
+    [data-theme="dark"] .task-popup {
+      background: #1c1c1e;
     }
 
-    .task-edit-popup-header {
+    .task-popup-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 20px;
+      padding: 20px 24px;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
     }
 
-    [data-theme="dark"] .task-edit-popup-header {
+    [data-theme="dark"] .task-popup-header {
+      background: #1c1c1e;
       border-bottom-color: rgba(255, 255, 255, 0.1);
     }
 
-    .task-edit-popup-close {
+    .task-popup-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .task-popup-close {
       background: none;
       border: none;
-      font-size: 18px;
+      font-size: 20px;
       color: #86868b;
       cursor: pointer;
       padding: 4px 8px;
-      border-radius: 4px;
-      transition: background-color 0.15s ease;
+      border-radius: 6px;
+      transition: all 0.15s ease;
     }
 
-    .task-edit-popup-close:hover {
+    .task-popup-close:hover {
       background: #f5f5f7;
       color: #1d1d1f;
     }
 
-    [data-theme="dark"] .task-edit-popup-close:hover {
+    [data-theme="dark"] .task-popup-close:hover {
       background: rgba(255, 255, 255, 0.1);
       color: #f5f5f7;
     }
 
-    .task-edit-popup-textarea {
-      width: 100%;
-      min-height: 100px;
-      padding: 16px 20px;
-      border: none;
-      font-size: 14px;
-      font-family: inherit;
-      resize: vertical;
-      background: transparent;
+    .task-popup-body {
+      padding: 24px;
+    }
+
+    .task-popup-section {
+      margin-bottom: 24px;
+    }
+
+    .task-popup-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .task-popup-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #86868b;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .task-popup-text {
+      font-size: 15px;
       color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .task-popup-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d1d6;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text-primary);
+      transition: border-color 0.15s ease;
       box-sizing: border-box;
     }
 
-    .task-edit-popup-textarea:focus {
+    .task-popup-input:focus {
       outline: none;
+      border-color: #007AFF;
     }
 
-    .task-edit-popup-textarea::placeholder {
+    [data-theme="dark"] .task-popup-input {
+      background: #2c2c2e;
+      border-color: #48484a;
+    }
+
+    .task-popup-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px 14px;
+      border: 1px solid #d1d1d6;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text-primary);
+      resize: vertical;
+      transition: border-color 0.15s ease;
+      box-sizing: border-box;
+    }
+
+    .task-popup-textarea:focus {
+      outline: none;
+      border-color: #007AFF;
+    }
+
+    [data-theme="dark"] .task-popup-textarea {
+      background: #2c2c2e;
+      border-color: #48484a;
+    }
+
+    /* Attachment Styles */
+    .task-attachments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .task-attachment-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f5f5f7;
+      border-radius: 10px;
+      transition: background-color 0.15s ease;
+    }
+
+    [data-theme="dark"] .task-attachment-item {
+      background: #2c2c2e;
+    }
+
+    .task-attachment-preview {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #e5e5ea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .task-attachment-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .task-attachment-preview.pdf {
+      background: #ff3b30;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .task-attachment-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-attachment-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .task-attachment-size {
+      font-size: 12px;
+      color: #86868b;
+      margin-top: 2px;
+    }
+
+    .task-attachment-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .task-attachment-btn {
+      background: none;
+      border: none;
+      padding: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #86868b;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .task-attachment-btn:hover {
+      background: #e5e5ea;
+      color: #1d1d1f;
+    }
+
+    .task-attachment-btn.delete:hover {
+      background: #fff5f5;
+      color: #ff3b30;
+    }
+
+    [data-theme="dark"] .task-attachment-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f5f5f7;
+    }
+
+    /* File Upload Area */
+    .task-file-upload {
+      border: 2px dashed #d1d1d6;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 12px;
+    }
+
+    .task-file-upload:hover {
+      border-color: #007AFF;
+      background: rgba(0, 122, 255, 0.05);
+    }
+
+    .task-file-upload.dragover {
+      border-color: #007AFF;
+      background: rgba(0, 122, 255, 0.1);
+    }
+
+    .task-file-upload-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .task-file-upload-text {
+      font-size: 14px;
       color: #86868b;
     }
 
-    .task-edit-popup-actions {
+    .task-file-upload-text strong {
+      color: #007AFF;
+    }
+
+    .task-file-upload-hint {
+      font-size: 12px;
+      color: #aeaeb2;
+      margin-top: 4px;
+    }
+
+    .task-file-upload input[type="file"] {
+      display: none;
+    }
+
+    .task-file-upload.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* Popup Actions */
+    .task-popup-actions {
       display: flex;
       gap: 12px;
-      padding: 16px 20px;
+      padding: 20px 24px;
       border-top: 1px solid rgba(0, 0, 0, 0.06);
       justify-content: flex-end;
     }
 
-    [data-theme="dark"] .task-edit-popup-actions {
+    [data-theme="dark"] .task-popup-actions {
       border-top-color: rgba(255, 255, 255, 0.1);
     }
 
-    .task-edit-popup-cancel {
-      background: transparent;
-      border: 1px solid #d1d1d6;
-      color: #1d1d1f;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 14px;
+    .task-popup-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 15px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .task-edit-popup-cancel:hover {
+    .task-popup-btn.secondary {
+      background: transparent;
+      border: 1px solid #d1d1d6;
+      color: #1d1d1f;
+    }
+
+    .task-popup-btn.secondary:hover {
       border-color: #86868b;
     }
 
-    [data-theme="dark"] .task-edit-popup-cancel {
+    [data-theme="dark"] .task-popup-btn.secondary {
       border-color: #48484a;
       color: #f5f5f7;
     }
 
-    .task-edit-popup-save {
+    .task-popup-btn.primary {
       background: #1d1d1f;
       border: none;
       color: #fff;
-      padding: 8px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
     }
 
-    .task-edit-popup-save:hover {
+    .task-popup-btn.primary:hover {
       background: #333;
     }
 
-    [data-theme="dark"] .task-edit-popup-save {
+    [data-theme="dark"] .task-popup-btn.primary {
       background: #0a84ff;
     }
 
-    [data-theme="dark"] .task-edit-popup-save:hover {
-      background: #409cff;
+    .task-popup-btn.primary:disabled {
+      background: #d1d1d6;
+      cursor: not-allowed;
+    }
+
+    /* No Attachments State */
+    .task-no-attachments {
+      text-align: center;
+      padding: 20px;
+      color: #86868b;
+      font-size: 14px;
     }
 
     /* Empty State */
@@ -17763,7 +17989,7 @@
           const tasksHtml = isMobileView ? tasks.map(task => `
             <div class="mobile-task-item ${task.is_completed ? 'completed' : ''}" data-task-id="${task.id}">
               <span class="mobile-task-checkbox ${task.is_completed ? 'completed' : ''}" onclick="event.stopPropagation(); toggleMobileTask('${task.id}', ${!task.is_completed}, '${project.id}')"></span>
-              <span class="mobile-task-title">${task.title}</span>
+              <span class="mobile-task-title" onclick="event.stopPropagation(); openTaskViewPopup('${task.id}')" style="cursor: pointer; flex: 1;">${task.title}</span>
             </div>
           `).join('') : '';
 
@@ -17980,14 +18206,14 @@
             <div class="todo-task-item ${completedClass}" data-task-id="${task.id}">
               <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
                 <input type="checkbox" class="todo-task-checkbox" ${task.is_completed ? 'checked' : ''} onchange="toggleTodoTask('${task.id}', this.checked)">
-                <span class="todo-task-title">${task.title}</span>
+                <span class="todo-task-title" onclick="openTaskViewPopup('${task.id}')" style="cursor: pointer; flex: 1; min-width: 0;">${task.title}</span>
               </div>
               <div class="todo-task-right">
                 ${assignee ? `<span class="todo-task-assignee">${assignee}</span>` : ''}
                 <div class="task-menu-container">
                   <button class="task-menu-trigger" onclick="toggleTaskMenu('${task.id}', event)">⋯</button>
                   <div class="task-menu-dropdown" id="taskMenu-${task.id}">
-                    <button class="task-menu-item" onclick="editTask('${task.id}')">
+                    <button class="task-menu-item" onclick="openTaskEditPopup('${task.id}')">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -18075,108 +18301,509 @@
         }
       }
 
-      async function editTask(taskId) {
-        // Schließe das Menü
-        document.querySelectorAll('.task-menu-dropdown.active').forEach(menu => {
-          menu.classList.remove('active');
-        });
+      // ============================================
+      // TASK VIEW POPUP (Nur Ansicht)
+      // ============================================
 
-        // Finde die Task-Daten
-        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
-        const taskTextElement = taskElement?.querySelector('.todo-task-title');
-        const currentText = taskTextElement?.textContent?.trim() || '';
+      async function openTaskViewPopup(taskId) {
+        // Lade Task-Daten
+        const { data: task, error: taskError } = await supabase
+          .from('project_tasks')
+          .select('*')
+          .eq('id', taskId)
+          .single();
 
-        // Erstelle das Edit-Popup (wie Schwarzes Brett)
-        const existingPopup = document.getElementById('taskEditPopup');
+        if (taskError || !task) {
+          console.error('Error loading task:', taskError);
+          return;
+        }
+
+        // Lade Attachments
+        const { data: attachments, error: attachError } = await supabase
+          .from('task_attachments')
+          .select('*')
+          .eq('task_id', taskId)
+          .order('created_at', { ascending: true });
+
+        if (attachError) {
+          console.error('Error loading attachments:', attachError);
+        }
+
+        // Entferne existierendes Popup
+        const existingPopup = document.getElementById('taskViewPopup');
         if (existingPopup) existingPopup.remove();
 
+        // Erstelle Popup
         const popup = document.createElement('div');
-        popup.id = 'taskEditPopup';
-        popup.className = 'task-edit-popup-overlay';
+        popup.id = 'taskViewPopup';
+        popup.className = 'task-popup-overlay';
+
+        const attachmentsHTML = attachments && attachments.length > 0
+          ? attachments.map(att => `
+              <div class="task-attachment-item">
+                <div class="task-attachment-preview ${att.file_type === 'application/pdf' ? 'pdf' : ''}">
+                  ${att.file_type === 'application/pdf'
+                    ? 'PDF'
+                    : `<img src="${att.file_url}" alt="${att.file_name}">`
+                  }
+                </div>
+                <div class="task-attachment-info">
+                  <div class="task-attachment-name">${att.file_name}</div>
+                  <div class="task-attachment-size">${formatFileSize(att.file_size)}</div>
+                </div>
+                <div class="task-attachment-actions">
+                  <a href="${att.file_url}" target="_blank" class="task-attachment-btn" title="Öffnen">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/>
+                      <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            `).join('')
+          : '<div class="task-no-attachments">Keine Anhänge vorhanden</div>';
+
         popup.innerHTML = `
-          <div class="task-edit-popup">
-            <div class="task-edit-popup-header">
-              <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Task bearbeiten</h4>
-              <button class="task-edit-popup-close" onclick="closeTaskEditPopup()">✕</button>
+          <div class="task-popup">
+            <div class="task-popup-header">
+              <h3 class="task-popup-title">Task Details</h3>
+              <button class="task-popup-close" onclick="closeTaskViewPopup()">✕</button>
             </div>
-            <textarea class="task-edit-popup-textarea" id="taskEditTextarea" placeholder="Task beschreiben...">${currentText}</textarea>
-            <div class="task-edit-popup-actions">
-              <button class="task-edit-popup-cancel" onclick="closeTaskEditPopup()">Abbrechen</button>
-              <button class="task-edit-popup-save" onclick="saveTaskEdit('${taskId}')">Speichern</button>
+            <div class="task-popup-body">
+              <div class="task-popup-section">
+                <label class="task-popup-label">Name</label>
+                <p class="task-popup-text">${task.title || 'Kein Titel'}</p>
+              </div>
+              <div class="task-popup-section">
+                <label class="task-popup-label">Beschreibung</label>
+                <p class="task-popup-text">${task.description || 'Keine Beschreibung'}</p>
+              </div>
+              <div class="task-popup-section">
+                <label class="task-popup-label">Anhänge (${attachments?.length || 0}/3)</label>
+                <div class="task-attachments-list">
+                  ${attachmentsHTML}
+                </div>
+              </div>
+            </div>
+            <div class="task-popup-actions">
+              <button class="task-popup-btn secondary" onclick="closeTaskViewPopup()">Schließen</button>
+              <button class="task-popup-btn primary" onclick="closeTaskViewPopup(); openTaskEditPopup('${taskId}');">Bearbeiten</button>
             </div>
           </div>
         `;
 
         document.body.appendChild(popup);
 
-        // Focus auf Textarea
-        setTimeout(() => {
-          const textarea = document.getElementById('taskEditTextarea');
-          if (textarea) {
-            textarea.focus();
-            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-          }
-        }, 100);
-
         // Schließen bei Klick auf Overlay
         popup.addEventListener('click', (e) => {
-          if (e.target === popup) {
-            closeTaskEditPopup();
-          }
+          if (e.target === popup) closeTaskViewPopup();
         });
 
         // Schließen bei Escape
-        const escHandler = (e) => {
-          if (e.key === 'Escape') {
-            closeTaskEditPopup();
-            document.removeEventListener('keydown', escHandler);
-          }
-        };
-        document.addEventListener('keydown', escHandler);
+        document.addEventListener('keydown', handleTaskViewEscape);
+      }
+
+      function handleTaskViewEscape(e) {
+        if (e.key === 'Escape') {
+          closeTaskViewPopup();
+        }
+      }
+
+      function closeTaskViewPopup() {
+        const popup = document.getElementById('taskViewPopup');
+        if (popup) popup.remove();
+        document.removeEventListener('keydown', handleTaskViewEscape);
+      }
+
+      // Expose to window
+      window.openTaskViewPopup = openTaskViewPopup;
+      window.closeTaskViewPopup = closeTaskViewPopup;
+
+      // ============================================
+      // TASK EDIT POPUP (Mit Datei-Upload)
+      // ============================================
+
+      let currentEditTaskId = null;
+      let pendingAttachments = []; // Neue Dateien zum Hochladen
+      let attachmentsToDelete = []; // Bestehende Dateien zum Löschen
+
+      async function openTaskEditPopup(taskId) {
+        currentEditTaskId = taskId;
+        pendingAttachments = [];
+        attachmentsToDelete = [];
+
+        // Schließe andere Popups/Menüs
+        closeTaskViewPopup();
+        document.querySelectorAll('.task-menu-dropdown.active').forEach(m => m.classList.remove('active'));
+
+        // Lade Task-Daten
+        const { data: task, error: taskError } = await supabase
+          .from('project_tasks')
+          .select('*')
+          .eq('id', taskId)
+          .single();
+
+        if (taskError || !task) {
+          console.error('Error loading task:', taskError);
+          alert('Fehler beim Laden der Task');
+          return;
+        }
+
+        // Lade bestehende Attachments
+        const { data: attachments, error: attachError } = await supabase
+          .from('task_attachments')
+          .select('*')
+          .eq('task_id', taskId)
+          .order('created_at', { ascending: true });
+
+        // Entferne existierendes Popup
+        const existingPopup = document.getElementById('taskEditPopup');
+        if (existingPopup) existingPopup.remove();
+
+        // Erstelle Popup
+        const popup = document.createElement('div');
+        popup.id = 'taskEditPopup';
+        popup.className = 'task-popup-overlay';
+
+        const currentAttachmentCount = attachments?.length || 0;
+
+        popup.innerHTML = `
+          <div class="task-popup">
+            <div class="task-popup-header">
+              <h3 class="task-popup-title">Task bearbeiten</h3>
+              <button class="task-popup-close" onclick="closeTaskEditPopup()">✕</button>
+            </div>
+            <div class="task-popup-body">
+              <div class="task-popup-section">
+                <label class="task-popup-label">Name</label>
+                <input type="text" class="task-popup-input" id="editTaskTitle" value="${task.title || ''}" placeholder="Task Name...">
+              </div>
+              <div class="task-popup-section">
+                <label class="task-popup-label">Beschreibung</label>
+                <textarea class="task-popup-textarea" id="editTaskDescription" placeholder="Beschreibung hinzufügen...">${task.description || ''}</textarea>
+              </div>
+              <div class="task-popup-section">
+                <label class="task-popup-label">Anhänge (<span id="attachmentCount">${currentAttachmentCount}</span>/3)</label>
+                <div class="task-attachments-list" id="editAttachmentsList">
+                  ${renderEditAttachments(attachments || [])}
+                </div>
+                <div class="task-file-upload ${currentAttachmentCount >= 3 ? 'disabled' : ''}" id="taskFileUpload" onclick="document.getElementById('taskFileInput').click()">
+                  <input type="file" id="taskFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" multiple onchange="handleTaskFileSelect(event)">
+                  <div class="task-file-upload-icon">📎</div>
+                  <div class="task-file-upload-text"><strong>Klicken</strong> oder Datei hierher ziehen</div>
+                  <div class="task-file-upload-hint">Bilder & PDFs, max. 8MB pro Datei</div>
+                </div>
+              </div>
+            </div>
+            <div class="task-popup-actions">
+              <button class="task-popup-btn secondary" onclick="closeTaskEditPopup()">Abbrechen</button>
+              <button class="task-popup-btn primary" onclick="saveTaskEdit()" id="saveTaskBtn">Speichern</button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(popup);
+
+        // Setup Drag & Drop
+        const uploadArea = document.getElementById('taskFileUpload');
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+          uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+          handleTaskFileSelect({ target: { files: e.dataTransfer.files } });
+        });
+
+        // Focus auf Title
+        setTimeout(() => document.getElementById('editTaskTitle')?.focus(), 100);
+
+        // Escape Handler
+        document.addEventListener('keydown', handleTaskEditEscape);
+      }
+
+      function handleTaskEditEscape(e) {
+        if (e.key === 'Escape') closeTaskEditPopup();
       }
 
       function closeTaskEditPopup() {
         const popup = document.getElementById('taskEditPopup');
         if (popup) popup.remove();
+        currentEditTaskId = null;
+        pendingAttachments = [];
+        attachmentsToDelete = [];
+        document.removeEventListener('keydown', handleTaskEditEscape);
       }
 
-      async function saveTaskEdit(taskId) {
-        const textarea = document.getElementById('taskEditTextarea');
-        const newText = textarea?.value?.trim();
+      function renderEditAttachments(attachments) {
+        if (!attachments || attachments.length === 0) {
+          return '';
+        }
 
-        if (!newText) {
-          alert('Task-Text darf nicht leer sein');
+        return attachments.map(att => `
+          <div class="task-attachment-item" data-attachment-id="${att.id}">
+            <div class="task-attachment-preview ${att.file_type === 'application/pdf' ? 'pdf' : ''}">
+              ${att.file_type === 'application/pdf'
+                ? 'PDF'
+                : `<img src="${att.file_url}" alt="${att.file_name}">`
+              }
+            </div>
+            <div class="task-attachment-info">
+              <div class="task-attachment-name">${att.file_name}</div>
+              <div class="task-attachment-size">${formatFileSize(att.file_size)}</div>
+            </div>
+            <div class="task-attachment-actions">
+              <a href="${att.file_url}" target="_blank" class="task-attachment-btn" title="Öffnen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </a>
+              <button class="task-attachment-btn delete" onclick="markAttachmentForDeletion('${att.id}')" title="Löschen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function handleTaskFileSelect(event) {
+        const files = Array.from(event.target.files || []);
+        const currentCount = document.querySelectorAll('#editAttachmentsList .task-attachment-item:not(.pending-delete)').length + pendingAttachments.length;
+        const maxFiles = 3;
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+        const maxSize = 8 * 1024 * 1024; // 8MB
+
+        for (const file of files) {
+          if (currentCount + pendingAttachments.length >= maxFiles) {
+            alert('Maximal 3 Anhänge pro Task erlaubt');
+            break;
+          }
+
+          if (!allowedTypes.includes(file.type)) {
+            alert(`Dateityp nicht erlaubt: ${file.name}\nErlaubt: Bilder (JPG, PNG, GIF, WebP) und PDFs`);
+            continue;
+          }
+
+          if (file.size > maxSize) {
+            alert(`Datei zu groß: ${file.name}\nMaximal 8MB pro Datei`);
+            continue;
+          }
+
+          pendingAttachments.push(file);
+          addPendingAttachmentToUI(file);
+        }
+
+        updateAttachmentCount();
+        event.target.value = ''; // Reset input
+      }
+
+      function addPendingAttachmentToUI(file) {
+        const list = document.getElementById('editAttachmentsList');
+        const item = document.createElement('div');
+        item.className = 'task-attachment-item pending';
+        item.dataset.fileName = file.name;
+
+        const isPdf = file.type === 'application/pdf';
+        let previewContent = 'PDF';
+
+        if (!isPdf) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = item.querySelector('.task-attachment-preview img');
+            if (img) img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+          previewContent = '<img src="" alt="Preview">';
+        }
+
+        item.innerHTML = `
+          <div class="task-attachment-preview ${isPdf ? 'pdf' : ''}">
+            ${previewContent}
+          </div>
+          <div class="task-attachment-info">
+            <div class="task-attachment-name">${file.name}</div>
+            <div class="task-attachment-size">${formatFileSize(file.size)} · Neu</div>
+          </div>
+          <div class="task-attachment-actions">
+            <button class="task-attachment-btn delete" onclick="removePendingAttachment('${file.name}')" title="Entfernen">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        `;
+
+        list.appendChild(item);
+      }
+
+      function removePendingAttachment(fileName) {
+        pendingAttachments = pendingAttachments.filter(f => f.name !== fileName);
+        const item = document.querySelector(`.task-attachment-item.pending[data-file-name="${fileName}"]`);
+        if (item) item.remove();
+        updateAttachmentCount();
+      }
+
+      function markAttachmentForDeletion(attachmentId) {
+        const item = document.querySelector(`[data-attachment-id="${attachmentId}"]`);
+        if (item) {
+          item.classList.add('pending-delete');
+          item.style.opacity = '0.4';
+          item.style.textDecoration = 'line-through';
+          attachmentsToDelete.push(attachmentId);
+        }
+        updateAttachmentCount();
+      }
+
+      function updateAttachmentCount() {
+        const existingCount = document.querySelectorAll('#editAttachmentsList .task-attachment-item:not(.pending-delete):not(.pending)').length;
+        const totalCount = existingCount + pendingAttachments.length;
+
+        const countEl = document.getElementById('attachmentCount');
+        if (countEl) countEl.textContent = totalCount;
+
+        const uploadArea = document.getElementById('taskFileUpload');
+        if (uploadArea) {
+          if (totalCount >= 3) {
+            uploadArea.classList.add('disabled');
+          } else {
+            uploadArea.classList.remove('disabled');
+          }
+        }
+      }
+
+      async function saveTaskEdit() {
+        if (!currentEditTaskId) return;
+
+        const title = document.getElementById('editTaskTitle')?.value?.trim();
+        const description = document.getElementById('editTaskDescription')?.value?.trim();
+
+        if (!title) {
+          alert('Bitte einen Task-Namen eingeben');
           return;
         }
 
+        const saveBtn = document.getElementById('saveTaskBtn');
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Speichern...';
+        }
+
         try {
-          const { error } = await supabase
+          // 1. Update Task
+          const { error: updateError } = await supabase
             .from('project_tasks')
-            .update({ title: newText })
-            .eq('id', taskId);
+            .update({ title, description })
+            .eq('id', currentEditTaskId);
 
-          if (error) throw error;
+          if (updateError) throw updateError;
 
-          console.log('✅ Task updated:', taskId);
+          // 2. Delete marked attachments
+          for (const attachmentId of attachmentsToDelete) {
+            const { data: att } = await supabase
+              .from('task_attachments')
+              .select('file_url')
+              .eq('id', attachmentId)
+              .single();
+
+            if (att?.file_url) {
+              // Extrahiere Pfad aus URL
+              const urlParts = att.file_url.split('/task-attachments/');
+              if (urlParts[1]) {
+                await supabase.storage.from('task-attachments').remove([urlParts[1]]);
+              }
+            }
+
+            await supabase.from('task_attachments').delete().eq('id', attachmentId);
+          }
+
+          // 3. Upload neue Dateien
+          const { data: { user } } = await supabase.auth.getUser();
+
+          for (const file of pendingAttachments) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${currentEditTaskId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('task-attachments')
+              .upload(fileName, file);
+
+            if (uploadError) {
+              console.error('Upload error:', uploadError);
+              continue;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('task-attachments')
+              .getPublicUrl(fileName);
+
+            await supabase.from('task_attachments').insert({
+              task_id: currentEditTaskId,
+              file_url: publicUrl,
+              file_name: file.name,
+              file_size: file.size,
+              file_type: file.type,
+              uploaded_by: user?.id
+            });
+          }
+
+          console.log('✅ Task updated successfully');
           closeTaskEditPopup();
+
+          // Refresh Tasks
+          if (window.selectedProjectId && typeof loadProjectTasks === 'function') {
+            await loadProjectTasks(window.selectedProjectId);
+          } else if (typeof loadTodoProjects === 'function') {
+            await loadTodoProjects();
+          }
 
           // Update local state and refresh
           if (selectedTodoProject) {
-            const taskIdx = selectedTodoProject.tasks?.findIndex(t => t.id === taskId);
+            const taskIdx = selectedTodoProject.tasks?.findIndex(t => t.id === currentEditTaskId);
             if (taskIdx !== -1) {
-              selectedTodoProject.tasks[taskIdx].title = newText;
+              selectedTodoProject.tasks[taskIdx].title = title;
+              selectedTodoProject.tasks[taskIdx].description = description;
             }
           }
           renderTodoTasks();
+
         } catch (err) {
-          console.error('❌ Error updating task:', err);
-          alert('Fehler beim Aktualisieren der Task');
+          console.error('❌ Error saving task:', err);
+          alert('Fehler beim Speichern');
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Speichern';
+          }
         }
       }
 
-      // Expose popup functions to window
+      // Hilfsfunktion: Dateigröße formatieren
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      }
+
+      // Expose to window
+      window.openTaskEditPopup = openTaskEditPopup;
       window.closeTaskEditPopup = closeTaskEditPopup;
+      window.handleTaskFileSelect = handleTaskFileSelect;
+      window.removePendingAttachment = removePendingAttachment;
+      window.markAttachmentForDeletion = markAttachmentForDeletion;
       window.saveTaskEdit = saveTaskEdit;
+      window.formatFileSize = formatFileSize;
 
       async function deleteTask(taskId) {
         // Schließe das Menü
@@ -18230,7 +18857,6 @@
 
       // Expose to window
       window.toggleTaskMenu = toggleTaskMenu;
-      window.editTask = editTask;
       window.deleteTask = deleteTask;
 
       // Open Edit Modal
