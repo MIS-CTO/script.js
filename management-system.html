@@ -5118,41 +5118,46 @@
       }
     }
 
-    /* Customer Rank Badges */
+    /* Customer Rank Badges (wie Request Cards) */
     .rank-badge {
       display: inline-block;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-left: 6px;
-      vertical-align: middle;
+      letter-spacing: 0.3px;
+      color: #fff;
     }
 
-    .rank-badge.rank-platinum {
-      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-      color: #1d1d1f;
-      box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+    /* Neukunde - Navy Blau */
+    .rank-badge.rank-neukunde,
+    .rank-badge.neukunde {
+      background: #1e3a5f;
     }
 
-    .rank-badge.rank-gold {
-      background: #FF8C00;
-      color: white;
-      box-shadow: 0 2px 4px rgba(255, 140, 0, 0.3);
+    /* Bronze - Kupfer Gradient */
+    .rank-badge.rank-bronze,
+    .rank-badge.bronze {
+      background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%);
     }
 
-    .rank-badge.rank-silver {
-      background: #C0C0C0;
-      color: #1d1d1f;
-      box-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);
+    /* Silver - Silber Gradient */
+    .rank-badge.rank-silver,
+    .rank-badge.silver {
+      background: linear-gradient(135deg, #A8A9AD 0%, #71706E 100%);
     }
 
-    .rank-badge.rank-bronze {
-      background: #CD7F32;
-      color: white;
-      box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
+    /* Gold - Gold Gradient */
+    .rank-badge.rank-gold,
+    .rank-badge.gold {
+      background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
+    }
+
+    /* Platinum - Lila Gradient */
+    .rank-badge.rank-platinum,
+    .rank-badge.platinum {
+      background: linear-gradient(135deg, #7C6FB5 0%, #5856D6 100%);
     }
 
     /* Artist Rank Badges */
@@ -24527,22 +24532,22 @@
         }
 
         tbody.innerHTML = artists.map(artist => {
-          // ✅ FIXED: Show location from city_location field (text) or location relation
+          // Show location from city_location field (text) or location relation
           const locationDisplay = artist.city_location
             ? `<span class="location-badge">${artist.city_location}</span>`
             : (artist.location && artist.location.name)
               ? `<span class="location-badge">${artist.location.name}</span>`
-              : '<span style="color:#E53935;">⚠️ Keine</span>';
+              : '<span style="color:#8E8E93;">Keine</span>';
 
           return `
             <tr>
               <td>${artist.name || '-'}</td>
               <td>${artist.instagram ? `<span style="color:var(--muted); font-size:13px;">@${artist.instagram}</span>` : '-'}</td>
               <td>${artist.phone || '-'}</td>
-              <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? '👥 Guest' : '🏠 Resident'}</span></td>
+              <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
               <td>${locationDisplay}</td>
               <td><span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span></td>
-              <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? '✅ Aktiv' : '❌ Inaktiv'}</span></td>
+              <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? 'Aktiv' : 'Inaktiv'}</span></td>
               <td style="text-align:right;">
                 <button class="btn btn-primary" onclick="viewArtistProfile('${artist.id}')" style="padding:6px 16px; font-size:13px; background:#1d1d1f; color:white;">View Profile</button>
               </td>
