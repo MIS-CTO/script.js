@@ -26148,7 +26148,67 @@
       document.getElementById('datePickerInput').addEventListener('change', async (e) => {
         await changeDateAndReloadIfNeeded(new Date(e.target.value));
       });
-      
+
+      // ============================================
+      // CALENDAR KEYBOARD NAVIGATION (← → T)
+      // ============================================
+      document.addEventListener('keydown', async (e) => {
+        // Nur wenn Calendar Tab aktiv ist
+        const calendarSection = document.getElementById('calendar-section');
+        const isCalendarVisible = calendarSection &&
+          calendarSection.style.display !== 'none' &&
+          !calendarSection.classList.contains('hidden') &&
+          calendarSection.offsetParent !== null;
+
+        if (!isCalendarVisible) return;
+
+        // Nicht wenn User in Input/Textarea tippt
+        const activeElement = document.activeElement;
+        const isTyping = activeElement && (
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable
+        );
+
+        if (isTyping) return;
+
+        // Nicht wenn Modal/Popup offen ist
+        const hasOpenModal = document.querySelector('.modal.active, .modal.show, .popup-overlay, .slot-popup-overlay, .task-popup-overlay, .event-popup-overlay');
+        if (hasOpenModal) return;
+
+        // Pfeiltaste Links → Previous Day
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const prevBtn = document.getElementById('prevDayBtn');
+          if (prevBtn) {
+            prevBtn.click();
+            console.log('⬅️ Calendar: Previous (keyboard)');
+          }
+        }
+
+        // Pfeiltaste Rechts → Next Day
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          const nextBtn = document.getElementById('nextDayBtn');
+          if (nextBtn) {
+            nextBtn.click();
+            console.log('➡️ Calendar: Next (keyboard)');
+          }
+        }
+
+        // "T" für Today (ohne Modifier)
+        if ((e.key === 't' || e.key === 'T') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          e.preventDefault();
+          const todayBtn = document.getElementById('todayBtn');
+          if (todayBtn) {
+            todayBtn.click();
+            console.log('📅 Calendar: Today (keyboard)');
+          }
+        }
+      });
+
+      console.log('⌨️ Calendar keyboard navigation enabled (← → T)');
+
       // Add Artist Button - Opens Add Artist Modal
       document.getElementById('addArtistBtn')?.addEventListener('click', async () => {
         // Populate location dropdown
