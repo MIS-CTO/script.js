@@ -17094,18 +17094,15 @@
         }
 
         // Check all permissions in parallel for faster load
+        // NOTE: Artists and Customers management is always allowed (no permission check)
         const [
           canCreateBooking,
           canCreateEvent,
-          canManageArtists,
-          canManageCustomers,
           canManageRequests,
           canManageDienstplan
         ] = await Promise.all([
           userHasPermission('calendar.create_booking'),
           userHasPermission('calendar.create_event'),
-          userHasPermission('artists.manage'),
-          userHasPermission('customers.manage'),
           userHasPermission('requests.manage'),
           userHasPermission('dienstplan.manage')
         ]);
@@ -17113,8 +17110,6 @@
         console.log('Permissions loaded:', {
           canCreateBooking,
           canCreateEvent,
-          canManageArtists,
-          canManageCustomers,
           canManageRequests,
           canManageDienstplan
         });
@@ -17130,15 +17125,7 @@
           createEventBtns.forEach(btn => btn.style.display = 'none');
         }
 
-        if (!canManageArtists) {
-          const artistBtns = document.querySelectorAll('#addArtistBtn, [onclick*="addArtist"], [onclick*="editArtist"], [onclick*="deleteArtist"]');
-          artistBtns.forEach(btn => btn.style.display = 'none');
-        }
-
-        if (!canManageCustomers) {
-          const customerBtns = document.querySelectorAll('#addCustomerBtn, [onclick*="addCustomer"], [onclick*="editCustomer"], [onclick*="deleteCustomer"]');
-          customerBtns.forEach(btn => btn.style.display = 'none');
-        }
+        // NOTE: Artists and Customers buttons are ALWAYS visible (no permission check)
 
         if (!canManageRequests) {
           const requestBtns = document.querySelectorAll('[onclick*="assignRequest"], [onclick*="scheduleAppointment"]');
@@ -17159,17 +17146,10 @@
     }
 
     function hideManagementButtons() {
+      // NOTE: Artist and Customer buttons are ALWAYS visible (removed from selectors)
       const selectors = [
         '[onclick*="createBooking"]',
         '[onclick*="createEvent"]',
-        '#addArtistBtn',
-        '[onclick*="addArtist"]',
-        '[onclick*="editArtist"]',
-        '[onclick*="deleteArtist"]',
-        '#addCustomerBtn',
-        '[onclick*="addCustomer"]',
-        '[onclick*="editCustomer"]',
-        '[onclick*="deleteCustomer"]',
         '[onclick*="assignRequest"]',
         '[onclick*="scheduleAppointment"]'
       ];
