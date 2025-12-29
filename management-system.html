@@ -29949,22 +29949,22 @@
           return;
         }
 
-        // Load completed projects (finished appointments)
+        // Load completed projects (finished appointments) - check both state and status fields
         const { data: completedProjects } = await supabase
           .from('appointments')
-          .select('id, project_number, state, start, customer_id, first_name, last_name, placement')
+          .select('id, project_number, state, status, start, customer_id, first_name, last_name, placement')
           .eq('artist_id', artistId)
-          .eq('state', 'Finished')
+          .or('state.eq.Finished,state.eq.finished,status.eq.finished')
           .order('start', { ascending: false })
           .limit(10);
 
-        // Load guest spots (from dienstplan where artist is guest)
+        // Load upcoming shifts from dienstplan (no shift_type filter - column doesn't exist)
         const { data: guestSpots } = await supabase
           .from('dienstplan')
-          .select('id, date, start_time, end_time, location_id, locations(name), note')
+          .select('id, date, start_time, end_time, location_id, note')
           .eq('artist_id', artistId)
-          .eq('shift_type', 'guest')
-          .order('date', { ascending: false })
+          .gte('date', new Date().toISOString().split('T')[0])
+          .order('date', { ascending: true })
           .limit(10);
 
         // Render artist profile with tabs
@@ -30017,7 +30017,7 @@
             </button>
             <button id="artistGuestSpotsTab" onclick="switchArtistTab('guestspots')"
               style="flex:1; padding:10px; background:#f5f5f7; color:#1d1d1f; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;">
-              Guest Spots (${guestSpots?.length || 0})
+              Shifts (${guestSpots?.length || 0})
             </button>
           </div>
 
@@ -30039,23 +30039,20 @@
             `).join('') : '<p style="text-align:center; color:#86868b; font-size:13px;">No completed projects</p>'}
           </div>
 
-          <!-- Guest Spots Tab Content -->
+          <!-- Shifts Tab Content -->
           <div id="artistGuestSpotsContent" style="display:none;">
             ${guestSpots && guestSpots.length > 0 ? guestSpots.map(spot => `
               <div style="background:#fafafa; padding:12px; border-radius:8px; margin-bottom:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:13px; font-weight:600; color:#1d1d1f;">${spot.locations?.name || 'Unknown Location'}</span>
-                  <span style="padding:3px 8px; background:#5856d6; color:white; border-radius:10px; font-size:10px; font-weight:600;">Guest</span>
+                  <span style="font-size:13px; font-weight:600; color:#1d1d1f;">${spot.date ? new Date(spot.date).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }) : 'No Date'}</span>
+                  <span style="padding:3px 8px; background:#007aff; color:white; border-radius:10px; font-size:10px; font-weight:600;">Shift</span>
                 </div>
                 <div style="font-size:12px; color:#86868b;">
                   ${spot.start_time || ''} - ${spot.end_time || ''}
                 </div>
-                <div style="font-size:11px; color:#aeaeb2; margin-top:4px;">
-                  ${spot.date ? new Date(spot.date).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
-                </div>
                 ${spot.note ? `<div style="font-size:11px; color:#1d1d1f; margin-top:6px; font-style:italic;">"${spot.note}"</div>` : ''}
               </div>
-            `).join('') : '<p style="text-align:center; color:#86868b; font-size:13px;">No guest spots found</p>'}
+            `).join('') : '<p style="text-align:center; color:#86868b; font-size:13px;">No upcoming shifts</p>'}
           </div>
         `;
 
