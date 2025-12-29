@@ -12637,6 +12637,30 @@
         <!-- Locations will be loaded dynamically -->
       </select>
 
+      <!-- View Toggle Button (List / Month / Year) -->
+      <button id="guestspotViewToggleBtn" onclick="toggleGuestspotView()" style="
+        padding:8px 12px;
+        border:1px solid rgba(0,0,0,0.1);
+        border-radius:8px;
+        background:white;
+        cursor:pointer;
+        color:#1d1d1f;
+        font-size:14px;
+        height:37px;
+        display:flex;
+        align-items:center;
+        gap:6px;
+        transition:all 0.2s;
+      " onmouseover="this.style.background='#f5f5f7';" onmouseout="this.style.background='white';">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span id="guestspotViewLabel">List</span>
+      </button>
+
       <!-- Add Slot Button (for Waitlist and Upcoming) -->
       <button id="addWaitlistSlotButton" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
         <span style="font-size:18px; font-weight:600;">+</span>
@@ -12681,6 +12705,34 @@
     <!-- Active Slots Display -->
     <div id="waitlistSlotsContainer">
       <!-- Slots will be rendered here -->
+    </div>
+
+    <!-- Month View Container (initially hidden) -->
+    <div id="guestspotMonthViewContainer" style="display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <button onclick="changeGuestspotMonth(-1)" style="padding:8px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer; font-size:14px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h3 id="guestspotMonthTitle" style="margin:0; font-size:20px; font-weight:600;"></h3>
+        <button onclick="changeGuestspotMonth(1)" style="padding:8px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer; font-size:14px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div id="guestspotMonthGrid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;"></div>
+    </div>
+
+    <!-- Year View Container (initially hidden) -->
+    <div id="guestspotYearViewContainer" style="display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <button onclick="changeGuestspotYear(-1)" style="padding:8px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer; font-size:14px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h3 id="guestspotYearTitle" style="margin:0; font-size:20px; font-weight:600;"></h3>
+        <button onclick="changeGuestspotYear(1)" style="padding:8px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer; font-size:14px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div id="guestspotYearGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;"></div>
     </div>
 
     <!-- Empty State -->
@@ -38392,6 +38444,9 @@
 
         if (!container) return;
 
+        // Cache slots for calendar views
+        guestspotCachedSlots = slots || [];
+
         // Show empty state if no slots
         if (!slots || slots.length === 0) {
           container.innerHTML = '';
@@ -38496,18 +38551,23 @@
                     onclick="viewArtistProfile('${slot.artist_id}')"
                     style="
                       padding:8px 12px;
-                      border:1px solid #007aff;
+                      border:none;
                       border-radius:8px;
-                      background:var(--macos-elevated);
+                      background:#1d1d1f;
                       cursor:pointer;
-                      color:#007aff;
+                      color:#fff;
                       font-size:14px;
+                      font-weight:500;
                       transition:all 0.2s;
+                      display:inline-flex;
+                      align-items:center;
+                      gap:6px;
                     "
-                    onmouseover="this.style.background='#007aff'; this.style.color='white';"
-                    onmouseout="this.style.background='var(--macos-elevated)'; this.style.color='#007aff';"
+                    onmouseover="this.style.background='#333';"
+                    onmouseout="this.style.background='#1d1d1f';"
                   >
-                    👤 Profile
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Profile
                   </button>
                   <button
                     class="edit-slot-button"
@@ -38520,17 +38580,22 @@
                     data-share-paid="${slot.share_paid || false}"
                     style="
                       padding:8px 12px;
-                      border:1px solid var(--border-color);
+                      border:none;
                       border-radius:8px;
-                      background:var(--macos-elevated);
+                      background:rgba(142, 142, 147, 0.12);
                       cursor:pointer;
-                      color:#007aff;
+                      color:#86868b;
                       font-size:14px;
+                      font-weight:500;
                       transition:all 0.2s;
+                      display:inline-flex;
+                      align-items:center;
+                      gap:6px;
                     "
-                    onmouseover="this.style.background='rgba(142, 142, 147, 0.12)'"
-                    onmouseout="this.style.background='var(--macos-elevated)'"
+                    onmouseover="this.style.background='rgba(142, 142, 147, 0.2)'; this.style.color='#1d1d1f';"
+                    onmouseout="this.style.background='rgba(142, 142, 147, 0.12)'; this.style.color='#86868b';"
                   >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Edit${slotCount > 1 ? ` (${slotCount})` : ''}
                   </button>
                   <button
@@ -38538,17 +38603,22 @@
                     data-slot-ids='${JSON.stringify(allSlotIds)}'
                     style="
                       padding:8px 12px;
-                      border:1px solid #ff3b30;
+                      border:none;
                       border-radius:8px;
-                      background:var(--macos-elevated);
+                      background:#ff3b30;
                       cursor:pointer;
-                      color:#ff3b30;
+                      color:#fff;
                       font-size:14px;
+                      font-weight:500;
                       transition:all 0.2s;
+                      display:inline-flex;
+                      align-items:center;
+                      gap:6px;
                     "
-                    onmouseover="this.style.background='rgba(255, 59, 48, 0.1)'"
-                    onmouseout="this.style.background='var(--macos-elevated)'"
+                    onmouseover="this.style.background='#e6352b';"
+                    onmouseout="this.style.background='#ff3b30';"
                   >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     Delete${slotCount > 1 ? ` (${slotCount})` : ''}
                   </button>
                   <button
@@ -38557,19 +38627,24 @@
                     data-current-status="${slot.share_paid || false}"
                     style="
                       padding:8px 12px;
-                      border:1px solid ${slot.share_paid ? '#34c759' : '#ff3b30'};
+                      border:none;
                       border-radius:8px;
-                      background:var(--macos-elevated);
+                      background:#1d1d1f;
                       cursor:pointer;
                       color:${slot.share_paid ? '#34c759' : '#ff3b30'};
                       font-size:14px;
                       font-weight:600;
                       transition:all 0.2s;
+                      display:inline-flex;
+                      align-items:center;
+                      gap:6px;
                     "
-                    onmouseover="this.style.background='${slot.share_paid ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 59, 48, 0.1)'}'"
-                    onmouseout="this.style.background='var(--macos-elevated)'"
+                    onmouseover="this.style.background='#333';"
+                    onmouseout="this.style.background='#1d1d1f';"
                   >
-                    ${slot.share_paid ? '✅ Paid' : '❌ Unpaid'}
+                    ${slot.share_paid
+                      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Paid'
+                      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Unpaid'}
                   </button>
                   ${currentListType === 'upcoming' ? `
                   <button
@@ -44493,6 +44568,211 @@
         initMobileDienstplan();
       }
     }
+
+    // ============================================
+    // Guestspot View Toggle (List / Month / Year)
+    // ============================================
+    let guestspotCurrentView = 'list'; // 'list', 'month', 'year'
+    let guestspotViewMonth = new Date();
+    let guestspotViewYear = new Date().getFullYear();
+    let guestspotCachedSlots = [];
+
+    function toggleGuestspotView() {
+      const views = ['list', 'month', 'year'];
+      const currentIndex = views.indexOf(guestspotCurrentView);
+      guestspotCurrentView = views[(currentIndex + 1) % views.length];
+
+      updateGuestspotViewUI();
+    }
+
+    function updateGuestspotViewUI() {
+      const listContainer = document.getElementById('waitlistSlotsContainer');
+      const monthContainer = document.getElementById('guestspotMonthViewContainer');
+      const yearContainer = document.getElementById('guestspotYearViewContainer');
+      const viewLabel = document.getElementById('guestspotViewLabel');
+      const emptyState = document.getElementById('waitlistEmptyState');
+
+      // Hide all containers first
+      if (listContainer) listContainer.style.display = 'none';
+      if (monthContainer) monthContainer.style.display = 'none';
+      if (yearContainer) yearContainer.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'none';
+
+      // Update label
+      const labels = { list: 'List', month: 'Month', year: 'Year' };
+      if (viewLabel) viewLabel.textContent = labels[guestspotCurrentView];
+
+      // Show appropriate container
+      if (guestspotCurrentView === 'list') {
+        if (listContainer) listContainer.style.display = 'block';
+        // Show empty state if no slots
+        if (guestspotCachedSlots.length === 0 && emptyState) {
+          emptyState.style.display = 'block';
+        }
+      } else if (guestspotCurrentView === 'month') {
+        if (monthContainer) monthContainer.style.display = 'block';
+        renderGuestspotMonthView();
+      } else if (guestspotCurrentView === 'year') {
+        if (yearContainer) yearContainer.style.display = 'block';
+        renderGuestspotYearView();
+      }
+    }
+
+    function changeGuestspotMonth(delta) {
+      guestspotViewMonth.setMonth(guestspotViewMonth.getMonth() + delta);
+      renderGuestspotMonthView();
+    }
+
+    function changeGuestspotYear(delta) {
+      guestspotViewYear += delta;
+      renderGuestspotYearView();
+    }
+
+    function renderGuestspotMonthView() {
+      const titleEl = document.getElementById('guestspotMonthTitle');
+      const gridEl = document.getElementById('guestspotMonthGrid');
+
+      if (!titleEl || !gridEl) return;
+
+      const year = guestspotViewMonth.getFullYear();
+      const month = guestspotViewMonth.getMonth();
+
+      // Set title
+      titleEl.textContent = guestspotViewMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+
+      // Get first day and days in month
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+
+      // Create slots lookup by date
+      const slotsByDate = {};
+      guestspotCachedSlots.forEach(slot => {
+        if (slot.date_from && slot.date_to) {
+          const from = new Date(slot.date_from);
+          const to = new Date(slot.date_to);
+          for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+            const key = d.toISOString().split('T')[0];
+            if (!slotsByDate[key]) slotsByDate[key] = [];
+            slotsByDate[key].push(slot);
+          }
+        }
+      });
+
+      // Build grid
+      let html = '';
+
+      // Day headers
+      const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      dayNames.forEach(day => {
+        html += `<div style="text-align:center; font-size:12px; font-weight:600; color:#86868b; padding:8px 0;">${day}</div>`;
+      });
+
+      // Empty cells before first day
+      for (let i = 0; i < startDayOfWeek; i++) {
+        html += '<div></div>';
+      }
+
+      // Days
+      const today = new Date().toISOString().split('T')[0];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const slots = slotsByDate[dateStr] || [];
+        const isToday = dateStr === today;
+        const hasSlots = slots.length > 0;
+
+        html += `
+          <div style="
+            aspect-ratio:1;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            border-radius:8px;
+            background:${hasSlots ? 'rgba(52, 199, 89, 0.15)' : 'transparent'};
+            border:${isToday ? '2px solid #007aff' : '1px solid transparent'};
+            cursor:${hasSlots ? 'pointer' : 'default'};
+            transition:all 0.2s;
+          " ${hasSlots ? `onclick="showGuestspotDayDetail('${dateStr}')"` : ''}>
+            <span style="font-size:14px; font-weight:${isToday ? '700' : '500'}; color:${isToday ? '#007aff' : 'var(--ink)'};">${day}</span>
+            ${hasSlots ? `<span style="font-size:10px; color:#34c759; font-weight:600;">${slots.length}</span>` : ''}
+          </div>
+        `;
+      }
+
+      gridEl.innerHTML = html;
+    }
+
+    function renderGuestspotYearView() {
+      const titleEl = document.getElementById('guestspotYearTitle');
+      const gridEl = document.getElementById('guestspotYearGrid');
+
+      if (!titleEl || !gridEl) return;
+
+      titleEl.textContent = guestspotViewYear.toString();
+
+      // Count slots per month
+      const slotsByMonth = {};
+      guestspotCachedSlots.forEach(slot => {
+        if (slot.date_from) {
+          const date = new Date(slot.date_from);
+          if (date.getFullYear() === guestspotViewYear) {
+            const month = date.getMonth();
+            slotsByMonth[month] = (slotsByMonth[month] || 0) + 1;
+          }
+        }
+      });
+
+      // Build grid
+      const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      let html = monthNames.map((name, index) => {
+        const count = slotsByMonth[index] || 0;
+        const isCurrent = index === currentMonth && guestspotViewYear === currentYear;
+
+        return `
+          <div onclick="guestspotViewMonth = new Date(${guestspotViewYear}, ${index}, 1); guestspotCurrentView = 'month'; updateGuestspotViewUI();" style="
+            padding:20px;
+            border-radius:12px;
+            background:${count > 0 ? 'rgba(52, 199, 89, 0.1)' : 'var(--macos-elevated)'};
+            border:${isCurrent ? '2px solid #007aff' : '1px solid var(--border-color)'};
+            cursor:pointer;
+            text-align:center;
+            transition:all 0.2s;
+          " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+            <div style="font-size:16px; font-weight:600; color:var(--ink);">${name}</div>
+            ${count > 0 ? `<div style="font-size:24px; font-weight:700; color:#34c759; margin-top:8px;">${count}</div>` : '<div style="font-size:13px; color:#86868b; margin-top:8px;">-</div>'}
+          </div>
+        `;
+      }).join('');
+
+      gridEl.innerHTML = html;
+    }
+
+    function showGuestspotDayDetail(dateStr) {
+      const slots = guestspotCachedSlots.filter(slot => {
+        if (!slot.date_from || !slot.date_to) return false;
+        const from = new Date(slot.date_from).toISOString().split('T')[0];
+        const to = new Date(slot.date_to).toISOString().split('T')[0];
+        return dateStr >= from && dateStr <= to;
+      });
+
+      if (slots.length === 0) return;
+
+      // Create a simple alert or modal with slot details
+      const details = slots.map(s => `• ${s.artist_name || 'Unknown'} @ ${s.location_name || 'N/A'}`).join('\n');
+      const date = new Date(dateStr).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      alert(`Guest Spots am ${date}:\n\n${details}`);
+    }
+
+    // Expose functions globally
+    window.toggleGuestspotView = toggleGuestspotView;
+    window.changeGuestspotMonth = changeGuestspotMonth;
+    window.changeGuestspotYear = changeGuestspotYear;
+    window.showGuestspotDayDetail = showGuestspotDayDetail;
   </script>
 
   <!-- Image Modal for Reference Images -->
