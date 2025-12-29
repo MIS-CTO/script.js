@@ -29850,10 +29850,13 @@
       // ============================================
 
       async function openAppointmentEditPopup(appointmentId) {
-        // Lade Appointment-Daten
+        // Lade Appointment-Daten MIT Artist-Join für Fallback
         const { data: appointment, error } = await supabase
           .from('appointments')
-          .select('*')
+          .select(`
+            *,
+            artist:artists(id, name)
+          `)
           .eq('id', appointmentId)
           .single();
 
@@ -29863,8 +29866,14 @@
           return;
         }
 
-        // Lade Artists für Artist-Name Lookup
-        const artists = window.centralDataManager?.data?.artists || [];
+        console.log('📋 Edit Popup - Loaded appointment:', appointment);
+
+        // Lade Artists für Artist-Name Lookup (mit mehreren Fallbacks)
+        const artists = (typeof CentralDataManager !== 'undefined' && CentralDataManager.getArtists)
+          ? CentralDataManager.getArtists()
+          : (window.allArtists || window.artistsCache || []);
+
+        console.log('🎨 Edit Popup - Artists loaded:', artists.length);
 
         // Entferne existierendes Popup
         const existingPopup = document.getElementById('appointmentEditPopup');
@@ -29914,9 +29923,20 @@
           (appointment.first_name && appointment.last_name ? `${appointment.first_name} ${appointment.last_name}` :
           (appointment.first_name || appointment.last_name || 'Unbekannt'));
 
-        // Artist Name (READ-ONLY)
-        const currentArtist = artists.find(a => a.id === appointment.artist_id);
-        const artistName = currentArtist?.name || 'Kein Artist zugewiesen';
+        // Artist Name (READ-ONLY) - Mehrere Fallbacks
+        // 1. Aus dem JOIN (appointment.artist.name)
+        // 2. Aus dem Artists-Cache lookup
+        // 3. Aus appointment.artist_name falls vorhanden
+        const artistFromJoin = appointment.artist?.name;
+        const artistFromCache = artists.find(a => a.id === appointment.artist_id)?.name;
+        const artistName = artistFromJoin || artistFromCache || appointment.artist_name || 'Kein Artist zugewiesen';
+
+        console.log('🎨 Artist Lookup Result:', {
+          artist_id: appointment.artist_id,
+          fromJoin: artistFromJoin,
+          fromCache: artistFromCache,
+          final: artistName
+        });
 
         const popup = document.createElement('div');
         popup.id = 'appointmentEditPopup';
