@@ -14491,7 +14491,7 @@
         </div>
 
         <!-- Action Buttons -->
-        <div style="display:flex; gap:12px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+        <div id="guestSpotDetailActions" style="display:flex; gap:12px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
           <button type="button" onclick="toggleGuestSpotPaid()" id="guestSpotTogglePaidBtn" style="
             flex:1;
             padding:12px;
@@ -14505,7 +14505,7 @@
             justify-content:center;
             gap:8px;
           "></button>
-          <button type="button" onclick="openGuestSpotEditMode()" style="
+          <button type="button" onclick="openGuestSpotEditMode()" id="guestSpotEditBtn" style="
             flex:1;
             padding:12px;
             border:none;
@@ -14526,7 +14526,7 @@
             </svg>
             Edit
           </button>
-          <button type="button" onclick="cancelGuestSpot()" style="
+          <button type="button" onclick="cancelGuestSpot()" id="guestSpotCancelBtn" style="
             flex:1;
             padding:12px;
             border:none;
@@ -14546,7 +14546,7 @@
             </svg>
             Cancel
           </button>
-          <button type="button" onclick="deleteGuestSpot()" style="
+          <button type="button" onclick="deleteGuestSpot()" id="guestSpotDeleteBtn" style="
             flex:1;
             padding:12px;
             border:none;
@@ -39383,6 +39383,9 @@
             statusBadge = `<span class="badge" style="background:#34c759; color:white;">🕒 Jetzt verfügbar</span>`;
           }
 
+          // Cache the slot data for click handling (avoids JSON in onclick)
+          cacheGuestSpotSlot(slot);
+
           return `
             <div class="waitlist-slot-card" data-slot-id="${slot.id}" style="
               background:var(--macos-elevated);
@@ -39453,7 +39456,7 @@
                   </button>
                   ` : ''}
                   <button
-                    onclick="openGuestSpotDetailFromList('${slot.id}', '${JSON.stringify(allSlotIds).replace(/'/g, "\\'")}')"
+                    onclick="openGuestSpotDetailFromCache('${slot.id}')"
                     style="
                       padding:8px 12px;
                       border:none;
@@ -39472,7 +39475,7 @@
                     onmouseout="this.style.background='rgba(142, 142, 147, 0.12)';"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Edit
+                    Details
                   </button>
                 </div>
               </div>
@@ -45661,6 +45664,38 @@
     let currentGuestSpotBookingType = 'internal';
     let currentGuestSpotDetailData = null;
     let artistSearchTimeout = null;
+    let guestSpotSlotsCache = {}; // Cache für Slot-Daten (vermeidet JSON in onclick)
+
+    // ============================================
+    // SLOT CACHE HELPER (vermeidet JSON in onclick)
+    // ============================================
+
+    function cacheGuestSpotSlot(slot) {
+      if (!slot || !slot.id) return null;
+      const cacheKey = slot.id;
+      guestSpotSlotsCache[cacheKey] = slot;
+      return cacheKey;
+    }
+
+    function getCachedGuestSpotSlot(cacheKey) {
+      return guestSpotSlotsCache[cacheKey] || null;
+    }
+
+    function openGuestSpotDetailFromCache(cacheKey) {
+      const slot = getCachedGuestSpotSlot(cacheKey);
+      if (slot) {
+        openGuestSpotDetailModal(slot);
+      } else {
+        console.error('Slot not found in cache:', cacheKey);
+        if (typeof window.showNotification === 'function') {
+          window.showNotification('Slot nicht gefunden', 'error');
+        }
+      }
+    }
+
+    window.cacheGuestSpotSlot = cacheGuestSpotSlot;
+    window.getCachedGuestSpotSlot = getCachedGuestSpotSlot;
+    window.openGuestSpotDetailFromCache = openGuestSpotDetailFromCache;
 
     // ============================================
     // MODAL OPEN/CLOSE FUNCTIONS
@@ -45814,6 +45849,31 @@
       // Show view mode, hide edit mode
       document.getElementById('guestSpotViewMode').style.display = 'block';
       document.getElementById('guestSpotEditMode').style.display = 'none';
+
+      // Check if slot is in the past or canceled
+      const isPast = slotData.date_to && new Date(slotData.date_to) < new Date();
+      const isCanceled = slotData.status === 'canceled' || slotData.canceled_at;
+
+      // Hide/Show action buttons based on status
+      const editBtn = document.getElementById('guestSpotEditBtn');
+      const cancelBtn = document.getElementById('guestSpotCancelBtn');
+      const deleteBtn = document.getElementById('guestSpotDeleteBtn');
+      const paidBtn = document.getElementById('guestSpotTogglePaidBtn');
+
+      if (isPast || isCanceled) {
+        // Hide edit/cancel buttons for past or canceled slots
+        if (editBtn) editBtn.style.display = 'none';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        // Keep delete and paid toggle visible for past slots
+        if (deleteBtn) deleteBtn.style.display = isCanceled ? 'none' : 'flex';
+        if (paidBtn) paidBtn.style.display = 'flex';
+      } else {
+        // Show all buttons for active/upcoming slots
+        if (editBtn) editBtn.style.display = 'flex';
+        if (cancelBtn) cancelBtn.style.display = 'flex';
+        if (deleteBtn) deleteBtn.style.display = 'flex';
+        if (paidBtn) paidBtn.style.display = 'flex';
+      }
 
       // Show modal
       const modal = document.getElementById('guestSpotDetailModal');
@@ -46860,79 +46920,76 @@
     // OPEN GUEST SPOT DETAIL FROM LIST (UPCOMING/PREVIOUS)
     // ============================================
 
-    async function openGuestSpotDetailFromList(slotId, allSlotIdsJson) {
-      console.log('📋 Opening Guest Spot detail from list:', slotId);
+    // DEPRECATED: Diese Funktion wurde durch openGuestSpotDetailFromCache ersetzt
+    // Bleibt als Fallback für alte Aufrufe
+    async function openGuestSpotDetailFromList(slotId) {
+      console.log('📋 openGuestSpotDetailFromList called, slot:', slotId);
 
+      // Versuche zuerst aus Cache
+      const cached = getCachedGuestSpotSlot(slotId);
+      if (cached) {
+        openGuestSpotDetailModal(cached);
+        return;
+      }
+
+      // Fallback: Lade aus Datenbank
       try {
-        // Parse the slot IDs
-        let allSlotIds;
-        try {
-          allSlotIds = JSON.parse(allSlotIdsJson.replace(/&quot;/g, '"'));
-        } catch (e) {
-          allSlotIds = [slotId];
-        }
-
-        // Load the slot data from upcoming_slots_grouped or previous_guest_spots_grouped
-        // First try upcoming
+        // Versuche upcoming_slots_grouped
         let { data, error } = await supabase
           .from('upcoming_slots_grouped')
           .select('*')
-          .contains('all_slot_ids', [slotId])
+          .eq('id', slotId)
           .single();
 
-        // If not found in upcoming, try previous
         if (error || !data) {
-          const previousResult = await supabase
+          // Versuche previous_guest_spots_grouped
+          const prevResult = await supabase
             .from('previous_guest_spots_grouped')
             .select('*')
-            .contains('all_slot_ids', [slotId])
+            .eq('id', slotId)
             .single();
 
-          data = previousResult.data;
-          error = previousResult.error;
+          data = prevResult.data;
+          error = prevResult.error;
         }
 
-        if (error) {
-          // Fallback: Load directly from upcoming_slots
+        if (error || !data) {
+          // Letzter Versuch: Direkt aus upcoming_slots
           const directResult = await supabase
             .from('upcoming_slots')
             .select(`
               *,
-              artist:artists(id, name, instagram, profile_picture_url, is_guest),
+              artist:artists(id, name, instagram, profile_picture_url),
               location:locations(id, name, city)
             `)
             .eq('id', slotId)
             .single();
 
-          if (directResult.error) throw directResult.error;
-
-          // Transform to expected format
-          data = {
-            ...directResult.data,
-            artist_name: directResult.data.artist?.name,
-            instagram: directResult.data.artist?.instagram,
-            profile_picture_url: directResult.data.artist?.profile_picture_url,
-            location_name: directResult.data.location?.name,
-            location_city: directResult.data.location?.city,
-            all_slot_ids: allSlotIds
-          };
+          if (directResult.data) {
+            data = {
+              ...directResult.data,
+              artist_name: directResult.data.artist?.name,
+              instagram: directResult.data.artist?.instagram,
+              profile_picture_url: directResult.data.artist?.profile_picture_url,
+              location_name: directResult.data.location?.name,
+              location_city: directResult.data.location?.city,
+              all_slot_ids: [slotId]
+            };
+          }
         }
 
         if (data) {
-          // Ensure all_slot_ids is set
-          if (!data.all_slot_ids) {
-            data.all_slot_ids = allSlotIds;
-          }
+          // Cache für zukünftige Aufrufe
+          cacheGuestSpotSlot(data);
           openGuestSpotDetailModal(data);
         } else {
-          console.error('Could not find slot data');
+          console.error('Slot nicht gefunden:', slotId);
           if (typeof window.showNotification === 'function') {
             window.showNotification('Slot nicht gefunden', 'error');
           }
         }
-
       } catch (err) {
-        console.error('Error loading slot details:', err);
+        console.error('Fehler beim Laden:', err);
         if (typeof window.showNotification === 'function') {
           window.showNotification('Fehler beim Laden: ' + err.message, 'error');
         }
