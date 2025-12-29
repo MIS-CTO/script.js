@@ -29558,7 +29558,7 @@
                 <div style="display:flex; gap:8px; margin-top:12px;">
                   ${appointment.customer?.id || appointment.customer_id ? `
                   <button onclick="openCustomerSidePanel('${appointment.customer?.id || appointment.customer_id}')"
-                    style="flex:1; padding:8px 12px; background:#007aff; color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    style="flex:1; padding:8px 12px; background:#1d1d1f; color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     View Customer
                   </button>
@@ -29786,7 +29786,6 @@
       window.openCustomerSidePanel = async function(customerId) {
         if (!customerId) return;
 
-        // Close artist panel if open
         const panel = document.getElementById('profileSidePanel');
         const content = document.getElementById('profileSidePanelContent');
 
@@ -29802,7 +29801,23 @@
           return;
         }
 
-        // Render customer profile
+        // Load customer requests
+        const { data: requests } = await supabase
+          .from('requests')
+          .select('id, request_number, status, created_at, placement, artist_name, preferred_artist')
+          .eq('customer_id', customerId)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        // Load customer appointments
+        const { data: appointments } = await supabase
+          .from('appointments')
+          .select('id, project_number, status, state, start, artist_id, artists(name)')
+          .eq('customer_id', customerId)
+          .order('start', { ascending: false })
+          .limit(10);
+
+        // Render customer profile with tabs
         content.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(0,0,0,0.1);">
             <h3 style="margin:0; font-size:18px; font-weight:600; color:#1d1d1f;">Customer Profile</h3>
@@ -29823,7 +29838,7 @@
           <!-- Contact Info -->
           <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
             <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Contact</h5>
-            <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Email</span>
                 <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.email || '-'}</span>
@@ -29839,43 +29854,81 @@
             </div>
           </div>
 
-          <!-- Stats -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
-            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Statistics</h5>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-              <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:12px; color:#86868b;">Total Appointments</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:600;">${customer.total_appointments || 0}</span>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:12px; color:#86868b;">Total Spent</span>
-                <span style="font-size:13px; color:#34c759; font-weight:600;">€${(customer.total_spent || 0).toFixed(2)}</span>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:12px; color:#86868b;">Member Since</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.created_at ? new Date(customer.created_at).toLocaleDateString('de-DE') : '-'}</span>
-              </div>
-            </div>
+          <!-- Tab Switcher -->
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button id="customerRequestsTab" onclick="switchCustomerTab('requests')"
+              style="flex:1; padding:10px; background:#1d1d1f; color:white; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;">
+              Requests (${requests?.length || 0})
+            </button>
+            <button id="customerAppointmentsTab" onclick="switchCustomerTab('appointments')"
+              style="flex:1; padding:10px; background:#f5f5f7; color:#1d1d1f; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;">
+              Appointments (${appointments?.length || 0})
+            </button>
           </div>
 
-          ${customer.notes ? `
-          <!-- Notes -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Notes</h5>
-            <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${customer.notes}</p>
+          <!-- Requests Tab Content -->
+          <div id="customerRequestsContent" style="display:block;">
+            ${requests && requests.length > 0 ? requests.map(req => `
+              <div style="background:#fafafa; padding:12px; border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:13px; font-weight:600; color:#1d1d1f;">${req.request_number || 'No Number'}</span>
+                  <span style="padding:3px 8px; background:${req.status === 'finished' ? '#34c759' : req.status === 'scheduled' ? '#007aff' : req.status === 'canceled' ? '#ff3b30' : '#ff9500'}; color:white; border-radius:10px; font-size:10px; font-weight:600;">${req.status || 'unknown'}</span>
+                </div>
+                <div style="font-size:12px; color:#86868b;">
+                  ${req.placement || 'No placement'} • ${req.artist_name || req.preferred_artist || 'No artist'}
+                </div>
+                <div style="font-size:11px; color:#aeaeb2; margin-top:4px;">
+                  ${req.created_at ? new Date(req.created_at).toLocaleDateString('de-DE') : '-'}
+                </div>
+              </div>
+            `).join('') : '<p style="text-align:center; color:#86868b; font-size:13px;">No requests found</p>'}
           </div>
-          ` : ''}
 
-          <!-- Action Button -->
-          <button onclick="window.location.href='#customers'; closeProfileSidePanel(); closeAppointmentDetailsModal(); setTimeout(() => showCustomerDetails && showCustomerDetails('${customer.id}'), 300);"
-            style="width:100%; margin-top:20px; padding:12px; background:#007aff; color:white; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
-            Open Full Profile
-          </button>
+          <!-- Appointments Tab Content -->
+          <div id="customerAppointmentsContent" style="display:none;">
+            ${appointments && appointments.length > 0 ? appointments.map(apt => `
+              <div style="background:#fafafa; padding:12px; border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:13px; font-weight:600; color:#1d1d1f;">${apt.project_number || 'No Project'}</span>
+                  <span style="padding:3px 8px; background:${apt.state === 'Finished' ? '#34c759' : apt.state === 'Scheduled' ? '#007aff' : apt.state === 'Cancelled' ? '#ff3b30' : '#ff9500'}; color:white; border-radius:10px; font-size:10px; font-weight:600;">${apt.state || apt.status || 'unknown'}</span>
+                </div>
+                <div style="font-size:12px; color:#86868b;">
+                  ${apt.artists?.name || 'No artist'}
+                </div>
+                <div style="font-size:11px; color:#aeaeb2; margin-top:4px;">
+                  ${apt.start ? new Date(apt.start).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                </div>
+              </div>
+            `).join('') : '<p style="text-align:center; color:#86868b; font-size:13px;">No appointments found</p>'}
+          </div>
         `;
 
         // Show panel
         panel.style.display = 'block';
         setTimeout(() => panel.style.transform = 'translateX(0)', 10);
+      };
+
+      window.switchCustomerTab = function(tab) {
+        const requestsTab = document.getElementById('customerRequestsTab');
+        const appointmentsTab = document.getElementById('customerAppointmentsTab');
+        const requestsContent = document.getElementById('customerRequestsContent');
+        const appointmentsContent = document.getElementById('customerAppointmentsContent');
+
+        if (tab === 'requests') {
+          requestsTab.style.background = '#1d1d1f';
+          requestsTab.style.color = 'white';
+          appointmentsTab.style.background = '#f5f5f7';
+          appointmentsTab.style.color = '#1d1d1f';
+          requestsContent.style.display = 'block';
+          appointmentsContent.style.display = 'none';
+        } else {
+          appointmentsTab.style.background = '#1d1d1f';
+          appointmentsTab.style.color = 'white';
+          requestsTab.style.background = '#f5f5f7';
+          requestsTab.style.color = '#1d1d1f';
+          requestsContent.style.display = 'none';
+          appointmentsContent.style.display = 'block';
+        }
       };
 
       window.openArtistSidePanel = async function(artistId) {
@@ -29896,7 +29949,25 @@
           return;
         }
 
-        // Render artist profile
+        // Load completed projects (finished appointments)
+        const { data: completedProjects } = await supabase
+          .from('appointments')
+          .select('id, project_number, state, start, customer_id, first_name, last_name, placement')
+          .eq('artist_id', artistId)
+          .eq('state', 'Finished')
+          .order('start', { ascending: false })
+          .limit(10);
+
+        // Load guest spots (from dienstplan where artist is guest)
+        const { data: guestSpots } = await supabase
+          .from('dienstplan')
+          .select('id, date, start_time, end_time, location_id, locations(name), note')
+          .eq('artist_id', artistId)
+          .eq('shift_type', 'guest')
+          .order('date', { ascending: false })
+          .limit(10);
+
+        // Render artist profile with tabs
         content.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(0,0,0,0.1);">
             <h3 style="margin:0; font-size:18px; font-weight:600; color:#1d1d1f;">Artist Profile</h3>
@@ -29922,7 +29993,7 @@
           <!-- Contact Info -->
           <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
             <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Contact</h5>
-            <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Email</span>
                 <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.email || '-'}</span>
@@ -29938,43 +30009,82 @@
             </div>
           </div>
 
-          <!-- Info -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
-            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Info</h5>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-              <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:12px; color:#86868b;">Location</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.location_name || '-'}</span>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:12px; color:#86868b;">Styles</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.styles || '-'}</span>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:12px; color:#86868b;">Hourly Rate</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:600;">${artist.hourly_rate ? '€' + artist.hourly_rate : '-'}</span>
-              </div>
-            </div>
+          <!-- Tab Switcher -->
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button id="artistProjectsTab" onclick="switchArtistTab('projects')"
+              style="flex:1; padding:10px; background:#1d1d1f; color:white; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;">
+              Completed (${completedProjects?.length || 0})
+            </button>
+            <button id="artistGuestSpotsTab" onclick="switchArtistTab('guestspots')"
+              style="flex:1; padding:10px; background:#f5f5f7; color:#1d1d1f; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;">
+              Guest Spots (${guestSpots?.length || 0})
+            </button>
           </div>
 
-          ${artist.bio ? `
-          <!-- Bio -->
-          <div style="background:#fafafa; padding:16px; border-radius:8px;">
-            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Bio</h5>
-            <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${artist.bio}</p>
+          <!-- Completed Projects Tab Content -->
+          <div id="artistProjectsContent" style="display:block;">
+            ${completedProjects && completedProjects.length > 0 ? completedProjects.map(proj => `
+              <div style="background:#fafafa; padding:12px; border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:13px; font-weight:600; color:#1d1d1f;">${proj.project_number || 'No Project'}</span>
+                  <span style="padding:3px 8px; background:#34c759; color:white; border-radius:10px; font-size:10px; font-weight:600;">Finished</span>
+                </div>
+                <div style="font-size:12px; color:#86868b;">
+                  ${proj.first_name || ''} ${proj.last_name || ''} ${proj.placement ? '• ' + proj.placement : ''}
+                </div>
+                <div style="font-size:11px; color:#aeaeb2; margin-top:4px;">
+                  ${proj.start ? new Date(proj.start).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                </div>
+              </div>
+            `).join('') : '<p style="text-align:center; color:#86868b; font-size:13px;">No completed projects</p>'}
           </div>
-          ` : ''}
 
-          <!-- Action Button -->
-          <button onclick="window.location.href='#artists'; closeProfileSidePanel(); closeAppointmentDetailsModal(); setTimeout(() => showArtistDetails && showArtistDetails('${artist.id}'), 300);"
-            style="width:100%; margin-top:20px; padding:12px; background:#1d1d1f; color:white; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
-            Open Full Profile
-          </button>
+          <!-- Guest Spots Tab Content -->
+          <div id="artistGuestSpotsContent" style="display:none;">
+            ${guestSpots && guestSpots.length > 0 ? guestSpots.map(spot => `
+              <div style="background:#fafafa; padding:12px; border-radius:8px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:13px; font-weight:600; color:#1d1d1f;">${spot.locations?.name || 'Unknown Location'}</span>
+                  <span style="padding:3px 8px; background:#5856d6; color:white; border-radius:10px; font-size:10px; font-weight:600;">Guest</span>
+                </div>
+                <div style="font-size:12px; color:#86868b;">
+                  ${spot.start_time || ''} - ${spot.end_time || ''}
+                </div>
+                <div style="font-size:11px; color:#aeaeb2; margin-top:4px;">
+                  ${spot.date ? new Date(spot.date).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                </div>
+                ${spot.note ? `<div style="font-size:11px; color:#1d1d1f; margin-top:6px; font-style:italic;">"${spot.note}"</div>` : ''}
+              </div>
+            `).join('') : '<p style="text-align:center; color:#86868b; font-size:13px;">No guest spots found</p>'}
+          </div>
         `;
 
         // Show panel
         panel.style.display = 'block';
         setTimeout(() => panel.style.transform = 'translateX(0)', 10);
+      };
+
+      window.switchArtistTab = function(tab) {
+        const projectsTab = document.getElementById('artistProjectsTab');
+        const guestSpotsTab = document.getElementById('artistGuestSpotsTab');
+        const projectsContent = document.getElementById('artistProjectsContent');
+        const guestSpotsContent = document.getElementById('artistGuestSpotsContent');
+
+        if (tab === 'projects') {
+          projectsTab.style.background = '#1d1d1f';
+          projectsTab.style.color = 'white';
+          guestSpotsTab.style.background = '#f5f5f7';
+          guestSpotsTab.style.color = '#1d1d1f';
+          projectsContent.style.display = 'block';
+          guestSpotsContent.style.display = 'none';
+        } else {
+          guestSpotsTab.style.background = '#1d1d1f';
+          guestSpotsTab.style.color = 'white';
+          projectsTab.style.background = '#f5f5f7';
+          projectsTab.style.color = '#1d1d1f';
+          projectsContent.style.display = 'none';
+          guestSpotsContent.style.display = 'block';
+        }
       };
 
       window.closeProfileSidePanel = function() {
