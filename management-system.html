@@ -45873,8 +45873,39 @@
       // Clear existing options (except first)
       dropdown.innerHTML = '<option value="">-- Location auswählen --</option>';
 
-      // Get locations from cache or allLocations
-      const locations = CentralDataManager?.getData('locations') || allLocations || [];
+      // Get locations from global variable or fetch from existing dropdown
+      let locations = [];
+
+      // Try global allLocations first
+      if (typeof allLocations !== 'undefined' && Array.isArray(allLocations) && allLocations.length > 0) {
+        locations = allLocations;
+        console.log('📍 Using allLocations:', locations.length);
+      }
+      // Try to get from waitlist location dropdown as fallback
+      else {
+        const waitlistDropdown = document.getElementById('waitlistLocationDropdown');
+        if (waitlistDropdown) {
+          Array.from(waitlistDropdown.options).forEach(opt => {
+            if (opt.value && opt.value !== 'all') {
+              locations.push({ id: opt.value, name: opt.textContent });
+            }
+          });
+          console.log('📍 Using waitlist dropdown locations:', locations.length);
+        }
+      }
+
+      // If still empty, try dienstplan location dropdown
+      if (locations.length === 0) {
+        const dienstplanDropdown = document.getElementById('locationFilter');
+        if (dienstplanDropdown) {
+          Array.from(dienstplanDropdown.options).forEach(opt => {
+            if (opt.value && opt.value !== 'all') {
+              locations.push({ id: opt.value, name: opt.textContent });
+            }
+          });
+          console.log('📍 Using dienstplan dropdown locations:', locations.length);
+        }
+      }
 
       locations.forEach(loc => {
         const option = document.createElement('option');
