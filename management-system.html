@@ -5454,6 +5454,13 @@
       }
     }
 
+    /* Hide Guestspot View Toggle on Mobile */
+    @media (max-width: 768px) {
+      .guestspot-view-toggle-btn {
+        display: none !important;
+      }
+    }
+
     /* ========================================
        PROJECT DASHBOARD STYLES
        ======================================== */
@@ -12637,8 +12644,8 @@
         <!-- Locations will be loaded dynamically -->
       </select>
 
-      <!-- View Toggle Button (List / Month / Year) -->
-      <button id="guestspotViewToggleBtn" onclick="toggleGuestspotView()" style="
+      <!-- View Toggle Button (List / Month / Year) - Hidden on Mobile -->
+      <button id="guestspotViewToggleBtn" onclick="toggleGuestspotView()" class="guestspot-view-toggle-btn" style="
         padding:8px 12px;
         border:1px solid rgba(0,0,0,0.1);
         border-radius:8px;
@@ -27998,11 +28005,11 @@
           }
 
           const statusConfig = {
-            'active': { color: '#34c759', label: '🎨 Active' },
-            'upcoming': { color: '#007aff', label: '📅 Upcoming' },
-            'waiting': { color: '#ff9500', label: '⏳ Waiting' },
-            'completed': { color: '#8e8e93', label: '✅ Completed' },
-            'canceled': { color: '#ff3b30', label: '❌ Canceled' }
+            'active': { color: '#34c759', label: 'Active', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>' },
+            'upcoming': { color: '#007aff', label: 'Upcoming', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' },
+            'waiting': { color: '#ff9500', label: 'Waiting', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
+            'completed': { color: '#8e8e93', label: 'Completed', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>' },
+            'canceled': { color: '#ff3b30', label: 'Canceled', icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' }
           };
 
           container.innerHTML = data.map(function(spot) {
@@ -28025,7 +28032,7 @@
                   '<p style="margin:6px 0 0 0;color:var(--muted);font-size:13px;">' + dateDisplay + slotCountBadge + '</p>' +
                   (spot.cancel_reason ? '<p style="margin:8px 0 0 0;color:#ff3b30;font-size:13px;">Grund: ' + spot.cancel_reason + '</p>' : '') +
                 '</div>' +
-                '<span style="background:' + config.color + ';color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;">' + config.label + '</span>' +
+                '<span style="background:' + config.color + ';color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:4px;">' + (config.icon || '') + ' ' + config.label + '</span>' +
               '</div>' +
             '</div>';
           }).join('');
@@ -38125,6 +38132,11 @@
         console.log(`🔄 Switching to ${listType} list`);
         currentListType = listType;
 
+        // Reset calendar view to list when switching tabs
+        if (typeof resetGuestspotView === 'function') {
+          resetGuestspotView();
+        }
+
         // Update toggle UI
         const toggleButtons = document.querySelectorAll('.list-toggle-option');
         toggleButtons.forEach(btn => {
@@ -38318,12 +38330,12 @@
 
         container.innerHTML = spots.map(spot => {
           const statusBadge = spot.status === 'completed'
-            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">✅ Completed</span>'
-            : '<span style="background:#ff3b30;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">❌ Canceled</span>';
+            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Completed</span>'
+            : '<span style="background:#ff3b30;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Canceled</span>';
 
           const paidBadge = spot.share_personal_data
-            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">💰 Paid</span>'
-            : '<span style="background:#ff9500;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">💳 Unpaid</span>';
+            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Paid</span>'
+            : '<span style="background:#ff9500;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Unpaid</span>';
 
           const cancelInfo = spot.status === 'canceled' && spot.cancel_reason
             ? '<p style="color:#ff3b30;font-size:13px;margin-top:12px;"><strong>Absagegrund:</strong> ' + spot.cancel_reason + '</p>'
@@ -38335,7 +38347,7 @@
 
           // View Profile Button
           const viewProfileButton = spot.artist_id
-            ? '<button onclick="viewArtistProfile(\'' + spot.artist_id + '\')" style="padding:8px 16px;border:1px solid #007aff;border-radius:8px;background:transparent;color:#007aff;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background=\'#007aff\';this.style.color=\'white\';" onmouseout="this.style.background=\'transparent\';this.style.color=\'#007aff\';">👤 View Profile</button>'
+            ? '<button onclick="viewArtistProfile(\'' + spot.artist_id + '\')" style="padding:8px 12px;border:none;border-radius:8px;background:#1d1d1f;color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.background=\'#333\';" onmouseout="this.style.background=\'#1d1d1f\';"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> View Profile</button>'
             : '';
 
           return '<div style="background:var(--macos-elevated, #fff);border-radius:16px;padding:24px;margin-bottom:16px;border:1px solid var(--border-color, #e0e0e0);opacity:' + (spot.status === 'canceled' ? '0.7' : '1') + ';">' +
@@ -38651,19 +38663,23 @@
                     class="cancel-slot-button"
                     onclick="cancelUpcomingSlot(${JSON.stringify(allSlotIds)})"
                     style="
-                      padding:8px 16px;
-                      border:1px solid #ff3b30;
+                      padding:8px 12px;
+                      border:none;
                       border-radius:8px;
-                      background:transparent;
+                      background:#ff9500;
                       cursor:pointer;
-                      color:#ff3b30;
+                      color:#fff;
                       font-size:14px;
                       font-weight:500;
                       transition:all 0.2s;
+                      display:inline-flex;
+                      align-items:center;
+                      gap:6px;
                     "
-                    onmouseover="this.style.background='#ff3b30'; this.style.color='white';"
-                    onmouseout="this.style.background='transparent'; this.style.color='#ff3b30';"
+                    onmouseover="this.style.background='#e68600';"
+                    onmouseout="this.style.background='#ff9500';"
                   >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
                     Cancel${slotCount > 1 ? ` (${slotCount})` : ''}
                   </button>
                   ` : ''}
@@ -44573,8 +44589,8 @@
     // Guestspot View Toggle (List / Month / Year)
     // ============================================
     let guestspotCurrentView = 'list'; // 'list', 'month', 'year'
-    let guestspotViewMonth = new Date();
-    let guestspotViewYear = new Date().getFullYear();
+    let guestspotViewMonth = new Date(); // Aktueller Monat als Default
+    let guestspotViewYear = new Date().getFullYear(); // Aktuelles Jahr als Default
     let guestspotCachedSlots = [];
 
     function toggleGuestspotView() {
@@ -44582,7 +44598,32 @@
       const currentIndex = views.indexOf(guestspotCurrentView);
       guestspotCurrentView = views[(currentIndex + 1) % views.length];
 
+      // Bei Wechsel zu Month/Year: Aktuellen Monat/Jahr setzen
+      if (guestspotCurrentView === 'month') {
+        guestspotViewMonth = new Date();
+      } else if (guestspotCurrentView === 'year') {
+        guestspotViewYear = new Date().getFullYear();
+      }
+
       updateGuestspotViewUI();
+    }
+
+    function resetGuestspotView() {
+      // Reset to list view (called when switching tabs)
+      guestspotCurrentView = 'list';
+      guestspotViewMonth = new Date();
+      guestspotViewYear = new Date().getFullYear();
+
+      const viewLabel = document.getElementById('guestspotViewLabel');
+      if (viewLabel) viewLabel.textContent = 'List';
+
+      const listContainer = document.getElementById('waitlistSlotsContainer');
+      const monthContainer = document.getElementById('guestspotMonthViewContainer');
+      const yearContainer = document.getElementById('guestspotYearViewContainer');
+
+      if (listContainer) listContainer.style.display = 'block';
+      if (monthContainer) monthContainer.style.display = 'none';
+      if (yearContainer) yearContainer.style.display = 'none';
     }
 
     function updateGuestspotViewUI() {
@@ -44605,7 +44646,6 @@
       // Show appropriate container
       if (guestspotCurrentView === 'list') {
         if (listContainer) listContainer.style.display = 'block';
-        // Show empty state if no slots
         if (guestspotCachedSlots.length === 0 && emptyState) {
           emptyState.style.display = 'block';
         }
@@ -44682,21 +44722,51 @@
         const isToday = dateStr === today;
         const hasSlots = slots.length > 0;
 
+        // Mini cards for slots (max 2 visible)
+        let slotCards = '';
+        if (hasSlots) {
+          const visibleSlots = slots.slice(0, 2);
+          slotCards = visibleSlots.map(s => `
+            <div style="
+              font-size:9px;
+              padding:2px 4px;
+              background:#34c759;
+              color:white;
+              border-radius:3px;
+              white-space:nowrap;
+              overflow:hidden;
+              text-overflow:ellipsis;
+              max-width:100%;
+            ">${(s.artist_name || 'Artist').substring(0, 8)}</div>
+          `).join('');
+          if (slots.length > 2) {
+            slotCards += `<div style="font-size:9px; color:#86868b;">+${slots.length - 2} more</div>`;
+          }
+        }
+
         html += `
-          <div style="
-            aspect-ratio:1;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            border-radius:8px;
-            background:${hasSlots ? 'rgba(52, 199, 89, 0.15)' : 'transparent'};
-            border:${isToday ? '2px solid #007aff' : '1px solid transparent'};
-            cursor:${hasSlots ? 'pointer' : 'default'};
-            transition:all 0.2s;
-          " ${hasSlots ? `onclick="showGuestspotDayDetail('${dateStr}')"` : ''}>
-            <span style="font-size:14px; font-weight:${isToday ? '700' : '500'}; color:${isToday ? '#007aff' : 'var(--ink)'};">${day}</span>
-            ${hasSlots ? `<span style="font-size:10px; color:#34c759; font-weight:600;">${slots.length}</span>` : ''}
+          <div
+            data-date="${dateStr}"
+            style="
+              min-height:60px;
+              padding:4px;
+              display:flex;
+              flex-direction:column;
+              align-items:stretch;
+              border-radius:8px;
+              background:${hasSlots ? 'rgba(52, 199, 89, 0.08)' : 'var(--macos-elevated)'};
+              border:${isToday ? '2px solid #007aff' : '1px solid var(--border-color)'};
+              cursor:${hasSlots ? 'pointer' : 'default'};
+              transition:all 0.2s;
+            "
+            ${hasSlots ? `onclick="scrollToGuestspotSlot('${dateStr}')"` : ''}
+            ${hasSlots ? `onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';"` : ''}
+            ${hasSlots ? `onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';"` : ''}
+          >
+            <span style="font-size:12px; font-weight:${isToday ? '700' : '500'}; color:${isToday ? '#007aff' : 'var(--ink)'}; margin-bottom:2px;">${day}</span>
+            <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+              ${slotCards}
+            </div>
           </div>
         `;
       }
@@ -44742,9 +44812,9 @@
             cursor:pointer;
             text-align:center;
             transition:all 0.2s;
-          " onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+          " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
             <div style="font-size:16px; font-weight:600; color:var(--ink);">${name}</div>
-            ${count > 0 ? `<div style="font-size:24px; font-weight:700; color:#34c759; margin-top:8px;">${count}</div>` : '<div style="font-size:13px; color:#86868b; margin-top:8px;">-</div>'}
+            ${count > 0 ? `<div style="font-size:28px; font-weight:700; color:#34c759; margin-top:8px;">${count}</div>` : '<div style="font-size:14px; color:#86868b; margin-top:8px;">–</div>'}
           </div>
         `;
       }).join('');
@@ -44752,27 +44822,41 @@
       gridEl.innerHTML = html;
     }
 
-    function showGuestspotDayDetail(dateStr) {
-      const slots = guestspotCachedSlots.filter(slot => {
+    function scrollToGuestspotSlot(dateStr) {
+      // Find slot that matches this date
+      const matchingSlot = guestspotCachedSlots.find(slot => {
         if (!slot.date_from || !slot.date_to) return false;
         const from = new Date(slot.date_from).toISOString().split('T')[0];
         const to = new Date(slot.date_to).toISOString().split('T')[0];
         return dateStr >= from && dateStr <= to;
       });
 
-      if (slots.length === 0) return;
+      if (!matchingSlot) return;
 
-      // Create a simple alert or modal with slot details
-      const details = slots.map(s => `• ${s.artist_name || 'Unknown'} @ ${s.location_name || 'N/A'}`).join('\n');
-      const date = new Date(dateStr).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-      alert(`Guest Spots am ${date}:\n\n${details}`);
+      // Switch to list view
+      guestspotCurrentView = 'list';
+      updateGuestspotViewUI();
+
+      // Wait for DOM update, then scroll to the slot card
+      setTimeout(() => {
+        const slotCard = document.querySelector(`.waitlist-slot-card[data-slot-id="${matchingSlot.id}"]`);
+        if (slotCard) {
+          slotCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight briefly
+          slotCard.style.boxShadow = '0 0 0 3px #007aff';
+          setTimeout(() => {
+            slotCard.style.boxShadow = '';
+          }, 2000);
+        }
+      }, 100);
     }
 
     // Expose functions globally
     window.toggleGuestspotView = toggleGuestspotView;
+    window.resetGuestspotView = resetGuestspotView;
     window.changeGuestspotMonth = changeGuestspotMonth;
     window.changeGuestspotYear = changeGuestspotYear;
-    window.showGuestspotDayDetail = showGuestspotDayDetail;
+    window.scrollToGuestspotSlot = scrollToGuestspotSlot;
   </script>
 
   <!-- Image Modal for Reference Images -->
