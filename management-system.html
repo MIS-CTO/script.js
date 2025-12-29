@@ -10867,6 +10867,107 @@
       resize: vertical;
     }
 
+    /* Artist Search Dropdown */
+    .artist-search-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .artist-search-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: #1d1d1f;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .artist-search-input:focus {
+      outline: none;
+      border-color: #0071e3;
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+    }
+
+    .artist-search-input::placeholder {
+      color: #86868b;
+    }
+
+    .artist-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      margin-top: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: none;
+    }
+
+    .artist-dropdown.visible {
+      display: block;
+    }
+
+    .artist-dropdown-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #1d1d1f;
+      transition: background 0.1s ease;
+    }
+
+    .artist-dropdown-item:hover {
+      background: #f5f5f7;
+    }
+
+    .artist-dropdown-item.selected {
+      background: #e8f0fe;
+      color: #0071e3;
+    }
+
+    .artist-dropdown-empty {
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #86868b;
+      font-style: italic;
+    }
+
+    [data-theme="dark"] .artist-search-input {
+      background: #2c2c2e;
+      border-color: #48484a;
+      color: #f5f5f7;
+    }
+
+    [data-theme="dark"] .artist-search-input:focus {
+      border-color: #0a84ff;
+      box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
+    }
+
+    [data-theme="dark"] .artist-dropdown {
+      background: #2c2c2e;
+      border-color: #48484a;
+    }
+
+    [data-theme="dark"] .artist-dropdown-item {
+      color: #f5f5f7;
+    }
+
+    [data-theme="dark"] .artist-dropdown-item:hover {
+      background: #3a3a3c;
+    }
+
+    [data-theme="dark"] .artist-dropdown-item.selected {
+      background: #1c3a5e;
+      color: #0a84ff;
+    }
+
     .appointment-edit-row {
       display: flex;
       gap: 12px;
@@ -29377,7 +29478,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:2px solid rgba(0,0,0,0.1);">
             <div>
               <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:700; color:#1d1d1f;">${appointment.project_number || 'Kein Projekt'}</h3>
-              <span style="font-size:13px; color:#86868b;">📍 ${appointment.location?.name || 'Unknown Location'} ${appointment.location?.city ? '- ' + appointment.location.city : ''}</span>
+              <span style="font-size:13px; color:#86868b;">${appointment.location?.name || 'Unknown Location'} ${appointment.location?.city ? '- ' + appointment.location.city : ''}</span>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               ${stateBadge}
@@ -29393,7 +29494,7 @@
 
               <!-- Customer Information -->
               <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">👤 Customer Information</h4>
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Customer Information</h4>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">VORNAME</span>
@@ -29420,7 +29521,7 @@
 
               <!-- Request Details -->
               <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">📋 Request Details</h4>
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Request Details</h4>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PLACEMENT</span>
@@ -29452,7 +29553,7 @@
 
               <!-- Appointment Details -->
               <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">📅 Appointment Details</h4>
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Appointment Details</h4>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">ARTIST</span>
@@ -29479,7 +29580,7 @@
 
               <!-- Payment Information -->
               <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">💰 Payment Information</h4>
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Payment Information</h4>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAYMENT STATUS</span>
@@ -29521,7 +29622,7 @@
               ${appointment.customer_notes || appointment.internal_notes || appointment.description || appointment.notice ? `
               <!-- Notes & Description -->
               <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">📝 Notes & Description</h4>
+                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Notes & Description</h4>
                 ${appointment.description ? `
                 <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
                   <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">DESCRIPTION</strong>
@@ -29780,6 +29881,26 @@
           { value: 'canceled', label: 'Storniert' }
         ];
 
+        // Work Process Optionen
+        const workProcessOptions = [
+          { value: '', label: 'Nicht angegeben' },
+          { value: 'neustechen', label: 'Neustechen' },
+          { value: 'weiterstechen', label: 'Weiterstechen' },
+          { value: 'coverup', label: 'Cover-up' },
+          { value: 'rework', label: 'Rework' },
+          { value: 'touch_up', label: 'Touch-up' }
+        ];
+
+        // Booking Type Optionen
+        const bookingTypeOptions = [
+          { value: '', label: 'Nicht angegeben' },
+          { value: 'regular', label: 'Regular' },
+          { value: 'wannado', label: 'Wannado' },
+          { value: 'guest', label: 'Guest Booking' },
+          { value: 'walk_in', label: 'Walk-in' },
+          { value: 'consultation', label: 'Beratung' }
+        ];
+
         // Formatiere Datum und Zeit
         const startDate = appointment.start_time || appointment.start ? new Date(appointment.start_time || appointment.start) : new Date();
         const dateStr = startDate.toISOString().split('T')[0];
@@ -29792,6 +29913,10 @@
         const customerName = appointment.customer_name ||
           (appointment.first_name && appointment.last_name ? `${appointment.first_name} ${appointment.last_name}` :
           (appointment.first_name || appointment.last_name || 'Unbekannt'));
+
+        // Aktueller Artist Name
+        const currentArtist = artists.find(a => a.id === appointment.artist_id);
+        const currentArtistName = currentArtist?.name || '';
 
         const popup = document.createElement('div');
         popup.id = 'appointmentEditPopup';
@@ -29806,23 +29931,25 @@
 
               <!-- Customer Information (Read-only Anzeige) -->
               <div class="appointment-edit-section">
-                <h4 class="appointment-edit-section-title">Kunde</h4>
+                <label class="appointment-edit-label">Kunde</label>
                 <div class="appointment-edit-readonly">
                   ${customerName}
                 </div>
               </div>
 
-              <!-- Artist -->
+              <!-- Artist (Searchbar) -->
               <div class="appointment-edit-section">
                 <label class="appointment-edit-label">Artist *</label>
-                <select class="appointment-edit-input" id="editAppointmentArtist">
-                  <option value="">Artist wählen...</option>
-                  ${artists.map(a => `
-                    <option value="${a.id}" ${a.id === appointment.artist_id ? 'selected' : ''}>
-                      ${a.name}
-                    </option>
-                  `).join('')}
-                </select>
+                <div class="artist-search-container">
+                  <input type="text"
+                         class="artist-search-input"
+                         id="editAppointmentArtistSearch"
+                         placeholder="Artist suchen..."
+                         value="${currentArtistName}"
+                         autocomplete="off">
+                  <input type="hidden" id="editAppointmentArtist" value="${appointment.artist_id || ''}">
+                  <div class="artist-dropdown" id="artistDropdown"></div>
+                </div>
               </div>
 
               <!-- Datum und Zeit -->
@@ -29853,6 +29980,30 @@
                 </select>
               </div>
 
+              <!-- Work Process -->
+              <div class="appointment-edit-section">
+                <label class="appointment-edit-label">Work Process</label>
+                <select class="appointment-edit-input" id="editAppointmentWorkProcess">
+                  ${workProcessOptions.map(w => `
+                    <option value="${w.value}" ${w.value === appointment.work_process ? 'selected' : ''}>
+                      ${w.label}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+
+              <!-- Booking Type -->
+              <div class="appointment-edit-section">
+                <label class="appointment-edit-label">Booking Type</label>
+                <select class="appointment-edit-input" id="editAppointmentBookingType">
+                  ${bookingTypeOptions.map(b => `
+                    <option value="${b.value}" ${b.value === appointment.booking_type ? 'selected' : ''}>
+                      ${b.label}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+
               <!-- Placement -->
               <div class="appointment-edit-section">
                 <label class="appointment-edit-label">Placement</label>
@@ -29874,11 +30025,39 @@
                        value="${appointment.style || ''}" placeholder="z.B. Fineline, Traditional...">
               </div>
 
+              <!-- Colorway -->
+              <div class="appointment-edit-section">
+                <label class="appointment-edit-label">Colorway</label>
+                <input type="text" class="appointment-edit-input" id="editAppointmentColorway"
+                       value="${appointment.colorway || ''}" placeholder="z.B. Black & Grey, Color...">
+              </div>
+
+              <!-- Description -->
+              <div class="appointment-edit-section">
+                <label class="appointment-edit-label">Beschreibung</label>
+                <textarea class="appointment-edit-textarea" id="editAppointmentDescription"
+                          placeholder="Motiv-Beschreibung...">${appointment.description || ''}</textarea>
+              </div>
+
               <!-- Notes -->
               <div class="appointment-edit-section">
                 <label class="appointment-edit-label">Notizen</label>
                 <textarea class="appointment-edit-textarea" id="editAppointmentNotes"
-                          placeholder="Zusätzliche Notizen...">${appointment.notes || appointment.description || ''}</textarea>
+                          placeholder="Allgemeine Notizen...">${appointment.notes || ''}</textarea>
+              </div>
+
+              <!-- Internal Notes -->
+              <div class="appointment-edit-section">
+                <label class="appointment-edit-label">Interne Notizen</label>
+                <textarea class="appointment-edit-textarea" id="editAppointmentInternalNotes"
+                          placeholder="Interne Notizen (nur für Team sichtbar)...">${appointment.internal_notes || ''}</textarea>
+              </div>
+
+              <!-- Notice -->
+              <div class="appointment-edit-section">
+                <label class="appointment-edit-label">Hinweis</label>
+                <textarea class="appointment-edit-textarea" id="editAppointmentNotice"
+                          placeholder="Besondere Hinweise...">${appointment.notice || ''}</textarea>
               </div>
 
             </div>
@@ -29891,7 +30070,68 @@
 
         document.body.appendChild(popup);
 
-        // Event Listeners
+        // Artist Search Functionality
+        const artistSearchInput = document.getElementById('editAppointmentArtistSearch');
+        const artistDropdown = document.getElementById('artistDropdown');
+        const artistHiddenInput = document.getElementById('editAppointmentArtist');
+
+        function renderArtistDropdown(filteredArtists) {
+          if (filteredArtists.length === 0) {
+            artistDropdown.innerHTML = '<div class="artist-dropdown-empty">Kein Artist gefunden</div>';
+          } else {
+            artistDropdown.innerHTML = filteredArtists.map(a => `
+              <div class="artist-dropdown-item ${a.id === artistHiddenInput.value ? 'selected' : ''}"
+                   data-id="${a.id}" data-name="${a.name}">
+                ${a.name}
+              </div>
+            `).join('');
+          }
+          artistDropdown.classList.add('visible');
+        }
+
+        function selectArtist(id, name) {
+          artistHiddenInput.value = id;
+          artistSearchInput.value = name;
+          artistDropdown.classList.remove('visible');
+        }
+
+        artistSearchInput.addEventListener('focus', () => {
+          const searchTerm = artistSearchInput.value.toLowerCase();
+          const filtered = artists.filter(a =>
+            a.name.toLowerCase().includes(searchTerm)
+          );
+          renderArtistDropdown(filtered);
+        });
+
+        artistSearchInput.addEventListener('input', (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const filtered = artists.filter(a =>
+            a.name.toLowerCase().includes(searchTerm)
+          );
+          renderArtistDropdown(filtered);
+
+          // Wenn kein exakter Match, lösche die Hidden ID
+          const exactMatch = artists.find(a => a.name.toLowerCase() === searchTerm);
+          if (!exactMatch) {
+            artistHiddenInput.value = '';
+          }
+        });
+
+        artistDropdown.addEventListener('click', (e) => {
+          const item = e.target.closest('.artist-dropdown-item');
+          if (item) {
+            selectArtist(item.dataset.id, item.dataset.name);
+          }
+        });
+
+        // Close dropdown on click outside
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.artist-search-container')) {
+            artistDropdown.classList.remove('visible');
+          }
+        });
+
+        // Event Listeners für Popup schließen
         popup.addEventListener('click', (e) => {
           if (e.target === popup) closeAppointmentEditPopup();
         });
@@ -29915,13 +30155,19 @@
         const startTime = document.getElementById('editAppointmentStartTime').value;
         const endTime = document.getElementById('editAppointmentEndTime').value;
         const status = document.getElementById('editAppointmentStatus').value;
+        const workProcess = document.getElementById('editAppointmentWorkProcess').value;
+        const bookingType = document.getElementById('editAppointmentBookingType').value;
         const placement = document.getElementById('editAppointmentPlacement').value;
         const size = document.getElementById('editAppointmentSize').value;
         const style = document.getElementById('editAppointmentStyle').value;
+        const colorway = document.getElementById('editAppointmentColorway').value;
+        const description = document.getElementById('editAppointmentDescription').value;
         const notes = document.getElementById('editAppointmentNotes').value;
+        const internalNotes = document.getElementById('editAppointmentInternalNotes').value;
+        const notice = document.getElementById('editAppointmentNotice').value;
 
         if (!artistId || !date || !startTime || !status) {
-          alert('Bitte alle Pflichtfelder ausfüllen');
+          alert('Bitte alle Pflichtfelder ausfüllen (Artist, Datum, Start Zeit, Status)');
           return;
         }
 
@@ -29937,10 +30183,16 @@
             end_time: endDateTime,
             end: endDateTime,
             status: status,
+            work_process: workProcess || null,
+            booking_type: bookingType || null,
             placement: placement || null,
             size: size || null,
             style: style || null,
-            notes: notes || null
+            colorway: colorway || null,
+            description: description || null,
+            notes: notes || null,
+            internal_notes: internalNotes || null,
+            notice: notice || null
           };
 
           const { error } = await supabase
