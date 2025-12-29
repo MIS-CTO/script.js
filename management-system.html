@@ -11706,7 +11706,7 @@
         transition: all 0.2s;
         color: #1d1d1f;
       ">
-        📅 Termine
+        Termine
       </button>
       <button onclick="switchCalendarView('worktracking')" id="calendarTabWorkTracking" style="
         padding: 12px 20px;
@@ -11719,7 +11719,7 @@
         transition: all 0.2s;
         color: #1d1d1f;
       ">
-        ⏰ Work Tracking
+        Work Tracking
       </button>
     </div>
 
@@ -14156,7 +14156,7 @@
   <div class="modal-backdrop" id="appointmentDetailsModal">
     <div class="modal" style="max-width:800px; max-height:90vh; overflow-y:auto;">
       <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:16px;">
-        <h3 style="margin:0;">📅 Appointment Details</h3>
+        <h3 style="margin:0;">Appointment Details</h3>
         <button type="button" class="btn btn-icon" onclick="closeAppointmentDetailsModal()" style="padding:4px 12px; font-size:20px; line-height:1;">×</button>
       </div>
       <div id="appointmentDetailsContent" style="display:flex; flex-direction:column; gap:24px;">
@@ -29863,7 +29863,7 @@
           return;
         }
 
-        // Lade Artists für Dropdown
+        // Lade Artists für Artist-Name Lookup
         const artists = window.centralDataManager?.data?.artists || [];
 
         // Entferne existierendes Popup
@@ -29914,9 +29914,9 @@
           (appointment.first_name && appointment.last_name ? `${appointment.first_name} ${appointment.last_name}` :
           (appointment.first_name || appointment.last_name || 'Unbekannt'));
 
-        // Aktueller Artist Name
+        // Artist Name (READ-ONLY)
         const currentArtist = artists.find(a => a.id === appointment.artist_id);
-        const currentArtistName = currentArtist?.name || '';
+        const artistName = currentArtist?.name || 'Kein Artist zugewiesen';
 
         const popup = document.createElement('div');
         popup.id = 'appointmentEditPopup';
@@ -29929,7 +29929,7 @@
             </div>
             <div class="appointment-edit-body">
 
-              <!-- Customer Information (Read-only Anzeige) -->
+              <!-- Customer Information (Read-only) -->
               <div class="appointment-edit-section">
                 <label class="appointment-edit-label">Kunde</label>
                 <div class="appointment-edit-readonly">
@@ -29937,18 +29937,11 @@
                 </div>
               </div>
 
-              <!-- Artist (Searchbar) -->
+              <!-- Artist (Read-only) -->
               <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Artist *</label>
-                <div class="artist-search-container">
-                  <input type="text"
-                         class="artist-search-input"
-                         id="editAppointmentArtistSearch"
-                         placeholder="Artist suchen..."
-                         value="${currentArtistName}"
-                         autocomplete="off">
-                  <input type="hidden" id="editAppointmentArtist" value="${appointment.artist_id || ''}">
-                  <div class="artist-dropdown" id="artistDropdown"></div>
+                <label class="appointment-edit-label">Artist</label>
+                <div class="appointment-edit-readonly">
+                  ${artistName}
                 </div>
               </div>
 
@@ -30070,67 +30063,6 @@
 
         document.body.appendChild(popup);
 
-        // Artist Search Functionality
-        const artistSearchInput = document.getElementById('editAppointmentArtistSearch');
-        const artistDropdown = document.getElementById('artistDropdown');
-        const artistHiddenInput = document.getElementById('editAppointmentArtist');
-
-        function renderArtistDropdown(filteredArtists) {
-          if (filteredArtists.length === 0) {
-            artistDropdown.innerHTML = '<div class="artist-dropdown-empty">Kein Artist gefunden</div>';
-          } else {
-            artistDropdown.innerHTML = filteredArtists.map(a => `
-              <div class="artist-dropdown-item ${a.id === artistHiddenInput.value ? 'selected' : ''}"
-                   data-id="${a.id}" data-name="${a.name}">
-                ${a.name}
-              </div>
-            `).join('');
-          }
-          artistDropdown.classList.add('visible');
-        }
-
-        function selectArtist(id, name) {
-          artistHiddenInput.value = id;
-          artistSearchInput.value = name;
-          artistDropdown.classList.remove('visible');
-        }
-
-        artistSearchInput.addEventListener('focus', () => {
-          const searchTerm = artistSearchInput.value.toLowerCase();
-          const filtered = artists.filter(a =>
-            a.name.toLowerCase().includes(searchTerm)
-          );
-          renderArtistDropdown(filtered);
-        });
-
-        artistSearchInput.addEventListener('input', (e) => {
-          const searchTerm = e.target.value.toLowerCase();
-          const filtered = artists.filter(a =>
-            a.name.toLowerCase().includes(searchTerm)
-          );
-          renderArtistDropdown(filtered);
-
-          // Wenn kein exakter Match, lösche die Hidden ID
-          const exactMatch = artists.find(a => a.name.toLowerCase() === searchTerm);
-          if (!exactMatch) {
-            artistHiddenInput.value = '';
-          }
-        });
-
-        artistDropdown.addEventListener('click', (e) => {
-          const item = e.target.closest('.artist-dropdown-item');
-          if (item) {
-            selectArtist(item.dataset.id, item.dataset.name);
-          }
-        });
-
-        // Close dropdown on click outside
-        document.addEventListener('click', (e) => {
-          if (!e.target.closest('.artist-search-container')) {
-            artistDropdown.classList.remove('visible');
-          }
-        });
-
         // Event Listeners für Popup schließen
         popup.addEventListener('click', (e) => {
           if (e.target === popup) closeAppointmentEditPopup();
@@ -30150,7 +30082,6 @@
       }
 
       async function saveAppointmentEdit(appointmentId) {
-        const artistId = document.getElementById('editAppointmentArtist').value;
         const date = document.getElementById('editAppointmentDate').value;
         const startTime = document.getElementById('editAppointmentStartTime').value;
         const endTime = document.getElementById('editAppointmentEndTime').value;
@@ -30166,8 +30097,8 @@
         const internalNotes = document.getElementById('editAppointmentInternalNotes').value;
         const notice = document.getElementById('editAppointmentNotice').value;
 
-        if (!artistId || !date || !startTime || !status) {
-          alert('Bitte alle Pflichtfelder ausfüllen (Artist, Datum, Start Zeit, Status)');
+        if (!date || !startTime || !status) {
+          alert('Bitte alle Pflichtfelder ausfüllen (Datum, Start Zeit, Status)');
           return;
         }
 
@@ -30176,8 +30107,8 @@
         const endDateTime = endTime ? `${date}T${endTime}:00` : null;
 
         try {
+          // WICHTIG: artist_id wird NICHT geändert (ist read-only)
           const updateData = {
-            artist_id: artistId,
             start_time: startDateTime,
             start: startDateTime,
             end_time: endDateTime,
@@ -32243,7 +32174,7 @@
       let html = `
         <div style="margin-top: 40px; padding-top: 40px; border-top: 2px solid rgba(0,0,0,0.05);">
           <h3 style="margin: 0 0 16px 0; font-size: 17px; font-weight: 600; color: #1d1d1f;">
-            ⏰ Work Tracking - Übersicht
+            Work Tracking - Übersicht
             <span style="color: #86868b; font-weight: 500; font-size: 15px; margin-left: 8px;">
               (${users.length} Mitarbeiter)
             </span>
@@ -43071,7 +43002,7 @@
 
         <!-- Appointment Details -->
         <div class="mobile-event-section">
-          <div class="mobile-event-section-title">📅 Appointment Details</div>
+          <div class="mobile-event-section-title">Appointment Details</div>
           <div class="mobile-event-field">
             <span class="mobile-event-label">Artist</span>
             <span class="mobile-event-value ${!artist?.name ? 'empty' : ''}">${artist?.name || apt.artist_name || 'Nicht angegeben'}</span>
