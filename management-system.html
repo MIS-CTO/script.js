@@ -1263,6 +1263,26 @@
       opacity: 1;
     }
 
+    /* Higher z-index for modals opened from other modals */
+    .modal-backdrop.elevated {
+      z-index: 10001 !important;
+    }
+
+    .modal-backdrop.elevated .modal {
+      animation: slideInFromLeft 0.3s ease-out;
+    }
+
+    @keyframes slideInFromLeft {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
     .modal {
       background: rgba(255, 255, 255, 0.95) !important;
       backdrop-filter: var(--macos-blur-strong);
@@ -25476,7 +25496,7 @@
       
       // Close Add Artist Modal
       document.getElementById('cancelAddArtist')?.addEventListener('click', () => {
-        document.getElementById('addArtistModal').classList.remove('active');
+        document.getElementById('addArtistModal').classList.remove('active', 'elevated');
       });
       
       // ============================================
@@ -27332,7 +27352,7 @@
       
       // Cancel Add Artist
       document.getElementById('cancelAddArtist')?.addEventListener('click', () => {
-        document.getElementById('addArtistModal').classList.remove('active');
+        document.getElementById('addArtistModal').classList.remove('active', 'elevated');
         document.getElementById('addArtistForm').reset();
       });
       
@@ -27359,7 +27379,7 @@
 
           if (error) throw error;
 
-          document.getElementById('addArtistModal').classList.remove('active');
+          document.getElementById('addArtistModal').classList.remove('active', 'elevated');
           document.getElementById('addArtistForm').reset();
           artistsCache = []; // ✅ Clear cache to force reload
           await loadInitialData();
@@ -45857,9 +45877,27 @@
       // Store flag to know we came from Guest Spot
       window.addArtistFromGuestSpot = true;
 
-      // Reset and open Add Artist Modal
+      // Reset form
       document.getElementById('addArtistForm')?.reset();
-      document.getElementById('addArtistModal')?.classList.add('active');
+
+      // Get the modal
+      const modal = document.getElementById('addArtistModal');
+      if (modal) {
+        // Add elevated class for higher z-index and slide-in animation
+        modal.classList.add('elevated');
+        modal.classList.add('active');
+
+        // Store original close handler to clean up elevated class
+        const originalCloseHandler = window.closeAddArtistModal;
+        window.closeAddArtistModal = function() {
+          modal.classList.remove('elevated');
+          modal.classList.remove('active');
+          // Restore original handler after closing
+          if (originalCloseHandler && typeof originalCloseHandler === 'function') {
+            window.closeAddArtistModal = originalCloseHandler;
+          }
+        };
+      }
     }
 
     // ============================================
