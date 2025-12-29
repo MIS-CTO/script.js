@@ -14152,6 +14152,26 @@
     </div>
   </div>
 
+  <!-- Customer/Artist Side Panel (neben dem Appointment Modal) -->
+  <div id="profileSidePanel" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 380px;
+    height: 100vh;
+    background: var(--macos-elevated, #fff);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    z-index: 10001;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  ">
+    <div id="profileSidePanelContent" style="padding: 20px;">
+      <!-- Content wird dynamisch geladen -->
+    </div>
+  </div>
+
   <!-- Appointment Details Modal -->
   <div class="modal-backdrop" id="appointmentDetailsModal">
     <div class="modal" style="max-width:800px; max-height:90vh; overflow-y:auto;">
@@ -22988,7 +23008,7 @@
 
               <!-- Payment & Pricing -->
               <div class="detail-section">
-                <h3>💰 Payment & Pricing</h3>
+                <h3>Payment & Pricing</h3>
                 <div class="detail-grid">
                   <div class="detail-item">
                     <div class="detail-label">Gesamtpreis (€)</div>
@@ -29534,6 +29554,23 @@
                     <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.instagram || appointment.customer?.instagram || 'No entry data'}</span>
                   </div>
                 </div>
+                <!-- View Profile Buttons -->
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                  ${appointment.customer?.id || appointment.customer_id ? `
+                  <button onclick="openCustomerSidePanel('${appointment.customer?.id || appointment.customer_id}')"
+                    style="flex:1; padding:8px 12px; background:#007aff; color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    View Customer
+                  </button>
+                  ` : ''}
+                  ${appointment.artist?.id || appointment.artist_id ? `
+                  <button onclick="openArtistSidePanel('${appointment.artist?.id || appointment.artist_id}')"
+                    style="flex:1; padding:8px 12px; background:#1d1d1f; color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                    View Artist
+                  </button>
+                  ` : ''}
+                </div>
               </div>
 
               <!-- Request Details -->
@@ -29556,10 +29593,18 @@
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">COLORWAY</span>
                     <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.colorway || appointment.request?.colorway || 'No entry data'}</span>
                   </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">BOOKING TYPE</span>
                     <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.booking_type || appointment.request?.booking_type || 'No entry data'}</span>
                   </div>
+                  ${(appointment.description || appointment.request?.description) ? `
+                  <div style="padding:10px 0 0 0;">
+                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">DESCRIPTION</span>
+                    <div style="background:white; padding:10px; border-radius:6px; font-size:13px; color:#1d1d1f; line-height:1.5; max-height:120px; overflow-y:auto;">
+                      ${appointment.description || appointment.request?.description}
+                    </div>
+                  </div>
+                  ` : ''}
                 </div>
               </div>
 
@@ -29734,12 +29779,220 @@
         modal.classList.add('active');
       };
 
+      // ============================================
+      // SIDE PANEL FUNCTIONS FOR CUSTOMER/ARTIST
+      // ============================================
+
+      window.openCustomerSidePanel = async function(customerId) {
+        if (!customerId) return;
+
+        // Close artist panel if open
+        const panel = document.getElementById('profileSidePanel');
+        const content = document.getElementById('profileSidePanelContent');
+
+        // Load customer data
+        const { data: customer, error } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', customerId)
+          .single();
+
+        if (error || !customer) {
+          console.error('Error loading customer:', error);
+          return;
+        }
+
+        // Render customer profile
+        content.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(0,0,0,0.1);">
+            <h3 style="margin:0; font-size:18px; font-weight:600; color:#1d1d1f;">Customer Profile</h3>
+            <button onclick="closeProfileSidePanel()" style="background:none; border:none; cursor:pointer; padding:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Customer Avatar/Name -->
+          <div style="text-align:center; margin-bottom:20px;">
+            <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #007aff, #5856d6); margin:0 auto 12px; display:flex; align-items:center; justify-content:center;">
+              <span style="color:white; font-size:28px; font-weight:600;">${(customer.first_name?.[0] || '?').toUpperCase()}${(customer.last_name?.[0] || '').toUpperCase()}</span>
+            </div>
+            <h4 style="margin:0 0 4px 0; font-size:18px; font-weight:600; color:#1d1d1f;">${customer.first_name || ''} ${customer.last_name || ''}</h4>
+            <span style="display:inline-block; padding:4px 10px; background:${customer.rank === 'Gold' ? '#ffd60a' : customer.rank === 'Platinum' ? '#e5e5ea' : customer.rank === 'Silver' ? '#c0c0c0' : '#cd7f32'}; color:${customer.rank === 'Gold' || customer.rank === 'Silver' ? '#1d1d1f' : '#fff'}; border-radius:12px; font-size:11px; font-weight:600;">${customer.rank || 'Neukunde'}</span>
+          </div>
+
+          <!-- Contact Info -->
+          <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
+            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Contact</h5>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Email</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.email || '-'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Phone</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.phone || '-'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Instagram</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.instagram || '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
+            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Statistics</h5>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Total Appointments</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:600;">${customer.total_appointments || 0}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Total Spent</span>
+                <span style="font-size:13px; color:#34c759; font-weight:600;">€${(customer.total_spent || 0).toFixed(2)}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Member Since</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.created_at ? new Date(customer.created_at).toLocaleDateString('de-DE') : '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          ${customer.notes ? `
+          <!-- Notes -->
+          <div style="background:#fafafa; padding:16px; border-radius:8px;">
+            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Notes</h5>
+            <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${customer.notes}</p>
+          </div>
+          ` : ''}
+
+          <!-- Action Button -->
+          <button onclick="window.location.href='#customers'; closeProfileSidePanel(); closeAppointmentDetailsModal(); setTimeout(() => showCustomerDetails && showCustomerDetails('${customer.id}'), 300);"
+            style="width:100%; margin-top:20px; padding:12px; background:#007aff; color:white; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
+            Open Full Profile
+          </button>
+        `;
+
+        // Show panel
+        panel.style.display = 'block';
+        setTimeout(() => panel.style.transform = 'translateX(0)', 10);
+      };
+
+      window.openArtistSidePanel = async function(artistId) {
+        if (!artistId) return;
+
+        const panel = document.getElementById('profileSidePanel');
+        const content = document.getElementById('profileSidePanelContent');
+
+        // Load artist data
+        const { data: artist, error } = await supabase
+          .from('artists')
+          .select('*')
+          .eq('id', artistId)
+          .single();
+
+        if (error || !artist) {
+          console.error('Error loading artist:', error);
+          return;
+        }
+
+        // Render artist profile
+        content.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(0,0,0,0.1);">
+            <h3 style="margin:0; font-size:18px; font-weight:600; color:#1d1d1f;">Artist Profile</h3>
+            <button onclick="closeProfileSidePanel()" style="background:none; border:none; cursor:pointer; padding:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Artist Avatar/Name -->
+          <div style="text-align:center; margin-bottom:20px;">
+            ${artist.avatar_url ? `
+              <img src="${artist.avatar_url}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin:0 auto 12px; display:block;">
+            ` : `
+              <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #1d1d1f, #48484a); margin:0 auto 12px; display:flex; align-items:center; justify-content:center;">
+                <span style="color:white; font-size:28px; font-weight:600;">${(artist.name?.[0] || '?').toUpperCase()}</span>
+              </div>
+            `}
+            <h4 style="margin:0 0 4px 0; font-size:18px; font-weight:600; color:#1d1d1f;">${artist.name || 'Unknown Artist'}</h4>
+            <span style="display:inline-block; padding:4px 10px; background:${artist.status === 'active' ? '#34c759' : '#ff9500'}; color:white; border-radius:12px; font-size:11px; font-weight:600;">${artist.status || 'Unknown'}</span>
+            ${artist.artist_type ? `<span style="display:inline-block; margin-left:6px; padding:4px 10px; background:#007aff; color:white; border-radius:12px; font-size:11px; font-weight:600;">${artist.artist_type}</span>` : ''}
+          </div>
+
+          <!-- Contact Info -->
+          <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
+            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Contact</h5>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Email</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.email || '-'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Phone</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.phone || '-'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Instagram</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.instagram || '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div style="background:#fafafa; padding:16px; border-radius:8px; margin-bottom:16px;">
+            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Info</h5>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Location</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.location_name || '-'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Styles</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.styles || '-'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#86868b;">Hourly Rate</span>
+                <span style="font-size:13px; color:#1d1d1f; font-weight:600;">${artist.hourly_rate ? '€' + artist.hourly_rate : '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          ${artist.bio ? `
+          <!-- Bio -->
+          <div style="background:#fafafa; padding:16px; border-radius:8px;">
+            <h5 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase;">Bio</h5>
+            <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${artist.bio}</p>
+          </div>
+          ` : ''}
+
+          <!-- Action Button -->
+          <button onclick="window.location.href='#artists'; closeProfileSidePanel(); closeAppointmentDetailsModal(); setTimeout(() => showArtistDetails && showArtistDetails('${artist.id}'), 300);"
+            style="width:100%; margin-top:20px; padding:12px; background:#1d1d1f; color:white; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
+            Open Full Profile
+          </button>
+        `;
+
+        // Show panel
+        panel.style.display = 'block';
+        setTimeout(() => panel.style.transform = 'translateX(0)', 10);
+      };
+
+      window.closeProfileSidePanel = function() {
+        const panel = document.getElementById('profileSidePanel');
+        if (panel) {
+          panel.style.transform = 'translateX(100%)';
+          setTimeout(() => panel.style.display = 'none', 300);
+        }
+      };
+
       // Close Appointment Details Modal
       window.closeAppointmentDetailsModal = function() {
         const modal = document.getElementById('appointmentDetailsModal');
         if (modal) {
           modal.classList.remove('active');
         }
+        // Also close side panel
+        closeProfileSidePanel();
       };
 
       // ============================================
@@ -42989,7 +43242,7 @@
       content.innerHTML = `
         <!-- Customer Information -->
         <div class="mobile-event-section">
-          <div class="mobile-event-section-title">👤 Customer Information</div>
+          <div class="mobile-event-section-title">Customer Information</div>
           <div class="mobile-event-field">
             <span class="mobile-event-label">Vorname</span>
             <span class="mobile-event-value ${!customer?.first_name ? 'empty' : ''}">${customer?.first_name || apt.customer_name?.split(' ')[0] || 'Nicht angegeben'}</span>
@@ -43014,7 +43267,7 @@
 
         <!-- Request Details -->
         <div class="mobile-event-section">
-          <div class="mobile-event-section-title">📋 Request Details</div>
+          <div class="mobile-event-section-title">Request Details</div>
           <div class="mobile-event-field">
             <span class="mobile-event-label">Placement</span>
             <span class="mobile-event-value ${!apt.placement ? 'empty' : ''}">${apt.placement || 'Nicht angegeben'}</span>
