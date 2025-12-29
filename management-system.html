@@ -705,6 +705,22 @@
       border-color: #5856D6;
     }
 
+    /* Guest Spot Calendar Events */
+    .event.guest_spot {
+      background: rgba(88, 86, 214, 0.1) !important;
+      border-left: 3px solid #5856D6 !important;
+      color: #4B49B6 !important;
+    }
+
+    .event.guest_spot:hover {
+      background: rgba(88, 86, 214, 0.2) !important;
+    }
+
+    [data-theme="dark"] .event.guest_spot {
+      background: rgba(88, 86, 214, 0.2) !important;
+      color: #8884D8 !important;
+    }
+
     /* Booking Type Colors - 1px colored border, light background */
     /* === DEUTSCHE work_process WERTE === */
     .event[data-type="neustechen"] {
@@ -26475,10 +26491,65 @@
             };
           });
 
-          // 4. Combine events, appointments, and artist infos
-          events = [...processedEvents, ...processedAppointments, ...processedArtistInfos];
+          // 4. Load Guest Spots from guest_spot_calendar_view
+          let processedGuestSpots = [];
+          try {
+            const { data: guestSpotsData, error: guestSpotsError } = await supabase
+              .from('guest_spot_calendar_view')
+              .select('*')
+              .eq('location_id', selectedLocationId)
+              .gte('entry_date', startDateStr)
+              .lte('entry_date', endDateStr)
+              .eq('entry_status', 'active');
 
-          console.log(`Total items in calendar: ${events.length} (${processedEvents.length} events + ${processedAppointments.length} appointments + ${processedArtistInfos.length} artist infos)`);
+            if (guestSpotsError) {
+              console.error('Error loading guest spots for calendar:', guestSpotsError);
+            } else if (guestSpotsData && guestSpotsData.length > 0) {
+              console.log(`📍 Guest spots loaded for calendar: ${guestSpotsData.length}`);
+
+              processedGuestSpots = guestSpotsData.map(gs => {
+                // Parse times
+                const timeFrom = gs.time_from || '10:00:00';
+                const timeTo = gs.time_to || '18:00:00';
+                const startHour = parseInt(timeFrom.split(':')[0]) + parseInt(timeFrom.split(':')[1]) / 60;
+                const endHour = parseInt(timeTo.split(':')[0]) + parseInt(timeTo.split(':')[1]) / 60;
+
+                return {
+                  id: `guest-spot-${gs.id}`,
+                  originalId: gs.id,
+                  guestSpotId: gs.guest_spot_id,
+                  date: gs.entry_date,
+                  category: 'guest_spot',
+                  slot: gs.slot_number || 1,
+                  title: gs.display_title || `Guest Spot - ${gs.artist_name || 'Artist'}`,
+                  type: 'guest_spot',
+                  artistName: gs.artist_name || 'Unknown Artist',
+                  artistId: gs.artist_id,
+                  customerName: null,
+                  customerId: null,
+                  attendanceRequired: false,
+                  startHour: startHour,
+                  endHour: endHour,
+                  startTimeRaw: `${gs.entry_date}T${timeFrom}`,
+                  endTimeRaw: `${gs.entry_date}T${timeTo}`,
+                  isAppointment: false,
+                  isGuestSpot: true,
+                  isPaid: gs.is_paid || false,
+                  bookingType: gs.booking_type || 'external',
+                  spotStatus: gs.spot_status,
+                  // Full data for detail view
+                  fullGuestSpotData: gs
+                };
+              });
+            }
+          } catch (gsError) {
+            console.error('Error in guest spot calendar loading:', gsError);
+          }
+
+          // 5. Combine all: events, appointments, artist infos, and guest spots
+          events = [...processedEvents, ...processedAppointments, ...processedArtistInfos, ...processedGuestSpots];
+
+          console.log(`Total items in calendar: ${events.length} (${processedEvents.length} events + ${processedAppointments.length} appointments + ${processedArtistInfos.length} artist infos + ${processedGuestSpots.length} guest spots)`);
 
           // Update Location Info
           const { data: locationData } = await supabase
@@ -26787,6 +26858,7 @@
           { key: 'events', label: 'Events', visible: visibleCategories.events },
           { key: 'resident', label: 'Residents', visible: visibleCategories.residents },
           { key: 'guest', label: 'Guests', visible: visibleCategories.guests },
+          { key: 'guest_spot', label: 'Guest Spots', visible: true }, // Always show guest spots
           { key: 'artist_info', label: 'Artist Notes', visible: true } // Always show artist infos
         ];
 
@@ -26933,7 +27005,30 @@
                     let content = '';
                     let isArtistInfoEvent = cell.event.isArtistInfo === true;
 
-                    if (isArtistInfoEvent) {
+                    if (cell.event.isGuestSpot) {
+                      // Guest Spot: Show artist name, time, and paid status
+                      const gsPaidIcon = cell.event.isPaid
+                        ? '<svg viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>'
+                        : '<svg viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2.5" style="width:12px;height:12px;"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+                      const gsTypeLabel = cell.event.bookingType === 'internal' ? 'Intern' : 'Extern';
+
+                      content = `
+                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                          </svg>
+                          <span style="font-weight:600; font-size:12px;">${timeStr}</span>
+                        </div>
+                        <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">
+                          ${cell.event.artistName}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsTypeLabel}</span>
+                          <span style="display:inline-flex;">${gsPaidIcon}</span>
+                        </div>
+                      `;
+                    } else if (isArtistInfoEvent) {
                       // Artist Info: Compact display with just notice text
                       content = `<div style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cell.event.title}</div>`;
                     } else if (cat === 'events') {
@@ -27025,12 +27120,15 @@
 
                     // Artist Info: Use special CSS class and click handler
                     const artistInfoClass = isArtistInfoEvent ? 'artist-info-event' : '';
-                    const clickHandler = isArtistInfoEvent
-                      ? `onclick="openArtistInfoModal('${cell.event.originalId}', ${JSON.stringify(cell.event).replace(/"/g, '&quot;')})"`
-                      : `onclick="openEditEventModal('${cell.event.id}')"`;
+                    const guestSpotClass = cell.event.isGuestSpot ? 'guest_spot' : '';
+                    const clickHandler = cell.event.isGuestSpot
+                      ? `onclick="handleGuestSpotCalendarClick('${cell.event.id}')"`
+                      : isArtistInfoEvent
+                        ? `onclick="openArtistInfoModal('${cell.event.originalId}', ${JSON.stringify(cell.event).replace(/"/g, '&quot;')})"`
+                        : `onclick="openEditEventModal('${cell.event.id}')"`;
 
                     html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
-                      <div class="event ${cat} ${artistInfoClass}" ${typeAttr} data-event-id="${cell.event.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
+                      <div class="event ${cat} ${artistInfoClass} ${guestSpotClass}" ${typeAttr} data-event-id="${cell.event.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
                         ${content}
                         ${attendanceIndicator}
                       </div>
@@ -39882,6 +39980,9 @@
         alert(`${icon} ${message}`);
       }
 
+      // Export showNotification globally
+      window.showNotification = showNotification;
+
       // ============================================
       // Handle Add Slot (GETRENNTE LOGIK für Waitlist/Upcoming)
       // ============================================
@@ -46036,10 +46137,20 @@
         }
 
         console.log('✅ Guest Spot created:', data);
-        showNotification('Guest Spot erfolgreich erstellt!', 'success');
 
-        // Close modal
+        // Close modal first
         closeCreateGuestSpotModal();
+
+        // Show notification (with fallback)
+        try {
+          if (typeof window.showNotification === 'function') {
+            window.showNotification('Guest Spot erfolgreich erstellt!', 'success');
+          } else {
+            console.log('✅ Guest Spot erfolgreich erstellt!');
+          }
+        } catch(e) {
+          console.log('✅ Guest Spot erfolgreich erstellt!');
+        }
 
         // Reload relevant data
         if (typeof loadWaitlistSlots === 'function') {
@@ -46381,6 +46492,24 @@
       // Init artist search
       initGuestSpotArtistSearch();
 
+      // Date validation: End date must be >= Start date
+      const dateFromInput = document.getElementById('guestSpotDateFrom');
+      const dateToInput = document.getElementById('guestSpotDateTo');
+
+      if (dateFromInput && dateToInput) {
+        dateFromInput.addEventListener('change', function() {
+          // Set minimum for end date to start date
+          dateToInput.min = this.value;
+
+          // If end date is before start date, set it to start date
+          if (dateToInput.value && dateToInput.value < this.value) {
+            dateToInput.value = this.value;
+          }
+        });
+
+        console.log('📅 Guest Spot date validation initialized');
+      }
+
       // Form submit handler
       const form = document.getElementById('createGuestSpotForm');
       if (form) {
@@ -46416,6 +46545,56 @@
       // DOM already loaded, init now
       setTimeout(initGuestSpotSystem, 100);
     }
+
+    // ============================================
+    // GUEST SPOT CALENDAR CLICK HANDLER
+    // ============================================
+
+    async function handleGuestSpotCalendarClick(guestSpotCalendarId) {
+      console.log('📅 Guest Spot calendar entry clicked:', guestSpotCalendarId);
+
+      // Extract the actual ID (remove 'guest-spot-' prefix if present)
+      const calendarEntryId = guestSpotCalendarId.replace('guest-spot-', '');
+
+      try {
+        // Load the full guest spot data from the view
+        const { data, error } = await supabase
+          .from('guest_spot_calendar_view')
+          .select('*')
+          .eq('id', calendarEntryId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          // Now load the parent guest spot with all info
+          const { data: slotData, error: slotError } = await supabase
+            .from('upcoming_slots_grouped')
+            .select('*')
+            .eq('id', data.guest_spot_id)
+            .single();
+
+          if (slotError) {
+            console.warn('Could not load grouped slot, using calendar view data');
+            // Use calendar view data as fallback
+            openGuestSpotDetailModal({
+              ...data,
+              id: data.guest_spot_id,
+              all_slot_ids: [data.guest_spot_id]
+            });
+          } else {
+            openGuestSpotDetailModal(slotData);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading guest spot details:', err);
+        if (typeof window.showNotification === 'function') {
+          window.showNotification('Fehler beim Laden der Details', 'error');
+        }
+      }
+    }
+
+    window.handleGuestSpotCalendarClick = handleGuestSpotCalendarClick;
 
     // ============================================
     // WINDOW EXPORTS
