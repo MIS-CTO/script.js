@@ -27339,24 +27339,24 @@
       // Submit Add Artist Form
       document.getElementById('addArtistForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const name = document.getElementById('addArtistName').value.trim();
         const instagram = document.getElementById('addArtistInstagram').value.trim();
         const type = document.getElementById('addArtistType').value;
         const locationId = document.getElementById('addArtistLocation').value;
         const active = document.getElementById('addArtistActive').checked;
-        
+
         if (!name || !locationId) return alert('Please enter name and select location');
-        
+
         try {
-          const { error } = await supabase.from('artists').insert({
+          const { data, error } = await supabase.from('artists').insert({
             name,
             instagram: instagram || null,
             is_guest: type === 'guest',
             active,
             location_id: locationId
-          });
-          
+          }).select();
+
           if (error) throw error;
 
           document.getElementById('addArtistModal').classList.remove('active');
@@ -27364,6 +27364,19 @@
           artistsCache = []; // ✅ Clear cache to force reload
           await loadInitialData();
           await loadArtists();
+
+          // Check if we came from Guest Spot Modal
+          if (window.addArtistFromGuestSpot && data && data[0]) {
+            const newArtist = data[0];
+            selectGuestSpotArtist(
+              newArtist.id,
+              newArtist.name || '',
+              newArtist.instagram || '',
+              newArtist.profile_picture_url || ''
+            );
+            window.addArtistFromGuestSpot = false;
+          }
+
           alert('Artist added successfully!');
         } catch(err) {
           alert('Error: ' + err.message);
@@ -45445,6 +45458,914 @@
     window.changeGuestspotMonth = changeGuestspotMonth;
     window.changeGuestspotYear = changeGuestspotYear;
     window.scrollToGuestspotSlot = scrollToGuestspotSlot;
+
+    // ════════════════════════════════════════════════════════════════════════════
+    // GUEST SPOT BOOKING SYSTEM
+    // ════════════════════════════════════════════════════════════════════════════
+
+    // Global Variables for Guest Spot System
+    let selectedGuestSpotArtist = null;
+    let currentGuestSpotBookingType = 'internal';
+    let currentGuestSpotDetailData = null;
+    let artistSearchTimeout = null;
+
+    // ============================================
+    // MODAL OPEN/CLOSE FUNCTIONS
+    // ============================================
+
+    function openCreateGuestSpotModal() {
+      console.log('📅 Opening Create Guest Spot Modal...');
+
+      // Reset form
+      const form = document.getElementById('createGuestSpotForm');
+      if (form) form.reset();
+
+      // Reset selected artist
+      clearSelectedGuestSpotArtist();
+
+      // Reset booking type to internal
+      switchGuestSpotBookingType('internal');
+
+      // Set default dates (today and tomorrow)
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const dateFromInput = document.getElementById('guestSpotDateFrom');
+      const dateToInput = document.getElementById('guestSpotDateTo');
+
+      if (dateFromInput) dateFromInput.value = today.toISOString().split('T')[0];
+      if (dateToInput) dateToInput.value = tomorrow.toISOString().split('T')[0];
+
+      // Populate location dropdown
+      populateGuestSpotLocationDropdown();
+
+      // Show modal
+      const modal = document.getElementById('createGuestSpotModal');
+      if (modal) {
+        modal.classList.add('active');
+      }
+    }
+
+    function closeCreateGuestSpotModal() {
+      const modal = document.getElementById('createGuestSpotModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+
+      // Clear search results
+      const resultsContainer = document.getElementById('guestSpotArtistResults');
+      if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+        resultsContainer.innerHTML = '';
+      }
+    }
+
+    function openGuestSpotDetailModal(slotData) {
+      console.log('📋 Opening Guest Spot Detail Modal...', slotData);
+
+      currentGuestSpotDetailData = slotData;
+
+      // Store IDs
+      document.getElementById('guestSpotDetailId').value = slotData.id || '';
+      document.getElementById('guestSpotDetailSlotIds').value = JSON.stringify(slotData.all_slot_ids || [slotData.id]);
+
+      // Populate Artist Info
+      const avatar = document.getElementById('guestSpotDetailAvatar');
+      if (slotData.profile_picture_url) {
+        avatar.src = slotData.profile_picture_url;
+        avatar.style.display = 'block';
+      } else {
+        avatar.style.display = 'none';
+      }
+
+      document.getElementById('guestSpotDetailArtistName').textContent = slotData.artist_name || 'Unknown Artist';
+      document.getElementById('guestSpotDetailArtistInstagram').textContent = slotData.instagram ? '@' + slotData.instagram : '';
+
+      // Paid Badge
+      const paidBadge = document.getElementById('guestSpotDetailPaidBadge');
+      if (slotData.is_paid) {
+        paidBadge.textContent = '✓ Paid';
+        paidBadge.style.background = '#34c759';
+        paidBadge.style.color = 'white';
+      } else {
+        paidBadge.textContent = '✗ Unpaid';
+        paidBadge.style.background = '#ff3b30';
+        paidBadge.style.color = 'white';
+      }
+
+      // Date & Time
+      const dateFrom = slotData.date_from ? new Date(slotData.date_from).toLocaleDateString('de-DE') : 'N/A';
+      const dateTo = slotData.date_to ? new Date(slotData.date_to).toLocaleDateString('de-DE') : 'N/A';
+      document.getElementById('guestSpotDetailDateRange').textContent = dateFrom === dateTo ? dateFrom : `${dateFrom} - ${dateTo}`;
+
+      const timeFrom = slotData.time_from || '10:00';
+      const timeTo = slotData.time_to || '18:00';
+      document.getElementById('guestSpotDetailTimeRange').textContent = `${timeFrom} - ${timeTo}`;
+
+      // Location
+      document.getElementById('guestSpotDetailLocation').textContent =
+        (slotData.location_name || 'Unknown') + (slotData.location_city ? ` (${slotData.location_city})` : '');
+
+      // Booking Type
+      const bookingType = slotData.booking_type || 'external';
+      document.getElementById('guestSpotDetailBookingType').textContent =
+        bookingType === 'internal' ? 'Interne Buchung' : 'Externe Artist Buchung';
+
+      // Payment Info
+      const internalPayment = document.getElementById('guestSpotDetailInternalPayment');
+      const externalPayment = document.getElementById('guestSpotDetailExternalPayment');
+
+      if (bookingType === 'internal') {
+        internalPayment.style.display = 'block';
+        externalPayment.style.display = 'none';
+
+        document.getElementById('guestSpotDetailInternalDeposit').textContent =
+          slotData.deposit_amount ? `€${parseFloat(slotData.deposit_amount).toFixed(2)}` : '€0.00';
+        document.getElementById('guestSpotDetailInternalOnsite').textContent =
+          slotData.onsite_deposit ? `€${parseFloat(slotData.onsite_deposit).toFixed(2)}` : '€0.00';
+        document.getElementById('guestSpotDetailInternalNotes').textContent =
+          slotData.payment_notes || '-';
+      } else {
+        internalPayment.style.display = 'none';
+        externalPayment.style.display = 'block';
+
+        document.getElementById('guestSpotDetailExternalTotal').textContent =
+          slotData.total_price ? `€${parseFloat(slotData.total_price).toFixed(2)}` : '€0.00';
+        document.getElementById('guestSpotDetailExternalDeposit').textContent =
+          slotData.deposit_amount ? `€${parseFloat(slotData.deposit_amount).toFixed(2)}` : '€0.00';
+        document.getElementById('guestSpotDetailStudioShare').textContent =
+          slotData.studio_share ? `€${parseFloat(slotData.studio_share).toFixed(2)}` : '€0.00';
+        document.getElementById('guestSpotDetailArtistShare').textContent =
+          slotData.artist_share ? `€${parseFloat(slotData.artist_share).toFixed(2)}` : '€0.00';
+        document.getElementById('guestSpotDetailExternalNotes').textContent =
+          slotData.payment_notes || '-';
+      }
+
+      // Notes
+      const notesSection = document.getElementById('guestSpotDetailNotesSection');
+      if (slotData.notes) {
+        notesSection.style.display = 'block';
+        document.getElementById('guestSpotDetailNotes').textContent = slotData.notes;
+      } else {
+        notesSection.style.display = 'none';
+      }
+
+      // Canceled Info
+      const canceledInfo = document.getElementById('guestSpotDetailCanceledInfo');
+      if (slotData.status === 'canceled' || slotData.canceled_at) {
+        canceledInfo.style.display = 'block';
+        document.getElementById('guestSpotDetailCancelReason').textContent =
+          slotData.cancel_reason || 'Kein Grund angegeben';
+      } else {
+        canceledInfo.style.display = 'none';
+      }
+
+      // Update Toggle Paid Button
+      updateTogglePaidButton(slotData.is_paid);
+
+      // Show view mode, hide edit mode
+      document.getElementById('guestSpotViewMode').style.display = 'block';
+      document.getElementById('guestSpotEditMode').style.display = 'none';
+
+      // Show modal
+      const modal = document.getElementById('guestSpotDetailModal');
+      if (modal) {
+        modal.classList.add('active');
+      }
+    }
+
+    function closeGuestSpotDetailModal() {
+      const modal = document.getElementById('guestSpotDetailModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+      currentGuestSpotDetailData = null;
+    }
+
+    function updateTogglePaidButton(isPaid) {
+      const btn = document.getElementById('guestSpotTogglePaidBtn');
+      if (!btn) return;
+
+      if (isPaid) {
+        btn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          Paid
+        `;
+        btn.style.background = '#34c759';
+        btn.style.color = 'white';
+      } else {
+        btn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
+          </svg>
+          Unpaid
+        `;
+        btn.style.background = '#ff3b30';
+        btn.style.color = 'white';
+      }
+    }
+
+    // ============================================
+    // BOOKING TYPE SWITCHER
+    // ============================================
+
+    function switchGuestSpotBookingType(type) {
+      console.log('🔄 Switching booking type to:', type);
+
+      currentGuestSpotBookingType = type;
+      document.getElementById('guestSpotBookingType').value = type;
+
+      // Update switcher buttons
+      const buttons = document.querySelectorAll('#guestSpotBookingTypeSwitcher .booking-type-option');
+      buttons.forEach(btn => {
+        if (btn.dataset.type === type) {
+          btn.classList.add('active');
+          btn.style.background = 'white';
+          btn.style.color = '#1d1d1f';
+          btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)';
+        } else {
+          btn.classList.remove('active');
+          btn.style.background = 'transparent';
+          btn.style.color = '#86868b';
+          btn.style.boxShadow = 'none';
+        }
+      });
+
+      // Show/Hide fields
+      const internalFields = document.getElementById('guestSpotInternalFields');
+      const externalFields = document.getElementById('guestSpotExternalFields');
+
+      if (type === 'internal') {
+        internalFields.style.display = 'block';
+        externalFields.style.display = 'none';
+      } else {
+        internalFields.style.display = 'none';
+        externalFields.style.display = 'block';
+      }
+    }
+
+    // ============================================
+    // ARTIST LIVE-SEARCH
+    // ============================================
+
+    function initGuestSpotArtistSearch() {
+      const searchInput = document.getElementById('guestSpotArtistSearch');
+      const resultsContainer = document.getElementById('guestSpotArtistResults');
+
+      if (!searchInput || !resultsContainer) return;
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+
+        // Clear previous timeout
+        if (artistSearchTimeout) {
+          clearTimeout(artistSearchTimeout);
+        }
+
+        // Hide results if empty
+        if (query.length < 2) {
+          resultsContainer.style.display = 'none';
+          resultsContainer.innerHTML = '';
+          return;
+        }
+
+        // Debounce search
+        artistSearchTimeout = setTimeout(() => {
+          searchArtistsForGuestSpot(query);
+        }, 300);
+      });
+
+      // Close results when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+          resultsContainer.style.display = 'none';
+        }
+      });
+    }
+
+    async function searchArtistsForGuestSpot(query) {
+      const resultsContainer = document.getElementById('guestSpotArtistResults');
+      if (!resultsContainer) return;
+
+      console.log('🔍 Searching artists for:', query);
+
+      // Show loading
+      resultsContainer.style.display = 'block';
+      resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#86868b;">Suche...</div>';
+
+      try {
+        // Search by name OR instagram (case insensitive)
+        const { data, error } = await supabase
+          .from('artists')
+          .select('id, name, instagram, profile_picture_url, is_guest')
+          .or(`name.ilike.%${query}%,instagram.ilike.%${query}%`)
+          .order('name')
+          .limit(10);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#86868b;">Keine Artists gefunden</div>';
+          return;
+        }
+
+        // Render results
+        resultsContainer.innerHTML = data.map(artist => `
+          <div
+            class="artist-search-result"
+            onclick="selectGuestSpotArtist('${artist.id}', '${(artist.name || '').replace(/'/g, "\\'")}', '${artist.instagram || ''}', '${artist.profile_picture_url || ''}')"
+            style="
+              padding:10px 12px;
+              display:flex;
+              align-items:center;
+              gap:10px;
+              cursor:pointer;
+              border-bottom:1px solid rgba(0,0,0,0.05);
+              transition:background 0.2s;
+            "
+            onmouseover="this.style.background='rgba(0,0,0,0.03)';"
+            onmouseout="this.style.background='transparent';"
+          >
+            ${artist.profile_picture_url
+              ? `<img src="${artist.profile_picture_url}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">`
+              : `<div style="width:32px; height:32px; border-radius:50%; background:#e0e0e0; display:flex; align-items:center; justify-content:center; font-size:14px; color:#86868b;">${(artist.name || '?')[0]}</div>`
+            }
+            <div style="flex:1;">
+              <div style="font-weight:500; font-size:14px;">${artist.name || 'Unknown'}</div>
+              ${artist.instagram ? `<div style="font-size:12px; color:#86868b;">@${artist.instagram}</div>` : ''}
+            </div>
+            <span style="
+              font-size:10px;
+              padding:2px 6px;
+              border-radius:4px;
+              background:${artist.is_guest ? 'rgba(0,122,255,0.1)' : 'rgba(52,199,89,0.1)'};
+              color:${artist.is_guest ? '#007aff' : '#34c759'};
+            ">${artist.is_guest ? 'Guest' : 'Resident'}</span>
+          </div>
+        `).join('');
+
+      } catch (error) {
+        console.error('❌ Artist search error:', error);
+        resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#ff3b30;">Fehler bei der Suche</div>';
+      }
+    }
+
+    function selectGuestSpotArtist(id, name, instagram, profilePicture) {
+      console.log('✅ Artist selected:', name);
+
+      selectedGuestSpotArtist = { id, name, instagram, profilePicture };
+
+      // Update hidden input
+      document.getElementById('guestSpotArtistId').value = id;
+
+      // Update display
+      const selectedDisplay = document.getElementById('guestSpotSelectedArtist');
+      const avatar = document.getElementById('guestSpotArtistAvatar');
+      const nameEl = document.getElementById('guestSpotArtistName');
+      const instagramEl = document.getElementById('guestSpotArtistInstagram');
+
+      if (profilePicture) {
+        avatar.src = profilePicture;
+        avatar.style.display = 'block';
+      } else {
+        avatar.style.display = 'none';
+      }
+
+      nameEl.textContent = name;
+      instagramEl.textContent = instagram ? `@${instagram}` : '';
+      selectedDisplay.style.display = 'block';
+
+      // Clear search
+      document.getElementById('guestSpotArtistSearch').value = '';
+      document.getElementById('guestSpotArtistResults').style.display = 'none';
+    }
+
+    function clearSelectedGuestSpotArtist() {
+      selectedGuestSpotArtist = null;
+      document.getElementById('guestSpotArtistId').value = '';
+      document.getElementById('guestSpotSelectedArtist').style.display = 'none';
+      document.getElementById('guestSpotArtistSearch').value = '';
+    }
+
+    // Open Add Artist Modal from Guest Spot Modal
+    function openAddArtistFromGuestSpot() {
+      console.log('➕ Opening Add Artist from Guest Spot...');
+
+      // Store flag to know we came from Guest Spot
+      window.addArtistFromGuestSpot = true;
+
+      // Reset and open Add Artist Modal
+      document.getElementById('addArtistForm')?.reset();
+      document.getElementById('addArtistModal')?.classList.add('active');
+    }
+
+    // ============================================
+    // LOCATION DROPDOWN
+    // ============================================
+
+    function populateGuestSpotLocationDropdown() {
+      const dropdown = document.getElementById('guestSpotLocation');
+      if (!dropdown) return;
+
+      // Clear existing options (except first)
+      dropdown.innerHTML = '<option value="">-- Location auswählen --</option>';
+
+      // Get locations from cache or allLocations
+      const locations = CentralDataManager?.getData('locations') || allLocations || [];
+
+      locations.forEach(loc => {
+        const option = document.createElement('option');
+        option.value = loc.id;
+        option.textContent = loc.name + (loc.city ? ` (${loc.city})` : '');
+        dropdown.appendChild(option);
+      });
+
+      console.log('📍 Location dropdown populated with', locations.length, 'locations');
+    }
+
+    // ============================================
+    // FORM SUBMIT HANDLER
+    // ============================================
+
+    async function handleCreateGuestSpotSubmit(e) {
+      e.preventDefault();
+
+      console.log('📝 Creating Guest Spot...');
+
+      // Validate artist selected
+      const artistId = document.getElementById('guestSpotArtistId').value;
+      if (!artistId) {
+        showNotification('Bitte wähle einen Artist aus', 'error');
+        return;
+      }
+
+      // Get form values
+      const dateFrom = document.getElementById('guestSpotDateFrom').value;
+      const dateTo = document.getElementById('guestSpotDateTo').value;
+      const timeFrom = document.getElementById('guestSpotTimeFrom').value;
+      const timeTo = document.getElementById('guestSpotTimeTo').value;
+      const locationId = document.getElementById('guestSpotLocation').value;
+      const notes = document.getElementById('guestSpotNotes').value;
+      const bookingType = document.getElementById('guestSpotBookingType').value;
+
+      // Validate required fields
+      if (!dateFrom || !dateTo || !locationId) {
+        showNotification('Bitte fülle alle Pflichtfelder aus', 'error');
+        return;
+      }
+
+      // Validate date range
+      if (new Date(dateFrom) > new Date(dateTo)) {
+        showNotification('End-Datum muss nach Start-Datum liegen', 'error');
+        return;
+      }
+
+      // Build slot data
+      const slotData = {
+        artist_id: artistId,
+        location_id: locationId,
+        date_from: dateFrom,
+        date_to: dateTo,
+        time_from: timeFrom || '10:00',
+        time_to: timeTo || '18:00',
+        notes: notes || null,
+        booking_type: bookingType,
+        status: new Date(dateFrom) <= new Date() ? 'active' : 'upcoming',
+        is_paid: false,
+        created_at: new Date().toISOString()
+      };
+
+      // Add payment fields based on booking type
+      if (bookingType === 'internal') {
+        slotData.deposit_amount = parseFloat(document.getElementById('guestSpotInternalDeposit').value) || 0;
+        slotData.onsite_deposit = parseFloat(document.getElementById('guestSpotInternalOnsiteDeposit').value) || 0;
+        slotData.payment_notes = document.getElementById('guestSpotInternalPaymentNotes').value || null;
+      } else {
+        slotData.total_price = parseFloat(document.getElementById('guestSpotExternalTotalPrice').value) || 0;
+        slotData.deposit_amount = parseFloat(document.getElementById('guestSpotExternalDeposit').value) || 0;
+        slotData.studio_share = parseFloat(document.getElementById('guestSpotExternalStudioShare').value) || 0;
+        slotData.artist_share = parseFloat(document.getElementById('guestSpotExternalArtistShare').value) || 0;
+        slotData.payment_notes = document.getElementById('guestSpotExternalPaymentNotes').value || null;
+      }
+
+      console.log('📤 Slot data:', slotData);
+
+      try {
+        // Insert into upcoming_slots
+        // The trigger will automatically create calendar entries!
+        const { data, error } = await supabase
+          .from('upcoming_slots')
+          .insert([slotData])
+          .select();
+
+        if (error) {
+          console.error('❌ Database error:', error);
+          throw error;
+        }
+
+        console.log('✅ Guest Spot created:', data);
+        showNotification('Guest Spot erfolgreich erstellt!', 'success');
+
+        // Close modal
+        closeCreateGuestSpotModal();
+
+        // Reload relevant data
+        if (typeof loadWaitlistSlots === 'function') {
+          await loadWaitlistSlots(currentWaitlistLocation);
+        }
+
+        // Reload calendar if on calendar tab
+        if (typeof loadCalendarData === 'function') {
+          await loadCalendarData();
+        }
+
+        // Reload Dienstplan if on Dienstplan tab
+        if (typeof loadDienstplan === 'function') {
+          await loadDienstplan();
+        }
+
+      } catch (error) {
+        console.error('❌ Error creating Guest Spot:', error);
+        showNotification('Fehler beim Erstellen: ' + error.message, 'error');
+      }
+    }
+
+    // ============================================
+    // TOGGLE PAID STATUS
+    // ============================================
+
+    async function toggleGuestSpotPaid() {
+      if (!currentGuestSpotDetailData) return;
+
+      const slotIds = JSON.parse(document.getElementById('guestSpotDetailSlotIds').value || '[]');
+      const currentPaid = currentGuestSpotDetailData.is_paid;
+      const newPaid = !currentPaid;
+
+      console.log('💰 Toggling paid status to:', newPaid);
+
+      try {
+        const { error } = await supabase
+          .from('upcoming_slots')
+          .update({ is_paid: newPaid })
+          .in('id', slotIds);
+
+        if (error) throw error;
+
+        // Update local data
+        currentGuestSpotDetailData.is_paid = newPaid;
+
+        // Update UI
+        updateTogglePaidButton(newPaid);
+
+        const paidBadge = document.getElementById('guestSpotDetailPaidBadge');
+        if (newPaid) {
+          paidBadge.textContent = '✓ Paid';
+          paidBadge.style.background = '#34c759';
+        } else {
+          paidBadge.textContent = '✗ Unpaid';
+          paidBadge.style.background = '#ff3b30';
+        }
+
+        showNotification(newPaid ? 'Als bezahlt markiert' : 'Als unbezahlt markiert', 'success');
+
+        // Reload lists
+        if (typeof loadWaitlistSlots === 'function') {
+          await loadWaitlistSlots(currentWaitlistLocation);
+        }
+
+      } catch (error) {
+        console.error('❌ Error toggling paid status:', error);
+        showNotification('Fehler: ' + error.message, 'error');
+      }
+    }
+
+    // ============================================
+    // CANCEL GUEST SPOT
+    // ============================================
+
+    async function cancelGuestSpot() {
+      if (!currentGuestSpotDetailData) return;
+
+      const reason = prompt('Grund für Stornierung (optional):');
+
+      if (reason === null) return; // User clicked cancel
+
+      const slotIds = JSON.parse(document.getElementById('guestSpotDetailSlotIds').value || '[]');
+
+      console.log('❌ Canceling Guest Spot:', slotIds);
+
+      try {
+        // Use the cancel_guest_spot function if available, otherwise update directly
+        const { error } = await supabase
+          .from('upcoming_slots')
+          .update({
+            status: 'canceled',
+            canceled_at: new Date().toISOString(),
+            cancel_reason: reason || null
+          })
+          .in('id', slotIds);
+
+        if (error) throw error;
+
+        showNotification('Guest Spot storniert', 'success');
+        closeGuestSpotDetailModal();
+
+        // Reload data
+        if (typeof loadWaitlistSlots === 'function') {
+          await loadWaitlistSlots(currentWaitlistLocation);
+        }
+        if (typeof loadCalendarData === 'function') {
+          await loadCalendarData();
+        }
+        if (typeof loadDienstplan === 'function') {
+          await loadDienstplan();
+        }
+
+      } catch (error) {
+        console.error('❌ Error canceling Guest Spot:', error);
+        showNotification('Fehler: ' + error.message, 'error');
+      }
+    }
+
+    // ============================================
+    // DELETE GUEST SPOT
+    // ============================================
+
+    async function deleteGuestSpot() {
+      if (!currentGuestSpotDetailData) return;
+
+      const slotIds = JSON.parse(document.getElementById('guestSpotDetailSlotIds').value || '[]');
+      const slotCount = slotIds.length;
+
+      const confirmMsg = slotCount > 1
+        ? `${slotCount} zusammenhängende Slots wirklich ENDGÜLTIG löschen?`
+        : 'Guest Spot wirklich ENDGÜLTIG löschen?';
+
+      if (!confirm(confirmMsg)) return;
+
+      console.log('🗑️ Deleting Guest Spot:', slotIds);
+
+      try {
+        // Delete the slots (cascade will handle calendar entries)
+        const { error } = await supabase
+          .from('upcoming_slots')
+          .delete()
+          .in('id', slotIds);
+
+        if (error) throw error;
+
+        showNotification('Guest Spot gelöscht', 'success');
+        closeGuestSpotDetailModal();
+
+        // Reload data
+        if (typeof loadWaitlistSlots === 'function') {
+          await loadWaitlistSlots(currentWaitlistLocation);
+        }
+        if (typeof loadCalendarData === 'function') {
+          await loadCalendarData();
+        }
+        if (typeof loadDienstplan === 'function') {
+          await loadDienstplan();
+        }
+
+      } catch (error) {
+        console.error('❌ Error deleting Guest Spot:', error);
+        showNotification('Fehler: ' + error.message, 'error');
+      }
+    }
+
+    // ============================================
+    // EDIT MODE (Placeholder - will be extended)
+    // ============================================
+
+    function openGuestSpotEditMode() {
+      console.log('✏️ Opening Edit Mode...');
+
+      if (!currentGuestSpotDetailData) return;
+
+      const editContainer = document.getElementById('guestSpotEditMode');
+      const viewContainer = document.getElementById('guestSpotViewMode');
+
+      // Build edit form HTML
+      const data = currentGuestSpotDetailData;
+      const bookingType = data.booking_type || 'external';
+
+      editContainer.innerHTML = `
+        <form id="guestSpotEditForm" onsubmit="handleGuestSpotEditSubmit(event)">
+          <!-- Date & Time -->
+          <div style="margin-bottom:20px;">
+            <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:12px;">Zeitraum</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div>
+                <label style="font-size:13px; margin-bottom:4px; display:block;">Start Datum</label>
+                <input type="date" id="editGuestSpotDateFrom" value="${data.date_from || ''}" required style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+              </div>
+              <div>
+                <label style="font-size:13px; margin-bottom:4px; display:block;">End Datum</label>
+                <input type="date" id="editGuestSpotDateTo" value="${data.date_to || ''}" required style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+              </div>
+              <div>
+                <label style="font-size:13px; margin-bottom:4px; display:block;">Start Zeit</label>
+                <input type="time" id="editGuestSpotTimeFrom" value="${data.time_from || '10:00'}" required style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+              </div>
+              <div>
+                <label style="font-size:13px; margin-bottom:4px; display:block;">End Zeit</label>
+                <input type="time" id="editGuestSpotTimeTo" value="${data.time_to || '18:00'}" required style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking Type (Read-Only Display) -->
+          <div style="margin-bottom:20px; padding:12px; background:rgba(142,142,147,0.08); border-radius:8px;">
+            <span style="font-size:12px; color:#86868b;">Buchungstyp (nicht änderbar):</span>
+            <span style="font-weight:600; margin-left:8px;">${bookingType === 'internal' ? 'Interne Buchung' : 'Externe Artist Buchung'}</span>
+          </div>
+
+          <!-- Payment Fields based on booking type -->
+          ${bookingType === 'internal' ? `
+            <div style="margin-bottom:20px; padding:16px; background:rgba(52, 199, 89, 0.08); border-radius:12px;">
+              <div style="font-size:13px; font-weight:600; color:#34c759; margin-bottom:12px;">Zahlungsinformationen</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                  <label style="font-size:13px; margin-bottom:4px; display:block;">Anzahlung (€)</label>
+                  <input type="number" id="editGuestSpotDeposit" value="${data.deposit_amount || 0}" step="0.01" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+                </div>
+                <div>
+                  <label style="font-size:13px; margin-bottom:4px; display:block;">Vor Ort (€)</label>
+                  <input type="number" id="editGuestSpotOnsite" value="${data.onsite_deposit || 0}" step="0.01" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+                </div>
+              </div>
+              <div style="margin-top:12px;">
+                <label style="font-size:13px; margin-bottom:4px; display:block;">Zahlungsnotiz</label>
+                <input type="text" id="editGuestSpotPaymentNotes" value="${data.payment_notes || ''}" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+              </div>
+            </div>
+          ` : `
+            <div style="margin-bottom:20px; padding:16px; background:rgba(0, 122, 255, 0.08); border-radius:12px;">
+              <div style="font-size:13px; font-weight:600; color:#007aff; margin-bottom:12px;">Zahlungsinformationen</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                  <label style="font-size:13px; margin-bottom:4px; display:block;">Total Preis (€)</label>
+                  <input type="number" id="editGuestSpotTotalPrice" value="${data.total_price || 0}" step="0.01" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+                </div>
+                <div>
+                  <label style="font-size:13px; margin-bottom:4px; display:block;">Deposit (€)</label>
+                  <input type="number" id="editGuestSpotDeposit" value="${data.deposit_amount || 0}" step="0.01" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+                </div>
+                <div>
+                  <label style="font-size:13px; margin-bottom:4px; display:block;">Studio Share (€)</label>
+                  <input type="number" id="editGuestSpotStudioShare" value="${data.studio_share || 0}" step="0.01" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+                </div>
+                <div>
+                  <label style="font-size:13px; margin-bottom:4px; display:block;">Artist Share (€)</label>
+                  <input type="number" id="editGuestSpotArtistShare" value="${data.artist_share || 0}" step="0.01" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+                </div>
+              </div>
+              <div style="margin-top:12px;">
+                <label style="font-size:13px; margin-bottom:4px; display:block;">Zahlungsnotiz</label>
+                <input type="text" id="editGuestSpotPaymentNotes" value="${data.payment_notes || ''}" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+              </div>
+            </div>
+          `}
+
+          <!-- Actions -->
+          <div style="display:flex; gap:12px; justify-content:flex-end; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+            <button type="button" onclick="closeGuestSpotEditMode()" style="padding:10px 20px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer;">Abbrechen</button>
+            <button type="submit" style="padding:10px 20px; border:none; border-radius:8px; background:#1d1d1f; color:white; cursor:pointer;">Speichern</button>
+          </div>
+        </form>
+      `;
+
+      // Switch view
+      viewContainer.style.display = 'none';
+      editContainer.style.display = 'block';
+    }
+
+    function closeGuestSpotEditMode() {
+      document.getElementById('guestSpotViewMode').style.display = 'block';
+      document.getElementById('guestSpotEditMode').style.display = 'none';
+    }
+
+    async function handleGuestSpotEditSubmit(e) {
+      e.preventDefault();
+
+      if (!currentGuestSpotDetailData) return;
+
+      const slotIds = JSON.parse(document.getElementById('guestSpotDetailSlotIds').value || '[]');
+      const bookingType = currentGuestSpotDetailData.booking_type || 'external';
+
+      console.log('💾 Saving Guest Spot edits...');
+
+      const updateData = {
+        date_from: document.getElementById('editGuestSpotDateFrom').value,
+        date_to: document.getElementById('editGuestSpotDateTo').value,
+        time_from: document.getElementById('editGuestSpotTimeFrom').value,
+        time_to: document.getElementById('editGuestSpotTimeTo').value,
+        payment_notes: document.getElementById('editGuestSpotPaymentNotes').value || null
+      };
+
+      if (bookingType === 'internal') {
+        updateData.deposit_amount = parseFloat(document.getElementById('editGuestSpotDeposit').value) || 0;
+        updateData.onsite_deposit = parseFloat(document.getElementById('editGuestSpotOnsite').value) || 0;
+      } else {
+        updateData.total_price = parseFloat(document.getElementById('editGuestSpotTotalPrice').value) || 0;
+        updateData.deposit_amount = parseFloat(document.getElementById('editGuestSpotDeposit').value) || 0;
+        updateData.studio_share = parseFloat(document.getElementById('editGuestSpotStudioShare').value) || 0;
+        updateData.artist_share = parseFloat(document.getElementById('editGuestSpotArtistShare').value) || 0;
+      }
+
+      try {
+        const { error } = await supabase
+          .from('upcoming_slots')
+          .update(updateData)
+          .in('id', slotIds);
+
+        if (error) throw error;
+
+        showNotification('Guest Spot aktualisiert', 'success');
+        closeGuestSpotDetailModal();
+
+        // Reload data
+        if (typeof loadWaitlistSlots === 'function') {
+          await loadWaitlistSlots(currentWaitlistLocation);
+        }
+        if (typeof loadCalendarData === 'function') {
+          await loadCalendarData();
+        }
+
+      } catch (error) {
+        console.error('❌ Error updating Guest Spot:', error);
+        showNotification('Fehler: ' + error.message, 'error');
+      }
+    }
+
+    // ============================================
+    // INITIALIZE EVENT LISTENERS
+    // ============================================
+
+    function initGuestSpotSystem() {
+      console.log('🎬 Initializing Guest Spot System...');
+
+      // Init artist search
+      initGuestSpotArtistSearch();
+
+      // Form submit handler
+      const form = document.getElementById('createGuestSpotForm');
+      if (form) {
+        form.addEventListener('submit', handleCreateGuestSpotSubmit);
+      }
+
+      // Modal backdrop click to close
+      const createModal = document.getElementById('createGuestSpotModal');
+      if (createModal) {
+        createModal.addEventListener('click', (e) => {
+          if (e.target === createModal) {
+            closeCreateGuestSpotModal();
+          }
+        });
+      }
+
+      const detailModal = document.getElementById('guestSpotDetailModal');
+      if (detailModal) {
+        detailModal.addEventListener('click', (e) => {
+          if (e.target === detailModal) {
+            closeGuestSpotDetailModal();
+          }
+        });
+      }
+
+      console.log('✅ Guest Spot System initialized');
+    }
+
+    // Auto-init when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGuestSpotSystem);
+    } else {
+      // DOM already loaded, init now
+      setTimeout(initGuestSpotSystem, 100);
+    }
+
+    // ============================================
+    // WINDOW EXPORTS
+    // ============================================
+
+    window.openCreateGuestSpotModal = openCreateGuestSpotModal;
+    window.closeCreateGuestSpotModal = closeCreateGuestSpotModal;
+    window.openGuestSpotDetailModal = openGuestSpotDetailModal;
+    window.closeGuestSpotDetailModal = closeGuestSpotDetailModal;
+    window.switchGuestSpotBookingType = switchGuestSpotBookingType;
+    window.selectGuestSpotArtist = selectGuestSpotArtist;
+    window.clearSelectedGuestSpotArtist = clearSelectedGuestSpotArtist;
+    window.openAddArtistFromGuestSpot = openAddArtistFromGuestSpot;
+    window.toggleGuestSpotPaid = toggleGuestSpotPaid;
+    window.cancelGuestSpot = cancelGuestSpot;
+    window.deleteGuestSpot = deleteGuestSpot;
+    window.openGuestSpotEditMode = openGuestSpotEditMode;
+    window.closeGuestSpotEditMode = closeGuestSpotEditMode;
+    window.handleGuestSpotEditSubmit = handleGuestSpotEditSubmit;
   </script>
 
   <!-- Image Modal for Reference Images -->
