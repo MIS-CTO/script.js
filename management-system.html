@@ -11880,6 +11880,28 @@
         <span>Add Slot</span>
       </button>
 
+      <!-- Create Guest Spot Button (Dienstplan) -->
+      <button id="createGuestSpotBtnDienstplan" onclick="openCreateGuestSpotModal()" style="
+        padding:10px 20px;
+        border:none;
+        border-radius:8px;
+        background:#1d1d1f;
+        color:#fff;
+        font-size:14px;
+        font-weight:500;
+        cursor:pointer;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        transition:all 0.2s;
+        height:37px;
+      " onmouseover="this.style.background='#333';" onmouseout="this.style.background='#1d1d1f';">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Create Guest Spot
+      </button>
+
       <!-- Monat-Navigation -->
       <div style="flex: 2; min-width: 320px; display: flex; align-items: center; gap: 8px;">
         <button onclick="navigateDienstplanMonth(-1)" style="
@@ -12668,10 +12690,35 @@
         <span id="guestspotViewLabel">List</span>
       </button>
 
-      <!-- Add Slot Button (for Waitlist and Upcoming) -->
-      <button id="addWaitlistSlotButton" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
-        <span style="font-size:18px; font-weight:600;">+</span>
-        <span>Add Slot</span>
+      <!-- Add Waitlist Spot Button (for Waitlist - Artists without dates) -->
+      <button id="addWaitlistSlotButton" class="btn-nav" style="background:rgba(142, 142, 147, 0.12); color:#1d1d1f; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span>Add Waitlist Spot</span>
+      </button>
+
+      <!-- Create Guest Spot Button (for Upcoming - Artists with dates) -->
+      <button id="createGuestSpotBtnWaitlist" onclick="openCreateGuestSpotModal()" style="
+        padding:10px 20px;
+        border:none;
+        border-radius:8px;
+        background:#1d1d1f;
+        color:#fff;
+        font-size:14px;
+        font-weight:500;
+        cursor:pointer;
+        display:flex;
+        align-items:center;
+        gap:8px;
+        transition:all 0.2s;
+        height:37px;
+        white-space:nowrap;
+      " onmouseover="this.style.background='#333';" onmouseout="this.style.background='#1d1d1f';">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Create Guest Spot
       </button>
 
       <!-- Add Previous Spot Button (for Previous Guest Spots - initially hidden) -->
@@ -13812,6 +13859,561 @@
     </div>
   </div>
 
+  <!-- ============================================ -->
+  <!-- CREATE GUEST SPOT MODAL -->
+  <!-- ============================================ -->
+  <div class="modal-backdrop" id="createGuestSpotModal">
+    <div class="modal" style="max-width:700px; max-height:90vh; overflow-y:auto;">
+      <h3 style="margin:0 0 24px 0; font-size:20px; font-weight:600;">Create Guest Spot</h3>
+
+      <form id="createGuestSpotForm">
+        <!-- SECTION 1: Artist Selection -->
+        <div style="margin-bottom:24px; padding:20px; background:rgba(142,142,147,0.08); border-radius:12px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:12px;">Artist auswählen</label>
+
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <!-- Artist Search -->
+            <div style="flex:1; position:relative;">
+              <input
+                type="text"
+                id="guestSpotArtistSearch"
+                placeholder="Artist suchen (Name oder Instagram)..."
+                autocomplete="off"
+                style="
+                  width:100%;
+                  padding:12px 16px;
+                  border:1px solid rgba(0,0,0,0.1);
+                  border-radius:8px;
+                  font-size:14px;
+                "
+              >
+              <!-- Search Results Dropdown -->
+              <div id="guestSpotArtistResults" style="
+                display:none;
+                position:absolute;
+                top:100%;
+                left:0;
+                right:0;
+                background:white;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.15);
+                max-height:200px;
+                overflow-y:auto;
+                z-index:1000;
+                margin-top:4px;
+              "></div>
+            </div>
+
+            <!-- Add Artist Button -->
+            <button type="button" onclick="openAddArtistFromGuestSpot()" style="
+              padding:12px 16px;
+              border:none;
+              border-radius:8px;
+              background:#1d1d1f;
+              color:#fff;
+              font-size:14px;
+              font-weight:500;
+              cursor:pointer;
+              display:flex;
+              align-items:center;
+              gap:6px;
+              white-space:nowrap;
+            ">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Add Artist
+            </button>
+          </div>
+
+          <!-- Selected Artist Display -->
+          <div id="guestSpotSelectedArtist" style="display:none; margin-top:12px; padding:12px; background:white; border-radius:8px; border:1px solid rgba(0,0,0,0.1);">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img id="guestSpotArtistAvatar" src="" alt="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; display:none;">
+              <div style="flex:1;">
+                <div id="guestSpotArtistName" style="font-weight:600; font-size:15px;"></div>
+                <div id="guestSpotArtistInstagram" style="font-size:13px; color:#86868b;"></div>
+              </div>
+              <button type="button" onclick="clearSelectedGuestSpotArtist()" style="
+                padding:6px 12px;
+                border:1px solid #ff3b30;
+                border-radius:6px;
+                background:transparent;
+                color:#ff3b30;
+                font-size:12px;
+                cursor:pointer;
+              ">Entfernen</button>
+            </div>
+          </div>
+
+          <!-- Hidden Input for Artist ID -->
+          <input type="hidden" id="guestSpotArtistId" name="artist_id" required>
+        </div>
+
+        <!-- SECTION 2: Date & Time -->
+        <div style="margin-bottom:24px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:12px;">Zeitraum</label>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Start Datum</label>
+              <input type="date" id="guestSpotDateFrom" required style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">End Datum</label>
+              <input type="date" id="guestSpotDateTo" required style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Start Zeit</label>
+              <input type="time" id="guestSpotTimeFrom" value="10:00" required style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">End Zeit</label>
+              <input type="time" id="guestSpotTimeTo" value="18:00" required style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Location -->
+        <div style="margin-bottom:24px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Location</label>
+          <select id="guestSpotLocation" required style="
+            width:100%;
+            padding:12px;
+            border:1px solid rgba(0,0,0,0.1);
+            border-radius:8px;
+            font-size:14px;
+            background:white;
+          ">
+            <option value="">-- Location auswählen --</option>
+            <!-- Options werden dynamisch geladen -->
+          </select>
+        </div>
+
+        <!-- SECTION 4: Info/Notes -->
+        <div style="margin-bottom:24px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Info / Notizen</label>
+          <textarea id="guestSpotNotes" rows="3" placeholder="Zusätzliche Informationen..." style="
+            width:100%;
+            padding:12px;
+            border:1px solid rgba(0,0,0,0.1);
+            border-radius:8px;
+            font-size:14px;
+            resize:vertical;
+            font-family:inherit;
+          "></textarea>
+        </div>
+
+        <!-- SECTION 5: Booking Type Switcher -->
+        <div style="margin-bottom:24px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:12px;">Buchungstyp</label>
+
+          <div id="guestSpotBookingTypeSwitcher" style="display:inline-flex; background:rgba(142, 142, 147, 0.12); border-radius:10px; padding:3px;">
+            <button type="button" class="booking-type-option active" data-type="internal" onclick="switchGuestSpotBookingType('internal')" style="
+              padding:10px 24px;
+              border:none;
+              background:white;
+              color:#1d1d1f;
+              font-weight:600;
+              font-size:14px;
+              cursor:pointer;
+              border-radius:8px;
+              transition:all 0.2s;
+              box-shadow:0 2px 4px rgba(0,0,0,0.08);
+            ">
+              Interne Buchung
+            </button>
+            <button type="button" class="booking-type-option" data-type="external" onclick="switchGuestSpotBookingType('external')" style="
+              padding:10px 24px;
+              border:none;
+              background:transparent;
+              color:#86868b;
+              font-weight:600;
+              font-size:14px;
+              cursor:pointer;
+              border-radius:8px;
+              transition:all 0.2s;
+            ">
+              Externe Artist Buchung
+            </button>
+          </div>
+          <input type="hidden" id="guestSpotBookingType" name="booking_type" value="internal">
+        </div>
+
+        <!-- SECTION 6A: Internal Booking Fields -->
+        <div id="guestSpotInternalFields" style="margin-bottom:24px; padding:20px; background:rgba(52, 199, 89, 0.08); border-radius:12px; border:1px solid rgba(52, 199, 89, 0.2);">
+          <div style="font-size:13px; font-weight:600; color:#34c759; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Interne Buchung
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Anzahlung (€)</label>
+              <input type="number" id="guestSpotInternalDeposit" step="0.01" min="0" placeholder="0.00" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Vor Ort Anzahlung (€)</label>
+              <input type="number" id="guestSpotInternalOnsiteDeposit" step="0.01" min="0" placeholder="0.00" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Zahlungsnotiz</label>
+            <input type="text" id="guestSpotInternalPaymentNotes" placeholder="z.B. Bar bezahlt, Überweisung ausstehend..." style="
+              width:100%;
+              padding:12px;
+              border:1px solid rgba(0,0,0,0.1);
+              border-radius:8px;
+              font-size:14px;
+            ">
+          </div>
+        </div>
+
+        <!-- SECTION 6B: External Booking Fields -->
+        <div id="guestSpotExternalFields" style="display:none; margin-bottom:24px; padding:20px; background:rgba(0, 122, 255, 0.08); border-radius:12px; border:1px solid rgba(0, 122, 255, 0.2);">
+          <div style="font-size:13px; font-weight:600; color:#007aff; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            Externe Artist Buchung
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Total Preis (€)</label>
+              <input type="number" id="guestSpotExternalTotalPrice" step="0.01" min="0" placeholder="0.00" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Deposit (€)</label>
+              <input type="number" id="guestSpotExternalDeposit" step="0.01" min="0" placeholder="0.00" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Studio Share (€)</label>
+              <input type="number" id="guestSpotExternalStudioShare" step="0.01" min="0" placeholder="0.00" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+            <div>
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Artist Share (€)</label>
+              <input type="number" id="guestSpotExternalArtistShare" step="0.01" min="0" placeholder="0.00" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Zahlungsnotiz</label>
+            <input type="text" id="guestSpotExternalPaymentNotes" placeholder="z.B. PayPal erhalten, 50% ausstehend..." style="
+              width:100%;
+              padding:12px;
+              border:1px solid rgba(0,0,0,0.1);
+              border-radius:8px;
+              font-size:14px;
+            ">
+          </div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-actions" style="display:flex; gap:12px; justify-content:flex-end; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+          <button type="button" onclick="closeCreateGuestSpotModal()" class="btn btn-secondary" style="
+            padding:12px 24px;
+            border:1px solid rgba(0,0,0,0.1);
+            border-radius:8px;
+            background:white;
+            color:#1d1d1f;
+            font-size:14px;
+            font-weight:500;
+            cursor:pointer;
+          ">Abbrechen</button>
+          <button type="submit" class="btn btn-primary" style="
+            padding:12px 24px;
+            border:none;
+            border-radius:8px;
+            background:#1d1d1f;
+            color:#fff;
+            font-size:14px;
+            font-weight:500;
+            cursor:pointer;
+          ">Guest Spot erstellen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- GUEST SPOT DETAIL/EDIT MODAL -->
+  <!-- ============================================ -->
+  <div class="modal-backdrop" id="guestSpotDetailModal">
+    <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
+      <h3 id="guestSpotDetailTitle" style="margin:0 0 20px 0; font-size:20px; font-weight:600;">Guest Spot Details</h3>
+
+      <!-- View Mode Content -->
+      <div id="guestSpotViewMode">
+        <!-- Artist Info -->
+        <div style="display:flex; align-items:center; gap:16px; padding:16px; background:rgba(142,142,147,0.08); border-radius:12px; margin-bottom:20px;">
+          <img id="guestSpotDetailAvatar" src="" alt="" style="width:56px; height:56px; border-radius:50%; object-fit:cover; display:none;">
+          <div style="flex:1;">
+            <div id="guestSpotDetailArtistName" style="font-weight:600; font-size:17px;"></div>
+            <div id="guestSpotDetailArtistInstagram" style="font-size:14px; color:#86868b;"></div>
+          </div>
+          <span id="guestSpotDetailPaidBadge" style="padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600;"></span>
+        </div>
+
+        <!-- Details Grid -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+          <div>
+            <div style="font-size:12px; color:#86868b; margin-bottom:4px;">Zeitraum</div>
+            <div id="guestSpotDetailDateRange" style="font-weight:500;"></div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:#86868b; margin-bottom:4px;">Uhrzeit</div>
+            <div id="guestSpotDetailTimeRange" style="font-weight:500;"></div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:#86868b; margin-bottom:4px;">Location</div>
+            <div id="guestSpotDetailLocation" style="font-weight:500;"></div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:#86868b; margin-bottom:4px;">Buchungstyp</div>
+            <div id="guestSpotDetailBookingType" style="font-weight:500;"></div>
+          </div>
+        </div>
+
+        <!-- Payment Info (Internal) -->
+        <div id="guestSpotDetailInternalPayment" style="display:none; padding:16px; background:rgba(52, 199, 89, 0.08); border-radius:12px; margin-bottom:20px;">
+          <div style="font-size:13px; font-weight:600; color:#34c759; margin-bottom:12px;">Interne Buchung</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <div style="font-size:12px; color:#86868b;">Anzahlung</div>
+              <div id="guestSpotDetailInternalDeposit" style="font-weight:600;"></div>
+            </div>
+            <div>
+              <div style="font-size:12px; color:#86868b;">Vor Ort</div>
+              <div id="guestSpotDetailInternalOnsite" style="font-weight:600;"></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="font-size:12px; color:#86868b;">Notiz</div>
+            <div id="guestSpotDetailInternalNotes" style="font-size:14px;"></div>
+          </div>
+        </div>
+
+        <!-- Payment Info (External) -->
+        <div id="guestSpotDetailExternalPayment" style="display:none; padding:16px; background:rgba(0, 122, 255, 0.08); border-radius:12px; margin-bottom:20px;">
+          <div style="font-size:13px; font-weight:600; color:#007aff; margin-bottom:12px;">Externe Buchung</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <div style="font-size:12px; color:#86868b;">Total Preis</div>
+              <div id="guestSpotDetailExternalTotal" style="font-weight:600;"></div>
+            </div>
+            <div>
+              <div style="font-size:12px; color:#86868b;">Deposit</div>
+              <div id="guestSpotDetailExternalDeposit" style="font-weight:600;"></div>
+            </div>
+            <div>
+              <div style="font-size:12px; color:#86868b;">Studio Share</div>
+              <div id="guestSpotDetailStudioShare" style="font-weight:600;"></div>
+            </div>
+            <div>
+              <div style="font-size:12px; color:#86868b;">Artist Share</div>
+              <div id="guestSpotDetailArtistShare" style="font-weight:600;"></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="font-size:12px; color:#86868b;">Notiz</div>
+            <div id="guestSpotDetailExternalNotes" style="font-size:14px;"></div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div id="guestSpotDetailNotesSection" style="display:none; margin-bottom:20px;">
+          <div style="font-size:12px; color:#86868b; margin-bottom:4px;">Info / Notizen</div>
+          <div id="guestSpotDetailNotes" style="padding:12px; background:rgba(142,142,147,0.08); border-radius:8px;"></div>
+        </div>
+
+        <!-- Canceled Info -->
+        <div id="guestSpotDetailCanceledInfo" style="display:none; padding:16px; background:rgba(255, 59, 48, 0.1); border-radius:12px; margin-bottom:20px;">
+          <div style="font-size:13px; font-weight:600; color:#ff3b30; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+            Storniert
+          </div>
+          <div id="guestSpotDetailCancelReason" style="font-size:14px;"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:12px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+          <button type="button" onclick="toggleGuestSpotPaid()" id="guestSpotTogglePaidBtn" style="
+            flex:1;
+            padding:12px;
+            border:none;
+            border-radius:8px;
+            font-size:14px;
+            font-weight:500;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+          "></button>
+          <button type="button" onclick="openGuestSpotEditMode()" style="
+            flex:1;
+            padding:12px;
+            border:none;
+            border-radius:8px;
+            background:rgba(142,142,147,0.12);
+            color:#1d1d1f;
+            font-size:14px;
+            font-weight:500;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit
+          </button>
+          <button type="button" onclick="cancelGuestSpot()" style="
+            flex:1;
+            padding:12px;
+            border:none;
+            border-radius:8px;
+            background:#ff9500;
+            color:#fff;
+            font-size:14px;
+            font-weight:500;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+            Cancel
+          </button>
+          <button type="button" onclick="deleteGuestSpot()" style="
+            flex:1;
+            padding:12px;
+            border:none;
+            border-radius:8px;
+            background:#ff3b30;
+            color:#fff;
+            font-size:14px;
+            font-weight:500;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Edit Mode Content (hidden by default) -->
+      <div id="guestSpotEditMode" style="display:none;">
+        <!-- Edit form will be populated dynamically -->
+      </div>
+
+      <!-- Close Button -->
+      <button type="button" onclick="closeGuestSpotDetailModal()" style="
+        position:absolute;
+        top:16px;
+        right:16px;
+        width:32px;
+        height:32px;
+        border:none;
+        border-radius:50%;
+        background:rgba(142,142,147,0.12);
+        cursor:pointer;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Hidden Data -->
+      <input type="hidden" id="guestSpotDetailId">
+      <input type="hidden" id="guestSpotDetailSlotIds">
+    </div>
+  </div>
+
   <!-- Edit Customer Modal -->
   <div class="modal-backdrop" id="editCustomerModal">
     <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
@@ -14710,6 +15312,12 @@
         bg: 'rgba(244, 67, 54, 0.1)', color: '#F44336', textColor: '#C62828',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
         label: 'Event (Pflicht)'
+      },
+      // Guest Spot Kategorie
+      'guest_spot': {
+        bg: 'rgba(88, 86, 214, 0.1)', color: '#5856D6', textColor: '#4B49B6',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+        label: 'Guest Spot'
       }
     };
 
