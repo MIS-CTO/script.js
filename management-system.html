@@ -708,7 +708,6 @@
     /* Guest Spot Calendar Events */
     .event.guest_spot {
       background: rgba(88, 86, 214, 0.1) !important;
-      border-left: 3px solid #5856D6 !important;
       color: #4B49B6 !important;
     }
 
@@ -719,6 +718,149 @@
     [data-theme="dark"] .event.guest_spot {
       background: rgba(88, 86, 214, 0.2) !important;
       color: #8884D8 !important;
+    }
+
+    /* Custom Date Picker für Guest Spot */
+    .guest-spot-date-picker-container {
+      position: relative;
+    }
+
+    .guest-spot-date-picker-trigger {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .guest-spot-date-picker-trigger:hover {
+      border-color: rgba(0,0,0,0.2);
+    }
+
+    .guest-spot-calendar-popup {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      z-index: 10002;
+      margin-top: 4px;
+      padding: 16px;
+      display: none;
+    }
+
+    .guest-spot-calendar-popup.active {
+      display: block;
+    }
+
+    .guest-spot-calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .guest-spot-calendar-nav {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.05);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .guest-spot-calendar-nav:hover {
+      background: rgba(0,0,0,0.1);
+    }
+
+    .guest-spot-calendar-nav:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .guest-spot-calendar-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .guest-spot-calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #86868b;
+      margin-bottom: 8px;
+    }
+
+    .guest-spot-calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .guest-spot-calendar-day {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .guest-spot-calendar-day:hover:not(:disabled) {
+      background: rgba(0,0,0,0.05);
+    }
+
+    .guest-spot-calendar-day.selected {
+      background: #1d1d1f;
+      color: white;
+    }
+
+    .guest-spot-calendar-day.today {
+      font-weight: 700;
+      color: #007aff;
+    }
+
+    .guest-spot-calendar-day:disabled {
+      color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .guest-spot-calendar-day.other-month {
+      color: #ccc;
+    }
+
+    [data-theme="dark"] .guest-spot-calendar-popup {
+      background: #2c2c2e;
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    [data-theme="dark"] .guest-spot-date-picker-trigger {
+      background: #2c2c2e;
+      border-color: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    [data-theme="dark"] .guest-spot-calendar-day:hover:not(:disabled) {
+      background: rgba(255,255,255,0.1);
     }
 
     /* Booking Type Colors - 1px colored border, light background */
@@ -13994,23 +14136,31 @@
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
             <div>
               <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Start Datum</label>
-              <input type="date" id="guestSpotDateFrom" required style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
+              <div class="guest-spot-date-picker-container">
+                <button type="button" class="guest-spot-date-picker-trigger" id="guestSpotDateFromTrigger" onclick="openGuestSpotDatePicker('from')">
+                  <span id="guestSpotDateFromDisplay">Datum wählen...</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <path d="M16 2v4M8 2v4M3 10h18"/>
+                  </svg>
+                </button>
+                <div class="guest-spot-calendar-popup" id="guestSpotDateFromPopup"></div>
+                <input type="hidden" id="guestSpotDateFrom" name="date_from" required>
+              </div>
             </div>
             <div>
               <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">End Datum</label>
-              <input type="date" id="guestSpotDateTo" required style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
+              <div class="guest-spot-date-picker-container">
+                <button type="button" class="guest-spot-date-picker-trigger" id="guestSpotDateToTrigger" onclick="openGuestSpotDatePicker('to')">
+                  <span id="guestSpotDateToDisplay">Datum wählen...</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <path d="M16 2v4M8 2v4M3 10h18"/>
+                  </svg>
+                </button>
+                <div class="guest-spot-calendar-popup" id="guestSpotDateToPopup"></div>
+                <input type="hidden" id="guestSpotDateTo" name="date_to" required>
+              </div>
             </div>
             <div>
               <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Start Zeit</label>
@@ -39276,8 +39426,9 @@
                   </div>
                 </div>
 
-                <!-- Actions -->
+                <!-- Actions: Only Profile and Edit buttons -->
                 <div style="display:flex; gap:8px;">
+                  ${slot.artist_id ? `
                   <button
                     onclick="viewArtistProfile('${slot.artist_id}')"
                     style="
@@ -39300,22 +39451,16 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Profile
                   </button>
+                  ` : ''}
                   <button
-                    class="edit-slot-button"
-                    data-slot-ids='${JSON.stringify(allSlotIds)}'
-                    data-artist-name="${slot.artist_name || 'Unknown'}"
-                    data-location-id="${slot.location_id || ''}"
-                    data-date-from="${displayDateFrom || ''}"
-                    data-date-to="${displayDateTo || ''}"
-                    data-notes="${(slot.notes || '').replace(/"/g, '&quot;')}"
-                    data-share-paid="${slot.share_paid || false}"
+                    onclick="openGuestSpotDetailFromList('${slot.id}', '${JSON.stringify(allSlotIds).replace(/'/g, "\\'")}')"
                     style="
                       padding:8px 12px;
                       border:none;
                       border-radius:8px;
                       background:rgba(142, 142, 147, 0.12);
                       cursor:pointer;
-                      color:#86868b;
+                      color:#1d1d1f;
                       font-size:14px;
                       font-weight:500;
                       transition:all 0.2s;
@@ -39323,85 +39468,12 @@
                       align-items:center;
                       gap:6px;
                     "
-                    onmouseover="this.style.background='rgba(142, 142, 147, 0.2)'; this.style.color='#1d1d1f';"
-                    onmouseout="this.style.background='rgba(142, 142, 147, 0.12)'; this.style.color='#86868b';"
+                    onmouseover="this.style.background='rgba(142, 142, 147, 0.2)';"
+                    onmouseout="this.style.background='rgba(142, 142, 147, 0.12)';"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Edit${slotCount > 1 ? ` (${slotCount})` : ''}
+                    Edit
                   </button>
-                  <button
-                    class="delete-slot-button"
-                    data-slot-ids='${JSON.stringify(allSlotIds)}'
-                    style="
-                      padding:8px 12px;
-                      border:none;
-                      border-radius:8px;
-                      background:#ff3b30;
-                      cursor:pointer;
-                      color:#fff;
-                      font-size:14px;
-                      font-weight:500;
-                      transition:all 0.2s;
-                      display:inline-flex;
-                      align-items:center;
-                      gap:6px;
-                    "
-                    onmouseover="this.style.background='#e6352b';"
-                    onmouseout="this.style.background='#ff3b30';"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    Delete${slotCount > 1 ? ` (${slotCount})` : ''}
-                  </button>
-                  <button
-                    class="toggle-share-paid-button"
-                    data-slot-id="${slot.id}"
-                    data-current-status="${slot.share_paid || false}"
-                    style="
-                      padding:8px 12px;
-                      border:none;
-                      border-radius:8px;
-                      background:#1d1d1f;
-                      cursor:pointer;
-                      color:${slot.share_paid ? '#34c759' : '#ff3b30'};
-                      font-size:14px;
-                      font-weight:600;
-                      transition:all 0.2s;
-                      display:inline-flex;
-                      align-items:center;
-                      gap:6px;
-                    "
-                    onmouseover="this.style.background='#333';"
-                    onmouseout="this.style.background='#1d1d1f';"
-                  >
-                    ${slot.share_paid
-                      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Paid'
-                      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Unpaid'}
-                  </button>
-                  ${currentListType === 'upcoming' ? `
-                  <button
-                    class="cancel-slot-button"
-                    onclick="cancelUpcomingSlot(${JSON.stringify(allSlotIds)})"
-                    style="
-                      padding:8px 12px;
-                      border:none;
-                      border-radius:8px;
-                      background:#ff9500;
-                      cursor:pointer;
-                      color:#fff;
-                      font-size:14px;
-                      font-weight:500;
-                      transition:all 0.2s;
-                      display:inline-flex;
-                      align-items:center;
-                      gap:6px;
-                    "
-                    onmouseover="this.style.background='#e68600';"
-                    onmouseout="this.style.background='#ff9500';"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                    Cancel${slotCount > 1 ? ` (${slotCount})` : ''}
-                  </button>
-                  ` : ''}
                 </div>
               </div>
 
@@ -45607,16 +45679,10 @@
       // Reset booking type to internal
       switchGuestSpotBookingType('internal');
 
-      // Set default dates (today and tomorrow)
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      const dateFromInput = document.getElementById('guestSpotDateFrom');
-      const dateToInput = document.getElementById('guestSpotDateTo');
-
-      if (dateFromInput) dateFromInput.value = today.toISOString().split('T')[0];
-      if (dateToInput) dateToInput.value = tomorrow.toISOString().split('T')[0];
+      // Reset date picker
+      if (typeof resetGuestSpotDatePicker === 'function') {
+        resetGuestSpotDatePicker();
+      }
 
       // Populate location dropdown
       populateGuestSpotLocationDropdown();
@@ -46492,23 +46558,8 @@
       // Init artist search
       initGuestSpotArtistSearch();
 
-      // Date validation: End date must be >= Start date
-      const dateFromInput = document.getElementById('guestSpotDateFrom');
-      const dateToInput = document.getElementById('guestSpotDateTo');
-
-      if (dateFromInput && dateToInput) {
-        dateFromInput.addEventListener('change', function() {
-          // Set minimum for end date to start date
-          dateToInput.min = this.value;
-
-          // If end date is before start date, set it to start date
-          if (dateToInput.value && dateToInput.value < this.value) {
-            dateToInput.value = this.value;
-          }
-        });
-
-        console.log('📅 Guest Spot date validation initialized');
-      }
+      // Date validation is now handled by custom date picker
+      console.log('📅 Guest Spot using custom date picker');
 
       // Form submit handler
       const form = document.getElementById('createGuestSpotForm');
@@ -46595,6 +46646,300 @@
     }
 
     window.handleGuestSpotCalendarClick = handleGuestSpotCalendarClick;
+
+    // ============================================
+    // CUSTOM DATE PICKER FOR GUEST SPOT
+    // ============================================
+
+    let guestSpotDatePickerState = {
+      activeField: null, // 'from' or 'to'
+      viewMonth: new Date().getMonth(),
+      viewYear: new Date().getFullYear(),
+      selectedFrom: null,
+      selectedTo: null
+    };
+
+    function openGuestSpotDatePicker(field) {
+      console.log('📅 Opening date picker for:', field);
+
+      guestSpotDatePickerState.activeField = field;
+
+      // Close all popups first
+      document.querySelectorAll('.guest-spot-calendar-popup').forEach(p => p.classList.remove('active'));
+
+      // Get the popup element
+      const popupId = field === 'from' ? 'guestSpotDateFromPopup' : 'guestSpotDateToPopup';
+      const popup = document.getElementById(popupId);
+
+      if (!popup) return;
+
+      // Set initial view month based on selected date or today
+      const today = new Date();
+      if (field === 'from' && guestSpotDatePickerState.selectedFrom) {
+        guestSpotDatePickerState.viewMonth = guestSpotDatePickerState.selectedFrom.getMonth();
+        guestSpotDatePickerState.viewYear = guestSpotDatePickerState.selectedFrom.getFullYear();
+      } else if (field === 'to' && guestSpotDatePickerState.selectedTo) {
+        guestSpotDatePickerState.viewMonth = guestSpotDatePickerState.selectedTo.getMonth();
+        guestSpotDatePickerState.viewYear = guestSpotDatePickerState.selectedTo.getFullYear();
+      } else {
+        guestSpotDatePickerState.viewMonth = today.getMonth();
+        guestSpotDatePickerState.viewYear = today.getFullYear();
+      }
+
+      renderGuestSpotDatePicker(popup, field);
+      popup.classList.add('active');
+
+      // Close on outside click
+      setTimeout(() => {
+        document.addEventListener('click', closeGuestSpotDatePickerOnOutsideClick);
+      }, 10);
+    }
+
+    function closeGuestSpotDatePickerOnOutsideClick(e) {
+      if (!e.target.closest('.guest-spot-date-picker-container')) {
+        document.querySelectorAll('.guest-spot-calendar-popup').forEach(p => p.classList.remove('active'));
+        document.removeEventListener('click', closeGuestSpotDatePickerOnOutsideClick);
+      }
+    }
+
+    function renderGuestSpotDatePicker(popup, field) {
+      const state = guestSpotDatePickerState;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                          'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+      const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+      // Calculate min date
+      let minDate = new Date(today);
+      if (field === 'to' && state.selectedFrom) {
+        minDate = new Date(state.selectedFrom);
+      }
+
+      // Check if we can go to previous month
+      const canGoPrev = new Date(state.viewYear, state.viewMonth, 1) > minDate;
+
+      // Build calendar
+      const firstDay = new Date(state.viewYear, state.viewMonth, 1);
+      const lastDay = new Date(state.viewYear, state.viewMonth + 1, 0);
+
+      // Adjust for Monday start (0 = Monday, 6 = Sunday)
+      let startDayOfWeek = firstDay.getDay() - 1;
+      if (startDayOfWeek < 0) startDayOfWeek = 6;
+
+      let html = `
+        <div class="guest-spot-calendar-header">
+          <button type="button" class="guest-spot-calendar-nav" onclick="navigateGuestSpotDatePicker(-1, '${field}')" ${!canGoPrev ? 'disabled' : ''}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+          <span class="guest-spot-calendar-title">${monthNames[state.viewMonth]} ${state.viewYear}</span>
+          <button type="button" class="guest-spot-calendar-nav" onclick="navigateGuestSpotDatePicker(1, '${field}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
+        <div class="guest-spot-calendar-weekdays">
+          ${dayNames.map(d => `<span>${d}</span>`).join('')}
+        </div>
+        <div class="guest-spot-calendar-days">
+      `;
+
+      // Empty cells before first day
+      for (let i = 0; i < startDayOfWeek; i++) {
+        html += `<button type="button" class="guest-spot-calendar-day other-month" disabled></button>`;
+      }
+
+      // Days of month
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(state.viewYear, state.viewMonth, day);
+        const dateStr = formatDateForInput(date);
+
+        const isToday = date.getTime() === today.getTime();
+        const isDisabled = date < minDate;
+        const isSelectedFrom = state.selectedFrom && date.getTime() === state.selectedFrom.getTime();
+        const isSelectedTo = state.selectedTo && date.getTime() === state.selectedTo.getTime();
+        const isSelected = (field === 'from' && isSelectedFrom) || (field === 'to' && isSelectedTo);
+
+        let classes = 'guest-spot-calendar-day';
+        if (isToday) classes += ' today';
+        if (isSelected) classes += ' selected';
+
+        html += `<button type="button" class="${classes}"
+          ${isDisabled ? 'disabled' : `onclick="selectGuestSpotDate('${dateStr}', '${field}')"`}
+        >${day}</button>`;
+      }
+
+      html += `</div>`;
+
+      popup.innerHTML = html;
+    }
+
+    function navigateGuestSpotDatePicker(direction, field) {
+      const state = guestSpotDatePickerState;
+      state.viewMonth += direction;
+
+      if (state.viewMonth > 11) {
+        state.viewMonth = 0;
+        state.viewYear++;
+      } else if (state.viewMonth < 0) {
+        state.viewMonth = 11;
+        state.viewYear--;
+      }
+
+      const popupId = field === 'from' ? 'guestSpotDateFromPopup' : 'guestSpotDateToPopup';
+      const popup = document.getElementById(popupId);
+      if (popup) {
+        renderGuestSpotDatePicker(popup, field);
+      }
+    }
+
+    function selectGuestSpotDate(dateStr, field) {
+      console.log('📅 Date selected:', dateStr, 'for field:', field);
+
+      const date = new Date(dateStr);
+      const state = guestSpotDatePickerState;
+
+      if (field === 'from') {
+        state.selectedFrom = date;
+        document.getElementById('guestSpotDateFrom').value = dateStr;
+        document.getElementById('guestSpotDateFromDisplay').textContent = formatDateForDisplay(date);
+
+        // If end date is before start date, reset it
+        if (state.selectedTo && state.selectedTo < date) {
+          state.selectedTo = null;
+          document.getElementById('guestSpotDateTo').value = '';
+          document.getElementById('guestSpotDateToDisplay').textContent = 'Datum wählen...';
+        }
+      } else {
+        state.selectedTo = date;
+        document.getElementById('guestSpotDateTo').value = dateStr;
+        document.getElementById('guestSpotDateToDisplay').textContent = formatDateForDisplay(date);
+      }
+
+      // Close popup
+      document.querySelectorAll('.guest-spot-calendar-popup').forEach(p => p.classList.remove('active'));
+      document.removeEventListener('click', closeGuestSpotDatePickerOnOutsideClick);
+    }
+
+    function formatDateForInput(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatDateForDisplay(date) {
+      const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+      return date.toLocaleDateString('de-DE', options);
+    }
+
+    function resetGuestSpotDatePicker() {
+      guestSpotDatePickerState.selectedFrom = null;
+      guestSpotDatePickerState.selectedTo = null;
+      const fromInput = document.getElementById('guestSpotDateFrom');
+      const toInput = document.getElementById('guestSpotDateTo');
+      const fromDisplay = document.getElementById('guestSpotDateFromDisplay');
+      const toDisplay = document.getElementById('guestSpotDateToDisplay');
+      if (fromInput) fromInput.value = '';
+      if (toInput) toInput.value = '';
+      if (fromDisplay) fromDisplay.textContent = 'Datum wählen...';
+      if (toDisplay) toDisplay.textContent = 'Datum wählen...';
+    }
+
+    // Export date picker functions
+    window.openGuestSpotDatePicker = openGuestSpotDatePicker;
+    window.navigateGuestSpotDatePicker = navigateGuestSpotDatePicker;
+    window.selectGuestSpotDate = selectGuestSpotDate;
+    window.resetGuestSpotDatePicker = resetGuestSpotDatePicker;
+
+    // ============================================
+    // OPEN GUEST SPOT DETAIL FROM LIST (UPCOMING/PREVIOUS)
+    // ============================================
+
+    async function openGuestSpotDetailFromList(slotId, allSlotIdsJson) {
+      console.log('📋 Opening Guest Spot detail from list:', slotId);
+
+      try {
+        // Parse the slot IDs
+        let allSlotIds;
+        try {
+          allSlotIds = JSON.parse(allSlotIdsJson.replace(/&quot;/g, '"'));
+        } catch (e) {
+          allSlotIds = [slotId];
+        }
+
+        // Load the slot data from upcoming_slots_grouped or previous_guest_spots_grouped
+        // First try upcoming
+        let { data, error } = await supabase
+          .from('upcoming_slots_grouped')
+          .select('*')
+          .contains('all_slot_ids', [slotId])
+          .single();
+
+        // If not found in upcoming, try previous
+        if (error || !data) {
+          const previousResult = await supabase
+            .from('previous_guest_spots_grouped')
+            .select('*')
+            .contains('all_slot_ids', [slotId])
+            .single();
+
+          data = previousResult.data;
+          error = previousResult.error;
+        }
+
+        if (error) {
+          // Fallback: Load directly from upcoming_slots
+          const directResult = await supabase
+            .from('upcoming_slots')
+            .select(`
+              *,
+              artist:artists(id, name, instagram, profile_picture_url, is_guest),
+              location:locations(id, name, city)
+            `)
+            .eq('id', slotId)
+            .single();
+
+          if (directResult.error) throw directResult.error;
+
+          // Transform to expected format
+          data = {
+            ...directResult.data,
+            artist_name: directResult.data.artist?.name,
+            instagram: directResult.data.artist?.instagram,
+            profile_picture_url: directResult.data.artist?.profile_picture_url,
+            location_name: directResult.data.location?.name,
+            location_city: directResult.data.location?.city,
+            all_slot_ids: allSlotIds
+          };
+        }
+
+        if (data) {
+          // Ensure all_slot_ids is set
+          if (!data.all_slot_ids) {
+            data.all_slot_ids = allSlotIds;
+          }
+          openGuestSpotDetailModal(data);
+        } else {
+          console.error('Could not find slot data');
+          if (typeof window.showNotification === 'function') {
+            window.showNotification('Slot nicht gefunden', 'error');
+          }
+        }
+
+      } catch (err) {
+        console.error('Error loading slot details:', err);
+        if (typeof window.showNotification === 'function') {
+          window.showNotification('Fehler beim Laden: ' + err.message, 'error');
+        }
+      }
+    }
+
+    window.openGuestSpotDetailFromList = openGuestSpotDetailFromList;
 
     // ============================================
     // WINDOW EXPORTS
