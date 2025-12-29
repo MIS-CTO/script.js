@@ -29421,14 +29421,31 @@
       window.showAppointmentDetails = async function(appointmentId) {
         console.log('📋 Loading complete appointment details:', appointmentId);
 
-        // Fetch complete appointment data
+        // Fetch complete appointment data WITH linked request
         const { data: appointment, error } = await supabase
           .from('appointments')
           .select(`
             *,
             customer:customers(id, first_name, last_name, email, phone, instagram),
             artist:artists(id, name, email, instagram, phone),
-            location:locations!appointments_location_id_fkey(id, name, city)
+            location:locations!appointments_location_id_fkey(id, name, city),
+            request:requests(
+              id,
+              request_number,
+              placement,
+              size,
+              style,
+              colorway,
+              description,
+              booking_type,
+              work_process,
+              preferred_artist,
+              image_url,
+              reference_images,
+              customer_notes,
+              internal_notes,
+              priority
+            )
           `)
           .eq('id', appointmentId)
           .single();
@@ -29525,23 +29542,23 @@
                 <div style="display:flex; flex-direction:column; gap:10px;">
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PLACEMENT</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.placement || 'No entry data'}</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.placement || appointment.request?.placement || 'No entry data'}</span>
                   </div>
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">SIZE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.size || 'No entry data'}</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.size || appointment.request?.size || 'No entry data'}</span>
                   </div>
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">STYLE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.style || 'No entry data'}</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.style || appointment.request?.style || 'No entry data'}</span>
                   </div>
                   <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">COLORWAY</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.colorway || 'No entry data'}</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.colorway || appointment.request?.colorway || 'No entry data'}</span>
                   </div>
                   <div style="display:flex; justify-content:space-between; padding:6px 0;">
                     <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">BOOKING TYPE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.booking_type || 'No entry data'}</span>
+                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.booking_type || appointment.request?.booking_type || 'No entry data'}</span>
                   </div>
                 </div>
               </div>
