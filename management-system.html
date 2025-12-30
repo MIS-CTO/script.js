@@ -11271,6 +11271,275 @@
     [data-theme="dark"] .appointment-edit-btn.save {
       background: #0a84ff;
     }
+
+    /* ============================================
+       PHASE 7: GUEST SPOT CALENDAR IMPROVEMENTS
+       ============================================ */
+
+    /* Guest Spot Month View - Day Cells with Auto Height */
+    #guestspotMonthGrid > div {
+      min-height: 80px;
+      height: auto;
+      max-height: none;
+    }
+
+    /* Guest Spot Items in Day Cell */
+    .guest-spot-day-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      margin: 2px 0;
+      background: #5856D6;
+      color: white;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .guest-spot-day-item:hover {
+      transform: scale(1.02);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .guest-spot-day-item.paid {
+      background: #34C759;
+    }
+
+    .guest-spot-day-item.unpaid {
+      background: #FF3B30;
+    }
+
+    .guest-spot-day-item.canceled {
+      background: #8E8E93;
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    .guest-spot-day-item.past {
+      opacity: 0.6;
+    }
+
+    .guest-spot-day-item .artist-name {
+      font-weight: 500;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .guest-spot-day-item .spot-time {
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    /* ============================================
+       GUEST SPOT YEAR VIEW - Dienstplan Style
+       ============================================ */
+
+    .guestspot-year-view {
+      background: var(--macos-panel, #1c1c1e);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color, #3a3a3c);
+    }
+
+    .guestspot-year-view-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--macos-elevated, #2c2c2e);
+      border-bottom: 1px solid var(--border-color, #3a3a3c);
+    }
+
+    .guestspot-year-navigation {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .guestspot-year-label {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ink, #fff);
+      min-width: 80px;
+      text-align: center;
+    }
+
+    /* Months Header Row */
+    .guestspot-year-months-header {
+      display: grid;
+      grid-template-columns: 180px repeat(12, 1fr);
+      background: var(--macos-elevated, #2c2c2e);
+      border-bottom: 1px solid var(--border-color, #3a3a3c);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .guestspot-artist-column-header,
+    .guestspot-month-header {
+      padding: 12px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted, #8e8e93);
+      text-align: center;
+      border-right: 1px solid var(--border-color, #3a3a3c);
+    }
+
+    .guestspot-artist-column-header {
+      text-align: left;
+      padding-left: 16px;
+      background: var(--macos-elevated, #2c2c2e);
+      position: sticky;
+      left: 0;
+      z-index: 11;
+    }
+
+    /* Year Grid Container */
+    .guestspot-year-grid-container {
+      max-height: calc(100vh - 350px);
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    /* Artist Row */
+    .guestspot-year-artist-row {
+      display: grid;
+      grid-template-columns: 180px repeat(12, 1fr);
+      border-bottom: 1px solid var(--border-color, #3a3a3c);
+      min-height: 44px;
+    }
+
+    .guestspot-year-artist-row:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* Artist Name Cell */
+    .guestspot-year-artist-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--macos-panel, #1c1c1e);
+      border-right: 1px solid var(--border-color, #3a3a3c);
+      position: sticky;
+      left: 0;
+      z-index: 5;
+    }
+
+    .guestspot-year-artist-name img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .guestspot-year-artist-name .name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink, #fff);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .guestspot-year-artist-name .instagram {
+      font-size: 11px;
+      color: var(--muted, #8e8e93);
+    }
+
+    /* Month Cell */
+    .guestspot-year-month-cell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      padding: 4px;
+      border-right: 1px solid var(--border-color, #3a3a3c);
+      min-height: 40px;
+      align-content: flex-start;
+    }
+
+    /* Spot Indicator in Year View */
+    .guestspot-year-spot-indicator {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin: 1px 0;
+    }
+
+    .guestspot-year-spot-indicator:hover {
+      transform: scaleY(1.8);
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    }
+
+    .guestspot-year-spot-indicator.paid {
+      background: linear-gradient(90deg, #34C759, #30D158);
+    }
+
+    .guestspot-year-spot-indicator.unpaid {
+      background: linear-gradient(90deg, #FF3B30, #FF453A);
+    }
+
+    .guestspot-year-spot-indicator.canceled {
+      background: #6b7280;
+      opacity: 0.5;
+    }
+
+    /* Multi-day span indicator */
+    .guestspot-year-spot-span {
+      display: flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .guestspot-year-spot-span.paid {
+      background: #34C759;
+    }
+
+    .guestspot-year-spot-span.unpaid {
+      background: #FF3B30;
+    }
+
+    /* Empty State */
+    .guestspot-year-view-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted, #8e8e93);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .guestspot-year-months-header,
+      .guestspot-year-artist-row {
+        grid-template-columns: 140px repeat(12, minmax(50px, 1fr));
+      }
+
+      .guestspot-year-artist-name {
+        padding: 6px 8px;
+      }
+
+      .guestspot-year-artist-name img {
+        width: 24px;
+        height: 24px;
+      }
+
+      .guestspot-year-artist-name .name {
+        font-size: 12px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -13029,18 +13298,50 @@
       <div id="guestspotMonthGrid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;"></div>
     </div>
 
-    <!-- Year View Container (initially hidden) -->
-    <div id="guestspotYearViewContainer" style="display:none;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
-        <button onclick="changeGuestspotYear(-1)" style="padding:8px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer; font-size:14px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <h3 id="guestspotYearTitle" style="margin:0; font-size:20px; font-weight:600;"></h3>
-        <button onclick="changeGuestspotYear(1)" style="padding:8px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer; font-size:14px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
+    <!-- Year View Container (initially hidden) - PHASE 7: Dienstplan Style -->
+    <div id="guestspotYearViewContainer" class="guestspot-year-view" style="display:none;">
+      <!-- Year View Header with Navigation -->
+      <div class="guestspot-year-view-header">
+        <div class="guestspot-year-navigation">
+          <button onclick="changeGuestspotYear(-1)" style="padding:8px 16px; border:1px solid var(--border-color, rgba(0,0,0,0.1)); border-radius:8px; background:var(--macos-elevated, white); cursor:pointer; font-size:14px; color:var(--ink);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span id="guestspotYearTitle" class="guestspot-year-label"></span>
+          <button onclick="changeGuestspotYear(1)" style="padding:8px 16px; border:1px solid var(--border-color, rgba(0,0,0,0.1)); border-radius:8px; background:var(--macos-elevated, white); cursor:pointer; font-size:14px; color:var(--ink);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div style="display:flex; gap:8px; font-size:12px; color:var(--muted);">
+          <span style="display:flex; align-items:center; gap:4px;">
+            <span style="width:12px; height:12px; background:#34C759; border-radius:2px;"></span> Bezahlt
+          </span>
+          <span style="display:flex; align-items:center; gap:4px;">
+            <span style="width:12px; height:12px; background:#FF3B30; border-radius:2px;"></span> Unbezahlt
+          </span>
+        </div>
       </div>
-      <div id="guestspotYearGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;"></div>
+
+      <!-- Months Header Row (Jan-Dec) -->
+      <div class="guestspot-year-months-header">
+        <div class="guestspot-artist-column-header">Artist</div>
+        <div class="guestspot-month-header">Jan</div>
+        <div class="guestspot-month-header">Feb</div>
+        <div class="guestspot-month-header">Mär</div>
+        <div class="guestspot-month-header">Apr</div>
+        <div class="guestspot-month-header">Mai</div>
+        <div class="guestspot-month-header">Jun</div>
+        <div class="guestspot-month-header">Jul</div>
+        <div class="guestspot-month-header">Aug</div>
+        <div class="guestspot-month-header">Sep</div>
+        <div class="guestspot-month-header">Okt</div>
+        <div class="guestspot-month-header">Nov</div>
+        <div class="guestspot-month-header">Dez</div>
+      </div>
+
+      <!-- Grid with Artists and their Spots per Month -->
+      <div class="guestspot-year-grid-container" id="guestspotYearGrid">
+        <!-- Will be dynamically populated -->
+      </div>
     </div>
 
     <!-- Empty State -->
@@ -45797,57 +46098,65 @@
         html += '<div></div>';
       }
 
-      // Days
+      // Days - PHASE 7: Show past, today and future with color coding
       const today = new Date().toISOString().split('T')[0];
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const slots = slotsByDate[dateStr] || [];
         const isToday = dateStr === today;
+        const isPast = dateStr < today;
         const hasSlots = slots.length > 0;
 
-        // Mini cards for slots (max 2 visible)
+        // PHASE 7: Guest Spot items with color coding (paid/unpaid/canceled)
         let slotCards = '';
         if (hasSlots) {
-          const visibleSlots = slots.slice(0, 2);
-          slotCards = visibleSlots.map(s => `
-            <div style="
-              font-size:9px;
-              padding:2px 4px;
-              background:#34c759;
-              color:white;
-              border-radius:3px;
-              white-space:nowrap;
-              overflow:hidden;
-              text-overflow:ellipsis;
-              max-width:100%;
-            ">${(s.artist_name || 'Artist').substring(0, 8)}</div>
-          `).join('');
-          if (slots.length > 2) {
-            slotCards += `<div style="font-size:9px; color:#86868b;">+${slots.length - 2} more</div>`;
-          }
+          slotCards = slots.map(s => {
+            const artistName = (s.artist_name || 'Artist').substring(0, 12);
+            const isPaid = s.is_paid === true;
+            const isCanceled = s.entry_status === 'canceled' || s.status === 'canceled';
+            const timeFrom = s.time_from ? s.time_from.substring(0, 5) : '';
+
+            // Determine status class
+            let statusClass = isPaid ? 'paid' : 'unpaid';
+            if (isCanceled) statusClass = 'canceled';
+            if (isPast && !isToday) statusClass += ' past';
+
+            // Cache the slot for click handler
+            const cacheKey = cacheGuestSpotSlot(s);
+
+            return `
+              <div class="guest-spot-day-item ${statusClass}"
+                   onclick="event.stopPropagation(); openGuestSpotDetailFromCache('${cacheKey}')"
+                   title="${artistName}${timeFrom ? ' - ' + timeFrom : ''}${isPaid ? ' (Bezahlt)' : ' (Unbezahlt)'}${isCanceled ? ' (Storniert)' : ''}">
+                <span class="artist-name">${artistName}</span>
+                ${timeFrom ? `<span class="spot-time">${timeFrom}</span>` : ''}
+              </div>
+            `;
+          }).join('');
         }
+
+        // Day cell styling - slightly muted for past days
+        const pastOpacity = isPast && !isToday ? 'opacity: 0.7;' : '';
 
         html += `
           <div
             data-date="${dateStr}"
             style="
-              min-height:60px;
+              min-height:80px;
+              height:auto;
               padding:4px;
               display:flex;
               flex-direction:column;
               align-items:stretch;
               border-radius:8px;
-              background:${hasSlots ? 'rgba(52, 199, 89, 0.08)' : 'var(--macos-elevated)'};
+              background:var(--macos-elevated);
               border:${isToday ? '2px solid #007aff' : '1px solid var(--border-color)'};
-              cursor:${hasSlots ? 'pointer' : 'default'};
               transition:all 0.2s;
+              ${pastOpacity}
             "
-            ${hasSlots ? `onclick="scrollToGuestspotSlot('${dateStr}')"` : ''}
-            ${hasSlots ? `onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';"` : ''}
-            ${hasSlots ? `onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';"` : ''}
           >
-            <span style="font-size:12px; font-weight:${isToday ? '700' : '500'}; color:${isToday ? '#007aff' : 'var(--ink)'}; margin-bottom:2px;">${day}</span>
-            <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+            <span style="font-size:12px; font-weight:${isToday ? '700' : '500'}; color:${isToday ? '#007aff' : 'var(--ink)'}; margin-bottom:4px;">${day}</span>
+            <div style="display:flex; flex-direction:column; gap:2px; flex:1; overflow:visible;">
               ${slotCards}
             </div>
           </div>
@@ -45857,6 +46166,10 @@
       gridEl.innerHTML = html;
     }
 
+    // ============================================
+    // PHASE 7: GUEST SPOT YEAR VIEW - Dienstplan Style
+    // Shows horizontal months header with artists as rows
+    // ============================================
     function renderGuestspotYearView() {
       const titleEl = document.getElementById('guestspotYearTitle');
       const gridEl = document.getElementById('guestspotYearGrid');
@@ -45865,42 +46178,113 @@
 
       titleEl.textContent = guestspotViewYear.toString();
 
-      // Count slots per month
-      const slotsByMonth = {};
-      guestspotCachedSlots.forEach(slot => {
-        if (slot.date_from) {
-          const date = new Date(slot.date_from);
-          if (date.getFullYear() === guestspotViewYear) {
-            const month = date.getMonth();
-            slotsByMonth[month] = (slotsByMonth[month] || 0) + 1;
-          }
-        }
+      // Filter slots for the current year (only Guest Spots, NO waitlist)
+      const yearSlots = guestspotCachedSlots.filter(slot => {
+        if (!slot.date_from) return false;
+        const date = new Date(slot.date_from);
+        return date.getFullYear() === guestspotViewYear;
       });
 
-      // Build grid
-      const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-
-      let html = monthNames.map((name, index) => {
-        const count = slotsByMonth[index] || 0;
-        const isCurrent = index === currentMonth && guestspotViewYear === currentYear;
-
-        return `
-          <div onclick="guestspotViewMonth = new Date(${guestspotViewYear}, ${index}, 1); guestspotCurrentView = 'month'; updateGuestspotViewUI();" style="
-            padding:20px;
-            border-radius:12px;
-            background:${count > 0 ? 'rgba(52, 199, 89, 0.1)' : 'var(--macos-elevated)'};
-            border:${isCurrent ? '2px solid #007aff' : '1px solid var(--border-color)'};
-            cursor:pointer;
-            text-align:center;
-            transition:all 0.2s;
-          " onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
-            <div style="font-size:16px; font-weight:600; color:var(--ink);">${name}</div>
-            ${count > 0 ? `<div style="font-size:28px; font-weight:700; color:#34c759; margin-top:8px;">${count}</div>` : '<div style="font-size:14px; color:#86868b; margin-top:8px;">–</div>'}
+      if (yearSlots.length === 0) {
+        gridEl.innerHTML = `
+          <div class="guestspot-year-view-empty">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 16px; opacity: 0.5;">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <p>Keine Guest Spots in ${guestspotViewYear}</p>
           </div>
         `;
-      }).join('');
+        return;
+      }
+
+      // Group slots by artist
+      const artistMap = new Map();
+
+      yearSlots.forEach(slot => {
+        const artistId = slot.artist_id || 'unknown';
+        const artistName = slot.artist_name || 'Unknown Artist';
+        const artistInsta = slot.instagram || slot.artist_instagram || '';
+        const artistImage = slot.profile_image_url || slot.artist_image || '';
+
+        if (!artistMap.has(artistId)) {
+          artistMap.set(artistId, {
+            id: artistId,
+            name: artistName,
+            instagram: artistInsta,
+            image: artistImage,
+            spots: []
+          });
+        }
+
+        artistMap.get(artistId).spots.push(slot);
+      });
+
+      // Sort artists alphabetically
+      const sortedArtists = Array.from(artistMap.values())
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      // Render Grid
+      let html = '';
+
+      sortedArtists.forEach(artist => {
+        html += `
+          <div class="guestspot-year-artist-row" data-artist-id="${artist.id}">
+            <div class="guestspot-year-artist-name">
+              <img src="${artist.image || 'https://via.placeholder.com/28'}" alt="${artist.name}" onerror="this.src='https://via.placeholder.com/28'">
+              <div style="overflow:hidden;">
+                <div class="name">${artist.name}</div>
+                ${artist.instagram ? `<div class="instagram">@${artist.instagram}</div>` : ''}
+              </div>
+            </div>
+        `;
+
+        // For each month (0-11)
+        for (let month = 0; month < 12; month++) {
+          const monthStart = new Date(guestspotViewYear, month, 1);
+          const monthEnd = new Date(guestspotViewYear, month + 1, 0);
+
+          // Find spots that overlap with this month
+          const monthSpots = artist.spots.filter(spot => {
+            const spotStart = new Date(spot.date_from);
+            const spotEnd = new Date(spot.date_to);
+            return spotStart <= monthEnd && spotEnd >= monthStart;
+          });
+
+          html += `<div class="guestspot-year-month-cell" data-month="${month}">`;
+
+          monthSpots.forEach(spot => {
+            const isPaid = spot.is_paid === true;
+            const isCanceled = spot.entry_status === 'canceled' || spot.status === 'canceled';
+            let statusClass = isPaid ? 'paid' : 'unpaid';
+            if (isCanceled) statusClass = 'canceled';
+
+            const dateFrom = new Date(spot.date_from);
+            const dateTo = new Date(spot.date_to);
+            const dayCount = Math.ceil((dateTo - dateFrom) / (1000 * 60 * 60 * 24)) + 1;
+
+            // Tooltip Info
+            const tooltipText = `${dateFrom.toLocaleDateString('de-DE')} - ${dateTo.toLocaleDateString('de-DE')} (${dayCount} Tag${dayCount > 1 ? 'e' : ''})${isPaid ? ' ✓ Bezahlt' : ' ✗ Unbezahlt'}${isCanceled ? ' (Storniert)' : ''}`;
+
+            // Cache slot for click handler
+            const cacheKey = cacheGuestSpotSlot(spot);
+
+            // Show as indicator bar
+            html += `
+              <div class="guestspot-year-spot-indicator ${statusClass}"
+                   title="${tooltipText}"
+                   onclick="openGuestSpotDetailFromCache('${cacheKey}')">
+              </div>
+            `;
+          });
+
+          html += `</div>`;
+        }
+
+        html += `</div>`;
+      });
 
       gridEl.innerHTML = html;
     }
