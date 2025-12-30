@@ -720,6 +720,23 @@
       color: #8884D8 !important;
     }
 
+    /* Stornierte Guest Spots im Kalender */
+    .event.guest_spot.canceled {
+      background: rgba(107, 114, 128, 0.15) !important;
+      color: #6b7280 !important;
+      opacity: 0.7;
+      text-decoration: line-through;
+    }
+
+    .event.guest_spot.canceled:hover {
+      background: rgba(107, 114, 128, 0.25) !important;
+    }
+
+    [data-theme="dark"] .event.guest_spot.canceled {
+      background: rgba(107, 114, 128, 0.25) !important;
+      color: #9ca3af !important;
+    }
+
     /* Custom Date Picker für Guest Spot */
     .guest-spot-date-picker-container {
       position: relative;
@@ -11507,7 +11524,7 @@
     <a class="nav-link active" href="#" data-view="dashboard" id="tab-dashboard">Dashboard</a>
     <a class="nav-link" href="#" data-view="requests" id="tab-requests">Requests</a>
     <a class="nav-link" href="#" data-view="calendar" id="tab-calendar">Calendar</a>
-    <a class="nav-link" href="#" data-view="waitlist" id="tab-waitlist">Guestspots</a>
+    <a class="nav-link" href="#" data-view="waitlist" id="tab-waitlist">Waitlist</a>
     <a class="nav-link" href="#" data-view="artists" id="tab-artists">Artists</a>
     <a class="nav-link" href="#" data-view="customers" id="tab-customers">Customers</a>
     <a class="nav-link" href="#" data-view="dienstplan" id="tab-dienstplan">Dienstplan</a>
@@ -12005,6 +12022,13 @@
         <span style="font-weight:700;">Guests</span>
         <label class="toggle-switch">
           <input type="checkbox" id="checkGuests" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; margin-left:16px; padding-left:16px; border-left:1px solid rgba(0,0,0,0.1);">
+        <span style="font-weight:500; color:#6b7280;">Stornierte</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="showCanceledGuestSpots" onchange="toggleShowCanceledGuestSpots()">
           <span class="toggle-slider"></span>
         </label>
       </label>
@@ -14546,6 +14570,27 @@
             </svg>
             Cancel
           </button>
+          <button type="button" onclick="reactivateGuestSpot()" id="guestSpotReactivateBtn" style="
+            flex:1;
+            padding:12px;
+            border:none;
+            border-radius:8px;
+            background:#34c759;
+            color:#fff;
+            font-size:14px;
+            font-weight:500;
+            cursor:pointer;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            Reaktivieren
+          </button>
           <button type="button" onclick="deleteGuestSpot()" id="guestSpotDeleteBtn" style="
             flex:1;
             padding:12px;
@@ -16510,6 +16555,7 @@
     let customerSortConfig = { field: 'created_at', order: 'desc' };
     let currentEditingEvent = null;
     let selectedLocationId = null;
+    let showCanceledGuestSpots = false; // Checkbox für stornierte Guest Spots im Kalender
     let selectedDienstplanLocationId = null;
     let selectedAgreementsLocationId = null;
     let currentLocationName = '';
@@ -26644,13 +26690,20 @@
           // 4. Load Guest Spots from guest_spot_calendar_view
           let processedGuestSpots = [];
           try {
-            const { data: guestSpotsData, error: guestSpotsError } = await supabase
+            // Build query - conditionally include canceled spots
+            let guestSpotQuery = supabase
               .from('guest_spot_calendar_view')
               .select('*')
               .eq('location_id', selectedLocationId)
               .gte('entry_date', startDateStr)
-              .lte('entry_date', endDateStr)
-              .eq('entry_status', 'active');
+              .lte('entry_date', endDateStr);
+
+            // Only filter by active if showCanceledGuestSpots is false
+            if (!showCanceledGuestSpots) {
+              guestSpotQuery = guestSpotQuery.eq('entry_status', 'active');
+            }
+
+            const { data: guestSpotsData, error: guestSpotsError } = await guestSpotQuery;
 
             if (guestSpotsError) {
               console.error('Error loading guest spots for calendar:', guestSpotsError);
@@ -26687,6 +26740,8 @@
                   isPaid: gs.is_paid || false,
                   bookingType: gs.booking_type || 'external',
                   spotStatus: gs.spot_status,
+                  entryStatus: gs.entry_status,
+                  isCanceled: gs.entry_status === 'canceled',
                   // Full data for detail view
                   fullGuestSpotData: gs
                 };
@@ -26972,7 +27027,18 @@
         };
         return typeLabels[type] || type;
       }
-      
+
+      // Toggle canceled guest spots visibility in calendar
+      function toggleShowCanceledGuestSpots() {
+        showCanceledGuestSpots = document.getElementById('showCanceledGuestSpots')?.checked || false;
+        console.log('📅 Show canceled guest spots:', showCanceledGuestSpots);
+        // Reload calendar data
+        if (selectedLocationId) {
+          loadEvents(selectedLocationId);
+        }
+      }
+      window.toggleShowCanceledGuestSpots = toggleShowCanceledGuestSpots;
+
       function renderCalendar() {
         const dateStr = currentDate.toISOString().split('T')[0];
         document.getElementById('datePickerInput').value = dateStr;
@@ -27270,7 +27336,8 @@
 
                     // Artist Info: Use special CSS class and click handler
                     const artistInfoClass = isArtistInfoEvent ? 'artist-info-event' : '';
-                    const guestSpotClass = cell.event.isGuestSpot ? 'guest_spot' : '';
+                    const guestSpotCanceledClass = cell.event.isCanceled ? 'canceled' : '';
+                    const guestSpotClass = cell.event.isGuestSpot ? `guest_spot ${guestSpotCanceledClass}` : '';
                     const clickHandler = cell.event.isGuestSpot
                       ? `onclick="handleGuestSpotCalendarClick('${cell.event.id}')"`
                       : isArtistInfoEvent
@@ -39202,7 +39269,7 @@
             ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Completed</span>'
             : '<span style="background:#ff3b30;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Canceled</span>';
 
-          const paidBadge = spot.share_personal_data
+          const paidBadge = spot.is_paid
             ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Paid</span>'
             : '<span style="background:#ff9500;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Unpaid</span>';
 
@@ -45886,18 +45953,27 @@
       const cancelBtn = document.getElementById('guestSpotCancelBtn');
       const deleteBtn = document.getElementById('guestSpotDeleteBtn');
       const paidBtn = document.getElementById('guestSpotTogglePaidBtn');
+      const reactivateBtn = document.getElementById('guestSpotReactivateBtn');
 
-      if (isPast || isCanceled) {
-        // Hide edit/cancel buttons for past or canceled slots
+      if (isCanceled) {
+        // Canceled slots: Show Reactivate and Delete only
         if (editBtn) editBtn.style.display = 'none';
         if (cancelBtn) cancelBtn.style.display = 'none';
-        // Keep delete and paid toggle visible for past slots
-        if (deleteBtn) deleteBtn.style.display = isCanceled ? 'none' : 'flex';
+        if (reactivateBtn) reactivateBtn.style.display = 'flex';
+        if (deleteBtn) deleteBtn.style.display = 'flex';
+        if (paidBtn) paidBtn.style.display = 'flex';
+      } else if (isPast) {
+        // Past slots: Hide edit/cancel/reactivate, show delete and paid
+        if (editBtn) editBtn.style.display = 'none';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        if (reactivateBtn) reactivateBtn.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'flex';
         if (paidBtn) paidBtn.style.display = 'flex';
       } else {
-        // Show all buttons for active/upcoming slots
+        // Active/upcoming slots: Show all standard buttons, hide reactivate
         if (editBtn) editBtn.style.display = 'flex';
         if (cancelBtn) cancelBtn.style.display = 'flex';
+        if (reactivateBtn) reactivateBtn.style.display = 'none';
         if (deleteBtn) deleteBtn.style.display = 'flex';
         if (paidBtn) paidBtn.style.display = 'flex';
       }
@@ -46277,6 +46353,32 @@
       console.log('📤 Slot data:', slotData);
 
       try {
+        // ========== OVERLAP VALIDIERUNG ==========
+        // Prüfe ob Artist bereits Guest Spot im Zeitraum hat
+        const { data: overlapData, error: overlapError } = await supabase
+          .rpc('check_guest_spot_overlap', {
+            p_artist_id: selectedGuestSpotArtist.id,
+            p_date_from: dateFrom,
+            p_date_to: dateTo,
+            p_exclude_slot_id: null
+          });
+
+        if (overlapError) {
+          console.error('Error checking overlap:', overlapError);
+        }
+
+        if (overlapData && overlapData.length > 0) {
+          const overlap = overlapData[0];
+          const overlapFrom = new Date(overlap.overlapping_date_from).toLocaleDateString('de-DE');
+          const overlapTo = new Date(overlap.overlapping_date_to).toLocaleDateString('de-DE');
+          showNotification(
+            `${overlap.artist_name || 'Artist'} hat bereits einen Guest Spot vom ${overlapFrom} bis ${overlapTo}`,
+            'error'
+          );
+          return;
+        }
+        // ========== ENDE OVERLAP VALIDIERUNG ==========
+
         // Insert into upcoming_slots
         // The trigger will automatically create calendar entries!
         const { data, error } = await supabase
@@ -46488,6 +46590,67 @@
     }
 
     // ============================================
+    // REACTIVATE GUEST SPOT (Un-Cancel)
+    // ============================================
+
+    async function reactivateGuestSpot() {
+      if (!currentGuestSpotDetailData) return;
+
+      const slotIds = JSON.parse(document.getElementById('guestSpotDetailSlotIds').value || '[]');
+
+      if (!confirm('Guest Spot wirklich reaktivieren?')) return;
+
+      console.log('🔄 Reactivating Guest Spot:', slotIds);
+
+      try {
+        const { data, error } = await supabase
+          .rpc('reactivate_guest_spot', { p_slot_ids: slotIds });
+
+        if (error) throw error;
+
+        if (data && data[0]) {
+          if (data[0].success) {
+            showNotification('Guest Spot reaktiviert!', 'success');
+            closeGuestSpotDetailModal();
+
+            // Reload data
+            if (typeof loadWaitlistSlots === 'function') {
+              await loadWaitlistSlots(currentWaitlistLocation);
+            }
+            if (typeof loadPreviousGuestSpots === 'function') {
+              await loadPreviousGuestSpots(currentWaitlistLocation);
+            }
+            if (typeof loadCalendarData === 'function') {
+              await loadCalendarData();
+            }
+            if (typeof loadDienstplan === 'function') {
+              await loadDienstplan();
+            }
+          } else {
+            showNotification(data[0].message || 'Fehler beim Reaktivieren', 'error');
+          }
+        } else {
+          showNotification('Guest Spot reaktiviert!', 'success');
+          closeGuestSpotDetailModal();
+
+          // Reload data
+          if (typeof loadWaitlistSlots === 'function') {
+            await loadWaitlistSlots(currentWaitlistLocation);
+          }
+          if (typeof loadPreviousGuestSpots === 'function') {
+            await loadPreviousGuestSpots(currentWaitlistLocation);
+          }
+          if (typeof loadCalendarData === 'function') {
+            await loadCalendarData();
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error reactivating Guest Spot:', error);
+        showNotification('Fehler: ' + error.message, 'error');
+      }
+    }
+
+    // ============================================
     // EDIT MODE (Placeholder - will be extended)
     // ============================================
 
@@ -46526,6 +46689,16 @@
                 <input type="time" id="editGuestSpotTimeTo" value="${data.time_to || '18:00'}" required style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
               </div>
             </div>
+          </div>
+
+          <!-- Location Dropdown -->
+          <div style="margin-bottom:20px;">
+            <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Location</label>
+            <select id="editGuestSpotLocation" style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white;">
+              ${(window.locationsCache || []).map(loc =>
+                `<option value="${loc.id}" ${loc.id === data.location_id ? 'selected' : ''}>${loc.name}${loc.city ? ' (' + loc.city + ')' : ''}</option>`
+              ).join('')}
+            </select>
           </div>
 
           <!-- Booking Type (Read-Only Display) -->
@@ -46614,6 +46787,7 @@
         date_to: document.getElementById('editGuestSpotDateTo').value,
         time_from: document.getElementById('editGuestSpotTimeFrom').value,
         time_to: document.getElementById('editGuestSpotTimeTo').value,
+        location_id: document.getElementById('editGuestSpotLocation')?.value || currentGuestSpotDetailData.location_id,
         payment_notes: document.getElementById('editGuestSpotPaymentNotes').value || null
       };
 
@@ -47057,6 +47231,7 @@
     window.toggleGuestSpotPaid = toggleGuestSpotPaid;
     window.cancelGuestSpot = cancelGuestSpot;
     window.deleteGuestSpot = deleteGuestSpot;
+    window.reactivateGuestSpot = reactivateGuestSpot;
     window.openGuestSpotEditMode = openGuestSpotEditMode;
     window.closeGuestSpotEditMode = closeGuestSpotEditMode;
     window.handleGuestSpotEditSubmit = handleGuestSpotEditSubmit;
