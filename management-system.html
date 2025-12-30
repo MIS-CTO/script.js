@@ -757,54 +757,25 @@
       background: rgba(107, 114, 128, 0.15) !important;
     }
 
-    /* Dienstplan - Canceled Entries - VERSTÄRKT (BUG FIX 6) */
+    /* Dienstplan - Canceled Entries */
     .dienstplan-slot.canceled,
-    .dienstplan-entry.canceled,
     .slot-entry.canceled,
-    .slot-entry[data-state="Canceled"],
-    .slot-cell.canceled,
-    .slot-cell[data-state="Canceled"],
-    [data-status="canceled"],
     .dienstplan-entry[data-status="canceled"],
-    .availability-slot[data-status="canceled"],
-    .availability-slot.canceled {
-      background: #6b7280 !important;
-      background-color: #6b7280 !important;
-      opacity: 0.6 !important;
-      border-color: #4b5563 !important;
+    .availability-slot[data-status="canceled"] {
+      background: #9ca3af !important;
+      opacity: 0.6;
     }
 
-    .dienstplan-slot.canceled *,
-    .dienstplan-entry.canceled *,
-    .slot-entry.canceled *,
-    .slot-entry[data-state="Canceled"] *,
     .dienstplan-slot.canceled .slot-time,
     .slot-entry.canceled .slot-time,
     .dienstplan-slot.canceled .artist-name,
     .slot-entry.canceled .artist-name {
-      color: #9ca3af !important;
-      text-decoration: line-through !important;
-    }
-
-    /* Guest Spot Cards - Canceled */
-    .guest-spot-card.canceled,
-    .guest-spot-day-item.canceled {
-      background: #6b7280 !important;
-      opacity: 0.6;
-    }
-
-    .guest-spot-card.canceled .artist-info h4,
-    .guest-spot-card.canceled .artist-name,
-    .guest-spot-day-item.canceled .artist-name {
       text-decoration: line-through;
-      color: #9ca3af;
     }
 
     [data-theme="dark"] .dienstplan-slot.canceled,
-    [data-theme="dark"] .dienstplan-entry.canceled,
-    [data-theme="dark"] .slot-entry.canceled,
-    [data-theme="dark"] .slot-entry[data-state="Canceled"] {
-      background: rgba(107, 114, 128, 0.5) !important;
+    [data-theme="dark"] .slot-entry.canceled {
+      background: rgba(107, 114, 128, 0.4) !important;
     }
 
     /* Custom Date Picker für Guest Spot */
@@ -11863,7 +11834,7 @@
     <a class="nav-link active" href="#" data-view="dashboard" id="tab-dashboard">Dashboard</a>
     <a class="nav-link" href="#" data-view="requests" id="tab-requests">Requests</a>
     <a class="nav-link" href="#" data-view="calendar" id="tab-calendar">Calendar</a>
-    <a class="nav-link" href="#" data-view="waitlist" id="tab-waitlist">Guest Spots</a>
+    <a class="nav-link" href="#" data-view="waitlist" id="tab-waitlist">Waitlist</a>
     <a class="nav-link" href="#" data-view="artists" id="tab-artists">Artists</a>
     <a class="nav-link" href="#" data-view="customers" id="tab-customers">Customers</a>
     <a class="nav-link" href="#" data-view="dienstplan" id="tab-dienstplan">Dienstplan</a>
@@ -39499,11 +39470,11 @@
         const descriptionEl = document.getElementById('listTypeDescription');
         if (descriptionEl) {
           const descriptions = {
-            'waitlist': 'Artists available NOW (no specific dates)',
-            'upcoming': 'Upcoming guest spots (scheduled)',
-            'active': 'Currently active guest spots',
-            'previous': 'Completed guest spots',
-            'canceled': 'Canceled guest spots'
+            'waitlist': '🕒 Artists available NOW (no specific dates)',
+            'upcoming': '📅 Upcoming guest spots (scheduled)',
+            'active': '🎨 Currently active guest spots',
+            'previous': '✅ Completed guest spots',
+            'canceled': '❌ Canceled guest spots'
           };
           descriptionEl.textContent = descriptions[listType] || '';
         }
@@ -43126,7 +43097,7 @@
               <div class="collection-header">
                 <div class="collection-header-left">
                   <span class="collection-drag-handle">⋮⋮</span>
-                  <img src="${artist.profile_picture_url || 'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='24' fill='%23e5e7eb'/%3E%3Ccircle cx='24' cy='18' r='8' fill='%239ca3af'/%3E%3Cpath d='M6 42c0-10 8-18 18-18s18 8 18 18' fill='%239ca3af'/%3E%3C/svg%3E'}" class="collection-artist-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='24' fill='%23e5e7eb'/%3E%3Ccircle cx='24' cy='18' r='8' fill='%239ca3af'/%3E%3Cpath d='M6 42c0-10 8-18 18-18s18 8 18 18' fill='%239ca3af'/%3E%3C/svg%3E'">
+                  <img src="${artist.profile_picture_url || 'https://via.placeholder.com/48'}" class="collection-artist-avatar" onerror="this.src='https://via.placeholder.com/48'">
                   <div class="collection-info">
                     <div style="display:flex;align-items:center;gap:12px;">
                       <h3 style="margin:0;">${c.name || artist.name + "'s Wannados"}</h3>
@@ -43190,7 +43161,7 @@
         if (error) console.error('Error loading artists:', error);
         document.getElementById('collectionArtistGrid').innerHTML = (artists || []).map(a => `
           <div class="artist-select-card" data-artist-id="${a.id}" onclick="window.selectCollectionArtist('${a.id}')">
-            <img src="${a.profile_picture_url || 'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Ccircle cx='25' cy='25' r='25' fill='%23e5e7eb'/%3E%3Ccircle cx='25' cy='18' r='8' fill='%239ca3af'/%3E%3Cpath d='M6 44c0-10.5 8.5-19 19-19s19 8.5 19 19' fill='%239ca3af'/%3E%3C/svg%3E'}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Ccircle cx='25' cy='25' r='25' fill='%23e5e7eb'/%3E%3Ccircle cx='25' cy='18' r='8' fill='%239ca3af'/%3E%3Cpath d='M6 44c0-10.5 8.5-19 19-19s19 8.5 19 19' fill='%239ca3af'/%3E%3C/svg%3E'">
+            <img src="${a.profile_picture_url || 'https://via.placeholder.com/50'}" onerror="this.src='https://via.placeholder.com/50'">
             <div class="name">${a.name}</div>
           </div>
         `).join('');
@@ -46005,7 +45976,6 @@
     let guestspotViewMonth = new Date(); // Aktueller Monat als Default
     let guestspotViewYear = new Date().getFullYear(); // Aktuelles Jahr als Default
     let guestspotCachedSlots = [];
-    let guestspotAllSlotsForCalendar = []; // BUG FIX 3: Separate cache for calendar (all statuses)
 
     function toggleGuestspotView() {
       const views = ['list', 'month', 'year'];
@@ -46040,7 +46010,7 @@
       if (yearContainer) yearContainer.style.display = 'none';
     }
 
-    async function updateGuestspotViewUI() {
+    function updateGuestspotViewUI() {
       const listContainer = document.getElementById('waitlistSlotsContainer');
       const monthContainer = document.getElementById('guestspotMonthViewContainer');
       const yearContainer = document.getElementById('guestspotYearViewContainer');
@@ -46065,75 +46035,12 @@
         }
       } else if (guestspotCurrentView === 'month') {
         if (monthContainer) monthContainer.style.display = 'block';
-        // BUG FIX 3: Load ALL guest spots for calendar (not filtered by sub-tab)
-        await loadAllGuestSpotsForCalendar();
         renderGuestspotMonthView();
       } else if (guestspotCurrentView === 'year') {
         if (yearContainer) yearContainer.style.display = 'block';
-        // BUG FIX 3: Load ALL guest spots for calendar (not filtered by sub-tab)
-        await loadAllGuestSpotsForCalendar();
         renderGuestspotYearView();
       }
     }
-
-    // BUG FIX 3: Load ALL guest spots for calendar views (all statuses)
-    async function loadAllGuestSpotsForCalendar() {
-      try {
-        console.log('📅 Loading ALL guest spots for calendar...');
-
-        // Load from upcoming_slots_grouped which contains all statuses
-        const { data: upcomingSlots, error: upcomingError } = await supabase
-          .from('upcoming_slots_grouped')
-          .select('*')
-          .order('date_from', { ascending: true });
-
-        if (upcomingError) throw upcomingError;
-
-        // Also load from waitlist_slots for waitlist entries
-        const { data: waitlistSlots, error: waitlistError } = await supabase
-          .from('waitlist_slots')
-          .select('*')
-          .eq('status', 'active');
-
-        if (waitlistError) console.warn('Could not load waitlist slots:', waitlistError);
-
-        // Combine and format slots
-        const allSlots = [];
-
-        // Add upcoming slots
-        if (upcomingSlots) {
-          upcomingSlots.forEach(slot => {
-            allSlots.push({
-              ...slot,
-              source: 'upcoming'
-            });
-          });
-        }
-
-        // Add waitlist slots (no specific dates, but include for completeness)
-        if (waitlistSlots) {
-          waitlistSlots.forEach(slot => {
-            // Only add if not already in upcoming (by artist_id)
-            if (!allSlots.find(s => s.artist_id === slot.artist_id && s.source === 'upcoming')) {
-              allSlots.push({
-                ...slot,
-                source: 'waitlist'
-              });
-            }
-          });
-        }
-
-        guestspotAllSlotsForCalendar = allSlots;
-        // Also update the regular cache so calendar views work
-        guestspotCachedSlots = allSlots;
-
-        console.log(`✅ Loaded ${allSlots.length} total guest spots for calendar`);
-      } catch (err) {
-        console.error('❌ Error loading all guest spots for calendar:', err);
-      }
-    }
-
-    window.loadAllGuestSpotsForCalendar = loadAllGuestSpotsForCalendar;
 
     function changeGuestspotMonth(delta) {
       guestspotViewMonth.setMonth(guestspotViewMonth.getMonth() + delta);
@@ -46326,7 +46233,7 @@
         html += `
           <div class="guestspot-year-artist-row" data-artist-id="${artist.id}">
             <div class="guestspot-year-artist-name">
-              <img src="${artist.image || 'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%23e5e7eb'/%3E%3Ccircle cx='14' cy='10' r='5' fill='%239ca3af'/%3E%3Cpath d='M4 24c0-5.5 4.5-10 10-10s10 4.5 10 10' fill='%239ca3af'/%3E%3C/svg%3E'}" alt="${artist.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%23e5e7eb'/%3E%3Ccircle cx='14' cy='10' r='5' fill='%239ca3af'/%3E%3Cpath d='M4 24c0-5.5 4.5-10 10-10s10 4.5 10 10' fill='%239ca3af'/%3E%3C/svg%3E'">
+              <img src="${artist.image || 'https://via.placeholder.com/28'}" alt="${artist.name}" onerror="this.src='https://via.placeholder.com/28'">
               <div style="overflow:hidden;">
                 <div class="name">${artist.name}</div>
                 ${artist.instagram ? `<div class="instagram">@${artist.instagram}</div>` : ''}
@@ -48028,11 +47935,9 @@
         }
       }
 
-      // CHECK 7: Current State (BUG FIX 5: Safe check for currentListType)
-      const listTypeValue = typeof currentListType !== 'undefined' ? currentListType : 'unknown';
-      const locationValue = typeof currentWaitlistLocation !== 'undefined' ? currentWaitlistLocation : 'unknown';
-      info.push(`📊 Current List Type: ${listTypeValue}`);
-      info.push(`📍 Current Location: ${locationValue}`);
+      // CHECK 7: Current State
+      info.push(`📊 Current List Type: ${currentListType}`);
+      info.push(`📍 Current Location: ${currentWaitlistLocation}`);
 
       // CHECK 8: Guest Spots Count
       try {
