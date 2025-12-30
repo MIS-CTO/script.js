@@ -46291,10 +46291,7 @@
 
         console.log('✅ Guest Spot created:', data);
 
-        // Create Dienstplan availability for the new Guest Spot
-        if (data && data[0]) {
-          await createDienstplanForGuestSpot(data[0]);
-        }
+        // Dienstplan wird automatisch via Trigger erstellt (trg_sync_upcoming_to_dienstplan)
 
         // Close modal first
         closeCreateGuestSpotModal();
@@ -46334,75 +46331,15 @@
     // ============================================
     // DIENSTPLAN AVAILABILITY FOR GUEST SPOTS
     // ============================================
-
-    async function createDienstplanForGuestSpot(slot) {
-      if (!slot || !slot.artist_id || !slot.date_from || !slot.date_to) {
-        console.warn('⚠️ Cannot create Dienstplan: missing slot data');
-        return;
-      }
-
-      console.log('📅 Creating Dienstplan availability for Guest Spot:', slot.id);
-
-      try {
-        // Generate all dates between date_from and date_to
-        const startDate = new Date(slot.date_from);
-        const endDate = new Date(slot.date_to);
-        const dienstplanEntries = [];
-
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split('T')[0];
-          dienstplanEntries.push({
-            artist_id: slot.artist_id,
-            date: dateStr,
-            location_id: slot.location_id,
-            time_from: slot.time_from || '10:00',
-            time_to: slot.time_to || '18:00',
-            status: 'confirmed',
-            guest_spot_id: slot.id,
-            created_at: new Date().toISOString()
-          });
-        }
-
-        if (dienstplanEntries.length === 0) return;
-
-        console.log('📤 Creating', dienstplanEntries.length, 'Dienstplan entries');
-
-        const { data, error } = await supabase
-          .from('dienstplan')
-          .insert(dienstplanEntries)
-          .select();
-
-        if (error) {
-          console.error('❌ Error creating Dienstplan entries:', error);
-          // Don't throw - this is a secondary operation
-        } else {
-          console.log('✅ Dienstplan entries created:', data?.length);
-        }
-      } catch (error) {
-        console.error('❌ Error in createDienstplanForGuestSpot:', error);
-      }
-    }
-
-    async function deleteDienstplanForGuestSpot(slotIds) {
-      if (!slotIds || slotIds.length === 0) return;
-
-      console.log('🗑️ Deleting Dienstplan entries for Guest Spot IDs:', slotIds);
-
-      try {
-        const { error } = await supabase
-          .from('dienstplan')
-          .delete()
-          .in('guest_spot_id', slotIds);
-
-        if (error) {
-          console.error('❌ Error deleting Dienstplan entries:', error);
-        } else {
-          console.log('✅ Dienstplan entries deleted');
-        }
-      } catch (error) {
-        console.error('❌ Error in deleteDienstplanForGuestSpot:', error);
-      }
-    }
+    // HINWEIS: Die Funktionen createDienstplanForGuestSpot() und
+    // deleteDienstplanForGuestSpot() wurden ENTFERNT (Phase 2 Cleanup).
+    //
+    // Supabase Trigger erledigen die Synchronisation automatisch:
+    // - trg_sync_upcoming_to_dienstplan (bei INSERT)
+    // - trg_sync_upcoming_to_dienstplan_update (bei UPDATE)
+    // - trg_sync_upcoming_to_dienstplan_delete (bei DELETE)
+    // - trg_sync_cancel_to_dienstplan (bei Cancel/Reactivate)
+    // ============================================
 
     // ============================================
     // TOGGLE PAID STATUS
@@ -46520,8 +46457,7 @@
       console.log('🗑️ Deleting Guest Spot:', slotIds);
 
       try {
-        // First delete the Dienstplan entries associated with this Guest Spot
-        await deleteDienstplanForGuestSpot(slotIds);
+        // Dienstplan wird automatisch via Trigger gelöscht (trg_sync_upcoming_to_dienstplan_delete)
 
         // Delete the slots (cascade will handle calendar entries)
         const { error } = await supabase
