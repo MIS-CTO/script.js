@@ -737,6 +737,47 @@
       color: #9ca3af !important;
     }
 
+    /* Canceled Guest Spot Cards in Waitlist */
+    .waitlist-slot-card.canceled,
+    .guest-spot-card.canceled {
+      opacity: 0.7;
+      background: #f9fafb !important;
+    }
+
+    .waitlist-slot-card.canceled h3,
+    .guest-spot-card.canceled h3,
+    .waitlist-slot-card.canceled h4,
+    .guest-spot-card.canceled h4 {
+      text-decoration: line-through;
+      color: #6b7280;
+    }
+
+    [data-theme="dark"] .waitlist-slot-card.canceled,
+    [data-theme="dark"] .guest-spot-card.canceled {
+      background: rgba(107, 114, 128, 0.15) !important;
+    }
+
+    /* Dienstplan - Canceled Entries */
+    .dienstplan-slot.canceled,
+    .slot-entry.canceled,
+    .dienstplan-entry[data-status="canceled"],
+    .availability-slot[data-status="canceled"] {
+      background: #9ca3af !important;
+      opacity: 0.6;
+    }
+
+    .dienstplan-slot.canceled .slot-time,
+    .slot-entry.canceled .slot-time,
+    .dienstplan-slot.canceled .artist-name,
+    .slot-entry.canceled .artist-name {
+      text-decoration: line-through;
+    }
+
+    [data-theme="dark"] .dienstplan-slot.canceled,
+    [data-theme="dark"] .slot-entry.canceled {
+      background: rgba(107, 114, 128, 0.4) !important;
+    }
+
     /* Custom Date Picker für Guest Spot */
     .guest-spot-date-picker-container {
       position: relative;
@@ -12929,15 +12970,26 @@
         <span>Add Previous</span>
       </button>
 
-      <div id="waitlistTypeToggle" style="display:inline-flex; background:rgba(142, 142, 147, 0.12); border-radius:10px; padding:3px;">
-        <button class="list-toggle-option active" data-list-type="waitlist" style="position:relative; padding:8px 20px; border:none; background:white; color:#1d1d1f; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 2px 4px rgba(0,0,0,0.08);">
-          Guestspots
+      <div id="waitlistTypeToggle" style="display:inline-flex; background:rgba(142, 142, 147, 0.12); border-radius:10px; padding:3px; gap:2px; flex-wrap:wrap;">
+        <button class="list-toggle-option active" data-list-type="waitlist" style="position:relative; padding:8px 14px; border:none; background:white; color:#1d1d1f; font-weight:600; font-size:13px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 2px 4px rgba(0,0,0,0.08); display:flex; align-items:center; gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Waitlist
         </button>
-        <button class="list-toggle-option" data-list-type="upcoming" style="position:relative; padding:8px 20px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
-          Upcoming List
+        <button class="list-toggle-option" data-list-type="upcoming" style="position:relative; padding:8px 14px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:13px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; align-items:center; gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Upcoming
         </button>
-        <button class="list-toggle-option" data-list-type="previous" style="position:relative; padding:8px 20px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:14px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
-          Previous Guest Spots
+        <button class="list-toggle-option" data-list-type="active" style="position:relative; padding:8px 14px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:13px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; align-items:center; gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Active
+        </button>
+        <button class="list-toggle-option" data-list-type="previous" style="position:relative; padding:8px 14px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:13px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; align-items:center; gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Previous
+        </button>
+        <button class="list-toggle-option" data-list-type="canceled" style="position:relative; padding:8px 14px; border:none; background:transparent; color:#86868b; font-weight:600; font-size:13px; cursor:pointer; border-radius:8px; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; align-items:center; gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Canceled
         </button>
       </div>
 
@@ -39059,10 +39111,10 @@
 
       let currentWaitlistLocation = 'all';
       let waitlistSlots = [];
-      let currentListType = 'waitlist'; // 'waitlist', 'upcoming', or 'previous'
+      let currentListType = 'waitlist'; // 'waitlist', 'upcoming', 'active', 'previous', or 'canceled'
 
       // ============================================
-      // Switch List Type (Waitlist / Upcoming / Previous)
+      // Switch List Type (5 Tabs: Waitlist / Upcoming / Active / Previous / Canceled)
       // ============================================
       function switchListType(listType) {
         console.log(`🔄 Switching to ${listType} list`);
@@ -39073,13 +39125,22 @@
           resetGuestspotView();
         }
 
-        // Update toggle UI
+        // Update toggle UI with tab-specific colors
         const toggleButtons = document.querySelectorAll('.list-toggle-option');
         toggleButtons.forEach(btn => {
           if (btn.dataset.listType === listType) {
             btn.classList.add('active');
-            btn.style.background = 'white';
-            btn.style.color = '#1d1d1f';
+            // Tab-specific colors
+            if (listType === 'active') {
+              btn.style.background = '#dcfce7';
+              btn.style.color = '#166534';
+            } else if (listType === 'canceled') {
+              btn.style.background = '#fee2e2';
+              btn.style.color = '#991b1b';
+            } else {
+              btn.style.background = 'white';
+              btn.style.color = '#1d1d1f';
+            }
             btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)';
           } else {
             btn.classList.remove('active');
@@ -39093,12 +39154,12 @@
         const addSlotButton = document.getElementById('addWaitlistSlotButton');
         const addPreviousButton = document.getElementById('addPreviousSpotButton');
         if (addSlotButton && addPreviousButton) {
-          if (listType === 'previous') {
-            // Show Add Previous, hide Add Slot
+          if (listType === 'previous' || listType === 'canceled') {
+            // Hide Add buttons for history tabs
             addSlotButton.style.display = 'none';
-            addPreviousButton.style.display = 'flex';
+            addPreviousButton.style.display = 'none';
           } else {
-            // Show Add Slot, hide Add Previous
+            // Show Add Slot for active tabs
             addSlotButton.style.display = 'flex';
             addPreviousButton.style.display = 'none';
           }
@@ -39107,20 +39168,35 @@
         // Update description text
         const descriptionEl = document.getElementById('listTypeDescription');
         if (descriptionEl) {
-          if (listType === 'waitlist') {
-            descriptionEl.textContent = '🕒 Artists available NOW (no specific dates)';
-          } else if (listType === 'upcoming') {
-            descriptionEl.textContent = '📅 Artists with SPECIFIC booking dates';
-          } else if (listType === 'previous') {
-            descriptionEl.textContent = '📋 Completed and canceled guest spots history';
-          }
+          const descriptions = {
+            'waitlist': '🕒 Artists available NOW (no specific dates)',
+            'upcoming': '📅 Upcoming guest spots (scheduled)',
+            'active': '🎨 Currently active guest spots',
+            'previous': '✅ Completed guest spots',
+            'canceled': '❌ Canceled guest spots'
+          };
+          descriptionEl.textContent = descriptions[listType] || '';
         }
 
         // Reload data based on list type
-        if (listType === 'previous') {
-          loadPreviousGuestSpots(currentWaitlistLocation);
-        } else {
-          loadWaitlistSlots(currentWaitlistLocation);
+        switch(listType) {
+          case 'waitlist':
+            loadWaitlistSlots(currentWaitlistLocation);
+            break;
+          case 'upcoming':
+            loadUpcomingGuestSpotsTab();
+            break;
+          case 'active':
+            loadActiveGuestSpotsTab();
+            break;
+          case 'previous':
+            loadPreviousGuestSpots(currentWaitlistLocation);
+            break;
+          case 'canceled':
+            loadCanceledGuestSpotsTab();
+            break;
+          default:
+            loadWaitlistSlots(currentWaitlistLocation);
         }
       }
 
@@ -39249,6 +39325,122 @@
           showNotification('Fehler: ' + error.message, 'error');
         }
       }
+
+      // ============================================
+      // Load Upcoming Guest Spots (status = upcoming/active, date in future)
+      // ============================================
+      async function loadUpcomingGuestSpotsTab() {
+        console.log('📋 Loading Upcoming Guest Spots...');
+        const container = document.getElementById('waitlistSlotsContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Laden...</div>';
+
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const { data, error } = await supabase
+            .from('upcoming_slots_grouped')
+            .select('*')
+            .gte('date_from', today)
+            .order('date_from', { ascending: true });
+
+          if (error) throw error;
+
+          console.log(`✅ Loaded ${data?.length || 0} upcoming guest spots`);
+
+          if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine anstehenden Guest Spots</p></div>';
+            return;
+          }
+
+          // Use existing renderWaitlistSlots or a similar render
+          waitlistSlots = data;
+          renderWaitlistSlots(data);
+
+        } catch (error) {
+          console.error('❌ Error loading upcoming guest spots:', error);
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:#ff3b30;">Fehler beim Laden</div>';
+        }
+      }
+
+      // ============================================
+      // Load Active Guest Spots (currently active based on date)
+      // ============================================
+      async function loadActiveGuestSpotsTab() {
+        console.log('📋 Loading Active Guest Spots...');
+        const container = document.getElementById('waitlistSlotsContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Laden...</div>';
+
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const { data, error } = await supabase
+            .from('upcoming_slots_grouped')
+            .select('*')
+            .lte('date_from', today)
+            .gte('date_to', today)
+            .neq('status', 'canceled')
+            .order('date_from', { ascending: true });
+
+          if (error) throw error;
+
+          console.log(`✅ Loaded ${data?.length || 0} active guest spots`);
+
+          if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine aktiven Guest Spots</p></div>';
+            return;
+          }
+
+          waitlistSlots = data;
+          renderWaitlistSlots(data);
+
+        } catch (error) {
+          console.error('❌ Error loading active guest spots:', error);
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:#ff3b30;">Fehler beim Laden</div>';
+        }
+      }
+
+      // ============================================
+      // Load Canceled Guest Spots (status = canceled)
+      // ============================================
+      async function loadCanceledGuestSpotsTab() {
+        console.log('📋 Loading Canceled Guest Spots...');
+        const container = document.getElementById('waitlistSlotsContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Laden...</div>';
+
+        try {
+          const { data, error } = await supabase
+            .from('previous_guest_spots_grouped')
+            .select('*')
+            .eq('status', 'canceled')
+            .order('canceled_at', { ascending: false, nullsFirst: false })
+            .limit(100);
+
+          if (error) throw error;
+
+          console.log(`✅ Loaded ${data?.length || 0} canceled guest spots`);
+
+          if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine stornierten Guest Spots</p></div>';
+            return;
+          }
+
+          // Render canceled spots (similar to previous spots)
+          renderPreviousGuestSpots(data);
+
+        } catch (error) {
+          console.error('❌ Error loading canceled guest spots:', error);
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:#ff3b30;">Fehler beim Laden</div>';
+        }
+      }
+
+      // Expose new functions
+      window.loadUpcomingGuestSpotsTab = loadUpcomingGuestSpotsTab;
+      window.loadActiveGuestSpotsTab = loadActiveGuestSpotsTab;
+      window.loadCanceledGuestSpotsTab = loadCanceledGuestSpotsTab;
 
       // ============================================
       // Render Previous Guest Spots
@@ -46395,34 +46587,41 @@
 
         // Dienstplan wird automatisch via Trigger erstellt (trg_sync_upcoming_to_dienstplan)
 
-        // Close modal first
+        // ========== INSTANT RELOAD ALLER ANSICHTEN ==========
+        console.log('🔄 Instant reloading all views after Guest Spot creation...');
+
+        // 1. Modal sofort schließen
         closeCreateGuestSpotModal();
 
-        // Show notification (with fallback)
-        try {
-          if (typeof window.showNotification === 'function') {
-            window.showNotification('Guest Spot erfolgreich erstellt!', 'success');
-          } else {
-            console.log('✅ Guest Spot erfolgreich erstellt!');
-          }
-        } catch(e) {
-          console.log('✅ Guest Spot erfolgreich erstellt!');
+        // 2. Notification zeigen
+        showNotification('Guest Spot erfolgreich erstellt!', 'success');
+
+        // 3. Alle Ansichten parallel neu laden
+        const reloadPromises = [];
+
+        // Waitlist/Guest Spots Tab (basierend auf aktuellem Tab)
+        if (currentListType === 'upcoming' && typeof loadUpcomingGuestSpotsTab === 'function') {
+          reloadPromises.push(loadUpcomingGuestSpotsTab());
+        } else if (typeof loadWaitlistSlots === 'function') {
+          reloadPromises.push(loadWaitlistSlots(currentWaitlistLocation || 'all'));
         }
 
-        // Reload relevant data
-        if (typeof loadWaitlistSlots === 'function') {
-          await loadWaitlistSlots(currentWaitlistLocation);
+        // Kalender
+        if (typeof loadEvents === 'function' && selectedLocationId) {
+          reloadPromises.push(loadEvents(selectedLocationId));
         }
 
-        // Reload calendar if on calendar tab
-        if (typeof loadCalendarData === 'function') {
-          await loadCalendarData();
+        // Dienstplan
+        if (typeof loadDienstplanData === 'function') {
+          reloadPromises.push(loadDienstplanData());
+        } else if (typeof loadDienstplan === 'function') {
+          reloadPromises.push(loadDienstplan());
         }
 
-        // Reload Dienstplan if on Dienstplan tab
-        if (typeof loadDienstplan === 'function') {
-          await loadDienstplan();
-        }
+        // Warte auf alle Reloads parallel
+        await Promise.all(reloadPromises);
+        console.log('✅ All views reloaded after Guest Spot creation');
+        // ========== ENDE INSTANT RELOAD ==========
 
       } catch (error) {
         console.error('❌ Error creating Guest Spot:', error);
@@ -46523,16 +46722,33 @@
         showNotification('Guest Spot storniert', 'success');
         closeGuestSpotDetailModal();
 
-        // Reload data
-        if (typeof loadWaitlistSlots === 'function') {
-          await loadWaitlistSlots(currentWaitlistLocation);
+        // ========== INSTANT RELOAD NACH CANCEL ==========
+        console.log('🔄 Instant reloading all views after Guest Spot cancel...');
+
+        const cancelReloadPromises = [];
+
+        // Reload current tab
+        if (currentListType === 'upcoming' && typeof loadUpcomingGuestSpotsTab === 'function') {
+          cancelReloadPromises.push(loadUpcomingGuestSpotsTab());
+        } else if (currentListType === 'active' && typeof loadActiveGuestSpotsTab === 'function') {
+          cancelReloadPromises.push(loadActiveGuestSpotsTab());
+        } else if (typeof loadWaitlistSlots === 'function') {
+          cancelReloadPromises.push(loadWaitlistSlots(currentWaitlistLocation || 'all'));
         }
-        if (typeof loadCalendarData === 'function') {
-          await loadCalendarData();
+
+        // Kalender
+        if (typeof loadEvents === 'function' && selectedLocationId) {
+          cancelReloadPromises.push(loadEvents(selectedLocationId));
         }
-        if (typeof loadDienstplan === 'function') {
-          await loadDienstplan();
+
+        // Dienstplan
+        if (typeof loadDienstplanData === 'function') {
+          cancelReloadPromises.push(loadDienstplanData());
         }
+
+        await Promise.all(cancelReloadPromises);
+        console.log('✅ All views reloaded after cancel');
+        // ========== ENDE INSTANT RELOAD ==========
 
       } catch (error) {
         console.error('❌ Error canceling Guest Spot:', error);
@@ -46572,16 +46788,42 @@
         showNotification('Guest Spot gelöscht', 'success');
         closeGuestSpotDetailModal();
 
-        // Reload data
-        if (typeof loadWaitlistSlots === 'function') {
-          await loadWaitlistSlots(currentWaitlistLocation);
+        // ========== INSTANT RELOAD NACH DELETE ==========
+        console.log('🔄 Instant reloading all views after Guest Spot delete...');
+
+        const deleteReloadPromises = [];
+
+        // Reload current tab
+        switch(currentListType) {
+          case 'upcoming':
+            if (typeof loadUpcomingGuestSpotsTab === 'function') deleteReloadPromises.push(loadUpcomingGuestSpotsTab());
+            break;
+          case 'active':
+            if (typeof loadActiveGuestSpotsTab === 'function') deleteReloadPromises.push(loadActiveGuestSpotsTab());
+            break;
+          case 'previous':
+            if (typeof loadPreviousGuestSpots === 'function') deleteReloadPromises.push(loadPreviousGuestSpots(currentWaitlistLocation));
+            break;
+          case 'canceled':
+            if (typeof loadCanceledGuestSpotsTab === 'function') deleteReloadPromises.push(loadCanceledGuestSpotsTab());
+            break;
+          default:
+            if (typeof loadWaitlistSlots === 'function') deleteReloadPromises.push(loadWaitlistSlots(currentWaitlistLocation || 'all'));
         }
-        if (typeof loadCalendarData === 'function') {
-          await loadCalendarData();
+
+        // Kalender
+        if (typeof loadEvents === 'function' && selectedLocationId) {
+          deleteReloadPromises.push(loadEvents(selectedLocationId));
         }
-        if (typeof loadDienstplan === 'function') {
-          await loadDienstplan();
+
+        // Dienstplan
+        if (typeof loadDienstplanData === 'function') {
+          deleteReloadPromises.push(loadDienstplanData());
         }
+
+        await Promise.all(deleteReloadPromises);
+        console.log('✅ All views reloaded after delete');
+        // ========== ENDE INSTANT RELOAD ==========
 
       } catch (error) {
         console.error('❌ Error deleting Guest Spot:', error);
@@ -46608,42 +46850,41 @@
 
         if (error) throw error;
 
-        if (data && data[0]) {
-          if (data[0].success) {
-            showNotification('Guest Spot reaktiviert!', 'success');
-            closeGuestSpotDetailModal();
-
-            // Reload data
-            if (typeof loadWaitlistSlots === 'function') {
-              await loadWaitlistSlots(currentWaitlistLocation);
-            }
-            if (typeof loadPreviousGuestSpots === 'function') {
-              await loadPreviousGuestSpots(currentWaitlistLocation);
-            }
-            if (typeof loadCalendarData === 'function') {
-              await loadCalendarData();
-            }
-            if (typeof loadDienstplan === 'function') {
-              await loadDienstplan();
-            }
-          } else {
-            showNotification(data[0].message || 'Fehler beim Reaktivieren', 'error');
-          }
-        } else {
-          showNotification('Guest Spot reaktiviert!', 'success');
-          closeGuestSpotDetailModal();
-
-          // Reload data
-          if (typeof loadWaitlistSlots === 'function') {
-            await loadWaitlistSlots(currentWaitlistLocation);
-          }
-          if (typeof loadPreviousGuestSpots === 'function') {
-            await loadPreviousGuestSpots(currentWaitlistLocation);
-          }
-          if (typeof loadCalendarData === 'function') {
-            await loadCalendarData();
-          }
+        if (data && data[0] && !data[0].success) {
+          showNotification(data[0].message || 'Fehler beim Reaktivieren', 'error');
+          return;
         }
+
+        showNotification('Guest Spot reaktiviert!', 'success');
+        closeGuestSpotDetailModal();
+
+        // ========== INSTANT RELOAD NACH REACTIVATE ==========
+        console.log('🔄 Instant reloading all views after Guest Spot reactivate...');
+
+        const reactivateReloadPromises = [];
+
+        // Reload canceled tab (where we came from) and upcoming (where it goes)
+        if (typeof loadCanceledGuestSpotsTab === 'function') {
+          reactivateReloadPromises.push(loadCanceledGuestSpotsTab());
+        }
+        if (typeof loadUpcomingGuestSpotsTab === 'function') {
+          reactivateReloadPromises.push(loadUpcomingGuestSpotsTab());
+        }
+
+        // Kalender
+        if (typeof loadEvents === 'function' && selectedLocationId) {
+          reactivateReloadPromises.push(loadEvents(selectedLocationId));
+        }
+
+        // Dienstplan
+        if (typeof loadDienstplanData === 'function') {
+          reactivateReloadPromises.push(loadDienstplanData());
+        }
+
+        await Promise.all(reactivateReloadPromises);
+        console.log('✅ All views reloaded after reactivate');
+        // ========== ENDE INSTANT RELOAD ==========
+
       } catch (error) {
         console.error('❌ Error reactivating Guest Spot:', error);
         showNotification('Fehler: ' + error.message, 'error');
@@ -47235,6 +47476,145 @@
     window.openGuestSpotEditMode = openGuestSpotEditMode;
     window.closeGuestSpotEditMode = closeGuestSpotEditMode;
     window.handleGuestSpotEditSubmit = handleGuestSpotEditSubmit;
+
+    // ============================================
+    // BUG ANALYZER - Debug Tool (Console Only)
+    // ============================================
+
+    async function runBugAnalyzer() {
+      console.log('');
+      console.log('═══════════════════════════════════════════════════════════');
+      console.log('🔍 BUG ANALYZER - Starting diagnostic checks...');
+      console.log('═══════════════════════════════════════════════════════════');
+
+      const issues = [];
+      const warnings = [];
+      const info = [];
+
+      // CHECK 1: Supabase Connection
+      try {
+        const { count } = await supabase.from('locations').select('*', { count: 'exact', head: true });
+        info.push(`✅ Supabase: Connected (${count} locations)`);
+      } catch (e) {
+        issues.push('❌ Supabase: ' + e.message);
+      }
+
+      // CHECK 2: Required Functions
+      const funcs = ['openGuestSpotDetailModal', 'loadUpcomingGuestSpotsTab', 'loadActiveGuestSpotsTab',
+                     'loadCanceledGuestSpotsTab', 'reactivateGuestSpot', 'switchListType'];
+      funcs.forEach(fn => {
+        if (typeof window[fn] === 'function') {
+          info.push(`✅ ${fn}(): Available`);
+        } else {
+          warnings.push(`⚠️ ${fn}(): NOT FOUND`);
+        }
+      });
+
+      // CHECK 3: Required DOM Elements
+      const els = ['createGuestSpotModal', 'guestSpotDetailModal', 'waitlistTypeToggle', 'waitlistSlotsContainer'];
+      els.forEach(id => {
+        if (document.getElementById(id)) {
+          info.push(`✅ #${id}: Found`);
+        } else {
+          warnings.push(`⚠️ #${id}: NOT FOUND`);
+        }
+      });
+
+      // CHECK 4: Sub-Tab Buttons
+      const tabButtons = document.querySelectorAll('.list-toggle-option');
+      info.push(`✅ Sub-Tab Buttons: ${tabButtons.length} found`);
+      if (tabButtons.length !== 5) {
+        warnings.push(`⚠️ Expected 5 sub-tabs, found ${tabButtons.length}`);
+      }
+
+      // CHECK 5: RPC Functions
+      for (const rpc of ['check_guest_spot_overlap', 'reactivate_guest_spot']) {
+        try {
+          await supabase.rpc(rpc, { p_artist_id: '00000000-0000-0000-0000-000000000000' });
+          info.push(`✅ RPC ${rpc}: Available`);
+        } catch (e) {
+          if (e.message.includes('does not exist')) {
+            issues.push(`❌ RPC ${rpc}: NOT IN DATABASE`);
+          } else {
+            info.push(`✅ RPC ${rpc}: Available`);
+          }
+        }
+      }
+
+      // CHECK 6: Views
+      for (const view of ['upcoming_slots_grouped', 'previous_guest_spots_grouped', 'guest_spot_calendar_view']) {
+        try {
+          const { data } = await supabase.from(view).select('*').limit(1);
+          info.push(`✅ View ${view}: Accessible`);
+        } catch (e) {
+          issues.push(`❌ View ${view}: ${e.message}`);
+        }
+      }
+
+      // CHECK 7: Current State
+      info.push(`📊 Current List Type: ${currentListType}`);
+      info.push(`📍 Current Location: ${currentWaitlistLocation}`);
+
+      // CHECK 8: Guest Spots Count
+      try {
+        const today = new Date().toISOString().split('T')[0];
+
+        const { count: upcomingCount } = await supabase
+          .from('upcoming_slots')
+          .select('*', { count: 'exact', head: true })
+          .gte('date_from', today)
+          .neq('status', 'canceled');
+
+        const { count: activeCount } = await supabase
+          .from('upcoming_slots')
+          .select('*', { count: 'exact', head: true })
+          .lte('date_from', today)
+          .gte('date_to', today)
+          .neq('status', 'canceled');
+
+        const { count: canceledCount } = await supabase
+          .from('upcoming_slots')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'canceled');
+
+        info.push(`📅 Upcoming: ${upcomingCount}, Active: ${activeCount}, Canceled: ${canceledCount}`);
+      } catch (e) {
+        warnings.push(`⚠️ Could not count guest spots: ${e.message}`);
+      }
+
+      // RESULTS
+      console.log('');
+      console.log('═══════════════════════════════════════════════════════════');
+      console.log('📊 RESULTS: ' + issues.length + ' issues, ' + warnings.length + ' warnings');
+      console.log('═══════════════════════════════════════════════════════════');
+
+      if (issues.length) {
+        console.log('🔴 ISSUES:');
+        issues.forEach(i => console.log('   ' + i));
+      }
+      if (warnings.length) {
+        console.log('🟡 WARNINGS:');
+        warnings.forEach(w => console.log('   ' + w));
+      }
+      console.log('🟢 PASSED: ' + info.length + ' checks');
+      info.forEach(i => console.log('   ' + i));
+
+      console.log('');
+      console.log('💡 Run again: runBugAnalyzer()');
+
+      return { issues, warnings, info };
+    }
+
+    window.runBugAnalyzer = runBugAnalyzer;
+
+    // Auto-run nach 7 Sekunden (optional - kann mit window.skipBugAnalyzer = true verhindert werden)
+    setTimeout(() => {
+      if (!window.skipBugAnalyzer) {
+        console.log('🔍 Running Bug Analyzer (auto)...');
+        runBugAnalyzer();
+      }
+    }, 7000);
+
   </script>
 
   <!-- Image Modal for Reference Images -->
