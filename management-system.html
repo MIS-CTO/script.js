@@ -5442,6 +5442,41 @@
       font-weight: 600;
     }
 
+    /* ═══════════════════════════════════════════════════════════════════════
+       NEU: Artist Rang Badges - Friends, Crew, Fam, VIP
+       ═══════════════════════════════════════════════════════════════════════ */
+    .rank-badge.rank-friends,
+    .rank-badge.rank-Friends,
+    .rank-badge.Friends {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+
+    .rank-badge.rank-crew,
+    .rank-badge.rank-Crew,
+    .rank-badge.Crew {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      color: #1565c0;
+      border: 1px solid #90caf9;
+    }
+
+    .rank-badge.rank-fam,
+    .rank-badge.rank-Fam,
+    .rank-badge.Fam {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      color: #e65100;
+      border: 1px solid #ffcc80;
+    }
+
+    .rank-badge.rank-vip,
+    .rank-badge.rank-VIP,
+    .rank-badge.VIP {
+      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+      color: #c2185b;
+      border: 1px solid #f48fb1;
+    }
+
     /* Artist Type Badges */
     .type-badge {
       padding: 4px 10px;
@@ -12785,11 +12820,10 @@
       <!-- Rank Filter -->
       <select id="artistRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white; cursor:pointer; height:37px;">
         <option value="">Alle Ranks</option>
-        <option value="R1">R1</option>
-        <option value="R2">R2</option>
-        <option value="R3">R3</option>
-        <option value="R4">R4</option>
-        <option value="R5">R5</option>
+        <option value="Friends">Friends (70/30)</option>
+        <option value="Crew">Crew (75/25)</option>
+        <option value="Fam">Fam (80/20)</option>
+        <option value="VIP">VIP (80/20)</option>
       </select>
 
       <!-- Type Filter -->
@@ -13874,11 +13908,10 @@
           <label>Rank</label>
           <select id="addArtistRank" required>
             <option value="">-- Select Rank --</option>
-            <option value="R1">R1</option>
-            <option value="R2">R2</option>
-            <option value="R3">R3</option>
-            <option value="R4">R4</option>
-            <option value="R5">R5</option>
+            <option value="Friends">Friends (70/30)</option>
+            <option value="Crew">Crew (75/25)</option>
+            <option value="Fam">Fam (80/20)</option>
+            <option value="VIP">VIP (80/20)</option>
           </select>
         </div>
         <div class="form-group">
@@ -13929,11 +13962,10 @@
           <label>Rank</label>
           <select id="editArtistRank">
             <option value="">-- No Rank --</option>
-            <option value="R1">R1</option>
-            <option value="R2">R2</option>
-            <option value="R3">R3</option>
-            <option value="R4">R4</option>
-            <option value="R5">R5</option>
+            <option value="Friends">Friends (70/30)</option>
+            <option value="Crew">Crew (75/25)</option>
+            <option value="Fam">Fam (80/20)</option>
+            <option value="VIP">VIP (80/20)</option>
           </select>
         </div>
         <div class="form-group">
@@ -14612,150 +14644,96 @@
           "></textarea>
         </div>
 
-        <!-- SECTION 5: Booking Type Switcher -->
-        <div style="margin-bottom:24px;">
-          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:12px;">Buchungstyp</label>
-
-          <div id="guestSpotBookingTypeSwitcher" style="display:inline-flex; background:rgba(142, 142, 147, 0.12); border-radius:10px; padding:3px;">
-            <button type="button" class="booking-type-option active" data-type="internal" onclick="switchGuestSpotBookingType('internal')" style="
-              padding:10px 24px;
-              border:none;
-              background:white;
-              color:#1d1d1f;
-              font-weight:600;
-              font-size:14px;
-              cursor:pointer;
-              border-radius:8px;
-              transition:all 0.2s;
-              box-shadow:0 2px 4px rgba(0,0,0,0.08);
-            ">
-              Interne Buchung
-            </button>
-            <button type="button" class="booking-type-option" data-type="external" onclick="switchGuestSpotBookingType('external')" style="
-              padding:10px 24px;
-              border:none;
-              background:transparent;
-              color:#86868b;
-              font-weight:600;
-              font-size:14px;
-              cursor:pointer;
-              border-radius:8px;
-              transition:all 0.2s;
-            ">
-              Externe Artist Buchung
-            </button>
-          </div>
-          <input type="hidden" id="guestSpotBookingType" name="booking_type" value="internal">
-        </div>
-
-        <!-- SECTION 6A: Internal Booking Fields -->
-        <div id="guestSpotInternalFields" style="margin-bottom:24px; padding:20px; background:rgba(52, 199, 89, 0.08); border-radius:12px; border:1px solid rgba(52, 199, 89, 0.2);">
-          <div style="font-size:13px; font-weight:600; color:#34c759; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            Interne Buchung
+        <!-- SECTION 5: Unterkunft (NEU) -->
+        <div style="margin-bottom:24px; padding:20px; background:rgba(142,142,147,0.08); border-radius:12px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <input type="checkbox" id="guestSpotAccommodation" onchange="toggleAccommodationFields()" style="width:18px; height:18px; cursor:pointer;">
+            <label for="guestSpotAccommodation" style="font-size:14px; font-weight:500; cursor:pointer;">
+              🏠 Artist wohnt bei uns
+            </label>
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <div>
-              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Anzahlung (€)</label>
-              <input type="number" id="guestSpotInternalDeposit" step="0.01" min="0" placeholder="0.00" style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
-            </div>
-            <div>
-              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Vor Ort Anzahlung (€)</label>
-              <input type="number" id="guestSpotInternalOnsiteDeposit" step="0.01" min="0" placeholder="0.00" style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
-            </div>
-          </div>
-
-          <div style="margin-top:16px;">
-            <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Zahlungsnotiz</label>
-            <input type="text" id="guestSpotInternalPaymentNotes" placeholder="z.B. Bar bezahlt, Überweisung ausstehend..." style="
+          <div id="accommodationFields" style="display:none; margin-top:16px;">
+            <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Gesamt Miete (€)</label>
+            <input type="number" id="guestSpotAccommodationCost" step="0.01" min="0" placeholder="0.00" style="
               width:100%;
               padding:12px;
               border:1px solid rgba(0,0,0,0.1);
               border-radius:8px;
               font-size:14px;
             ">
+            <p style="font-size:12px; color:#86868b; margin-top:8px;">
+              💡 Die Miete wird separat erfasst und kann vom Artist-Anteil abgezogen werden
+            </p>
           </div>
         </div>
 
-        <!-- SECTION 6B: External Booking Fields -->
-        <div id="guestSpotExternalFields" style="display:none; margin-bottom:24px; padding:20px; background:rgba(0, 122, 255, 0.08); border-radius:12px; border:1px solid rgba(0, 122, 255, 0.2);">
-          <div style="font-size:13px; font-weight:600; color:#007aff; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-            Externe Artist Buchung
-          </div>
+        <!-- SECTION 6: Share Split (NEU) -->
+        <div style="margin-bottom:24px; padding:20px; background:rgba(0,122,255,0.08); border-radius:12px; border:1px solid rgba(0,122,255,0.2);">
+          <label style="font-size:12px; font-weight:600; color:#007aff; text-transform:uppercase; display:block; margin-bottom:16px;">
+            💰 Share Split
+          </label>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <div>
-              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Total Preis (€)</label>
-              <input type="number" id="guestSpotExternalTotalPrice" step="0.01" min="0" placeholder="0.00" style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
-            </div>
-            <div>
-              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Deposit (€)</label>
-              <input type="number" id="guestSpotExternalDeposit" step="0.01" min="0" placeholder="0.00" style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
-            </div>
-            <div>
-              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Studio Share (€)</label>
-              <input type="number" id="guestSpotExternalStudioShare" step="0.01" min="0" placeholder="0.00" style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
-            </div>
-            <div>
-              <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Artist Share (€)</label>
-              <input type="number" id="guestSpotExternalArtistShare" step="0.01" min="0" placeholder="0.00" style="
-                width:100%;
-                padding:12px;
-                border:1px solid rgba(0,0,0,0.1);
-                border-radius:8px;
-                font-size:14px;
-              ">
+          <!-- Artist Rang Info -->
+          <div id="artistRankInfo" style="display:none; margin-bottom:16px; padding:12px; background:white; border-radius:8px; border:1px solid rgba(0,0,0,0.05);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:13px; color:#86868b;">Artist Rang:</span>
+              <span id="selectedArtistRankBadge" class="rank-badge" style="font-size:12px; padding:4px 10px;"></span>
             </div>
           </div>
 
-          <div style="margin-top:16px;">
-            <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Zahlungsnotiz</label>
-            <input type="text" id="guestSpotExternalPaymentNotes" placeholder="z.B. PayPal erhalten, 50% ausstehend..." style="
-              width:100%;
-              padding:12px;
-              border:1px solid rgba(0,0,0,0.1);
-              border-radius:8px;
-              font-size:14px;
-            ">
+          <!-- Share Display -->
+          <div id="shareSplitDisplay" style="display:flex; justify-content:space-between; padding:20px; background:white; border-radius:8px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="text-align:center; flex:1;">
+              <div style="font-size:28px; font-weight:700; color:#1d1d1f;" id="studioSharePercent">25%</div>
+              <div style="font-size:12px; color:#86868b; margin-top:4px;">Studio Cut</div>
+            </div>
+            <div style="width:1px; background:rgba(0,0,0,0.1); margin:0 20px;"></div>
+            <div style="text-align:center; flex:1;">
+              <div style="font-size:28px; font-weight:700; color:#34c759;" id="artistSharePercent">75%</div>
+              <div style="font-size:12px; color:#86868b; margin-top:4px;">Artist Cut</div>
+            </div>
           </div>
+
+          <!-- Share Source Info -->
+          <p id="shareSourceInfo" style="font-size:12px; color:#007aff; margin-bottom:16px; text-align:center;">
+            ℹ️ Wähle einen Artist um den Share zu sehen
+          </p>
+
+          <!-- Custom Share Checkbox -->
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; padding:12px; background:rgba(255,149,0,0.08); border-radius:8px;">
+            <input type="checkbox" id="guestSpotCustomShare" onchange="toggleCustomShareSlider()" style="width:18px; height:18px; cursor:pointer;">
+            <label for="guestSpotCustomShare" style="font-size:14px; cursor:pointer;">
+              ⚙️ Custom Share Split aktivieren
+            </label>
+          </div>
+
+          <!-- Slider Container (ausgegraut bis aktiviert) -->
+          <div id="customShareSliderContainer" style="opacity:0.4; pointer-events:none; transition:opacity 0.3s;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#86868b; margin-bottom:8px;">
+              <span>Studio 100%</span>
+              <span>50 / 50</span>
+              <span>Artist 100%</span>
+            </div>
+            <input type="range" id="shareSlider" min="0" max="100" value="75"
+              style="width:100%; cursor:pointer; height:8px;"
+              oninput="updateShareFromSlider(this.value)">
+            <div style="display:flex; justify-content:space-between; margin-top:12px;">
+              <div style="text-align:center; padding:8px 16px; background:rgba(0,0,0,0.05); border-radius:6px;">
+                <div style="font-size:11px; color:#86868b;">Studio</div>
+                <div style="font-size:16px; font-weight:600;" id="sliderStudioValue">25%</div>
+              </div>
+              <div style="text-align:center; padding:8px 16px; background:rgba(52,199,89,0.1); border-radius:6px;">
+                <div style="font-size:11px; color:#86868b;">Artist</div>
+                <div style="font-size:16px; font-weight:600; color:#34c759;" id="sliderArtistValue">75%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden Inputs für Form Submit -->
+          <input type="hidden" id="guestSpotShareArtist" name="share_percentage_artist" value="">
+          <input type="hidden" id="guestSpotShareStudio" name="share_percentage_studio" value="">
+          <input type="hidden" id="guestSpotIsCustomShare" name="custom_share" value="false">
         </div>
 
         <!-- Modal Actions -->
@@ -18394,7 +18372,7 @@
           aVal = (a.name || '').toLowerCase();
           bVal = (b.name || '').toLowerCase();
         } else if (field === 'rank') {
-          const rankOrder = { 'R1': 1, 'R2': 2, 'R3': 3, 'R4': 4, 'R5': 5 };
+          const rankOrder = { 'Friends': 1, 'Crew': 2, 'Fam': 3, 'VIP': 4 };
           aVal = rankOrder[a.rank] || 999;
           bVal = rankOrder[b.rank] || 999;
         } else if (field === 'location') {
@@ -46391,6 +46369,157 @@
     window.openGuestSpotDetailFromCache = openGuestSpotDetailFromCache;
 
     // ============================================
+    // SHARE SPLIT SYSTEM - Rang zu Share Mapping
+    // ============================================
+
+    const RANK_SHARE_MAP = {
+      'Friends': { artist: 70, studio: 30 },
+      'Crew':    { artist: 75, studio: 25 },
+      'Fam':     { artist: 80, studio: 20 },
+      'VIP':     { artist: 80, studio: 20 },
+      // Fallback für alte Ränge (Übergangszeit)
+      'R1':      { artist: 70, studio: 30 },
+      'R2':      { artist: 75, studio: 25 },
+      'R3':      { artist: 80, studio: 20 },
+      'R4':      { artist: 80, studio: 20 },
+      'R5':      { artist: 80, studio: 20 },
+      'default': { artist: 75, studio: 25 }
+    };
+
+    // Unterkunft-Felder Toggle
+    function toggleAccommodationFields() {
+      const checkbox = document.getElementById('guestSpotAccommodation');
+      const fields = document.getElementById('accommodationFields');
+      if (checkbox && fields) {
+        fields.style.display = checkbox.checked ? 'block' : 'none';
+        if (!checkbox.checked) {
+          const costInput = document.getElementById('guestSpotAccommodationCost');
+          if (costInput) costInput.value = '';
+        }
+      }
+    }
+
+    // Custom Share Slider Toggle
+    function toggleCustomShareSlider() {
+      const checkbox = document.getElementById('guestSpotCustomShare');
+      const sliderContainer = document.getElementById('customShareSliderContainer');
+      const isCustomInput = document.getElementById('guestSpotIsCustomShare');
+
+      if (!checkbox || !sliderContainer) return;
+
+      if (checkbox.checked) {
+        sliderContainer.style.opacity = '1';
+        sliderContainer.style.pointerEvents = 'auto';
+        if (isCustomInput) isCustomInput.value = 'true';
+
+        // Info-Text aktualisieren
+        const sourceInfo = document.getElementById('shareSourceInfo');
+        if (sourceInfo) {
+          sourceInfo.innerHTML = '<span style="color:#ff9500;">⚙️ Custom Share Split aktiv</span>';
+        }
+      } else {
+        sliderContainer.style.opacity = '0.4';
+        sliderContainer.style.pointerEvents = 'none';
+        if (isCustomInput) isCustomInput.value = 'false';
+
+        // Zurück zu Rang-basierten Werten
+        if (selectedGuestSpotArtist && selectedGuestSpotArtist.rank) {
+          updateShareDisplayFromRank(selectedGuestSpotArtist.rank);
+        }
+      }
+    }
+
+    // Slider-Wert Update
+    function updateShareFromSlider(value) {
+      const artistPercent = parseInt(value);
+      const studioPercent = 100 - artistPercent;
+
+      // Display aktualisieren
+      const studioDisplay = document.getElementById('studioSharePercent');
+      const artistDisplay = document.getElementById('artistSharePercent');
+      const sliderStudio = document.getElementById('sliderStudioValue');
+      const sliderArtist = document.getElementById('sliderArtistValue');
+
+      if (studioDisplay) studioDisplay.textContent = studioPercent + '%';
+      if (artistDisplay) artistDisplay.textContent = artistPercent + '%';
+      if (sliderStudio) sliderStudio.textContent = studioPercent + '%';
+      if (sliderArtist) sliderArtist.textContent = artistPercent + '%';
+
+      // Hidden Inputs setzen
+      const artistInput = document.getElementById('guestSpotShareArtist');
+      const studioInput = document.getElementById('guestSpotShareStudio');
+      if (artistInput) artistInput.value = artistPercent;
+      if (studioInput) studioInput.value = studioPercent;
+    }
+
+    // Share-Anzeige basierend auf Rang aktualisieren
+    function updateShareDisplayFromRank(rank) {
+      const shares = RANK_SHARE_MAP[rank] || RANK_SHARE_MAP['default'];
+
+      // Display aktualisieren
+      const studioDisplay = document.getElementById('studioSharePercent');
+      const artistDisplay = document.getElementById('artistSharePercent');
+      const sliderStudio = document.getElementById('sliderStudioValue');
+      const sliderArtist = document.getElementById('sliderArtistValue');
+      const slider = document.getElementById('shareSlider');
+      const sourceInfo = document.getElementById('shareSourceInfo');
+      const rankInfo = document.getElementById('artistRankInfo');
+      const rankBadge = document.getElementById('selectedArtistRankBadge');
+
+      if (studioDisplay) studioDisplay.textContent = shares.studio + '%';
+      if (artistDisplay) artistDisplay.textContent = shares.artist + '%';
+      if (sliderStudio) sliderStudio.textContent = shares.studio + '%';
+      if (sliderArtist) sliderArtist.textContent = shares.artist + '%';
+      if (slider) slider.value = shares.artist;
+
+      // Hidden Inputs setzen
+      const artistInput = document.getElementById('guestSpotShareArtist');
+      const studioInput = document.getElementById('guestSpotShareStudio');
+      if (artistInput) artistInput.value = shares.artist;
+      if (studioInput) studioInput.value = shares.studio;
+
+      // Rang-Info anzeigen
+      if (rankInfo) rankInfo.style.display = 'block';
+      if (rankBadge) {
+        rankBadge.textContent = rank;
+        rankBadge.className = 'rank-badge rank-' + rank.toLowerCase();
+      }
+
+      // Source Info aktualisieren
+      if (sourceInfo) {
+        const customCheckbox = document.getElementById('guestSpotCustomShare');
+        if (!customCheckbox || !customCheckbox.checked) {
+          sourceInfo.innerHTML = `✅ Basierend auf Artist Rang: <strong>${rank}</strong> (${shares.artist}/${shares.studio})`;
+        }
+      }
+    }
+
+    // Reset Share Display (wenn kein Artist ausgewählt)
+    function resetShareDisplay() {
+      const studioDisplay = document.getElementById('studioSharePercent');
+      const artistDisplay = document.getElementById('artistSharePercent');
+      const sourceInfo = document.getElementById('shareSourceInfo');
+      const rankInfo = document.getElementById('artistRankInfo');
+      const artistInput = document.getElementById('guestSpotShareArtist');
+      const studioInput = document.getElementById('guestSpotShareStudio');
+
+      if (studioDisplay) studioDisplay.textContent = '-%';
+      if (artistDisplay) artistDisplay.textContent = '-%';
+      if (sourceInfo) sourceInfo.innerHTML = 'ℹ️ Wähle einen Artist um den Share zu sehen';
+      if (rankInfo) rankInfo.style.display = 'none';
+      if (artistInput) artistInput.value = '';
+      if (studioInput) studioInput.value = '';
+    }
+
+    // Window Exports für neue Funktionen
+    window.toggleAccommodationFields = toggleAccommodationFields;
+    window.toggleCustomShareSlider = toggleCustomShareSlider;
+    window.updateShareFromSlider = updateShareFromSlider;
+    window.updateShareDisplayFromRank = updateShareDisplayFromRank;
+    window.resetShareDisplay = resetShareDisplay;
+    window.RANK_SHARE_MAP = RANK_SHARE_MAP;
+
+    // ============================================
     // MODAL OPEN/CLOSE FUNCTIONS
     // ============================================
 
@@ -46404,8 +46533,23 @@
       // Reset selected artist
       clearSelectedGuestSpotArtist();
 
-      // Reset booking type to internal
-      switchGuestSpotBookingType('internal');
+      // NEU: Share-Felder zurücksetzen
+      resetShareDisplay();
+      const customShareCheckbox = document.getElementById('guestSpotCustomShare');
+      if (customShareCheckbox) customShareCheckbox.checked = false;
+      const sliderContainer = document.getElementById('customShareSliderContainer');
+      if (sliderContainer) {
+        sliderContainer.style.opacity = '0.4';
+        sliderContainer.style.pointerEvents = 'none';
+      }
+      const isCustomInput = document.getElementById('guestSpotIsCustomShare');
+      if (isCustomInput) isCustomInput.value = 'false';
+
+      // NEU: Unterkunft-Felder zurücksetzen
+      const accommodationCheckbox = document.getElementById('guestSpotAccommodation');
+      if (accommodationCheckbox) accommodationCheckbox.checked = false;
+      const accommodationFields = document.getElementById('accommodationFields');
+      if (accommodationFields) accommodationFields.style.display = 'none';
 
       // Reset date picker
       if (typeof resetGuestSpotDatePicker === 'function') {
@@ -46621,39 +46765,10 @@
     // BOOKING TYPE SWITCHER
     // ============================================
 
+    // DEPRECATED: Booking Type wurde durch Share System ersetzt
     function switchGuestSpotBookingType(type) {
-      console.log('🔄 Switching booking type to:', type);
-
-      currentGuestSpotBookingType = type;
-      document.getElementById('guestSpotBookingType').value = type;
-
-      // Update switcher buttons
-      const buttons = document.querySelectorAll('#guestSpotBookingTypeSwitcher .booking-type-option');
-      buttons.forEach(btn => {
-        if (btn.dataset.type === type) {
-          btn.classList.add('active');
-          btn.style.background = 'white';
-          btn.style.color = '#1d1d1f';
-          btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)';
-        } else {
-          btn.classList.remove('active');
-          btn.style.background = 'transparent';
-          btn.style.color = '#86868b';
-          btn.style.boxShadow = 'none';
-        }
-      });
-
-      // Show/Hide fields
-      const internalFields = document.getElementById('guestSpotInternalFields');
-      const externalFields = document.getElementById('guestSpotExternalFields');
-
-      if (type === 'internal') {
-        internalFields.style.display = 'block';
-        externalFields.style.display = 'none';
-      } else {
-        internalFields.style.display = 'none';
-        externalFields.style.display = 'block';
-      }
+      console.log('switchGuestSpotBookingType is deprecated - Share System is now used');
+      return;
     }
 
     // ============================================
@@ -46709,7 +46824,7 @@
         // Search by name OR instagram (case insensitive)
         const { data, error } = await supabase
           .from('artists')
-          .select('id, name, instagram, profile_picture_url, is_guest')
+          .select('id, name, instagram, profile_picture_url, is_guest, rank')
           .or(`name.ilike.%${query}%,instagram.ilike.%${query}%`)
           .order('name')
           .limit(10);
@@ -46725,7 +46840,7 @@
         resultsContainer.innerHTML = data.map(artist => `
           <div
             class="artist-search-result"
-            onclick="selectGuestSpotArtist('${artist.id}', '${(artist.name || '').replace(/'/g, "\\'")}', '${artist.instagram || ''}', '${artist.profile_picture_url || ''}')"
+            onclick="selectGuestSpotArtist('${artist.id}', '${(artist.name || '').replace(/'/g, "\\'")}', '${artist.instagram || ''}', '${artist.profile_picture_url || ''}', '${artist.rank || ''}')"
             style="
               padding:10px 12px;
               display:flex;
@@ -46762,10 +46877,10 @@
       }
     }
 
-    function selectGuestSpotArtist(id, name, instagram, profilePicture) {
-      console.log('✅ Artist selected:', name);
+    function selectGuestSpotArtist(id, name, instagram, profilePicture, rank) {
+      console.log('✅ Artist selected:', name, 'Rank:', rank);
 
-      selectedGuestSpotArtist = { id, name, instagram, profilePicture };
+      selectedGuestSpotArtist = { id, name, instagram, profilePicture, rank };
 
       // Update hidden input
       document.getElementById('guestSpotArtistId').value = id;
@@ -46790,6 +46905,14 @@
       // Clear search
       document.getElementById('guestSpotArtistSearch').value = '';
       document.getElementById('guestSpotArtistResults').style.display = 'none';
+
+      // NEU: Share-Anzeige basierend auf Artist-Rang aktualisieren
+      if (rank) {
+        updateShareDisplayFromRank(rank);
+      } else {
+        // Fallback wenn kein Rang: Default verwenden
+        updateShareDisplayFromRank('default');
+      }
     }
 
     function clearSelectedGuestSpotArtist() {
@@ -46797,6 +46920,9 @@
       document.getElementById('guestSpotArtistId').value = '';
       document.getElementById('guestSpotSelectedArtist').style.display = 'none';
       document.getElementById('guestSpotArtistSearch').value = '';
+
+      // NEU: Share-Anzeige zurücksetzen
+      resetShareDisplay();
     }
 
     // Open Add Artist Modal from Guest Spot Modal
@@ -46907,7 +47033,6 @@
       const timeTo = document.getElementById('guestSpotTimeTo').value;
       const locationId = document.getElementById('guestSpotLocation').value;
       const notes = document.getElementById('guestSpotNotes').value;
-      const bookingType = document.getElementById('guestSpotBookingType').value;
 
       // Validate required fields
       if (!dateFrom || !dateTo || !locationId) {
@@ -46930,24 +47055,19 @@
         time_from: timeFrom || '10:00',
         time_to: timeTo || '18:00',
         notes: notes || null,
-        booking_type: bookingType,
         status: new Date(dateFrom) <= new Date() ? 'active' : 'upcoming',
         is_paid: false,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        // NEU: Share-Felder
+        share_percentage_artist: parseInt(document.getElementById('guestSpotShareArtist').value) || null,
+        share_percentage_studio: parseInt(document.getElementById('guestSpotShareStudio').value) || null,
+        custom_share: document.getElementById('guestSpotIsCustomShare').value === 'true',
+        // NEU: Unterkunft-Felder
+        accommodation_provided: document.getElementById('guestSpotAccommodation')?.checked || false,
+        accommodation_cost: document.getElementById('guestSpotAccommodation')?.checked
+          ? (parseFloat(document.getElementById('guestSpotAccommodationCost').value) || null)
+          : null
       };
-
-      // Add payment fields based on booking type
-      if (bookingType === 'internal') {
-        slotData.deposit_amount = parseFloat(document.getElementById('guestSpotInternalDeposit').value) || 0;
-        slotData.onsite_deposit = parseFloat(document.getElementById('guestSpotInternalOnsiteDeposit').value) || 0;
-        slotData.payment_notes = document.getElementById('guestSpotInternalPaymentNotes').value || null;
-      } else {
-        slotData.total_price = parseFloat(document.getElementById('guestSpotExternalTotalPrice').value) || 0;
-        slotData.deposit_amount = parseFloat(document.getElementById('guestSpotExternalDeposit').value) || 0;
-        slotData.studio_share = parseFloat(document.getElementById('guestSpotExternalStudioShare').value) || 0;
-        slotData.artist_share = parseFloat(document.getElementById('guestSpotExternalArtistShare').value) || 0;
-        slotData.payment_notes = document.getElementById('guestSpotExternalPaymentNotes').value || null;
-      }
 
       console.log('📤 Slot data:', slotData);
 
