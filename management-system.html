@@ -14644,7 +14644,22 @@
           "></textarea>
         </div>
 
-        <!-- SECTION 5: Unterkunft (NEU) -->
+        <!-- SECTION 5: Self Booking -->
+        <div style="margin-bottom:24px; padding:16px 20px; background:rgba(255,149,0,0.08); border-radius:12px; border:1px solid rgba(255,149,0,0.2);">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="checkbox" id="guestSpotSelfBooking" onchange="toggleSelfBookingMode()" style="width:20px; height:20px; cursor:pointer;">
+            <div>
+              <label for="guestSpotSelfBooking" style="font-size:14px; font-weight:600; cursor:pointer; color:#1d1d1f;">
+                🎨 Self Booking
+              </label>
+              <p style="font-size:12px; color:#86868b; margin:4px 0 0 0;">
+                Artist bucht und verwaltet seine Termine selbst
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 6: Unterkunft -->
         <div style="margin-bottom:24px; padding:20px; background:rgba(142,142,147,0.08); border-radius:12px;">
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
             <input type="checkbox" id="guestSpotAccommodation" onchange="toggleAccommodationFields()" style="width:18px; height:18px; cursor:pointer;">
@@ -14728,6 +14743,18 @@
                 <div style="font-size:16px; font-weight:600; color:#34c759;" id="sliderArtistValue">75%</div>
               </div>
             </div>
+          </div>
+
+          <!-- Zahlungsnotiz -->
+          <div style="margin-top:16px;">
+            <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">📝 Zahlungsnotiz (optional)</label>
+            <input type="text" id="guestSpotPaymentNotes" placeholder="z.B. Bar bezahlt, PayPal erhalten, Überweisung ausstehend..." style="
+              width:100%;
+              padding:12px;
+              border:1px solid rgba(0,0,0,0.1);
+              border-radius:8px;
+              font-size:14px;
+            ">
           </div>
 
           <!-- Hidden Inputs für Form Submit -->
@@ -14863,6 +14890,40 @@
             Storniert
           </div>
           <div id="guestSpotDetailCancelReason" style="font-size:14px;"></div>
+        </div>
+
+        <!-- Verknüpfte Appointments Section -->
+        <div id="guestSpotAppointmentsSection" style="margin-top:24px; padding-top:24px; border-top:1px solid rgba(0,0,0,0.1);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="margin:0; font-size:14px; font-weight:600; color:#1d1d1f;">
+              📅 Verknüpfte Appointments
+            </h4>
+            <div id="addAppointmentBtnContainer" style="display:none;">
+              <button type="button" onclick="openAddGuestSpotAppointmentModal()" style="
+                padding:8px 16px;
+                border:none;
+                border-radius:6px;
+                background:#007aff;
+                color:white;
+                font-size:13px;
+                font-weight:500;
+                cursor:pointer;
+                display:flex;
+                align-items:center;
+                gap:6px;
+              ">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Add Appointment
+              </button>
+            </div>
+          </div>
+          <div id="guestSpotAppointmentsList" style="max-height:300px; overflow-y:auto;">
+            <div style="text-align:center; padding:20px; color:#86868b;">
+              <p>Lade Appointments...</p>
+            </div>
+          </div>
         </div>
 
         <!-- Action Buttons -->
@@ -19542,8 +19603,8 @@
       // PINNED EVENTS - AUTO-REFRESH (alle 60 Sekunden)
       // ============================================
       function startPinnedEventsAutoRefresh() {
-        // Stoppe existierenden Interval falls vorhanden
-        if (pinnedEventsInterval) {
+        // Safe check - variable might not be initialized yet
+        if (typeof pinnedEventsInterval !== 'undefined' && pinnedEventsInterval) {
           clearInterval(pinnedEventsInterval);
         }
 
@@ -46519,6 +46580,19 @@
     window.resetShareDisplay = resetShareDisplay;
     window.RANK_SHARE_MAP = RANK_SHARE_MAP;
 
+    // Self Booking Mode Toggle
+    function toggleSelfBookingMode() {
+      const checkbox = document.getElementById('guestSpotSelfBooking');
+      const isSelfBooking = checkbox?.checked || false;
+
+      console.log('Self Booking Mode:', isSelfBooking ? 'ON' : 'OFF');
+
+      // Optional: Visuelle Änderungen basierend auf Self Booking
+      // z.B. andere Beschriftungen oder Hinweise
+    }
+
+    window.toggleSelfBookingMode = toggleSelfBookingMode;
+
     // ============================================
     // MODAL OPEN/CLOSE FUNCTIONS
     // ============================================
@@ -46726,6 +46800,9 @@
       if (modal) {
         modal.classList.add('active');
       }
+
+      // NEU: Lade verknüpfte Appointments
+      loadGuestSpotAppointments(slotData.id, slotData.share_percentage_artist, slotData.share_percentage_studio, slotData.self_booking || slotData.booking_type === 'external');
     }
 
     function closeGuestSpotDetailModal() {
@@ -46868,6 +46945,7 @@
               background:${artist.is_guest ? 'rgba(0,122,255,0.1)' : 'rgba(52,199,89,0.1)'};
               color:${artist.is_guest ? '#007aff' : '#34c759'};
             ">${artist.is_guest ? 'Guest' : 'Resident'}</span>
+            ${artist.rank ? `<span class="rank-badge rank-${(artist.rank || '').toLowerCase()}" style="padding:2px 6px; border-radius:4px; font-size:10px; margin-left:4px;">${artist.rank}</span>` : ''}
           </div>
         `).join('');
 
@@ -47066,14 +47144,21 @@
         accommodation_provided: document.getElementById('guestSpotAccommodation')?.checked || false,
         accommodation_cost: document.getElementById('guestSpotAccommodation')?.checked
           ? (parseFloat(document.getElementById('guestSpotAccommodationCost').value) || null)
-          : null
+          : null,
+        // Self Booking (ersetzt booking_type internal/external)
+        self_booking: document.getElementById('guestSpotSelfBooking')?.checked || false,
+        booking_type: document.getElementById('guestSpotSelfBooking')?.checked ? 'external' : 'internal',
+        // Zahlungsnotiz
+        payment_notes: document.getElementById('guestSpotPaymentNotes')?.value || null
       };
 
       console.log('📤 Slot data:', slotData);
 
       try {
-        // ========== OVERLAP VALIDIERUNG ==========
-        // Prüfe ob Artist bereits Guest Spot im Zeitraum hat
+        // ========== OVERLAP VALIDIERUNG (DEAKTIVIERT - RPC Funktion fehlt) ==========
+        // TODO: RPC check_guest_spot_overlap in Supabase erstellen
+        // Dann diesen Block wieder aktivieren
+        /*
         const { data: overlapData, error: overlapError } = await supabase
           .rpc('check_guest_spot_overlap', {
             p_artist_id: selectedGuestSpotArtist.id,
@@ -47096,6 +47181,7 @@
           );
           return;
         }
+        */
         // ========== ENDE OVERLAP VALIDIERUNG ==========
 
         // Insert into upcoming_slots
@@ -47372,15 +47458,18 @@
       console.log('🔄 Reactivating Guest Spot:', slotIds);
 
       try {
+        // Direkte UPDATE Query statt RPC (RPC reactivate_guest_spot existiert nicht)
+        const today = new Date().toISOString().split('T')[0];
+        const firstSlot = currentGuestSpotDetailData;
+        const newStatus = new Date(firstSlot.date_from) <= new Date(today) ? 'active' : 'upcoming';
+
         const { data, error } = await supabase
-          .rpc('reactivate_guest_spot', { p_slot_ids: slotIds });
+          .from('upcoming_slots')
+          .update({ status: newStatus })
+          .in('id', slotIds)
+          .select();
 
         if (error) throw error;
-
-        if (data && data[0] && !data[0].success) {
-          showNotification(data[0].message || 'Fehler beim Reaktivieren', 'error');
-          return;
-        }
 
         showNotification('Guest Spot reaktiviert!', 'success');
         closeGuestSpotDetailModal();
@@ -48005,6 +48094,328 @@
     window.handleGuestSpotEditSubmit = handleGuestSpotEditSubmit;
 
     // ============================================
+    // GUEST SPOT APPOINTMENTS SYSTEM
+    // ============================================
+
+    // Globale Variable für aktuellen Guest Spot
+    let currentGuestSpotForAppointment = null;
+
+    // Appointments für einen Guest Spot laden
+    async function loadGuestSpotAppointments(guestSpotId, shareArtist, shareStudio, isSelfBooking) {
+      const listContainer = document.getElementById('guestSpotAppointmentsList');
+      const addBtnContainer = document.getElementById('addAppointmentBtnContainer');
+
+      if (!listContainer) return;
+
+      // Add Appointment Button nur bei Self Booking anzeigen
+      if (addBtnContainer) {
+        addBtnContainer.style.display = isSelfBooking ? 'block' : 'none';
+      }
+
+      // Speichere Guest Spot Info für Add Appointment
+      currentGuestSpotForAppointment = {
+        id: guestSpotId,
+        shareArtist: shareArtist || 75,
+        shareStudio: shareStudio || 25
+      };
+
+      try {
+        // Lade Appointments die zu diesem Guest Spot gehören
+        const { data: appointments, error } = await supabase
+          .from('appointments')
+          .select(`
+            id, start, end, price, deposit_amount, artist_share_amount, studio_share_amount, status, notes,
+            customer:customers(id, first_name, last_name, email, phone)
+          `)
+          .eq('guest_spot_id', guestSpotId)
+          .order('start', { ascending: true });
+
+        if (error) {
+          console.error('Error loading guest spot appointments:', error);
+          listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#ff3b30;">Fehler beim Laden</div>';
+          return;
+        }
+
+        if (!appointments || appointments.length === 0) {
+          listContainer.innerHTML = `
+            <div style="padding:20px; text-align:center; color:#86868b;">
+              <p style="margin:0;">Keine Appointments verknüpft</p>
+              <p style="margin:8px 0 0 0; font-size:12px;">Appointments werden automatisch gematched wenn Artist + Datum übereinstimmen</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Render Appointments
+        listContainer.innerHTML = appointments.map(apt => {
+          const customerName = apt.customer
+            ? `${apt.customer.first_name || ''} ${apt.customer.last_name || ''}`.trim() || 'Unknown'
+            : 'Unknown Customer';
+
+          const aptDate = apt.start ? new Date(apt.start) : null;
+          const dateStr = aptDate ? aptDate.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
+          const timeStr = aptDate ? aptDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '';
+
+          const price = parseFloat(apt.price) || 0;
+          const deposit = parseFloat(apt.deposit_amount) || 0;
+          const artistAmount = apt.artist_share_amount || (price * (shareArtist || 75) / 100);
+          const studioAmount = apt.studio_share_amount || (price * (shareStudio || 25) / 100);
+
+          const statusColors = {
+            'scheduled': { bg: '#007aff', text: 'Geplant' },
+            'completed': { bg: '#34c759', text: 'Abgeschlossen' },
+            'canceled': { bg: '#ff3b30', text: 'Storniert' },
+            'no_show': { bg: '#ff9500', text: 'No Show' }
+          };
+          const status = statusColors[apt.status] || { bg: '#86868b', text: apt.status || 'Unbekannt' };
+
+          return `
+            <div class="guest-spot-appointment-card" style="
+              padding:16px;
+              background:white;
+              border-radius:10px;
+              border:1px solid rgba(0,0,0,0.08);
+              margin-bottom:12px;
+              box-shadow:0 1px 3px rgba(0,0,0,0.04);
+            ">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                <div>
+                  <div style="font-weight:600; font-size:15px; color:#1d1d1f;">${customerName}</div>
+                  <div style="font-size:13px; color:#86868b; margin-top:2px;">📅 ${dateStr} ${timeStr ? '• 🕐 ' + timeStr : ''}</div>
+                </div>
+                <span style="
+                  padding:4px 10px;
+                  border-radius:6px;
+                  font-size:11px;
+                  font-weight:600;
+                  background:${status.bg};
+                  color:white;
+                ">${status.text}</span>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:12px; background:rgba(0,0,0,0.02); border-radius:8px;">
+                <div>
+                  <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Gesamtpreis</div>
+                  <div style="font-size:16px; font-weight:600; color:#1d1d1f;">€${price.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Deposit</div>
+                  <div style="font-size:16px; font-weight:600; color:#1d1d1f;">€${deposit.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Studio (${shareStudio || 25}%)</div>
+                  <div style="font-size:14px; font-weight:500; color:#1d1d1f;">€${studioAmount.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Artist (${shareArtist || 75}%)</div>
+                  <div style="font-size:14px; font-weight:500; color:#34c759;">€${(artistAmount - deposit).toFixed(2)}</div>
+                  ${deposit > 0 ? `<div style="font-size:10px; color:#86868b;">(€${artistAmount.toFixed(2)} - €${deposit.toFixed(2)} Deposit)</div>` : ''}
+                </div>
+              </div>
+
+              ${apt.notes ? `<div style="margin-top:12px; padding:8px 12px; background:rgba(255,204,0,0.1); border-radius:6px; font-size:12px; color:#86868b;">📝 ${apt.notes}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error in loadGuestSpotAppointments:', err);
+        listContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#ff3b30;">Fehler beim Laden</div>';
+      }
+    }
+
+    // Window Export
+    window.loadGuestSpotAppointments = loadGuestSpotAppointments;
+
+    // Add Appointment Modal für Self-Booking Guest Spots
+    function openAddGuestSpotAppointmentModal() {
+      if (!currentGuestSpotForAppointment || !currentGuestSpotDetailData) {
+        showNotification('Kein Guest Spot ausgewählt', 'error');
+        return;
+      }
+
+      const gs = currentGuestSpotDetailData;
+      const dateFrom = gs.date_from;
+      const dateTo = gs.date_to;
+
+      // Erstelle Mini-Modal für Appointment
+      const existingModal = document.getElementById('addGuestSpotAppointmentModal');
+      if (existingModal) existingModal.remove();
+
+      const modalHtml = `
+        <div class="modal-backdrop" id="addGuestSpotAppointmentModal" style="display:flex; z-index:10001;">
+          <div class="modal" style="max-width:500px; max-height:90vh; overflow-y:auto;">
+            <h3 style="margin:0 0 20px 0; font-size:18px; font-weight:600;">
+              📅 Appointment hinzufügen
+            </h3>
+
+            <p style="font-size:13px; color:#86868b; margin-bottom:20px;">
+              Zeitraum: ${new Date(dateFrom).toLocaleDateString('de-DE')} - ${new Date(dateTo).toLocaleDateString('de-DE')}
+            </p>
+
+            <div style="margin-bottom:16px;">
+              <label style="font-size:13px; font-weight:500; display:block; margin-bottom:6px;">Datum *</label>
+              <input type="date" id="gsAptDate" min="${dateFrom}" max="${dateTo}" required style="
+                width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;
+              ">
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+              <div>
+                <label style="font-size:13px; font-weight:500; display:block; margin-bottom:6px;">Start Zeit *</label>
+                <input type="time" id="gsAptTimeStart" value="10:00" required style="
+                  width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;
+                ">
+              </div>
+              <div>
+                <label style="font-size:13px; font-weight:500; display:block; margin-bottom:6px;">End Zeit *</label>
+                <input type="time" id="gsAptTimeEnd" value="18:00" required style="
+                  width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;
+                ">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+              <div>
+                <label style="font-size:13px; font-weight:500; display:block; margin-bottom:6px;">Gesamtpreis (€) *</label>
+                <input type="number" id="gsAptPrice" step="0.01" min="0" placeholder="0.00" required style="
+                  width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;
+                " oninput="calculateGsAptShares()">
+              </div>
+              <div>
+                <label style="font-size:13px; font-weight:500; display:block; margin-bottom:6px;">Deposit (€)</label>
+                <input type="number" id="gsAptDeposit" step="0.01" min="0" placeholder="0.00" style="
+                  width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;
+                " oninput="calculateGsAptShares()">
+                <p style="font-size:11px; color:#86868b; margin-top:4px;">Wird vom Artist Share abgezogen</p>
+              </div>
+            </div>
+
+            <!-- Share Berechnung Anzeige -->
+            <div style="padding:16px; background:rgba(0,0,0,0.03); border-radius:8px; margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:13px; color:#86868b;">Studio Share (${currentGuestSpotForAppointment.shareStudio}%)</span>
+                <span id="gsAptStudioShare" style="font-size:14px; font-weight:600;">€0.00</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:13px; color:#86868b;">Artist Share (${currentGuestSpotForAppointment.shareArtist}%) - Deposit</span>
+                <span id="gsAptArtistShare" style="font-size:14px; font-weight:600; color:#34c759;">€0.00</span>
+              </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <label style="font-size:13px; font-weight:500; display:block; margin-bottom:6px;">Notizen (optional)</label>
+              <textarea id="gsAptNotes" rows="2" placeholder="Zusätzliche Infos..." style="
+                width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; resize:vertical;
+              "></textarea>
+            </div>
+
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+              <button type="button" onclick="closeAddGuestSpotAppointmentModal()" style="
+                padding:12px 24px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; color:#1d1d1f; font-size:14px; cursor:pointer;
+              ">Abbrechen</button>
+              <button type="button" onclick="saveGuestSpotAppointment()" style="
+                padding:12px 24px; border:none; border-radius:8px; background:#007aff; color:white; font-size:14px; font-weight:500; cursor:pointer;
+              ">Speichern</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+      // Setze Default-Datum auf erstes Datum des Guest Spots
+      document.getElementById('gsAptDate').value = dateFrom;
+    }
+
+    function closeAddGuestSpotAppointmentModal() {
+      const modal = document.getElementById('addGuestSpotAppointmentModal');
+      if (modal) modal.remove();
+    }
+
+    function calculateGsAptShares() {
+      const price = parseFloat(document.getElementById('gsAptPrice')?.value) || 0;
+      const deposit = parseFloat(document.getElementById('gsAptDeposit')?.value) || 0;
+
+      const shareArtist = currentGuestSpotForAppointment?.shareArtist || 75;
+      const shareStudio = currentGuestSpotForAppointment?.shareStudio || 25;
+
+      const studioAmount = price * shareStudio / 100;
+      const artistAmount = (price * shareArtist / 100) - deposit;
+
+      const studioEl = document.getElementById('gsAptStudioShare');
+      const artistEl = document.getElementById('gsAptArtistShare');
+
+      if (studioEl) studioEl.textContent = `€${studioAmount.toFixed(2)}`;
+      if (artistEl) artistEl.textContent = `€${artistAmount.toFixed(2)}`;
+    }
+
+    async function saveGuestSpotAppointment() {
+      if (!currentGuestSpotForAppointment || !currentGuestSpotDetailData) {
+        showNotification('Fehler: Kein Guest Spot ausgewählt', 'error');
+        return;
+      }
+
+      const gs = currentGuestSpotDetailData;
+      const dateVal = document.getElementById('gsAptDate')?.value;
+      const timeStart = document.getElementById('gsAptTimeStart')?.value;
+      const timeEnd = document.getElementById('gsAptTimeEnd')?.value;
+      const price = parseFloat(document.getElementById('gsAptPrice')?.value) || 0;
+      const deposit = parseFloat(document.getElementById('gsAptDeposit')?.value) || 0;
+      const notes = document.getElementById('gsAptNotes')?.value || null;
+
+      if (!dateVal || !timeStart || !timeEnd || price <= 0) {
+        showNotification('Bitte fülle alle Pflichtfelder aus', 'error');
+        return;
+      }
+
+      const shareArtist = currentGuestSpotForAppointment.shareArtist;
+      const shareStudio = currentGuestSpotForAppointment.shareStudio;
+
+      const appointmentData = {
+        guest_spot_id: gs.id,
+        artist_id: gs.artist_id,
+        location_id: gs.location_id,
+        start: `${dateVal}T${timeStart}:00`,
+        end: `${dateVal}T${timeEnd}:00`,
+        price: price,
+        deposit_amount: deposit,
+        artist_share_amount: (price * shareArtist / 100) - deposit,
+        studio_share_amount: price * shareStudio / 100,
+        status: 'scheduled',
+        notes: notes,
+        booking_type: 'guest_spot',
+        created_at: new Date().toISOString()
+      };
+
+      try {
+        const { data, error } = await supabase
+          .from('appointments')
+          .insert([appointmentData])
+          .select();
+
+        if (error) throw error;
+
+        console.log('✅ Guest Spot Appointment created:', data);
+        showNotification('Appointment erstellt!', 'success');
+
+        // Modal schließen und Liste aktualisieren
+        closeAddGuestSpotAppointmentModal();
+        loadGuestSpotAppointments(gs.id, shareArtist, shareStudio, true);
+
+      } catch (err) {
+        console.error('Error saving appointment:', err);
+        showNotification('Fehler beim Speichern: ' + err.message, 'error');
+      }
+    }
+
+    // Window Exports
+    window.openAddGuestSpotAppointmentModal = openAddGuestSpotAppointmentModal;
+    window.closeAddGuestSpotAppointmentModal = closeAddGuestSpotAppointmentModal;
+    window.calculateGsAptShares = calculateGsAptShares;
+    window.saveGuestSpotAppointment = saveGuestSpotAppointment;
+
+    // ============================================
     // BUG ANALYZER - Debug Tool (Console Only)
     // ============================================
 
@@ -48082,7 +48493,9 @@
       // Safe check for current list type
       const listType = (typeof currentListType !== 'undefined') ? currentListType : 'unknown';
       info.push('📊 Current List Type: ' + listType);
-      info.push(`📍 Current Location: ${currentWaitlistLocation}`);
+      // Safe check for currentWaitlistLocation
+      const safeWaitlistLocation = (typeof currentWaitlistLocation !== 'undefined') ? currentWaitlistLocation : 'all';
+      info.push(`📍 Current Location: ${safeWaitlistLocation}`);
 
       // CHECK 8: Guest Spots Count
       try {
