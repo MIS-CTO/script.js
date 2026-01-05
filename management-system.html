@@ -19099,21 +19099,15 @@
           else if (tabName === "customers") loadCustomers();
           else if (tabName === "wannados") window.loadWannadoCollections();
           else if (tabName === "guestspots") {
-            // Initialize Guest Spots tab with Upcoming as default
-            if (!window.waitlistInitialized) {
-              initWaitlist();
-              window.waitlistInitialized = true;
-            } else {
-              // Ensure Upcoming tab is selected and data is loaded
-              switchListType('upcoming');
+            // Guest Spots Tab - lädt Upcoming Guest Spots als Default
+            if (typeof loadUpcomingGuestSpotsTab === 'function') {
+              loadUpcomingGuestSpotsTab();
             }
           }
           else if (tabName === "waitlist") {
-            // Initialize Waitlist-Only section
-            if (!waitlistOnlyInitialized) {
-              initWaitlistOnlySection();
-            } else {
-              loadWaitlistOnlySlots(document.getElementById('waitlistOnlyLocationFilter')?.value || 'all');
+            // Waitlist Tab - lädt Waitlist Slots (Künstler ohne feste Buchungsdaten)
+            if (typeof loadWaitlistOnlySlots === 'function') {
+              loadWaitlistOnlySlots('all');
             }
           }
         }
