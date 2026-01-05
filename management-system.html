@@ -39965,46 +39965,116 @@
         }
 
         container.innerHTML = spots.map(spot => {
-          const statusBadge = spot.status === 'completed'
-            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Completed</span>'
-            : '<span style="background:#ff3b30;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Canceled</span>';
+          // Status Badge - Completed oder Canceled im neuen Style
+          const statusBadge = spot.status === 'canceled'
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(255,59,48,0.1);color:#ff3b30;font-size:11px;font-weight:600;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg>
+                Canceled
+              </span>`
+            : `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(52,199,89,0.15);color:#34c759;font-size:11px;font-weight:600;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                Completed
+              </span>`;
 
-          const paidBadge = spot.is_paid
-            ? '<span style="background:#34c759;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Paid</span>'
-            : '<span style="background:#ff9500;color:white;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg> Unpaid</span>';
-
-          const cancelInfo = spot.status === 'canceled' && spot.cancel_reason
-            ? '<p style="color:#ff3b30;font-size:13px;margin-top:12px;"><strong>Absagegrund:</strong> ' + spot.cancel_reason + '</p>'
-            : '';
-
-          const canceledBy = spot.canceled_by_username
-            ? '<p style="color:var(--muted);font-size:12px;margin-top:4px;">Abgesagt von: ' + spot.canceled_by_username + '</p>'
-            : '';
+          // Paid Badge im neuen Style
+          const paidBadge = spot.is_paid || spot.share_paid
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(52,199,89,0.15);color:#34c759;font-size:11px;font-weight:600;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                Paid
+              </span>`
+            : `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(255,59,48,0.1);color:#ff3b30;font-size:11px;font-weight:600;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                Unpaid
+              </span>`;
 
           // Cache the slot for detail view
           cacheGuestSpotSlot(spot);
 
-          // View Profile Button
-          const viewProfileButton = spot.artist_id
-            ? '<button onclick="viewArtistProfile(\'' + spot.artist_id + '\')" style="padding:8px 12px;border:none;border-radius:8px;background:#1d1d1f;color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.background=\'#333\';" onmouseout="this.style.background=\'#1d1d1f\';"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> View Profile</button>'
-            : '';
+          return `
+            <div class="waitlist-slot-card" data-slot-id="${spot.id}" style="
+              background:var(--macos-elevated);
+              border-radius:16px;
+              padding:24px;
+              margin-bottom:16px;
+              transition:all 0.2s;
+              cursor:pointer;
+              border:1px solid var(--border-color);
+              ${spot.status === 'canceled' ? 'opacity:0.7;' : ''}
+            ">
+              <!-- Header: Artist Info + Badges -->
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;">
+                <div>
+                  <h3 style="margin:0 0 4px 0; font-size:18px; color:var(--ink);">
+                    ${spot.artist_name || spot.name || 'Unknown Artist'}
+                  </h3>
+                  <p style="margin:0; color:var(--muted); font-size:14px;">
+                    ${spot.artist_email || ''}
+                  </p>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  ${paidBadge}
+                  ${statusBadge}
+                </div>
+              </div>
 
-          // Details Button
-          const detailsButton = '<button onclick="openGuestSpotDetailFromCache(\'' + spot.id + '\')" style="padding:8px 12px;border:none;border-radius:8px;background:rgba(142, 142, 147, 0.12);color:#1d1d1f;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.background=\'rgba(142, 142, 147, 0.2)\';" onmouseout="this.style.background=\'rgba(142, 142, 147, 0.12)\';"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Details</button>';
+              <!-- Date Info, Location and Actions in one row -->
+              <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px;">
+                <!-- Left: Date and Location Info -->
+                <div style="display:flex; gap:32px; align-items:flex-end;">
+                  <div>
+                    <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Zeitraum</div>
+                    <div style="font-weight:600; color:var(--ink);">
+                      ${formatDateDE(spot.date_from)} - ${formatDateDE(spot.date_to)}
+                    </div>
+                  </div>
+                  ${spot.location_name ? `
+                    <div>
+                      <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Location</div>
+                      <div style="font-weight:600; color:var(--ink);">
+                        ${spot.location_name}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
 
-          return '<div style="background:var(--macos-elevated, #fff);border-radius:16px;padding:24px;margin-bottom:16px;border:1px solid var(--border-color, #e0e0e0);opacity:' + (spot.status === 'canceled' ? '0.7' : '1') + ';">' +
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-              '<div style="flex:1;">' +
-                '<h3 style="margin:0 0 4px 0;font-size:18px;font-weight:600;">' + (spot.artist_name || spot.name || 'Unknown Artist') + '</h3>' +
-                '<p style="margin:0;color:var(--muted);font-size:14px;">' + (spot.location_name || '') + (spot.location_city ? ' (' + spot.location_city + ')' : '') + '</p>' +
-                '<p style="margin:12px 0 8px 0;font-size:14px;"><strong>Zeitraum:</strong> ' + formatDateDE(spot.date_from) + ' - ' + formatDateDE(spot.date_to) + '</p>' +
-                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' + statusBadge + paidBadge + '</div>' +
-                cancelInfo + canceledBy +
-                '<div style="margin-top:16px;display:flex;gap:8px;">' + viewProfileButton + detailsButton + '</div>' +
-              '</div>' +
-              (spot.profile_picture_url ? '<img src="' + spot.profile_picture_url + '" alt="' + (spot.artist_name || '') + '" style="width:60px;height:60px;border-radius:12px;object-fit:cover;margin-left:16px;">' : '') +
-            '</div>' +
-          '</div>';
+                <!-- Right: Action Buttons -->
+                <div style="display:flex; gap:8px;">
+                  ${spot.artist_id ? `
+                  <button
+                    onclick="viewArtistProfile('${spot.artist_id}')"
+                    style="padding:8px 12px;border:none;border-radius:8px;background:#1d1d1f;cursor:pointer;color:#fff;font-size:14px;font-weight:500;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;"
+                    onmouseover="this.style.background='#333';"
+                    onmouseout="this.style.background='#1d1d1f';"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Profile
+                  </button>
+                  ` : ''}
+                  <button
+                    onclick="openGuestSpotDetailFromCache('${spot.id}')"
+                    style="padding:8px 12px;border:none;border-radius:8px;background:rgba(142, 142, 147, 0.12);cursor:pointer;color:#1d1d1f;font-size:14px;font-weight:500;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;"
+                    onmouseover="this.style.background='rgba(142, 142, 147, 0.2)';"
+                    onmouseout="this.style.background='rgba(142, 142, 147, 0.12)';"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Details
+                  </button>
+                </div>
+              </div>
+
+              ${spot.status === 'canceled' && spot.cancel_reason ? `
+                <div style="margin-top:16px;padding:12px;background:rgba(255,59,48,0.05);border-radius:8px;font-size:13px;color:#ff3b30;">
+                  <strong>Absagegrund:</strong> ${spot.cancel_reason}
+                </div>
+              ` : ''}
+
+              ${spot.notes ? `
+                <div style="margin-top:16px;padding:12px;background:rgba(142, 142, 147, 0.12);border-radius:8px;font-size:14px;color:var(--muted);">
+                  <strong>Notes:</strong> ${spot.notes}
+                </div>
+              ` : ''}
+            </div>
+          `;
         }).join('');
       }
 
@@ -40209,8 +40279,29 @@
                 </div>
               </div>
 
-              <!-- Actions: Profile and Details buttons -->
-              <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+              <!-- Date Info, Location and Actions in one row -->
+              <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px;">
+                <!-- Left: Date and Location Info -->
+                <div style="display:flex; gap:32px; align-items:flex-end;">
+                  ${currentListType !== 'waitlist' && fromDate && toDate ? `
+                    <div>
+                      <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Zeitraum</div>
+                      <div style="font-weight:600; color:var(--ink);">
+                        ${fromDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })} - ${toDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+                  ` : ''}
+                  ${slot.location_name ? `
+                    <div>
+                      <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Location</div>
+                      <div style="font-weight:600; color:var(--ink);">
+                        ${slot.location_name}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+
+                <!-- Right: Action Buttons -->
                 <div style="display:flex; gap:8px;">
                   ${slot.artist_id ? `
                   <button
@@ -40259,36 +40350,6 @@
                     Details
                   </button>
                 </div>
-              </div>
-
-              <!-- Date Range (UPCOMING ONLY - has dates) or Location -->
-              <div style="display:flex; gap:24px; margin-bottom:12px;">
-                ${currentListType === 'upcoming' && fromDate && toDate ? `
-                  <div style="flex:1;">
-                    <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Zeitraum</div>
-                    <div style="font-weight:600; color:var(--ink);">
-                      ${fromDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })} - ${toDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </div>
-                  </div>
-                ` : ''}
-
-                ${slot.location_name ? `
-                  <div style="flex:1;">
-                    <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Location</div>
-                    <div style="font-weight:600; color:var(--ink);">
-                      ${slot.location_name}
-                    </div>
-                  </div>
-                ` : ''}
-
-                ${slot.artist_style ? `
-                  <div style="flex:1;">
-                    <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Style</div>
-                    <div style="font-weight:600; color:var(--ink);">
-                      ${slot.artist_style}
-                    </div>
-                  </div>
-                ` : ''}
               </div>
 
               <!-- Status Badges removed - now shown in header only -->
