@@ -12001,7 +12001,7 @@
         <h1 id="dashboardWelcomeText">Willkommen</h1>
         <p>Deine Übersicht über alle wichtigen Aktivitäten</p>
       </div>
-      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1067</span>
+      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1066</span>
     </div>
 
     <!-- Dashboard Grid Layout - New 30/70 Split -->
@@ -19117,8 +19117,7 @@
         e.preventDefault();
 
         // Prevent artist users from accessing restricted tabs via click
-        // Safe check: function may not be defined yet at page load
-        if (typeof window.isArtistUser === 'function' && window.isArtistUser()) {
+        if (isArtistUser()) {
           const tabName = tab.id.replace('tab-', '');
           const allowedTabs = ['dashboard', 'calendar', 'dienstplan'];
           if (!allowedTabs.includes(tabName)) {
@@ -27615,7 +27614,7 @@
             );
 
             // Filter for artist users: Only show their own appointments
-            if (typeof window.isArtistUser === 'function' && window.isArtistUser() && currentUserArtistId) {
+            if (isArtistUser() && currentUserArtistId) {
               categoryEvents = categoryEvents.filter(e => {
                 // Artist Info events: Always show (they're general info)
                 if (e.category === 'artist_info') return true;
@@ -27642,7 +27641,7 @@
             const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
             // If no events, show at least one empty slot (but not for artist users)
-            if (sortedEvents.length === 0 && !(typeof window.isArtistUser === 'function' && window.isArtistUser())) {
+            if (sortedEvents.length === 0 && !isArtistUser()) {
               html += `<div class="slot-row empty-row"><div class="slot-label">Slot 1</div>`;
 
               // Empty cells
