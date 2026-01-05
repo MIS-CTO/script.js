@@ -40147,9 +40147,15 @@
           if (currentListType === 'upcoming') {
             // For upcoming list with dates, show date-based status
             if (isActive) {
-              statusBadge = `<span class="badge" style="background:#34c759; color:white;">🎨 Active (${daysRemaining} days left)</span>`;
+              statusBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(52,199,89,0.15);color:#34c759;font-size:11px;font-weight:600;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  Active (${daysRemaining} days left)
+                </span>`;
             } else if (isUpcoming) {
-              statusBadge = `<span class="badge" style="background:#007aff; color:white;">📅 Starts in ${daysUntilStart} days</span>`;
+              statusBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:rgba(0,122,255,0.1);color:#007aff;font-size:11px;font-weight:600;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Starts in ${daysUntilStart} days
+                </span>`;
             }
           } else {
             // For waitlist (NO dates), show "Available Now" badge
@@ -40178,7 +40184,6 @@
               border-radius:16px;
               padding:24px;
               margin-bottom:16px;
-              box-shadow:0 2px 8px rgba(0,0,0,0.08);
               transition:all 0.2s;
               cursor:pointer;
               border:1px solid var(--border-color);
@@ -40186,24 +40191,6 @@
               <!-- Slot Header -->
               <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;">
                 <div style="display:flex; align-items:center; gap:16px;">
-                  <!-- Slot Number Badge -->
-                  <div style="
-                    width:48px;
-                    height:48px;
-                    border-radius:50%;
-                    background:rgba(142, 142, 147, 0.12);
-                    border:2px solid var(--border-color);
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    color:var(--ink);
-                    font-size:20px;
-                    font-weight:700;
-                    flex-shrink:0;
-                  ">
-                    ${slotNumber}
-                  </div>
-
                   <!-- Artist Info -->
                   <div>
                     <h3 style="margin:0 0 4px 0; font-size:18px; color:var(--ink);">
@@ -40278,16 +40265,9 @@
               <div style="display:flex; gap:24px; margin-bottom:12px;">
                 ${currentListType === 'upcoming' && fromDate && toDate ? `
                   <div style="flex:1;">
-                    <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Start Date</div>
+                    <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">Zeitraum</div>
                     <div style="font-weight:600; color:var(--ink);">
-                      ${fromDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </div>
-                  </div>
-
-                  <div style="flex:1;">
-                    <div style="color:var(--muted); font-size:12px; margin-bottom:4px;">End Date</div>
-                    <div style="font-weight:600; color:var(--ink);">
-                      ${toDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      ${fromDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })} - ${toDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
                   </div>
                 ` : ''}
@@ -40311,14 +40291,7 @@
                 ` : ''}
               </div>
 
-              <!-- Status Badges -->
-              <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-                ${statusBadge}
-                ${slot.share_paid
-                  ? '<span class="badge" style="background:#34c759; color:white;">✅ Share Paid</span>'
-                  : '<span class="badge" style="background:#ff3b30; color:white;">❌ Share Not Paid</span>'
-                }
-              </div>
+              <!-- Status Badges removed - now shown in header only -->
 
               <!-- Notes (if any) -->
               ${slot.notes ? `
