@@ -39861,9 +39861,12 @@
             return;
           }
 
-          // Use existing renderWaitlistSlots or a similar render
-          waitlistSlots = data;
-          renderWaitlistSlots(data);
+          // Group consecutive slots by same artist
+          const groupedData = groupConsecutiveSlots(data);
+          console.log(`📦 Grouped into ${groupedData.length} entries`);
+
+          waitlistSlots = groupedData;
+          renderWaitlistSlots(groupedData);
 
         } catch (error) {
           console.error('❌ Error loading upcoming guest spots:', error);
@@ -39900,8 +39903,12 @@
             return;
           }
 
-          waitlistSlots = data;
-          renderWaitlistSlots(data);
+          // Group consecutive slots by same artist
+          const groupedData = groupConsecutiveSlots(data);
+          console.log(`📦 Grouped into ${groupedData.length} entries`);
+
+          waitlistSlots = groupedData;
+          renderWaitlistSlots(groupedData);
 
         } catch (error) {
           console.error('❌ Error loading active guest spots:', error);
@@ -40189,9 +40196,9 @@
           // Use display_order from VIEW, otherwise use index + 1
           const slotNumber = slot.display_order || (index + 1);
 
-          // Dates come directly from the VIEW (already grouped if applicable)
-          const displayDateFrom = slot.date_from;
-          const displayDateTo = slot.date_to;
+          // Dates: Use grouped dates if available (from frontend grouping), otherwise raw dates
+          const displayDateFrom = slot.grouped_date_from || slot.date_from;
+          const displayDateTo = slot.grouped_date_to || slot.date_to;
 
           // All slot IDs for cancel/delete (from backend VIEW)
           const allSlotIds = slot.all_slot_ids || [slot.id];
