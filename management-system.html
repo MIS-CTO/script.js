@@ -14924,30 +14924,28 @@
           </div>
         </div>
 
-        <!-- Payment Info (External) -->
+        <!-- Payment Info (External/Self-Booking) - Aggregated from all Appointments -->
         <div id="guestSpotDetailExternalPayment" style="display:none; padding:16px; background:rgba(0, 122, 255, 0.08); border-radius:12px; margin-bottom:20px;">
           <div style="font-size:13px; font-weight:600; color:#007aff; margin-bottom:12px;">Self-Booking</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="display:grid; grid-template-columns:1fr; gap:12px;">
             <div>
-              <div style="font-size:12px; color:#86868b;">Total Preis</div>
-              <div id="guestSpotDetailExternalTotal" style="font-weight:600;"></div>
+              <div style="font-size:12px; color:#86868b;">Total Income</div>
+              <div id="guestSpotDetailTotalIncome" style="font-weight:600; font-size:18px;">€0.00</div>
             </div>
-            <div>
-              <div style="font-size:12px; color:#86868b;">Deposit</div>
-              <div id="guestSpotDetailExternalDeposit" style="font-weight:600;"></div>
-            </div>
-            <div>
-              <div style="font-size:12px; color:#86868b;">Studio Share</div>
-              <div id="guestSpotDetailStudioShare" style="font-weight:600;"></div>
-            </div>
-            <div>
-              <div style="font-size:12px; color:#86868b;">Artist Share</div>
-              <div id="guestSpotDetailArtistShare" style="font-weight:600;"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
+              <div>
+                <div style="font-size:12px; color:#86868b;">Studio Gesamt Share</div>
+                <div id="guestSpotDetailStudioShare" style="font-weight:600; color:#34c759;">€0.00</div>
+              </div>
+              <div>
+                <div style="font-size:12px; color:#86868b;">Artist Gesamt Share</div>
+                <div id="guestSpotDetailArtistShare" style="font-weight:600;">€0.00</div>
+              </div>
             </div>
           </div>
           <div style="margin-top:12px;">
             <div style="font-size:12px; color:#86868b;">Notiz</div>
-            <div id="guestSpotDetailExternalNotes" style="font-size:14px;"></div>
+            <div id="guestSpotDetailExternalNotes" style="font-size:14px;">-</div>
           </div>
         </div>
 
@@ -48645,7 +48643,7 @@
         const { data: appointments, error } = await supabase
           .from('appointments')
           .select(`
-            id, start, end, price, deposit_amount, artist_share_amount, studio_share_amount, status, notes,
+            id, start, end, price, deposit_amount, deposit_recipient, artist_share_amount, studio_share_amount, status, notes,
             customer:customers(id, first_name, last_name, email, phone)
           `)
           .eq('guest_spot_id', guestSpotId)
@@ -48720,17 +48718,18 @@
                   <div style="font-size:16px; font-weight:600; color:#1d1d1f;">€${price.toFixed(2)}</div>
                 </div>
                 <div>
-                  <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Deposit</div>
+                  <div style="font-size:11px; color:#86868b; margin-bottom:2px;">${apt.deposit_recipient === 'studio' ? 'Studio' : 'Artist'} Deposit Received</div>
                   <div style="font-size:16px; font-weight:600; color:#1d1d1f;">€${deposit.toFixed(2)}</div>
                 </div>
                 <div>
                   <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Studio (${shareStudio || 25}%)</div>
-                  <div style="font-size:14px; font-weight:500; color:#1d1d1f;">€${studioAmount.toFixed(2)}</div>
+                  <div style="font-size:14px; font-weight:500; color:#34c759;">€${studioAmount.toFixed(2)}</div>
+                  ${apt.deposit_recipient === 'studio' && deposit > 0 ? `<div style="font-size:10px; color:#86868b;">(€${(price * (shareStudio || 25) / 100).toFixed(2)} - €${deposit.toFixed(2)} Deposit)</div>` : ''}
                 </div>
                 <div>
                   <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Artist (${shareArtist || 75}%)</div>
-                  <div style="font-size:14px; font-weight:500; color:#34c759;">€${(artistAmount - deposit).toFixed(2)}</div>
-                  ${deposit > 0 ? `<div style="font-size:10px; color:#86868b;">(€${artistAmount.toFixed(2)} - €${deposit.toFixed(2)} Deposit)</div>` : ''}
+                  <div style="font-size:14px; font-weight:500; color:#1d1d1f;">€${artistAmount.toFixed(2)}</div>
+                  ${apt.deposit_recipient !== 'studio' && deposit > 0 ? `<div style="font-size:10px; color:#86868b;">(€${(price * (shareArtist || 75) / 100).toFixed(2)} - €${deposit.toFixed(2)} Deposit)</div>` : ''}
                 </div>
               </div>
 
@@ -48738,6 +48737,26 @@
             </div>
           `;
         }).join('');
+
+        // Aggregierte Summen für Self-Booking Container berechnen
+        let totalIncome = 0;
+        let totalStudioShare = 0;
+        let totalArtistShare = 0;
+
+        appointments.forEach(apt => {
+          totalIncome += parseFloat(apt.price) || 0;
+          totalStudioShare += parseFloat(apt.studio_share_amount) || 0;
+          totalArtistShare += parseFloat(apt.artist_share_amount) || 0;
+        });
+
+        // Self-Booking Container aktualisieren
+        const totalIncomeEl = document.getElementById('guestSpotDetailTotalIncome');
+        const studioShareEl = document.getElementById('guestSpotDetailStudioShare');
+        const artistShareEl = document.getElementById('guestSpotDetailArtistShare');
+
+        if (totalIncomeEl) totalIncomeEl.textContent = `€${totalIncome.toFixed(2)}`;
+        if (studioShareEl) studioShareEl.textContent = `€${totalStudioShare.toFixed(2)}`;
+        if (artistShareEl) artistShareEl.textContent = `€${totalArtistShare.toFixed(2)}`;
 
       } catch (err) {
         console.error('Error in loadGuestSpotAppointments:', err);
