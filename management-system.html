@@ -27009,8 +27009,9 @@
             let isGuestSpotAppointment = false;
 
             if (apt.guest_spot_id) {
-              // Appointment belongs to a Guest Spot → show in Guest Spots category
-              category = 'guest_spot';
+              // Appointment belongs to a Guest Spot → show in Guests category (not Guest Spots)
+              // Guest Spots category is only for Availability, appointments get normal category
+              category = 'guest';
               isGuestSpotAppointment = true;
             } else if (artist && artist.is_guest) {
               category = 'guest';
@@ -27038,8 +27039,8 @@
               startTimeRaw: apt.start,
               endTimeRaw: apt.end,
               isAppointment: true, // Flag to distinguish from events table entries
-              isGuestSpot: isGuestSpotAppointment, // Render as guest spot if linked
-              isGuestSpotAppointment: isGuestSpotAppointment, // Additional flag for styling
+              isGuestSpot: false, // Guest Spot Appointments render as normal appointments (with booking_type colors)
+              isGuestSpotAppointment: isGuestSpotAppointment, // Flag for click handler (opens edit modal)
               guestSpotId: apt.guest_spot_id || null,
               // Include all payment and appointment data
               paymentStatus: apt.payment_status || 'unpaid',
@@ -27069,7 +27070,7 @@
           // Log Guest Spot Appointments count
           const guestSpotAppointmentsCount = processedAppointments.filter(a => a.isGuestSpotAppointment).length;
           if (guestSpotAppointmentsCount > 0) {
-            console.log(`📅 Found ${guestSpotAppointmentsCount} appointments linked to Guest Spots (will show in Guest Spots category)`);
+            console.log(`📅 Found ${guestSpotAppointmentsCount} appointments linked to Guest Spots (will show in Guests category with normal booking_type colors)`);
           }
 
           // 3. Load ARTIST INFOS (internal artist blocks/notes)
@@ -27715,10 +27716,7 @@
                           </div>
                         `;
                       } else {
-                        // Guest Spot AVAILABILITY: Show artist name, time, and paid status (original)
-                        const gsPaidIcon = cell.event.isPaid
-                          ? '<svg viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>'
-                          : '<svg viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2.5" style="width:12px;height:12px;"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+                        // Guest Spot AVAILABILITY: Show artist name, time, and booking type (paid status shown in detail modal)
                         const gsTypeLabel = cell.event.bookingType === 'internal' ? 'Intern' : 'Extern';
 
                         content = `
@@ -27734,7 +27732,6 @@
                           </div>
                           <div style="display:flex; align-items:center; gap:6px;">
                             <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsTypeLabel}</span>
-                            <span style="display:inline-flex;">${gsPaidIcon}</span>
                           </div>
                         `;
                       }
