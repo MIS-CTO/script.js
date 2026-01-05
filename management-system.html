@@ -48278,18 +48278,18 @@
       // Erstelle das Slide-in Panel
       const panelHtml = `
         <div id="addGuestSpotAppointmentPanel" style="
-          position: absolute;
+          position: fixed;
           top: 50%;
-          left: calc(50% + 290px);
-          transform: translateY(-50%) translateX(100%);
-          width: 380px;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 560px;
+          max-width: 95vw;
           max-height: 90vh;
           background: #f5f5f7;
           border-radius: 16px;
           box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-          margin-left: 12px;
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          z-index: 10001;
+          transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 9999;
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -48671,11 +48671,12 @@
       const dateInput = document.getElementById('gsAptDate');
       if (dateInput) dateInput.value = dateFrom;
 
-      // Trigger Slide-in Animation (von rechts nach links)
+      // Trigger Slide-in Animation (von hinter dem Modal nach rechts heraus)
       requestAnimationFrame(() => {
         const panel = document.getElementById('addGuestSpotAppointmentPanel');
         if (panel) {
-          panel.style.transform = 'translateY(-50%) translateX(0)';
+          // Slide nach rechts (neben das Modal)
+          panel.style.transform = 'translate(calc(-50% + 300px), -50%)';
         }
       });
 
@@ -48689,8 +48690,8 @@
     function closeAddGuestSpotAppointmentModal() {
       const panel = document.getElementById('addGuestSpotAppointmentPanel');
       if (panel) {
-        // Slide-out Animation (nach rechts raus)
-        panel.style.transform = 'translateY(-50%) translateX(100%)';
+        // Slide-out Animation (zurück hinter das Modal)
+        panel.style.transform = 'translate(-50%, -50%)';
 
         // Entferne nach Animation
         setTimeout(() => {
