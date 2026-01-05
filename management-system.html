@@ -48477,7 +48477,7 @@
                 </div>
 
                 <!-- Continuing Tattoo -->
-                <div class="gs-apt-type-card" data-type="continuing" onclick="selectGsAptType('continuing')" style="
+                <div class="gs-apt-type-card" data-type="continuing_tattoo" onclick="selectGsAptType('continuing_tattoo')" style="
                   padding: 16px 12px;
                   background: white;
                   border: 2px solid rgba(0,0,0,0.1);
@@ -48808,9 +48808,17 @@
         studio_share_amount: price * shareStudio / 100,
         status: 'scheduled',
         notes: notes,
-        booking_type: 'guest_spot',
         created_at: new Date().toISOString()
       };
+
+      console.log('📅 Creating Guest Spot Appointment:', {
+        guest_spot_id: appointmentData.guest_spot_id,
+        artist_id: appointmentData.artist_id,
+        location_id: appointmentData.location_id,
+        customer_id: appointmentData.customer_id,
+        booking_type: appointmentData.booking_type,
+        date: appointmentData.start
+      });
 
       try {
         const { data, error } = await supabase
