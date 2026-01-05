@@ -1456,7 +1456,7 @@
 
     /* Guest Spot Modal Animation für Panel */
     .guest-spot-modal-shifted {
-      transform: translateX(-280px) !important;
+      transform: translateX(-295px) !important;
       border-top-right-radius: 0 !important;
       border-bottom-right-radius: 0 !important;
     }
@@ -48698,21 +48698,23 @@
       if (dateInput) dateInput.value = dateFrom;
 
       // Trigger Slide-in Animation
-      // Guest Spot Modal slided nach links, Panel slided nach rechts
-      // Zusammen sind sie als Paar zentriert
+      // ERST Modal nach links, DANN Panel nach rechts hervor
       requestAnimationFrame(() => {
-        const panel = document.getElementById('addGuestSpotAppointmentPanel');
         const guestSpotModal = document.querySelector('#guestSpotDetailModal .modal');
 
-        if (panel) {
-          // Panel slided nach rechts (280px = halbe Breite des Panels)
-          panel.style.transform = 'translate(calc(-50% + 280px), -50%)';
-        }
-
+        // Modal sofort nach links schieben
         if (guestSpotModal) {
-          // Modal slided nach links
           guestSpotModal.classList.add('guest-spot-modal-shifted');
         }
+
+        // Panel mit minimalem Delay nach rechts (damit Modal zuerst weg ist)
+        setTimeout(() => {
+          const panel = document.getElementById('addGuestSpotAppointmentPanel');
+          if (panel) {
+            // Panel slided nach rechts (295px für saubere Trennung)
+            panel.style.transform = 'translate(calc(-50% + 295px), -50%)';
+          }
+        }, 50);
       });
 
       // Reset Customer und Type Selection
@@ -48725,15 +48727,18 @@
     function closeAddGuestSpotAppointmentModal() {
       const panel = document.getElementById('addGuestSpotAppointmentPanel');
 
-      // Guest Spot Modal zurück zur Mitte
-      const guestSpotModal = document.querySelector('#guestSpotDetailModal .modal');
-      if (guestSpotModal) {
-        guestSpotModal.classList.remove('guest-spot-modal-shifted');
-      }
-
       if (panel) {
-        // Panel slided zurück hinter das Modal
+        // ERST: Panel slided zurück hinter das Modal
         panel.style.transform = 'translate(-50%, -50%)';
+
+        // DANN: Nach der Animation das Modal zurück zur Mitte
+        // Verzögerung damit Panel zuerst hinter dem Modal verschwindet
+        setTimeout(() => {
+          const guestSpotModal = document.querySelector('#guestSpotDetailModal .modal');
+          if (guestSpotModal) {
+            guestSpotModal.classList.remove('guest-spot-modal-shifted');
+          }
+        }, 50);
 
         // Entferne nach Animation
         setTimeout(() => {
