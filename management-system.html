@@ -47188,9 +47188,11 @@
         paidBadge.style.color = 'white';
       }
 
-      // Date & Time
-      const dateFrom = slotData.date_from ? new Date(slotData.date_from).toLocaleDateString('de-DE') : 'N/A';
-      const dateTo = slotData.date_to ? new Date(slotData.date_to).toLocaleDateString('de-DE') : 'N/A';
+      // Date & Time - use grouped dates if available (from frontend grouping)
+      const effectiveDateFrom = slotData.grouped_date_from || slotData.date_from;
+      const effectiveDateTo = slotData.grouped_date_to || slotData.date_to;
+      const dateFrom = effectiveDateFrom ? new Date(effectiveDateFrom).toLocaleDateString('de-DE') : 'N/A';
+      const dateTo = effectiveDateTo ? new Date(effectiveDateTo).toLocaleDateString('de-DE') : 'N/A';
       document.getElementById('guestSpotDetailDateRange').textContent = dateFrom === dateTo ? dateFrom : `${dateFrom} - ${dateTo}`;
 
       const timeFrom = slotData.time_from || '10:00';
@@ -48754,8 +48756,9 @@
       }
 
       const gs = currentGuestSpotDetailData;
-      const dateFrom = gs.date_from;
-      const dateTo = gs.date_to;
+      // Use grouped dates if available (from frontend grouping)
+      const dateFrom = gs.grouped_date_from || gs.date_from;
+      const dateTo = gs.grouped_date_to || gs.date_to;
 
       // Entferne existierendes Panel falls vorhanden
       const existingPanel = document.getElementById('addGuestSpotAppointmentPanel');
