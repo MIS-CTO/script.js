@@ -39482,7 +39482,7 @@
         });
       }
 
-      // Waitlist Tab Click - Initialize waitlist when tab is clicked
+      // Waitlist Tab Click - Load waitlist slots (artists WITHOUT booking dates)
       const waitlistTab = document.getElementById('tab-waitlist');
       if (waitlistTab) {
         waitlistTab.addEventListener('click', async function() {
@@ -39501,13 +39501,9 @@
           document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
           waitlistTab.classList.add('active');
 
-          // Initialize waitlist if not already done
-          if (!window.waitlistInitialized) {
-            await initWaitlist();
-            window.waitlistInitialized = true;
-          } else {
-            // Refresh data
-            await loadWaitlistSlots(currentWaitlistLocation);
+          // Load waitlist-only slots (artists WITHOUT booking dates)
+          if (typeof loadWaitlistOnlySlots === 'function') {
+            await loadWaitlistOnlySlots('all');
           }
         });
       }
@@ -41606,7 +41602,8 @@
       }
 
       async function loadWaitlistOnlySlots(locationFilter = 'all') {
-        console.log('📋 Loading Waitlist-Only slots...');
+        console.log('📋 Loading Waitlist Slots (artists WITHOUT booking dates)...');
+        console.log('   View: waitlist_slots_ordered, Location filter:', locationFilter);
 
         const container = document.getElementById('waitlistOnlySlotsContainer');
         const emptyState = document.getElementById('waitlistOnlyEmptyState');
@@ -41617,7 +41614,7 @@
         }
 
         try {
-          // Query waitlist_slots_ordered view
+          // Query waitlist_slots_ordered view - artists WITHOUT booking dates
           let query = supabase
             .from('waitlist_slots_ordered')
             .select('*')
@@ -41632,7 +41629,7 @@
 
           if (error) throw error;
 
-          console.log(`✅ Loaded ${data?.length || 0} waitlist slots`);
+          console.log(`✅ Loaded ${data?.length || 0} waitlist slots from waitlist_slots_ordered`);
 
           if (!data || data.length === 0) {
             container.innerHTML = '';
