@@ -19117,7 +19117,8 @@
         e.preventDefault();
 
         // Prevent artist users from accessing restricted tabs via click
-        if (isArtistUser()) {
+        // Safe check: function may not be defined yet at page load
+        if (typeof window.isArtistUser === 'function' && window.isArtistUser()) {
           const tabName = tab.id.replace('tab-', '');
           const allowedTabs = ['dashboard', 'calendar', 'dienstplan'];
           if (!allowedTabs.includes(tabName)) {
@@ -27614,7 +27615,7 @@
             );
 
             // Filter for artist users: Only show their own appointments
-            if (isArtistUser() && currentUserArtistId) {
+            if (typeof window.isArtistUser === 'function' && window.isArtistUser() && currentUserArtistId) {
               categoryEvents = categoryEvents.filter(e => {
                 // Artist Info events: Always show (they're general info)
                 if (e.category === 'artist_info') return true;
@@ -27641,7 +27642,7 @@
             const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
             // If no events, show at least one empty slot (but not for artist users)
-            if (sortedEvents.length === 0 && !isArtistUser()) {
+            if (sortedEvents.length === 0 && !(typeof window.isArtistUser === 'function' && window.isArtistUser())) {
               html += `<div class="slot-row empty-row"><div class="slot-label">Slot 1</div>`;
 
               // Empty cells
