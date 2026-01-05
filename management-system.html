@@ -1454,6 +1454,18 @@
       border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
+    /* Guest Spot Modal Animation für Panel */
+    .guest-spot-modal-shifted {
+      transform: translateX(-280px) !important;
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+    }
+
+    .guest-spot-modal-content {
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-radius 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     /* ========================================
        Modals & Dialogs - Frosted Glass Overlay
        ======================================== */
@@ -46821,6 +46833,18 @@
         modal.classList.add('active');
       }
 
+      // Modal Styling für Animation und einheitliche Höhe
+      setTimeout(() => {
+        const modalContent = document.querySelector('#guestSpotDetailModal .modal');
+        if (modalContent) {
+          modalContent.style.transition = 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+          modalContent.style.height = '80vh';
+          modalContent.style.maxHeight = '80vh';
+          modalContent.style.overflowY = 'auto';
+          modalContent.style.boxShadow = 'none';
+        }
+      }, 0);
+
       // NEU: Lade verknüpfte Appointments
       loadGuestSpotAppointments(slotData.id, slotData.share_percentage_artist, slotData.share_percentage_studio, slotData.self_booking || slotData.booking_type === 'external');
     }
@@ -48284,10 +48308,11 @@
           transform: translate(-50%, -50%);
           width: 560px;
           max-width: 95vw;
-          max-height: 90vh;
-          background: #f5f5f7;
+          height: 80vh;
+          background: white;
           border-radius: 16px;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
           transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
           z-index: 9999;
           display: flex;
@@ -48299,6 +48324,7 @@
             padding: 16px 20px;
             background: #1d1d1f;
             color: white;
+            border-top-right-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -48671,12 +48697,21 @@
       const dateInput = document.getElementById('gsAptDate');
       if (dateInput) dateInput.value = dateFrom;
 
-      // Trigger Slide-in Animation (von hinter dem Modal nach rechts heraus)
+      // Trigger Slide-in Animation
+      // Guest Spot Modal slided nach links, Panel slided nach rechts
+      // Zusammen sind sie als Paar zentriert
       requestAnimationFrame(() => {
         const panel = document.getElementById('addGuestSpotAppointmentPanel');
+        const guestSpotModal = document.querySelector('#guestSpotDetailModal .modal');
+
         if (panel) {
-          // Slide nach rechts (neben das Modal)
-          panel.style.transform = 'translate(calc(-50% + 300px), -50%)';
+          // Panel slided nach rechts (280px = halbe Breite des Panels)
+          panel.style.transform = 'translate(calc(-50% + 280px), -50%)';
+        }
+
+        if (guestSpotModal) {
+          // Modal slided nach links
+          guestSpotModal.classList.add('guest-spot-modal-shifted');
         }
       });
 
@@ -48689,8 +48724,15 @@
 
     function closeAddGuestSpotAppointmentModal() {
       const panel = document.getElementById('addGuestSpotAppointmentPanel');
+
+      // Guest Spot Modal zurück zur Mitte
+      const guestSpotModal = document.querySelector('#guestSpotDetailModal .modal');
+      if (guestSpotModal) {
+        guestSpotModal.classList.remove('guest-spot-modal-shifted');
+      }
+
       if (panel) {
-        // Slide-out Animation (zurück hinter das Modal)
+        // Panel slided zurück hinter das Modal
         panel.style.transform = 'translate(-50%, -50%)';
 
         // Entferne nach Animation
