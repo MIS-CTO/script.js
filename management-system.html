@@ -12001,7 +12001,7 @@
         <h1 id="dashboardWelcomeText">Willkommen</h1>
         <p>Deine Übersicht über alle wichtigen Aktivitäten</p>
       </div>
-      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1067</span>
+      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1065</span>
     </div>
 
     <!-- Dashboard Grid Layout - New 30/70 Split -->
@@ -19117,8 +19117,7 @@
         e.preventDefault();
 
         // Prevent artist users from accessing restricted tabs via click
-        // Safe check: function may not be defined yet at page load
-        if (typeof window.isArtistUser === 'function' && window.isArtistUser()) {
+        if (isArtistUser()) {
           const tabName = tab.id.replace('tab-', '');
           const allowedTabs = ['dashboard', 'calendar', 'dienstplan'];
           if (!allowedTabs.includes(tabName)) {
@@ -27615,7 +27614,7 @@
             );
 
             // Filter for artist users: Only show their own appointments
-            if (typeof window.isArtistUser === 'function' && window.isArtistUser() && currentUserArtistId) {
+            if (isArtistUser() && currentUserArtistId) {
               categoryEvents = categoryEvents.filter(e => {
                 // Artist Info events: Always show (they're general info)
                 if (e.category === 'artist_info') return true;
@@ -27642,7 +27641,7 @@
             const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
             // If no events, show at least one empty slot (but not for artist users)
-            if (sortedEvents.length === 0 && !(typeof window.isArtistUser === 'function' && window.isArtistUser())) {
+            if (sortedEvents.length === 0 && !isArtistUser()) {
               html += `<div class="slot-row empty-row"><div class="slot-label">Slot 1</div>`;
 
               // Empty cells
@@ -41671,14 +41670,14 @@
 
         return `
           <div class="waitlist-slot-card" data-slot-id="${slot.id}" style="
-            background: #fff;
+            background: white;
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 12px;
-            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             cursor: pointer;
-            transition: background 0.2s;
-          " onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='#fff'">`
+            transition: all 0.2s;
+          " onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.12)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div style="flex: 1;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -41832,56 +41831,13 @@
         }
       }
 
-      // ============================================
-      // ADD WAITLIST SLOT MODAL
-      // ============================================
-
+      // Wrapper function for adding waitlist slots from Waitlist-Only section
       function openAddWaitlistSlotModal() {
-        console.log('📋 Opening Add Waitlist Slot Modal...');
-
-        // Versuche verschiedene mögliche Modal-IDs
-        const modalIds = [
-          'addWaitlistSlotModal',
-          'createWaitlistSlotModal',
-          'waitlistSlotModal',
-          'addWaitlistModal',
-          'createWaitlistModal',
-          'addSlotModal'  // Fallback: gemeinsames Slot-Modal
-        ];
-
-        let modal = null;
-        for (const id of modalIds) {
-          modal = document.getElementById(id);
-          if (modal) {
-            console.log('✅ Found waitlist modal:', id);
-            break;
-          }
-        }
-
-        if (modal) {
-          // Set list type to waitlist for the modal
-          if (typeof currentListType !== 'undefined') {
-            currentListType = 'waitlist';
-          }
-          modal.style.display = 'flex';
-          return;
-        }
-
-        // Fallback: Suche nach Modal mit waitlist im Namen
-        const allModals = document.querySelectorAll('[id*="waitlist"][id*="modal"], [id*="waitlist"][id*="Modal"]');
-        if (allModals.length > 0) {
-          console.log('✅ Found waitlist modal via query:', allModals[0].id);
-          allModals[0].style.display = 'flex';
-          return;
-        }
-
-        // Letzter Fallback: Zeige eine Notification
-        console.error('❌ No waitlist modal found!');
-        if (typeof showNotification === 'function') {
-          showNotification('Waitlist Modal nicht gefunden', 'error');
-        } else {
-          alert('Waitlist Modal konnte nicht gefunden werden. Bitte Seite neu laden.');
-        }
+        // Temporarily set list type to waitlist to use the waitlist add modal
+        const prevListType = currentListType;
+        currentListType = 'waitlist';
+        openAddSlotModal();
+        // Note: currentListType will be restored when the modal is closed or saved
       }
 
       // ========================================
