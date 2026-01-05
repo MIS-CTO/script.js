@@ -737,6 +737,21 @@
       color: #9ca3af !important;
     }
 
+    /* Guest Spot APPOINTMENTS (Termine) - Türkis/Blau statt Lila */
+    .event.guest_spot.guest_spot_appointment {
+      background: rgba(0, 131, 143, 0.15) !important;
+      color: #00838F !important;
+    }
+
+    .event.guest_spot.guest_spot_appointment:hover {
+      background: rgba(0, 131, 143, 0.25) !important;
+    }
+
+    [data-theme="dark"] .event.guest_spot.guest_spot_appointment {
+      background: rgba(0, 188, 212, 0.2) !important;
+      color: #00BCD4 !important;
+    }
+
     /* Canceled Guest Spot Cards in Waitlist */
     .waitlist-slot-card.canceled,
     .guest-spot-card.canceled {
@@ -26989,9 +27004,15 @@
             const startHour = parseLocalTime(apt.start);
             const endHour = parseLocalTime(apt.end);
 
-            // Determine category based on artist
+            // Determine category based on guest_spot_id or artist type
             let category = 'resident'; // Default to resident
-            if (artist && artist.is_guest) {
+            let isGuestSpotAppointment = false;
+
+            if (apt.guest_spot_id) {
+              // Appointment belongs to a Guest Spot → show in Guest Spots category
+              category = 'guest_spot';
+              isGuestSpotAppointment = true;
+            } else if (artist && artist.is_guest) {
               category = 'guest';
             }
 
@@ -27017,12 +27038,16 @@
               startTimeRaw: apt.start,
               endTimeRaw: apt.end,
               isAppointment: true, // Flag to distinguish from events table entries
+              isGuestSpot: isGuestSpotAppointment, // Render as guest spot if linked
+              isGuestSpotAppointment: isGuestSpotAppointment, // Additional flag for styling
+              guestSpotId: apt.guest_spot_id || null,
               // Include all payment and appointment data
               paymentStatus: apt.payment_status || 'unpaid',
               paymentAmount: apt.payment_amount,
               depositAmount: apt.deposit_amount,
               totalAmount: apt.total_amount,
               priceEstimate: apt.price_estimate,
+              price: apt.price || apt.total_amount || apt.price_estimate,
               stripePaymentLink: apt.stripe_payment_link,
               projectNumber: apt.project_number,
               customerEmail: apt.customer_email,
@@ -27040,6 +27065,12 @@
               fullData: apt // Store full appointment data for modal
             };
           });
+
+          // Log Guest Spot Appointments count
+          const guestSpotAppointmentsCount = processedAppointments.filter(a => a.isGuestSpotAppointment).length;
+          if (guestSpotAppointmentsCount > 0) {
+            console.log(`📅 Found ${guestSpotAppointmentsCount} appointments linked to Guest Spots (will show in Guest Spots category)`);
+          }
 
           // 3. Load ARTIST INFOS (internal artist blocks/notes)
           console.log('📌 Loading artist infos...');
@@ -27536,7 +27567,14 @@
               });
             }
 
-            console.log(`📅 Rendering ${categoryEvents.length} ${label} for ${dateStr}`);
+            // Enhanced logging for Guest Spots category
+            if (cat === 'guest_spot') {
+              const guestSpotAvailability = categoryEvents.filter(e => !e.isGuestSpotAppointment).length;
+              const guestSpotAppointments = categoryEvents.filter(e => e.isGuestSpotAppointment).length;
+              console.log(`📅 Rendering ${categoryEvents.length} ${label} for ${dateStr} (${guestSpotAvailability} Availability + ${guestSpotAppointments} Appointments)`);
+            } else {
+              console.log(`📅 Rendering ${categoryEvents.length} ${label} for ${dateStr}`);
+            }
 
             // CRITICAL: Each appointment gets its OWN ROW
             // Sort by start time
@@ -27651,28 +27689,55 @@
                     let isArtistInfoEvent = cell.event.isArtistInfo === true;
 
                     if (cell.event.isGuestSpot) {
-                      // Guest Spot: Show artist name, time, and paid status
-                      const gsPaidIcon = cell.event.isPaid
-                        ? '<svg viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>'
-                        : '<svg viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2.5" style="width:12px;height:12px;"><path d="M18 6L6 18M6 6l12 12"/></svg>';
-                      const gsTypeLabel = cell.event.bookingType === 'internal' ? 'Intern' : 'Extern';
+                      // Check if this is a Guest Spot Appointment (has customer) vs Guest Spot Availability
+                      if (cell.event.isGuestSpotAppointment) {
+                        // Guest Spot APPOINTMENT: Show customer, time, price
+                        const gsAptCustomer = cell.event.customerName || 'Kunde';
+                        const gsAptPrice = cell.event.price ? `€${cell.event.price}` : '';
+                        const gsAptType = cell.event.type || 'Termin';
 
-                      content = `
-                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                          </svg>
-                          <span style="font-weight:600; font-size:12px;">${timeStr}</span>
-                        </div>
-                        <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">
-                          ${cell.event.artistName}
-                        </div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                          <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsTypeLabel}</span>
-                          <span style="display:inline-flex;">${gsPaidIcon}</span>
-                        </div>
-                      `;
+                        content = `
+                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                              <line x1="16" y1="2" x2="16" y2="6"></line>
+                              <line x1="8" y1="2" x2="8" y2="6"></line>
+                              <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <span style="font-weight:600; font-size:12px;">${timeStr}</span>
+                          </div>
+                          <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px;">
+                            ${gsAptCustomer}
+                          </div>
+                          <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsAptType}</span>
+                            ${gsAptPrice ? `<span style="font-size:10px; font-weight:600; opacity:0.9;">${gsAptPrice}</span>` : ''}
+                          </div>
+                        `;
+                      } else {
+                        // Guest Spot AVAILABILITY: Show artist name, time, and paid status (original)
+                        const gsPaidIcon = cell.event.isPaid
+                          ? '<svg viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>'
+                          : '<svg viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2.5" style="width:12px;height:12px;"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+                        const gsTypeLabel = cell.event.bookingType === 'internal' ? 'Intern' : 'Extern';
+
+                        content = `
+                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                              <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <span style="font-weight:600; font-size:12px;">${timeStr}</span>
+                          </div>
+                          <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">
+                            ${cell.event.artistName}
+                          </div>
+                          <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsTypeLabel}</span>
+                            <span style="display:inline-flex;">${gsPaidIcon}</span>
+                          </div>
+                        `;
+                      }
                     } else if (isArtistInfoEvent) {
                       // Artist Info: Compact display with just notice text
                       content = `<div style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cell.event.title}</div>`;
@@ -27766,12 +27831,23 @@
                     // Artist Info: Use special CSS class and click handler
                     const artistInfoClass = isArtistInfoEvent ? 'artist-info-event' : '';
                     const guestSpotCanceledClass = cell.event.isCanceled ? 'canceled' : '';
-                    const guestSpotClass = cell.event.isGuestSpot ? `guest_spot ${guestSpotCanceledClass}` : '';
-                    const clickHandler = cell.event.isGuestSpot
-                      ? `onclick="handleGuestSpotCalendarClick('${cell.event.id}')"`
-                      : isArtistInfoEvent
-                        ? `onclick="openArtistInfoModal('${cell.event.originalId}', ${JSON.stringify(cell.event).replace(/"/g, '&quot;')})"`
-                        : `onclick="openEditEventModal('${cell.event.id}')"`;
+                    // Guest Spot Appointment gets different class for styling (türkis instead of braun)
+                    const guestSpotAppointmentClass = cell.event.isGuestSpotAppointment ? 'guest_spot_appointment' : '';
+                    const guestSpotClass = cell.event.isGuestSpot ? `guest_spot ${guestSpotCanceledClass} ${guestSpotAppointmentClass}` : '';
+
+                    // Click handler: Guest Spot Appointments open edit modal, Guest Spot Availability opens detail modal
+                    let clickHandler;
+                    if (cell.event.isGuestSpotAppointment) {
+                      // Guest Spot Appointment → open edit appointment modal
+                      clickHandler = `onclick="openEditEventModal('${cell.event.id}')"`;
+                    } else if (cell.event.isGuestSpot) {
+                      // Guest Spot Availability → open guest spot detail modal
+                      clickHandler = `onclick="handleGuestSpotCalendarClick('${cell.event.id}')"`;
+                    } else if (isArtistInfoEvent) {
+                      clickHandler = `onclick="openArtistInfoModal('${cell.event.originalId}', ${JSON.stringify(cell.event).replace(/"/g, '&quot;')})"`;
+                    } else {
+                      clickHandler = `onclick="openEditEventModal('${cell.event.id}')"`;
+                    }
 
                     html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
                       <div class="event ${cat} ${artistInfoClass} ${guestSpotClass}" ${typeAttr} data-event-id="${cell.event.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
