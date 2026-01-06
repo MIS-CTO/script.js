@@ -47224,16 +47224,10 @@
         internalPayment.style.display = 'none';
         externalPayment.style.display = 'block';
 
-        document.getElementById('guestSpotDetailExternalTotal').textContent =
-          slotData.total_price ? `€${parseFloat(slotData.total_price).toFixed(2)}` : '€0.00';
-        document.getElementById('guestSpotDetailExternalDeposit').textContent =
-          slotData.deposit_amount ? `€${parseFloat(slotData.deposit_amount).toFixed(2)}` : '€0.00';
-        document.getElementById('guestSpotDetailStudioShare').textContent =
-          slotData.studio_share ? `€${parseFloat(slotData.studio_share).toFixed(2)}` : '€0.00';
-        document.getElementById('guestSpotDetailArtistShare').textContent =
-          slotData.artist_share ? `€${parseFloat(slotData.artist_share).toFixed(2)}` : '€0.00';
-        document.getElementById('guestSpotDetailExternalNotes').textContent =
-          slotData.payment_notes || '-';
+        // Self-Booking: Werte werden jetzt aus Appointments aggregiert (in loadGuestSpotAppointments)
+        // Hier nur die Notiz setzen
+        const notesEl = document.getElementById('guestSpotDetailExternalNotes');
+        if (notesEl) notesEl.textContent = slotData.payment_notes || '-';
       }
 
       // Notes
