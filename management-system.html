@@ -14928,9 +14928,20 @@
         <div id="guestSpotDetailExternalPayment" style="display:none; padding:16px; background:rgba(0, 122, 255, 0.08); border-radius:12px; margin-bottom:20px;">
           <div style="font-size:13px; font-weight:600; color:#007aff; margin-bottom:12px;">Self-Booking</div>
           <div style="display:grid; grid-template-columns:1fr; gap:12px;">
+            <!-- Total Income mit Paid/Unpaid Badges -->
             <div>
-              <div style="font-size:12px; color:#86868b;">Total Income</div>
-              <div id="guestSpotDetailTotalIncome" style="font-weight:600; font-size:18px;">€0.00</div>
+              <div style="font-size:12px; color:#86868b; margin-bottom:4px;">Total Income</div>
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div id="guestSpotDetailTotalIncome" style="font-weight:600; font-size:18px;">€0.00</div>
+                <div style="display:flex; gap:8px;">
+                  <span id="guestSpotDetailPaidBadge" style="display:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; background:#34c759; color:white;">
+                    <span id="guestSpotDetailPaidAmount">€0.00</span> Paid
+                  </span>
+                  <span id="guestSpotDetailUnpaidBadge" style="display:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; background:#ff9500; color:white;">
+                    <span id="guestSpotDetailUnpaidAmount">€0.00</span> Offen
+                  </span>
+                </div>
+              </div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
               <div>
@@ -48736,21 +48747,55 @@
         let totalIncome = 0;
         let totalStudioShare = 0;
         let totalArtistShare = 0;
+        let totalPaid = 0;
+        let totalUnpaid = 0;
 
         appointments.forEach(apt => {
-          totalIncome += parseFloat(apt.price) || 0;
+          const price = parseFloat(apt.price) || 0;
+          totalIncome += price;
           totalStudioShare += parseFloat(apt.studio_share_amount) || 0;
           totalArtistShare += parseFloat(apt.artist_share_amount) || 0;
+
+          // Paid/Unpaid basierend auf Status
+          if (apt.status === 'completed' || apt.status === 'paid') {
+            totalPaid += price;
+          } else if (apt.status !== 'canceled' && apt.status !== 'no_show') {
+            totalUnpaid += price;
+          }
         });
 
         // Self-Booking Container aktualisieren
         const totalIncomeEl = document.getElementById('guestSpotDetailTotalIncome');
         const studioShareEl = document.getElementById('guestSpotDetailStudioShare');
         const artistShareEl = document.getElementById('guestSpotDetailArtistShare');
+        const paidBadgeEl = document.getElementById('guestSpotDetailPaidBadge');
+        const unpaidBadgeEl = document.getElementById('guestSpotDetailUnpaidBadge');
+        const paidAmountEl = document.getElementById('guestSpotDetailPaidAmount');
+        const unpaidAmountEl = document.getElementById('guestSpotDetailUnpaidAmount');
 
         if (totalIncomeEl) totalIncomeEl.textContent = `€${totalIncome.toFixed(2)}`;
         if (studioShareEl) studioShareEl.textContent = `€${totalStudioShare.toFixed(2)}`;
         if (artistShareEl) artistShareEl.textContent = `€${totalArtistShare.toFixed(2)}`;
+
+        // Paid Badge anzeigen wenn > 0
+        if (paidBadgeEl && paidAmountEl) {
+          if (totalPaid > 0) {
+            paidAmountEl.textContent = `€${totalPaid.toFixed(2)}`;
+            paidBadgeEl.style.display = 'inline-flex';
+          } else {
+            paidBadgeEl.style.display = 'none';
+          }
+        }
+
+        // Unpaid Badge anzeigen wenn > 0
+        if (unpaidBadgeEl && unpaidAmountEl) {
+          if (totalUnpaid > 0) {
+            unpaidAmountEl.textContent = `€${totalUnpaid.toFixed(2)}`;
+            unpaidBadgeEl.style.display = 'inline-flex';
+          } else {
+            unpaidBadgeEl.style.display = 'none';
+          }
+        }
 
       } catch (err) {
         console.error('Error in loadGuestSpotAppointments:', err);
