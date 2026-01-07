@@ -14731,7 +14731,7 @@
         </div>
 
         <!-- SECTION 2: Date & Time -->
-        <div style="margin-bottom:24px;">
+        <div id="guestSpotDateSection" style="margin-bottom:24px; opacity:0.5; pointer-events:none;">
           <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:12px;">Zeitraum</label>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
@@ -14787,7 +14787,7 @@
         </div>
 
         <!-- SECTION 3: Location -->
-        <div style="margin-bottom:24px;">
+        <div id="guestSpotLocationSection" style="margin-bottom:24px; opacity:0.5; pointer-events:none;">
           <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Location</label>
           <select id="guestSpotLocation" required style="
             width:100%;
@@ -15165,6 +15165,41 @@
             <div style="font-size:12px; color:#86868b;">Notiz</div>
             <div id="guestSpotDetailExternalNotes" style="font-size:14px;">-</div>
           </div>
+          </div>
+        </div>
+
+        <!-- Stay / Unterkunft Info (only shown if stay exists) -->
+        <div id="guestSpotStayInfo" style="display:none; margin-bottom:20px; padding:16px; background:rgba(142,142,147,0.08); border-radius:12px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span style="font-size:14px; font-weight:600; color:#1d1d1f;">Unterkunft</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Location</div>
+              <div id="stayInfoLocation" style="font-size:14px; font-weight:500;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Zeitraum</div>
+              <div id="stayInfoDateRange" style="font-size:14px; font-weight:500;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Tagesmiete</div>
+              <div id="stayInfoDailyRate" style="font-size:14px; font-weight:500;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#86868b; margin-bottom:2px;">Ausgewählte Tage</div>
+              <div id="stayInfoDaysCount" style="font-size:14px; font-weight:500;"></div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(0,0,0,0.08); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:#86868b;">Gesamt Miete</span>
+            <span id="stayInfoTotalAmount" style="font-size:18px; font-weight:700; color:#34c759;"></span>
           </div>
         </div>
 
@@ -47822,6 +47857,85 @@
     window.onGuestSpotLocationChange = onGuestSpotLocationChange;
     window.resetHospitalityFields = resetHospitalityFields;
 
+    // Load Stay info for Guest Spot Detail Modal
+    async function loadAndDisplayStayInfo(guestSpotId) {
+      const stayInfoDiv = document.getElementById('guestSpotStayInfo');
+      if (!stayInfoDiv) return;
+
+      try {
+        const { data: stay, error } = await supabase
+          .from('stays')
+          .select(`
+            *,
+            stay_location:stay_locations(id, name, city)
+          `)
+          .eq('guest_spot_id', guestSpotId)
+          .eq('status', 'active')
+          .single();
+
+        if (error || !stay) {
+          stayInfoDiv.style.display = 'none';
+          window.currentGuestSpotStayData = null;
+          return;
+        }
+
+        // Show stay info
+        stayInfoDiv.style.display = 'block';
+
+        // Location
+        const locationEl = document.getElementById('stayInfoLocation');
+        if (locationEl) {
+          locationEl.textContent = stay.stay_location?.name || 'Unbekannt';
+        }
+
+        // Date Range
+        const dateRangeEl = document.getElementById('stayInfoDateRange');
+        if (dateRangeEl) {
+          const fromDate = new Date(stay.date_from).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+          const toDate = new Date(stay.date_to).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          dateRangeEl.textContent = `${fromDate} - ${toDate}`;
+        }
+
+        // Daily Rate
+        const dailyRateEl = document.getElementById('stayInfoDailyRate');
+        if (dailyRateEl) {
+          dailyRateEl.textContent = `${stay.daily_rate?.toFixed(0) || 0}€/Tag`;
+        }
+
+        // Days Count
+        const daysCountEl = document.getElementById('stayInfoDaysCount');
+        let daysCount;
+        if (stay.selected_days && Array.isArray(stay.selected_days)) {
+          daysCount = stay.selected_days.length;
+        } else {
+          // Calculate from date range
+          const from = new Date(stay.date_from);
+          const to = new Date(stay.date_to);
+          daysCount = Math.ceil((to - from) / (1000 * 60 * 60 * 24)) + 1;
+        }
+        if (daysCountEl) {
+          daysCountEl.textContent = `${daysCount} Tage`;
+        }
+
+        // Total Amount - calculate from daily_rate * days
+        const totalEl = document.getElementById('stayInfoTotalAmount');
+        if (totalEl) {
+          const total = (stay.daily_rate || 0) * daysCount;
+          totalEl.textContent = `${total.toFixed(0)}€`;
+        }
+
+        // Store stay data for edit mode
+        window.currentGuestSpotStayData = stay;
+
+      } catch (err) {
+        console.error('Error loading stay info:', err);
+        stayInfoDiv.style.display = 'none';
+        window.currentGuestSpotStayData = null;
+      }
+    }
+
+    window.loadAndDisplayStayInfo = loadAndDisplayStayInfo;
+
     window.toggleCustomShareSlider = toggleCustomShareSlider;
     window.updateShareFromSlider = updateShareFromSlider;
     window.updateShareDisplayFromRank = updateShareDisplayFromRank;
@@ -47876,6 +47990,18 @@
       // Reset date picker
       if (typeof resetGuestSpotDatePicker === 'function') {
         resetGuestSpotDatePicker();
+      }
+
+      // Reset disabled states for sequential unlock
+      const dateSection = document.getElementById('guestSpotDateSection');
+      const locationSection = document.getElementById('guestSpotLocationSection');
+      if (dateSection) {
+        dateSection.style.opacity = '0.5';
+        dateSection.style.pointerEvents = 'none';
+      }
+      if (locationSection) {
+        locationSection.style.opacity = '0.5';
+        locationSection.style.pointerEvents = 'none';
       }
 
       // Populate location dropdown
@@ -48074,6 +48200,9 @@
 
       // NEU: Lade verknüpfte Appointments
       loadGuestSpotAppointments(slotData.id, slotData.share_percentage_artist, slotData.share_percentage_studio, slotData.self_booking || slotData.booking_type === 'external');
+
+      // Load and display Stay info if exists
+      loadAndDisplayStayInfo(slotData.id);
     }
 
     function closeGuestSpotDetailModal() {
@@ -48262,6 +48391,13 @@
         // Fallback wenn kein Rang: Default verwenden
         updateShareDisplayFromRank('default');
       }
+
+      // Unlock Date Section after Artist selected
+      const dateSection = document.getElementById('guestSpotDateSection');
+      if (dateSection) {
+        dateSection.style.opacity = '1';
+        dateSection.style.pointerEvents = 'auto';
+      }
     }
 
     function clearSelectedGuestSpotArtist() {
@@ -48272,6 +48408,18 @@
 
       // NEU: Share-Anzeige zurücksetzen
       resetShareDisplay();
+
+      // Lock Date and Location sections again
+      const dateSection = document.getElementById('guestSpotDateSection');
+      const locationSection = document.getElementById('guestSpotLocationSection');
+      if (dateSection) {
+        dateSection.style.opacity = '0.5';
+        dateSection.style.pointerEvents = 'none';
+      }
+      if (locationSection) {
+        locationSection.style.opacity = '0.5';
+        locationSection.style.pointerEvents = 'none';
+      }
     }
 
     // Open Add Artist Modal from Guest Spot Modal
@@ -48924,6 +49072,30 @@
             </div>
           `}
 
+          <!-- Stay Edit Section (only if stay exists) -->
+          <div id="guestSpotStayEdit" style="display:none; margin-bottom:20px; padding:16px; background:rgba(142,142,147,0.08); border-radius:12px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span style="font-size:14px; font-weight:600;">Unterkunft bearbeiten</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div>
+                <label style="font-size:11px; color:#86868b;">Tagesmiete (€)</label>
+                <input type="number" id="editStayDailyRate" style="width:100%; padding:8px; border:1px solid rgba(0,0,0,0.1); border-radius:6px; font-size:14px;">
+              </div>
+              <div>
+                <label style="font-size:11px; color:#86868b;">Gesamt (berechnet)</label>
+                <div id="editStayTotalDisplay" style="padding:8px; font-size:14px; font-weight:600; color:#34c759;"></div>
+              </div>
+            </div>
+
+            <input type="hidden" id="editStayId">
+          </div>
+
           <!-- Actions -->
           <div style="display:flex; gap:12px; justify-content:flex-end; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
             <button type="button" onclick="closeGuestSpotEditMode()" style="padding:10px 20px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; cursor:pointer;">Abbrechen</button>
@@ -48935,6 +49107,36 @@
       // Switch view
       viewContainer.style.display = 'none';
       editContainer.style.display = 'block';
+
+      // Load stay data into edit form
+      const stayEditDiv = document.getElementById('guestSpotStayEdit');
+      const stayData = window.currentGuestSpotStayData;
+
+      if (stayEditDiv && stayData) {
+        stayEditDiv.style.display = 'block';
+        document.getElementById('editStayId').value = stayData.id;
+        document.getElementById('editStayDailyRate').value = stayData.daily_rate || '';
+
+        // Calculate days
+        let stayDays;
+        if (stayData.selected_days && Array.isArray(stayData.selected_days)) {
+          stayDays = stayData.selected_days.length;
+        } else {
+          const from = new Date(stayData.date_from);
+          const to = new Date(stayData.date_to);
+          stayDays = Math.ceil((to - from) / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        document.getElementById('editStayTotalDisplay').textContent = `${((stayData.daily_rate || 0) * stayDays).toFixed(0)}€`;
+
+        // Update total on rate change
+        document.getElementById('editStayDailyRate').oninput = function() {
+          const rate = parseFloat(this.value) || 0;
+          document.getElementById('editStayTotalDisplay').textContent = `${(rate * stayDays).toFixed(0)}€`;
+        };
+      } else if (stayEditDiv) {
+        stayEditDiv.style.display = 'none';
+      }
     }
 
     function closeGuestSpotEditMode() {
@@ -48978,6 +49180,24 @@
           .in('id', slotIds);
 
         if (error) throw error;
+
+        // Update Stay if exists
+        const stayId = document.getElementById('editStayId')?.value;
+        if (stayId) {
+          const newDailyRate = parseFloat(document.getElementById('editStayDailyRate')?.value);
+          if (!isNaN(newDailyRate)) {
+            const { error: stayError } = await supabase
+              .from('stays')
+              .update({ daily_rate: newDailyRate })
+              .eq('id', stayId);
+
+            if (stayError) {
+              console.error('Error updating stay:', stayError);
+            } else {
+              console.log('✅ Stay daily_rate updated');
+            }
+          }
+        }
 
         showNotification('Guest Spot aktualisiert', 'success');
         closeGuestSpotDetailModal();
@@ -49266,6 +49486,17 @@
         state.selectedTo = date;
         document.getElementById('guestSpotDateTo').value = dateStr;
         document.getElementById('guestSpotDateToDisplay').textContent = formatDateForDisplay(date);
+      }
+
+      // Check if both dates are set, then unlock Location Section
+      const dateFrom = document.getElementById('guestSpotDateFrom')?.value;
+      const dateTo = document.getElementById('guestSpotDateTo')?.value;
+      if (dateFrom && dateTo) {
+        const locationSection = document.getElementById('guestSpotLocationSection');
+        if (locationSection) {
+          locationSection.style.opacity = '1';
+          locationSection.style.pointerEvents = 'auto';
+        }
       }
 
       // Close popup
