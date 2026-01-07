@@ -14905,18 +14905,18 @@
           </div>
         </div>
 
-        <!-- Payment Info (Internal) - Same structure as Self-Booking -->
+        <!-- Payment Info (Internal) - Same structure as Self-Booking, values from Appointments -->
         <div id="guestSpotDetailInternalPayment" style="display:none; padding:16px; background:rgba(52, 199, 89, 0.08); border-radius:12px; margin-bottom:20px;">
           <div style="font-size:13px; font-weight:600; color:#34c759; margin-bottom:12px;">Interne Buchung</div>
-          <!-- Row 1: Paid | Offen | Total Income -->
-          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+          <!-- Row 1: Paid | Offen | Total Income (all left-aligned) -->
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
             <span id="guestSpotDetailInternalPaidIndicator" style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#34c759; color:white;">
               <span id="guestSpotDetailInternalPaidAmount">€0.00</span> Paid
             </span>
             <span id="guestSpotDetailInternalUnpaidIndicator" style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#ff9500; color:white;">
               <span id="guestSpotDetailInternalUnpaidAmount">€0.00</span> Offen
             </span>
-            <div style="margin-left:auto;">
+            <div>
               <div style="font-size:11px; color:#86868b;">Total Income</div>
               <div id="guestSpotDetailInternalTotalIncome" style="font-weight:600; font-size:16px;">€0.00</div>
             </div>
@@ -14942,15 +14942,15 @@
         <!-- Payment Info (External/Self-Booking) - Aggregated from all Appointments -->
         <div id="guestSpotDetailExternalPayment" style="display:none; padding:16px; background:rgba(0, 122, 255, 0.08); border-radius:12px; margin-bottom:20px;">
           <div style="font-size:13px; font-weight:600; color:#007aff; margin-bottom:12px;">Self-Booking</div>
-          <!-- Row 1: Paid | Offen | Total Income -->
-          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+          <!-- Row 1: Paid | Offen | Total Income (all left-aligned) -->
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
             <span id="guestSpotDetailPaidIndicator" style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#34c759; color:white;">
               <span id="guestSpotDetailPaidAmount">€0.00</span> Paid
             </span>
             <span id="guestSpotDetailUnpaidIndicator" style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#ff9500; color:white;">
               <span id="guestSpotDetailUnpaidAmount">€0.00</span> Offen
             </span>
-            <div style="margin-left:auto;">
+            <div>
               <div style="font-size:11px; color:#86868b;">Total Income</div>
               <div id="guestSpotDetailTotalIncome" style="font-weight:600; font-size:16px;">€0.00</div>
             </div>
@@ -47307,24 +47307,20 @@
       const internalPayment = document.getElementById('guestSpotDetailInternalPayment');
       const externalPayment = document.getElementById('guestSpotDetailExternalPayment');
 
+      // Beide (Internal und Self-Booking) zeigen den gleichen Container
+      // Werte werden aus Appointments aggregiert (in loadGuestSpotAppointments)
       if (bookingType === 'internal') {
         internalPayment.style.display = 'block';
         externalPayment.style.display = 'none';
-
-        document.getElementById('guestSpotDetailInternalDeposit').textContent =
-          slotData.deposit_amount ? `€${parseFloat(slotData.deposit_amount).toFixed(2)}` : '€0.00';
-        document.getElementById('guestSpotDetailInternalOnsite').textContent =
-          slotData.onsite_deposit ? `€${parseFloat(slotData.onsite_deposit).toFixed(2)}` : '€0.00';
-        document.getElementById('guestSpotDetailInternalNotes').textContent =
-          slotData.payment_notes || '-';
+        // Nur Notiz setzen - Zahlungswerte kommen aus loadGuestSpotAppointments
+        const internalNotesEl = document.getElementById('guestSpotDetailInternalNotes');
+        if (internalNotesEl) internalNotesEl.textContent = slotData.payment_notes || '-';
       } else {
         internalPayment.style.display = 'none';
         externalPayment.style.display = 'block';
-
-        // Self-Booking: Werte werden jetzt aus Appointments aggregiert (in loadGuestSpotAppointments)
-        // Hier nur die Notiz setzen
-        const notesEl = document.getElementById('guestSpotDetailExternalNotes');
-        if (notesEl) notesEl.textContent = slotData.payment_notes || '-';
+        // Nur Notiz setzen - Zahlungswerte kommen aus loadGuestSpotAppointments
+        const externalNotesEl = document.getElementById('guestSpotDetailExternalNotes');
+        if (externalNotesEl) externalNotesEl.textContent = slotData.payment_notes || '-';
       }
 
       // Notes
@@ -48855,24 +48851,27 @@
         const totalIncomeEl = document.getElementById('guestSpotDetailTotalIncome');
         const studioShareEl = document.getElementById('guestSpotDetailStudioShare');
         const artistShareEl = document.getElementById('guestSpotDetailArtistShare');
-        const paidBadgeEl = document.getElementById('guestSpotDetailPaidIndicator');
-        const unpaidBadgeEl = document.getElementById('guestSpotDetailUnpaidIndicator');
         const paidAmountEl = document.getElementById('guestSpotDetailPaidAmount');
         const unpaidAmountEl = document.getElementById('guestSpotDetailUnpaidAmount');
 
         if (totalIncomeEl) totalIncomeEl.textContent = `€${totalIncome.toFixed(2)}`;
         if (studioShareEl) studioShareEl.textContent = `€${totalStudioShare.toFixed(2)}`;
         if (artistShareEl) artistShareEl.textContent = `€${totalArtistShare.toFixed(2)}`;
+        if (paidAmountEl) paidAmountEl.textContent = `€${totalPaid.toFixed(2)}`;
+        if (unpaidAmountEl) unpaidAmountEl.textContent = `€${totalUnpaid.toFixed(2)}`;
 
-        // Paid Badge - nur Wert aktualisieren (immer sichtbar via CSS)
-        if (paidBadgeEl && paidAmountEl) {
-          paidAmountEl.textContent = `€${totalPaid.toFixed(2)}`;
-        }
+        // Internal Container ebenfalls aktualisieren (gleiche Werte)
+        const internalTotalIncomeEl = document.getElementById('guestSpotDetailInternalTotalIncome');
+        const internalStudioShareEl = document.getElementById('guestSpotDetailInternalStudioShare');
+        const internalArtistShareEl = document.getElementById('guestSpotDetailInternalArtistShare');
+        const internalPaidAmountEl = document.getElementById('guestSpotDetailInternalPaidAmount');
+        const internalUnpaidAmountEl = document.getElementById('guestSpotDetailInternalUnpaidAmount');
 
-        // Unpaid Badge - nur Wert aktualisieren (immer sichtbar via CSS)
-        if (unpaidBadgeEl && unpaidAmountEl) {
-          unpaidAmountEl.textContent = `€${totalUnpaid.toFixed(2)}`;
-        }
+        if (internalTotalIncomeEl) internalTotalIncomeEl.textContent = `€${totalIncome.toFixed(2)}`;
+        if (internalStudioShareEl) internalStudioShareEl.textContent = `€${totalStudioShare.toFixed(2)}`;
+        if (internalArtistShareEl) internalArtistShareEl.textContent = `€${totalArtistShare.toFixed(2)}`;
+        if (internalPaidAmountEl) internalPaidAmountEl.textContent = `€${totalPaid.toFixed(2)}`;
+        if (internalUnpaidAmountEl) internalUnpaidAmountEl.textContent = `€${totalUnpaid.toFixed(2)}`;
 
       } catch (err) {
         console.error('Error in loadGuestSpotAppointments:', err);
