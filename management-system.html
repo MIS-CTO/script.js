@@ -47361,13 +47361,12 @@
       document.getElementById('guestSpotEditMode').style.display = 'none';
 
       // Check if slot is in the past or canceled
-      // Use grouped_date_to if available (for grouped slots), otherwise date_to
-      const effectiveDateTo = slotData.grouped_date_to || slotData.date_to;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // effectiveDateTo is already defined above - use it for isPast calculation
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
       const slotEndDate = effectiveDateTo ? new Date(effectiveDateTo) : null;
       if (slotEndDate) slotEndDate.setHours(23, 59, 59, 999);
-      const isPast = slotEndDate && slotEndDate < today;
+      const isPast = slotEndDate && slotEndDate < todayDate;
       const isCanceled = slotData.status === 'canceled' || slotData.canceled_at;
 
       // Hide/Show action buttons based on status
