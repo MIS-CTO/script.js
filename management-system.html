@@ -39855,6 +39855,7 @@
           // Load from BASE TABLE (individual days) with artist data
           // NOT from grouped view - we need to group ourselves!
           // WICHTIG: FK muss explizit angegeben werden wegen mehrerer Beziehungen!
+          // Filter für upcoming/active Status - ignoriert completed (alte Daten)
           const { data, error } = await supabase
             .from('upcoming_slots')
             .select(`
@@ -39862,7 +39863,7 @@
               artist:artists!upcoming_slots_artist_id_fkey(id, name, instagram, profile_picture_url, background_image_url, style),
               location:locations!upcoming_slots_location_id_fkey(id, name, city)
             `)
-            .not('status', 'eq', 'canceled')
+            .in('status', ['upcoming', 'active'])
             .order('date_from', { ascending: true });
 
           if (error) throw error;
