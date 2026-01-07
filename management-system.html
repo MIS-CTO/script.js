@@ -27723,7 +27723,7 @@
                 .from('stays')
                 .select(`
                   *,
-                  artist:artists(id, name, profile_image),
+                  artist:artists(id, name, profile_picture_url),
                   stay_location:stay_locations(id, name, city)
                 `)
                 .eq('status', 'active')
@@ -48376,14 +48376,14 @@
       const form = document.getElementById('createStandaloneStayForm');
       form.onsubmit = handleStandaloneStaySubmit;
 
-      modal.style.display = 'flex';
+      modal.classList.add('active');
       console.log('🏠 Standalone Stay Modal opened');
     }
 
     // Modal schließen
     function closeStandaloneStayModal() {
       const modal = document.getElementById('createStandaloneStayModal');
-      if (modal) modal.style.display = 'none';
+      if (modal) modal.classList.remove('active');
     }
 
     // Stay Locations laden
@@ -48436,7 +48436,7 @@
           try {
             const { data: artists, error } = await supabase
               .from('artists')
-              .select('id, name, instagram_handle, profile_image')
+              .select('id, name, instagram_handle, profile_picture_url')
               .or(`name.ilike.%${query}%,instagram_handle.ilike.%${query}%`)
               .limit(10);
 
@@ -48444,8 +48444,8 @@
 
             if (artists && artists.length > 0) {
               resultsDiv.innerHTML = artists.map(a => `
-                <div onclick="selectStandaloneStayArtist('${a.id}', '${(a.name || '').replace(/'/g, "\\'")}', '${a.instagram_handle || ''}', '${a.profile_image || ''}')" style="padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(0,0,0,0.05);">
-                  ${a.profile_image ? `<img src="${a.profile_image}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">` : ''}
+                <div onclick="selectStandaloneStayArtist('${a.id}', '${(a.name || '').replace(/'/g, "\\'")}', '${a.instagram_handle || ''}', '${a.profile_picture_url || ''}')" style="padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(0,0,0,0.05);">
+                  ${a.profile_picture_url ? `<img src="${a.profile_picture_url}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">` : ''}
                   <div>
                     <div style="font-weight:500;">${a.name || 'Unknown'}</div>
                     ${a.instagram_handle ? `<div style="font-size:12px; color:#86868b;">@${a.instagram_handle}</div>` : ''}
@@ -50267,13 +50267,13 @@
 
       let html = `
         <div class="guest-spot-calendar-header">
-          <button type="button" class="guest-spot-calendar-nav" onclick="navigateGuestSpotDatePicker(-1, '${field}')" ${!canGoPrev ? 'disabled' : ''}>
+          <button type="button" class="guest-spot-calendar-nav" onclick="navigateGuestSpotDatePicker(-1, '${field}', event)" ${!canGoPrev ? 'disabled' : ''}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
           <span class="guest-spot-calendar-title">${monthNames[state.viewMonth]} ${state.viewYear}</span>
-          <button type="button" class="guest-spot-calendar-nav" onclick="navigateGuestSpotDatePicker(1, '${field}')">
+          <button type="button" class="guest-spot-calendar-nav" onclick="navigateGuestSpotDatePicker(1, '${field}', event)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 18l6-6-6-6"/>
             </svg>
@@ -50315,7 +50315,13 @@
       popup.innerHTML = html;
     }
 
-    function navigateGuestSpotDatePicker(direction, field) {
+    function navigateGuestSpotDatePicker(direction, field, event) {
+      // Stop event propagation to prevent outside-click handler from closing
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+
       const state = guestSpotDatePickerState;
       state.viewMonth += direction;
 
