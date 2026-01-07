@@ -39846,33 +39846,52 @@
       // ============================================
       // Helper: Load ALL non-canceled Guest Spots and categorize AFTER grouping
       // This prevents multi-day spots from being split across tabs
+      // WICHTIG: Lädt von BASE-Tabelle (einzelne Tage), nicht von gruppierter View!
       // ============================================
       async function loadAllNonCanceledGuestSpots() {
         console.log('📋 Loading ALL non-canceled Guest Spots for proper categorization...');
 
         try {
-          // Load ALL non-canceled slots in one query
+          // Load from BASE TABLE (individual days) with artist data
+          // NOT from grouped view - we need to group ourselves!
           const { data, error } = await supabase
-            .from('upcoming_slots_grouped')
-            .select('*')
+            .from('upcoming_slots')
+            .select(`
+              *,
+              artist:artists!artist_id(id, name, instagram, profile_picture_url, background_image_url, style),
+              location:locations!location_id(id, name, city)
+            `)
             .not('status', 'eq', 'canceled')
             .order('date_from', { ascending: true });
 
           if (error) throw error;
 
-          console.log(`✅ Loaded ${data?.length || 0} total non-canceled guest spots`);
+          console.log(`✅ Loaded ${data?.length || 0} total non-canceled guest spot DAYS`);
 
           if (!data || data.length === 0) {
             return { upcoming: [], active: [], previous: [] };
           }
 
-          // Group consecutive slots FIRST (before categorization)
-          const groupedData = groupConsecutiveSlots(data);
-          console.log(`📦 Grouped into ${groupedData.length} entries`);
+          // Transform data to match expected format (flatten artist/location)
+          const transformedData = data.map(slot => ({
+            ...slot,
+            artist_name: slot.artist?.name || 'Unknown Artist',
+            artist_instagram: slot.artist?.instagram || null,
+            profile_picture_url: slot.artist?.profile_picture_url || null,
+            background_image_url: slot.artist?.background_image_url || null,
+            artist_style: slot.artist?.style || null,
+            location_name: slot.location?.name || 'Unknown',
+            location_city: slot.location?.city || null
+          }));
+
+          // Group consecutive slots FIRST (this is the key step!)
+          const groupedData = groupConsecutiveSlots(transformedData);
+          console.log(`📦 Grouped ${data.length} days into ${groupedData.length} entries`);
 
           // NOW categorize based on GROUPED dates
           const today = new Date();
           today.setHours(0, 0, 0, 0);
+          const todayTime = today.getTime();
 
           const upcoming = [];
           const active = [];
@@ -39880,15 +39899,27 @@
 
           groupedData.forEach(slot => {
             // Use grouped dates (from frontend grouping)
-            const dateFrom = new Date(slot.grouped_date_from || slot.date_from);
-            const dateTo = new Date(slot.grouped_date_to || slot.date_to);
+            const dateFromStr = slot.grouped_date_from || slot.date_from;
+            const dateToStr = slot.grouped_date_to || slot.date_to;
+
+            const dateFrom = new Date(dateFromStr);
+            const dateTo = new Date(dateToStr);
             dateFrom.setHours(0, 0, 0, 0);
             dateTo.setHours(23, 59, 59, 999);
 
-            if (dateTo < today) {
+            const dateFromTime = dateFrom.getTime();
+            const dateToTime = dateTo.getTime();
+
+            // Debug log for first few entries
+            if (upcoming.length + active.length + previous.length < 3) {
+              console.log(`🔍 Slot ${slot.artist_name}: ${dateFromStr} - ${dateToStr}, today: ${today.toISOString().split('T')[0]}`);
+              console.log(`   dateFromTime: ${dateFromTime}, dateToTime: ${dateToTime}, todayTime: ${todayTime}`);
+            }
+
+            if (dateToTime < todayTime) {
               // LAST day is in the past → Previous
               previous.push(slot);
-            } else if (dateFrom <= today && dateTo >= today) {
+            } else if (dateFromTime <= todayTime && dateToTime >= todayTime) {
               // Today is WITHIN the range → Active
               active.push(slot);
             } else {
