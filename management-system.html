@@ -39346,242 +39346,542 @@
       }
     }
 
-    // ============================================
-    // LOAD ANALYTICS - COMPLETE DATA
-    // ============================================
-    async function loadAnalytics() {
-      console.log('📊 Loading Analytics Page...');
-      console.log('📊 ANALYTICS VERSION: 2025-11-15 - Complete Fix');
+    // ========================================
+    // ANALYTICS DASHBOARD v2 - NEW FUNCTIONS
+    // ========================================
+
+    // Current analytics state
+    let currentAnalyticsView = 'dashboard';
+    let analyticsDateRange = { start: null, end: null };
+    let analyticsStudioFilter = '';
+
+    // Show specific analytics view
+    function showAnalyticsView(viewName) {
+      console.log('📊 Switching to analytics view:', viewName);
+      currentAnalyticsView = viewName;
+
+      // Hide all views
+      document.querySelectorAll('.analytics-view').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      // Show selected view
+      const targetView = document.getElementById(`analytics-view-${viewName}`);
+      if (targetView) {
+        targetView.classList.add('active');
+      }
+
+      // Update nav items
+      document.querySelectorAll('.analytics-nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      const activeNav = document.querySelector(`.analytics-nav-item[data-analytics-view="${viewName}"]`);
+      if (activeNav) {
+        activeNav.classList.add('active');
+      }
+
+      // Load view-specific data
+      loadAnalyticsViewData(viewName);
+    }
+    window.showAnalyticsView = showAnalyticsView;
+
+    // Load data for specific view
+    async function loadAnalyticsViewData(viewName) {
+      console.log('📊 Loading data for view:', viewName);
+
+      switch(viewName) {
+        case 'dashboard':
+          await loadAnalyticsDashboardData();
+          break;
+        case 'revenue-overview':
+          await loadRevenueOverviewData();
+          break;
+        case 'revenue-merch':
+          await loadMerchData();
+          break;
+        case 'revenue-gutscheine':
+          await loadGutscheineData();
+          break;
+        case 'request-origins':
+          await loadRequestOriginsData();
+          break;
+        case 'conversion':
+          await loadConversionData();
+          break;
+        case 'team':
+          await loadTeamPerformanceData();
+          break;
+        case 'customers':
+          await loadCustomersAnalyticsData();
+          break;
+        case 'resident-artists':
+          await loadResidentArtistsData();
+          break;
+        case 'guest-artists':
+          await loadGuestArtistsData();
+          break;
+        case 'guest-spots':
+          await loadGuestSpotsAnalyticsData();
+          break;
+        case 'rankings':
+          await loadRankingsData();
+          break;
+        case 'revenue-timeline':
+          await loadRevenueTimelineData();
+          break;
+        case 'studio-breakdown':
+          await loadStudioBreakdownData();
+          break;
+        default:
+          console.log('Unknown view:', viewName);
+      }
+    }
+
+    // Initialize date pickers
+    function initAnalyticsDatePickers() {
+      const startInput = document.getElementById('analyticsDateStart');
+      const endInput = document.getElementById('analyticsDateEnd');
+
+      if (!startInput || !endInput) return;
+
+      // Set default: last 30 days
+      const today = new Date();
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      endInput.value = today.toISOString().split('T')[0];
+      startInput.value = monthAgo.toISOString().split('T')[0];
+
+      analyticsDateRange.start = startInput.value;
+      analyticsDateRange.end = endInput.value;
+
+      // Event listeners
+      startInput.addEventListener('change', handleAnalyticsDateChange);
+      endInput.addEventListener('change', handleAnalyticsDateChange);
+    }
+
+    function handleAnalyticsDateChange() {
+      const startInput = document.getElementById('analyticsDateStart');
+      const endInput = document.getElementById('analyticsDateEnd');
+
+      if (!startInput.value || !endInput.value) return;
+
+      // Validate
+      if (new Date(endInput.value) < new Date(startInput.value)) {
+        endInput.value = startInput.value;
+      }
+
+      analyticsDateRange.start = startInput.value;
+      analyticsDateRange.end = endInput.value;
+
+      // Remove active from time pills
+      document.querySelectorAll('.analytics-time-pill').forEach(p => p.classList.remove('active'));
+
+      // Reload current view
+      loadAnalyticsViewData(currentAnalyticsView);
+    }
+
+    // Initialize time filter pills
+    function initAnalyticsTimePills() {
+      document.querySelectorAll('.analytics-time-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          // Update active state
+          document.querySelectorAll('.analytics-time-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+
+          // Calculate date range
+          const today = new Date();
+          const range = pill.dataset.range;
+          let startDate = new Date();
+
+          switch(range) {
+            case '7d': startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); break;
+            case '14d': startDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000); break;
+            case '30d': startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000); break;
+            case '3m': startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000); break;
+            case '6m': startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000); break;
+            case '1y': startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000); break;
+            case 'all': startDate = new Date('2020-01-01'); break;
+          }
+
+          // Update date inputs
+          document.getElementById('analyticsDateStart').value = startDate.toISOString().split('T')[0];
+          document.getElementById('analyticsDateEnd').value = today.toISOString().split('T')[0];
+
+          analyticsDateRange.start = startDate.toISOString().split('T')[0];
+          analyticsDateRange.end = today.toISOString().split('T')[0];
+
+          // Reload current view
+          loadAnalyticsViewData(currentAnalyticsView);
+        });
+      });
+
+      // Studio filter
+      const studioFilter = document.getElementById('analyticsStudioFilter');
+      if (studioFilter) {
+        studioFilter.addEventListener('change', () => {
+          analyticsStudioFilter = studioFilter.value;
+          loadAnalyticsViewData(currentAnalyticsView);
+        });
+      }
+    }
+
+    // ========================================
+    // ANALYTICS DATA LOADING FUNCTIONS
+    // ========================================
+
+    async function loadAnalyticsDashboardData() {
+      console.log('📊 Loading dashboard data...');
 
       try {
-        // Show progress bar
-        ProgressBar.show('Starting to load analytics data...');
+        // Load appointments count
+        const { count: appointmentsCount } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true });
 
-        // Show loading state
-        const analyticsContent = document.getElementById('analyticsContent');
-        if (analyticsContent) {
-          analyticsContent.innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner"></div><p>Loading analytics data...</p></div>';
-        }
+        // Load requests count
+        const { count: requestsCount } = await supabase
+          .from('requests')
+          .select('*', { count: 'exact', head: true });
 
-        ProgressBar.updateProgress(10, 'Loading requests...');
+        // Load revenue data
+        const { data: revenueData } = await supabase
+          .from('appointments')
+          .select('total_amount')
+          .not('total_amount', 'is', null);
 
-        // Load ALL requests (no pagination limit)
-        console.log('📥 Loading all requests for analytics...');
-        let allRequests = [];
-        let page = 0;
-        const pageSize = 1000;
-        let hasMore = true;
+        const totalRevenue = revenueData?.reduce((sum, apt) => sum + (parseFloat(apt.total_amount) || 0), 0) || 0;
 
-        while (hasMore) {
-          const { data: requestsBatch, error: reqError } = await supabase
-            .from('requests')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .range(page * pageSize, (page + 1) * pageSize - 1);
+        // Calculate conversion rate
+        const conversionRate = requestsCount > 0 ? ((appointmentsCount / requestsCount) * 100).toFixed(1) : 0;
 
-          if (reqError) {
-            console.error('Error loading requests batch:', reqError);
-            break;
+        // Update KPIs
+        const kpiRevenue = document.getElementById('kpiTotalRevenue');
+        const kpiAppointments = document.getElementById('kpiAppointments');
+        const kpiRequests = document.getElementById('kpiRequests');
+        const kpiConversion = document.getElementById('kpiConversion');
+
+        if (kpiRevenue) kpiRevenue.textContent = `€${totalRevenue.toLocaleString('de-DE')}`;
+        if (kpiAppointments) kpiAppointments.textContent = appointmentsCount?.toLocaleString('de-DE') || '0';
+        if (kpiRequests) kpiRequests.textContent = requestsCount?.toLocaleString('de-DE') || '0';
+        if (kpiConversion) kpiConversion.textContent = `${conversionRate}%`;
+
+        // Render charts
+        renderDashboardCharts();
+
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    }
+
+    async function loadRevenueOverviewData() {
+      console.log('📊 Loading revenue overview data...');
+      renderRevenueOverviewCharts();
+    }
+
+    async function loadMerchData() {
+      console.log('📊 Loading merch data...');
+      renderMerchCharts();
+    }
+
+    async function loadGutscheineData() {
+      console.log('📊 Loading gutscheine data...');
+      renderGutscheineCharts();
+    }
+
+    async function loadRequestOriginsData() {
+      console.log('📊 Loading request origins data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadConversionData() {
+      console.log('📊 Loading conversion data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadTeamPerformanceData() {
+      console.log('📊 Loading team performance data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadCustomersAnalyticsData() {
+      console.log('📊 Loading customers analytics data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadResidentArtistsData() {
+      console.log('📊 Loading resident artists data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadGuestArtistsData() {
+      console.log('📊 Loading guest artists data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadGuestSpotsAnalyticsData() {
+      console.log('📊 Loading guest spots analytics data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadRankingsData() {
+      console.log('📊 Loading rankings data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadRevenueTimelineData() {
+      console.log('📊 Loading revenue timeline data...');
+      // TODO: Implement with real data
+    }
+
+    async function loadStudioBreakdownData() {
+      console.log('📊 Loading studio breakdown data...');
+      // TODO: Implement with real data
+    }
+
+    // ========================================
+    // ANALYTICS CHART RENDERING FUNCTIONS
+    // ========================================
+
+    // Chart instances storage
+    const analyticsCharts = {};
+
+    function getAnalyticsChartColors() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      return {
+        blue: '#0071e3',
+        green: '#34c759',
+        orange: '#ff9500',
+        red: '#ff3b30',
+        purple: '#5856d6',
+        pink: '#ff2d55',
+        gray: isDark ? '#636366' : '#8e8e93',
+        text: isDark ? '#f5f5f7' : '#1d1d1f',
+        grid: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+      };
+    }
+
+    function createAnalyticsPieChart(canvasId, legendId, data) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+
+      // Destroy existing chart
+      if (analyticsCharts[canvasId]) {
+        analyticsCharts[canvasId].destroy();
+      }
+
+      const colors = getAnalyticsChartColors();
+
+      analyticsCharts[canvasId] = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: data.map(d => d.label),
+          datasets: [{
+            data: data.map(d => d.value),
+            backgroundColor: data.map(d => d.color),
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: {
+            legend: { display: false }
           }
+        }
+      });
 
-          if (requestsBatch && requestsBatch.length > 0) {
-            allRequests = [...allRequests, ...requestsBatch];
-            // Update progress during request loading (10% to 35%)
-            const requestProgress = 10 + (25 * Math.min(page / 10, 1));
-            ProgressBar.updateProgress(requestProgress, `Loading requests (${allRequests.length} loaded)...`);
+      // Render custom legend
+      const legendContainer = document.getElementById(legendId);
+      if (legendContainer) {
+        legendContainer.innerHTML = data.map(d => `
+          <div class="analytics-legend-item">
+            <div class="analytics-legend-color" style="background: ${d.color}"></div>
+            <span class="analytics-legend-label">${d.label}</span>
+            <span class="analytics-legend-value">${d.display || d.value}</span>
+          </div>
+        `).join('');
+      }
+    }
 
-            if (page % 5 === 0) { // Log every 5 batches
-              console.log(`  ↳ Loaded ${allRequests.length} requests so far...`);
+    function createAnalyticsBarChart(canvasId, labels, datasets) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+
+      if (analyticsCharts[canvasId]) {
+        analyticsCharts[canvasId].destroy();
+      }
+
+      const colors = getAnalyticsChartColors();
+
+      analyticsCharts[canvasId] = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: datasets.length > 1 }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: colors.grid }
+            },
+            x: {
+              grid: { display: false }
             }
+          }
+        }
+      });
+    }
 
-            if (requestsBatch.length < pageSize) {
-              hasMore = false;
-            } else {
-              page++;
+    function createAnalyticsLineChart(canvasId, labels, datasets) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+
+      if (analyticsCharts[canvasId]) {
+        analyticsCharts[canvasId].destroy();
+      }
+
+      const colors = getAnalyticsChartColors();
+
+      analyticsCharts[canvasId] = new Chart(canvas, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: datasets.length > 1 }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: colors.grid }
+            },
+            x: {
+              grid: { display: false }
             }
-          } else {
-            hasMore = false;
           }
         }
+      });
+    }
 
-        console.log(`✅ Loaded ${allRequests.length} total requests`);
-        ProgressBar.updateProgress(40, `Loaded ${allRequests.length} requests. Loading appointments...`);
+    // ========================================
+    // SPECIFIC VIEW CHART RENDERERS
+    // ========================================
 
-        // Load ALL appointments (no pagination limit)
-        console.log('📥 Loading all appointments for analytics...');
-        let allAppointments = [];
-        page = 0;
-        hasMore = true;
+    function renderDashboardCharts() {
+      const colors = getAnalyticsChartColors();
 
-        while (hasMore) {
-          const { data: appointmentsBatch, error: aptError } = await supabase
-            .from('appointments')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .range(page * pageSize, (page + 1) * pageSize - 1);
+      // Revenue by Studio
+      createAnalyticsBarChart('dashboardRevenueChart',
+        ["Mommy I'm Sorry", 'Seventyone', 'GON', 'Muttersöhne', 'Pardon Paris'],
+        [{ label: 'Revenue €K', data: [215, 187, 172, 168, 105], backgroundColor: colors.blue }]
+      );
 
-          if (aptError) {
-            console.error('Error loading appointments batch:', aptError);
-            break;
-          }
+      // Appointments Timeline
+      createAnalyticsLineChart('dashboardAppointmentsChart',
+        ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
+        [{
+          label: 'Termine',
+          data: [120, 145, 132, 167, 189, 201, 178, 195, 210, 225, 198, 215],
+          borderColor: colors.green,
+          backgroundColor: 'rgba(52, 199, 89, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      );
+    }
 
-          if (appointmentsBatch && appointmentsBatch.length > 0) {
-            allAppointments = [...allAppointments, ...appointmentsBatch];
-            // Update progress during appointment loading (40% to 65%)
-            const appointmentProgress = 40 + (25 * Math.min(page / 10, 1));
-            ProgressBar.updateProgress(appointmentProgress, `Loading appointments (${allAppointments.length} loaded)...`);
+    function renderRevenueOverviewCharts() {
+      const colors = getAnalyticsChartColors();
 
-            if (page % 5 === 0) { // Log every 5 batches
-              console.log(`  ↳ Loaded ${allAppointments.length} appointments so far...`);
-            }
+      createAnalyticsPieChart('revenueSourcesPie', 'revenueSourcesLegend', [
+        { label: 'Tattoo-Termine', value: 712450, color: colors.green, display: '€712.450 (81.2%)' },
+        { label: 'Shop / Merch', value: 63463, color: colors.blue, display: '€63.463 (7.2%)' },
+        { label: 'Gutscheine', value: 52595, color: colors.orange, display: '€52.595 (6.0%)' },
+        { label: 'Guest Spots', value: 42800, color: colors.purple, display: '€42.800 (4.9%)' }
+      ]);
 
-            if (appointmentsBatch.length < pageSize) {
-              hasMore = false;
-            } else {
-              page++;
-            }
-          } else {
-            hasMore = false;
-          }
-        }
+      createAnalyticsBarChart('revenueByStudioChart',
+        ["Mommy I'm Sorry", 'Seventyone', 'GON', 'Muttersöhne', 'Pardon Paris'],
+        [{ label: 'Revenue €K', data: [215, 187, 172, 168, 105], backgroundColor: colors.blue }]
+      );
+    }
 
-        console.log(`✅ Loaded ${allAppointments.length} total appointments`);
-        ProgressBar.updateProgress(70, 'Calculating analytics...');
+    function renderMerchCharts() {
+      const colors = getAnalyticsChartColors();
 
-        // Calculate analytics data
-        console.log('📊 Calculating analytics...');
+      createAnalyticsPieChart('merchCategoryPie', 'merchCategoryLegend', [
+        { label: 'Gift Cards', value: 25335, color: colors.blue, display: '€25.336 (40%)' },
+        { label: 'Appointments', value: 5714, color: colors.green, display: '€5.714 (9%)' },
+        { label: 'Accessories', value: 2499, color: colors.purple, display: '€2.499 (4%)' },
+        { label: 'T-Shirts', value: 1592, color: colors.orange, display: '€1.592 (2.5%)' },
+        { label: 'Hoodies', value: 840, color: colors.pink, display: '€840 (1.3%)' }
+      ]);
 
-        // Request status breakdown
-        const requestStatusCounts = {
-          archived: 0,
-          finished: 0,
-          open_request: 0,
-          scheduled: 0,
-          canceled: 0,
-          pending: 0
-        };
+      createAnalyticsBarChart('merchSalesChart',
+        ['Gift Cards', 'Appointments', 'Accessories', 'T-Shirts', 'Hoodies'],
+        [{ label: 'Verkauft', data: [195, 68, 62, 15, 1], backgroundColor: colors.purple }]
+      );
+    }
 
-        allRequests.forEach(req => {
-          const status = req.status || 'unknown';
-          if (requestStatusCounts.hasOwnProperty(status)) {
-            requestStatusCounts[status]++;
-          } else {
-            requestStatusCounts[status] = 1;
-          }
-        });
+    function renderGutscheineCharts() {
+      const colors = getAnalyticsChartColors();
 
-        // Appointment status breakdown
-        const appointmentStatusCounts = {
-          finished: 0,
-          scheduled: 0,
-          no_show: 0,
-          rescheduled: 0,
-          canceled: 0,
-          unknown: 0
-        };
+      createAnalyticsPieChart('gutscheineStatusPie', 'gutscheineStatusLegend', [
+        { label: 'Eingelöst', value: 52595, color: colors.green, display: '€52.595 (251 Stück)' },
+        { label: 'Offen', value: 59065, color: colors.orange, display: '€59.065 (425 Stück)' }
+      ]);
 
-        allAppointments.forEach(apt => {
-          const status = apt.status || 'unknown';
-          if (appointmentStatusCounts.hasOwnProperty(status)) {
-            appointmentStatusCounts[status]++;
-          } else {
-            appointmentStatusCounts[status] = 1;
-          }
-        });
+      createAnalyticsBarChart('gutscheineAusstellerChart',
+        ['Marc', 'Bennet', 'Bao', 'Fay', 'Silas'],
+        [{ label: 'Gutscheine €', data: [44848, 23475, 20658, 10105, 2710], backgroundColor: colors.blue }]
+      );
 
-        // Filter by current time range (from analytics page filter)
-        const timeRangeFilter = document.getElementById('analyticsTimeRange')?.value || 'all';
-        const locationFilter = document.getElementById('analyticsLocationFilter')?.value || '';
+      createAnalyticsBarChart('gutscheineWertChart',
+        ['€50', '€100', '€150', '€200', '€250', '€300', '€350', '€500', '€750'],
+        [{ label: 'Anzahl', data: [116, 233, 33, 38, 69, 17, 8, 14, 8], backgroundColor: colors.purple }]
+      );
+    }
 
-        let filteredRequests = allRequests;
-        let filteredAppointments = allAppointments;
+    // ============================================
+    // LOAD ANALYTICS - DASHBOARD V2
+    // ============================================
+    async function loadAnalytics() {
+      console.log('📊 Loading Analytics Dashboard v2...');
 
-        // Apply location filter
-        if (locationFilter && locationFilter !== '') {
-          filteredRequests = filteredRequests.filter(req => req.location_id === locationFilter);
-          filteredAppointments = filteredAppointments.filter(apt => apt.location_id === locationFilter);
-        }
+      try {
+        ProgressBar.show('Loading Analytics...');
 
-        // Apply time range filter
-        if (timeRangeFilter !== 'all') {
-          const now = new Date();
-          let startDate = null;
+        // Initialize date pickers with default range (last 30 days)
+        initAnalyticsDatePickers();
 
-          switch(timeRangeFilter) {
-            case 'week':
-              const day = now.getDay();
-              const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-              startDate = new Date(now.getFullYear(), now.getMonth(), diff);
-              startDate.setHours(0, 0, 0, 0);
-              break;
-            case 'month':
-              startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-              startDate.setHours(0, 0, 0, 0);
-              break;
-            case 'year':
-              startDate = new Date(now.getFullYear(), 0, 1);
-              startDate.setHours(0, 0, 0, 0);
-              break;
-          }
+        // Initialize time pill click handlers
+        initAnalyticsTimePills();
 
-          if (startDate) {
-            filteredRequests = filteredRequests.filter(req => {
-              const reqDate = new Date(req.created_at);
-              return reqDate >= startDate;
-            });
+        // Load data for default view (dashboard)
+        ProgressBar.updateProgress(30, 'Loading dashboard data...');
+        await loadAnalyticsDashboardData();
 
-            filteredAppointments = filteredAppointments.filter(apt => {
-              const aptDate = new Date(apt.created_at);
-              return aptDate >= startDate;
-            });
-          }
-        }
+        // Show default view
+        showAnalyticsView('dashboard');
 
-        // Calculate project metrics
-        ProgressBar.updateProgress(75, 'Calculating metrics...');
-        const projectMetrics = window.calculateProjectMetrics(allRequests, allAppointments);
-
-        // Render analytics sections
-        ProgressBar.updateProgress(80, 'Rendering charts...');
-        console.log('🎨 Rendering analytics sections...');
-
-        renderRequestsOverview(filteredRequests, filteredAppointments);
-        ProgressBar.updateProgress(85, 'Rendering status breakdowns...');
-        renderRequestStatusBreakdown(allRequests, requestStatusCounts);
-        renderAppointmentStatusBreakdown(allAppointments, appointmentStatusCounts);
-        ProgressBar.updateProgress(90, 'Rendering revenue data...');
-        renderRevenueOverview(allRequests, allAppointments);
-        renderRevenueTimeline(allRequests);
-        ProgressBar.updateProgress(95, 'Finalizing charts...');
-        renderAppointmentsByArtist(allAppointments);
-        renderRevenueByPaymentStatus(allRequests);
-        renderProjectAnalytics(projectMetrics);
-        renderArtistPerformance(allAppointments);
-        renderVIPCustomers(allRequests);
-
-        console.log('✅ Analytics page loaded successfully');
+        ProgressBar.updateProgress(100, 'Analytics loaded');
         ProgressBar.hide();
+
+        console.log('✅ Analytics Dashboard loaded successfully');
 
       } catch (error) {
         console.error('❌ Error loading analytics:', error);
         ProgressBar.hide();
-        const analyticsContent = document.getElementById('analyticsContent');
-        if (analyticsContent) {
-          analyticsContent.innerHTML = `
-            <div style="text-align:center; padding:40px;">
-              <p style="color:var(--error); font-size:18px; margin-bottom:10px;">⚠️ Error Loading Analytics</p>
-              <p style="color:var(--muted); font-size:14px;">${error.message}</p>
-              <button onclick="loadAnalytics()" style="margin-top:20px; padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer;">
-                Retry
-              </button>
-            </div>
-          `;
-        }
       }
     }
 
     // ============================================
-    // RENDER REQUESTS OVERVIEW
+    // RENDER REQUESTS OVERVIEW (LEGACY)
     // ============================================
     function renderRequestsOverview(requests, appointments) {
       const totalRequests = requests.length;
