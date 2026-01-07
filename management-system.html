@@ -12512,6 +12512,13 @@
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Create Booking</span>
       </button>
+      <button id="createStayBtn" onclick="openStandaloneStayModal()" style="display:none; padding:10px 16px; border:none; border-radius:8px; background:rgba(142,142,147,0.15); color:#1d1d1f; font-size:14px; font-weight:500; cursor:pointer; align-items:center; gap:6px; height:37px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        + Stay
+      </button>
       <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
         <select id="locationDropdown" style="min-width:200px;"></select>
       </div>
@@ -15080,6 +15087,138 @@
             font-weight:500;
             cursor:pointer;
           ">Guest Spot erstellen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- STANDALONE STAY MODAL -->
+  <!-- ============================================ -->
+  <div class="modal-backdrop" id="createStandaloneStayModal">
+    <div class="modal" style="max-width:550px; max-height:90vh; overflow-y:auto;">
+      <h3 style="margin:0 0 24px 0; font-size:20px; font-weight:600; display:flex; align-items:center; gap:10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Unterkunft buchen
+      </h3>
+
+      <form id="createStandaloneStayForm">
+        <!-- Artist Auswahl -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Artist</label>
+          <div style="position:relative;">
+            <input
+              type="text"
+              id="standaloneStayArtistSearch"
+              placeholder="Artist suchen..."
+              autocomplete="off"
+              style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;"
+            >
+            <div id="standaloneStayArtistResults" style="
+              display:none;
+              position:absolute;
+              top:100%;
+              left:0;
+              right:0;
+              background:white;
+              border:1px solid rgba(0,0,0,0.1);
+              border-radius:8px;
+              box-shadow:0 4px 12px rgba(0,0,0,0.15);
+              max-height:200px;
+              overflow-y:auto;
+              z-index:1000;
+              margin-top:4px;
+            "></div>
+          </div>
+          <div id="standaloneStaySelectedArtist" style="display:none; margin-top:12px; padding:12px; background:rgba(142,142,147,0.08); border-radius:8px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img id="standaloneStayArtistAvatar" src="" alt="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; display:none;">
+              <div style="flex:1;">
+                <div id="standaloneStayArtistName" style="font-weight:600; font-size:15px;"></div>
+                <div id="standaloneStayArtistInstagram" style="font-size:13px; color:#86868b;"></div>
+              </div>
+              <button type="button" onclick="clearStandaloneStayArtist()" style="padding:6px 12px; border:1px solid #ff3b30; border-radius:6px; background:transparent; color:#ff3b30; font-size:12px; cursor:pointer;">✕</button>
+            </div>
+          </div>
+          <input type="hidden" id="standaloneStayArtistId" required>
+        </div>
+
+        <!-- Unterkunft Auswahl -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Unterkunft</label>
+          <select id="standaloneStayLocation" onchange="onStandaloneStayLocationChange()" required style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; background:white;">
+            <option value="">-- Unterkunft wählen --</option>
+          </select>
+          <div id="standaloneStayOccupancy" style="display:none; margin-top:8px; padding:10px; background:rgba(0,122,255,0.08); border-radius:6px; font-size:12px;">
+            <span style="color:#007aff; font-weight:500;">Aktuelle Belegung:</span>
+            <span id="standaloneStayArtists" style="color:#1d1d1f;"></span>
+          </div>
+        </div>
+
+        <!-- Datum -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Zeitraum</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="font-size:11px; color:#86868b; display:block; margin-bottom:4px;">Ankunft</label>
+              <input type="date" id="standaloneStayDateFrom" onchange="updateStandaloneStayCalendar()" required style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:#86868b; display:block; margin-bottom:4px;">Abreise</label>
+              <input type="date" id="standaloneStayDateTo" onchange="updateStandaloneStayCalendar()" required style="width:100%; padding:10px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tagesmiete -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Tagesmiete (€)</label>
+          <input type="number" id="standaloneStayDailyRate" step="1" min="0" placeholder="50" oninput="updateStandaloneStayTotal()" style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
+          <p id="standaloneStayRateHint" style="font-size:11px; color:#86868b; margin-top:4px;">Standard: 50€/Tag</p>
+        </div>
+
+        <!-- Mini-Kalender -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Tage auswählen</label>
+          <div id="standaloneStayMiniCalendar" style="padding:12px; background:rgba(142,142,147,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <span style="font-size:12px; color:#86868b;">Erst Datum wählen</span>
+              <div style="display:flex; gap:8px;">
+                <button type="button" onclick="selectAllStandaloneStayDays()" style="padding:4px 8px; font-size:11px; border:1px solid rgba(0,0,0,0.1); border-radius:4px; background:white; cursor:pointer;">Alle</button>
+                <button type="button" onclick="deselectAllStandaloneStayDays()" style="padding:4px 8px; font-size:11px; border:1px solid rgba(0,0,0,0.1); border-radius:4px; background:white; cursor:pointer;">Keine</button>
+              </div>
+            </div>
+            <div id="standaloneStayDaysGrid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;"></div>
+          </div>
+        </div>
+
+        <!-- Notizen -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">Notizen (optional)</label>
+          <textarea id="standaloneStayNotes" rows="2" placeholder="z.B. Grund des Aufenthalts..." style="width:100%; padding:12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px; resize:vertical; font-family:inherit;"></textarea>
+        </div>
+
+        <!-- Zusammenfassung -->
+        <div style="margin-bottom:24px; padding:16px; background:rgba(142,142,147,0.08); border-radius:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-size:12px; color:#86868b;">Ausgewählte Tage:</span>
+              <span id="standaloneStayDaysCount" style="font-size:16px; font-weight:600; color:#1d1d1f; margin-left:8px;">0</span>
+            </div>
+            <div>
+              <span style="font-size:12px; color:#86868b;">Gesamt:</span>
+              <span id="standaloneStayTotal" style="font-size:20px; font-weight:700; color:#1d1d1f; margin-left:8px;">0€</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:12px; justify-content:flex-end;">
+          <button type="button" onclick="closeStandaloneStayModal()" style="padding:12px 24px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; background:white; color:#1d1d1f; font-size:14px; font-weight:500; cursor:pointer;">Abbrechen</button>
+          <button type="submit" style="padding:12px 24px; border:none; border-radius:8px; background:#1d1d1f; color:#fff; font-size:14px; font-weight:500; cursor:pointer;">Unterkunft buchen</button>
         </div>
       </form>
     </div>
@@ -19449,6 +19588,9 @@
               applyLocationTheme(colors);
             }
 
+            // Set initial Create Stay button visibility
+            updateCreateStayButtonVisibility(selectedLocationId);
+
             const locSelect = document.getElementById('locationDropdown');
             if (locSelect) {
               locSelect.innerHTML = locations.map(l =>
@@ -19466,6 +19608,9 @@
                   const colors = getLocationColors(currentLocationName);
                   applyLocationTheme(colors);
                 }
+
+                // Update Create Stay button visibility
+                updateCreateStayButtonVisibility(selectedLocationId);
 
                 await loadEvents();
                 renderCalendar();
@@ -48196,6 +48341,414 @@
     window.selectAllEditStayDays = selectAllEditStayDays;
     window.deselectAllEditStayDays = deselectAllEditStayDays;
     window.updateEditStayTotal = updateEditStayTotal;
+
+    // ========== STANDALONE STAY FUNKTIONEN ==========
+
+    let standaloneStaySelectedArtist = null;
+    let standaloneStaySelectedDays = [];
+
+    // Modal öffnen
+    function openStandaloneStayModal() {
+      const modal = document.getElementById('createStandaloneStayModal');
+      if (!modal) return;
+
+      // Reset form
+      document.getElementById('createStandaloneStayForm')?.reset();
+      document.getElementById('standaloneStaySelectedArtist').style.display = 'none';
+      document.getElementById('standaloneStayArtistSearch').value = '';
+      document.getElementById('standaloneStayArtistId').value = '';
+      document.getElementById('standaloneStayOccupancy').style.display = 'none';
+      document.getElementById('standaloneStayDaysGrid').innerHTML = '';
+      standaloneStaySelectedArtist = null;
+      standaloneStaySelectedDays = [];
+
+      // Default date: heute
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('standaloneStayDateFrom').value = today;
+
+      // Load stay locations
+      loadStandaloneStayLocations();
+
+      // Setup artist search
+      setupStandaloneStayArtistSearch();
+
+      // Setup form submit
+      const form = document.getElementById('createStandaloneStayForm');
+      form.onsubmit = handleStandaloneStaySubmit;
+
+      modal.style.display = 'flex';
+      console.log('🏠 Standalone Stay Modal opened');
+    }
+
+    // Modal schließen
+    function closeStandaloneStayModal() {
+      const modal = document.getElementById('createStandaloneStayModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Stay Locations laden
+    async function loadStandaloneStayLocations() {
+      const select = document.getElementById('standaloneStayLocation');
+      if (!select) return;
+
+      try {
+        const { data: locations, error } = await supabase
+          .from('stay_locations')
+          .select('*')
+          .eq('is_active', true)
+          .order('city, name');
+
+        if (error) throw error;
+
+        select.innerHTML = '<option value="">-- Unterkunft wählen --</option>';
+
+        (locations || []).forEach(loc => {
+          const option = document.createElement('option');
+          option.value = loc.id;
+          option.dataset.defaultRate = loc.default_daily_rate;
+          option.textContent = `${loc.name} (${loc.city})`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error('Error loading stay locations:', err);
+      }
+    }
+
+    // Artist Suche Setup
+    function setupStandaloneStayArtistSearch() {
+      const searchInput = document.getElementById('standaloneStayArtistSearch');
+      const resultsDiv = document.getElementById('standaloneStayArtistResults');
+
+      if (!searchInput || !resultsDiv) return;
+
+      let debounceTimer;
+
+      searchInput.oninput = async function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+          resultsDiv.style.display = 'none';
+          return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const { data: artists, error } = await supabase
+              .from('artists')
+              .select('id, name, instagram_handle, profile_image')
+              .or(`name.ilike.%${query}%,instagram_handle.ilike.%${query}%`)
+              .limit(10);
+
+            if (error) throw error;
+
+            if (artists && artists.length > 0) {
+              resultsDiv.innerHTML = artists.map(a => `
+                <div onclick="selectStandaloneStayArtist('${a.id}', '${(a.name || '').replace(/'/g, "\\'")}', '${a.instagram_handle || ''}', '${a.profile_image || ''}')" style="padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(0,0,0,0.05);">
+                  ${a.profile_image ? `<img src="${a.profile_image}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">` : ''}
+                  <div>
+                    <div style="font-weight:500;">${a.name || 'Unknown'}</div>
+                    ${a.instagram_handle ? `<div style="font-size:12px; color:#86868b;">@${a.instagram_handle}</div>` : ''}
+                  </div>
+                </div>
+              `).join('');
+              resultsDiv.style.display = 'block';
+            } else {
+              resultsDiv.innerHTML = '<div style="padding:12px; color:#86868b; text-align:center;">Keine Artists gefunden</div>';
+              resultsDiv.style.display = 'block';
+            }
+          } catch (err) {
+            console.error('Error searching artists:', err);
+          }
+        }, 300);
+      };
+
+      // Close on click outside
+      document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+          resultsDiv.style.display = 'none';
+        }
+      });
+    }
+
+    // Artist auswählen
+    function selectStandaloneStayArtist(id, name, instagram, image) {
+      standaloneStaySelectedArtist = { id, name, instagram, image };
+
+      document.getElementById('standaloneStayArtistId').value = id;
+      document.getElementById('standaloneStayArtistName').textContent = name;
+      document.getElementById('standaloneStayArtistInstagram').textContent = instagram ? `@${instagram}` : '';
+
+      const avatar = document.getElementById('standaloneStayArtistAvatar');
+      if (avatar && image) {
+        avatar.src = image;
+        avatar.style.display = 'block';
+      } else if (avatar) {
+        avatar.style.display = 'none';
+      }
+
+      document.getElementById('standaloneStaySelectedArtist').style.display = 'block';
+      document.getElementById('standaloneStayArtistSearch').value = '';
+      document.getElementById('standaloneStayArtistResults').style.display = 'none';
+
+      console.log('✅ Standalone Stay Artist selected:', name);
+    }
+
+    // Artist entfernen
+    function clearStandaloneStayArtist() {
+      standaloneStaySelectedArtist = null;
+      document.getElementById('standaloneStayArtistId').value = '';
+      document.getElementById('standaloneStaySelectedArtist').style.display = 'none';
+      document.getElementById('standaloneStayArtistSearch').value = '';
+    }
+
+    // Location Change
+    async function onStandaloneStayLocationChange() {
+      const select = document.getElementById('standaloneStayLocation');
+      const rateInput = document.getElementById('standaloneStayDailyRate');
+      const rateHint = document.getElementById('standaloneStayRateHint');
+      const occupancyDiv = document.getElementById('standaloneStayOccupancy');
+
+      if (!select) return;
+
+      const selectedOption = select.options[select.selectedIndex];
+
+      if (select.value && selectedOption) {
+        // Default Rate setzen
+        const defaultRate = selectedOption.dataset.defaultRate || 50;
+        if (rateInput && !rateInput.value) {
+          rateInput.value = defaultRate;
+        }
+        if (rateHint) {
+          rateHint.textContent = `Standard: ${defaultRate}€/Tag`;
+        }
+
+        // Belegung prüfen
+        const dateFrom = document.getElementById('standaloneStayDateFrom')?.value;
+        const dateTo = document.getElementById('standaloneStayDateTo')?.value;
+
+        if (dateFrom && dateTo) {
+          const occupancy = await getStayLocationOccupancy(select.value, dateFrom, dateTo);
+          if (occupancy.artists.length > 0 && occupancyDiv) {
+            document.getElementById('standaloneStayArtists').textContent = occupancy.artists.join(', ');
+            occupancyDiv.style.display = 'block';
+          } else if (occupancyDiv) {
+            occupancyDiv.style.display = 'none';
+          }
+        }
+      } else {
+        if (occupancyDiv) occupancyDiv.style.display = 'none';
+      }
+
+      updateStandaloneStayTotal();
+    }
+
+    // Mini-Kalender aktualisieren
+    function updateStandaloneStayCalendar() {
+      const grid = document.getElementById('standaloneStayDaysGrid');
+      const dateFrom = document.getElementById('standaloneStayDateFrom')?.value;
+      const dateTo = document.getElementById('standaloneStayDateTo')?.value;
+
+      if (!grid || !dateFrom || !dateTo) {
+        if (grid) grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#86868b; font-size:12px;">Bitte Datum wählen</div>';
+        return;
+      }
+
+      // Tage generieren
+      const days = [];
+      const start = new Date(dateFrom);
+      const end = new Date(dateTo);
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        days.push(new Date(d));
+      }
+
+      // Grid befüllen
+      grid.innerHTML = '';
+      const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+      days.forEach(date => {
+        const dateStr = date.toISOString().split('T')[0];
+        const dayName = dayNames[date.getDay()];
+        const dayNum = date.getDate();
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'stay-day-btn selected'; // Default: alle ausgewählt
+        btn.dataset.date = dateStr;
+        btn.innerHTML = `
+          <span class="day-name">${dayName}</span>
+          <span class="day-num">${dayNum}</span>
+        `;
+        btn.onclick = () => toggleStandaloneStayDay(btn, dateStr);
+
+        grid.appendChild(btn);
+      });
+
+      // Alle Tage initial auswählen
+      standaloneStaySelectedDays = days.map(d => d.toISOString().split('T')[0]);
+      updateStandaloneStayTotal();
+
+      // Belegung aktualisieren
+      onStandaloneStayLocationChange();
+    }
+
+    // Tag an/abwählen
+    function toggleStandaloneStayDay(btn, dateStr) {
+      btn.classList.toggle('selected');
+
+      if (btn.classList.contains('selected')) {
+        if (!standaloneStaySelectedDays.includes(dateStr)) {
+          standaloneStaySelectedDays.push(dateStr);
+        }
+      } else {
+        standaloneStaySelectedDays = standaloneStaySelectedDays.filter(d => d !== dateStr);
+      }
+
+      standaloneStaySelectedDays.sort();
+      updateStandaloneStayTotal();
+    }
+
+    // Alle Tage auswählen
+    function selectAllStandaloneStayDays() {
+      const buttons = document.querySelectorAll('#standaloneStayDaysGrid .stay-day-btn');
+      standaloneStaySelectedDays = [];
+
+      buttons.forEach(btn => {
+        btn.classList.add('selected');
+        standaloneStaySelectedDays.push(btn.dataset.date);
+      });
+
+      standaloneStaySelectedDays.sort();
+      updateStandaloneStayTotal();
+    }
+
+    // Alle Tage abwählen
+    function deselectAllStandaloneStayDays() {
+      const buttons = document.querySelectorAll('#standaloneStayDaysGrid .stay-day-btn');
+
+      buttons.forEach(btn => {
+        btn.classList.remove('selected');
+      });
+
+      standaloneStaySelectedDays = [];
+      updateStandaloneStayTotal();
+    }
+
+    // Gesamt berechnen
+    function updateStandaloneStayTotal() {
+      const dailyRate = parseFloat(document.getElementById('standaloneStayDailyRate')?.value) || 0;
+      const daysCount = standaloneStaySelectedDays.length;
+      const total = dailyRate * daysCount;
+
+      const countEl = document.getElementById('standaloneStayDaysCount');
+      const totalEl = document.getElementById('standaloneStayTotal');
+
+      if (countEl) countEl.textContent = daysCount;
+      if (totalEl) totalEl.textContent = `${total.toFixed(0)}€`;
+    }
+
+    // Form Submit
+    async function handleStandaloneStaySubmit(e) {
+      e.preventDefault();
+
+      const artistId = document.getElementById('standaloneStayArtistId')?.value;
+      const stayLocationId = document.getElementById('standaloneStayLocation')?.value;
+      const dateFrom = document.getElementById('standaloneStayDateFrom')?.value;
+      const dateTo = document.getElementById('standaloneStayDateTo')?.value;
+      const dailyRate = parseFloat(document.getElementById('standaloneStayDailyRate')?.value) || 0;
+      const notes = document.getElementById('standaloneStayNotes')?.value?.trim() || null;
+
+      // Validierung
+      if (!artistId) {
+        showToast('Bitte Artist auswählen', 'error');
+        return;
+      }
+      if (!stayLocationId) {
+        showToast('Bitte Unterkunft auswählen', 'error');
+        return;
+      }
+      if (!dateFrom || !dateTo) {
+        showToast('Bitte Zeitraum angeben', 'error');
+        return;
+      }
+      if (standaloneStaySelectedDays.length === 0) {
+        showToast('Bitte mindestens einen Tag auswählen', 'error');
+        return;
+      }
+
+      try {
+        const stayData = {
+          guest_spot_id: null, // Standalone - kein Guest Spot
+          artist_id: artistId,
+          stay_location_id: stayLocationId,
+          date_from: dateFrom,
+          date_to: dateTo,
+          daily_rate: dailyRate,
+          selected_days: standaloneStaySelectedDays,
+          is_long_stay: false,
+          status: 'active',
+          notes: notes,
+          created_by: localStorage.getItem('username')
+        };
+
+        console.log('📤 Creating standalone stay:', stayData);
+
+        const { data, error } = await supabase
+          .from('stays')
+          .insert(stayData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        console.log('✅ Standalone stay created:', data);
+        showToast('Unterkunft erfolgreich gebucht', 'success');
+
+        closeStandaloneStayModal();
+
+        // Kalender aktualisieren
+        if (typeof loadEvents === 'function') {
+          loadEvents();
+        }
+      } catch (err) {
+        console.error('❌ Error creating standalone stay:', err);
+        showToast('Fehler beim Buchen: ' + err.message, 'error');
+      }
+    }
+
+    // Window Exposure
+    window.openStandaloneStayModal = openStandaloneStayModal;
+    window.closeStandaloneStayModal = closeStandaloneStayModal;
+    window.selectStandaloneStayArtist = selectStandaloneStayArtist;
+    window.clearStandaloneStayArtist = clearStandaloneStayArtist;
+    window.onStandaloneStayLocationChange = onStandaloneStayLocationChange;
+    window.updateStandaloneStayCalendar = updateStandaloneStayCalendar;
+    window.toggleStandaloneStayDay = toggleStandaloneStayDay;
+    window.selectAllStandaloneStayDays = selectAllStandaloneStayDays;
+    window.deselectAllStandaloneStayDays = deselectAllStandaloneStayDays;
+    window.updateStandaloneStayTotal = updateStandaloneStayTotal;
+
+    // Show/hide Create Stay button based on selected location
+    function updateCreateStayButtonVisibility(locationId) {
+      const createStayBtn = document.getElementById('createStayBtn');
+      if (!createStayBtn) return;
+
+      // Get location details from allLocations or from name if available
+      const location = (window.allLocations || []).find(l => l.id === locationId);
+      const locationName = (location?.name || '').toLowerCase();
+
+      // Hospitality nur für Stuttgart (MIS, Seventyone) und Berlin (GON)
+      const isHospitalityLocation =
+        locationName.includes('mommy') ||
+        locationName.includes('seventyone') ||
+        locationName.includes('gon');
+
+      createStayBtn.style.display = isHospitalityLocation ? 'flex' : 'none';
+      console.log(`🏠 Create Stay button ${isHospitalityLocation ? 'shown' : 'hidden'} for location: ${locationName}`);
+    }
+
+    window.updateCreateStayButtonVisibility = updateCreateStayButtonVisibility;
 
     window.toggleCustomShareSlider = toggleCustomShareSlider;
     window.updateShareFromSlider = updateShareFromSlider;
