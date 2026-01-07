@@ -47261,6 +47261,9 @@
     function openGuestSpotDetailModal(slotData) {
       console.log('📋 Opening Guest Spot Detail Modal...', slotData);
 
+      // Store current guest spot data for later use (e.g., in toggleAppointmentPaidStatus)
+      window.currentGuestSpotData = slotData;
+
       currentGuestSpotDetailData = slotData;
 
       // Store IDs
@@ -47358,7 +47361,13 @@
       document.getElementById('guestSpotEditMode').style.display = 'none';
 
       // Check if slot is in the past or canceled
-      const isPast = slotData.date_to && new Date(slotData.date_to) < new Date();
+      // Use grouped_date_to if available (for grouped slots), otherwise date_to
+      const effectiveDateTo = slotData.grouped_date_to || slotData.date_to;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const slotEndDate = effectiveDateTo ? new Date(effectiveDateTo) : null;
+      if (slotEndDate) slotEndDate.setHours(23, 59, 59, 999);
+      const isPast = slotEndDate && slotEndDate < today;
       const isCanceled = slotData.status === 'canceled' || slotData.canceled_at;
 
       // Hide/Show action buttons based on status
@@ -48917,6 +48926,8 @@
     // Toggle Appointment Payment Status (für Guest Spot Appointment Cards)
     async function toggleAppointmentPaidStatus(appointmentId) {
       try {
+        console.log('🔄 Toggling payment status for appointment:', appointmentId);
+
         // Get current appointment data
         const { data: apt, error: fetchError } = await supabase
           .from('appointments')
@@ -48929,6 +48940,8 @@
         const currentStatus = (apt.payment_status || '').toLowerCase();
         const newStatus = currentStatus === 'paid' ? 'unpaid' : 'paid';
 
+        console.log(`📝 Changing status from "${currentStatus}" to "${newStatus}"`);
+
         // Update payment status
         const { error: updateError } = await supabase
           .from('appointments')
@@ -48937,46 +48950,41 @@
 
         if (updateError) throw updateError;
 
+        console.log('✅ Payment status updated successfully');
+
         // Reload appointments to refresh the view
         if (window.currentGuestSpotSlotIds && window.currentGuestSpotSlotIds.length > 0) {
           await loadGuestSpotAppointments(window.currentGuestSpotSlotIds);
+        } else if (window.currentGuestSpotData) {
+          // Fallback: reload using current guest spot data
+          const slotData = window.currentGuestSpotData;
+          await loadGuestSpotAppointments(slotData.id, slotData.share_percentage_artist, slotData.share_percentage_studio, slotData.self_booking || slotData.booking_type === 'external');
         }
 
-        showToast(`Zahlungsstatus auf "${newStatus}" geändert`, 'success');
       } catch (err) {
-        console.error('Error toggling payment status:', err);
-        showToast('Fehler beim Aktualisieren des Zahlungsstatus', 'error');
+        console.error('❌ Error toggling payment status:', err);
+        alert('Fehler beim Aktualisieren des Zahlungsstatus: ' + err.message);
       }
     }
     window.toggleAppointmentPaidStatus = toggleAppointmentPaidStatus;
 
-    // Edit Guest Spot Appointment - opens the appointment edit modal
+    // Edit Guest Spot Appointment - opens the appointment details modal
     async function editGuestSpotAppointment(appointmentId) {
       try {
-        // Fetch full appointment data
-        const { data: apt, error } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('id', appointmentId)
-          .single();
+        console.log('📝 Opening appointment details for:', appointmentId);
 
-        if (error) throw error;
-
-        // Use existing appointment edit function if available
-        if (typeof openAppointmentEditModal === 'function') {
-          openAppointmentEditModal(apt);
-        } else if (typeof editAppointment === 'function') {
-          editAppointment(apt);
-        } else if (typeof openEditAppointmentModal === 'function') {
-          openEditAppointmentModal(apt);
+        // Use the existing showAppointmentDetails function
+        if (typeof showAppointmentDetails === 'function') {
+          await showAppointmentDetails(appointmentId);
+        } else if (typeof window.showAppointmentDetails === 'function') {
+          await window.showAppointmentDetails(appointmentId);
         } else {
-          // Fallback: Log and inform user
-          console.log('Appointment to edit:', apt);
-          showToast('Appointment Edit Modal nicht gefunden', 'warning');
+          console.error('showAppointmentDetails function not found');
+          alert('Termin-Details Modal nicht verfügbar');
         }
       } catch (err) {
-        console.error('Error loading appointment for edit:', err);
-        showToast('Fehler beim Laden des Termins', 'error');
+        console.error('❌ Error opening appointment details:', err);
+        alert('Fehler beim Öffnen der Termin-Details: ' + err.message);
       }
     }
     window.editGuestSpotAppointment = editGuestSpotAppointment;
