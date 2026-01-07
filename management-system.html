@@ -39854,12 +39854,13 @@
         try {
           // Load from BASE TABLE (individual days) with artist data
           // NOT from grouped view - we need to group ourselves!
+          // WICHTIG: FK muss explizit angegeben werden wegen mehrerer Beziehungen!
           const { data, error } = await supabase
             .from('upcoming_slots')
             .select(`
               *,
-              artist:artists!artist_id(id, name, instagram, profile_picture_url, background_image_url, style),
-              location:locations!location_id(id, name, city)
+              artist:artists!upcoming_slots_artist_id_fkey(id, name, instagram, profile_picture_url, background_image_url, style),
+              location:locations!upcoming_slots_location_id_fkey(id, name, city)
             `)
             .not('status', 'eq', 'canceled')
             .order('date_from', { ascending: true });
