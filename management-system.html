@@ -13686,270 +13686,587 @@
   </section>
 
   <section id="analytics-section">
-    <div class="tab-header">
-      <h2 class="tab-header-title">Analytics</h2>
-      <p class="tab-header-subtitle">Analysiere Geschäftszahlen und Statistiken</p>
-    </div>
+    <div class="analytics-dashboard">
+      <!-- Analytics Sidebar Navigation -->
+      <div class="analytics-sidebar">
+        <div class="analytics-sidebar-header">
+          <div class="analytics-sidebar-title">📊 Analytics</div>
+        </div>
 
-    <!-- Filters -->
-    <div class="analytics-filters">
-      <select id="analyticsLocationFilter" class="filter-select">
-        <option value="">All Locations</option>
-        <!-- Will be populated dynamically -->
-      </select>
-
-      <select id="analyticsDateRangeFilter" class="filter-select">
-        <option value="all">Alle Zeiträume</option>
-        <option value="today">Heute</option>
-        <option value="week">Diese Woche</option>
-        <option value="month" selected>Dieser Monat</option>
-        <option value="quarter">Dieses Quartal</option>
-        <option value="year">Dieses Jahr</option>
-        <option value="last30">Letzte 30 Tage</option>
-        <option value="last90">Letzte 90 Tage</option>
-        <option value="last365">Letztes Jahr</option>
-      </select>
-
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <label style="font-size: 13px; color: var(--muted);">Von:</label>
-        <input type="date" id="analyticsStartDate" class="filter-select" style="min-width: 150px;">
-        <label style="font-size: 13px; color: var(--muted);">Bis:</label>
-        <input type="date" id="analyticsEndDate" class="filter-select" style="min-width: 150px;">
-      </div>
-    </div>
-
-    <!-- Chart Grid -->
-    <div class="charts-grid">
-
-      <!-- Wrapper 1: Booking Sources & Artist Distribution -->
-      <div class="chart-card" style="grid-column: 1 / -1;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-
-          <!-- Booking Sources -->
-          <div>
-            <h3>Booking Sources</h3>
-            <div style="position: relative; width: 100%; height: 400px;">
-              <canvas id="bookingOriginsPie" style="width: 100%; height: 400px;"></canvas>
-            </div>
+        <div class="analytics-nav-section">
+          <div class="analytics-nav-section-title">Overview</div>
+          <div class="analytics-nav-item active" data-analytics-view="dashboard" onclick="showAnalyticsView('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
           </div>
+        </div>
 
-          <!-- Appointments nach Resident Artist -->
-          <div>
-            <h3>Appointments nach Resident Artist</h3>
-            <canvas id="artistDistributionChart"></canvas>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px;">
-              <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
-                <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Total Appointments</div>
-                <div style="font-size: 16px; font-weight: 600;" id="artistTotalRequests">0</div>
-              </div>
-              <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
-                <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Umgesetzte Termine</div>
-                <div style="font-size: 16px; font-weight: 600;" id="artistCompletedAppointments">0 (0%)</div>
-              </div>
-              <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
-                <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Nicht umgesetzt</div>
-                <div style="font-size: 16px; font-weight: 600;" id="artistNotCompleted">0 (0%)</div>
-              </div>
-              <div style="background: rgba(255,255,255,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
-                <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Beliebig</div>
-                <div style="font-size: 16px; font-weight: 600;" id="artistAny">0 (0%)</div>
-              </div>
-            </div>
+        <div class="analytics-nav-section">
+          <div class="analytics-nav-section-title">Bookings & Traffic</div>
+          <div class="analytics-nav-item" data-analytics-view="request-origins" onclick="showAnalyticsView('request-origins')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Request Origins
           </div>
+          <div class="analytics-nav-item" data-analytics-view="conversion" onclick="showAnalyticsView('conversion')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Conversion Funnel
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="team" onclick="showAnalyticsView('team')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Team Performance
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="customers" onclick="showAnalyticsView('customers')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Customers
+          </div>
+        </div>
 
+        <div class="analytics-nav-section">
+          <div class="analytics-nav-section-title">Artist Performance</div>
+          <div class="analytics-nav-item" data-analytics-view="resident-artists" onclick="showAnalyticsView('resident-artists')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Resident Artists
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="guest-artists" onclick="showAnalyticsView('guest-artists')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+            Guest Artists
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="guest-spots" onclick="showAnalyticsView('guest-spots')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Guest Spots
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="rankings" onclick="showAnalyticsView('rankings')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            Rankings
+          </div>
+        </div>
+
+        <div class="analytics-nav-section">
+          <div class="analytics-nav-section-title">Revenue</div>
+          <div class="analytics-nav-item" data-analytics-view="revenue-overview" onclick="showAnalyticsView('revenue-overview')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Overview
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="revenue-merch" onclick="showAnalyticsView('revenue-merch')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Merch
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="revenue-gutscheine" onclick="showAnalyticsView('revenue-gutscheine')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><circle cx="12" cy="14" r="2"/></svg>
+            Gutscheine
+          </div>
+          <div class="analytics-nav-item" data-analytics-view="revenue-timeline" onclick="showAnalyticsView('revenue-timeline')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            Timeline
+          </div>
+        </div>
+
+        <div class="analytics-nav-section">
+          <div class="analytics-nav-section-title">Studios</div>
+          <div class="analytics-nav-item" data-analytics-view="studio-breakdown" onclick="showAnalyticsView('studio-breakdown')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Studio Breakdown
+          </div>
         </div>
       </div>
 
-      <!-- Wrapper 2: Bookings Over Time & Requests/Appointments Overview -->
-      <div class="chart-card" style="grid-column: 1 / -1;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-
-          <!-- Bookings Over Time -->
-          <div>
-            <h3>Bookings Over Time</h3>
-
-            <div style="position: relative; width: 100%; height: 400px; margin-top: 16px;">
-              <canvas id="bookingsTimeline" style="width: 600px; height: 400px;"></canvas>
+      <!-- Analytics Main Content -->
+      <div class="analytics-main">
+        <!-- Header with Filters -->
+        <div class="analytics-header">
+          <div></div>
+          <div class="analytics-header-controls">
+            <div class="analytics-time-filter">
+              <button class="analytics-time-pill" data-range="7d">7d</button>
+              <button class="analytics-time-pill" data-range="14d">14d</button>
+              <button class="analytics-time-pill active" data-range="30d">30d</button>
+              <button class="analytics-time-pill" data-range="3m">3m</button>
+              <button class="analytics-time-pill" data-range="6m">6m</button>
+              <button class="analytics-time-pill" data-range="1y">1y</button>
+              <button class="analytics-time-pill" data-range="all">All</button>
             </div>
-          </div>
 
-          <!-- Requests & Appointments Overview -->
-          <div>
-            <h3>Requests & Appointments Overview</h3>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 20px;">
-              <!-- Total Requests -->
-              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 113, 227, 0.05); border-radius: 12px;">
-                <div style="font-size: 14px; color: var(--muted); margin-bottom: 8px;">Total Requests</div>
-                <div style="font-size: 56px; font-weight: 700; color: var(--accent);" id="requestsCount">0</div>
-                <div style="font-size: 14px; color: var(--muted); margin-top: 8px;">Customer Requests</div>
+            <div class="analytics-date-picker">
+              <input type="date" id="analyticsDateStart" title="Startdatum">
+              <span class="analytics-date-separator">–</span>
+              <input type="date" id="analyticsDateEnd" title="Enddatum">
+            </div>
+
+            <select class="analytics-location-select" id="analyticsStudioFilter">
+              <option value="">Alle Studios</option>
+              <option value="mis">Mommy I'm Sorry</option>
+              <option value="seventyone">Seventyone</option>
+              <option value="gon">GON</option>
+              <option value="muttersoehne">Muttersöhne</option>
+              <option value="pardon">Pardon Paris</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Analytics Views Container -->
+        <div id="analyticsViewsContainer">
+
+          <!-- VIEW: Dashboard -->
+          <div class="analytics-view active" id="analytics-view-dashboard">
+            <div class="analytics-page-header">
+              <h2>Dashboard</h2>
+              <p>Gesamtübersicht aller wichtigen Kennzahlen</p>
+            </div>
+
+            <div class="analytics-kpi-grid" id="dashboardKPIs">
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Gesamtumsatz</div>
+                <div class="analytics-kpi-value" id="kpiTotalRevenue">€0</div>
+                <div class="analytics-kpi-change positive">+12.5%</div>
               </div>
-              <!-- Total Appointments -->
-              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: rgba(52, 199, 89, 0.05); border-radius: 12px;">
-                <div style="font-size: 14px; color: var(--muted); margin-bottom: 8px;">Total Appointments</div>
-                <div style="font-size: 56px; font-weight: 700; color: var(--success);" id="appointmentsCount">0</div>
-                <div style="font-size: 14px; color: var(--muted); margin-top: 8px;">Scheduled Appointments</div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Termine</div>
+                <div class="analytics-kpi-value" id="kpiAppointments">0</div>
+                <div class="analytics-kpi-change positive">+8.3%</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Neue Anfragen</div>
+                <div class="analytics-kpi-value" id="kpiRequests">0</div>
+                <div class="analytics-kpi-change negative">-2.1%</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Conversion Rate</div>
+                <div class="analytics-kpi-value" id="kpiConversion">0%</div>
               </div>
             </div>
-          </div>
 
-        </div>
-      </div>
-
-      <!-- REQUEST & APPOINTMENT STATUS BREAKDOWN CHARTS -->
-      <div class="chart-card" style="grid-column: 1 / -1;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-          <!-- Request Status Chart -->
-          <div id="requestStatusChart"></div>
-
-          <!-- Appointment Status Chart -->
-          <div id="appointmentStatusChart"></div>
-        </div>
-      </div>
-
-      <!-- REVENUE OVERVIEW & TIMELINE (Horizontal Layout) -->
-      <div class="chart-card" style="grid-column: 1 / -1;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-
-          <!-- Revenue Overview -->
-          <div>
-            <h3>Umsatz-Übersicht</h3>
-            <div style="display: flex; flex-direction: column; gap: 24px; padding: 20px;">
-              <!-- Total Revenue -->
-              <div style="text-align: center;">
-                <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Gesamtumsatz</div>
-                <div style="font-size: 48px; font-weight: 700; color: var(--accent);" id="totalRevenue">€0</div>
-              </div>
-
-              <!-- Revenue Stats Grid -->
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-                <div style="text-align: center; padding: 16px; background: rgba(0, 113, 227, 0.05); border-radius: 8px;">
-                  <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Bezahlte Projekte</div>
-                  <div style="font-size: 24px; font-weight: 600; color: #0071e3;" id="paidProjects">0</div>
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header">
+                  <div class="analytics-chart-title">Umsatz nach Studio</div>
                 </div>
-                <div style="text-align: center; padding: 16px; background: rgba(255, 149, 0, 0.05); border-radius: 8px;">
-                  <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Ausstehend</div>
-                  <div style="font-size: 24px; font-weight: 600; color: #ff9500;" id="pendingRevenue">€0</div>
+                <div class="analytics-chart-container">
+                  <canvas id="dashboardRevenueChart"></canvas>
                 </div>
-                <div style="text-align: center; padding: 16px; background: rgba(52, 199, 89, 0.05); border-radius: 8px;">
-                  <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Durchschnitt</div>
-                  <div style="font-size: 24px; font-weight: 600; color: #34c759;" id="avgProjectPrice">€0</div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header">
+                  <div class="analytics-chart-title">Termine im Zeitverlauf</div>
                 </div>
-                <div style="text-align: center; padding: 16px; background: rgba(142, 142, 147, 0.05); border-radius: 8px;">
-                  <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Projekte</div>
-                  <div style="font-size: 24px; font-weight: 600; color: #8e8e93;" id="totalProjects">0</div>
+                <div class="analytics-chart-container">
+                  <canvas id="dashboardAppointmentsChart"></canvas>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Revenue Timeline -->
-          <div>
-            <h3>Umsatz im Zeitverlauf</h3>
-            <div style="position: relative; height: 400px;">
-              <canvas id="revenueTimeline"></canvas>
+          <!-- VIEW: Revenue Overview -->
+          <div class="analytics-view" id="analytics-view-revenue-overview">
+            <div class="analytics-page-header">
+              <h2>Revenue Overview</h2>
+              <p>Gesamtübersicht aller Einnahmequellen</p>
+            </div>
+
+            <div class="analytics-kpi-grid">
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Gesamtumsatz</div>
+                <div class="analytics-kpi-value">€877.778</div>
+                <div class="analytics-kpi-change positive">Alle Einnahmen</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Tattoo-Termine</div>
+                <div class="analytics-kpi-value">€712.450</div>
+                <div class="analytics-kpi-change" style="background: rgba(52, 199, 89, 0.1); color: var(--macos-accent-green);">81.2%</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Offene Zahlungen</div>
+                <div class="analytics-kpi-value">€98.780</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Anzahlungen</div>
+                <div class="analytics-kpi-value">€36.000</div>
+              </div>
+            </div>
+
+            <div class="analytics-page-header" style="margin-top: 32px; margin-bottom: 16px;">
+              <h3 style="font-size: 16px; font-weight: 600;">Einnahmequellen</h3>
+            </div>
+
+            <div class="analytics-revenue-streams">
+              <div class="analytics-revenue-stream-card">
+                <div class="analytics-revenue-stream-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <div class="analytics-revenue-stream-content">
+                  <div class="analytics-revenue-stream-label">Tattoo-Termine</div>
+                  <div class="analytics-revenue-stream-value">€712.450</div>
+                  <div class="analytics-revenue-stream-sub">appointments.total_amount</div>
+                </div>
+                <div class="analytics-revenue-stream-percent">81.2%</div>
+              </div>
+
+              <div class="analytics-revenue-stream-card">
+                <div class="analytics-revenue-stream-icon purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div class="analytics-revenue-stream-content">
+                  <div class="analytics-revenue-stream-label">Guest Spot Studio Share</div>
+                  <div class="analytics-revenue-stream-value">€42.800</div>
+                  <div class="analytics-revenue-stream-sub">upcoming_slots.studio_share</div>
+                </div>
+                <div class="analytics-revenue-stream-percent">4.9%</div>
+              </div>
+
+              <div class="analytics-revenue-stream-card">
+                <div class="analytics-revenue-stream-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </div>
+                <div class="analytics-revenue-stream-content">
+                  <div class="analytics-revenue-stream-label">Shop / Merch</div>
+                  <div class="analytics-revenue-stream-value">€63.463</div>
+                  <div class="analytics-revenue-stream-sub">E-Commerce Nettoumsatz</div>
+                </div>
+                <div class="analytics-revenue-stream-percent">7.2%</div>
+              </div>
+
+              <div class="analytics-revenue-stream-card">
+                <div class="analytics-revenue-stream-icon orange">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><circle cx="12" cy="14" r="2"/></svg>
+                </div>
+                <div class="analytics-revenue-stream-content">
+                  <div class="analytics-revenue-stream-label">Gutscheine (eingelöst)</div>
+                  <div class="analytics-revenue-stream-value">€52.595</div>
+                  <div class="analytics-revenue-stream-sub">251 von 676 eingelöst</div>
+                </div>
+                <div class="analytics-revenue-stream-percent">6.0%</div>
+              </div>
+
+              <div class="analytics-revenue-stream-card" style="border-color: var(--macos-accent-orange); border-style: dashed;">
+                <div class="analytics-revenue-stream-icon" style="background: rgba(255, 149, 0, 0.1); color: var(--macos-accent-orange);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="analytics-revenue-stream-content">
+                  <div class="analytics-revenue-stream-label">Gutscheine (offen)</div>
+                  <div class="analytics-revenue-stream-value">€59.065</div>
+                  <div class="analytics-revenue-stream-sub">425 noch nicht eingelöst</div>
+                </div>
+                <div class="analytics-revenue-stream-percent" style="color: var(--macos-accent-orange);">Potenzial</div>
+              </div>
+
+              <div class="analytics-revenue-stream-card total">
+                <div class="analytics-revenue-stream-icon" style="background: var(--macos-fill-tertiary); color: var(--macos-text-primary);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div class="analytics-revenue-stream-content">
+                  <div class="analytics-revenue-stream-label">Gesamt (realisiert)</div>
+                  <div class="analytics-revenue-stream-value">€871.308</div>
+                  <div class="analytics-revenue-stream-sub">Tattoo + Guest + Merch + Gutscheine</div>
+                </div>
+                <div class="analytics-revenue-stream-percent">100%</div>
+              </div>
+            </div>
+
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Einnahmen nach Quelle</div></div>
+                <div class="analytics-pie-layout">
+                  <div class="analytics-pie-wrapper"><canvas id="revenueSourcesPie"></canvas></div>
+                  <div class="analytics-pie-legend" id="revenueSourcesLegend"></div>
+                </div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Revenue by Studio</div></div>
+                <div class="analytics-chart-container"><canvas id="revenueByStudioChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: Merch -->
+          <div class="analytics-view" id="analytics-view-revenue-merch">
+            <div class="analytics-page-header">
+              <h2>Merch / E-Commerce</h2>
+              <p>Shop-Umsätze und Produktanalyse</p>
+            </div>
+
+            <div class="analytics-kpi-grid">
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Gesamtumsatz</div>
+                <div class="analytics-kpi-value">€76.145</div>
+                <div class="analytics-kpi-change positive">+300%</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Nettoumsatz</div>
+                <div class="analytics-kpi-value">€63.463</div>
+                <div class="analytics-kpi-change positive">+296%</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Bestellungen</div>
+                <div class="analytics-kpi-value">365</div>
+                <div class="analytics-kpi-change positive">+335%</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Ø Bestellwert</div>
+                <div class="analytics-kpi-value">€173,87</div>
+                <div class="analytics-kpi-change negative">-9%</div>
+              </div>
+            </div>
+
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Umsatz nach Kategorie</div></div>
+                <div class="analytics-pie-layout">
+                  <div class="analytics-pie-wrapper"><canvas id="merchCategoryPie"></canvas></div>
+                  <div class="analytics-pie-legend" id="merchCategoryLegend"></div>
+                </div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Verkaufte Artikel</div></div>
+                <div class="analytics-chart-container"><canvas id="merchSalesChart"></canvas></div>
+              </div>
+            </div>
+
+            <div class="analytics-table-container">
+              <table class="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Produkt</th>
+                    <th>Kategorie</th>
+                    <th style="text-align: right;">Verkauft</th>
+                    <th style="text-align: right;">Nettoumsatz</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="name">GIFT CARD</td><td>Gift Cards</td><td class="mono" style="text-align: right;">195</td><td class="mono" style="text-align: right;">€25.335,88</td></tr>
+                  <tr><td class="name">Appointment</td><td>Services</td><td class="mono" style="text-align: right;">68</td><td class="mono" style="text-align: right;">€5.714,04</td></tr>
+                  <tr><td class="name">MIS CULT CAP</td><td>Accessories</td><td class="mono" style="text-align: right;">30</td><td class="mono" style="text-align: right;">€1.251,36</td></tr>
+                  <tr><td class="name">MIS CULT BOXER</td><td>Accessories</td><td class="mono" style="text-align: right;">18</td><td class="mono" style="text-align: right;">€529,39</td></tr>
+                  <tr><td class="name">MIS CULT SHIRT</td><td>T-Shirts</td><td class="mono" style="text-align: right;">13</td><td class="mono" style="text-align: right;">€679,82</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- VIEW: Gutscheine -->
+          <div class="analytics-view" id="analytics-view-revenue-gutscheine">
+            <div class="analytics-page-header">
+              <h2>Gutscheine</h2>
+              <p>Analyse ausgestellter und eingelöster Gutscheine</p>
+            </div>
+
+            <div class="analytics-kpi-grid">
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Gutscheine Gesamt</div>
+                <div class="analytics-kpi-value">676</div>
+                <div class="analytics-kpi-change" style="background: rgba(0, 112, 243, 0.1); color: var(--macos-accent-blue);">€111.660 Wert</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Eingelöst</div>
+                <div class="analytics-kpi-value">251</div>
+                <div class="analytics-kpi-change positive">37.1% · €52.595</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Noch Offen</div>
+                <div class="analytics-kpi-value">425</div>
+                <div class="analytics-kpi-change negative">62.9% · €59.065</div>
+              </div>
+              <div class="analytics-kpi-card">
+                <div class="analytics-kpi-label">Ø Gutscheinwert</div>
+                <div class="analytics-kpi-value">€165</div>
+              </div>
+            </div>
+
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Eingelöst vs. Offen</div></div>
+                <div class="analytics-pie-layout">
+                  <div class="analytics-pie-wrapper"><canvas id="gutscheineStatusPie"></canvas></div>
+                  <div class="analytics-pie-legend" id="gutscheineStatusLegend"></div>
+                </div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Gutscheine nach Aussteller</div></div>
+                <div class="analytics-chart-container"><canvas id="gutscheineAusstellerChart"></canvas></div>
+              </div>
+            </div>
+
+            <div class="analytics-chart-card full-width" style="margin-top: 24px;">
+              <div class="analytics-chart-header"><div class="analytics-chart-title">Wert-Verteilung</div></div>
+              <div class="analytics-chart-container"><canvas id="gutscheineWertChart"></canvas></div>
+            </div>
+
+            <div class="analytics-table-container">
+              <table class="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Aussteller</th>
+                    <th style="text-align: right;">Ausgestellt</th>
+                    <th style="text-align: right;">Gesamtwert</th>
+                    <th style="text-align: right;">Ø Wert</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="name">Marc</td><td class="mono" style="text-align: right;">230</td><td class="mono" style="text-align: right;">€44.848</td><td class="mono" style="text-align: right;">€195</td></tr>
+                  <tr><td class="name">Bennet</td><td class="mono" style="text-align: right;">142</td><td class="mono" style="text-align: right;">€23.475</td><td class="mono" style="text-align: right;">€165</td></tr>
+                  <tr><td class="name">Bao</td><td class="mono" style="text-align: right;">118</td><td class="mono" style="text-align: right;">€20.658</td><td class="mono" style="text-align: right;">€175</td></tr>
+                  <tr><td class="name">Fay</td><td class="mono" style="text-align: right;">60</td><td class="mono" style="text-align: right;">€10.105</td><td class="mono" style="text-align: right;">€168</td></tr>
+                  <tr><td class="name">Silas</td><td class="mono" style="text-align: right;">16</td><td class="mono" style="text-align: right;">€2.710</td><td class="mono" style="text-align: right;">€169</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- VIEW: Request Origins (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-request-origins">
+            <div class="analytics-page-header">
+              <h2>Request Origins</h2>
+              <p>Woher kommen die Anfragen?</p>
+            </div>
+            <div class="analytics-kpi-grid" id="requestOriginsKPIs"></div>
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Booking Sources</div></div>
+                <div class="analytics-pie-layout">
+                  <div class="analytics-pie-wrapper"><canvas id="requestOriginsPie"></canvas></div>
+                  <div class="analytics-pie-legend" id="requestOriginsLegend"></div>
+                </div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Origins über Zeit</div></div>
+                <div class="analytics-chart-container"><canvas id="requestOriginsTimeline"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: Conversion Funnel (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-conversion">
+            <div class="analytics-page-header">
+              <h2>Conversion Funnel</h2>
+              <p>Von der Anfrage zum Termin</p>
+            </div>
+            <div class="analytics-kpi-grid" id="conversionKPIs"></div>
+            <div class="analytics-chart-card">
+              <div class="analytics-chart-header"><div class="analytics-chart-title">Funnel Stages</div></div>
+              <div class="analytics-chart-container"><canvas id="conversionFunnelChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- VIEW: Team Performance (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-team">
+            <div class="analytics-page-header">
+              <h2>Team Performance</h2>
+              <p>Booking Team Leistungsübersicht</p>
+            </div>
+            <div class="analytics-kpi-grid" id="teamKPIs"></div>
+            <div class="analytics-table-container" id="teamPerformanceTable"></div>
+          </div>
+
+          <!-- VIEW: Customers (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-customers">
+            <div class="analytics-page-header">
+              <h2>Customers</h2>
+              <p>Kundenanalyse und VIP Tracking</p>
+            </div>
+            <div class="analytics-kpi-grid" id="customersKPIs"></div>
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Kunden nach Rang</div></div>
+                <div class="analytics-pie-layout">
+                  <div class="analytics-pie-wrapper"><canvas id="customerRankPie"></canvas></div>
+                  <div class="analytics-pie-legend" id="customerRankLegend"></div>
+                </div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Neue Kunden</div></div>
+                <div class="analytics-chart-container"><canvas id="newCustomersChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: Resident Artists (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-resident-artists">
+            <div class="analytics-page-header">
+              <h2>Resident Artists</h2>
+              <p>Performance der festangestellten Künstler</p>
+            </div>
+            <div class="analytics-search-container">
+              <svg class="analytics-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" class="analytics-search-input" placeholder="Artist suchen..." id="residentArtistSearch">
+            </div>
+            <div class="analytics-kpi-grid" id="residentArtistsKPIs"></div>
+            <div class="analytics-table-container" id="residentArtistsTable"></div>
+          </div>
+
+          <!-- VIEW: Guest Artists (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-guest-artists">
+            <div class="analytics-page-header">
+              <h2>Guest Artists</h2>
+              <p>Performance der Gastartists</p>
+            </div>
+            <div class="analytics-search-container">
+              <svg class="analytics-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" class="analytics-search-input" placeholder="Guest Artist suchen..." id="guestArtistSearch">
+            </div>
+            <div class="analytics-kpi-grid" id="guestArtistsKPIs"></div>
+            <div class="analytics-table-container" id="guestArtistsTable"></div>
+          </div>
+
+          <!-- VIEW: Guest Spots (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-guest-spots">
+            <div class="analytics-page-header">
+              <h2>Guest Spots</h2>
+              <p>Guest Spot Auslastung und Revenue</p>
+            </div>
+            <div class="analytics-kpi-grid" id="guestSpotsKPIs"></div>
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Auslastung nach Studio</div></div>
+                <div class="analytics-chart-container"><canvas id="guestSpotsOccupancyChart"></canvas></div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Revenue Timeline</div></div>
+                <div class="analytics-chart-container"><canvas id="guestSpotsRevenueChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW: Rankings (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-rankings">
+            <div class="analytics-page-header">
+              <h2>Rankings</h2>
+              <p>Top Performer und Vergleiche</p>
+            </div>
+            <div class="analytics-table-container" id="rankingsTable"></div>
+          </div>
+
+          <!-- VIEW: Revenue Timeline (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-revenue-timeline">
+            <div class="analytics-page-header">
+              <h2>Revenue Timeline</h2>
+              <p>Umsatzentwicklung im Zeitverlauf</p>
+            </div>
+            <div class="analytics-chart-card full-width">
+              <div class="analytics-chart-header"><div class="analytics-chart-title">Monatlicher Umsatz</div></div>
+              <div class="analytics-chart-container" style="height: 400px;"><canvas id="revenueTimelineChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- VIEW: Studio Breakdown (Placeholder) -->
+          <div class="analytics-view" id="analytics-view-studio-breakdown">
+            <div class="analytics-page-header">
+              <h2>Studio Breakdown</h2>
+              <p>Vergleich aller Studios</p>
+            </div>
+            <div class="analytics-kpi-grid" id="studioBreakdownKPIs"></div>
+            <div class="analytics-charts-row">
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Umsatz nach Studio</div></div>
+                <div class="analytics-chart-container"><canvas id="studioRevenueChart"></canvas></div>
+              </div>
+              <div class="analytics-chart-card">
+                <div class="analytics-chart-header"><div class="analytics-chart-title">Termine nach Studio</div></div>
+                <div class="analytics-chart-container"><canvas id="studioAppointmentsChart"></canvas></div>
+              </div>
             </div>
           </div>
 
         </div>
       </div>
-
-      <!-- Revenue by Payment Status Chart (New Format) -->
-      <div class="chart-card">
-        <div id="revenueByPaymentStatusChart">
-          <!-- Will be populated dynamically by loadRevenueByPaymentStatus() -->
-        </div>
-      </div>
-
-      <!-- Revenue by Payment Status Card (Full Width) -->
-      <div class="chart-card" style="grid-column: 1 / -1; width: 100%;">
-        <h3>Umsatz nach Zahlungsstatus</h3>
-
-        <!-- Revenue Summary Cards -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
-          <div style="background: rgba(52, 199, 89, 0.05); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(52, 199, 89, 0.2);">
-            <div style="font-size: 28px; margin-bottom: 8px;">💰</div>
-            <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Komplett Bezahlt</div>
-            <div style="font-size: 24px; font-weight: 600; margin-bottom: 4px;" id="paidAmount">0,00 €</div>
-            <div style="font-size: 13px; color: var(--muted);" id="paidCount">0 Projekte</div>
-          </div>
-          <div style="background: rgba(255, 149, 0, 0.05); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(255, 149, 0, 0.2);">
-            <div style="font-size: 28px; margin-bottom: 8px;">⏳</div>
-            <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Offen</div>
-            <div style="font-size: 24px; font-weight: 600; margin-bottom: 4px;" id="pendingAmount">0,00 €</div>
-            <div style="font-size: 13px; color: var(--muted);" id="pendingCount">0 Projekte</div>
-          </div>
-          <div style="background: rgba(0, 113, 227, 0.05); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(0, 113, 227, 0.2);">
-            <div style="font-size: 28px; margin-bottom: 8px;">💳</div>
-            <div style="font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px;">Anzahlung Bezahlt</div>
-            <div style="font-size: 24px; font-weight: 600; margin-bottom: 4px;" id="partialAmount">0,00 €</div>
-            <div style="font-size: 13px; color: var(--muted);" id="partialCount">0 Projekte</div>
-          </div>
-        </div>
-
-        <!-- Revenue Bar Chart -->
-        <div style="position: relative; height: 500px; margin-bottom: 24px;">
-          <canvas id="revenueByStatusChart"></canvas>
-        </div>
-
-        <!-- Revenue Details Table -->
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Payment Status</th>
-              <th style="text-align: right;">Anzahl Projekte</th>
-              <th style="text-align: right;">Gesamt Umsatz</th>
-              <th style="text-align: right;">Durchschnitt</th>
-              <th style="text-align: right;">% vom Gesamt</th>
-            </tr>
-          </thead>
-          <tbody id="revenueByStatusTable"></tbody>
-          <tfoot>
-            <tr style="border-top: 2px solid rgba(0,0,0,0.1); background: rgba(0,0,0,0.02);">
-              <td><strong>Gesamt</strong></td>
-              <td style="text-align: right;"><strong id="revenueTotalProjects">0</strong></td>
-              <td style="text-align: right;"><strong id="revenueTotalAmount">0,00 €</strong></td>
-              <td style="text-align: right;"><strong id="revenueAvgAmount">0,00 €</strong></td>
-              <td style="text-align: right;"><strong>100%</strong></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
     </div>
-
-    <!-- PROJECT-BASED ANALYTICS -->
-    <div class="dashboard-section" style="margin-top: 48px;">
-      <h2>📈 Project Analytics</h2>
-
-      <!-- Project KPI Summary -->
-      <div id="analyticsProjectKPIs" class="kpi-grid" style="margin-bottom: 32px;"></div>
-
-      <!-- Project Charts -->
-      <div class="charts-grid">
-        <div class="chart-card">
-          <canvas id="projectsTimelineChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <canvas id="revenueByMonthChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <canvas id="topArtistsChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- ARTIST PERFORMANCE REPORT -->
-    <div class="dashboard-section" style="margin-top: 32px;">
-      <h2>🎨 Artist Performance</h2>
-      <div id="artistPerformanceTable"></div>
-    </div>
-
-    <!-- MULTI-PROJECT CUSTOMERS (VIP) -->
-    <div class="dashboard-section" style="margin-top: 32px;">
-      <h2>👥 VIP Customers (Multi-Project Customers)</h2>
-      <div id="multiProjectCustomersTable"></div>
-    </div>
-
   </section>
 
   <!-- ============================================ -->
