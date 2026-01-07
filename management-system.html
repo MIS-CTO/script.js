@@ -808,13 +808,13 @@
     }
 
     .stay-day-btn:hover {
-      border-color: #007aff;
-      background: rgba(0,122,255,0.05);
+      border-color: #1d1d1f;
+      background: rgba(29,29,31,0.08);
     }
 
     .stay-day-btn.selected {
-      background: #007aff;
-      border-color: #007aff;
+      background: #1d1d1f;
+      border-color: #1d1d1f;
       color: white;
     }
 
@@ -14879,7 +14879,7 @@
             <!-- Tage Auswahl -->
             <div style="margin-bottom:16px;">
               <label style="font-size:13px; color:#1d1d1f; margin-bottom:6px; display:block;">Tage auswählen</label>
-              <div style="display:flex; gap:12px; margin-bottom:12px;">
+              <div class="stay-days-radio-container" style="display:flex; gap:12px; margin-bottom:12px;">
                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:8px 12px; background:white; border:1px solid rgba(0,0,0,0.1); border-radius:6px;">
                   <input type="radio" name="stayDaysMode" value="all" checked onchange="onStayDaysModeChange()">
                   <span style="font-size:13px;">Alle Tage</span>
@@ -47586,11 +47586,20 @@
     function onLongStayChange() {
       const checkbox = document.getElementById('guestSpotLongStay');
       const longStayDates = document.getElementById('longStayDates');
+      const miniCalendar = document.getElementById('stayMiniCalendar');
 
       if (checkbox && longStayDates) {
-        longStayDates.style.display = checkbox.checked ? 'grid' : 'none';
-
         if (checkbox.checked) {
+          // Long Stay aktiviert
+          longStayDates.style.display = 'grid';
+
+          // Radio Buttons ausblenden
+          const radioContainer = document.querySelector('.stay-days-radio-container');
+          if (radioContainer) radioContainer.style.display = 'none';
+
+          // Mini-Kalender direkt anzeigen
+          if (miniCalendar) miniCalendar.style.display = 'block';
+
           // Initiale Werte setzen (Guest Spot Daten -/+ 2 Tage)
           const guestSpotFrom = document.getElementById('guestSpotDateFrom')?.value;
           const guestSpotTo = document.getElementById('guestSpotDateTo')?.value;
@@ -47604,6 +47613,23 @@
             const toDate = new Date(guestSpotTo);
             toDate.setDate(toDate.getDate() + 2);
             document.getElementById('stayDateTo').value = toDate.toISOString().split('T')[0];
+          }
+
+          // Event Listener für Datum-Änderungen
+          document.getElementById('stayDateFrom')?.addEventListener('change', initStayMiniCalendar);
+          document.getElementById('stayDateTo')?.addEventListener('change', initStayMiniCalendar);
+        } else {
+          // Long Stay deaktiviert
+          longStayDates.style.display = 'none';
+
+          // Radio Buttons wieder anzeigen
+          const radioContainer = document.querySelector('.stay-days-radio-container');
+          if (radioContainer) radioContainer.style.display = 'flex';
+
+          // Mini-Kalender Status basierend auf Radio-Auswahl
+          const mode = document.querySelector('input[name="stayDaysMode"]:checked')?.value;
+          if (miniCalendar) {
+            miniCalendar.style.display = mode === 'custom' ? 'block' : 'none';
           }
         }
 
@@ -48494,15 +48520,20 @@
         // 3. Alle Ansichten parallel neu laden
         const reloadPromises = [];
 
-        // Waitlist/Guest Spots Tab (basierend auf aktuellem Tab)
-        if (currentListType === 'upcoming' && typeof loadUpcomingGuestSpotsTab === 'function') {
-          reloadPromises.push(loadUpcomingGuestSpotsTab());
-        } else if (typeof loadWaitlistSlots === 'function') {
-          reloadPromises.push(loadWaitlistSlots(currentWaitlistLocation || 'all'));
+        // Reload the current view - detect active tab from DOM
+        const listType = document.querySelector('.guest-spots-sub-tab.active')?.dataset?.tab || 'upcoming';
+        if (listType === 'waitlist') {
+          if (typeof loadWaitlistSlots === 'function') reloadPromises.push(loadWaitlistSlots());
+        } else if (listType === 'upcoming') {
+          if (typeof loadUpcomingGuestSpotsTab === 'function') reloadPromises.push(loadUpcomingGuestSpotsTab());
+        } else if (listType === 'active') {
+          if (typeof loadActiveGuestSpotsTab === 'function') reloadPromises.push(loadActiveGuestSpotsTab());
         }
 
-        // Kalender
-        if (typeof loadEvents === 'function' && selectedLocationId) {
+        // Also refresh calendar if visible
+        if (typeof loadCalendarEvents === 'function') {
+          reloadPromises.push(loadCalendarEvents());
+        } else if (typeof loadEvents === 'function' && typeof selectedLocationId !== 'undefined' && selectedLocationId) {
           reloadPromises.push(loadEvents(selectedLocationId));
         }
 
@@ -49393,9 +49424,19 @@
 
       if (!listContainer) return;
 
-      // Add Appointment Button nur bei Self Booking anzeigen
+      // Add Appointment Button sichtbar für upcoming UND active (nicht vergangen)
       if (addBtnContainer) {
-        addBtnContainer.style.display = isSelfBooking ? 'block' : 'none';
+        // Prüfe ob Guest Spot in der Vergangenheit liegt
+        const slotData = window.currentGuestSpotDetailData || window.currentGuestSpotData;
+        const effectiveDateTo = slotData?.grouped_date_to || slotData?.date_to;
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
+        const slotEndDate = effectiveDateTo ? new Date(effectiveDateTo) : null;
+        if (slotEndDate) slotEndDate.setHours(23, 59, 59, 999);
+        const isInPast = slotEndDate && slotEndDate < todayDate;
+
+        // Button anzeigen wenn nicht vergangen
+        addBtnContainer.style.display = isInPast ? 'none' : 'block';
       }
 
       // Speichere Guest Spot Info für Add Appointment
