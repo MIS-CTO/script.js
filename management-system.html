@@ -48648,7 +48648,7 @@
         const { data: appointments, error } = await supabase
           .from('appointments')
           .select(`
-            id, start, end, price, deposit_amount, deposit_recipient, artist_share_amount, studio_share_amount, status, notes,
+            id, start, end, price, deposit_amount, deposit_recipient, artist_share_amount, studio_share_amount, status, payment_status, notes,
             customer:customers(id, first_name, last_name, email, phone)
           `)
           .eq('guest_spot_id', guestSpotId)
@@ -48756,8 +48756,9 @@
           totalStudioShare += parseFloat(apt.studio_share_amount) || 0;
           totalArtistShare += parseFloat(apt.artist_share_amount) || 0;
 
-          // Paid/Unpaid basierend auf Status
-          if (apt.status === 'completed' || apt.status === 'paid') {
+          // Paid/Unpaid basierend auf payment_status
+          const pStatus = (apt.payment_status || '').toLowerCase();
+          if (pStatus === 'paid' || pStatus === 'fully_paid' || pStatus === 'deposit_paid') {
             totalPaid += price;
           } else if (apt.status !== 'canceled' && apt.status !== 'no_show') {
             totalUnpaid += price;
