@@ -793,6 +793,104 @@
       background: rgba(107, 114, 128, 0.4) !important;
     }
 
+    /* ========== HOSPITALITY / STAY STYLES ========== */
+
+    /* Stay Day Button */
+    .stay-day-btn {
+      padding: 8px 4px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      font-size: 12px;
+    }
+
+    .stay-day-btn:hover {
+      border-color: #007aff;
+      background: rgba(0,122,255,0.05);
+    }
+
+    .stay-day-btn.selected {
+      background: #007aff;
+      border-color: #007aff;
+      color: white;
+    }
+
+    .stay-day-btn.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: #f5f5f7;
+    }
+
+    .stay-day-btn .day-name {
+      font-size: 10px;
+      color: #86868b;
+      display: block;
+    }
+
+    .stay-day-btn.selected .day-name {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .stay-day-btn .day-num {
+      font-weight: 600;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Stay Location Option with Occupancy */
+    .stay-location-option {
+      padding: 8px 12px;
+    }
+
+    .stay-location-option.booked-out {
+      color: #86868b;
+      background: #f5f5f7;
+    }
+
+    .stay-location-option .occupancy-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+
+    .stay-location-option .occupancy-badge.available {
+      background: rgba(52,199,89,0.15);
+      color: #34c759;
+    }
+
+    .stay-location-option .occupancy-badge.limited {
+      background: rgba(255,149,0,0.15);
+      color: #ff9500;
+    }
+
+    .stay-location-option .occupancy-badge.full {
+      background: rgba(255,59,48,0.15);
+      color: #ff3b30;
+    }
+
+    /* Dark Mode */
+    [data-theme="dark"] .stay-day-btn {
+      background: #2c2c2e;
+      border-color: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    [data-theme="dark"] .stay-day-btn:hover {
+      background: rgba(0,122,255,0.2);
+    }
+
+    [data-theme="dark"] .stay-day-btn.disabled {
+      background: #1c1c1e;
+    }
+
+    [data-theme="dark"] .stay-day-btn .day-name {
+      color: #8e8e93;
+    }
+
     /* Custom Date Picker für Guest Spot */
     .guest-spot-date-picker-container {
       position: relative;
@@ -14733,8 +14831,8 @@
           </div>
         </div>
 
-        <!-- SECTION 6: Unterkunft -->
-        <div style="margin-bottom:24px; padding:20px; background:rgba(142,142,147,0.08); border-radius:12px;">
+        <!-- SECTION 6: Unterkunft / Hospitality -->
+        <div id="hospitalitySection" style="margin-bottom:24px; padding:20px; background:rgba(142,142,147,0.08); border-radius:12px; display:none;">
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
             <input type="checkbox" id="guestSpotAccommodation" onchange="toggleAccommodationFields()" style="width:18px; height:18px; cursor:pointer;">
             <label for="guestSpotAccommodation" style="font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
@@ -14742,19 +14840,108 @@
             </label>
           </div>
 
+          <!-- Hospitality Fields (hidden by default) -->
           <div id="accommodationFields" style="display:none; margin-top:16px;">
-            <label style="font-size:13px; color:#1d1d1f; margin-bottom:4px; display:block;">Gesamt Miete (€)</label>
-            <input type="number" id="guestSpotAccommodationCost" step="0.01" min="0" placeholder="0.00" style="
-              width:100%;
-              padding:12px;
-              border:1px solid rgba(0,0,0,0.1);
-              border-radius:8px;
-              font-size:14px;
-            ">
-            <p style="font-size:12px; color:#86868b; margin-top:8px; display:flex; align-items:flex-start; gap:6px;">
-              <span style="display:inline-flex; flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span>
-              <span>Die Miete wird separat erfasst und kann vom Artist-Anteil abgezogen werden</span>
-            </p>
+
+            <!-- Stay Location Dropdown -->
+            <div style="margin-bottom:16px;">
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:6px; display:block;">Unterkunft auswählen</label>
+              <select id="guestSpotStayLocation" onchange="onStayLocationChange()" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+                background:white;
+              ">
+                <option value="">-- Unterkunft wählen --</option>
+              </select>
+              <!-- Aktuelle Belegung Anzeige -->
+              <div id="stayLocationOccupancy" style="display:none; margin-top:8px; padding:10px; background:rgba(0,122,255,0.08); border-radius:6px; font-size:12px;">
+                <span style="color:#007aff; font-weight:500;">Aktuelle Belegung:</span>
+                <span id="stayLocationArtists" style="color:#1d1d1f;"></span>
+              </div>
+            </div>
+
+            <!-- Tagesmiete -->
+            <div style="margin-bottom:16px;">
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:6px; display:block;">Tagesmiete (€)</label>
+              <input type="number" id="guestSpotDailyRate" step="1" min="0" placeholder="50" style="
+                width:100%;
+                padding:12px;
+                border:1px solid rgba(0,0,0,0.1);
+                border-radius:8px;
+                font-size:14px;
+              ">
+              <p id="dailyRateHint" style="font-size:11px; color:#86868b; margin-top:4px;">Standard: 50€/Tag</p>
+            </div>
+
+            <!-- Tage Auswahl -->
+            <div style="margin-bottom:16px;">
+              <label style="font-size:13px; color:#1d1d1f; margin-bottom:6px; display:block;">Tage auswählen</label>
+              <div style="display:flex; gap:12px; margin-bottom:12px;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:8px 12px; background:white; border:1px solid rgba(0,0,0,0.1); border-radius:6px;">
+                  <input type="radio" name="stayDaysMode" value="all" checked onchange="onStayDaysModeChange()">
+                  <span style="font-size:13px;">Alle Tage</span>
+                  <span id="allDaysCount" style="font-size:12px; color:#86868b;">(0)</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:8px 12px; background:white; border:1px solid rgba(0,0,0,0.1); border-radius:6px;">
+                  <input type="radio" name="stayDaysMode" value="custom" onchange="onStayDaysModeChange()">
+                  <span style="font-size:13px;">Custom</span>
+                </label>
+              </div>
+
+              <!-- Long Stay Checkbox (nur bei Custom) -->
+              <div id="longStayOption" style="display:none; margin-bottom:12px; padding:10px; background:rgba(255,149,0,0.08); border-radius:6px;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                  <input type="checkbox" id="guestSpotLongStay" onchange="onLongStayChange()" style="width:16px; height:16px;">
+                  <span style="font-size:13px;">Long Stay (Tage außerhalb Guest Spot)</span>
+                </label>
+                <!-- Extended Date Range (nur bei Long Stay) -->
+                <div id="longStayDates" style="display:none; margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                  <div>
+                    <label style="font-size:11px; color:#86868b;">Ankunft</label>
+                    <input type="date" id="stayDateFrom" style="width:100%; padding:8px; border:1px solid rgba(0,0,0,0.1); border-radius:6px; font-size:13px;">
+                  </div>
+                  <div>
+                    <label style="font-size:11px; color:#86868b;">Abreise</label>
+                    <input type="date" id="stayDateTo" style="width:100%; padding:8px; border:1px solid rgba(0,0,0,0.1); border-radius:6px; font-size:13px;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mini Calendar -->
+              <div id="stayMiniCalendar" style="display:none; padding:12px; background:white; border:1px solid rgba(0,0,0,0.1); border-radius:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                  <span style="font-size:12px; font-weight:500; color:#1d1d1f;">Tage auswählen</span>
+                  <div style="display:flex; gap:8px;">
+                    <button type="button" onclick="selectAllStayDays()" style="padding:4px 8px; font-size:11px; border:1px solid rgba(0,0,0,0.1); border-radius:4px; background:white; cursor:pointer;">Alle</button>
+                    <button type="button" onclick="deselectAllStayDays()" style="padding:4px 8px; font-size:11px; border:1px solid rgba(0,0,0,0.1); border-radius:4px; background:white; cursor:pointer;">Keine</button>
+                  </div>
+                </div>
+                <div id="stayDaysGrid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;"></div>
+              </div>
+            </div>
+
+            <!-- Zusammenfassung -->
+            <div id="staySummary" style="padding:12px; background:rgba(52,199,89,0.08); border-radius:8px; border:1px solid rgba(52,199,89,0.2);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <span style="font-size:12px; color:#86868b;">Ausgewählte Tage:</span>
+                  <span id="selectedDaysCount" style="font-size:14px; font-weight:600; color:#1d1d1f; margin-left:6px;">0</span>
+                </div>
+                <div>
+                  <span style="font-size:12px; color:#86868b;">Gesamt:</span>
+                  <span id="stayTotalAmount" style="font-size:16px; font-weight:700; color:#34c759; margin-left:6px;">0€</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden Inputs für Form Submit -->
+            <input type="hidden" id="guestSpotStayLocationId" name="stay_location_id">
+            <input type="hidden" id="guestSpotSelectedDays" name="selected_days">
+            <input type="hidden" id="guestSpotStayDateFrom" name="stay_date_from">
+            <input type="hidden" id="guestSpotStayDateTo" name="stay_date_to">
           </div>
         </div>
 
@@ -47055,13 +47242,50 @@
     function toggleAccommodationFields() {
       const checkbox = document.getElementById('guestSpotAccommodation');
       const fields = document.getElementById('accommodationFields');
+
       if (checkbox && fields) {
-        fields.style.display = checkbox.checked ? 'block' : 'none';
-        if (!checkbox.checked) {
-          const costInput = document.getElementById('guestSpotAccommodationCost');
-          if (costInput) costInput.value = '';
+        if (checkbox.checked) {
+          fields.style.display = 'block';
+          // Stay Locations laden basierend auf ausgewählter Location
+          loadStayLocationsForGuestSpot();
+        } else {
+          fields.style.display = 'none';
+          // Reset all hospitality fields
+          resetHospitalityFields();
         }
       }
+    }
+
+    function resetHospitalityFields() {
+      const stayLocationSelect = document.getElementById('guestSpotStayLocation');
+      const dailyRateInput = document.getElementById('guestSpotDailyRate');
+      const occupancyDiv = document.getElementById('stayLocationOccupancy');
+      const miniCalendar = document.getElementById('stayMiniCalendar');
+      const longStayCheckbox = document.getElementById('guestSpotLongStay');
+
+      if (stayLocationSelect) stayLocationSelect.value = '';
+      if (dailyRateInput) dailyRateInput.value = '';
+      if (occupancyDiv) occupancyDiv.style.display = 'none';
+      if (miniCalendar) miniCalendar.style.display = 'none';
+      if (longStayCheckbox) longStayCheckbox.checked = false;
+
+      // Reset radio to "all"
+      const allDaysRadio = document.querySelector('input[name="stayDaysMode"][value="all"]');
+      if (allDaysRadio) allDaysRadio.checked = true;
+
+      // Reset hidden inputs
+      const stayLocationId = document.getElementById('guestSpotStayLocationId');
+      const selectedDays = document.getElementById('guestSpotSelectedDays');
+      const stayDateFrom = document.getElementById('guestSpotStayDateFrom');
+      const stayDateTo = document.getElementById('guestSpotStayDateTo');
+
+      if (stayLocationId) stayLocationId.value = '';
+      if (selectedDays) selectedDays.value = '';
+      if (stayDateFrom) stayDateFrom.value = '';
+      if (stayDateTo) stayDateTo.value = '';
+
+      // Update summary
+      updateStaySummary();
     }
 
     // Custom Share Slider Toggle
@@ -47178,6 +47402,400 @@
 
     // Window Exports für neue Funktionen
     window.toggleAccommodationFields = toggleAccommodationFields;
+
+    // ========== HOSPITALITY FUNKTIONEN ==========
+
+    // Globale Variable für Stay-Locations Cache
+    let stayLocationsCache = [];
+    let selectedStayDays = [];
+
+    // Stay Locations für ausgewählte Location laden
+    async function loadStayLocationsForGuestSpot() {
+      const locationSelect = document.getElementById('guestSpotLocation');
+      const stayLocationSelect = document.getElementById('guestSpotStayLocation');
+
+      if (!locationSelect || !stayLocationSelect) return;
+
+      const selectedLocationId = locationSelect.value;
+      if (!selectedLocationId) {
+        stayLocationSelect.innerHTML = '<option value="">-- Erst Location wählen --</option>';
+        return;
+      }
+
+      try {
+        // Stay Locations laden die diese Location enthalten
+        const { data: stayLocations, error } = await supabase
+          .from('stay_locations')
+          .select('*')
+          .contains('location_ids', [selectedLocationId])
+          .eq('is_active', true)
+          .order('name');
+
+        if (error) throw error;
+
+        stayLocationsCache = stayLocations || [];
+
+        // Dropdown befüllen
+        stayLocationSelect.innerHTML = '<option value="">-- Unterkunft wählen --</option>';
+
+        if (stayLocations && stayLocations.length > 0) {
+          // Kapazität für jeden Stay-Location prüfen
+          const dateFrom = document.getElementById('guestSpotDateFrom')?.value;
+          const dateTo = document.getElementById('guestSpotDateTo')?.value;
+
+          for (const loc of stayLocations) {
+            const occupancy = await getStayLocationOccupancy(loc.id, dateFrom, dateTo);
+            const availableSpots = loc.max_capacity - occupancy.currentCount;
+
+            const option = document.createElement('option');
+            option.value = loc.id;
+            option.dataset.defaultRate = loc.default_daily_rate;
+            option.dataset.maxCapacity = loc.max_capacity;
+            option.dataset.currentCount = occupancy.currentCount;
+            option.dataset.artists = JSON.stringify(occupancy.artists);
+
+            let statusText = '';
+            if (availableSpots <= 0) {
+              option.disabled = true;
+              statusText = ' [AUSGEBUCHT]';
+            } else if (availableSpots === 1) {
+              statusText = ` [${availableSpots} Platz frei]`;
+            } else {
+              statusText = ` [${availableSpots} Plätze frei]`;
+            }
+
+            option.textContent = `${loc.name}${statusText}`;
+            stayLocationSelect.appendChild(option);
+          }
+        } else {
+          stayLocationSelect.innerHTML = '<option value="">Keine Unterkünfte für diese Location</option>';
+        }
+      } catch (err) {
+        console.error('Error loading stay locations:', err);
+        stayLocationSelect.innerHTML = '<option value="">Fehler beim Laden</option>';
+      }
+    }
+
+    // Belegung einer Stay-Location für Zeitraum prüfen
+    async function getStayLocationOccupancy(stayLocationId, dateFrom, dateTo) {
+      if (!dateFrom || !dateTo) {
+        return { currentCount: 0, artists: [] };
+      }
+
+      try {
+        const { data: stays, error } = await supabase
+          .from('stays')
+          .select(`
+            id,
+            artist_id,
+            artist:artists(id, name)
+          `)
+          .eq('stay_location_id', stayLocationId)
+          .eq('status', 'active')
+          .lte('date_from', dateTo)
+          .gte('date_to', dateFrom);
+
+        if (error) throw error;
+
+        const uniqueArtists = [];
+        const artistIds = new Set();
+
+        (stays || []).forEach(stay => {
+          if (stay.artist && !artistIds.has(stay.artist_id)) {
+            artistIds.add(stay.artist_id);
+            uniqueArtists.push(stay.artist.name);
+          }
+        });
+
+        return {
+          currentCount: uniqueArtists.length,
+          artists: uniqueArtists
+        };
+      } catch (err) {
+        console.error('Error checking occupancy:', err);
+        return { currentCount: 0, artists: [] };
+      }
+    }
+
+    // Bei Stay-Location Auswahl
+    function onStayLocationChange() {
+      const select = document.getElementById('guestSpotStayLocation');
+      const dailyRateInput = document.getElementById('guestSpotDailyRate');
+      const dailyRateHint = document.getElementById('dailyRateHint');
+      const occupancyDiv = document.getElementById('stayLocationOccupancy');
+      const artistsSpan = document.getElementById('stayLocationArtists');
+      const hiddenInput = document.getElementById('guestSpotStayLocationId');
+
+      if (!select) return;
+
+      const selectedOption = select.options[select.selectedIndex];
+
+      if (select.value && selectedOption) {
+        // Hidden Input setzen
+        hiddenInput.value = select.value;
+
+        // Default Rate setzen
+        const defaultRate = selectedOption.dataset.defaultRate || 50;
+        if (dailyRateInput && !dailyRateInput.value) {
+          dailyRateInput.value = defaultRate;
+        }
+        if (dailyRateHint) {
+          dailyRateHint.textContent = `Standard: ${defaultRate}€/Tag`;
+        }
+
+        // Aktuelle Belegung anzeigen
+        const artists = JSON.parse(selectedOption.dataset.artists || '[]');
+        if (artists.length > 0 && occupancyDiv && artistsSpan) {
+          artistsSpan.textContent = artists.join(', ');
+          occupancyDiv.style.display = 'block';
+        } else if (occupancyDiv) {
+          occupancyDiv.style.display = 'none';
+        }
+
+        // Mini-Kalender initialisieren
+        initStayMiniCalendar();
+      } else {
+        hiddenInput.value = '';
+        if (occupancyDiv) occupancyDiv.style.display = 'none';
+      }
+
+      updateStaySummary();
+    }
+
+    // Tage-Modus wechseln (Alle / Custom)
+    function onStayDaysModeChange() {
+      const mode = document.querySelector('input[name="stayDaysMode"]:checked')?.value;
+      const miniCalendar = document.getElementById('stayMiniCalendar');
+      const longStayOption = document.getElementById('longStayOption');
+
+      if (mode === 'custom') {
+        if (miniCalendar) miniCalendar.style.display = 'block';
+        if (longStayOption) longStayOption.style.display = 'block';
+        initStayMiniCalendar();
+      } else {
+        if (miniCalendar) miniCalendar.style.display = 'none';
+        if (longStayOption) longStayOption.style.display = 'none';
+        // Bei "Alle" alle Tage auswählen
+        selectAllStayDays();
+      }
+
+      updateStaySummary();
+    }
+
+    // Long Stay Checkbox
+    function onLongStayChange() {
+      const checkbox = document.getElementById('guestSpotLongStay');
+      const longStayDates = document.getElementById('longStayDates');
+
+      if (checkbox && longStayDates) {
+        longStayDates.style.display = checkbox.checked ? 'grid' : 'none';
+
+        if (checkbox.checked) {
+          // Initiale Werte setzen (Guest Spot Daten -/+ 2 Tage)
+          const guestSpotFrom = document.getElementById('guestSpotDateFrom')?.value;
+          const guestSpotTo = document.getElementById('guestSpotDateTo')?.value;
+
+          if (guestSpotFrom) {
+            const fromDate = new Date(guestSpotFrom);
+            fromDate.setDate(fromDate.getDate() - 2);
+            document.getElementById('stayDateFrom').value = fromDate.toISOString().split('T')[0];
+          }
+          if (guestSpotTo) {
+            const toDate = new Date(guestSpotTo);
+            toDate.setDate(toDate.getDate() + 2);
+            document.getElementById('stayDateTo').value = toDate.toISOString().split('T')[0];
+          }
+        }
+
+        // Mini-Kalender neu initialisieren
+        initStayMiniCalendar();
+      }
+    }
+
+    // Mini-Kalender initialisieren
+    function initStayMiniCalendar() {
+      const grid = document.getElementById('stayDaysGrid');
+      const allDaysCount = document.getElementById('allDaysCount');
+
+      if (!grid) return;
+
+      // Datum-Range bestimmen
+      let dateFrom, dateTo;
+
+      const isLongStay = document.getElementById('guestSpotLongStay')?.checked;
+
+      if (isLongStay) {
+        dateFrom = document.getElementById('stayDateFrom')?.value;
+        dateTo = document.getElementById('stayDateTo')?.value;
+      } else {
+        dateFrom = document.getElementById('guestSpotDateFrom')?.value;
+        dateTo = document.getElementById('guestSpotDateTo')?.value;
+      }
+
+      if (!dateFrom || !dateTo) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#86868b; font-size:12px;">Bitte erst Datum wählen</div>';
+        return;
+      }
+
+      // Hidden Inputs für Datum-Range setzen
+      document.getElementById('guestSpotStayDateFrom').value = dateFrom;
+      document.getElementById('guestSpotStayDateTo').value = dateTo;
+
+      // Tage generieren
+      const days = [];
+      const start = new Date(dateFrom);
+      const end = new Date(dateTo);
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        days.push(new Date(d));
+      }
+
+      // "Alle Tage" Count aktualisieren
+      if (allDaysCount) {
+        allDaysCount.textContent = `(${days.length})`;
+      }
+
+      // Grid befüllen
+      grid.innerHTML = '';
+
+      const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+      days.forEach(date => {
+        const dateStr = date.toISOString().split('T')[0];
+        const dayName = dayNames[date.getDay()];
+        const dayNum = date.getDate();
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'stay-day-btn selected'; // Default: alle ausgewählt
+        btn.dataset.date = dateStr;
+        btn.innerHTML = `
+          <span class="day-name">${dayName}</span>
+          <span class="day-num">${dayNum}</span>
+        `;
+        btn.onclick = () => toggleStayDay(btn, dateStr);
+
+        grid.appendChild(btn);
+      });
+
+      // Alle Tage initial auswählen
+      selectedStayDays = days.map(d => d.toISOString().split('T')[0]);
+      updateStaySummary();
+    }
+
+    // Tag an/abwählen
+    function toggleStayDay(btn, dateStr) {
+      btn.classList.toggle('selected');
+
+      if (btn.classList.contains('selected')) {
+        if (!selectedStayDays.includes(dateStr)) {
+          selectedStayDays.push(dateStr);
+        }
+      } else {
+        selectedStayDays = selectedStayDays.filter(d => d !== dateStr);
+      }
+
+      // Sortieren
+      selectedStayDays.sort();
+
+      updateStaySummary();
+    }
+
+    // Alle Tage auswählen
+    function selectAllStayDays() {
+      const buttons = document.querySelectorAll('#stayDaysGrid .stay-day-btn');
+      selectedStayDays = [];
+
+      buttons.forEach(btn => {
+        btn.classList.add('selected');
+        selectedStayDays.push(btn.dataset.date);
+      });
+
+      selectedStayDays.sort();
+      updateStaySummary();
+    }
+
+    // Alle Tage abwählen
+    function deselectAllStayDays() {
+      const buttons = document.querySelectorAll('#stayDaysGrid .stay-day-btn');
+
+      buttons.forEach(btn => {
+        btn.classList.remove('selected');
+      });
+
+      selectedStayDays = [];
+      updateStaySummary();
+    }
+
+    // Zusammenfassung aktualisieren
+    function updateStaySummary() {
+      const countSpan = document.getElementById('selectedDaysCount');
+      const totalSpan = document.getElementById('stayTotalAmount');
+      const dailyRateInput = document.getElementById('guestSpotDailyRate');
+      const selectedDaysInput = document.getElementById('guestSpotSelectedDays');
+
+      const dailyRate = parseFloat(dailyRateInput?.value) || 0;
+      const dayCount = selectedStayDays.length;
+      const total = dailyRate * dayCount;
+
+      if (countSpan) countSpan.textContent = dayCount;
+      if (totalSpan) totalSpan.textContent = `${total.toFixed(0)}€`;
+
+      // Hidden Input für selected_days (JSON Array oder null für alle)
+      const mode = document.querySelector('input[name="stayDaysMode"]:checked')?.value;
+      if (selectedDaysInput) {
+        if (mode === 'all') {
+          selectedDaysInput.value = ''; // null = alle Tage
+        } else {
+          selectedDaysInput.value = JSON.stringify(selectedStayDays);
+        }
+      }
+    }
+
+    // Location Change Handler für Hospitality-Sichtbarkeit
+    function onGuestSpotLocationChange() {
+      const locationSelect = document.getElementById('guestSpotLocation');
+      const hospitalitySection = document.getElementById('hospitalitySection');
+      const accommodationCheckbox = document.getElementById('guestSpotAccommodation');
+
+      if (!locationSelect || !hospitalitySection) return;
+
+      const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+      const locationName = selectedOption?.textContent?.toLowerCase() || '';
+
+      // Hospitality nur für Stuttgart (MIS, Seventyone) und Berlin (GON)
+      const isHospitalityLocation =
+        locationName.includes('mommy') ||
+        locationName.includes('seventyone') ||
+        locationName.includes('gon');
+
+      hospitalitySection.style.display = isHospitalityLocation ? 'block' : 'none';
+
+      // Wenn nicht Hospitality-Location, Checkbox deaktivieren
+      if (!isHospitalityLocation && accommodationCheckbox) {
+        accommodationCheckbox.checked = false;
+        toggleAccommodationFields();
+      }
+
+      // Stay-Locations neu laden wenn Checkbox aktiv
+      if (accommodationCheckbox?.checked) {
+        loadStayLocationsForGuestSpot();
+      }
+    }
+
+    // Window Exposure für neue Funktionen
+    window.loadStayLocationsForGuestSpot = loadStayLocationsForGuestSpot;
+    window.onStayLocationChange = onStayLocationChange;
+    window.onStayDaysModeChange = onStayDaysModeChange;
+    window.onLongStayChange = onLongStayChange;
+    window.initStayMiniCalendar = initStayMiniCalendar;
+    window.toggleStayDay = toggleStayDay;
+    window.selectAllStayDays = selectAllStayDays;
+    window.deselectAllStayDays = deselectAllStayDays;
+    window.updateStaySummary = updateStaySummary;
+    window.onGuestSpotLocationChange = onGuestSpotLocationChange;
+    window.resetHospitalityFields = resetHospitalityFields;
+
     window.toggleCustomShareSlider = toggleCustomShareSlider;
     window.updateShareFromSlider = updateShareFromSlider;
     window.updateShareDisplayFromRank = updateShareDisplayFromRank;
@@ -47241,6 +47859,15 @@
       const modal = document.getElementById('createGuestSpotModal');
       if (modal) {
         modal.classList.add('active');
+      }
+
+      // Location Change Handler für Hospitality
+      const locationSelect = document.getElementById('guestSpotLocation');
+      if (locationSelect) {
+        locationSelect.removeEventListener('change', onGuestSpotLocationChange);
+        locationSelect.addEventListener('change', onGuestSpotLocationChange);
+        // Initial check
+        onGuestSpotLocationChange();
       }
     }
 
@@ -47760,9 +48387,8 @@
         custom_share: document.getElementById('guestSpotIsCustomShare').value === 'true',
         // NEU: Unterkunft-Felder
         accommodation_provided: document.getElementById('guestSpotAccommodation')?.checked || false,
-        accommodation_cost: document.getElementById('guestSpotAccommodation')?.checked
-          ? (parseFloat(document.getElementById('guestSpotAccommodationCost').value) || null)
-          : null,
+        // Legacy field - wird durch stays Tabelle ersetzt
+        accommodation_cost: null,
         // Self Booking (ersetzt booking_type internal/external)
         self_booking: document.getElementById('guestSpotSelfBooking')?.checked || false,
         booking_type: document.getElementById('guestSpotSelfBooking')?.checked ? 'external' : 'internal',
@@ -47817,6 +48443,44 @@
         console.log('✅ Guest Spot created:', data);
 
         // Dienstplan wird automatisch via Trigger erstellt (trg_sync_upcoming_to_dienstplan)
+
+        // Stay erstellen wenn Hospitality aktiviert
+        const insertedGuestSpot = data && data[0];
+        if (document.getElementById('guestSpotAccommodation')?.checked && insertedGuestSpot) {
+          const stayLocationId = document.getElementById('guestSpotStayLocationId')?.value;
+          const dailyRate = parseFloat(document.getElementById('guestSpotDailyRate')?.value) || 0;
+          const selectedDaysJson = document.getElementById('guestSpotSelectedDays')?.value;
+          const stayDateFrom = document.getElementById('guestSpotStayDateFrom')?.value;
+          const stayDateTo = document.getElementById('guestSpotStayDateTo')?.value;
+          const isLongStay = document.getElementById('guestSpotLongStay')?.checked || false;
+
+          if (stayLocationId && stayDateFrom && stayDateTo) {
+            const stayData = {
+              guest_spot_id: insertedGuestSpot.id,
+              artist_id: artistId,
+              stay_location_id: stayLocationId,
+              date_from: stayDateFrom,
+              date_to: stayDateTo,
+              daily_rate: dailyRate,
+              selected_days: selectedDaysJson ? JSON.parse(selectedDaysJson) : null,
+              is_long_stay: isLongStay,
+              status: 'active',
+              created_by: localStorage.getItem('username')
+            };
+
+            const { error: stayError } = await supabase
+              .from('stays')
+              .insert(stayData);
+
+            if (stayError) {
+              console.error('Error creating stay:', stayError);
+              // Guest Spot wurde erstellt, aber Stay nicht - User informieren
+              showToast('Guest Spot erstellt, aber Unterkunft konnte nicht gespeichert werden', 'warning');
+            } else {
+              console.log('✅ Stay created for Guest Spot');
+            }
+          }
+        }
 
         // ========== INSTANT RELOAD ALLER ANSICHTEN ==========
         console.log('🔄 Instant reloading all views after Guest Spot creation...');
