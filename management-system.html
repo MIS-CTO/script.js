@@ -11752,6 +11752,578 @@
       color: #9ca3af !important;
     }
 
+    /* ========================================
+       ANALYTICS DASHBOARD v2 - NEW STYLES
+       ======================================== */
+
+    /* Analytics Dashboard Layout */
+    .analytics-dashboard {
+      display: flex;
+      min-height: 100vh;
+      background: var(--macos-bg);
+    }
+
+    .analytics-sidebar {
+      width: 260px;
+      background: var(--macos-nav-bg);
+      border-right: 1px solid var(--macos-stroke-primary);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .analytics-sidebar-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--macos-stroke-primary);
+      margin-bottom: 16px;
+    }
+
+    .analytics-sidebar-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+    }
+
+    .analytics-nav-section {
+      margin-bottom: 24px;
+    }
+
+    .analytics-nav-section-title {
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--macos-text-tertiary);
+    }
+
+    .analytics-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      color: var(--macos-text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .analytics-nav-item:hover {
+      background: var(--macos-fill-quaternary);
+      color: var(--macos-text-primary);
+    }
+
+    .analytics-nav-item.active {
+      background: rgba(0, 112, 243, 0.08);
+      color: var(--macos-accent-blue);
+      border-left-color: var(--macos-accent-blue);
+      font-weight: 500;
+    }
+
+    .analytics-nav-item svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .analytics-main {
+      flex: 1;
+      padding: 24px 32px;
+      overflow-y: auto;
+    }
+
+    .analytics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .analytics-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Time Filter Pills */
+    .analytics-time-filter {
+      display: flex;
+      background: var(--macos-fill-quaternary);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .analytics-time-pill {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--macos-text-secondary);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .analytics-time-pill:hover {
+      color: var(--macos-text-primary);
+    }
+
+    .analytics-time-pill.active {
+      background: white;
+      color: var(--macos-text-primary);
+      box-shadow: var(--macos-shadow-small);
+    }
+
+    [data-theme="dark"] .analytics-time-pill.active {
+      background: var(--macos-elevated);
+    }
+
+    /* Analytics View Container */
+    .analytics-view {
+      display: none;
+    }
+
+    .analytics-view.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Analytics Page Header */
+    .analytics-page-header {
+      margin-bottom: 24px;
+    }
+
+    .analytics-page-header h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+      margin: 0 0 4px 0;
+    }
+
+    .analytics-page-header p {
+      font-size: 14px;
+      color: var(--macos-text-secondary);
+      margin: 0;
+    }
+
+    /* Analytics KPI Grid */
+    .analytics-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .analytics-kpi-card {
+      background: var(--macos-panel);
+      backdrop-filter: var(--macos-blur-medium);
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .analytics-kpi-card:hover {
+      border-color: var(--macos-stroke-secondary);
+      box-shadow: var(--macos-shadow-small);
+    }
+
+    .analytics-kpi-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--macos-text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .analytics-kpi-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+      font-family: 'Geist', monospace;
+    }
+
+    .analytics-kpi-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+
+    .analytics-kpi-change.positive {
+      background: rgba(52, 199, 89, 0.1);
+      color: var(--macos-accent-green);
+    }
+
+    .analytics-kpi-change.negative {
+      background: rgba(255, 59, 48, 0.1);
+      color: var(--macos-accent-red);
+    }
+
+    /* Analytics Charts */
+    .analytics-charts-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .analytics-chart-card {
+      background: var(--macos-panel);
+      backdrop-filter: var(--macos-blur-medium);
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .analytics-chart-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .analytics-chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .analytics-chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+    }
+
+    .analytics-chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    /* Analytics Pie Chart Layout */
+    .analytics-pie-layout {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .analytics-pie-wrapper {
+      width: 200px;
+      height: 200px;
+      flex-shrink: 0;
+    }
+
+    .analytics-pie-legend {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .analytics-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .analytics-legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .analytics-legend-label {
+      flex: 1;
+      color: var(--macos-text-secondary);
+    }
+
+    .analytics-legend-value {
+      font-weight: 600;
+      color: var(--macos-text-primary);
+      font-family: 'Geist', monospace;
+    }
+
+    /* Analytics Data Tables */
+    .analytics-table-container {
+      overflow-x: auto;
+      margin-top: 24px;
+    }
+
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .analytics-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--macos-text-secondary);
+      border-bottom: 1px solid var(--macos-stroke-primary);
+      background: var(--macos-fill-quaternary);
+    }
+
+    .analytics-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--macos-stroke-secondary);
+      color: var(--macos-text-primary);
+    }
+
+    .analytics-table td.mono {
+      font-family: 'Geist', monospace;
+    }
+
+    .analytics-table td.name {
+      font-weight: 500;
+    }
+
+    .analytics-table tr:hover {
+      background: var(--macos-fill-quaternary);
+    }
+
+    /* Revenue Streams Grid */
+    .analytics-revenue-streams {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .analytics-revenue-stream-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: var(--macos-panel);
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .analytics-revenue-stream-card:hover {
+      border-color: var(--macos-stroke-secondary);
+      box-shadow: var(--macos-shadow-small);
+    }
+
+    .analytics-revenue-stream-card.total {
+      background: var(--macos-fill-quaternary);
+      border-style: dashed;
+    }
+
+    .analytics-revenue-stream-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .analytics-revenue-stream-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .analytics-revenue-stream-icon.green { background: rgba(52, 199, 89, 0.1); color: var(--macos-accent-green); }
+    .analytics-revenue-stream-icon.blue { background: rgba(0, 113, 227, 0.1); color: var(--macos-accent-blue); }
+    .analytics-revenue-stream-icon.purple { background: rgba(88, 86, 214, 0.1); color: var(--macos-accent-purple); }
+    .analytics-revenue-stream-icon.orange { background: rgba(255, 149, 0, 0.1); color: var(--macos-accent-orange); }
+
+    .analytics-revenue-stream-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .analytics-revenue-stream-label {
+      font-size: 13px;
+      color: var(--macos-text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .analytics-revenue-stream-value {
+      font-size: 20px;
+      font-weight: 600;
+      font-family: 'Geist', monospace;
+      color: var(--macos-text-primary);
+    }
+
+    .analytics-revenue-stream-sub {
+      font-size: 11px;
+      color: var(--macos-text-tertiary);
+      margin-top: 2px;
+    }
+
+    .analytics-revenue-stream-percent {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--macos-text-secondary);
+      padding: 4px 10px;
+      background: var(--macos-fill-quaternary);
+      border-radius: 6px;
+    }
+
+    /* Search Components */
+    .analytics-search-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .analytics-search-input {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px 16px 10px 40px;
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--macos-panel);
+      color: var(--macos-text-primary);
+      transition: all 0.15s ease;
+    }
+
+    .analytics-search-input:focus {
+      outline: none;
+      border-color: var(--macos-accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+    }
+
+    .analytics-search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--macos-text-tertiary);
+    }
+
+    /* Date Picker Inline */
+    .analytics-date-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .analytics-date-picker input[type="date"] {
+      padding: 8px 12px;
+      background: var(--macos-fill-quaternary);
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--macos-text-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      width: 140px;
+    }
+
+    .analytics-date-picker input[type="date"]:hover {
+      background: var(--macos-fill-tertiary);
+      border-color: var(--macos-stroke-secondary);
+    }
+
+    .analytics-date-picker input[type="date"]:focus {
+      outline: none;
+      border-color: var(--macos-accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+    }
+
+    .analytics-date-separator {
+      font-size: 13px;
+      color: var(--macos-text-tertiary);
+    }
+
+    /* Status Badges */
+    .analytics-status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .analytics-status-badge.success {
+      background: rgba(52, 199, 89, 0.1);
+      color: var(--macos-accent-green);
+    }
+
+    .analytics-status-badge.warning {
+      background: rgba(255, 149, 0, 0.1);
+      color: var(--macos-accent-orange);
+    }
+
+    .analytics-status-badge.info {
+      background: rgba(0, 113, 227, 0.1);
+      color: var(--macos-accent-blue);
+    }
+
+    /* Location Select */
+    .analytics-location-select {
+      padding: 8px 32px 8px 12px;
+      background: var(--macos-fill-quaternary);
+      border: 1px solid var(--macos-stroke-primary);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--macos-text-primary);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .analytics-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .analytics-revenue-streams {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .analytics-sidebar {
+        display: none;
+      }
+      .analytics-main {
+        padding: 16px;
+      }
+      .analytics-kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .analytics-charts-row {
+        grid-template-columns: 1fr;
+      }
+      .analytics-revenue-streams {
+        grid-template-columns: 1fr;
+      }
+      .analytics-header-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
   </style>
 </head>
 <body>
