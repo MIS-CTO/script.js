@@ -39844,6 +39844,70 @@
       }
 
       // ============================================
+      // Helper: Load ALL non-canceled Guest Spots and categorize AFTER grouping
+      // This prevents multi-day spots from being split across tabs
+      // ============================================
+      async function loadAllNonCanceledGuestSpots() {
+        console.log('📋 Loading ALL non-canceled Guest Spots for proper categorization...');
+
+        try {
+          // Load ALL non-canceled slots in one query
+          const { data, error } = await supabase
+            .from('upcoming_slots_grouped')
+            .select('*')
+            .not('status', 'eq', 'canceled')
+            .order('date_from', { ascending: true });
+
+          if (error) throw error;
+
+          console.log(`✅ Loaded ${data?.length || 0} total non-canceled guest spots`);
+
+          if (!data || data.length === 0) {
+            return { upcoming: [], active: [], previous: [] };
+          }
+
+          // Group consecutive slots FIRST (before categorization)
+          const groupedData = groupConsecutiveSlots(data);
+          console.log(`📦 Grouped into ${groupedData.length} entries`);
+
+          // NOW categorize based on GROUPED dates
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const upcoming = [];
+          const active = [];
+          const previous = [];
+
+          groupedData.forEach(slot => {
+            // Use grouped dates (from frontend grouping)
+            const dateFrom = new Date(slot.grouped_date_from || slot.date_from);
+            const dateTo = new Date(slot.grouped_date_to || slot.date_to);
+            dateFrom.setHours(0, 0, 0, 0);
+            dateTo.setHours(23, 59, 59, 999);
+
+            if (dateTo < today) {
+              // LAST day is in the past → Previous
+              previous.push(slot);
+            } else if (dateFrom <= today && dateTo >= today) {
+              // Today is WITHIN the range → Active
+              active.push(slot);
+            } else {
+              // FIRST day is in the future → Upcoming
+              upcoming.push(slot);
+            }
+          });
+
+          console.log(`📊 Categorized: ${upcoming.length} upcoming, ${active.length} active, ${previous.length} previous`);
+
+          return { upcoming, active, previous };
+
+        } catch (error) {
+          console.error('❌ Error loading guest spots:', error);
+          return { upcoming: [], active: [], previous: [] };
+        }
+      }
+
+      // ============================================
       // Load Upcoming Guest Spots (status = upcoming/active, date in future)
       // ============================================
       async function loadUpcomingGuestSpotsTab() {
@@ -39854,28 +39918,17 @@
         container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Laden...</div>';
 
         try {
-          const today = new Date().toISOString().split('T')[0];
-          const { data, error } = await supabase
-            .from('upcoming_slots_grouped')
-            .select('*')
-            .gte('date_from', today)
-            .order('date_from', { ascending: true });
+          // Use centralized loading to prevent multi-day spot splitting
+          const { upcoming } = await loadAllNonCanceledGuestSpots();
 
-          if (error) throw error;
-
-          console.log(`✅ Loaded ${data?.length || 0} upcoming guest spots`);
-
-          if (!data || data.length === 0) {
+          if (upcoming.length === 0) {
             container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine anstehenden Guest Spots</p></div>';
             return;
           }
 
-          // Group consecutive slots by same artist
-          const groupedData = groupConsecutiveSlots(data);
-          console.log(`📦 Grouped into ${groupedData.length} entries`);
-
-          waitlistSlots = groupedData;
-          renderWaitlistSlots(groupedData);
+          console.log(`✅ Displaying ${upcoming.length} upcoming guest spots`);
+          waitlistSlots = upcoming;
+          renderWaitlistSlots(upcoming);
 
         } catch (error) {
           console.error('❌ Error loading upcoming guest spots:', error);
@@ -39894,30 +39947,17 @@
         container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Laden...</div>';
 
         try {
-          const today = new Date().toISOString().split('T')[0];
-          const { data, error } = await supabase
-            .from('upcoming_slots_grouped')
-            .select('*')
-            .lte('date_from', today)
-            .gte('date_to', today)
-            .neq('status', 'canceled')
-            .order('date_from', { ascending: true });
+          // Use centralized loading to prevent multi-day spot splitting
+          const { active } = await loadAllNonCanceledGuestSpots();
 
-          if (error) throw error;
-
-          console.log(`✅ Loaded ${data?.length || 0} active guest spots`);
-
-          if (!data || data.length === 0) {
-            container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine aktiven Guest Spots</p></div>';
+          if (active.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine aktiven Guest Spots heute</p></div>';
             return;
           }
 
-          // Group consecutive slots by same artist
-          const groupedData = groupConsecutiveSlots(data);
-          console.log(`📦 Grouped into ${groupedData.length} entries`);
-
-          waitlistSlots = groupedData;
-          renderWaitlistSlots(groupedData);
+          console.log(`✅ Displaying ${active.length} active guest spots`);
+          waitlistSlots = active;
+          renderWaitlistSlots(active);
 
         } catch (error) {
           console.error('❌ Error loading active guest spots:', error);
