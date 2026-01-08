@@ -11757,12 +11757,12 @@
        ======================================== */
 
     /* Analytics Section Override - OVERRIDE GLOBAL section STYLES */
+    /* NOTE: No display property here - follows default section display:none */
     #analytics-section {
       padding: 0 !important;
       margin-top: 60px !important;
       max-width: 100% !important;
       min-height: calc(100vh - 60px) !important;
-      display: block !important;
       position: relative !important;
       overflow: visible !important;
 
@@ -11837,6 +11837,23 @@
     /* ========================================
        Sidebar - FIXED LEFT VERTICAL
        ======================================== */
+
+    /* CRITICAL: Hide sidebar when analytics is not active */
+    #analytics-section:not(.active) .analytics-sidebar {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Only show sidebar when analytics section IS active */
+    #analytics-section.active .analytics-sidebar {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+
     #analytics-section .analytics-sidebar {
       width: var(--analytics-sidebar-width) !important;
       background: var(--analytics-bg-000) !important;
@@ -11847,7 +11864,7 @@
       bottom: 0 !important;
       display: flex !important;
       flex-direction: column !important;
-      z-index: 100 !important;
+      z-index: 50 !important;
       transition: background 0.3s ease, border-color 0.3s ease;
       overflow-y: auto !important;
       padding: 0 !important;
