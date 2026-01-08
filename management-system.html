@@ -38569,250 +38569,21 @@
 
     // Render Pie Chart for Booking Origins
     async function renderOriginsPieChart(data) {
-      console.log('📊 Rendering origins pie chart with', data.length, 'requests');
-
-      // Mapping from database values to chart categories
-      const originMapping = {
-        // Booking form variations
-        'Contactform': 'booking_form',
-        'contactform': 'booking_form',
-        'booking_form': 'booking_form',
-        'Booking Form': 'booking_form',
-        'Booking form': 'booking_form',
-
-        // WhatsApp variations
-        'WhatsApp': 'whatsapp',
-        'whatsapp': 'whatsapp',
-        'Whatsapp': 'whatsapp',
-
-        // Instagram variations
-        'Instagram': 'instagram',
-        'instagram': 'instagram',
-
-        // Facebook variations
-        'Facebook': 'facebook',
-        'facebook': 'facebook',
-
-        // Email variations
-        'Email': 'email',
-        'email': 'email',
-        'E-Mail': 'email',
-        'E-mail': 'email',
-
-        // Phone variations
-        'Phone': 'phone',
-        'phone': 'phone',
-        'Telefon': 'phone',
-
-        // Walk-In variations
-        'Walk-In': 'walk_in',
-        'walk_in': 'walk_in',
-        'Walk In': 'walk_in',
-        'Walk in': 'walk_in',
-
-        // Self-Booking variations
-        'Self-Booking': 'self_booking',
-        'self_booking': 'self_booking',
-        'Self Booking': 'self_booking'
-      };
-
-      // Count origins
-      const originCounts = {
-        'booking_form': 0,
-        'whatsapp': 0,
-        'instagram': 0,
-        'facebook': 0,
-        'phone': 0,
-        'email': 0,
-        'walk_in': 0,
-        'self_booking': 0
-      };
-
-      // Track unknown origins for debugging
-      const unknownOrigins = new Set();
-
-      data.forEach(req => {
-        // Trim whitespace and handle null/undefined
-        const rawOrigin = req.origin?.trim();
-
-        if (rawOrigin && rawOrigin !== '') {
-          // Map the database value to a chart category
-          const mappedOrigin = originMapping[rawOrigin];
-
-          if (mappedOrigin) {
-            originCounts[mappedOrigin]++;
-          } else {
-            // Unknown origin value - log for debugging
-            unknownOrigins.add(rawOrigin);
-          }
-        }
-        // Note: Requests without origin value are not counted
-      });
-
-      console.log('📊 Origin counts:', originCounts);
-      console.log('📊 Total requests processed:', data.length);
-      console.log('📊 Requests WITH origin:', data.filter(r => r.origin?.trim()).length);
-      console.log('📊 Requests WITHOUT origin:', data.filter(r => !r.origin?.trim()).length);
-      if (unknownOrigins.size > 0) {
-        console.warn('⚠️ Unknown origin values found:', Array.from(unknownOrigins));
-        console.warn('⚠️ Add these to originMapping if they should be tracked');
-      }
-
-      // Labels and colors (order must match originCounts)
-      const labels = [
-        'Booking form',
-        'Whatsapp',
-        'Instagram',
-        'Facebook',
-        'Phone',
-        'E-mail',
-        'Walk-in',
-        'Self-Booking'
-      ];
-
-      const colors = [
-        '#0071e3', // Accent (Booking Form)
-        '#25D366', // WhatsApp Green
-        '#E1306C', // Instagram Pink
-        '#1877F2', // Facebook Blue
-        '#34C759', // Phone Green (iOS)
-        '#EA4335', // Email Red
-        '#7B1FA2', // Walk-In Purple
-        '#00897B'  // Self-Booking Teal
-      ];
-
-      // Filter out categories with 0 count for cleaner chart
-      const chartLabels = [];
-      const chartData = [];
-      const chartColors = [];
-
-      labels.forEach((label, index) => {
-        const key = Object.keys(originCounts)[index];
-        const count = originCounts[key];
-        // Always show all categories, even with 0 count
-        chartLabels.push(label);
-        chartData.push(count);
-        chartColors.push(colors[index]);
-      });
-
-      const chartDataConfig = {
-        labels: chartLabels,
-        datasets: [{
-          data: chartData,
-          backgroundColor: chartColors,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      };
-
-      // Destroy existing chart
-      if (originsPieChart) {
-        originsPieChart.destroy();
-      }
-
-      const ctx = document.getElementById('bookingOriginsPie');
-      if (!ctx) {
-        console.error('❌ Canvas element not found: bookingOriginsPie');
-        return;
-      }
-
-      originsPieChart = new Chart(ctx.getContext('2d'), {
-        type: 'pie',
-        data: chartDataConfig,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'right',
-              labels: {
-                padding: 12,
-                font: {
-                  size: 12,
-                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-                }
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const label = context.label || '';
-                  const value = context.parsed || 0;
-                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                  return `${label}: ${value} (${percentage}%)`;
-                }
-              }
-            }
-          }
-        }
-      });
-
-      console.log('✅ Pie chart rendered successfully');
-      console.log(`📊 Total requests in chart: ${data.length}`);
-      console.log(`📊 Displayed categories: ${chartLabels.length} (excluding empty)`);
+      // DEPRECATED: Diese Funktion wurde durch Analytics V2 ersetzt
+      // Die neuen Funktionen verwenden createAnalyticsPieChart() mit korrekten IDs
+      console.log('ℹ️ renderOriginsPieChart: Skipped (handled by Analytics V2)');
     }
 
     // Render Requests Count Display
     async function renderRequestsCount(data) {
-      console.log('📊 Rendering requests count with', data.length, 'requests');
-
-      const countElement = document.getElementById('requestsCount');
-      if (!countElement) {
-        console.error('❌ Count element not found: requestsCount');
-        return;
-      }
-
-      // Animate the count
-      const targetCount = data.length;
-      let currentCount = 0;
-      const duration = 1000; // 1 second
-      const steps = 30;
-      const increment = targetCount / steps;
-      const stepDuration = duration / steps;
-
-      const counter = setInterval(() => {
-        currentCount += increment;
-        if (currentCount >= targetCount) {
-          countElement.textContent = targetCount.toLocaleString('de-DE');
-          clearInterval(counter);
-        } else {
-          countElement.textContent = Math.floor(currentCount).toLocaleString('de-DE');
-        }
-      }, stepDuration);
-
-      console.log('✅ Requests count rendered successfully');
+      // DEPRECATED: Diese Funktion wurde durch Analytics V2 ersetzt
+      console.log('ℹ️ renderRequestsCount: Skipped (handled by Analytics V2)');
     }
 
     // Render Appointments Count Display
     async function renderAppointmentsCount(data) {
-      console.log('📊 Rendering appointments count with', data.length, 'appointments');
-
-      const countElement = document.getElementById('appointmentsCount');
-      if (!countElement) {
-        console.error('❌ Count element not found: appointmentsCount');
-        return;
-      }
-
-      // Animate the count
-      const targetCount = data.length;
-      let currentCount = 0;
-      const duration = 1000; // 1 second
-      const steps = 30;
-      const increment = targetCount / steps;
-      const stepDuration = duration / steps;
-
-      const counter = setInterval(() => {
-        currentCount += increment;
-        if (currentCount >= targetCount) {
-          countElement.textContent = targetCount.toLocaleString('de-DE');
-          clearInterval(counter);
-        } else {
-          countElement.textContent = Math.floor(currentCount).toLocaleString('de-DE');
-        }
-      }, stepDuration);
-
-      console.log('✅ Appointments count rendered successfully');
+      // DEPRECATED: Diese Funktion wurde durch Analytics V2 ersetzt
+      console.log('ℹ️ renderAppointmentsCount: Skipped (handled by Analytics V2)');
     }
 
     // ========================================
@@ -39374,124 +39145,8 @@
 
     // Render Revenue Timeline Chart
     async function renderRevenueTimeline(data) {
-      console.log('💰 Rendering revenue timeline with', data.length, 'projects');
-
-      if (data.length === 0) {
-        console.warn('⚠️ No data for revenue timeline');
-        return;
-      }
-
-      // Group by month
-      const monthlyRevenue = {};
-
-      data.forEach(project => {
-        const date = new Date(project.created_at);
-        if (isNaN(date.getTime())) return;
-
-        const key = date.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
-        const price = parseFloat(project.price) || 0;
-
-        if (!monthlyRevenue[key]) {
-          monthlyRevenue[key] = { total: 0, count: 0 };
-        }
-
-        monthlyRevenue[key].total += price;
-        monthlyRevenue[key].count += 1;
-      });
-
-      // Sort by date
-      const sortedKeys = Object.keys(monthlyRevenue).sort((a, b) => {
-        return new Date(a) - new Date(b);
-      });
-
-      // Take last 12 months
-      const last12Months = sortedKeys.slice(-12);
-
-      const chartData = {
-        labels: last12Months,
-        datasets: [{
-          label: 'Umsatz (€)',
-          data: last12Months.map(key => monthlyRevenue[key].total),
-          borderColor: '#0071e3',
-          backgroundColor: 'rgba(0, 113, 227, 0.1)',
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointBackgroundColor: '#0071e3',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointHoverRadius: 6
-        }]
-      };
-
-      // Destroy existing chart
-      if (revenueTimelineChart) {
-        revenueTimelineChart.destroy();
-      }
-
-      const ctx = document.getElementById('revenueTimeline');
-      if (!ctx) {
-        console.error('❌ Canvas element not found: revenueTimeline');
-        return;
-      }
-
-      revenueTimelineChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: chartData,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const value = context.parsed.y;
-                  const key = context.label;
-                  const count = monthlyRevenue[key]?.count || 0;
-                  return [
-                    `Umsatz: €${value.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-                    `Projekte: ${count}`
-                  ];
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return '€' + value.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-                },
-                font: {
-                  size: 11,
-                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-                }
-              },
-              grid: {
-                color: 'rgba(0, 0, 0, 0.05)'
-              }
-            },
-            x: {
-              ticks: {
-                font: {
-                  size: 11,
-                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-                }
-              },
-              grid: {
-                display: false
-              }
-            }
-          }
-        }
-      });
-
-      console.log('✅ Revenue timeline chart rendered successfully');
+      // DEPRECATED: Diese Funktion wurde durch Analytics V2 ersetzt
+      console.log('ℹ️ renderRevenueTimeline: Skipped (handled by Analytics V2)');
     }
 
     // Group appointments data by time range (uses created_at)
@@ -39601,97 +39256,8 @@
 
     // Render Line Chart for Bookings Timeline
     async function renderBookingsTimeline(data, timeRange = 'weekly') {
-      console.log('📊 Rendering timeline chart for range:', timeRange);
-
-      currentTimeRange = timeRange;
-
-      // Group data by time range
-      const groupedData = groupDataByTimeRange(data, timeRange);
-
-      console.log('📈 Timeline data points:', groupedData.labels.length);
-
-      const chartData = {
-        labels: groupedData.labels,
-        datasets: [{
-          label: 'Bookings',
-          data: groupedData.values,
-          borderColor: '#0071e3',
-          backgroundColor: 'rgba(0,113,227,0.1)',
-          borderWidth: 2,
-          tension: 0.4,
-          fill: true,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          pointBackgroundColor: '#0071e3',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2
-        }]
-      };
-
-      // Destroy existing chart
-      if (timelineChart) {
-        timelineChart.destroy();
-      }
-
-      const ctx = document.getElementById('bookingsTimeline');
-      if (!ctx) {
-        console.error('❌ Canvas element not found: bookingsTimeline');
-        return;
-      }
-
-      timelineChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: chartData,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              backgroundColor: 'rgba(29,29,31,0.95)',
-              padding: 12,
-              cornerRadius: 8,
-              titleFont: {
-                size: 13,
-                weight: '600'
-              },
-              bodyFont: {
-                size: 12
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                precision: 0,
-                font: {
-                  size: 11
-                }
-              },
-              grid: {
-                color: 'rgba(0,0,0,0.06)'
-              }
-            },
-            x: {
-              ticks: {
-                font: {
-                  size: 11
-                },
-                maxRotation: 45,
-                minRotation: 0
-              },
-              grid: {
-                display: false
-              }
-            }
-          }
-        }
-      });
-
-      console.log('✅ Timeline chart rendered successfully');
+      // DEPRECATED: Diese Funktion wurde durch Analytics V2 ersetzt
+      console.log('ℹ️ renderBookingsTimeline: Skipped (handled by Analytics V2)');
     }
 
     // Test Supabase connection and tables
@@ -41955,6 +41521,7 @@
             break;
 
           case 'request-origins':
+            // Request Origins Sub-View
             const origCounts = {};
             requests.forEach(r => {
               const origin = r.origin || 'Unknown';
@@ -41970,30 +41537,92 @@
                 display: value.toLocaleString('de-DE')
               }));
 
-            createAnalyticsPieChart('originsMainPie', 'originsMainLegend', origData);
+            if (origData.length > 0) {
+              createAnalyticsPieChart('originsMainPie', 'originsMainLegend', origData);
+            }
+
+            // Sources Over Time Chart
+            const monthlyOrigins = {};
+            requests.forEach(r => {
+              const date = new Date(r.created_at);
+              if (!isNaN(date.getTime())) {
+                const monthKey = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+                if (!monthlyOrigins[monthKey]) monthlyOrigins[monthKey] = {};
+                const origin = r.origin || 'Unknown';
+                monthlyOrigins[monthKey][origin] = (monthlyOrigins[monthKey][origin] || 0) + 1;
+              }
+            });
+
+            const originMonths = Object.keys(monthlyOrigins).slice(-12);
+            const topOrigins = Object.keys(origCounts).slice(0, 3);
+
+            if (originMonths.length > 0 && topOrigins.length > 0) {
+              const originDatasets = topOrigins.map((origin, i) => ({
+                label: origin,
+                data: originMonths.map(m => monthlyOrigins[m]?.[origin] || 0),
+                borderColor: [colors.blue, colors.purple, colors.green][i],
+                backgroundColor: [`rgba(0, 112, 243, 0.1)`, `rgba(139, 92, 246, 0.1)`, `rgba(16, 185, 129, 0.1)`][i]
+              }));
+              createAnalyticsLineChart('originsTimeline', originMonths, originDatasets);
+            }
             break;
 
           case 'conversion':
+            // Conversion Funnel Sub-View
             const convTotal = requests.length;
-            const convConverted = requests.filter(r => r.status === 'scheduled' || r.status === 'finished').length;
+            const convScheduled = requests.filter(r => r.status === 'scheduled').length;
+            const convFinished = requests.filter(r => r.status === 'finished').length;
+            const convConverted = convScheduled + convFinished;
+            const convCanceled = requests.filter(r => r.status === 'canceled').length;
+            const convPending = requests.filter(r => r.status === 'pending' || r.status === 'open_request').length;
             const convRate = convTotal > 0 ? ((convConverted / convTotal) * 100).toFixed(1) : 0;
 
-            const convEls = {
-              conversionTotalRequests: convTotal.toLocaleString('de-DE'),
-              conversionConvertedCount: convConverted.toLocaleString('de-DE'),
-              conversionRate: convRate + '%',
-              conversionAvgTime: '4.2 Tage'
-            };
+            // Update KPIs
+            const convKpi1 = document.getElementById('conversionTotalRequests');
+            const convKpi2 = document.getElementById('conversionConverted');
+            const convKpi3 = document.getElementById('conversionRate');
+            const convKpi4 = document.getElementById('conversionAvgTime');
+            if (convKpi1) convKpi1.textContent = convTotal.toLocaleString('de-DE');
+            if (convKpi2) convKpi2.textContent = convConverted.toLocaleString('de-DE');
+            if (convKpi3) convKpi3.textContent = convRate + '%';
+            if (convKpi4) convKpi4.textContent = '4.2 Tage'; // Placeholder
 
-            Object.entries(convEls).forEach(([id, value]) => {
-              const el = document.getElementById(id);
-              if (el) el.textContent = value;
+            // Conversion Breakdown Pie
+            createAnalyticsPieChart('conversionPie', 'conversionLegend', [
+              { label: 'Scheduled', value: convScheduled, color: colors.green, display: convScheduled.toLocaleString('de-DE') },
+              { label: 'Finished', value: convFinished, color: colors.blue, display: convFinished.toLocaleString('de-DE') },
+              { label: 'Canceled', value: convCanceled, color: colors.red, display: convCanceled.toLocaleString('de-DE') },
+              { label: 'Pending', value: convPending, color: colors.orange, display: convPending.toLocaleString('de-DE') }
+            ]);
+
+            // Conversion Over Time
+            const convMonthly = {};
+            requests.forEach(r => {
+              const date = new Date(r.created_at);
+              if (!isNaN(date.getTime())) {
+                const monthKey = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+                if (!convMonthly[monthKey]) convMonthly[monthKey] = { total: 0, converted: 0 };
+                convMonthly[monthKey].total++;
+                if (r.status === 'scheduled' || r.status === 'finished') {
+                  convMonthly[monthKey].converted++;
+                }
+              }
             });
 
-            createAnalyticsPieChart('conversionPie', 'conversionLegend', [
-              { label: 'Umgesetzt', value: convConverted, color: colors.green },
-              { label: 'Offen', value: convTotal - convConverted, color: colors.orange }
-            ]);
+            const convMonths = Object.keys(convMonthly).slice(-12);
+            const convRates = convMonths.map(m => {
+              const d = convMonthly[m];
+              return d.total > 0 ? ((d.converted / d.total) * 100).toFixed(1) : 0;
+            });
+
+            if (convMonths.length > 0) {
+              createAnalyticsLineChart('conversionTimeline', convMonths, [{
+                label: 'Conversion Rate %',
+                data: convRates,
+                borderColor: colors.green,
+                backgroundColor: 'rgba(16, 185, 129, 0.1)'
+              }]);
+            }
             break;
 
           case 'residents':
@@ -42117,6 +41746,149 @@
                 display: l.requests.toLocaleString('de-DE')
               }))
             );
+            break;
+
+          case 'team':
+            // Team Performance Sub-View
+            const bookingTeam = ['Cara', 'Aman', 'Stefan', 'Aj', 'Ben'];
+            const teamStats = {};
+
+            requests.forEach(r => {
+              const handler = r.assigned_to || r.handled_by || 'Unassigned';
+              if (!teamStats[handler]) {
+                teamStats[handler] = { processed: 0, converted: 0 };
+              }
+              teamStats[handler].processed++;
+              if (r.status === 'scheduled' || r.status === 'finished') {
+                teamStats[handler].converted++;
+              }
+            });
+
+            const teamLabels = Object.keys(teamStats).filter(t => t !== 'Unassigned').slice(0, 6);
+            const teamProcessed = teamLabels.map(t => teamStats[t]?.processed || 0);
+            const teamConverted = teamLabels.map(t => teamStats[t]?.converted || 0);
+
+            if (teamLabels.length > 0) {
+              createAnalyticsBarChart('teamComparisonChart', teamLabels, [
+                { label: 'Bearbeitete Requests', data: teamProcessed, backgroundColor: colors.blue },
+                { label: 'Umgesetzte Termine', data: teamConverted, backgroundColor: colors.green }
+              ]);
+            }
+
+            // Fill table
+            const teamTable = document.querySelector('#teamPerformanceTable tbody');
+            if (teamTable) {
+              teamTable.innerHTML = teamLabels.map(name => {
+                const stats = teamStats[name];
+                const rate = stats.processed > 0 ? ((stats.converted / stats.processed) * 100).toFixed(1) : 0;
+                return `
+                  <tr>
+                    <td class="name">${name}</td>
+                    <td class="mono">${stats.processed.toLocaleString('de-DE')}</td>
+                    <td class="mono">${stats.converted.toLocaleString('de-DE')}</td>
+                    <td class="mono">${rate}%</td>
+                    <td>--</td>
+                    <td><span class="status-badge ${rate > 40 ? 'success' : rate > 20 ? 'warning' : 'error'}">
+                      ${rate > 40 ? 'Excellent' : rate > 20 ? 'Good' : 'Needs Improvement'}
+                    </span></td>
+                  </tr>
+                `;
+              }).join('');
+            }
+            break;
+
+          case 'guests':
+            // Guest Artists Sub-View - KPIs
+            const guestSpots = appointments.filter(a => a.is_guest_spot || a.artist_type === 'guest');
+            const totalGuestRevenue = guestSpots.reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0), 0);
+            const studioShare = totalGuestRevenue * 0.3; // 30% studio share typical
+
+            const gs1 = document.getElementById('guestsTotalSpots');
+            const gs2 = document.getElementById('guestsStudioShare');
+            const gs3 = document.getElementById('guestsAvgPerGuest');
+            if (gs1) gs1.textContent = guestSpots.length.toLocaleString('de-DE');
+            if (gs2) gs2.textContent = '€' + studioShare.toLocaleString('de-DE', {maximumFractionDigits: 0});
+            if (gs3) gs3.textContent = guestSpots.length > 0 ? '€' + (totalGuestRevenue / guestSpots.length).toFixed(0) : '--';
+            break;
+
+          case 'rankings':
+            // Rankings Sub-View
+            const rankCounts = {};
+            const rankRevenue = {};
+            artists.forEach(a => {
+              const rank = a.rank || 'Unranked';
+              rankCounts[rank] = (rankCounts[rank] || 0) + 1;
+            });
+
+            appointments.forEach(a => {
+              const artist = artists.find(ar => ar.id === a.artist_id);
+              if (artist) {
+                const rank = artist.rank || 'Unranked';
+                rankRevenue[rank] = (rankRevenue[rank] || 0) + (parseFloat(a.total_amount) || 0);
+              }
+            });
+
+            const ranks = ['R1', 'R2', 'R3', 'R4', 'R5'].filter(r => rankCounts[r] || rankRevenue[r]);
+
+            if (ranks.length > 0) {
+              createAnalyticsBarChart('rankingRevenueChart', ranks,
+                [{ label: 'Avg Revenue €', data: ranks.map(r => {
+                  const count = rankCounts[r] || 1;
+                  const rev = rankRevenue[r] || 0;
+                  return Math.round(rev / count);
+                }), backgroundColor: [colors.gray, colors.cyan, colors.green, colors.purple, colors.blue] }]
+              );
+
+              createAnalyticsPieChart('rankingDistributionPie', 'rankingLegend',
+                ranks.map((r, i) => ({
+                  label: r,
+                  value: rankCounts[r] || 0,
+                  color: [colors.gray, colors.cyan, colors.green, colors.purple, colors.blue][i],
+                  display: (rankCounts[r] || 0).toString()
+                }))
+              );
+            }
+            break;
+
+          case 'revenue-categories':
+            // Revenue Categories - Category Cards
+            const stuhlmiete = appointments.filter(a => a.booking_type === 'freelancer' || a.booking_type === 'guest').length * 50; // Placeholder
+            const tattooRev = appointments.filter(a => a.booking_type === 'resident').reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0), 0);
+            const guestRev = appointments.filter(a => a.booking_type === 'guest').reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0) * 0.3, 0);
+
+            const cat1 = document.getElementById('categoryStuhlmiete');
+            const cat2 = document.getElementById('categoryTattoo');
+            const cat3 = document.getElementById('categoryGuest');
+            if (cat1) cat1.textContent = '€' + stuhlmiete.toLocaleString('de-DE', {maximumFractionDigits: 0});
+            if (cat2) cat2.textContent = '€' + tattooRev.toLocaleString('de-DE', {maximumFractionDigits: 0});
+            if (cat3) cat3.textContent = '€' + guestRev.toLocaleString('de-DE', {maximumFractionDigits: 0});
+
+            createAnalyticsPieChart('categoryPie', 'categoryLegend', [
+              { label: 'Tattoo-Umsätze', value: tattooRev, color: colors.green, display: '€' + tattooRev.toLocaleString('de-DE', {maximumFractionDigits: 0}) },
+              { label: 'Stuhlmiete', value: stuhlmiete, color: colors.blue, display: '€' + stuhlmiete.toLocaleString('de-DE', {maximumFractionDigits: 0}) },
+              { label: 'Guest Artists', value: guestRev, color: colors.purple, display: '€' + guestRev.toLocaleString('de-DE', {maximumFractionDigits: 0}) }
+            ]);
+            break;
+
+          case 'revenue-timeline':
+            // Revenue Timeline
+            const revMonthly = {};
+            appointments.forEach(a => {
+              const date = new Date(a.start || a.created_at);
+              if (!isNaN(date.getTime())) {
+                const monthKey = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+                revMonthly[monthKey] = (revMonthly[monthKey] || 0) + (parseFloat(a.total_amount) || 0);
+              }
+            });
+
+            const revMonths = Object.keys(revMonthly).slice(-12);
+            const revValues = revMonths.map(m => revMonthly[m] / 1000);
+
+            if (revMonths.length > 0) {
+              createAnalyticsBarChart('revenueMonthlyChart', revMonths,
+                [{ label: 'Revenue €K', data: revValues, backgroundColor: colors.blue }]
+              );
+            }
             break;
 
           default:
