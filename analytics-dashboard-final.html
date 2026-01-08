@@ -1,0 +1,3611 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Dashboard - Culture Over Money</title>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- Geist Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ========================================
+       CSS Variables - Light Mode (Default)
+       ======================================== */
+    :root {
+      --bg-000: #ffffff;
+      --bg-100: #fafafa;
+      --bg-200: #f5f5f5;
+      --bg-300: #ebebeb;
+      --bg-400: #e0e0e0;
+      --bg-500: #d4d4d4;
+      --bg-600: #a3a3a3;
+      
+      --text-100: #0a0a0a;
+      --text-200: #171717;
+      --text-300: #404040;
+      --text-400: #737373;
+      --text-500: #a3a3a3;
+      
+      --accent-blue: #0070f3;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-purple: #8b5cf6;
+      --accent-pink: #ec4899;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+      
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-color-hover: rgba(0, 0, 0, 0.15);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+      
+      --sidebar-width: 240px;
+      --header-height: 56px;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Dark Mode */
+    [data-theme="dark"] {
+      --bg-000: #000000;
+      --bg-100: #0a0a0a;
+      --bg-200: #111111;
+      --bg-300: #171717;
+      --bg-400: #1f1f1f;
+      --bg-500: #262626;
+      --bg-600: #404040;
+      
+      --text-100: #fafafa;
+      --text-200: #e5e5e5;
+      --text-300: #a3a3a3;
+      --text-400: #737373;
+      --text-500: #525252;
+      
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-color-hover: rgba(255, 255, 255, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-100);
+      color: var(--text-200);
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .analytics-layout { display: flex; min-height: 100vh; }
+
+    /* ========================================
+       Sidebar
+       ======================================== */
+    .analytics-sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-000);
+      border-right: 1px solid var(--border-color);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: all 0.3s ease;
+      animation: slideInLeft 0.5s var(--ease-out-expo) forwards;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    @keyframes slideInLeft { to { opacity: 1; transform: translateX(0); } }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-100);
+    }
+
+    .sidebar-logo svg { width: 20px; height: 20px; }
+
+    .theme-toggle {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-200);
+      color: var(--text-300);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .theme-toggle:hover { background: var(--bg-300); color: var(--text-100); }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .theme-toggle .icon-sun { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+    .sidebar-nav { flex: 1; padding: 12px; overflow-y: auto; }
+    .nav-section { margin-bottom: 20px; }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-500);
+      padding: 8px 12px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--text-400);
+      font-size: 13px;
+      font-weight: 450;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+      opacity: 0;
+      transform: translateX(-10px);
+      animation: fadeInStagger 0.4s var(--ease-out-expo) forwards;
+    }
+
+    .nav-item:nth-child(1) { animation-delay: 0.05s; }
+    .nav-item:nth-child(2) { animation-delay: 0.1s; }
+    .nav-item:nth-child(3) { animation-delay: 0.15s; }
+    .nav-item:nth-child(4) { animation-delay: 0.2s; }
+    .nav-item:nth-child(5) { animation-delay: 0.25s; }
+
+    @keyframes fadeInStagger { to { opacity: 1; transform: translateX(0); } }
+
+    .nav-item:hover { background: var(--bg-200); color: var(--text-200); }
+
+    .nav-item.active {
+      background: var(--bg-300);
+      color: var(--text-100);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 20px;
+      background: var(--accent-blue);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.6; }
+    .nav-item.active svg { opacity: 1; }
+
+    /* ========================================
+       Main Content
+       ======================================== */
+    .analytics-main {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      background: var(--bg-100);
+      transition: background 0.3s ease;
+    }
+
+    .analytics-header {
+      height: var(--header-height);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--bg-000);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      transition: all 0.3s ease;
+      animation: fadeInDown 0.4s var(--ease-out-expo) 0.15s forwards;
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    @keyframes fadeInDown { to { opacity: 1; transform: translateY(0); } }
+
+    .header-breadcrumb {
+      font-size: 13px;
+      color: var(--text-300);
+    }
+
+    .header-breadcrumb span { color: var(--text-500); margin: 0 6px; }
+
+    .header-controls { display: flex; align-items: center; gap: 12px; }
+
+    .time-filter {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--bg-200);
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    .time-pill {
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 450;
+      color: var(--text-400);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .time-pill:hover { color: var(--text-200); }
+
+    .time-pill.active {
+      background: var(--bg-000);
+      color: var(--text-100);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .location-select {
+      background: var(--bg-200);
+      border: 1px solid var(--border-color);
+      color: var(--text-200);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .location-select:focus { outline: none; border-color: var(--accent-blue); }
+
+    .analytics-content { padding: 24px; }
+
+    .analytics-view {
+      display: none;
+      animation: fadeInUp 0.4s var(--ease-out-expo) forwards;
+    }
+
+    .analytics-view.active { display: block; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header { margin-bottom: 24px; }
+    .page-header h2 { font-size: 22px; font-weight: 600; color: var(--text-100); margin-bottom: 6px; }
+    .page-header p { font-size: 14px; color: var(--text-400); }
+
+    /* ========================================
+       KPI Cards
+       ======================================== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s ease;
+      animation: scaleIn 0.4s var(--ease-out-expo) forwards;
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    .kpi-card:nth-child(1) { animation-delay: 0.2s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.25s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.35s; }
+
+    @keyframes scaleIn { to { opacity: 1; transform: scale(1); } }
+
+    .kpi-card:hover { border-color: var(--border-color-hover); box-shadow: var(--shadow-md); }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-400);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kpi-label svg { width: 14px; height: 14px; opacity: 0.6; }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-100);
+      font-family: 'Geist Mono', monospace;
+      letter-spacing: -0.02em;
+    }
+
+    .kpi-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      margin-top: 8px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .kpi-change.positive { color: var(--accent-green); background: rgba(16, 185, 129, 0.1); }
+    .kpi-change.negative { color: var(--accent-red); background: rgba(239, 68, 68, 0.1); }
+    .kpi-change svg { width: 12px; height: 12px; }
+
+    /* ========================================
+       Chart Cards
+       ======================================== */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .chart-card {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .chart-card:hover { box-shadow: var(--shadow-md); }
+    .chart-card.full-width { grid-column: 1 / -1; }
+
+    .chart-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-200);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-title svg { width: 16px; height: 16px; opacity: 0.5; }
+    .chart-body { padding: 20px; }
+    .chart-container { position: relative; width: 100%; height: 280px; }
+    .chart-container.small { height: 200px; }
+
+    .pie-chart-layout { display: flex; align-items: center; gap: 32px; }
+    .pie-chart-wrapper { width: 200px; height: 200px; flex-shrink: 0; }
+
+    .pie-legend { flex: 1; }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .legend-item:last-child { border-bottom: none; }
+    .legend-label { display: flex; align-items: center; gap: 10px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .legend-text { font-size: 13px; color: var(--text-300); }
+
+    .legend-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-100);
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .legend-extra {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .legend-extra-label { font-size: 12px; color: var(--text-400); }
+
+    .legend-extra-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-blue);
+      font-family: 'Geist Mono', monospace;
+    }
+
+    /* ========================================
+       Data Table
+       ======================================== */
+    .data-table-container {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; }
+
+    .data-table th {
+      background: var(--bg-200);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-400);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th:last-child, .data-table td:last-child { text-align: right; }
+
+    .data-table td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-300);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tbody tr { transition: background 0.15s ease; }
+    .data-table tbody tr:hover { background: var(--bg-100); }
+    .data-table .mono { font-family: 'Geist Mono', monospace; color: var(--text-200); }
+    .data-table .name { color: var(--text-100); font-weight: 500; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-badge.success { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+    .status-badge.warning { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+    .status-badge.error { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
+
+    /* Category Cards */
+    .category-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .category-card {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .category-card:hover { border-color: var(--border-color-hover); box-shadow: var(--shadow-md); }
+
+    .category-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+
+    .category-icon svg { width: 24px; height: 24px; }
+    .category-icon.blue { background: rgba(0, 112, 243, 0.1); color: var(--accent-blue); }
+    .category-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+    .category-icon.purple { background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); }
+
+    .category-card h4 { font-size: 12px; font-weight: 500; color: var(--text-400); margin-bottom: 8px; }
+    .category-card .value { font-size: 24px; font-weight: 600; color: var(--text-100); font-family: 'Geist Mono', monospace; }
+    .category-card .sub { font-size: 12px; color: var(--text-500); margin-top: 4px; }
+
+    /* Location Cards */
+    .location-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .location-card {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .location-card:hover, .location-card.active {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+    }
+
+    .location-card h4 { font-size: 14px; font-weight: 600; color: var(--text-100); margin-bottom: 12px; }
+
+    .location-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-400);
+      margin-bottom: 6px;
+    }
+
+    .location-stat .value { font-weight: 500; color: var(--text-200); font-family: 'Geist Mono', monospace; }
+
+    /* Loading State */
+    .loading-spinner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: var(--text-400);
+    }
+
+    .spinner {
+      width: 24px; height: 24px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 1400px) { .location-cards { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } .category-cards { grid-template-columns: 1fr; } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-200); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-500); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--bg-600); }
+
+    /* ========================================
+       Search Bar
+       ======================================== */
+    .search-container {
+      margin-bottom: 24px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      max-width: 400px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-200);
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-500);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--text-500);
+      pointer-events: none;
+    }
+
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      margin-top: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+      display: none;
+    }
+
+    .search-results.active {
+      display: block;
+    }
+
+    .search-result-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .search-result-item:hover {
+      background: var(--bg-200);
+    }
+
+    .search-result-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-300);
+    }
+
+    .search-result-info {
+      flex: 1;
+    }
+
+    .search-result-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-100);
+    }
+
+    .search-result-meta {
+      font-size: 12px;
+      color: var(--text-400);
+    }
+
+    /* ========================================
+       Artist Detail Card
+       ======================================== */
+    .artist-detail-card {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.4s var(--ease-out-expo) forwards;
+    }
+
+    .artist-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .artist-detail-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .artist-detail-info h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-100);
+      margin-bottom: 4px;
+    }
+
+    .artist-detail-info p {
+      font-size: 14px;
+      color: var(--text-400);
+    }
+
+    .artist-detail-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .artist-detail-badge.resident {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-green);
+    }
+
+    .artist-detail-badge.guest {
+      background: rgba(139, 92, 246, 0.1);
+      color: var(--accent-purple);
+    }
+
+    .artist-detail-close {
+      margin-left: auto;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-200);
+      color: var(--text-400);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .artist-detail-close:hover {
+      background: var(--bg-300);
+      color: var(--text-100);
+    }
+
+    .artist-detail-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .artist-stat-card {
+      background: var(--bg-100);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .artist-stat-label {
+      font-size: 12px;
+      color: var(--text-400);
+      margin-bottom: 8px;
+    }
+
+    .artist-stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-100);
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .artist-stat-sub {
+      font-size: 11px;
+      color: var(--text-500);
+      margin-top: 4px;
+    }
+
+    /* ========================================
+       Customer Cards
+       ======================================== */
+    .customer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .customer-card {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .customer-card:hover {
+      border-color: var(--border-color-hover);
+      box-shadow: var(--shadow-md);
+    }
+
+    .customer-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .customer-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--bg-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-300);
+    }
+
+    .customer-avatar.vip {
+      background: linear-gradient(135deg, #f59e0b, #eab308);
+      color: white;
+    }
+
+    .customer-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-100);
+    }
+
+    .customer-email {
+      font-size: 12px;
+      color: var(--text-400);
+    }
+
+    .customer-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .customer-stat {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-100);
+      border-radius: 8px;
+    }
+
+    .customer-stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-100);
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .customer-stat-label {
+      font-size: 11px;
+      color: var(--text-400);
+      margin-top: 2px;
+    }
+
+    .customer-rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .customer-rank-badge.bronze { background: #cd7f32; color: white; }
+    .customer-rank-badge.silver { background: #c0c0c0; color: #333; }
+    .customer-rank-badge.gold { background: #ffd700; color: #333; }
+    .customer-rank-badge.platinum { background: linear-gradient(135deg, #e5e4e2, #a8a8a8); color: #333; }
+
+    /* Current date range display */
+    .current-range-display {
+      font-size: 12px;
+      color: var(--text-400);
+      margin-left: 8px;
+      padding: 4px 8px;
+      background: var(--bg-200);
+      border-radius: 4px;
+      font-family: 'Geist Mono', monospace;
+    }
+
+    /* ========================================
+       Revenue Streams Grid
+       ======================================== */
+    .revenue-streams-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .revenue-stream-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .revenue-stream-card:hover {
+      border-color: var(--border-color-hover);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .revenue-stream-card.total {
+      background: var(--bg-100);
+      border-style: dashed;
+    }
+
+    .revenue-stream-card.pending {
+      border-color: var(--accent-orange);
+      border-style: dashed;
+    }
+
+    .revenue-stream-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .revenue-stream-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .revenue-stream-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+    .revenue-stream-icon.blue { background: rgba(0, 112, 243, 0.1); color: var(--accent-blue); }
+    .revenue-stream-icon.purple { background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); }
+    .revenue-stream-icon.orange { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+
+    .revenue-stream-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .revenue-stream-label {
+      font-size: 13px;
+      color: var(--text-400);
+      margin-bottom: 4px;
+    }
+
+    .revenue-stream-value {
+      font-size: 20px;
+      font-weight: 600;
+      font-family: 'Geist Mono', monospace;
+      color: var(--text-100);
+    }
+
+    .revenue-stream-sub {
+      font-size: 11px;
+      color: var(--text-500);
+      margin-top: 2px;
+    }
+
+    .revenue-stream-percent {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-300);
+      padding: 4px 10px;
+      background: var(--bg-200);
+      border-radius: 6px;
+    }
+
+    /* Merch Breakdown Grid */
+    .merch-breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .merch-breakdown-item {
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      background: var(--bg-100);
+      border-radius: 8px;
+    }
+
+    .merch-breakdown-label {
+      font-size: 13px;
+      color: var(--text-300);
+      margin-bottom: 4px;
+    }
+
+    .merch-breakdown-value {
+      font-size: 18px;
+      font-weight: 600;
+      font-family: 'Geist Mono', monospace;
+      color: var(--text-100);
+    }
+
+    .merch-breakdown-count {
+      font-size: 11px;
+      color: var(--text-500);
+      margin-top: 2px;
+    }
+
+    /* ========================================
+       Simplified Date Range Picker
+       ======================================== */
+    .date-picker-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-picker-inline input[type="date"] {
+      padding: 8px 12px;
+      background: var(--bg-200);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-200);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      width: 140px;
+    }
+
+    .date-picker-inline input[type="date"]:hover {
+      background: var(--bg-300);
+      border-color: var(--border-color-hover);
+    }
+
+    .date-picker-inline input[type="date"]:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+    }
+
+    .date-picker-separator {
+      font-size: 13px;
+      color: var(--text-400);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .revenue-streams-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .merch-breakdown-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .revenue-streams-grid {
+        grid-template-columns: 1fr;
+      }
+      .merch-breakdown-grid {
+        grid-template-columns: 1fr;
+      }
+      .date-picker-inline {
+        flex-wrap: wrap;
+      }
+    }
+
+    /* Guest Spot Summary Cards */
+    .guestspot-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .guestspot-summary-card {
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .guestspot-summary-card h4 {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-400);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guestspot-summary-card .value {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-100);
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .guestspot-summary-card .sub {
+      font-size: 12px;
+      color: var(--text-500);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="analytics-layout">
+    
+    <!-- Sidebar -->
+    <aside class="analytics-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+          </svg>
+          Analytics
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <!-- Overview -->
+        <div class="nav-section">
+          <div class="nav-section-title">Overview</div>
+          <div class="nav-item active" data-view="dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            Dashboard
+          </div>
+        </div>
+        
+        <!-- Bookings & Traffic -->
+        <div class="nav-section">
+          <div class="nav-section-title">Bookings & Traffic</div>
+          <div class="nav-item" data-view="request-origins">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+            </svg>
+            Request Origins
+          </div>
+          <div class="nav-item" data-view="conversion">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+            </svg>
+            Conversion Funnel
+          </div>
+          <div class="nav-item" data-view="team">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Team Performance
+          </div>
+          <div class="nav-item" data-view="traffic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            Website Traffic
+          </div>
+          <div class="nav-item" data-view="customers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Customers
+          </div>
+        </div>
+        
+        <!-- Artist Performance -->
+        <div class="nav-section">
+          <div class="nav-section-title">Artist Performance</div>
+          <div class="nav-item" data-view="residents">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            Resident Artists
+          </div>
+          <div class="nav-item" data-view="guests">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
+            </svg>
+            Guest Artists
+          </div>
+          <div class="nav-item" data-view="guestspots">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/>
+            </svg>
+            Guest Spots
+          </div>
+          <div class="nav-item" data-view="rankings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+            Rankings
+          </div>
+        </div>
+        
+        <!-- Revenue -->
+        <div class="nav-section">
+          <div class="nav-section-title">Revenue</div>
+          <div class="nav-item" data-view="revenue-overview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/>
+            </svg>
+            Overview
+          </div>
+          <div class="nav-item" data-view="revenue-categories">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
+            </svg>
+            Categories
+          </div>
+          <div class="nav-item" data-view="revenue-merch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            Merch
+          </div>
+          <div class="nav-item" data-view="revenue-gutscheine">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><circle cx="12" cy="14" r="2"/>
+            </svg>
+            Gutscheine
+          </div>
+          <div class="nav-item" data-view="revenue-timeline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
+            </svg>
+            Timeline
+          </div>
+        </div>
+        
+        <!-- Studios -->
+        <div class="nav-section">
+          <div class="nav-section-title">Studios</div>
+          <div class="nav-item" data-view="locations">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            Studio Breakdown
+          </div>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="analytics-main">
+      <!-- Header -->
+      <header class="analytics-header">
+        <div class="header-breadcrumb">
+          Analytics <span>/</span> <span id="breadcrumbTitle">Dashboard</span>
+        </div>
+        
+        <div class="header-controls">
+          <div class="time-filter">
+            <button class="time-pill" data-range="12h">12h</button>
+            <button class="time-pill" data-range="24h">24h</button>
+            <button class="time-pill" data-range="3d">3d</button>
+            <button class="time-pill active" data-range="7d">7d</button>
+            <button class="time-pill" data-range="14d">14d</button>
+            <button class="time-pill" data-range="30d">30d</button>
+            <button class="time-pill" data-range="3m">3m</button>
+            <button class="time-pill" data-range="6m">6m</button>
+            <button class="time-pill" data-range="1y">1y</button>
+            <button class="time-pill" data-range="all">All</button>
+          </div>
+          
+          <div class="date-picker-inline">
+            <input type="date" id="dateRangeStart" title="Startdatum">
+            <span class="date-picker-separator">–</span>
+            <input type="date" id="dateRangeEnd" title="Enddatum">
+          </div>
+          
+          <select class="location-select" id="globalLocationFilter">
+            <option value="">Alle Studios</option>
+            <option value="mis">Mommy I'm Sorry</option>
+            <option value="pardon">Pardon Paris</option>
+            <option value="seventyone">Seventyone</option>
+            <option value="muttersoehne">Muttersöhne</option>
+            <option value="gon">GON</option>
+          </select>
+        </div>
+      </header>
+      
+      <!-- Content -->
+      <div class="analytics-content">
+        
+        <!-- VIEW: Dashboard -->
+        <div class="analytics-view active" id="view-dashboard">
+          <div class="page-header">
+            <h2>Dashboard Overview</h2>
+            <p>Gesamtübersicht aller Geschäftszahlen und Performance-Metriken</p>
+          </div>
+          
+          <div class="kpi-grid" id="dashboardKPIs">
+            <div class="loading-spinner"><div class="spinner"></div>Loading...</div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                  Request Origins
+                </div>
+              </div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="dashboardOriginsPie"></canvas></div>
+                  <div class="pie-legend" id="dashboardOriginsLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
+                  Conversion Funnel
+                </div>
+              </div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="dashboardConversionPie"></canvas></div>
+                  <div class="pie-legend" id="dashboardConversionLegend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card full-width">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                  Requests Over Time
+                </div>
+              </div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="dashboardTimeline"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Request Origins -->
+        <div class="analytics-view" id="view-request-origins">
+          <div class="page-header">
+            <h2>Request Origins</h2>
+            <p>Woher kommen deine Kundenanfragen?</p>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Booking Sources</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="originsMainPie"></canvas></div>
+                  <div class="pie-legend" id="originsMainLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Origins Detail Table</div></div>
+              <div class="chart-body">
+                <div id="originsTable"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Conversion -->
+        <div class="analytics-view" id="view-conversion">
+          <div class="page-header">
+            <h2>Conversion Funnel</h2>
+            <p>Analyse der Umwandlungsrate von Anfragen zu Terminen</p>
+          </div>
+          
+          <div class="kpi-grid" id="conversionKPIs"></div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Umgesetzte vs. Nicht umgesetzte Termine</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="conversionPie"></canvas></div>
+                  <div class="pie-legend" id="conversionLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Artist Preference Distribution</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="artistPreferencePie"></canvas></div>
+                  <div class="pie-legend" id="artistPreferenceLegend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Team Performance -->
+        <div class="analytics-view" id="view-team">
+          <div class="page-header">
+            <h2>Team Performance</h2>
+            <p>Performance des Booking Teams bei der Request-Bearbeitung</p>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Umgesetzte Termine nach Mitarbeiter</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="teamConversionPie"></canvas></div>
+                  <div class="pie-legend" id="teamConversionLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Umsatz pro Mitarbeiter</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="teamRevenuePie"></canvas></div>
+                  <div class="pie-legend" id="teamRevenueLegend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="data-table" id="teamPerformanceTable">
+              <thead>
+                <tr>
+                  <th>Team Member</th>
+                  <th>Anfragen</th>
+                  <th>Umgesetzt</th>
+                  <th>% Umgesetzt</th>
+                  <th>% Gesamt</th>
+                  <th>Ø Antwortzeit</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- VIEW: Website Traffic (Placeholder) -->
+        <div class="analytics-view" id="view-traffic">
+          <div class="page-header">
+            <h2>Website Traffic</h2>
+            <p>Besucherstatistiken (PostHog/SEMrush Integration erforderlich)</p>
+          </div>
+          
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">Website Besucher</div>
+              <div class="kpi-value" style="color: var(--text-400);">—</div>
+              <div style="font-size: 12px; color: var(--text-500); margin-top: 8px;">PostHog Integration</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Formular Besucher</div>
+              <div class="kpi-value" style="color: var(--text-400);">—</div>
+              <div style="font-size: 12px; color: var(--text-500); margin-top: 8px;">PostHog Integration</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Traffic: Direkt</div>
+              <div class="kpi-value" style="color: var(--text-400);">—</div>
+              <div style="font-size: 12px; color: var(--text-500); margin-top: 8px;">SEMrush Integration</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Traffic: Suchmaschinen</div>
+              <div class="kpi-value" style="color: var(--text-400);">—</div>
+              <div style="font-size: 12px; color: var(--text-500); margin-top: 8px;">SEMrush Integration</div>
+            </div>
+          </div>
+          
+          <div class="chart-card" style="padding: 40px; text-align: center; color: var(--text-400);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <h3 style="margin-bottom: 8px;">PostHog / SEMrush Integration</h3>
+            <p>Website Traffic Daten werden angezeigt sobald die Integration aktiviert ist.</p>
+          </div>
+        </div>
+        
+        <!-- VIEW: Customers -->
+        <div class="analytics-view" id="view-customers">
+          <div class="page-header">
+            <h2>Customer Analytics</h2>
+            <p>Analyse deiner Kunden: Top Customers, Stammkunden & Customer Lifetime Value</p>
+          </div>
+          
+          <!-- Search Bar -->
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" class="search-input" id="customerSearchInput" placeholder="Kunde suchen (Name, Email, Instagram)...">
+              <div class="search-results" id="customerSearchResults"></div>
+            </div>
+          </div>
+          
+          <!-- Customer Detail Card (hidden by default) -->
+          <div class="artist-detail-card" id="customerDetailCard" style="display: none;">
+            <div class="artist-detail-header">
+              <div class="artist-detail-avatar" id="customerDetailAvatar">MK</div>
+              <div class="artist-detail-info">
+                <h3 id="customerDetailName">Max Kühn</h3>
+                <p id="customerDetailEmail">max.kuehn@email.de</p>
+                <span class="customer-rank-badge gold" id="customerDetailBadge">Gold Kunde</span>
+              </div>
+              <button class="artist-detail-close" onclick="closeCustomerDetail()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div class="artist-detail-stats">
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Termine gesamt</div>
+                <div class="artist-stat-value" id="customerDetailAppointments">8</div>
+                <div class="artist-stat-sub">seit 2022</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Gesamtumsatz</div>
+                <div class="artist-stat-value" id="customerDetailRevenue">€4.850</div>
+                <div class="artist-stat-sub">Lifetime Value</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Ø pro Termin</div>
+                <div class="artist-stat-value" id="customerDetailAvg">€606</div>
+                <div class="artist-stat-sub">Durchschnitt</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Lieblings-Artist</div>
+                <div class="artist-stat-value" id="customerDetailArtist" style="font-size: 18px;">Alex T.</div>
+                <div class="artist-stat-sub">5 Termine</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="kpi-grid" id="customerKPIs">
+            <div class="kpi-card">
+              <div class="kpi-label">Total Customers</div>
+              <div class="kpi-value" id="custTotal">12.847</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Stammkunden</div>
+              <div class="kpi-value" id="custRegulars">2.156</div>
+              <div class="kpi-change positive">16.8% aller Kunden</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Ø Customer Value</div>
+              <div class="kpi-value" id="custAvgValue">€487</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Ø Termine pro Kunde</div>
+              <div class="kpi-value" id="custAvgAppointments">1.8</div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Customer Segmentation</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="customerSegmentPie"></canvas></div>
+                  <div class="pie-legend" id="customerSegmentLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Customer Retention</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="customerRetentionChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Top Customers Section -->
+          <div class="page-header" style="margin-top: 32px;">
+            <h2 style="font-size: 18px;">Top Customers by Revenue</h2>
+            <p>Kunden mit dem höchsten Lifetime Value</p>
+          </div>
+          
+          <div class="customer-grid" id="topCustomersGrid">
+            <!-- Will be populated by JS -->
+          </div>
+          
+          <!-- Stammkunden Section -->
+          <div class="page-header" style="margin-top: 32px;">
+            <h2 style="font-size: 18px;">Stammkunden (3+ Termine)</h2>
+            <p>Wiederkehrende Kunden mit hoher Loyalität</p>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="data-table" id="regularCustomersTable">
+              <thead>
+                <tr>
+                  <th>Kunde</th>
+                  <th>Email</th>
+                  <th>Termine</th>
+                  <th>Umsatz</th>
+                  <th>Erster Termin</th>
+                  <th>Letzter Termin</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- VIEW: Resident Artists -->
+        <div class="analytics-view" id="view-residents">
+          <div class="page-header">
+            <h2>Resident Artists</h2>
+            <p>Performance-Analyse der Resident Artists</p>
+          </div>
+          
+          <!-- Search Bar -->
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" class="search-input" id="residentSearchInput" placeholder="Artist suchen...">
+              <div class="search-results" id="residentSearchResults"></div>
+            </div>
+          </div>
+          
+          <!-- Artist Detail Card (hidden by default) -->
+          <div class="artist-detail-card" id="residentDetailCard" style="display: none;">
+            <div class="artist-detail-header">
+              <div class="artist-detail-avatar" id="residentDetailAvatar">AT</div>
+              <div class="artist-detail-info">
+                <h3 id="residentDetailName">Alex Torres</h3>
+                <p id="residentDetailLocation">Stuttgart</p>
+                <span class="artist-detail-badge resident" id="residentDetailRank">Fam</span>
+              </div>
+              <button class="artist-detail-close" onclick="closeResidentDetail()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div class="artist-detail-stats">
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Umgesetzte Termine</div>
+                <div class="artist-stat-value" id="residentDetailAppointments">234</div>
+                <div class="artist-stat-sub">Conversion: 78.2%</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Gesamtumsatz</div>
+                <div class="artist-stat-value" id="residentDetailRevenue">€87.4K</div>
+                <div class="artist-stat-sub">Ø €373 pro Termin</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Stammkunden</div>
+                <div class="artist-stat-value" id="residentDetailRegulars">47</div>
+                <div class="artist-stat-sub">2+ Termine</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Guest Spots</div>
+                <div class="artist-stat-value" id="residentDetailGuestSpots">3</div>
+                <div class="artist-stat-sub">als Gast bei anderen</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Top Artists by Revenue</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="residentRevenueChart"></canvas></div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Top Artists by Appointments</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="residentAppointmentsChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="data-table" id="residentArtistsTable">
+              <thead>
+                <tr>
+                  <th>Artist</th>
+                  <th>Studio</th>
+                  <th>Rank</th>
+                  <th>Termine</th>
+                  <th>Umsatz</th>
+                  <th>Stammkunden</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- VIEW: Guest Artists -->
+        <div class="analytics-view" id="view-guests">
+          <div class="page-header">
+            <h2>Guest Artists</h2>
+            <p>Performance-Analyse der Guest Artists</p>
+          </div>
+          
+          <!-- Search Bar -->
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" class="search-input" id="guestSearchInput" placeholder="Guest Artist suchen...">
+              <div class="search-results" id="guestSearchResults"></div>
+            </div>
+          </div>
+          
+          <!-- Artist Detail Card (hidden by default) -->
+          <div class="artist-detail-card" id="guestDetailCard" style="display: none;">
+            <div class="artist-detail-header">
+              <div class="artist-detail-avatar" id="guestDetailAvatar">JK</div>
+              <div class="artist-detail-info">
+                <h3 id="guestDetailName">Jay Kim</h3>
+                <p id="guestDetailLocation">Stuttgart Guest Spot</p>
+                <span class="artist-detail-badge guest" id="guestDetailBadge">Guest Artist</span>
+              </div>
+              <button class="artist-detail-close" onclick="closeGuestDetail()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div class="artist-detail-stats">
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Guest Spots</div>
+                <div class="artist-stat-value" id="guestDetailSpots">4</div>
+                <div class="artist-stat-sub">bei uns gebucht</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Total Income</div>
+                <div class="artist-stat-value" id="guestDetailIncome">€24.5K</div>
+                <div class="artist-stat-sub">Gesamt</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Studio Share</div>
+                <div class="artist-stat-value" id="guestDetailStudioShare">€7.3K</div>
+                <div class="artist-stat-sub">für uns</div>
+              </div>
+              <div class="artist-stat-card">
+                <div class="artist-stat-label">Termine</div>
+                <div class="artist-stat-value" id="guestDetailAppointments">38</div>
+                <div class="artist-stat-sub">umgesetzt</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="kpi-grid" id="guestKPIs"></div>
+          
+          <div class="data-table-container">
+            <table class="data-table" id="guestArtistsTable">
+              <thead>
+                <tr>
+                  <th>Guest Artist</th>
+                  <th>Studio</th>
+                  <th>Guest Spots</th>
+                  <th>Total Income</th>
+                  <th>Studio Share</th>
+                  <th>Artist Share</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- VIEW: Guest Spots (Gesamt-Analyse) -->
+        <div class="analytics-view" id="view-guestspots">
+          <div class="page-header">
+            <h2>Guest Spots Analyse</h2>
+            <p>Gesamtübersicht aller Guest Spot Buchungen</p>
+          </div>
+          
+          <!-- Summary Cards -->
+          <div class="guestspot-summary-grid">
+            <div class="guestspot-summary-card">
+              <h4>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                </svg>
+                Total Guest Spots
+              </h4>
+              <div class="value" id="gsTotal">127</div>
+              <div class="sub">im ausgewählten Zeitraum</div>
+            </div>
+            <div class="guestspot-summary-card">
+              <h4>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Total Income
+              </h4>
+              <div class="value" id="gsTotalIncome">€142.8K</div>
+              <div class="sub">Gesamteinnahmen</div>
+            </div>
+            <div class="guestspot-summary-card">
+              <h4>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                </svg>
+                Studio Share
+              </h4>
+              <div class="value" id="gsStudioShare">€42.8K</div>
+              <div class="sub">30% Durchschnitt</div>
+            </div>
+          </div>
+          
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">Ø Dauer pro Spot</div>
+              <div class="kpi-value" id="gsAvgDuration">5.2 Tage</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Ø Income pro Spot</div>
+              <div class="kpi-value" id="gsAvgIncome">€1.124</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Self-Booking Rate</div>
+              <div class="kpi-value" id="gsSelfBooking">68%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Wiederkehrende Guests</div>
+              <div class="kpi-value" id="gsReturning">23</div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Guest Spots by Studio</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="gsLocationPie"></canvas></div>
+                  <div class="pie-legend" id="gsLocationLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Guest Spots Over Time</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="gsTimelineChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Booking Type Distribution</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="gsBookingTypePie"></canvas></div>
+                  <div class="pie-legend" id="gsBookingTypeLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Revenue Distribution</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="gsRevenueChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="data-table-container">
+            <table class="data-table" id="guestSpotsTable">
+              <thead>
+                <tr>
+                  <th>Artist</th>
+                  <th>Studio</th>
+                  <th>Zeitraum</th>
+                  <th>Typ</th>
+                  <th>Total Income</th>
+                  <th>Studio Share</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- VIEW: Rankings -->
+        <div class="analytics-view" id="view-rankings">
+          <div class="page-header">
+            <h2>Artist Rankings</h2>
+            <p>Performance nach Rang-Kategorie (Friends, Crew, Fam, VIP)</p>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Revenue by Rank</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="rankingRevenueChart"></canvas></div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Artists per Rank</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="rankingDistributionPie"></canvas></div>
+                  <div class="pie-legend" id="rankingLegend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Revenue Overview -->
+        <div class="analytics-view" id="view-revenue-overview">
+          <div class="page-header">
+            <h2>Revenue Overview</h2>
+            <p>Gesamtübersicht aller Einnahmequellen</p>
+          </div>
+          
+          <!-- Haupt-KPIs -->
+          <div class="kpi-grid" id="revenueKPIs">
+            <div class="kpi-card">
+              <div class="kpi-label">Gesamtumsatz</div>
+              <div class="kpi-value">€877.778</div>
+              <div class="kpi-change positive">Alle Einnahmen</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Tattoo-Termine</div>
+              <div class="kpi-value">€712.450</div>
+              <div class="kpi-change" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green);">81.2%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Offene Zahlungen</div>
+              <div class="kpi-value">€98.780</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Anzahlungen</div>
+              <div class="kpi-value">€36.000</div>
+            </div>
+          </div>
+          
+          <!-- Revenue Streams Cards -->
+          <div class="page-header" style="margin-top: 32px; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 600;">Einnahmequellen</h3>
+          </div>
+          
+          <div class="revenue-streams-grid">
+            <div class="revenue-stream-card">
+              <div class="revenue-stream-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                </svg>
+              </div>
+              <div class="revenue-stream-content">
+                <div class="revenue-stream-label">Tattoo-Termine</div>
+                <div class="revenue-stream-value">€712.450</div>
+                <div class="revenue-stream-sub">appointments.total_amount</div>
+              </div>
+              <div class="revenue-stream-percent">81.2%</div>
+            </div>
+            
+            <div class="revenue-stream-card">
+              <div class="revenue-stream-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div class="revenue-stream-content">
+                <div class="revenue-stream-label">Guest Spot Studio Share</div>
+                <div class="revenue-stream-value">€42.800</div>
+                <div class="revenue-stream-sub">upcoming_slots.studio_share</div>
+              </div>
+              <div class="revenue-stream-percent">4.9%</div>
+            </div>
+            
+            <div class="revenue-stream-card">
+              <div class="revenue-stream-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+              </div>
+              <div class="revenue-stream-content">
+                <div class="revenue-stream-label">Shop / Merch</div>
+                <div class="revenue-stream-value">€63.463</div>
+                <div class="revenue-stream-sub">E-Commerce Nettoumsatz</div>
+              </div>
+              <div class="revenue-stream-percent">7.2%</div>
+            </div>
+            
+            <div class="revenue-stream-card">
+              <div class="revenue-stream-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><circle cx="12" cy="14" r="2"/>
+                </svg>
+              </div>
+              <div class="revenue-stream-content">
+                <div class="revenue-stream-label">Gutscheine (eingelöst)</div>
+                <div class="revenue-stream-value">€52.595</div>
+                <div class="revenue-stream-sub">251 von 676 eingelöst</div>
+              </div>
+              <div class="revenue-stream-percent">6.0%</div>
+            </div>
+            
+            <div class="revenue-stream-card pending">
+              <div class="revenue-stream-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-orange);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div class="revenue-stream-content">
+                <div class="revenue-stream-label">Gutscheine (offen)</div>
+                <div class="revenue-stream-value">€59.065</div>
+                <div class="revenue-stream-sub">425 noch nicht eingelöst</div>
+              </div>
+              <div class="revenue-stream-percent" style="color: var(--accent-orange);">Potenzial</div>
+            </div>
+            
+            <div class="revenue-stream-card total">
+              <div class="revenue-stream-icon" style="background: var(--bg-300); color: var(--text-100);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+              <div class="revenue-stream-content">
+                <div class="revenue-stream-label">Gesamt (realisiert)</div>
+                <div class="revenue-stream-value">€871.308</div>
+                <div class="revenue-stream-sub">Tattoo + Guest + Merch + Gutscheine eingelöst</div>
+              </div>
+              <div class="revenue-stream-percent">100%</div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Einnahmen nach Quelle</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="revenueStatusPie"></canvas></div>
+                  <div class="pie-legend" id="revenueStatusLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Revenue by Studio</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="revenueLocationChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Merch Breakdown -->
+          <div class="chart-card" style="margin-top: 24px;">
+            <div class="chart-header"><div class="chart-title">Shop / Merch Breakdown</div></div>
+            <div class="chart-body">
+              <div class="merch-breakdown-grid">
+                <div class="merch-breakdown-item">
+                  <span class="merch-breakdown-label">Gift Cards (Shop)</span>
+                  <span class="merch-breakdown-value">€25.336</span>
+                  <span class="merch-breakdown-count">195 verkauft</span>
+                </div>
+                <div class="merch-breakdown-item">
+                  <span class="merch-breakdown-label">Appointments (Shop)</span>
+                  <span class="merch-breakdown-value">€5.714</span>
+                  <span class="merch-breakdown-count">68 verkauft</span>
+                </div>
+                <div class="merch-breakdown-item">
+                  <span class="merch-breakdown-label">Accessories</span>
+                  <span class="merch-breakdown-value">€2.499</span>
+                  <span class="merch-breakdown-count">62 verkauft</span>
+                </div>
+                <div class="merch-breakdown-item">
+                  <span class="merch-breakdown-label">T-Shirts</span>
+                  <span class="merch-breakdown-value">€1.592</span>
+                  <span class="merch-breakdown-count">15 verkauft</span>
+                </div>
+                <div class="merch-breakdown-item">
+                  <span class="merch-breakdown-label">Hoodies</span>
+                  <span class="merch-breakdown-value">€840</span>
+                  <span class="merch-breakdown-count">1 verkauft</span>
+                </div>
+                <div class="merch-breakdown-item">
+                  <span class="merch-breakdown-label">YOUTHOFPARIS</span>
+                  <span class="merch-breakdown-value">€840</span>
+                  <span class="merch-breakdown-count">1 verkauft</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Revenue Categories -->
+        <div class="analytics-view" id="view-revenue-categories">
+          <div class="page-header">
+            <h2>Revenue Categories</h2>
+            <p>Umsatz nach Einnahmequelle</p>
+          </div>
+          
+          <div class="category-cards" id="revenueCategoryCards"></div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Category Distribution</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="categoryPie"></canvas></div>
+                  <div class="pie-legend" id="categoryLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Categories Over Time</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="categoryTimeline"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Revenue Timeline -->
+        <div class="analytics-view" id="view-revenue-timeline">
+          <div class="page-header">
+            <h2>Revenue Timeline</h2>
+            <p>Umsatzentwicklung über Zeit</p>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card full-width">
+              <div class="chart-header"><div class="chart-title">Monthly Revenue</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="revenueMonthlyChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Revenue Merch -->
+        <div class="analytics-view" id="view-revenue-merch">
+          <div class="page-header">
+            <h2>Merch & Shop Revenue</h2>
+            <p>E-Commerce Umsatzanalyse - Merchandise, Gift Cards & Appointments</p>
+          </div>
+          
+          <!-- Main KPIs -->
+          <div class="kpi-grid" id="merchKPIs">
+            <div class="kpi-card">
+              <div class="kpi-label">Gesamtumsatz</div>
+              <div class="kpi-value">€76.145</div>
+              <div class="kpi-change positive">+300%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Nettoumsatz</div>
+              <div class="kpi-value">€63.463</div>
+              <div class="kpi-change positive">+296%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Bestellungen</div>
+              <div class="kpi-value">365</div>
+              <div class="kpi-change positive">+335%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Ø Bestellwert</div>
+              <div class="kpi-value">€173,87</div>
+              <div class="kpi-change negative">-9%</div>
+            </div>
+          </div>
+          
+          <!-- Secondary KPIs -->
+          <div class="kpi-grid" style="margin-bottom: 24px;">
+            <div class="kpi-card">
+              <div class="kpi-label">Verkaufte Produkte</div>
+              <div class="kpi-value">421</div>
+              <div class="kpi-change positive">+334%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Retouren</div>
+              <div class="kpi-value">€249,03</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Steuern</div>
+              <div class="kpi-value">€12.265</div>
+              <div class="kpi-change positive">+293%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Versand</div>
+              <div class="kpi-value">€496,00</div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Umsatz nach Kategorie</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="merchCategoryPie"></canvas></div>
+                  <div class="pie-legend" id="merchCategoryLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Verkaufte Artikel nach Kategorie</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="merchStudioChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card full-width">
+              <div class="chart-header">
+                <div class="chart-title">Nettoumsatz Over Time</div>
+                <div style="font-size: 12px; color: var(--text-400);">
+                  <span style="color: var(--accent-blue);">●</span> Aktuell: €63.463,10 
+                  <span style="margin-left: 16px; color: var(--accent-green);">●</span> Vorjahr: €16.008,32
+                </div>
+              </div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="merchTimelineChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Top Categories Table -->
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Top-Kategorien – verkaufte Artikel</div></div>
+              <div class="chart-body" style="padding: 0;">
+                <table class="data-table" id="merchCategoriesTable">
+                  <thead>
+                    <tr>
+                      <th>Kategorie</th>
+                      <th>Verkaufte Artikel</th>
+                      <th>Nettoumsatz</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Top-Produkte – verkaufte Artikel</div></div>
+              <div class="chart-body" style="padding: 0;">
+                <table class="data-table" id="merchProductsTable">
+                  <thead>
+                    <tr>
+                      <th>Produkt</th>
+                      <th>Verkauft</th>
+                      <th>Nettoumsatz</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- VIEW: Revenue Gutscheine -->
+        <div class="analytics-view" id="view-revenue-gutscheine">
+          <div class="page-header">
+            <h2>Gutscheine</h2>
+            <p>Analyse ausgestellter und eingelöster Gutscheine (Mommy I'm Sorry)</p>
+          </div>
+          
+          <div class="kpi-grid" id="gutscheineKPIs">
+            <div class="kpi-card">
+              <div class="kpi-label">Gutscheine Gesamt</div>
+              <div class="kpi-value">676</div>
+              <div class="kpi-change" style="background: rgba(0, 112, 243, 0.1); color: var(--accent-blue);">€111.660 Wert</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Eingelöst</div>
+              <div class="kpi-value">251</div>
+              <div class="kpi-change positive">37.1% · €52.595</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Noch Offen</div>
+              <div class="kpi-value">425</div>
+              <div class="kpi-change negative">62.9% · €59.065</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Ø Gutscheinwert</div>
+              <div class="kpi-value">€165</div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Eingelöst vs. Offen</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="gutscheineStatusPie"></canvas></div>
+                  <div class="pie-legend" id="gutscheineStatusLegend"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Gutscheine nach Aussteller</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="gutscheineStudioChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card full-width">
+              <div class="chart-header"><div class="chart-title">Wert-Verteilung</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="gutscheineTimelineChart"></canvas></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Wert-Kategorie Cards -->
+          <div class="category-cards" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+            <div class="category-card">
+              <div class="category-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              </div>
+              <h4>€50 - €100</h4>
+              <div class="value">349</div>
+              <div class="sub">233x €100 · 116x €50</div>
+            </div>
+            <div class="category-card">
+              <div class="category-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              </div>
+              <h4>€150 - €200</h4>
+              <div class="value">71</div>
+              <div class="sub">33x €150 · 38x €200</div>
+            </div>
+            <div class="category-card">
+              <div class="category-icon purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              </div>
+              <h4>€250 - €300</h4>
+              <div class="value">86</div>
+              <div class="sub">69x €250 · 17x €300</div>
+            </div>
+            <div class="category-card">
+              <div class="category-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-orange);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              </div>
+              <h4>€500+</h4>
+              <div class="value">22</div>
+              <div class="sub">14x €500 · 8x €750</div>
+            </div>
+          </div>
+          
+          <!-- Aussteller Tabelle -->
+          <div class="data-table-container">
+            <table class="data-table" id="gutscheineAusstellerTable">
+              <thead>
+                <tr>
+                  <th>Aussteller</th>
+                  <th>Ausgestellt</th>
+                  <th>Gesamtwert</th>
+                  <th>Ø Wert</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="name">Marc</td><td class="mono">230</td><td class="mono">€44.848</td><td class="mono">€195</td></tr>
+                <tr><td class="name">Bennet</td><td class="mono">142</td><td class="mono">€23.475</td><td class="mono">€165</td></tr>
+                <tr><td class="name">Bao</td><td class="mono">118</td><td class="mono">€20.658</td><td class="mono">€175</td></tr>
+                <tr><td class="name">Fay</td><td class="mono">60</td><td class="mono">€10.105</td><td class="mono">€168</td></tr>
+                <tr><td class="name">Silas</td><td class="mono">16</td><td class="mono">€2.710</td><td class="mono">€169</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- VIEW: Locations -->
+        <div class="analytics-view" id="view-locations">
+          <div class="page-header">
+            <h2>Studio Breakdown</h2>
+            <p>Performance-Vergleich aller Studios</p>
+          </div>
+          
+          <div class="location-cards" id="locationCards"></div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Revenue by Studio</div></div>
+              <div class="chart-body">
+                <div class="chart-container"><canvas id="locationRevenueChart"></canvas></div>
+              </div>
+            </div>
+            
+            <div class="chart-card">
+              <div class="chart-header"><div class="chart-title">Requests by Studio</div></div>
+              <div class="chart-body">
+                <div class="pie-chart-layout">
+                  <div class="pie-chart-wrapper"><canvas id="locationRequestsPie"></canvas></div>
+                  <div class="pie-legend" id="locationRequestsLegend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ========================================
+    // ANALYTICS DATA MANAGER
+    // Dieses Objekt wird mit echten Supabase-Daten befüllt
+    // ========================================
+    const AnalyticsData = {
+      requests: [],
+      appointments: [],
+      artists: [],
+      profiles: [],
+      locations: [],
+      upcomingSlots: [],
+      
+      // Computed data
+      computed: {
+        totalRequests: 0,
+        totalAppointments: 0,
+        conversionRate: 0,
+        totalRevenue: 0,
+        avgLeadTime: 0,
+        originBreakdown: [],
+        statusBreakdown: [],
+        teamPerformance: [],
+        artistPerformance: [],
+        locationBreakdown: []
+      }
+    };
+
+    // Current filter state
+    let currentTimeRange = '7d';
+    let currentLocation = '';
+
+    // ========================================
+    // Theme Toggle
+    // ========================================
+    function toggleTheme() {
+      const html = document.documentElement;
+      const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('analytics-theme', newTheme);
+      updateChartsTheme();
+    }
+
+    const savedTheme = localStorage.getItem('analytics-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // ========================================
+    // Navigation
+    // ========================================
+    const navItems = document.querySelectorAll('.nav-item');
+    const views = document.querySelectorAll('.analytics-view');
+    const breadcrumbTitle = document.getElementById('breadcrumbTitle');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const viewId = item.dataset.view;
+        
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        
+        views.forEach(v => v.classList.remove('active'));
+        const targetView = document.getElementById('view-' + viewId);
+        if (targetView) {
+          targetView.classList.add('active');
+          targetView.style.animation = 'none';
+          targetView.offsetHeight;
+          targetView.style.animation = null;
+        }
+        
+        breadcrumbTitle.textContent = item.textContent.trim();
+        renderViewData(viewId);
+      });
+    });
+
+    // ========================================
+    // Time Filter
+    // ========================================
+    document.querySelectorAll('.time-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.time-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentTimeRange = pill.dataset.range;
+        reloadAllData();
+      });
+    });
+
+    // ========================================
+    // Chart.js Setup
+    // ========================================
+    Chart.defaults.font.family = "'Geist', sans-serif";
+    const charts = {};
+
+    function getChartColors() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      return {
+        text: isDark ? '#a3a3a3' : '#737373',
+        grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+        blue: '#0070f3',
+        cyan: '#06b6d4',
+        green: '#10b981',
+        purple: '#8b5cf6',
+        pink: '#ec4899',
+        orange: '#f59e0b',
+        red: '#ef4444',
+        gray: '#6b7280',
+        yellow: '#eab308'
+      };
+    }
+
+    function updateChartsTheme() {
+      const colors = getChartColors();
+      Chart.defaults.color = colors.text;
+      Object.values(charts).forEach(chart => {
+        if (chart) {
+          if (chart.options.scales?.x) chart.options.scales.x.grid.color = colors.grid;
+          if (chart.options.scales?.y) chart.options.scales.y.grid.color = colors.grid;
+          chart.update();
+        }
+      });
+    }
+
+    // ========================================
+    // Create Charts
+    // ========================================
+    function createPieChart(canvasId, legendId, data, showLegend = true) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return null;
+      
+      if (charts[canvasId]) charts[canvasId].destroy();
+      
+      const chart = new Chart(canvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: data.map(d => d.label),
+          datasets: [{
+            data: data.map(d => d.value),
+            backgroundColor: data.map(d => d.color),
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '65%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              cornerRadius: 8
+            }
+          },
+          animation: { duration: 800, easing: 'easeOutQuart' }
+        }
+      });
+      
+      charts[canvasId] = chart;
+      
+      if (showLegend && legendId) {
+        const legendContainer = document.getElementById(legendId);
+        if (legendContainer) {
+          legendContainer.innerHTML = data.map(d => `
+            <div class="legend-item">
+              <div class="legend-label">
+                <div class="legend-dot" style="background: ${d.color};"></div>
+                <span class="legend-text">${d.label}</span>
+              </div>
+              <span class="legend-value">${d.display || d.value}</span>
+            </div>
+          `).join('');
+        }
+      }
+      
+      return chart;
+    }
+
+    function createBarChart(canvasId, labels, datasets, horizontal = false) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return null;
+      
+      const colors = getChartColors();
+      if (charts[canvasId]) charts[canvasId].destroy();
+      
+      const chart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: datasets.map(ds => ({ ...ds, borderRadius: 4, borderSkipped: false }))
+        },
+        options: {
+          indexAxis: horizontal ? 'y' : 'x',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: datasets.length > 1, position: 'top' },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, cornerRadius: 8 }
+          },
+          scales: {
+            x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
+            y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
+          },
+          animation: { duration: 800, easing: 'easeOutQuart' }
+        }
+      });
+      
+      charts[canvasId] = chart;
+      return chart;
+    }
+
+    function createLineChart(canvasId, labels, datasets) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return null;
+      
+      const colors = getChartColors();
+      if (charts[canvasId]) charts[canvasId].destroy();
+      
+      const chart = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: datasets.map(ds => ({
+            ...ds,
+            borderWidth: 2,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            fill: { target: 'origin', above: ds.backgroundColor || 'rgba(0, 112, 243, 0.1)' }
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: datasets.length > 1, position: 'top' },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, cornerRadius: 8 }
+          },
+          scales: {
+            x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
+            y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
+          },
+          animation: { duration: 1000, easing: 'easeOutQuart' }
+        }
+      });
+      
+      charts[canvasId] = chart;
+      return chart;
+    }
+
+    // ========================================
+    // Render Functions (will be populated with real data)
+    // ========================================
+    function renderViewData(viewId) {
+      // Diese Funktion wird die echten Daten aus AnalyticsData rendern
+      const colors = getChartColors();
+      
+      switch(viewId) {
+        case 'dashboard':
+          renderDashboard();
+          break;
+        case 'request-origins':
+          renderRequestOrigins();
+          break;
+        case 'conversion':
+          renderConversion();
+          break;
+        case 'team':
+          renderTeamPerformance();
+          break;
+        case 'traffic':
+          // Placeholder - PostHog integration needed
+          break;
+        case 'customers':
+          renderCustomers();
+          break;
+        case 'residents':
+          renderResidentArtists();
+          break;
+        case 'guests':
+          renderGuestArtists();
+          break;
+        case 'guestspots':
+          renderGuestSpots();
+          break;
+        case 'rankings':
+          renderRankings();
+          break;
+        case 'revenue-overview':
+          renderRevenueOverview();
+          break;
+        case 'revenue-categories':
+          renderRevenueCategories();
+          break;
+        case 'revenue-merch':
+          renderMerch();
+          break;
+        case 'revenue-gutscheine':
+          renderGutscheine();
+          break;
+        case 'revenue-timeline':
+          renderRevenueTimeline();
+          break;
+        case 'locations':
+          renderLocations();
+          break;
+      }
+    }
+
+    function renderDashboard() {
+      const colors = getChartColors();
+      
+      // KPIs (Placeholder - wird mit echten Daten ersetzt)
+      document.getElementById('dashboardKPIs').innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-label">Total Requests</div>
+          <div class="kpi-value">${formatNumber(AnalyticsData.computed.totalRequests || 34420)}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Appointments</div>
+          <div class="kpi-value">${formatNumber(AnalyticsData.computed.totalAppointments || 15925)}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Gesamtumsatz</div>
+          <div class="kpi-value">${formatCurrency(AnalyticsData.computed.totalRevenue || 847230)}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Conversion Rate</div>
+          <div class="kpi-value">${(AnalyticsData.computed.conversionRate || 46.3).toFixed(1)}%</div>
+        </div>
+      `;
+      
+      // Origin Pie
+      createPieChart('dashboardOriginsPie', 'dashboardOriginsLegend', [
+        { label: 'Contactform', value: 87.5, color: colors.blue, display: '87.5%' },
+        { label: 'WhatsApp', value: 9.4, color: colors.green, display: '9.4%' },
+        { label: 'Phone', value: 3.1, color: colors.orange, display: '3.1%' }
+      ]);
+      
+      // Conversion Pie
+      createPieChart('dashboardConversionPie', 'dashboardConversionLegend', [
+        { label: 'Umgesetzt', value: 34.4, color: colors.green, display: '34.4%' },
+        { label: 'Nicht umgesetzt', value: 65.6, color: colors.red, display: '65.6%' }
+      ]);
+      
+      // Timeline
+      createLineChart('dashboardTimeline', 
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        [{
+          label: 'Requests',
+          data: [2800, 3200, 3100, 3500, 3800, 4200, 4100, 4500, 4300, 4800, 5200, 5100],
+          borderColor: colors.blue,
+          backgroundColor: 'rgba(0, 112, 243, 0.1)'
+        }]
+      );
+    }
+
+    function renderRequestOrigins() {
+      const colors = getChartColors();
+      createPieChart('originsMainPie', 'originsMainLegend', [
+        { label: 'Contactform', value: 87.5, color: colors.blue, display: '87.5%' },
+        { label: 'WhatsApp', value: 9.4, color: colors.green, display: '9.4%' },
+        { label: 'Phone', value: 3.1, color: colors.orange, display: '3.1%' }
+      ]);
+    }
+
+    function renderConversion() {
+      const colors = getChartColors();
+      
+      document.getElementById('conversionKPIs').innerHTML = `
+        <div class="kpi-card"><div class="kpi-label">Total Requests</div><div class="kpi-value">639</div></div>
+        <div class="kpi-card"><div class="kpi-label">Umgesetzte Termine</div><div class="kpi-value">220</div></div>
+        <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value">34.4%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ø Umsetzungszeit</div><div class="kpi-value">~8h</div></div>
+      `;
+      
+      createPieChart('conversionPie', 'conversionLegend', [
+        { label: 'Umgesetzt', value: 220, color: colors.green, display: '220 (34.4%)' },
+        { label: 'Nicht umgesetzt', value: 419, color: colors.red, display: '419 (65.6%)' }
+      ]);
+      
+      createPieChart('artistPreferencePie', 'artistPreferenceLegend', [
+        { label: 'Beliebig', value: 65.6, color: colors.blue, display: '65.6%' },
+        { label: 'Spezifisch', value: 34.4, color: colors.purple, display: '34.4%' }
+      ]);
+    }
+
+    function renderTeamPerformance() {
+      const colors = getChartColors();
+      
+      createPieChart('teamConversionPie', 'teamConversionLegend', [
+        { label: 'Cara', value: 110, color: colors.orange, display: '110 (50%)' },
+        { label: 'Jenny', value: 75, color: colors.red, display: '75 (34.1%)' },
+        { label: 'Dennis', value: 35, color: colors.blue, display: '35 (15.9%)' }
+      ]);
+      
+      createPieChart('teamRevenuePie', 'teamRevenueLegend', [
+        { label: 'Cara', value: 68750, color: colors.blue, display: '€68.750 (45.7%)' },
+        { label: 'Jenny', value: 61500, color: colors.red, display: '€61.500 (40.9%)' },
+        { label: 'Dennis', value: 20050, color: colors.orange, display: '€20.050 (13.3%)' }
+      ]);
+      
+      document.querySelector('#teamPerformanceTable tbody').innerHTML = `
+        <tr><td class="name">Dennis</td><td class="mono">66</td><td class="mono">35</td><td class="mono">53%</td><td class="mono">15.9%</td><td class="mono">~4h</td></tr>
+        <tr><td class="name">Jenny</td><td class="mono">217</td><td class="mono">75</td><td class="mono">34.6%</td><td class="mono">34.1%</td><td class="mono">~12h</td></tr>
+        <tr><td class="name">Cara</td><td class="mono">313</td><td class="mono">110</td><td class="mono">35.1%</td><td class="mono">50%</td><td class="mono">~11h</td></tr>
+      `;
+    }
+
+    function renderResidentArtists() {
+      const colors = getChartColors();
+      createBarChart('residentRevenueChart', ['Alex T.', 'Maria S.', 'Chris W.', 'Nina L.', 'Tom B.'], [{ label: 'Revenue €', data: [87420, 72150, 68900, 54200, 48600], backgroundColor: colors.green }], true);
+      createBarChart('residentAppointmentsChart', ['Alex T.', 'Maria S.', 'Chris W.', 'Nina L.', 'Tom B.'], [{ label: 'Termine', data: [234, 198, 187, 156, 142], backgroundColor: colors.blue }], true);
+      
+      // Table with Studio names and Stammkunden column
+      document.querySelector('#residentArtistsTable tbody').innerHTML = `
+        <tr><td class="name">Alex Torres</td><td>Mommy I'm Sorry</td><td>Fam</td><td class="mono">234</td><td class="mono">€87.420</td><td class="mono">47</td></tr>
+        <tr><td class="name">Maria Schmidt</td><td>GON</td><td>Crew</td><td class="mono">198</td><td class="mono">€72.150</td><td class="mono">38</td></tr>
+        <tr><td class="name">Chris Weber</td><td>Muttersöhne</td><td>Crew</td><td class="mono">187</td><td class="mono">€68.900</td><td class="mono">35</td></tr>
+        <tr><td class="name">Nina Lang</td><td>Seventyone</td><td>Friends</td><td class="mono">156</td><td class="mono">€54.200</td><td class="mono">28</td></tr>
+        <tr><td class="name">Tom Bauer</td><td>Pardon Paris</td><td>VIP</td><td class="mono">142</td><td class="mono">€48.600</td><td class="mono">24</td></tr>
+      `;
+      
+      // Setup search
+      setupArtistSearch('resident');
+    }
+
+    function renderGuestArtists() {
+      const colors = getChartColors();
+      
+      document.getElementById('guestKPIs').innerHTML = `
+        <div class="kpi-card"><div class="kpi-label">Unique Guest Artists</div><div class="kpi-value">89</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Studio Share</div><div class="kpi-value">€42.8K</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ø Share pro Artist</div><div class="kpi-value">€481</div></div>
+        <div class="kpi-card"><div class="kpi-label">Wiederkehrende</div><div class="kpi-value">23</div></div>
+      `;
+      
+      document.querySelector('#guestArtistsTable tbody').innerHTML = `
+        <tr><td class="name">Jay Kim</td><td>Mommy I'm Sorry</td><td class="mono">4</td><td class="mono">€24,500</td><td class="mono">€7,350</td><td class="mono">€17,150</td></tr>
+        <tr><td class="name">Luna Park</td><td>GON</td><td class="mono">3</td><td class="mono">€18,200</td><td class="mono">€5,460</td><td class="mono">€12,740</td></tr>
+        <tr><td class="name">Marco Silva</td><td>Seventyone</td><td class="mono">2</td><td class="mono">€12,800</td><td class="mono">€3,840</td><td class="mono">€8,960</td></tr>
+        <tr><td class="name">Yuki Tanaka</td><td>Muttersöhne</td><td class="mono">2</td><td class="mono">€11,500</td><td class="mono">€3,450</td><td class="mono">€8,050</td></tr>
+        <tr><td class="name">Emma Brown</td><td>Pardon Paris</td><td class="mono">1</td><td class="mono">€6,200</td><td class="mono">€1,860</td><td class="mono">€4,340</td></tr>
+      `;
+      
+      // Setup search
+      setupArtistSearch('guest');
+    }
+    
+    function renderGuestSpots() {
+      const colors = getChartColors();
+      
+      // Location Pie - by Studio
+      createPieChart('gsLocationPie', 'gsLocationLegend', [
+        { label: "Mommy I'm Sorry", value: 42, color: colors.blue, display: '42 Spots' },
+        { label: 'GON', value: 35, color: colors.green, display: '35 Spots' },
+        { label: 'Seventyone', value: 24, color: colors.purple, display: '24 Spots' },
+        { label: 'Muttersöhne', value: 18, color: colors.orange, display: '18 Spots' },
+        { label: 'Pardon Paris', value: 8, color: colors.pink, display: '8 Spots' }
+      ]);
+      
+      // Timeline
+      createLineChart('gsTimelineChart',
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        [{
+          label: 'Guest Spots',
+          data: [8, 10, 9, 12, 14, 16, 15, 18, 14, 12, 10, 9],
+          borderColor: colors.purple,
+          backgroundColor: 'rgba(139, 92, 246, 0.1)'
+        }]
+      );
+      
+      // Booking Type Pie
+      createPieChart('gsBookingTypePie', 'gsBookingTypeLegend', [
+        { label: 'Self-Booking', value: 68, color: colors.green, display: '68%' },
+        { label: 'Studio-Booking', value: 32, color: colors.blue, display: '32%' }
+      ]);
+      
+      // Revenue Chart by Studio
+      createBarChart('gsRevenueChart',
+        ["Mommy I'm Sorry", 'GON', 'Seventyone', 'Muttersöhne', 'Pardon Paris'],
+        [{
+          label: 'Studio Share €K',
+          data: [18.5, 12.8, 6.2, 4.1, 1.2],
+          backgroundColor: colors.purple
+        }]
+      );
+      
+      // Table with Studio names
+      document.querySelector('#guestSpotsTable tbody').innerHTML = `
+        <tr><td class="name">Jay Kim</td><td>Mommy I'm Sorry</td><td>15.12 - 22.12.2025</td><td>Self-Booking</td><td class="mono">€8,450</td><td class="mono">€2,535</td><td><span class="status-badge success">Completed</span></td></tr>
+        <tr><td class="name">Luna Park</td><td>GON</td><td>08.01 - 15.01.2026</td><td>Studio-Booking</td><td class="mono">€6,200</td><td class="mono">€1,860</td><td><span class="status-badge warning">Active</span></td></tr>
+        <tr><td class="name">Marco Silva</td><td>Seventyone</td><td>22.01 - 28.01.2026</td><td>Self-Booking</td><td class="mono">€5,800</td><td class="mono">€1,740</td><td><span class="status-badge">Upcoming</span></td></tr>
+        <tr><td class="name">Yuki Tanaka</td><td>Muttersöhne</td><td>01.02 - 07.02.2026</td><td>Self-Booking</td><td class="mono">€7,200</td><td class="mono">€2,160</td><td><span class="status-badge">Upcoming</span></td></tr>
+      `;
+    }
+    
+    function renderCustomers() {
+      const colors = getChartColors();
+      
+      // Segment Pie
+      createPieChart('customerSegmentPie', 'customerSegmentLegend', [
+        { label: 'Einmalig (1 Termin)', value: 10691, color: colors.gray, display: '10,691 (83.2%)' },
+        { label: 'Wiederkehrend (2 Termine)', value: 1284, color: colors.cyan, display: '1,284 (10%)' },
+        { label: 'Stammkunde (3-5)', value: 642, color: colors.green, display: '642 (5%)' },
+        { label: 'VIP (6+)', value: 230, color: colors.orange, display: '230 (1.8%)' }
+      ]);
+      
+      // Retention Chart
+      createBarChart('customerRetentionChart',
+        ['1. Termin', '2. Termin', '3. Termin', '4. Termin', '5+ Termine'],
+        [{
+          label: 'Kunden',
+          data: [12847, 2156, 872, 412, 230],
+          backgroundColor: [colors.blue, colors.cyan, colors.green, colors.purple, colors.orange]
+        }]
+      );
+      
+      // Top Customers Grid
+      document.getElementById('topCustomersGrid').innerHTML = `
+        <div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar vip">SK</div>
+            <div>
+              <div class="customer-name">Stefan Krause</div>
+              <div class="customer-email">stefan.k@email.de</div>
+            </div>
+          </div>
+          <div class="customer-stats">
+            <div class="customer-stat"><div class="customer-stat-value">12</div><div class="customer-stat-label">Termine</div></div>
+            <div class="customer-stat"><div class="customer-stat-value">€8.450</div><div class="customer-stat-label">Umsatz</div></div>
+          </div>
+        </div>
+        <div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar vip">LM</div>
+            <div>
+              <div class="customer-name">Laura Müller</div>
+              <div class="customer-email">laura.m@email.de</div>
+            </div>
+          </div>
+          <div class="customer-stats">
+            <div class="customer-stat"><div class="customer-stat-value">9</div><div class="customer-stat-label">Termine</div></div>
+            <div class="customer-stat"><div class="customer-stat-value">€6.920</div><div class="customer-stat-label">Umsatz</div></div>
+          </div>
+        </div>
+        <div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar vip">TH</div>
+            <div>
+              <div class="customer-name">Thomas Hoffmann</div>
+              <div class="customer-email">t.hoffmann@email.de</div>
+            </div>
+          </div>
+          <div class="customer-stats">
+            <div class="customer-stat"><div class="customer-stat-value">8</div><div class="customer-stat-label">Termine</div></div>
+            <div class="customer-stat"><div class="customer-stat-value">€5.840</div><div class="customer-stat-label">Umsatz</div></div>
+          </div>
+        </div>
+        <div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar">JW</div>
+            <div>
+              <div class="customer-name">Julia Weber</div>
+              <div class="customer-email">julia.weber@email.de</div>
+            </div>
+          </div>
+          <div class="customer-stats">
+            <div class="customer-stat"><div class="customer-stat-value">7</div><div class="customer-stat-label">Termine</div></div>
+            <div class="customer-stat"><div class="customer-stat-value">€4.650</div><div class="customer-stat-label">Umsatz</div></div>
+          </div>
+        </div>
+        <div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar">MK</div>
+            <div>
+              <div class="customer-name">Max Kühn</div>
+              <div class="customer-email">max.kuehn@email.de</div>
+            </div>
+          </div>
+          <div class="customer-stats">
+            <div class="customer-stat"><div class="customer-stat-value">6</div><div class="customer-stat-label">Termine</div></div>
+            <div class="customer-stat"><div class="customer-stat-value">€4.280</div><div class="customer-stat-label">Umsatz</div></div>
+          </div>
+        </div>
+        <div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar">AS</div>
+            <div>
+              <div class="customer-name">Anna Schmidt</div>
+              <div class="customer-email">anna.schmidt@email.de</div>
+            </div>
+          </div>
+          <div class="customer-stats">
+            <div class="customer-stat"><div class="customer-stat-value">6</div><div class="customer-stat-label">Termine</div></div>
+            <div class="customer-stat"><div class="customer-stat-value">€3.950</div><div class="customer-stat-label">Umsatz</div></div>
+          </div>
+        </div>
+      `;
+      
+      // Stammkunden Table
+      document.querySelector('#regularCustomersTable tbody').innerHTML = `
+        <tr><td class="name">Stefan Krause</td><td>stefan.k@email.de</td><td class="mono">12</td><td class="mono">€8.450</td><td>15.03.2022</td><td>28.11.2025</td><td><span class="status-badge success">VIP</span></td></tr>
+        <tr><td class="name">Laura Müller</td><td>laura.m@email.de</td><td class="mono">9</td><td class="mono">€6.920</td><td>22.06.2022</td><td>15.12.2025</td><td><span class="status-badge success">VIP</span></td></tr>
+        <tr><td class="name">Thomas Hoffmann</td><td>t.hoffmann@email.de</td><td class="mono">8</td><td class="mono">€5.840</td><td>08.01.2023</td><td>03.01.2026</td><td><span class="status-badge success">VIP</span></td></tr>
+        <tr><td class="name">Julia Weber</td><td>julia.weber@email.de</td><td class="mono">7</td><td class="mono">€4.650</td><td>14.04.2023</td><td>20.11.2025</td><td><span class="status-badge warning">Gold</span></td></tr>
+        <tr><td class="name">Max Kühn</td><td>max.kuehn@email.de</td><td class="mono">6</td><td class="mono">€4.280</td><td>30.07.2023</td><td>08.12.2025</td><td><span class="status-badge warning">Gold</span></td></tr>
+        <tr><td class="name">Anna Schmidt</td><td>anna.schmidt@email.de</td><td class="mono">6</td><td class="mono">€3.950</td><td>11.09.2023</td><td>25.10.2025</td><td><span class="status-badge warning">Gold</span></td></tr>
+      `;
+      
+      // Setup customer search
+      setupCustomerSearch();
+    }
+
+    // ========================================
+    // Search Functionality
+    // ========================================
+    
+    // Sample data for search (will be replaced with real Supabase data)
+    const sampleResidentArtists = [
+      { id: 1, name: 'Alex Torres', location: "Mommy I'm Sorry", rank: 'Fam', appointments: 234, revenue: 87420, regulars: 47 },
+      { id: 2, name: 'Maria Schmidt', location: 'GON', rank: 'Crew', appointments: 198, revenue: 72150, regulars: 38 },
+      { id: 3, name: 'Chris Weber', location: 'Muttersöhne', rank: 'Crew', appointments: 187, revenue: 68900, regulars: 35 },
+      { id: 4, name: 'Nina Lang', location: 'Seventyone', rank: 'Friends', appointments: 156, revenue: 54200, regulars: 28 },
+      { id: 5, name: 'Tom Bauer', location: 'Pardon Paris', rank: 'VIP', appointments: 142, revenue: 48600, regulars: 24 }
+    ];
+    
+    const sampleGuestArtists = [
+      { id: 1, name: 'Jay Kim', location: "Mommy I'm Sorry", spots: 4, income: 24500, studioShare: 7350, appointments: 38 },
+      { id: 2, name: 'Luna Park', location: 'GON', spots: 3, income: 18200, studioShare: 5460, appointments: 28 },
+      { id: 3, name: 'Marco Silva', location: 'Seventyone', spots: 2, income: 12800, studioShare: 3840, appointments: 19 },
+      { id: 4, name: 'Yuki Tanaka', location: 'Muttersöhne', spots: 2, income: 11500, studioShare: 3450, appointments: 16 },
+      { id: 5, name: 'Emma Brown', location: 'Pardon Paris', spots: 1, income: 6200, studioShare: 1860, appointments: 9 }
+    ];
+    
+    const sampleCustomers = [
+      { id: 1, name: 'Stefan Krause', email: 'stefan.k@email.de', appointments: 12, revenue: 8450, favoriteArtist: 'Alex T.' },
+      { id: 2, name: 'Laura Müller', email: 'laura.m@email.de', appointments: 9, revenue: 6920, favoriteArtist: 'Maria S.' },
+      { id: 3, name: 'Thomas Hoffmann', email: 't.hoffmann@email.de', appointments: 8, revenue: 5840, favoriteArtist: 'Chris W.' },
+      { id: 4, name: 'Julia Weber', email: 'julia.weber@email.de', appointments: 7, revenue: 4650, favoriteArtist: 'Nina L.' },
+      { id: 5, name: 'Max Kühn', email: 'max.kuehn@email.de', appointments: 6, revenue: 4280, favoriteArtist: 'Alex T.' }
+    ];
+    
+    function setupArtistSearch(type) {
+      const inputId = type === 'resident' ? 'residentSearchInput' : 'guestSearchInput';
+      const resultsId = type === 'resident' ? 'residentSearchResults' : 'guestSearchResults';
+      const artists = type === 'resident' ? sampleResidentArtists : sampleGuestArtists;
+      
+      const input = document.getElementById(inputId);
+      const results = document.getElementById(resultsId);
+      
+      if (!input || !results) return;
+      
+      input.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        
+        if (query.length < 2) {
+          results.classList.remove('active');
+          return;
+        }
+        
+        const filtered = artists.filter(a => 
+          a.name.toLowerCase().includes(query) || 
+          a.location.toLowerCase().includes(query)
+        );
+        
+        if (filtered.length === 0) {
+          results.innerHTML = '<div class="search-result-item"><span style="color: var(--text-400);">Keine Ergebnisse</span></div>';
+        } else {
+          results.innerHTML = filtered.map(a => `
+            <div class="search-result-item" onclick="${type === 'resident' ? 'showResidentDetail' : 'showGuestDetail'}(${a.id})">
+              <div class="search-result-avatar">${a.name.split(' ').map(n => n[0]).join('')}</div>
+              <div class="search-result-info">
+                <div class="search-result-name">${a.name}</div>
+                <div class="search-result-meta">${a.location} • ${type === 'resident' ? a.rank : a.spots + ' Spots'}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+        
+        results.classList.add('active');
+      });
+      
+      input.addEventListener('blur', () => {
+        setTimeout(() => results.classList.remove('active'), 200);
+      });
+      
+      input.addEventListener('focus', () => {
+        if (input.value.length >= 2) results.classList.add('active');
+      });
+    }
+    
+    function setupCustomerSearch() {
+      const input = document.getElementById('customerSearchInput');
+      const results = document.getElementById('customerSearchResults');
+      
+      if (!input || !results) return;
+      
+      input.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        
+        if (query.length < 2) {
+          results.classList.remove('active');
+          return;
+        }
+        
+        const filtered = sampleCustomers.filter(c => 
+          c.name.toLowerCase().includes(query) || 
+          c.email.toLowerCase().includes(query)
+        );
+        
+        if (filtered.length === 0) {
+          results.innerHTML = '<div class="search-result-item"><span style="color: var(--text-400);">Keine Ergebnisse</span></div>';
+        } else {
+          results.innerHTML = filtered.map(c => `
+            <div class="search-result-item" onclick="showCustomerDetail(${c.id})">
+              <div class="search-result-avatar">${c.name.split(' ').map(n => n[0]).join('')}</div>
+              <div class="search-result-info">
+                <div class="search-result-name">${c.name}</div>
+                <div class="search-result-meta">${c.email}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+        
+        results.classList.add('active');
+      });
+      
+      input.addEventListener('blur', () => {
+        setTimeout(() => results.classList.remove('active'), 200);
+      });
+    }
+    
+    // Show/Hide Detail Cards
+    function showResidentDetail(id) {
+      const artist = sampleResidentArtists.find(a => a.id === id);
+      if (!artist) return;
+      
+      document.getElementById('residentDetailAvatar').textContent = artist.name.split(' ').map(n => n[0]).join('');
+      document.getElementById('residentDetailName').textContent = artist.name;
+      document.getElementById('residentDetailLocation').textContent = artist.location;
+      document.getElementById('residentDetailRank').textContent = artist.rank;
+      document.getElementById('residentDetailAppointments').textContent = artist.appointments;
+      document.getElementById('residentDetailRevenue').textContent = formatCurrency(artist.revenue);
+      document.getElementById('residentDetailRegulars').textContent = artist.regulars;
+      
+      document.getElementById('residentDetailCard').style.display = 'block';
+      document.getElementById('residentSearchInput').value = '';
+      document.getElementById('residentSearchResults').classList.remove('active');
+    }
+    
+    function closeResidentDetail() {
+      document.getElementById('residentDetailCard').style.display = 'none';
+    }
+    
+    function showGuestDetail(id) {
+      const artist = sampleGuestArtists.find(a => a.id === id);
+      if (!artist) return;
+      
+      document.getElementById('guestDetailAvatar').textContent = artist.name.split(' ').map(n => n[0]).join('');
+      document.getElementById('guestDetailName').textContent = artist.name;
+      document.getElementById('guestDetailLocation').textContent = artist.location + ' Guest Spot';
+      document.getElementById('guestDetailSpots').textContent = artist.spots;
+      document.getElementById('guestDetailIncome').textContent = formatCurrency(artist.income);
+      document.getElementById('guestDetailStudioShare').textContent = formatCurrency(artist.studioShare);
+      document.getElementById('guestDetailAppointments').textContent = artist.appointments;
+      
+      document.getElementById('guestDetailCard').style.display = 'block';
+      document.getElementById('guestSearchInput').value = '';
+      document.getElementById('guestSearchResults').classList.remove('active');
+    }
+    
+    function closeGuestDetail() {
+      document.getElementById('guestDetailCard').style.display = 'none';
+    }
+    
+    function showCustomerDetail(id) {
+      const customer = sampleCustomers.find(c => c.id === id);
+      if (!customer) return;
+      
+      document.getElementById('customerDetailAvatar').textContent = customer.name.split(' ').map(n => n[0]).join('');
+      document.getElementById('customerDetailName').textContent = customer.name;
+      document.getElementById('customerDetailEmail').textContent = customer.email;
+      document.getElementById('customerDetailAppointments').textContent = customer.appointments;
+      document.getElementById('customerDetailRevenue').textContent = formatCurrency(customer.revenue);
+      document.getElementById('customerDetailAvg').textContent = formatCurrency(Math.round(customer.revenue / customer.appointments));
+      document.getElementById('customerDetailArtist').textContent = customer.favoriteArtist;
+      
+      // Set badge based on appointments
+      const badge = document.getElementById('customerDetailBadge');
+      if (customer.appointments >= 6) {
+        badge.className = 'customer-rank-badge gold';
+        badge.textContent = 'VIP Kunde';
+      } else if (customer.appointments >= 3) {
+        badge.className = 'customer-rank-badge silver';
+        badge.textContent = 'Stammkunde';
+      } else {
+        badge.className = 'customer-rank-badge bronze';
+        badge.textContent = 'Wiederkehrend';
+      }
+      
+      document.getElementById('customerDetailCard').style.display = 'block';
+      document.getElementById('customerSearchInput').value = '';
+      document.getElementById('customerSearchResults').classList.remove('active');
+    }
+    
+    function closeCustomerDetail() {
+      document.getElementById('customerDetailCard').style.display = 'none';
+    }
+
+    function renderRankings() {
+      const colors = getChartColors();
+      createBarChart('rankingRevenueChart', ['Friends', 'Crew', 'Fam', 'VIP'], [{ label: 'Avg Revenue €', data: [25000, 45000, 68000, 95000], backgroundColor: [colors.gray, colors.cyan, colors.purple, colors.yellow] }]);
+      createPieChart('rankingDistributionPie', 'rankingLegend', [
+        { label: 'Friends', value: 45, color: colors.gray, display: '45' },
+        { label: 'Crew', value: 28, color: colors.cyan, display: '28' },
+        { label: 'Fam', value: 18, color: colors.purple, display: '18' },
+        { label: 'VIP', value: 8, color: colors.yellow, display: '8' }
+      ]);
+    }
+
+    function renderRevenueOverview() {
+      const colors = getChartColors();
+      
+      // Pie Chart - Einnahmen nach Quelle
+      createPieChart('revenueStatusPie', 'revenueStatusLegend', [
+        { label: 'Tattoo-Termine', value: 712450, color: colors.green, display: '€712.450 (81.2%)' },
+        { label: 'Shop / Merch', value: 63463, color: colors.blue, display: '€63.463 (7.2%)' },
+        { label: 'Gutscheine (eingelöst)', value: 52595, color: colors.orange, display: '€52.595 (6.0%)' },
+        { label: 'Guest Spot Share', value: 42800, color: colors.purple, display: '€42.800 (4.9%)' }
+      ]);
+      
+      // Bar Chart - Revenue by Studio
+      createBarChart('revenueLocationChart', ["Mommy I'm Sorry", 'Seventyone', 'GON', 'Muttersöhne', 'Pardon Paris'], [{ label: 'Revenue €K', data: [215, 187, 172, 168, 105], backgroundColor: colors.blue }]);
+    }
+
+    function renderRevenueCategories() {
+      const colors = getChartColors();
+      document.getElementById('revenueCategoryCards').innerHTML = `
+        <div class="category-card">
+          <div class="category-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h4>Tattoo-Termine</h4>
+          <div class="value">€712.450</div>
+          <div class="sub">appointments.total_amount</div>
+        </div>
+        <div class="category-card">
+          <div class="category-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <h4>Shop / E-Commerce</h4>
+          <div class="value">€63.463</div>
+          <div class="sub">Merch + Gift Cards + Appointments</div>
+        </div>
+        <div class="category-card">
+          <div class="category-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h4>Guest Spot Studio Share</h4>
+          <div class="value">€42.800</div>
+          <div class="sub">upcoming_slots.studio_share</div>
+        </div>
+      `;
+      createPieChart('categoryPie', 'categoryLegend', [
+        { label: 'Tattoo-Termine', value: 712450, color: colors.green, display: '€712.450' },
+        { label: 'Shop / E-Commerce', value: 63463, color: colors.blue, display: '€63.463' },
+        { label: 'Guest Spot Share', value: 42800, color: colors.purple, display: '€42.800' }
+      ]);
+      createLineChart('categoryTimeline', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], [
+        { label: 'Tattoo-Termine', data: [58000, 62000, 59000, 64000, 68000, 72000, 70000, 74000, 71000, 76000, 80000, 78000], borderColor: colors.green, backgroundColor: 'rgba(16, 185, 129, 0.1)' },
+        { label: 'E-Commerce', data: [4200, 4800, 5100, 5400, 5800, 6200, 5900, 6400, 6100, 6800, 7200, 6800], borderColor: colors.blue, backgroundColor: 'rgba(0, 112, 243, 0.1)' },
+        { label: 'Guest Spots', data: [3200, 3500, 3800, 4100, 4400, 4200, 3900, 4300, 3800, 4000, 4200, 4100], borderColor: colors.purple, backgroundColor: 'rgba(139, 92, 246, 0.1)' }
+      ]);
+    }
+
+    function renderRevenueTimeline() {
+      const colors = getChartColors();
+      createBarChart('revenueMonthlyChart', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], [{ label: 'Revenue €K', data: [22, 24, 23, 26, 28, 30, 29, 32, 30, 34, 36, 35], backgroundColor: colors.blue }]);
+    }
+
+    function renderLocations() {
+      const colors = getChartColors();
+      document.getElementById('locationCards').innerHTML = `
+        <div class="location-card active">
+          <h4>Mommy I'm Sorry</h4>
+          <div class="location-stat"><span>Stuttgart</span><span class="value"></span></div>
+          <div class="location-stat"><span>Requests</span><span class="value">8,420</span></div>
+          <div class="location-stat"><span>Appointments</span><span class="value">4,125</span></div>
+          <div class="location-stat"><span>Revenue</span><span class="value">€215K</span></div>
+        </div>
+        <div class="location-card">
+          <h4>Seventyone</h4>
+          <div class="location-stat"><span>Köln</span><span class="value"></span></div>
+          <div class="location-stat"><span>Requests</span><span class="value">7,890</span></div>
+          <div class="location-stat"><span>Appointments</span><span class="value">3,680</span></div>
+          <div class="location-stat"><span>Revenue</span><span class="value">€187K</span></div>
+        </div>
+        <div class="location-card">
+          <h4>Muttersöhne</h4>
+          <div class="location-stat"><span>München</span><span class="value"></span></div>
+          <div class="location-stat"><span>Requests</span><span class="value">6,540</span></div>
+          <div class="location-stat"><span>Appointments</span><span class="value">3,120</span></div>
+          <div class="location-stat"><span>Revenue</span><span class="value">€168K</span></div>
+        </div>
+        <div class="location-card">
+          <h4>GON</h4>
+          <div class="location-stat"><span>Berlin</span><span class="value"></span></div>
+          <div class="location-stat"><span>Requests</span><span class="value">6,890</span></div>
+          <div class="location-stat"><span>Appointments</span><span class="value">3,250</span></div>
+          <div class="location-stat"><span>Revenue</span><span class="value">€172K</span></div>
+        </div>
+        <div class="location-card">
+          <h4>Pardon Paris</h4>
+          <div class="location-stat"><span>Paris</span><span class="value"></span></div>
+          <div class="location-stat"><span>Requests</span><span class="value">4,680</span></div>
+          <div class="location-stat"><span>Appointments</span><span class="value">1,750</span></div>
+          <div class="location-stat"><span>Revenue</span><span class="value">€105K</span></div>
+        </div>
+      `;
+      createBarChart('locationRevenueChart', ["Mommy I'm Sorry", 'Seventyone', 'GON', 'Muttersöhne', 'Pardon Paris'], [{ label: 'Revenue €K', data: [215, 187, 172, 168, 105], backgroundColor: colors.blue }]);
+      createPieChart('locationRequestsPie', 'locationRequestsLegend', [
+        { label: "Mommy I'm Sorry", value: 8420, color: colors.blue, display: '8,420' },
+        { label: 'Seventyone', value: 7890, color: colors.purple, display: '7,890' },
+        { label: 'GON', value: 6890, color: colors.green, display: '6,890' },
+        { label: 'Muttersöhne', value: 6540, color: colors.orange, display: '6,540' },
+        { label: 'Pardon Paris', value: 4680, color: colors.pink, display: '4,680' }
+      ]);
+    }
+    
+    function renderMerch() {
+      const colors = getChartColors();
+      
+      // Category Pie - echte Daten aus E-Commerce
+      createPieChart('merchCategoryPie', 'merchCategoryLegend', [
+        { label: 'Gift Cards', value: 25335.88, color: colors.blue, display: '€25.335,88' },
+        { label: 'Appointments', value: 5714.04, color: colors.green, display: '€5.714,04' },
+        { label: 'Accessories', value: 2499.25, color: colors.purple, display: '€2.499,25' },
+        { label: 'T-Shirts', value: 1591.59, color: colors.orange, display: '€1.591,59' },
+        { label: 'Hoodies', value: 840.34, color: colors.pink, display: '€840,34' },
+        { label: 'YOUTHOFPARIS', value: 840.34, color: colors.cyan, display: '€840,34' }
+      ]);
+      
+      // Verkaufte Artikel Bar Chart
+      createBarChart('merchStudioChart',
+        ['Gift Cards', 'Appointments', 'Accessories', 'MIS Cult Cap', 'MIS Cult Boxer', 'T-Shirts'],
+        [{ label: 'Verkaufte Artikel', data: [195, 68, 62, 30, 18, 15], backgroundColor: colors.purple }]
+      );
+      
+      // Timeline mit Vorjahresvergleich
+      createLineChart('merchTimelineChart',
+        ['Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez', 'Jan'],
+        [{
+          label: 'Aktuell (Mai 24 - Jan 26)',
+          data: [800, 1200, 900, 1100, 1400, 1300, 1800, 2200, 2800, 3100, 3400, 3200, 3500, 2600, 3800, 4200, 3900, 4100, 4500, 4800, 5200],
+          borderColor: colors.blue,
+          backgroundColor: 'rgba(0, 112, 243, 0.1)'
+        }, {
+          label: 'Vorjahr (Mai 23 - Jan 25)',
+          data: [200, 300, 250, 280, 320, 350, 400, 450, 500, 520, 550, 580, 600, 620, 650, 680, 700, 720, 750, 780, 800],
+          borderColor: colors.green,
+          backgroundColor: 'rgba(16, 185, 129, 0.1)'
+        }]
+      );
+      
+      // Categories Table - echte Daten
+      document.querySelector('#merchCategoriesTable tbody').innerHTML = `
+        <tr><td class="name">Gift Cards</td><td class="mono">195</td><td class="mono">€25.335,88</td></tr>
+        <tr><td class="name">Accessories</td><td class="mono">62</td><td class="mono">€2.499,25</td></tr>
+        <tr><td class="name">T-Shirts</td><td class="mono">15</td><td class="mono">€1.591,59</td></tr>
+        <tr><td class="name">Hoodies</td><td class="mono">1</td><td class="mono">€840,34</td></tr>
+        <tr><td class="name">YOUTHOFPARIS</td><td class="mono">1</td><td class="mono">€840,34</td></tr>
+      `;
+      
+      // Products Table - echte Daten
+      document.querySelector('#merchProductsTable tbody').innerHTML = `
+        <tr><td class="name">GIFT CARD</td><td class="mono">195</td><td class="mono">€25.335,88</td></tr>
+        <tr><td class="name">Appointment</td><td class="mono">68</td><td class="mono">€5.714,04</td></tr>
+        <tr><td class="name">MOMMY I'M SORRY CULT CAP</td><td class="mono">30</td><td class="mono">€1.251,36</td></tr>
+        <tr><td class="name">MOMMY I'M SORRY CULT BOXER</td><td class="mono">18</td><td class="mono">€529,39</td></tr>
+        <tr><td class="name">MOMMY I'M SORRY CULT SHIRT</td><td class="mono">13</td><td class="mono">€679,82</td></tr>
+      `;
+    }
+    
+    function renderGutscheine() {
+      const colors = getChartColors();
+      
+      // Eingelöst vs Offen Pie - echte Daten
+      createPieChart('gutscheineStatusPie', 'gutscheineStatusLegend', [
+        { label: 'Eingelöst', value: 52595, color: colors.green, display: '€52.595 (251 Stück)' },
+        { label: 'Offen', value: 59065, color: colors.orange, display: '€59.065 (425 Stück)' }
+      ]);
+      
+      // Aussteller Bar Chart - echte Daten
+      createBarChart('gutscheineStudioChart',
+        ['Marc', 'Bennet', 'Bao', 'Fay', 'Silas'],
+        [{ label: 'Gutscheine €', data: [44848, 23475, 20658, 10105, 2710], backgroundColor: colors.blue }]
+      );
+      
+      // Wert-Verteilung Bar Chart
+      createBarChart('gutscheineTimelineChart',
+        ['€50', '€100', '€150', '€200', '€250', '€300', '€350', '€500', '€750'],
+        [{ label: 'Anzahl Gutscheine', data: [116, 233, 33, 38, 69, 17, 8, 14, 8], backgroundColor: colors.purple }]
+      );
+    }
+
+    // ========================================
+    // Inline Date Range Picker Functions
+    // ========================================
+    let customDateRange = { start: null, end: null };
+    
+    function initDatePickers() {
+      const startInput = document.getElementById('dateRangeStart');
+      const endInput = document.getElementById('dateRangeEnd');
+      
+      if (!startInput || !endInput) return;
+      
+      // Set default dates (last 7 days)
+      const today = new Date();
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      endInput.value = today.toISOString().split('T')[0];
+      startInput.value = weekAgo.toISOString().split('T')[0];
+      
+      // Event listeners for date changes
+      startInput.addEventListener('change', handleDateChange);
+      endInput.addEventListener('change', handleDateChange);
+    }
+    
+    function handleDateChange() {
+      const startInput = document.getElementById('dateRangeStart');
+      const endInput = document.getElementById('dateRangeEnd');
+      
+      if (!startInput.value || !endInput.value) return;
+      
+      // Validate end date is after start date
+      if (new Date(endInput.value) < new Date(startInput.value)) {
+        endInput.value = startInput.value;
+      }
+      
+      customDateRange.start = startInput.value;
+      customDateRange.end = endInput.value;
+      
+      // Remove active from time pills
+      document.querySelectorAll('.time-pill').forEach(p => p.classList.remove('active'));
+      
+      // Reload data with new date range
+      reloadAllData();
+    }
+    
+    // Reset date pickers when time pill is clicked
+    document.querySelectorAll('.time-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        const today = new Date();
+        const range = pill.dataset.range;
+        let startDate = new Date();
+        
+        switch(range) {
+          case '12h': startDate = new Date(today.getTime() - 12 * 60 * 60 * 1000); break;
+          case '24h': startDate = new Date(today.getTime() - 24 * 60 * 60 * 1000); break;
+          case '3d': startDate = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000); break;
+          case '7d': startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); break;
+          case '14d': startDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000); break;
+          case '30d': startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000); break;
+          case '3m': startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000); break;
+          case '6m': startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000); break;
+          case '1y': startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000); break;
+          case 'all': startDate = new Date('2020-01-01'); break;
+        }
+        
+        document.getElementById('dateRangeStart').value = startDate.toISOString().split('T')[0];
+        document.getElementById('dateRangeEnd').value = today.toISOString().split('T')[0];
+        
+        customDateRange.start = startDate.toISOString().split('T')[0];
+        customDateRange.end = today.toISOString().split('T')[0];
+      });
+    });
+    
+    // Initialize date pickers on load
+    document.addEventListener('DOMContentLoaded', initDatePickers);
+
+    // ========================================
+    // Utility Functions
+    // ========================================
+    function formatNumber(num) {
+      return new Intl.NumberFormat('de-DE').format(num);
+    }
+
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(num);
+    }
+
+    function reloadAllData() {
+      // Wird bei Integration mit Supabase implementiert
+      const activeView = document.querySelector('.nav-item.active')?.dataset.view || 'dashboard';
+      renderViewData(activeView);
+    }
+
+    // ========================================
+    // Initialize
+    // ========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      renderDashboard();
+    });
+  </script>
+</body>
+</html>
