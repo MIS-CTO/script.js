@@ -12734,49 +12734,40 @@
       animation: analyticsSlideInRight 0.6s var(--analytics-ease-out-expo) 0.1s forwards !important;
     }
 
-    /* KPI Cards Animation */
-    #analytics-section .kpi-card {
-      animation: analyticsScaleIn 0.4s var(--analytics-ease-out-expo) forwards !important;
-    }
-    #analytics-section .kpi-card:nth-child(1) { animation-delay: 0.1s !important; }
-    #analytics-section .kpi-card:nth-child(2) { animation-delay: 0.15s !important; }
-    #analytics-section .kpi-card:nth-child(3) { animation-delay: 0.2s !important; }
-    #analytics-section .kpi-card:nth-child(4) { animation-delay: 0.25s !important; }
+    /* ═══════════════════════════════════════════════════════════════════════
+       OPTIMIZED ANIMATIONS - No opacity:0 starts, no lag on re-render
+       Only subtle transitions, animations only on view switch
+       ═══════════════════════════════════════════════════════════════════════ */
 
-    /* Chart Cards Animation */
-    #analytics-section .chart-card {
-      animation: analyticsFadeInUp 0.5s var(--analytics-ease-out-expo) forwards !important;
-    }
-    #analytics-section .chart-card:nth-child(1) { animation-delay: 0.2s !important; }
-    #analytics-section .chart-card:nth-child(2) { animation-delay: 0.3s !important; }
-    #analytics-section .chart-card:nth-child(3) { animation-delay: 0.4s !important; }
-
-    /* Category Cards Animation */
-    #analytics-section .category-card {
-      animation: analyticsScaleIn 0.4s var(--analytics-ease-out-expo) forwards !important;
-    }
-    #analytics-section .category-card:nth-child(1) { animation-delay: 0.15s !important; }
-    #analytics-section .category-card:nth-child(2) { animation-delay: 0.2s !important; }
-    #analytics-section .category-card:nth-child(3) { animation-delay: 0.25s !important; }
-
-    /* Location Cards Animation */
-    #analytics-section .location-card {
-      animation: analyticsScaleIn 0.4s var(--analytics-ease-out-expo) forwards !important;
-    }
-    #analytics-section .location-card:nth-child(1) { animation-delay: 0.1s !important; }
-    #analytics-section .location-card:nth-child(2) { animation-delay: 0.15s !important; }
-    #analytics-section .location-card:nth-child(3) { animation-delay: 0.2s !important; }
-    #analytics-section .location-card:nth-child(4) { animation-delay: 0.25s !important; }
-    #analytics-section .location-card:nth-child(5) { animation-delay: 0.3s !important; }
-
-    /* Data Table Animation */
-    #analytics-section .data-table-container {
-      animation: analyticsFadeInUp 0.5s var(--analytics-ease-out-expo) 0.3s forwards !important;
-    }
-
-    /* Page Header Animation */
+    /* All elements visible by default - no hidden state */
+    #analytics-section .kpi-card,
+    #analytics-section .chart-card,
+    #analytics-section .category-card,
+    #analytics-section .location-card,
+    #analytics-section .data-table-container,
     #analytics-section .page-header {
-      animation: analyticsFadeIn 0.4s var(--analytics-ease-out-expo) forwards !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    /* Subtle hover transitions instead of entry animations */
+    #analytics-section .kpi-card,
+    #analytics-section .chart-card,
+    #analytics-section .category-card,
+    #analytics-section .location-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    #analytics-section .kpi-card:hover,
+    #analytics-section .chart-card:hover,
+    #analytics-section .category-card:hover,
+    #analytics-section .location-card:hover {
+      transform: translateY(-2px) !important;
+    }
+
+    /* Only animate page header on view switch */
+    #analytics-section .analytics-view.active .page-header {
+      animation: analyticsFadeIn 0.3s ease-out forwards !important;
     }
 
   </style>
@@ -14265,13 +14256,13 @@
 
           <div class="header-controls">
             <div class="time-filter">
+              <button class="time-pill" data-range="12h" onclick="setAnalyticsTimeRange('12h')">12h</button>
+              <button class="time-pill" data-range="24h" onclick="setAnalyticsTimeRange('24h')">24h</button>
+              <button class="time-pill" data-range="3d" onclick="setAnalyticsTimeRange('3d')">3d</button>
               <button class="time-pill" data-range="7d" onclick="setAnalyticsTimeRange('7d')">7d</button>
-              <button class="time-pill" data-range="14d" onclick="setAnalyticsTimeRange('14d')">14d</button>
-              <button class="time-pill active" data-range="30d" onclick="setAnalyticsTimeRange('30d')">30d</button>
-              <button class="time-pill" data-range="3m" onclick="setAnalyticsTimeRange('3m')">3m</button>
-              <button class="time-pill" data-range="6m" onclick="setAnalyticsTimeRange('6m')">6m</button>
-              <button class="time-pill" data-range="1y" onclick="setAnalyticsTimeRange('1y')">1y</button>
-              <button class="time-pill" data-range="all" onclick="setAnalyticsTimeRange('all')">All</button>
+              <button class="time-pill" data-range="30d" onclick="setAnalyticsTimeRange('30d')">30d</button>
+              <button class="time-pill" data-range="90d" onclick="setAnalyticsTimeRange('90d')">90d</button>
+              <button class="time-pill active" data-range="all" onclick="setAnalyticsTimeRange('all')">All</button>
             </div>
 
             <select class="location-select" id="analyticsLocationFilter" onchange="filterAnalyticsByLocation()">
@@ -38531,304 +38522,88 @@
 
     // Load analytics data from Supabase
     // Load appointments data for Timeline Chart (uses created_at)
+    // ═══════════════════════════════════════════════════════════════════════
+    // OPTIMIZED: Uses cache from CentralDataManager - NO DB calls!
+    // ═══════════════════════════════════════════════════════════════════════
     async function loadAppointmentsData(locationFilter = null) {
+      console.log('📊 loadAppointmentsData: Using cached data (no DB calls)');
+
       try {
-        console.log('📊 Loading appointments data for timeline...');
-        console.log('📊 Location filter:', locationFilter || 'None');
-        console.log('📊 Current user:', currentUser ? currentUser.username : 'Not logged in');
+        // Get appointments from cache
+        let appointments = window.CentralDataManager?.data?.appointments ||
+                          window.appointmentsCache ||
+                          CentralDataManager?.getAppointments?.() || [];
 
-        // First, try to count total appointments to check if we have access
-        console.log('🔍 Checking table access...');
-        const { count, error: countError } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true });
+        console.log(`✅ Using ${appointments.length} appointments from cache`);
 
-        console.log('📊 Total appointments in table (accessible):', count);
-        if (countError) {
-          console.error('❌ Count error:', countError);
+        // Apply location filter if needed
+        if (locationFilter && locationFilter !== '' && locationFilter !== 'null' && locationFilter !== 'all') {
+          appointments = appointments.filter(a => a.location_id === locationFilter);
+          console.log(`📍 Filtered to ${appointments.length} appointments for location: ${locationFilter}`);
         }
 
-        // PAGINATED LOADING: Load ALL appointments in batches of 1000
-        console.log('🚨 APPOINTMENTS QUERY VERSION: 2025-11-13-v7 PAGINATED - loading ALL records in batches');
-        console.log('⏳ Fetching all appointments from Supabase using pagination...');
-
-        let allData = [];
-        let from = 0;
-        const batchSize = 1000;
-        let hasMore = true;
-        let batchNumber = 1;
-
-        while (hasMore) {
-          console.log(`📦 Loading batch ${batchNumber} (records ${from} to ${from + batchSize - 1})...`);
-
-          let query = supabase
-            .from('appointments')
-            .select('booking_type, state, created_at, location_id, id')
-            .not('created_at', 'is', null)  // Only get appointments with created_at
-            .order('created_at', { ascending: true })  // Load OLDEST first to get 2024 AND 2025 data
-            .range(from, from + batchSize - 1);  // Paginate with range
-
-          // Don't apply location filter if it's an empty string or invalid
-          if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
-            query = query.eq('location_id', locationFilter);
-          }
-
-          const { data, error } = await query;
-
-          if (error) {
-            console.error('❌ Supabase error on batch', batchNumber, ':', error);
-            throw error;
-          }
-
-          if (data && data.length > 0) {
-            allData = allData.concat(data);
-            console.log(`✅ Batch ${batchNumber}: Loaded ${data.length} records. Total so far: ${allData.length}`);
-            from += batchSize;
-            hasMore = data.length === batchSize;  // If we got less than batchSize, we're done
-            batchNumber++;
-          } else {
-            hasMore = false;
-          }
-        }
-
-        console.log(`✅ Successfully loaded ${allData.length} of ${count || 'unknown'} appointments`);
-        if (allData.length < count) {
-          console.warn(`⚠️ WARNING: Only loaded ${allData.length} out of ${count} appointments!`);
-        } else {
-          console.log(`🎉 SUCCESS: All ${allData.length} appointments loaded!`);
-        }
-
-        // If no data at all, return empty array
-        if (!allData || allData.length === 0) {
-          console.warn('⚠️ Appointments table is empty');
-          return [];
-        }
-
-        // DEBUG: Show sample of created_at values
-        console.log('📅 Sample created_at values (first 5):', allData.slice(0, 5).map(apt => apt.created_at));
-
-        // DEBUG: Show date range of loaded appointments
-        const dates = allData.map(apt => new Date(apt.created_at)).filter(d => !isNaN(d.getTime()));
-        if (dates.length > 0) {
-          const minDate = new Date(Math.min(...dates));
-          const maxDate = new Date(Math.max(...dates));
-          console.log('📅 Date range:', minDate.toLocaleDateString('de-DE'), 'to', maxDate.toLocaleDateString('de-DE'));
-          console.log('📅 Valid dates:', dates.length, 'out of', allData.length, 'appointments');
-          console.log(`📊 Total appointments loaded: ${allData.length}`);
-          console.log(`📅 Oldest appointment: ${minDate.toLocaleDateString('de-DE')}`);
-          console.log(`📅 Newest appointment: ${maxDate.toLocaleDateString('de-DE')}`);
-        }
-
-        // Analyze state distribution
-        const stateCounts = {};
-        allData.forEach(apt => {
-          const state = apt.state || 'null';
-          stateCounts[state] = (stateCounts[state] || 0) + 1;
-        });
-        console.log('📊 State distribution:', stateCounts);
-
-        // Filter for relevant states (if they exist)
-        // Accept: scheduled, finished, completed, confirmed, or any state that's not cancelled
-        const filteredData = allData.filter(apt => {
-          const state = apt.state?.toLowerCase();
-          return state &&
-                 state !== 'cancelled' &&
-                 state !== 'canceled' &&
-                 state !== 'rejected';
-        });
-
-        console.log(`✅ ${filteredData.length} appointments after filtering (excluding cancelled/rejected)`);
-
-        // If filtering removes all data, use all data anyway
-        if (filteredData.length === 0 && allData.length > 0) {
-          console.warn('⚠️ All appointments filtered out, using all appointments instead');
-          return allData;
-        }
-
-        return filteredData.length > 0 ? filteredData : allData;
-
+        return appointments;
       } catch (err) {
-        console.error('❌ Appointments data load failed:', err);
-        console.error('❌ Error details:', {
-          message: err.message,
-          code: err.code,
-          details: err.details,
-          hint: err.hint
-        });
+        console.error('❌ loadAppointmentsData error:', err);
         return [];
       }
     }
 
     // Load requests data for Origin Pie Chart (uses created_at and origin)
+    // ═══════════════════════════════════════════════════════════════════════
+    // OPTIMIZED: Uses cache from CentralDataManager - NO DB calls!
+    // ═══════════════════════════════════════════════════════════════════════
     async function loadRequestsData(locationFilter = null) {
+      console.log('📊 loadRequestsData: Using cached data (no DB calls)');
+
       try {
-        console.log('📊 Loading requests data for origin chart...');
-        console.log('📊 Location filter:', locationFilter || 'None');
+        // Get requests from cache
+        let requests = window.CentralDataManager?.data?.requests ||
+                      window.requestsCache ||
+                      CentralDataManager?.getRequests?.() || [];
 
-        // First, count total requests
-        const { count, error: countError } = await supabase
-          .from('requests')
-          .select('*', { count: 'exact', head: true });
+        console.log(`✅ Using ${requests.length} requests from cache`);
 
-        console.log('📊 Total requests in table:', count);
-        if (countError) {
-          console.error('❌ Count error:', countError);
+        // Apply location filter if needed
+        if (locationFilter && locationFilter !== '' && locationFilter !== 'null' && locationFilter !== 'all') {
+          requests = requests.filter(r => r.location_id === locationFilter);
+          console.log(`📍 Filtered to ${requests.length} requests for location: ${locationFilter}`);
         }
 
-        // PAGINATED LOADING: Load ALL requests in batches of 1000
-        console.log('🚨 REQUESTS ORIGIN QUERY VERSION: 2025-11-13-v7 PAGINATED - loading ALL records in batches');
-        console.log('⏳ Analyzing all requests for origin chart using pagination...');
+        // Exclude canceled for origin chart
+        requests = requests.filter(r => r.status !== 'canceled');
 
-        let allData = [];
-        let from = 0;
-        const batchSize = 1000;
-        let hasMore = true;
-        let batchNumber = 1;
-
-        while (hasMore) {
-          console.log(`📦 Loading requests batch ${batchNumber} (records ${from} to ${from + batchSize - 1})...`);
-
-          let query = supabase
-            .from('requests')
-            .select('origin, status, created_at, location_id')
-            .neq('status', 'canceled')  // Exclude canceled requests
-            .range(from, from + batchSize - 1);  // Paginate with range
-
-          if (locationFilter) {
-            query = query.eq('location_id', locationFilter);
-          }
-
-          const { data, error } = await query;
-
-          if (error) {
-            console.error('❌ Supabase error on batch', batchNumber, ':', error);
-            throw error;
-          }
-
-          if (data && data.length > 0) {
-            allData = allData.concat(data);
-            console.log(`✅ Batch ${batchNumber}: Loaded ${data.length} records. Total so far: ${allData.length}`);
-            from += batchSize;
-            hasMore = data.length === batchSize;  // If we got less than batchSize, we're done
-            batchNumber++;
-          } else {
-            hasMore = false;
-          }
-        }
-
-        console.log(`✅ Successfully loaded ${allData.length} of ${count || 'unknown'} requests for origin chart`);
-        if (allData.length < count) {
-          console.warn(`⚠️ WARNING: Only loaded ${allData.length} out of ${count} requests!`);
-        } else {
-          console.log(`🎉 SUCCESS: All ${allData.length} requests loaded for origin analysis!`);
-        }
-
-        // 🔍 DEBUG: Analyze origin values distribution
-        console.log('🔍 DEBUG: Analyzing origin values in loaded requests...');
-        const originDebug = {};
-        let nullCount = 0;
-        allData.forEach(req => {
-          if (req.origin) {
-            const origin = req.origin.trim();
-            originDebug[origin] = (originDebug[origin] || 0) + 1;
-          } else {
-            nullCount++;
-          }
-        });
-        console.log('🔍 Origin value distribution:', originDebug);
-        console.log('🔍 Requests with NULL/empty origin:', nullCount);
-        console.log('🔍 If most are NULL, check: 1) requests table schema, 2) data migration, 3) Webflow form field mapping');
-
-        // If no data, log warning but don't throw error
-        if (!allData || allData.length === 0) {
-          console.warn('⚠️ No requests found in database');
-          return [];
-        }
-
-        return allData;
+        return requests;
       } catch (err) {
-        console.error('❌ Requests data load failed:', err);
-        console.error('❌ Error details:', {
-          message: err.message,
-          code: err.code,
-          details: err.details
-        });
-        // Don't use alert() - just log and return empty array
+        console.error('❌ loadRequestsData error:', err);
         return [];
       }
     }
 
     // Load ALL requests data (including canceled) for count display
+    // ═══════════════════════════════════════════════════════════════════════
+    // OPTIMIZED: Uses cache from CentralDataManager - NO DB calls!
+    // ═══════════════════════════════════════════════════════════════════════
     async function loadAllRequestsData(locationFilter = null) {
+      console.log('📊 loadAllRequestsData: Using cached data (no DB calls)');
+
       try {
-        console.log('📊 Loading ALL requests data for count...');
-        console.log('📊 Location filter:', locationFilter || 'None');
+        // Get ALL requests from cache (including canceled)
+        let requests = window.CentralDataManager?.data?.requests ||
+                      window.requestsCache ||
+                      CentralDataManager?.getRequests?.() || [];
 
-        // First, count total requests
-        const { count, error: countError } = await supabase
-          .from('requests')
-          .select('*', { count: 'exact', head: true });
+        console.log(`✅ Using ${requests.length} requests from cache (including all statuses)`);
 
-        console.log('📊 Total requests in table:', count);
-        if (countError) {
-          console.error('❌ Count error:', countError);
+        // Apply location filter if needed
+        if (locationFilter && locationFilter !== '' && locationFilter !== 'null' && locationFilter !== 'all') {
+          requests = requests.filter(r => r.location_id === locationFilter);
+          console.log(`📍 Filtered to ${requests.length} requests for location: ${locationFilter}`);
         }
 
-        // PAGINATED LOADING: Load ALL requests in batches of 1000
-        console.log('🚨 ALL REQUESTS COUNT QUERY VERSION: 2025-11-13-v7 PAGINATED - loading ALL records in batches');
-        console.log('⏳ Processing all requests for count display using pagination...');
-
-        let allData = [];
-        let from = 0;
-        const batchSize = 1000;
-        let hasMore = true;
-        let batchNumber = 1;
-
-        while (hasMore) {
-          console.log(`📦 Loading all requests batch ${batchNumber} (records ${from} to ${from + batchSize - 1})...`);
-
-          let query = supabase
-            .from('requests')
-            .select('id, status, created_at, location_id')
-            .range(from, from + batchSize - 1);  // Paginate with range
-
-          if (locationFilter && locationFilter !== '' && locationFilter !== 'null') {
-            query = query.eq('location_id', locationFilter);
-          }
-
-          const { data, error } = await query;
-
-          if (error) {
-            console.error('❌ Supabase error on batch', batchNumber, ':', error);
-            throw error;
-          }
-
-          if (data && data.length > 0) {
-            allData = allData.concat(data);
-            console.log(`✅ Batch ${batchNumber}: Loaded ${data.length} records. Total so far: ${allData.length}`);
-            from += batchSize;
-            hasMore = data.length === batchSize;  // If we got less than batchSize, we're done
-            batchNumber++;
-          } else {
-            hasMore = false;
-          }
-        }
-
-        console.log(`✅ Successfully loaded ${allData.length} of ${count || 'unknown'} total requests (including canceled)`);
-        if (allData.length < count) {
-          console.warn(`⚠️ WARNING: Only loaded ${allData.length} out of ${count} total requests!`);
-        } else {
-          console.log(`🎉 SUCCESS: All ${allData.length} requests loaded for count display!`);
-        }
-
-        if (!allData || allData.length === 0) {
-          console.warn('⚠️ No requests found in database');
-          return [];
-        }
-
-        return allData;
+        return requests;
       } catch (err) {
-        console.error('❌ All requests data load failed:', err);
+        console.error('❌ loadAllRequestsData error:', err);
         return [];
       }
     }
@@ -41502,6 +41277,7 @@
     // Set time range filter
     function setAnalyticsTimeRange(range) {
       analyticsTimeRange = range;
+      console.log('📅 Analytics time range changed:', range);
 
       document.querySelectorAll('#analytics-section .time-pill').forEach(pill => {
         pill.classList.remove('active');
@@ -41518,9 +41294,51 @@
     function filterAnalyticsByLocation() {
       const select = document.getElementById('analyticsLocationFilter');
       analyticsLocationFilter = select ? select.value : '';
+      console.log('📍 Analytics location changed:', analyticsLocationFilter || 'All Locations');
       loadAnalyticsViewData(analyticsCurrentView);
     }
     window.filterAnalyticsByLocation = filterAnalyticsByLocation;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TIME FILTER HELPER - Filter data by analyticsTimeRange
+    // ═══════════════════════════════════════════════════════════════════════
+    function getTimeFilteredData(data, dateField = 'created_at') {
+      if (!analyticsTimeRange || analyticsTimeRange === 'all') return data;
+
+      const now = new Date();
+      let cutoff;
+
+      switch(analyticsTimeRange) {
+        case '12h': cutoff = new Date(now.getTime() - 12 * 60 * 60 * 1000); break;
+        case '24h': cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000); break;
+        case '3d': cutoff = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); break;
+        case '7d': cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); break;
+        case '14d': cutoff = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); break;
+        case '30d': cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); break;
+        case '90d': cutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); break;
+        case '3m': cutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); break;
+        case '6m': cutoff = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000); break;
+        case '1y': cutoff = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); break;
+        default: return data;
+      }
+
+      return data.filter(item => {
+        const itemDate = new Date(item[dateField]);
+        return !isNaN(itemDate.getTime()) && itemDate >= cutoff;
+      });
+    }
+    window.getTimeFilteredData = getTimeFilteredData;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOCATION FILTER HELPER - Filter data by analyticsLocationFilter
+    // ═══════════════════════════════════════════════════════════════════════
+    function getLocationFilteredData(data, locationField = 'location_id') {
+      if (!analyticsLocationFilter || analyticsLocationFilter === '' || analyticsLocationFilter === 'all') {
+        return data;
+      }
+      return data.filter(item => item[locationField] === analyticsLocationFilter);
+    }
+    window.getLocationFilteredData = getLocationFilteredData;
 
     // Create Pie Chart
     function createAnalyticsPieChart(canvasId, legendId, data, showLegend = true) {
@@ -41699,16 +41517,21 @@
 
       try {
         // Use cached data from CentralDataManager (note: capital C!)
-        const requests = window.CentralDataManager?.data?.requests || [];
-        const appointments = window.CentralDataManager?.data?.appointments || [];
+        let rawRequests = window.CentralDataManager?.data?.requests || [];
+        let rawAppointments = window.CentralDataManager?.data?.appointments || [];
         const artists = window.CentralDataManager?.data?.artists || [];
         const locations = window.CentralDataManager?.data?.locations || [];
 
-        console.log('📊 Analytics V2 - Data loaded:', {
+        // Apply filters (time + location)
+        const requests = getLocationFilteredData(getTimeFilteredData(rawRequests, 'created_at'), 'location_id');
+        const appointments = getLocationFilteredData(getTimeFilteredData(rawAppointments, 'created_at'), 'location_id');
+
+        console.log('📊 Analytics V2 - Filtered data:', {
           requests: requests.length,
           appointments: appointments.length,
           artists: artists.length,
-          locations: locations.length
+          timeRange: analyticsTimeRange,
+          location: analyticsLocationFilter || 'All'
         });
 
         switch(viewId) {
