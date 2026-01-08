@@ -11760,9 +11760,9 @@
     /* NOTE: No display property here - follows default section display:none */
     #analytics-section {
       padding: 0 !important;
-      margin-top: 60px !important;
+      margin-top: 106px !important;
       max-width: 100% !important;
-      min-height: calc(100vh - 60px) !important;
+      min-height: calc(100vh - 106px) !important;
       position: relative !important;
       overflow: visible !important;
 
@@ -11859,7 +11859,7 @@
       background: var(--analytics-bg-000) !important;
       border-right: 1px solid var(--analytics-border-color) !important;
       position: fixed !important;
-      top: 60px !important;
+      top: 106px !important;
       left: 0 !important;
       bottom: 0 !important;
       display: flex !important;
@@ -12120,8 +12120,13 @@
       border: 1px solid var(--analytics-border-color) !important;
       border-radius: 12px !important;
       padding: 20px !important;
-      transition: all 0.2s ease;
       margin: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      text-align: left !important;
+      transition: all 0.2s ease !important;
     }
 
     #analytics-section .kpi-card:hover {
@@ -12195,8 +12200,12 @@
       border: 1px solid var(--analytics-border-color) !important;
       border-radius: 12px !important;
       overflow: hidden !important;
-      transition: all 0.2s ease;
+      margin: 0 !important;
       padding: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      transition: all 0.2s ease !important;
     }
 
     #analytics-section .chart-card:hover {
@@ -12235,19 +12244,33 @@
     #analytics-section .chart-body {
       padding: 20px !important;
       margin: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
     }
 
     /* Chart Container - WICHTIG FÜR TIMELINE */
     #analytics-section .chart-container {
       position: relative !important;
       width: 100% !important;
+      max-width: 100% !important;
       height: 280px !important;
       min-height: 280px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
     }
 
     #analytics-section .chart-container.small {
       height: 200px !important;
       min-height: 200px !important;
+    }
+
+    #analytics-section .chart-container canvas {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: 100% !important;
+      display: block !important;
     }
 
     /* Pie Chart Layout - KRITISCH */
@@ -12671,6 +12694,11 @@
       to { opacity: 1; transform: translateX(0); }
     }
 
+    @keyframes analyticsSlideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
     @keyframes analyticsFadeInStagger {
       from { opacity: 0; transform: translateX(-10px); }
       to { opacity: 1; transform: translateX(0); }
@@ -12689,6 +12717,66 @@
     @keyframes analyticsFadeInUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes analyticsFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Sidebar Animation */
+    #analytics-section.active .analytics-sidebar {
+      animation: analyticsSlideInLeft 0.5s var(--analytics-ease-out-expo) forwards !important;
+    }
+
+    /* Main Content Animation */
+    #analytics-section.active .analytics-main {
+      animation: analyticsSlideInRight 0.6s var(--analytics-ease-out-expo) 0.1s forwards !important;
+    }
+
+    /* KPI Cards Animation */
+    #analytics-section .kpi-card {
+      animation: analyticsScaleIn 0.4s var(--analytics-ease-out-expo) forwards !important;
+    }
+    #analytics-section .kpi-card:nth-child(1) { animation-delay: 0.1s !important; }
+    #analytics-section .kpi-card:nth-child(2) { animation-delay: 0.15s !important; }
+    #analytics-section .kpi-card:nth-child(3) { animation-delay: 0.2s !important; }
+    #analytics-section .kpi-card:nth-child(4) { animation-delay: 0.25s !important; }
+
+    /* Chart Cards Animation */
+    #analytics-section .chart-card {
+      animation: analyticsFadeInUp 0.5s var(--analytics-ease-out-expo) forwards !important;
+    }
+    #analytics-section .chart-card:nth-child(1) { animation-delay: 0.2s !important; }
+    #analytics-section .chart-card:nth-child(2) { animation-delay: 0.3s !important; }
+    #analytics-section .chart-card:nth-child(3) { animation-delay: 0.4s !important; }
+
+    /* Category Cards Animation */
+    #analytics-section .category-card {
+      animation: analyticsScaleIn 0.4s var(--analytics-ease-out-expo) forwards !important;
+    }
+    #analytics-section .category-card:nth-child(1) { animation-delay: 0.15s !important; }
+    #analytics-section .category-card:nth-child(2) { animation-delay: 0.2s !important; }
+    #analytics-section .category-card:nth-child(3) { animation-delay: 0.25s !important; }
+
+    /* Location Cards Animation */
+    #analytics-section .location-card {
+      animation: analyticsScaleIn 0.4s var(--analytics-ease-out-expo) forwards !important;
+    }
+    #analytics-section .location-card:nth-child(1) { animation-delay: 0.1s !important; }
+    #analytics-section .location-card:nth-child(2) { animation-delay: 0.15s !important; }
+    #analytics-section .location-card:nth-child(3) { animation-delay: 0.2s !important; }
+    #analytics-section .location-card:nth-child(4) { animation-delay: 0.25s !important; }
+    #analytics-section .location-card:nth-child(5) { animation-delay: 0.3s !important; }
+
+    /* Data Table Animation */
+    #analytics-section .data-table-container {
+      animation: analyticsFadeInUp 0.5s var(--analytics-ease-out-expo) 0.3s forwards !important;
+    }
+
+    /* Page Header Animation */
+    #analytics-section .page-header {
+      animation: analyticsFadeIn 0.4s var(--analytics-ease-out-expo) forwards !important;
     }
 
   </style>
@@ -14099,6 +14187,12 @@
               </svg>
               Team Performance
             </div>
+            <div class="nav-item" data-view="traffic" onclick="switchAnalyticsView('traffic')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              Website Traffic
+            </div>
           </div>
 
           <!-- Artist Performance -->
@@ -14118,7 +14212,7 @@
             </div>
             <div class="nav-item" data-view="rankings" onclick="switchAnalyticsView('rankings')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
               </svg>
               Rankings
             </div>
@@ -14459,6 +14553,87 @@
                   <!-- Wird dynamisch gefüllt -->
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════
+               VIEW: Website Traffic
+               ═══════════════════════════════════════════════════ -->
+          <div class="analytics-view" id="view-traffic">
+            <div class="page-header">
+              <h2>Website Traffic</h2>
+              <p>Besucherstatistiken und Traffic-Analyse</p>
+            </div>
+
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                  </svg>
+                  Unique Visitors
+                </div>
+                <div class="kpi-value" id="trafficTotalVisitors">--</div>
+                <div class="kpi-change positive">+18.7%</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Page Views</div>
+                <div class="kpi-value" id="trafficPageViews">--</div>
+                <div class="kpi-change positive">+12.4%</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Avg. Session</div>
+                <div class="kpi-value" id="trafficAvgSession">--</div>
+                <div class="kpi-change positive">+0:24</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Bounce Rate</div>
+                <div class="kpi-value" id="trafficBounceRate">--</div>
+                <div class="kpi-change positive">-5.3%</div>
+              </div>
+            </div>
+
+            <div class="charts-row">
+              <div class="chart-card full-width">
+                <div class="chart-header">
+                  <div class="chart-title">Visitors Over Time</div>
+                </div>
+                <div class="chart-body">
+                  <div class="chart-container">
+                    <canvas id="trafficTimelineChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="charts-row">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">Traffic Sources</div>
+                </div>
+                <div class="chart-body">
+                  <div class="pie-chart-layout">
+                    <div class="pie-chart-wrapper">
+                      <canvas id="trafficSourcesChart"></canvas>
+                    </div>
+                    <div class="pie-legend" id="trafficSourcesLegend"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">Device Breakdown</div>
+                </div>
+                <div class="chart-body">
+                  <div class="pie-chart-layout">
+                    <div class="pie-chart-wrapper">
+                      <canvas id="trafficDevicesChart"></canvas>
+                    </div>
+                    <div class="pie-legend" id="trafficDevicesLegend"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -23837,8 +24012,8 @@
             </p>
           </div>
 
-          <div style="position: relative; width: 300px; max-width: 300px; height: 300px; margin: 0 auto 20px;">
-            <canvas id="requestStatusPieCanvas" width="300" height="300" style="display: block; box-sizing: border-box;"></canvas>
+          <div style="position: relative; width: 200px; height: 200px; margin: 0 auto 20px;">
+            <canvas id="requestStatusPieCanvas" width="200" height="200" style="display: block; box-sizing: border-box; width: 100%; height: 100%;"></canvas>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
@@ -23948,8 +24123,8 @@
             </p>
           </div>
 
-          <div style="position: relative; width: 300px; max-width: 300px; height: 300px; margin: 0 auto 20px;">
-            <canvas id="appointmentStatusPieCanvas" width="300" height="300" style="display: block; box-sizing: border-box;"></canvas>
+          <div style="position: relative; width: 200px; height: 200px; margin: 0 auto 20px;">
+            <canvas id="appointmentStatusPieCanvas" width="200" height="200" style="display: block; box-sizing: border-box; width: 100%; height: 100%;"></canvas>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.1);">
@@ -40028,8 +40203,8 @@
           <p style="color:var(--muted); margin-bottom:20px;">${total.toLocaleString()} Total Requests</p>
 
           <!-- Pie Chart -->
-          <div style="position: relative; width: 300px; max-width: 100%; height: 300px; margin: 0 auto 30px;">
-            <canvas id="analyticsRequestStatusPieCanvas" width="300" height="300"></canvas>
+          <div style="position: relative; width: 200px; height: 200px; margin: 0 auto 30px;">
+            <canvas id="analyticsRequestStatusPieCanvas" width="200" height="200" style="width: 100%; height: 100%;"></canvas>
           </div>
 
           <!-- Bullet Point List -->
@@ -40142,8 +40317,8 @@
           <p style="color:var(--muted); margin-bottom:20px;">${total.toLocaleString()} Total Appointments</p>
 
           <!-- Pie Chart -->
-          <div style="position: relative; width: 300px; max-width: 100%; height: 300px; margin: 0 auto 30px;">
-            <canvas id="analyticsAppointmentStatusPieCanvas" width="300" height="300"></canvas>
+          <div style="position: relative; width: 200px; height: 200px; margin: 0 auto 30px;">
+            <canvas id="analyticsAppointmentStatusPieCanvas" width="200" height="200" style="width: 100%; height: 100%;"></canvas>
           </div>
 
           <!-- Bullet Point List -->
