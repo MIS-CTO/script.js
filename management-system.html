@@ -11763,6 +11763,12 @@
 
     /* Analytics-spezifische CSS Variablen */
     #analytics-section {
+      /* OVERRIDE: Globale Section-Styles überschreiben */
+      padding: 0 !important;
+      margin-top: 60px !important; /* Nur die Navbar-Höhe */
+      max-width: 100% !important;
+      min-height: calc(100vh - 60px) !important;
+
       /* Backgrounds */
       --analytics-bg-000: #ffffff;
       --analytics-bg-100: #fafafa;
@@ -41549,6 +41555,533 @@
       }
     }
 
+    // ════════════════════════════════════════════════════════════════════════════════
+    // ANALYTICS DASHBOARD V2 - CHART FUNCTIONS
+    // ════════════════════════════════════════════════════════════════════════════════
+
+    // Analytics State
+    let analyticsCurrentView = 'dashboard';
+    let analyticsTimeRange = '30d';
+    let analyticsLocationFilter = '';
+    const analyticsCharts = {};
+
+    // Get chart colors based on theme
+    function getAnalyticsChartColors() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      return {
+        text: isDark ? '#a3a3a3' : '#737373',
+        grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+        blue: '#0070f3',
+        cyan: '#06b6d4',
+        green: '#10b981',
+        purple: '#8b5cf6',
+        pink: '#ec4899',
+        orange: '#f59e0b',
+        red: '#ef4444',
+        gray: '#6b7280'
+      };
+    }
+
+    // Switch Analytics View
+    function switchAnalyticsView(viewId) {
+      console.log('📊 Switching to analytics view:', viewId);
+      analyticsCurrentView = viewId;
+
+      // Hide all views
+      document.querySelectorAll('#analytics-section .analytics-view').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      // Show selected view
+      const targetView = document.getElementById('view-' + viewId);
+      if (targetView) {
+        targetView.classList.add('active');
+      }
+
+      // Update nav items
+      document.querySelectorAll('#analytics-section .nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      const activeNav = document.querySelector(`#analytics-section .nav-item[data-view="${viewId}"]`);
+      if (activeNav) {
+        activeNav.classList.add('active');
+      }
+
+      // Update breadcrumb
+      const breadcrumb = document.getElementById('analyticsBreadcrumbTitle');
+      if (breadcrumb && activeNav) {
+        breadcrumb.textContent = activeNav.textContent.trim();
+      }
+
+      // Load data for this view
+      loadAnalyticsViewData(viewId);
+    }
+    window.switchAnalyticsView = switchAnalyticsView;
+
+    // Set time range filter
+    function setAnalyticsTimeRange(range) {
+      analyticsTimeRange = range;
+
+      document.querySelectorAll('#analytics-section .time-pill').forEach(pill => {
+        pill.classList.remove('active');
+        if (pill.dataset.range === range) {
+          pill.classList.add('active');
+        }
+      });
+
+      loadAnalyticsViewData(analyticsCurrentView);
+    }
+    window.setAnalyticsTimeRange = setAnalyticsTimeRange;
+
+    // Filter by location
+    function filterAnalyticsByLocation() {
+      const select = document.getElementById('analyticsLocationFilter');
+      analyticsLocationFilter = select ? select.value : '';
+      loadAnalyticsViewData(analyticsCurrentView);
+    }
+    window.filterAnalyticsByLocation = filterAnalyticsByLocation;
+
+    // Create Pie Chart
+    function createAnalyticsPieChart(canvasId, legendId, data, showLegend = true) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        console.warn('📊 Canvas not found:', canvasId);
+        return null;
+      }
+
+      const ctx = canvas.getContext('2d');
+      const colors = getAnalyticsChartColors();
+
+      if (analyticsCharts[canvasId]) {
+        analyticsCharts[canvasId].destroy();
+      }
+
+      const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: data.map(d => d.label),
+          datasets: [{
+            data: data.map(d => d.value),
+            backgroundColor: data.map(d => d.color),
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '65%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              cornerRadius: 8
+            }
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 800,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+
+      analyticsCharts[canvasId] = chart;
+
+      if (showLegend && legendId) {
+        const legendContainer = document.getElementById(legendId);
+        if (legendContainer) {
+          legendContainer.innerHTML = data.map(d => `
+            <div class="legend-item">
+              <div class="legend-label">
+                <div class="legend-dot" style="background: ${d.color};"></div>
+                <span class="legend-text">${d.label}</span>
+              </div>
+              <span class="legend-value">${d.display || d.value.toLocaleString('de-DE')}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      return chart;
+    }
+
+    // Create Line Chart
+    function createAnalyticsLineChart(canvasId, labels, datasets) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        console.warn('📊 Canvas not found:', canvasId);
+        return null;
+      }
+
+      const ctx = canvas.getContext('2d');
+      const colors = getAnalyticsChartColors();
+
+      if (analyticsCharts[canvasId]) {
+        analyticsCharts[canvasId].destroy();
+      }
+
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: datasets.map(ds => ({
+            ...ds,
+            borderWidth: 2,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            fill: ds.fill !== false ? {
+              target: 'origin',
+              above: ds.backgroundColor || 'rgba(0, 112, 243, 0.1)'
+            } : false
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: {
+              display: datasets.length > 1,
+              position: 'top'
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              padding: 12,
+              cornerRadius: 8
+            }
+          },
+          scales: {
+            x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
+            y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
+          },
+          animation: { duration: 1000, easing: 'easeOutQuart' }
+        }
+      });
+
+      analyticsCharts[canvasId] = chart;
+      return chart;
+    }
+
+    // Create Bar Chart
+    function createAnalyticsBarChart(canvasId, labels, datasets, horizontal = false) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        console.warn('📊 Canvas not found:', canvasId);
+        return null;
+      }
+
+      const ctx = canvas.getContext('2d');
+      const colors = getAnalyticsChartColors();
+
+      if (analyticsCharts[canvasId]) {
+        analyticsCharts[canvasId].destroy();
+      }
+
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: datasets.map(ds => ({
+            ...ds,
+            borderRadius: 4,
+            borderSkipped: false
+          }))
+        },
+        options: {
+          indexAxis: horizontal ? 'y' : 'x',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: datasets.length > 1, position: 'top' },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, cornerRadius: 8 }
+          },
+          scales: {
+            x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
+            y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
+          },
+          animation: { duration: 800, easing: 'easeOutQuart' }
+        }
+      });
+
+      analyticsCharts[canvasId] = chart;
+      return chart;
+    }
+
+    // Load data for specific view
+    async function loadAnalyticsViewData(viewId) {
+      console.log('📊 Loading data for view:', viewId);
+      const colors = getAnalyticsChartColors();
+
+      try {
+        // Use cached data from centralDataManager
+        const requests = window.centralDataManager?.data?.requests || [];
+        const appointments = window.centralDataManager?.data?.appointments || [];
+        const artists = window.centralDataManager?.data?.artists || [];
+        const locations = window.centralDataManager?.data?.locations || [];
+
+        switch(viewId) {
+          case 'dashboard':
+            // KPIs
+            const totalRequests = requests.length;
+            const totalAppointments = appointments.length;
+            const convertedRequests = requests.filter(r => r.status === 'scheduled' || r.status === 'finished').length;
+            const conversionRate = totalRequests > 0 ? ((convertedRequests / totalRequests) * 100).toFixed(1) : 0;
+            const totalRevenue = appointments.reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0), 0);
+
+            // Update KPI elements
+            const el1 = document.getElementById('kpiTotalRequests');
+            const el2 = document.getElementById('kpiTotalAppointments');
+            const el3 = document.getElementById('kpiTotalRevenue');
+            const el4 = document.getElementById('kpiConversionRate');
+            if (el1) el1.textContent = totalRequests.toLocaleString('de-DE');
+            if (el2) el2.textContent = totalAppointments.toLocaleString('de-DE');
+            if (el3) el3.textContent = '€' + (totalRevenue / 1000).toFixed(0) + 'K';
+            if (el4) el4.textContent = conversionRate + '%';
+
+            // Update legend values
+            const legConv = document.getElementById('legendConvertedCount');
+            const legNotConv = document.getElementById('legendNotConvertedCount');
+            if (legConv) legConv.textContent = convertedRequests.toLocaleString('de-DE');
+            if (legNotConv) legNotConv.textContent = (totalRequests - convertedRequests).toLocaleString('de-DE');
+
+            // Origins Pie Chart
+            const originCounts = {};
+            requests.forEach(r => {
+              const origin = r.origin || 'Unknown';
+              originCounts[origin] = (originCounts[origin] || 0) + 1;
+            });
+
+            const originData = Object.entries(originCounts)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([label, value], i) => ({
+                label: label,
+                value: value,
+                color: [colors.blue, colors.purple, colors.green, colors.orange, colors.gray][i],
+                display: value.toLocaleString('de-DE')
+              }));
+
+            if (originData.length > 0) {
+              createAnalyticsPieChart('dashboardOriginsPie', 'dashboardOriginsLegend', originData);
+            }
+
+            // Conversion Pie Chart
+            createAnalyticsPieChart('dashboardConversionPie', null, [
+              { label: 'Umgesetzt', value: convertedRequests, color: colors.green },
+              { label: 'Nicht umgesetzt', value: totalRequests - convertedRequests, color: colors.red }
+            ], false);
+
+            // Timeline Chart
+            const monthlyData = {};
+            appointments.forEach(a => {
+              const date = new Date(a.start || a.created_at);
+              if (!isNaN(date.getTime())) {
+                const monthKey = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+                monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+              }
+            });
+
+            const sortedMonths = Object.keys(monthlyData).slice(-12);
+            const monthlyValues = sortedMonths.map(m => monthlyData[m] || 0);
+
+            if (sortedMonths.length > 0) {
+              createAnalyticsLineChart('dashboardTimeline', sortedMonths, [{
+                label: 'Appointments',
+                data: monthlyValues,
+                borderColor: colors.blue,
+                backgroundColor: 'rgba(0, 112, 243, 0.1)'
+              }]);
+            }
+            break;
+
+          case 'request-origins':
+            const origCounts = {};
+            requests.forEach(r => {
+              const origin = r.origin || 'Unknown';
+              origCounts[origin] = (origCounts[origin] || 0) + 1;
+            });
+
+            const origData = Object.entries(origCounts)
+              .sort((a, b) => b[1] - a[1])
+              .map(([label, value], i) => ({
+                label: label,
+                value: value,
+                color: [colors.blue, colors.purple, colors.green, colors.orange, colors.cyan, colors.gray][i % 6],
+                display: value.toLocaleString('de-DE')
+              }));
+
+            createAnalyticsPieChart('originsMainPie', 'originsMainLegend', origData);
+            break;
+
+          case 'conversion':
+            const convTotal = requests.length;
+            const convConverted = requests.filter(r => r.status === 'scheduled' || r.status === 'finished').length;
+            const convRate = convTotal > 0 ? ((convConverted / convTotal) * 100).toFixed(1) : 0;
+
+            const convEls = {
+              conversionTotalRequests: convTotal.toLocaleString('de-DE'),
+              conversionConvertedCount: convConverted.toLocaleString('de-DE'),
+              conversionRate: convRate + '%',
+              conversionAvgTime: '4.2 Tage'
+            };
+
+            Object.entries(convEls).forEach(([id, value]) => {
+              const el = document.getElementById(id);
+              if (el) el.textContent = value;
+            });
+
+            createAnalyticsPieChart('conversionPie', 'conversionLegend', [
+              { label: 'Umgesetzt', value: convConverted, color: colors.green },
+              { label: 'Offen', value: convTotal - convConverted, color: colors.orange }
+            ]);
+            break;
+
+          case 'residents':
+            const residents = artists.filter(a => a.type === 'resident' || !a.type);
+            const artistStats = {};
+            appointments.forEach(a => {
+              if (a.artist_id) {
+                artistStats[a.artist_id] = artistStats[a.artist_id] || { count: 0, revenue: 0 };
+                artistStats[a.artist_id].count++;
+                artistStats[a.artist_id].revenue += parseFloat(a.total_amount) || 0;
+              }
+            });
+
+            const topByRevenue = residents
+              .map(a => ({ name: a.name, revenue: artistStats[a.id]?.revenue || 0 }))
+              .sort((a, b) => b.revenue - a.revenue)
+              .slice(0, 10);
+
+            const topByAppointments = residents
+              .map(a => ({ name: a.name, count: artistStats[a.id]?.count || 0 }))
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 10);
+
+            createAnalyticsBarChart('residentRevenueChart',
+              topByRevenue.map(a => a.name),
+              [{ label: 'Revenue €', data: topByRevenue.map(a => a.revenue), backgroundColor: colors.green }],
+              true
+            );
+
+            createAnalyticsBarChart('residentAppointmentsChart',
+              topByAppointments.map(a => a.name),
+              [{ label: 'Appointments', data: topByAppointments.map(a => a.count), backgroundColor: colors.blue }],
+              true
+            );
+            break;
+
+          case 'revenue-overview':
+            let revTotal = 0, revPaid = 0, revPending = 0, revDeposit = 0;
+            appointments.forEach(a => {
+              const amount = parseFloat(a.total_amount) || 0;
+              revTotal += amount;
+              if (a.payment_status === 'paid' || a.payment_status === 'Komplett bezahlt') {
+                revPaid += amount;
+              } else if (a.payment_status === 'deposit' || a.payment_status === 'Anzahlung bezahlt') {
+                revDeposit += amount;
+              } else {
+                revPending += amount;
+              }
+            });
+
+            const revEls = {
+              revenueTotalAmount: '€' + revTotal.toLocaleString('de-DE'),
+              revenuePaidAmount: '€' + revPaid.toLocaleString('de-DE'),
+              revenuePendingAmount: '€' + revPending.toLocaleString('de-DE'),
+              revenueDepositAmount: '€' + revDeposit.toLocaleString('de-DE')
+            };
+
+            Object.entries(revEls).forEach(([id, value]) => {
+              const el = document.getElementById(id);
+              if (el) el.textContent = value;
+            });
+
+            createAnalyticsPieChart('revenueStatusPie', 'revenueStatusLegend', [
+              { label: 'Bezahlt', value: revPaid, color: colors.green, display: '€' + revPaid.toLocaleString('de-DE') },
+              { label: 'Ausstehend', value: revPending, color: colors.orange, display: '€' + revPending.toLocaleString('de-DE') },
+              { label: 'Anzahlung', value: revDeposit, color: colors.blue, display: '€' + revDeposit.toLocaleString('de-DE') }
+            ]);
+            break;
+
+          case 'locations':
+            const locStats = {};
+            locations.forEach(l => {
+              locStats[l.id] = { name: l.name || l.city, requests: 0, appointments: 0, revenue: 0 };
+            });
+
+            requests.forEach(r => {
+              if (r.location_id && locStats[r.location_id]) {
+                locStats[r.location_id].requests++;
+              }
+            });
+
+            appointments.forEach(a => {
+              if (a.location_id && locStats[a.location_id]) {
+                locStats[a.location_id].appointments++;
+                locStats[a.location_id].revenue += parseFloat(a.total_amount) || 0;
+              }
+            });
+
+            const container = document.getElementById('locationCardsContainer');
+            if (container) {
+              container.innerHTML = Object.values(locStats).map((l, i) => `
+                <div class="location-card ${i === 0 ? 'active' : ''}">
+                  <h4>${l.name}</h4>
+                  <div class="location-stat">
+                    <span>Requests</span>
+                    <span class="value">${l.requests.toLocaleString('de-DE')}</span>
+                  </div>
+                  <div class="location-stat">
+                    <span>Appointments</span>
+                    <span class="value">${l.appointments.toLocaleString('de-DE')}</span>
+                  </div>
+                  <div class="location-stat">
+                    <span>Revenue</span>
+                    <span class="value">€${Math.round(l.revenue / 1000)}K</span>
+                  </div>
+                </div>
+              `).join('');
+            }
+
+            const sortedLocs = Object.values(locStats).sort((a, b) => b.revenue - a.revenue);
+            createAnalyticsBarChart('locationRevenueChart',
+              sortedLocs.map(l => l.name),
+              [{ label: 'Revenue €K', data: sortedLocs.map(l => Math.round(l.revenue / 1000)), backgroundColor: colors.blue }]
+            );
+
+            createAnalyticsPieChart('locationRequestsPie', 'locationRequestsLegend',
+              sortedLocs.map((l, i) => ({
+                label: l.name,
+                value: l.requests,
+                color: [colors.blue, colors.purple, colors.green, colors.orange, colors.pink][i % 5],
+                display: l.requests.toLocaleString('de-DE')
+              }))
+            );
+            break;
+
+          default:
+            console.log('📊 View not implemented yet:', viewId);
+        }
+      } catch (error) {
+        console.error('Error loading analytics data:', error);
+      }
+    }
+
+    // Initialize Analytics when tab is shown
+    function initAnalyticsV2() {
+      console.log('📊 Initializing Analytics V2...');
+      switchAnalyticsView('dashboard');
+    }
+    window.initAnalyticsV2 = initAnalyticsV2;
+
+    // ════════════════════════════════════════════════════════════════════════════════
+    // END ANALYTICS DASHBOARD V2
+    // ════════════════════════════════════════════════════════════════════════════════
+
     // Attach event listeners
     document.addEventListener('DOMContentLoaded', function() {
       // Login form
@@ -41574,6 +42107,10 @@
           // Small delay to ensure section is visible before rendering charts
           setTimeout(async () => {
             await initAnalytics();
+            // Initialize Analytics V2 Dashboard
+            if (typeof initAnalyticsV2 === 'function') {
+              initAnalyticsV2();
+            }
           }, 100);
         });
       }
