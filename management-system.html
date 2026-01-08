@@ -20859,7 +20859,7 @@
             }
 
             // Set initial Create Stay button visibility
-            updateCreateStayButtonVisibility(selectedLocationId);
+            if (typeof updateCreateStayButtonVisibility === 'function') updateCreateStayButtonVisibility(selectedLocationId);
 
             const locSelect = document.getElementById('locationDropdown');
             if (locSelect) {
@@ -20880,7 +20880,7 @@
                 }
 
                 // Update Create Stay button visibility
-                updateCreateStayButtonVisibility(selectedLocationId);
+                if (typeof updateCreateStayButtonVisibility === 'function') updateCreateStayButtonVisibility(selectedLocationId);
 
                 await loadEvents();
                 renderCalendar();
@@ -35787,7 +35787,7 @@
     window.selectSlotProfile = selectSlotProfile;
     window.selectSlotArtist = selectSlotArtist;
     window.saveNewSlot = saveNewSlot;
-    window.openAddWaitlistSlotModal = openAddWaitlistSlotModal;
+    // NOTE: openAddWaitlistSlotModal is exposed later where it's defined
     window.switchListType = switchListType;
 
     // Load Work Tracking Data from database with BATCH LOADING
@@ -41559,11 +41559,11 @@
     // ANALYTICS DASHBOARD V2 - CHART FUNCTIONS
     // ════════════════════════════════════════════════════════════════════════════════
 
-    // Analytics State
+    // Analytics State (V2) - Using existing analyticsCharts object
     let analyticsCurrentView = 'dashboard';
     let analyticsTimeRange = '30d';
     let analyticsLocationFilter = '';
-    const analyticsCharts = {};
+    // NOTE: analyticsCharts already defined above, reusing it
 
     // Get chart colors based on theme
     function getAnalyticsChartColors() {
