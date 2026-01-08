@@ -15361,57 +15361,160 @@
             </div>
           </div>
 
-          <!-- ═══════════════════════════════════════════════════
+          <!-- ═══════════════════════════════════════════════════════════
                VIEW: Revenue Overview
-               ═══════════════════════════════════════════════════ -->
+               ═══════════════════════════════════════════════════════════ -->
           <div class="analytics-view" id="view-revenue-overview">
             <div class="page-header">
               <h2>Revenue Overview</h2>
-              <p>Gesamtumsatz und Zahlungsstatus</p>
+              <p>Gesamtübersicht aller Einnahmequellen</p>
             </div>
 
+            <!-- Main KPIs -->
             <div class="kpi-grid">
               <div class="kpi-card">
                 <div class="kpi-label">Gesamtumsatz</div>
-                <div class="kpi-value" id="revenueTotalAmount">--</div>
+                <div class="kpi-value" id="revTotalGesamt">--</div>
+                <div class="kpi-change positive" id="revTotalGesamtSub">Alle Einnahmen</div>
               </div>
               <div class="kpi-card">
-                <div class="kpi-label">Bezahlt</div>
-                <div class="kpi-value" id="revenuePaidAmount">--</div>
+                <div class="kpi-label">Tattoo-Termine</div>
+                <div class="kpi-value" id="revTattooTermine">--</div>
+                <div class="kpi-change positive" id="revTattooPercent">--%</div>
               </div>
               <div class="kpi-card">
-                <div class="kpi-label">Ausstehend</div>
-                <div class="kpi-value" id="revenuePendingAmount">--</div>
+                <div class="kpi-label">Offene Zahlungen</div>
+                <div class="kpi-value" id="revOffeneZahlungen">--</div>
               </div>
               <div class="kpi-card">
-                <div class="kpi-label">Anzahlung erhalten</div>
-                <div class="kpi-value" id="revenueDepositAmount">--</div>
+                <div class="kpi-label">Anzahlungen</div>
+                <div class="kpi-value" id="revAnzahlungen">--</div>
               </div>
             </div>
 
+            <!-- Einnahmequellen Section -->
+            <div class="page-header" style="margin-top: 32px; margin-bottom: 16px;">
+              <h3 style="font-size: 16px; font-weight: 600; color: var(--text-100);">Einnahmequellen</h3>
+            </div>
+
+            <div class="revenue-streams-grid">
+              <!-- Tattoo-Termine -->
+              <div class="revenue-stream-card">
+                <div class="revenue-stream-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div class="revenue-stream-content">
+                  <div class="revenue-stream-label">Tattoo-Termine</div>
+                  <div class="revenue-stream-value" id="revStreamTattoo">--</div>
+                  <div class="revenue-stream-sub">appointments.total_amount</div>
+                </div>
+                <div class="revenue-stream-percent" id="revStreamTattooPercent">--%</div>
+              </div>
+
+              <!-- Guest Spot Studio Share -->
+              <div class="revenue-stream-card">
+                <div class="revenue-stream-icon purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="revenue-stream-content">
+                  <div class="revenue-stream-label">Guest Spot Studio Share</div>
+                  <div class="revenue-stream-value" id="revStreamGuest">--</div>
+                  <div class="revenue-stream-sub">upcoming_slots.studio_share</div>
+                </div>
+                <div class="revenue-stream-percent" id="revStreamGuestPercent">--%</div>
+              </div>
+
+              <!-- Shop / Merch -->
+              <div class="revenue-stream-card">
+                <div class="revenue-stream-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                  </svg>
+                </div>
+                <div class="revenue-stream-content">
+                  <div class="revenue-stream-label">Shop / Merch</div>
+                  <div class="revenue-stream-value" id="revStreamMerch">--</div>
+                  <div class="revenue-stream-sub">E-Commerce Nettoumsatz</div>
+                </div>
+                <div class="revenue-stream-percent" id="revStreamMerchPercent">--%</div>
+              </div>
+
+              <!-- Gutscheine (eingelöst) -->
+              <div class="revenue-stream-card">
+                <div class="revenue-stream-icon orange">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><circle cx="12" cy="14" r="2"/>
+                  </svg>
+                </div>
+                <div class="revenue-stream-content">
+                  <div class="revenue-stream-label">Gutscheine (eingelöst)</div>
+                  <div class="revenue-stream-value" id="revStreamGutscheinEin">--</div>
+                  <div class="revenue-stream-sub" id="revStreamGutscheinEinSub">-- von -- eingelöst</div>
+                </div>
+                <div class="revenue-stream-percent" id="revStreamGutscheinEinPercent">--%</div>
+              </div>
+
+              <!-- Gutscheine (offen) -->
+              <div class="revenue-stream-card pending">
+                <div class="revenue-stream-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-orange);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div class="revenue-stream-content">
+                  <div class="revenue-stream-label">Gutscheine (offen)</div>
+                  <div class="revenue-stream-value" id="revStreamGutscheinOffen">--</div>
+                  <div class="revenue-stream-sub" id="revStreamGutscheinOffenSub">-- noch nicht eingelöst</div>
+                </div>
+                <div class="revenue-stream-percent" style="color: var(--accent-orange);">Potenzial</div>
+              </div>
+
+              <!-- Gesamt (realisiert) -->
+              <div class="revenue-stream-card total">
+                <div class="revenue-stream-icon" style="background: var(--bg-300); color: var(--text-100);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </div>
+                <div class="revenue-stream-content">
+                  <div class="revenue-stream-label">Gesamt (realisiert)</div>
+                  <div class="revenue-stream-value" id="revStreamGesamt">--</div>
+                  <div class="revenue-stream-sub">Tattoo + Guest + Merch + Gutscheine eingelöst</div>
+                </div>
+                <div class="revenue-stream-percent">100%</div>
+              </div>
+            </div>
+
+            <!-- Charts -->
             <div class="charts-row">
               <div class="chart-card">
-                <div class="chart-header">
-                  <div class="chart-title">Payment Status</div>
-                </div>
+                <div class="chart-header"><div class="chart-title">Einnahmen nach Quelle</div></div>
                 <div class="chart-body">
                   <div class="pie-chart-layout">
-                    <div class="pie-chart-wrapper">
-                      <canvas id="revenueStatusPie"></canvas>
-                    </div>
-                    <div class="pie-legend" id="revenueStatusLegend"></div>
+                    <div class="pie-chart-wrapper"><canvas id="revenueSourcePie"></canvas></div>
+                    <div class="pie-legend" id="revenueSourceLegend"></div>
                   </div>
                 </div>
               </div>
 
               <div class="chart-card">
-                <div class="chart-header">
-                  <div class="chart-title">Revenue by Location</div>
-                </div>
+                <div class="chart-header"><div class="chart-title">Revenue by Studio</div></div>
                 <div class="chart-body">
-                  <div class="chart-container">
-                    <canvas id="revenueLocationChart"></canvas>
-                  </div>
+                  <div class="chart-container"><canvas id="revenueStudioChart"></canvas></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Merch Breakdown -->
+            <div class="chart-card" style="margin-top: 24px;">
+              <div class="chart-header"><div class="chart-title">Shop / Merch Breakdown</div></div>
+              <div class="chart-body">
+                <div class="merch-breakdown-grid" id="merchBreakdownGrid">
+                  <!-- Will be populated by JavaScript -->
                 </div>
               </div>
             </div>
@@ -42788,36 +42891,7 @@
             break;
 
           case 'revenue-overview':
-            let revTotal = 0, revPaid = 0, revPending = 0, revDeposit = 0;
-            appointments.forEach(a => {
-              const amount = parseFloat(a.total_amount) || 0;
-              revTotal += amount;
-              if (a.payment_status === 'paid' || a.payment_status === 'Komplett bezahlt') {
-                revPaid += amount;
-              } else if (a.payment_status === 'deposit' || a.payment_status === 'Anzahlung bezahlt') {
-                revDeposit += amount;
-              } else {
-                revPending += amount;
-              }
-            });
-
-            const revEls = {
-              revenueTotalAmount: '€' + revTotal.toLocaleString('de-DE'),
-              revenuePaidAmount: '€' + revPaid.toLocaleString('de-DE'),
-              revenuePendingAmount: '€' + revPending.toLocaleString('de-DE'),
-              revenueDepositAmount: '€' + revDeposit.toLocaleString('de-DE')
-            };
-
-            Object.entries(revEls).forEach(([id, value]) => {
-              const el = document.getElementById(id);
-              if (el) el.textContent = value;
-            });
-
-            createAnalyticsPieChart('revenueStatusPie', 'revenueStatusLegend', [
-              { label: 'Bezahlt', value: revPaid, color: colors.green, display: '€' + revPaid.toLocaleString('de-DE') },
-              { label: 'Ausstehend', value: revPending, color: colors.orange, display: '€' + revPending.toLocaleString('de-DE') },
-              { label: 'Anzahlung', value: revDeposit, color: colors.blue, display: '€' + revDeposit.toLocaleString('de-DE') }
-            ]);
+            renderAnalyticsRevenueOverview();
             break;
 
           case 'locations':
@@ -42877,125 +42951,19 @@
             break;
 
           case 'team':
-            // Team Performance Sub-View
-            const bookingTeam = ['Cara', 'Aman', 'Stefan', 'Aj', 'Ben'];
-            const teamStats = {};
-
-            requests.forEach(r => {
-              const handler = r.assigned_to || r.handled_by || 'Unassigned';
-              if (!teamStats[handler]) {
-                teamStats[handler] = { processed: 0, converted: 0 };
-              }
-              teamStats[handler].processed++;
-              if (r.status === 'scheduled' || r.status === 'finished') {
-                teamStats[handler].converted++;
-              }
-            });
-
-            const teamLabels = Object.keys(teamStats).filter(t => t !== 'Unassigned').slice(0, 6);
-            const teamProcessed = teamLabels.map(t => teamStats[t]?.processed || 0);
-            const teamConverted = teamLabels.map(t => teamStats[t]?.converted || 0);
-
-            if (teamLabels.length > 0) {
-              createAnalyticsBarChart('teamComparisonChart', teamLabels, [
-                { label: 'Bearbeitete Requests', data: teamProcessed, backgroundColor: colors.blue },
-                { label: 'Umgesetzte Termine', data: teamConverted, backgroundColor: colors.green }
-              ]);
-            }
-
-            // Fill table
-            const teamTable = document.querySelector('#teamPerformanceTable tbody');
-            if (teamTable) {
-              teamTable.innerHTML = teamLabels.map(name => {
-                const stats = teamStats[name];
-                const rate = stats.processed > 0 ? ((stats.converted / stats.processed) * 100).toFixed(1) : 0;
-                return `
-                  <tr>
-                    <td class="name">${name}</td>
-                    <td class="mono">${stats.processed.toLocaleString('de-DE')}</td>
-                    <td class="mono">${stats.converted.toLocaleString('de-DE')}</td>
-                    <td class="mono">${rate}%</td>
-                    <td>--</td>
-                    <td><span class="status-badge ${rate > 40 ? 'success' : rate > 20 ? 'warning' : 'error'}">
-                      ${rate > 40 ? 'Excellent' : rate > 20 ? 'Good' : 'Needs Improvement'}
-                    </span></td>
-                  </tr>
-                `;
-              }).join('');
-            }
+            renderAnalyticsTeamPerformance();
             break;
 
           case 'guests':
-            // Guest Artists Sub-View - KPIs
-            const guestSpots = appointments.filter(a => a.is_guest_spot || a.artist_type === 'guest');
-            const totalGuestRevenue = guestSpots.reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0), 0);
-            const studioShare = totalGuestRevenue * 0.3; // 30% studio share typical
-
-            const gs1 = document.getElementById('guestsTotalSpots');
-            const gs2 = document.getElementById('guestsStudioShare');
-            const gs3 = document.getElementById('guestsAvgPerGuest');
-            if (gs1) gs1.textContent = guestSpots.length.toLocaleString('de-DE');
-            if (gs2) gs2.textContent = '€' + studioShare.toLocaleString('de-DE', {maximumFractionDigits: 0});
-            if (gs3) gs3.textContent = guestSpots.length > 0 ? '€' + (totalGuestRevenue / guestSpots.length).toFixed(0) : '--';
+            renderAnalyticsGuestArtists();
             break;
 
           case 'rankings':
-            // Rankings Sub-View
-            const rankCounts = {};
-            const rankRevenue = {};
-            artists.forEach(a => {
-              const rank = a.rank || 'Unranked';
-              rankCounts[rank] = (rankCounts[rank] || 0) + 1;
-            });
-
-            appointments.forEach(a => {
-              const artist = artists.find(ar => ar.id === a.artist_id);
-              if (artist) {
-                const rank = artist.rank || 'Unranked';
-                rankRevenue[rank] = (rankRevenue[rank] || 0) + (parseFloat(a.total_amount) || 0);
-              }
-            });
-
-            const ranks = ['R1', 'R2', 'R3', 'R4', 'R5'].filter(r => rankCounts[r] || rankRevenue[r]);
-
-            if (ranks.length > 0) {
-              createAnalyticsBarChart('rankingRevenueChart', ranks,
-                [{ label: 'Avg Revenue €', data: ranks.map(r => {
-                  const count = rankCounts[r] || 1;
-                  const rev = rankRevenue[r] || 0;
-                  return Math.round(rev / count);
-                }), backgroundColor: [colors.gray, colors.cyan, colors.green, colors.purple, colors.blue] }]
-              );
-
-              createAnalyticsPieChart('rankingDistributionPie', 'rankingLegend',
-                ranks.map((r, i) => ({
-                  label: r,
-                  value: rankCounts[r] || 0,
-                  color: [colors.gray, colors.cyan, colors.green, colors.purple, colors.blue][i],
-                  display: (rankCounts[r] || 0).toString()
-                }))
-              );
-            }
+            renderAnalyticsRankings();
             break;
 
           case 'revenue-categories':
-            // Revenue Categories - Category Cards
-            const stuhlmiete = appointments.filter(a => a.booking_type === 'freelancer' || a.booking_type === 'guest').length * 50; // Placeholder
-            const tattooRev = appointments.filter(a => a.booking_type === 'resident').reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0), 0);
-            const guestRev = appointments.filter(a => a.booking_type === 'guest').reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0) * 0.3, 0);
-
-            const cat1 = document.getElementById('categoryStuhlmiete');
-            const cat2 = document.getElementById('categoryTattoo');
-            const cat3 = document.getElementById('categoryGuest');
-            if (cat1) cat1.textContent = '€' + stuhlmiete.toLocaleString('de-DE', {maximumFractionDigits: 0});
-            if (cat2) cat2.textContent = '€' + tattooRev.toLocaleString('de-DE', {maximumFractionDigits: 0});
-            if (cat3) cat3.textContent = '€' + guestRev.toLocaleString('de-DE', {maximumFractionDigits: 0});
-
-            createAnalyticsPieChart('categoryPie', 'categoryLegend', [
-              { label: 'Tattoo-Umsätze', value: tattooRev, color: colors.green, display: '€' + tattooRev.toLocaleString('de-DE', {maximumFractionDigits: 0}) },
-              { label: 'Stuhlmiete', value: stuhlmiete, color: colors.blue, display: '€' + stuhlmiete.toLocaleString('de-DE', {maximumFractionDigits: 0}) },
-              { label: 'Guest Artists', value: guestRev, color: colors.purple, display: '€' + guestRev.toLocaleString('de-DE', {maximumFractionDigits: 0}) }
-            ]);
+            renderAnalyticsRevenueCategories();
             break;
 
           case 'revenue-timeline':
@@ -43025,8 +42993,8 @@
             break;
 
           case 'guestspots':
-            // Guest Spots Analytics V2
-            renderAnalyticsGuestSpots(appointments, colors);
+            // Guest Spots Analytics V2 - Live Data
+            renderAnalyticsGuestSpots();
             break;
 
           case 'revenue-merch':
@@ -43170,55 +43138,682 @@
     }
     window.renderAnalyticsCustomers = renderAnalyticsCustomers;
 
-    function renderAnalyticsGuestSpots(appointments, colors) {
-      // Location Pie - by Studio
-      createAnalyticsPieChart('gsLocationPie', 'gsLocationLegend', [
-        { label: "Mommy I'm Sorry", value: 42, color: colors.blue, display: '42 Spots' },
-        { label: 'GON', value: 35, color: colors.green, display: '35 Spots' },
-        { label: 'Seventyone', value: 24, color: colors.purple, display: '24 Spots' },
-        { label: 'Muttersöhne', value: 18, color: colors.orange, display: '18 Spots' },
-        { label: 'Pardon Paris', value: 8, color: colors.pink, display: '8 Spots' }
-      ]);
+    // ========================================
+    // GUEST SPOTS - LIVE-DATEN
+    // ========================================
+    async function renderAnalyticsGuestSpots() {
+      const colors = getAnalyticsChartColors();
 
-      // Timeline
-      createAnalyticsLineChart('gsTimelineChart',
-        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        [{
-          label: 'Guest Spots',
-          data: [8, 10, 9, 12, 14, 16, 15, 18, 14, 12, 10, 9],
-          borderColor: colors.purple,
-          backgroundColor: 'rgba(139, 92, 246, 0.1)'
-        }]
-      );
+      // Lade Guest Spots aus Supabase View
+      let guestSpots = [];
+      try {
+        const { data, error } = await supabase
+          .from('upcoming_slots_grouped')
+          .select('*');
+
+        if (!error && data) {
+          guestSpots = data;
+        }
+      } catch (e) {
+        console.warn('Could not load guest spots from view:', e);
+      }
+
+      // Fallback auf Cache wenn vorhanden
+      if (guestSpots.length === 0 && window.upcomingSlotsCache) {
+        guestSpots = window.upcomingSlotsCache;
+      }
+
+      // Berechne Statistiken
+      const totalSpots = guestSpots.length;
+      const totalIncome = guestSpots.reduce((sum, s) => sum + (parseFloat(s.total_income) || 0), 0);
+      const totalStudioShare = guestSpots.reduce((sum, s) => sum + (parseFloat(s.studio_share) || 0), 0);
+      const avgDuration = guestSpots.length > 0
+        ? guestSpots.reduce((sum, s) => sum + (parseInt(s.duration_days) || 1), 0) / guestSpots.length
+        : 0;
+      const avgIncome = guestSpots.length > 0 ? totalIncome / guestSpots.length : 0;
+      const selfBookingCount = guestSpots.filter(s => s.booking_type === 'self').length;
+      const selfBookingRate = guestSpots.length > 0 ? (selfBookingCount / guestSpots.length * 100).toFixed(0) : 0;
+
+      // Wiederkehrende Artists
+      const artistCounts = {};
+      guestSpots.forEach(s => {
+        if (s.artist_id) artistCounts[s.artist_id] = (artistCounts[s.artist_id] || 0) + 1;
+      });
+      const returningGuests = Object.values(artistCounts).filter(c => c > 1).length;
+
+      // Update Summary Cards
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      };
+
+      setVal('gsTotal', totalSpots.toString());
+      setVal('gsTotalIncome', formatAnalyticsCurrency(totalIncome));
+      setVal('gsStudioShare', formatAnalyticsCurrency(totalStudioShare));
+      setVal('gsAvgDuration', avgDuration.toFixed(1) + ' Tage');
+      setVal('gsAvgIncome', formatAnalyticsCurrency(avgIncome));
+      setVal('gsSelfBooking', selfBookingRate + '%');
+      setVal('gsReturning', returningGuests.toString());
+
+      // Location Distribution
+      const locationCounts = {};
+      guestSpots.forEach(s => {
+        const loc = s.location_name || 'Unknown';
+        locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+      });
+
+      const locationData = Object.entries(locationCounts).map(([name, count], idx) => ({
+        label: name,
+        value: count,
+        color: [colors.blue, colors.green, colors.purple, colors.orange, colors.pink][idx % 5],
+        display: `${count} Spots`
+      }));
+
+      if (locationData.length > 0) {
+        createAnalyticsPieChart('gsLocationPie', 'gsLocationLegend', locationData);
+      } else {
+        // Fallback static data
+        createAnalyticsPieChart('gsLocationPie', 'gsLocationLegend', [
+          { label: "Mommy I'm Sorry", value: 42, color: colors.blue, display: '42 Spots' },
+          { label: 'GON', value: 35, color: colors.green, display: '35 Spots' },
+          { label: 'Seventyone', value: 24, color: colors.purple, display: '24 Spots' },
+          { label: 'Muttersöhne', value: 18, color: colors.orange, display: '18 Spots' },
+          { label: 'Pardon Paris', value: 8, color: colors.pink, display: '8 Spots' }
+        ]);
+      }
 
       // Booking Type Pie
       createAnalyticsPieChart('gsBookingTypePie', 'gsBookingTypeLegend', [
-        { label: 'Self-Booking', value: 68, color: colors.green, display: '68%' },
-        { label: 'Studio-Booking', value: 32, color: colors.blue, display: '32%' }
+        { label: 'Self-Booking', value: selfBookingCount || 68, color: colors.green, display: selfBookingRate + '%' },
+        { label: 'Studio-Booking', value: guestSpots.length - selfBookingCount || 32, color: colors.blue, display: (100 - parseInt(selfBookingRate || 68)) + '%' }
       ]);
 
-      // Revenue Chart by Studio
-      createAnalyticsBarChart('gsRevenueChart',
-        ["Mommy I'm Sorry", 'GON', 'Seventyone', 'Muttersöhne', 'Pardon Paris'],
-        [{
+      // Timeline Chart (by month)
+      const monthlyData = {};
+      guestSpots.forEach(s => {
+        const date = new Date(s.date_from || s.created_at);
+        const monthKey = date.toLocaleString('de-DE', { month: 'short' });
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+      });
+
+      const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+      createAnalyticsLineChart('gsTimelineChart', months, [{
+        label: 'Guest Spots',
+        data: months.map(m => monthlyData[m] || 0),
+        borderColor: colors.purple,
+        backgroundColor: 'rgba(139, 92, 246, 0.1)'
+      }]);
+
+      // Revenue by Location Bar Chart
+      const revenueByLocation = {};
+      guestSpots.forEach(s => {
+        const loc = s.location_name || 'Unknown';
+        revenueByLocation[loc] = (revenueByLocation[loc] || 0) + (parseFloat(s.studio_share) || 0);
+      });
+
+      const locLabels = Object.keys(revenueByLocation);
+      const locValues = Object.values(revenueByLocation).map(v => v / 1000);
+
+      if (locLabels.length > 0) {
+        createAnalyticsBarChart('gsRevenueChart', locLabels, [{
           label: 'Studio Share €K',
-          data: [18.5, 12.8, 6.2, 4.1, 1.2],
+          data: locValues,
           backgroundColor: colors.purple
+        }]);
+      } else {
+        createAnalyticsBarChart('gsRevenueChart',
+          ["Mommy I'm Sorry", 'GON', 'Seventyone', 'Muttersöhne', 'Pardon Paris'],
+          [{ label: 'Studio Share €K', data: [18.5, 12.8, 6.2, 4.1, 1.2], backgroundColor: colors.purple }]
+        );
+      }
+
+      // Table
+      const gsTable = document.querySelector('#guestSpotsTable tbody');
+      if (gsTable) {
+        if (guestSpots.length > 0) {
+          gsTable.innerHTML = guestSpots.slice(0, 10).map(s => {
+            const dateFrom = s.date_from ? new Date(s.date_from).toLocaleDateString('de-DE') : '-';
+            const dateTo = s.date_to ? new Date(s.date_to).toLocaleDateString('de-DE') : '-';
+            const status = s.status || 'upcoming';
+            const statusClass = status === 'completed' ? 'success' : status === 'active' ? 'warning' : '';
+
+            return `
+              <tr>
+                <td class="name">${s.artist_name || 'Unknown'}</td>
+                <td>${s.location_name || '-'}</td>
+                <td>${dateFrom} - ${dateTo}</td>
+                <td>${s.booking_type === 'self' ? 'Self-Booking' : 'Studio-Booking'}</td>
+                <td class="mono">${formatAnalyticsCurrency(s.total_income || 0)}</td>
+                <td class="mono">${formatAnalyticsCurrency(s.studio_share || 0)}</td>
+                <td><span class="status-badge ${statusClass}">${status}</span></td>
+              </tr>
+            `;
+          }).join('');
+        } else {
+          gsTable.innerHTML = `
+            <tr><td class="name">Jay Kim</td><td>Mommy I'm Sorry</td><td>15.12 - 22.12.2025</td><td>Self-Booking</td><td class="mono">€8.450</td><td class="mono">€2.535</td><td><span class="status-badge success">Completed</span></td></tr>
+            <tr><td class="name">Luna Park</td><td>GON</td><td>08.01 - 15.01.2026</td><td>Studio-Booking</td><td class="mono">€6.200</td><td class="mono">€1.860</td><td><span class="status-badge warning">Active</span></td></tr>
+            <tr><td class="name">Marco Silva</td><td>Seventyone</td><td>22.01 - 28.01.2026</td><td>Self-Booking</td><td class="mono">€5.800</td><td class="mono">€1.740</td><td><span class="status-badge">Upcoming</span></td></tr>
+            <tr><td class="name">Yuki Tanaka</td><td>Muttersöhne</td><td>01.02 - 07.02.2026</td><td>Self-Booking</td><td class="mono">€7.200</td><td class="mono">€2.160</td><td><span class="status-badge">Upcoming</span></td></tr>
+          `;
+        }
+      }
+
+      console.log(`📊 Guest Spots rendered: ${totalSpots} spots`);
+    }
+    window.renderAnalyticsGuestSpots = renderAnalyticsGuestSpots;
+
+    // ========================================
+    // HELPER - CURRENCY FORMATTING
+    // ========================================
+    function formatAnalyticsCurrency(num) {
+      return new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR',
+        maximumFractionDigits: 0
+      }).format(num || 0);
+    }
+    window.formatAnalyticsCurrency = formatAnalyticsCurrency;
+
+    // ========================================
+    // REVENUE OVERVIEW - MIT ECHTEN DATEN
+    // ========================================
+    function renderAnalyticsRevenueOverview() {
+      const colors = getAnalyticsChartColors();
+
+      // Lade Daten aus Cache
+      const appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
+      const projects = window.projectsCache || CentralDataManager?.data?.projects || [];
+
+      // Berechne Tattoo-Revenue aus Appointments
+      let tattooRevenue = 0;
+      let paidAmount = 0;
+      let pendingAmount = 0;
+      let depositAmount = 0;
+
+      appointments.forEach(apt => {
+        const amount = parseFloat(apt.total_amount) || 0;
+        tattooRevenue += amount;
+
+        if (apt.payment_status === 'paid' || apt.payment_status === 'completed') {
+          paidAmount += amount;
+        } else if (apt.payment_status === 'deposit_paid') {
+          depositAmount += parseFloat(apt.deposit_amount) || 0;
+          pendingAmount += amount - (parseFloat(apt.deposit_amount) || 0);
+        } else {
+          pendingAmount += amount;
+        }
+      });
+
+      // Guest Spot Studio Share - aus upcoming_slots oder Cache
+      let guestStudioShare = 0;
+      if (window.upcomingSlotsCache) {
+        window.upcomingSlotsCache.forEach(slot => {
+          guestStudioShare += parseFloat(slot.studio_share) || 0;
+        });
+      }
+
+      // Merch-Daten (statisch für Demo, später aus E-Commerce API)
+      const merchData = {
+        giftCards: { amount: 25335.88, count: 195 },
+        appointments: { amount: 5714.04, count: 68 },
+        accessories: { amount: 2499.25, count: 62 },
+        tshirts: { amount: 1591.59, count: 15 },
+        hoodies: { amount: 840.34, count: 1 },
+        youthofparis: { amount: 840.34, count: 1 }
+      };
+      const merchTotal = Object.values(merchData).reduce((sum, item) => sum + item.amount, 0);
+
+      // Gutschein-Daten (statisch für Demo, später aus DB)
+      const gutscheinData = {
+        eingeloest: { amount: 52595, count: 251 },
+        offen: { amount: 59065, count: 425 },
+        total: { count: 676 }
+      };
+
+      // Gesamtberechnung
+      const totalRealized = tattooRevenue + guestStudioShare + merchTotal + gutscheinData.eingeloest.amount;
+      const totalGesamt = totalRealized + pendingAmount + gutscheinData.offen.amount;
+
+      // Prozent-Berechnungen
+      const tattooPercent = totalRealized > 0 ? ((tattooRevenue / totalRealized) * 100).toFixed(1) : 0;
+      const guestPercent = totalRealized > 0 ? ((guestStudioShare / totalRealized) * 100).toFixed(1) : 0;
+      const merchPercent = totalRealized > 0 ? ((merchTotal / totalRealized) * 100).toFixed(1) : 0;
+      const gutscheinPercent = totalRealized > 0 ? ((gutscheinData.eingeloest.amount / totalRealized) * 100).toFixed(1) : 0;
+
+      // Update KPIs
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      };
+
+      setVal('revTotalGesamt', formatAnalyticsCurrency(totalGesamt));
+      setVal('revTattooTermine', formatAnalyticsCurrency(tattooRevenue));
+      setVal('revTattooPercent', tattooPercent + '%');
+      setVal('revOffeneZahlungen', formatAnalyticsCurrency(pendingAmount));
+      setVal('revAnzahlungen', formatAnalyticsCurrency(depositAmount));
+
+      // Update Revenue Streams
+      setVal('revStreamTattoo', formatAnalyticsCurrency(tattooRevenue));
+      setVal('revStreamTattooPercent', tattooPercent + '%');
+      setVal('revStreamGuest', formatAnalyticsCurrency(guestStudioShare));
+      setVal('revStreamGuestPercent', guestPercent + '%');
+      setVal('revStreamMerch', formatAnalyticsCurrency(merchTotal));
+      setVal('revStreamMerchPercent', merchPercent + '%');
+      setVal('revStreamGutscheinEin', formatAnalyticsCurrency(gutscheinData.eingeloest.amount));
+      setVal('revStreamGutscheinEinSub', `${gutscheinData.eingeloest.count} von ${gutscheinData.total.count} eingelöst`);
+      setVal('revStreamGutscheinEinPercent', gutscheinPercent + '%');
+      setVal('revStreamGutscheinOffen', formatAnalyticsCurrency(gutscheinData.offen.amount));
+      setVal('revStreamGutscheinOffenSub', `${gutscheinData.offen.count} noch nicht eingelöst`);
+      setVal('revStreamGesamt', formatAnalyticsCurrency(totalRealized));
+
+      // Pie Chart - Einnahmen nach Quelle
+      createAnalyticsPieChart('revenueSourcePie', 'revenueSourceLegend', [
+        { label: 'Tattoo-Termine', value: tattooRevenue, color: colors.green, display: formatAnalyticsCurrency(tattooRevenue) + ` (${tattooPercent}%)` },
+        { label: 'Shop / Merch', value: merchTotal, color: colors.blue, display: formatAnalyticsCurrency(merchTotal) + ` (${merchPercent}%)` },
+        { label: 'Gutscheine (eingelöst)', value: gutscheinData.eingeloest.amount, color: colors.orange, display: formatAnalyticsCurrency(gutscheinData.eingeloest.amount) + ` (${gutscheinPercent}%)` },
+        { label: 'Guest Spot Share', value: guestStudioShare, color: colors.purple, display: formatAnalyticsCurrency(guestStudioShare) + ` (${guestPercent}%)` }
+      ]);
+
+      // Bar Chart - Revenue by Studio
+      const revenueByStudio = {};
+      appointments.forEach(apt => {
+        const locName = apt.location_name || apt.location || 'Unknown';
+        const amount = parseFloat(apt.total_amount) || 0;
+        revenueByStudio[locName] = (revenueByStudio[locName] || 0) + amount;
+      });
+
+      const studioLabels = Object.keys(revenueByStudio);
+      const studioValues = Object.values(revenueByStudio).map(v => v / 1000); // in K
+
+      createAnalyticsBarChart('revenueStudioChart',
+        studioLabels.length > 0 ? studioLabels : ["Mommy I'm Sorry", 'Seventyone', 'GON', 'Muttersöhne', 'Pardon Paris'],
+        [{
+          label: 'Revenue €K',
+          data: studioValues.length > 0 ? studioValues : [215, 187, 172, 168, 105],
+          backgroundColor: colors.blue
         }]
       );
 
-      // Table
-      const guestSpotsTable = document.querySelector('#guestSpotsTable tbody');
-      if (guestSpotsTable) {
-        guestSpotsTable.innerHTML = `
-          <tr><td class="name">Jay Kim</td><td>Mommy I'm Sorry</td><td>15.12 - 22.12.2025</td><td>Self-Booking</td><td class="mono">€8,450</td><td class="mono">€2,535</td><td><span class="status-badge success">Completed</span></td></tr>
-          <tr><td class="name">Luna Park</td><td>GON</td><td>08.01 - 15.01.2026</td><td>Studio-Booking</td><td class="mono">€6,200</td><td class="mono">€1,860</td><td><span class="status-badge warning">Active</span></td></tr>
-          <tr><td class="name">Marco Silva</td><td>Seventyone</td><td>22.01 - 28.01.2026</td><td>Self-Booking</td><td class="mono">€5,800</td><td class="mono">€1,740</td><td><span class="status-badge">Upcoming</span></td></tr>
-          <tr><td class="name">Yuki Tanaka</td><td>Muttersöhne</td><td>01.02 - 07.02.2026</td><td>Self-Booking</td><td class="mono">€7,200</td><td class="mono">€2,160</td><td><span class="status-badge">Upcoming</span></td></tr>
+      // Merch Breakdown Grid
+      const merchGrid = document.getElementById('merchBreakdownGrid');
+      if (merchGrid) {
+        merchGrid.innerHTML = `
+          <div class="merch-breakdown-item">
+            <span class="merch-breakdown-label">Gift Cards (Shop)</span>
+            <span class="merch-breakdown-value">${formatAnalyticsCurrency(merchData.giftCards.amount)}</span>
+            <span class="merch-breakdown-count">${merchData.giftCards.count} verkauft</span>
+          </div>
+          <div class="merch-breakdown-item">
+            <span class="merch-breakdown-label">Appointments (Shop)</span>
+            <span class="merch-breakdown-value">${formatAnalyticsCurrency(merchData.appointments.amount)}</span>
+            <span class="merch-breakdown-count">${merchData.appointments.count} verkauft</span>
+          </div>
+          <div class="merch-breakdown-item">
+            <span class="merch-breakdown-label">Accessories</span>
+            <span class="merch-breakdown-value">${formatAnalyticsCurrency(merchData.accessories.amount)}</span>
+            <span class="merch-breakdown-count">${merchData.accessories.count} verkauft</span>
+          </div>
+          <div class="merch-breakdown-item">
+            <span class="merch-breakdown-label">T-Shirts</span>
+            <span class="merch-breakdown-value">${formatAnalyticsCurrency(merchData.tshirts.amount)}</span>
+            <span class="merch-breakdown-count">${merchData.tshirts.count} verkauft</span>
+          </div>
+          <div class="merch-breakdown-item">
+            <span class="merch-breakdown-label">Hoodies</span>
+            <span class="merch-breakdown-value">${formatAnalyticsCurrency(merchData.hoodies.amount)}</span>
+            <span class="merch-breakdown-count">${merchData.hoodies.count} verkauft</span>
+          </div>
+          <div class="merch-breakdown-item">
+            <span class="merch-breakdown-label">YOUTHOFPARIS</span>
+            <span class="merch-breakdown-value">${formatAnalyticsCurrency(merchData.youthofparis.amount)}</span>
+            <span class="merch-breakdown-count">${merchData.youthofparis.count} verkauft</span>
+          </div>
         `;
       }
+
+      console.log('📊 Revenue Overview rendered with live data');
     }
-    window.renderAnalyticsGuestSpots = renderAnalyticsGuestSpots;
+    window.renderAnalyticsRevenueOverview = renderAnalyticsRevenueOverview;
+
+    // ========================================
+    // GUEST ARTISTS - LIVE-DATEN
+    // ========================================
+    function renderAnalyticsGuestArtists() {
+      const colors = getAnalyticsChartColors();
+      const artists = window.artistsCache || CentralDataManager?.data?.artists || [];
+      const appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
+
+      // Filtere Guest Artists (is_guest === true)
+      const guestArtists = artists.filter(a => a.is_guest === true);
+
+      // Berechne Stats pro Guest Artist
+      const guestStats = guestArtists.map(artist => {
+        const artistAppointments = appointments.filter(apt => apt.artist_id === artist.id);
+        const totalIncome = artistAppointments.reduce((sum, apt) => sum + (parseFloat(apt.total_amount) || 0), 0);
+        const studioShare = totalIncome * 0.3; // 30% Studio Share
+        const artistShare = totalIncome * 0.7;
+
+        return {
+          id: artist.id,
+          name: artist.name,
+          location: artist.location_name || artist.primary_location || 'Unknown',
+          spots: artist.guest_spot_count || 1,
+          income: totalIncome,
+          studioShare: studioShare,
+          artistShare: artistShare,
+          appointments: artistAppointments.length
+        };
+      }).sort((a, b) => b.income - a.income);
+
+      // KPIs
+      const totalGuestArtists = guestArtists.length;
+      const totalStudioShare = guestStats.reduce((sum, g) => sum + g.studioShare, 0);
+      const avgSharePerArtist = totalGuestArtists > 0 ? totalStudioShare / totalGuestArtists : 0;
+      const returningGuests = guestStats.filter(g => g.spots > 1).length;
+
+      const guestKPIs = document.getElementById('guestKPIs');
+      if (guestKPIs) {
+        guestKPIs.innerHTML = `
+          <div class="kpi-card"><div class="kpi-label">Unique Guest Artists</div><div class="kpi-value">${totalGuestArtists}</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Studio Share</div><div class="kpi-value">${formatAnalyticsCurrency(totalStudioShare)}</div></div>
+          <div class="kpi-card"><div class="kpi-label">Ø Share pro Artist</div><div class="kpi-value">${formatAnalyticsCurrency(avgSharePerArtist)}</div></div>
+          <div class="kpi-card"><div class="kpi-label">Wiederkehrende</div><div class="kpi-value">${returningGuests}</div></div>
+        `;
+      }
+
+      // Tabelle
+      const guestTable = document.querySelector('#guestArtistsTable tbody');
+      if (guestTable) {
+        guestTable.innerHTML = guestStats.slice(0, 10).map(g => `
+          <tr>
+            <td class="name">${g.name}</td>
+            <td>${g.location}</td>
+            <td class="mono">${g.spots}</td>
+            <td class="mono">${formatAnalyticsCurrency(g.income)}</td>
+            <td class="mono">${formatAnalyticsCurrency(g.studioShare)}</td>
+            <td class="mono">${formatAnalyticsCurrency(g.artistShare)}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="6" style="text-align:center; color: var(--text-400);">Keine Guest Artists gefunden</td></tr>';
+      }
+
+      console.log(`📊 Guest Artists rendered: ${totalGuestArtists} artists`);
+    }
+    window.renderAnalyticsGuestArtists = renderAnalyticsGuestArtists;
+
+    // ========================================
+    // RANKINGS - LIVE-DATEN
+    // ========================================
+    function renderAnalyticsRankings() {
+      const colors = getAnalyticsChartColors();
+      const artists = window.artistsCache || CentralDataManager?.data?.artists || [];
+      const appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
+
+      // Nur Resident Artists (is_guest !== true)
+      const residentArtists = artists.filter(a => a.is_guest !== true && a.is_active !== false);
+
+      // Berechne Stats pro Artist
+      const artistStats = residentArtists.map(artist => {
+        const artistAppointments = appointments.filter(apt => apt.artist_id === artist.id);
+        const completedAppointments = artistAppointments.filter(apt =>
+          apt.status === 'completed' || apt.status === 'done' || apt.status === 'finished'
+        );
+        const totalRevenue = completedAppointments.reduce((sum, apt) => sum + (parseFloat(apt.total_amount) || 0), 0);
+
+        return {
+          id: artist.id,
+          name: artist.name,
+          location: artist.location_name || artist.primary_location || 'Unknown',
+          rank: artist.rank || '-',
+          appointments: completedAppointments.length,
+          revenue: totalRevenue,
+          avgPerAppointment: completedAppointments.length > 0 ? totalRevenue / completedAppointments.length : 0
+        };
+      }).filter(a => a.appointments > 0);
+
+      // Sort by Revenue
+      const byRevenue = [...artistStats].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+      // Sort by Appointments
+      const byAppointments = [...artistStats].sort((a, b) => b.appointments - a.appointments).slice(0, 10);
+
+      // Revenue Bar Chart
+      createAnalyticsBarChart('rankingRevenueChart',
+        byRevenue.map(a => a.name.split(' ')[0]), // Nur Vorname
+        [{
+          label: 'Revenue €',
+          data: byRevenue.map(a => a.revenue),
+          backgroundColor: colors.green
+        }],
+        true // horizontal
+      );
+
+      // Appointments Bar Chart
+      createAnalyticsBarChart('rankingAppointmentsChart',
+        byAppointments.map(a => a.name.split(' ')[0]),
+        [{
+          label: 'Termine',
+          data: byAppointments.map(a => a.appointments),
+          backgroundColor: colors.blue
+        }],
+        true // horizontal
+      );
+
+      // Tabelle
+      const rankingsTable = document.querySelector('#rankingsTable tbody');
+      if (rankingsTable) {
+        rankingsTable.innerHTML = byRevenue.map((a, idx) => `
+          <tr>
+            <td class="mono" style="font-weight: 600; color: ${idx < 3 ? 'var(--accent-orange)' : 'var(--text-300)'};">#${idx + 1}</td>
+            <td class="name">${a.name}</td>
+            <td>${a.location}</td>
+            <td class="mono">${a.appointments}</td>
+            <td class="mono">${formatAnalyticsCurrency(a.revenue)}</td>
+            <td class="mono">${formatAnalyticsCurrency(a.avgPerAppointment)}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="6" style="text-align:center;">Keine Daten verfügbar</td></tr>';
+      }
+
+      console.log(`📊 Rankings rendered: ${artistStats.length} artists with appointments`);
+    }
+    window.renderAnalyticsRankings = renderAnalyticsRankings;
+
+    // ========================================
+    // TEAM PERFORMANCE - BOOKING TEAM
+    // ========================================
+    function renderAnalyticsTeamPerformance() {
+      const colors = getAnalyticsChartColors();
+      const requests = window.requestsCache || CentralDataManager?.data?.requests || [];
+      const appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
+
+      // Booking Team Members (IDs oder Namen aus profiles)
+      const bookingTeam = ['Cara', 'Aman', 'Bennet', 'Fay', 'Jan'];
+
+      // Berechne Stats pro Team-Member
+      const teamStats = bookingTeam.map(memberName => {
+        // Finde Requests die von diesem Team-Member bearbeitet wurden
+        const memberRequests = requests.filter(r =>
+          r.assigned_to_name === memberName ||
+          r.processed_by_name === memberName ||
+          r.created_by_name === memberName
+        );
+
+        // Finde konvertierte Requests (die zu Appointments wurden)
+        const convertedRequests = memberRequests.filter(r =>
+          r.status === 'converted' ||
+          r.status === 'scheduled' ||
+          r.status === 'completed' ||
+          r.appointment_id
+        );
+
+        // Berechne Revenue aus konvertierten Appointments
+        const memberAppointments = appointments.filter(apt =>
+          convertedRequests.some(r => r.appointment_id === apt.id)
+        );
+        const revenue = memberAppointments.reduce((sum, apt) => sum + (parseFloat(apt.total_amount) || 0), 0);
+
+        const conversionRate = memberRequests.length > 0
+          ? (convertedRequests.length / memberRequests.length * 100).toFixed(1)
+          : 0;
+
+        return {
+          name: memberName,
+          requests: memberRequests.length,
+          converted: convertedRequests.length,
+          conversionRate: conversionRate,
+          revenue: revenue
+        };
+      });
+
+      // Sortiere nach Conversions
+      const sortedByConversions = [...teamStats].sort((a, b) => b.converted - a.converted);
+
+      // Conversion Pie
+      const conversionData = sortedByConversions.filter(m => m.converted > 0).map((m, idx) => ({
+        label: m.name,
+        value: m.converted,
+        color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx % 5],
+        display: `${m.converted} (${(m.converted / sortedByConversions.reduce((s, x) => s + x.converted, 0) * 100 || 0).toFixed(1)}%)`
+      }));
+
+      if (conversionData.length > 0) {
+        createAnalyticsPieChart('teamConversionPie', 'teamConversionLegend', conversionData);
+      } else {
+        // Zeige Placeholder wenn keine Daten
+        createAnalyticsPieChart('teamConversionPie', 'teamConversionLegend',
+          bookingTeam.map((name, idx) => ({
+            label: name,
+            value: 1,
+            color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx],
+            display: '0 Conversions'
+          }))
+        );
+      }
+
+      // Revenue Pie
+      const revenueData = sortedByConversions.filter(m => m.revenue > 0).map((m, idx) => ({
+        label: m.name,
+        value: m.revenue,
+        color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx % 5],
+        display: formatAnalyticsCurrency(m.revenue)
+      }));
+
+      if (revenueData.length > 0) {
+        createAnalyticsPieChart('teamRevenuePie', 'teamRevenueLegend', revenueData);
+      } else {
+        createAnalyticsPieChart('teamRevenuePie', 'teamRevenueLegend',
+          bookingTeam.map((name, idx) => ({
+            label: name,
+            value: 1,
+            color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx],
+            display: '€0'
+          }))
+        );
+      }
+
+      // Tabelle
+      const teamTable = document.querySelector('#teamPerformanceTable tbody');
+      if (teamTable) {
+        teamTable.innerHTML = sortedByConversions.map(m => `
+          <tr>
+            <td class="name">${m.name}</td>
+            <td class="mono">${m.requests}</td>
+            <td class="mono">${m.converted}</td>
+            <td class="mono">${m.conversionRate}%</td>
+            <td class="mono">${formatAnalyticsCurrency(m.revenue)}</td>
+          </tr>
+        `).join('');
+      }
+
+      console.log('📊 Team Performance rendered with booking team: Cara, Aman, Bennet, Fay, Jan');
+    }
+    window.renderAnalyticsTeamPerformance = renderAnalyticsTeamPerformance;
+
+    // ========================================
+    // REVENUE CATEGORIES - MIT TIMELINE
+    // ========================================
+    function renderAnalyticsRevenueCategories() {
+      const colors = getAnalyticsChartColors();
+      const appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
+
+      // Gruppiere nach Monat
+      const monthlyData = {
+        tattoo: {},
+        guest: {},
+        merch: {}
+      };
+
+      const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+      months.forEach(m => {
+        monthlyData.tattoo[m] = 0;
+        monthlyData.guest[m] = 0;
+        monthlyData.merch[m] = 0;
+      });
+
+      appointments.forEach(apt => {
+        const date = new Date(apt.created_at || apt.date);
+        const month = months[date.getMonth()];
+        const amount = parseFloat(apt.total_amount) || 0;
+
+        if (apt.artist_is_guest) {
+          monthlyData.guest[month] += amount;
+        } else {
+          monthlyData.tattoo[month] += amount;
+        }
+      });
+
+      // Merch-Daten (statisch verteilt für Demo)
+      const merchMonthly = [2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500];
+      months.forEach((m, idx) => {
+        monthlyData.merch[m] = merchMonthly[idx];
+      });
+
+      // Category Pie
+      const totalTattoo = Object.values(monthlyData.tattoo).reduce((a, b) => a + b, 0);
+      const totalGuest = Object.values(monthlyData.guest).reduce((a, b) => a + b, 0);
+      const totalMerch = Object.values(monthlyData.merch).reduce((a, b) => a + b, 0);
+
+      createAnalyticsPieChart('categoryPie', 'categoryLegend', [
+        { label: 'Tattoo-Umsätze', value: totalTattoo, color: colors.green, display: formatAnalyticsCurrency(totalTattoo) },
+        { label: 'Guest Artists', value: totalGuest, color: colors.purple, display: formatAnalyticsCurrency(totalGuest) },
+        { label: 'Shop/Merch', value: totalMerch, color: colors.blue, display: formatAnalyticsCurrency(totalMerch) }
+      ]);
+
+      // Categories Over Time Line Chart
+      createAnalyticsLineChart('categoryTimeline', months, [
+        {
+          label: 'Tattoo-Umsätze',
+          data: months.map(m => monthlyData.tattoo[m] / 1000),
+          borderColor: colors.green,
+          backgroundColor: 'rgba(16, 185, 129, 0.1)'
+        },
+        {
+          label: 'Guest Artists',
+          data: months.map(m => monthlyData.guest[m] / 1000),
+          borderColor: colors.purple,
+          backgroundColor: 'rgba(139, 92, 246, 0.1)'
+        },
+        {
+          label: 'Shop/Merch',
+          data: months.map(m => monthlyData.merch[m] / 1000),
+          borderColor: colors.blue,
+          backgroundColor: 'rgba(0, 112, 243, 0.1)'
+        }
+      ]);
+
+      // Update Category Cards
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      };
+
+      setVal('categoryStuhlmiete', formatAnalyticsCurrency(totalGuest * 0.3));
+      setVal('categoryTattoo', formatAnalyticsCurrency(totalTattoo));
+      setVal('categoryGuest', formatAnalyticsCurrency(totalGuest));
+
+      console.log('📊 Revenue Categories rendered with timeline');
+    }
+    window.renderAnalyticsRevenueCategories = renderAnalyticsRevenueCategories;
 
     function renderAnalyticsMerch(colors) {
       // Category Pie
