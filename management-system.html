@@ -11753,23 +11753,17 @@
     }
 
     /* ========================================
-       ANALYTICS DASHBOARD v2 - NEW STYLES
+       ANALYTICS DASHBOARD v2 - COMPLETE 1:1 FROM REFERENCE
        ======================================== */
 
-    /* ═══════════════════════════════════════════════════════════════════════════
-       ANALYTICS DASHBOARD - ISOLATED STYLES
-       Diese Styles sind komplett isoliert vom Rest des Management Systems
-       ═══════════════════════════════════════════════════════════════════════════ */
-
-    /* Analytics-spezifische CSS Variablen */
+    /* Analytics Section Override */
     #analytics-section {
-      /* OVERRIDE: Globale Section-Styles überschreiben */
       padding: 0 !important;
-      margin-top: 60px !important; /* Nur die Navbar-Höhe */
+      margin-top: 60px !important;
       max-width: 100% !important;
       min-height: calc(100vh - 60px) !important;
 
-      /* Backgrounds */
+      /* CSS Variables */
       --analytics-bg-000: #ffffff;
       --analytics-bg-100: #fafafa;
       --analytics-bg-200: #f5f5f5;
@@ -11778,14 +11772,12 @@
       --analytics-bg-500: #d4d4d4;
       --analytics-bg-600: #a3a3a3;
 
-      /* Text Colors */
       --analytics-text-100: #0a0a0a;
       --analytics-text-200: #171717;
       --analytics-text-300: #404040;
       --analytics-text-400: #737373;
       --analytics-text-500: #a3a3a3;
 
-      /* Accent Colors */
       --analytics-accent-blue: #0070f3;
       --analytics-accent-cyan: #06b6d4;
       --analytics-accent-green: #10b981;
@@ -11794,22 +11786,18 @@
       --analytics-accent-orange: #f59e0b;
       --analytics-accent-red: #ef4444;
 
-      /* Borders & Shadows */
       --analytics-border-color: rgba(0, 0, 0, 0.08);
       --analytics-border-color-hover: rgba(0, 0, 0, 0.15);
       --analytics-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
       --analytics-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
       --analytics-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
 
-      /* Layout */
       --analytics-sidebar-width: 240px;
       --analytics-header-height: 56px;
-
-      /* Animation */
       --analytics-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Dark Mode für Analytics */
+    /* Dark Mode */
     [data-theme="dark"] #analytics-section {
       --analytics-bg-000: #000000;
       --analytics-bg-100: #0a0a0a;
@@ -11827,35 +11815,33 @@
 
       --analytics-border-color: rgba(255, 255, 255, 0.08);
       --analytics-border-color-hover: rgba(255, 255, 255, 0.15);
-      --analytics-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-      --analytics-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-      --analytics-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
 
-    /* Layout Structure */
+    /* ========================================
+       Layout Structure
+       ======================================== */
     #analytics-section .analytics-layout {
       display: flex;
       min-height: calc(100vh - 60px);
-      background: var(--analytics-bg-100);
       font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-      position: relative;
     }
 
-    /* Sidebar */
+    /* ========================================
+       Sidebar - FIXED LEFT VERTICAL
+       ======================================== */
     #analytics-section .analytics-sidebar {
       width: var(--analytics-sidebar-width);
       background: var(--analytics-bg-000);
       border-right: 1px solid var(--analytics-border-color);
       position: fixed;
+      top: 60px;
       left: 0;
-      top: 60px; /* Navbar height */
-      height: calc(100vh - 60px);
+      bottom: 0;
       display: flex;
       flex-direction: column;
       z-index: 100;
       transition: background 0.3s ease, border-color 0.3s ease;
       overflow-y: auto;
-      flex-shrink: 0;
     }
 
     #analytics-section .sidebar-header {
@@ -11880,7 +11866,7 @@
       height: 20px;
     }
 
-    /* Navigation */
+    /* Navigation - VERTICAL */
     #analytics-section .sidebar-nav {
       flex: 1;
       padding: 12px;
@@ -11947,7 +11933,9 @@
       opacity: 1;
     }
 
-    /* Main Content */
+    /* ========================================
+       Main Content - WITH MARGIN-LEFT
+       ======================================== */
     #analytics-section .analytics-main {
       flex: 1;
       margin-left: var(--analytics-sidebar-width);
@@ -12050,16 +12038,10 @@
     /* Page Views */
     #analytics-section .analytics-view {
       display: none;
-      animation: analyticsViewFadeIn 0.4s var(--analytics-ease-out-expo) forwards;
     }
 
     #analytics-section .analytics-view.active {
       display: block;
-    }
-
-    @keyframes analyticsViewFadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     /* Page Header */
@@ -12080,7 +12062,9 @@
       margin: 0;
     }
 
-    /* KPI Cards */
+    /* ========================================
+       KPI Cards
+       ======================================== */
     #analytics-section .kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -12121,7 +12105,7 @@
       font-size: 28px;
       font-weight: 600;
       color: var(--analytics-text-100);
-      font-family: 'Geist Mono', 'Geist', monospace;
+      font-family: 'Geist Mono', monospace;
       letter-spacing: -0.02em;
     }
 
@@ -12150,7 +12134,9 @@
       height: 12px;
     }
 
-    /* Chart Cards */
+    /* ========================================
+       Chart Cards - KRITISCH FÜR LAYOUT
+       ======================================== */
     #analytics-section .charts-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -12201,7 +12187,7 @@
       padding: 20px;
     }
 
-    /* Chart Container */
+    /* Chart Container - WICHTIG FÜR TIMELINE */
     #analytics-section .chart-container {
       position: relative;
       width: 100%;
@@ -12212,7 +12198,7 @@
       height: 200px;
     }
 
-    /* Pie Chart Layout */
+    /* Pie Chart Layout - KRITISCH */
     #analytics-section .pie-chart-layout {
       display: flex;
       align-items: center;
@@ -12262,7 +12248,7 @@
       font-size: 13px;
       font-weight: 600;
       color: var(--analytics-text-100);
-      font-family: 'Geist Mono', 'Geist', monospace;
+      font-family: 'Geist Mono', monospace;
     }
 
     #analytics-section .legend-extra {
@@ -12283,10 +12269,12 @@
       font-size: 14px;
       font-weight: 600;
       color: var(--analytics-accent-blue);
-      font-family: 'Geist Mono', 'Geist', monospace;
+      font-family: 'Geist Mono', monospace;
     }
 
-    /* Data Table */
+    /* ========================================
+       Data Table
+       ======================================== */
     #analytics-section .data-table-container {
       background: var(--analytics-bg-000);
       border: 1px solid var(--analytics-border-color);
@@ -12337,7 +12325,7 @@
     }
 
     #analytics-section .data-table .mono {
-      font-family: 'Geist Mono', 'Geist', monospace;
+      font-family: 'Geist Mono', monospace;
       color: var(--analytics-text-200);
     }
 
@@ -12380,7 +12368,24 @@
       color: var(--analytics-accent-red);
     }
 
-    /* Category Cards */
+    /* Progress Bar */
+    #analytics-section .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--analytics-bg-300);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    #analytics-section .progress-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s var(--analytics-ease-out-expo);
+    }
+
+    /* ========================================
+       Category Cards
+       ======================================== */
     #analytics-section .category-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -12443,7 +12448,7 @@
       font-size: 24px;
       font-weight: 600;
       color: var(--analytics-text-100);
-      font-family: 'Geist Mono', 'Geist', monospace;
+      font-family: 'Geist Mono', monospace;
     }
 
     #analytics-section .category-card .sub {
@@ -12452,7 +12457,9 @@
       margin-top: 4px;
     }
 
-    /* Location Cards */
+    /* ========================================
+       Location Cards
+       ======================================== */
     #analytics-section .location-cards {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -12494,10 +12501,12 @@
     #analytics-section .location-stat .value {
       font-weight: 500;
       color: var(--analytics-text-200);
-      font-family: 'Geist Mono', 'Geist', monospace;
+      font-family: 'Geist Mono', monospace;
     }
 
-    /* Responsive */
+    /* ========================================
+       Responsive
+       ======================================== */
     @media (max-width: 1400px) {
       #analytics-section .location-cards {
         grid-template-columns: repeat(3, 1fr);
@@ -12526,6 +12535,9 @@
       #analytics-section .analytics-sidebar {
         display: none;
       }
+      #analytics-section .analytics-main {
+        margin-left: 0;
+      }
       #analytics-section .analytics-content {
         padding: 16px;
       }
@@ -12535,9 +12547,14 @@
       #analytics-section .time-filter {
         flex-wrap: wrap;
       }
+      #analytics-section .location-cards {
+        grid-template-columns: 1fr;
+      }
     }
 
-    /* Analytics-spezifische Scrollbar */
+    /* ========================================
+       Scrollbar
+       ======================================== */
     #analytics-section .analytics-sidebar::-webkit-scrollbar {
       width: 8px;
     }
@@ -12553,6 +12570,34 @@
 
     #analytics-section .analytics-sidebar::-webkit-scrollbar-thumb:hover {
       background: var(--analytics-bg-600);
+    }
+
+    /* ========================================
+       Entry Animations (nur bei Tab-Wechsel)
+       ======================================== */
+    @keyframes analyticsSlideInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes analyticsFadeInStagger {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes analyticsScaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes analyticsFadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes analyticsFadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
   </style>
