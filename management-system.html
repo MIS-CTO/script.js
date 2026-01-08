@@ -11756,572 +11756,794 @@
        ANALYTICS DASHBOARD v2 - NEW STYLES
        ======================================== */
 
-    /* Analytics Dashboard Layout */
-    .analytics-dashboard {
-      display: flex;
-      min-height: 100vh;
-      background: var(--macos-bg);
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ANALYTICS DASHBOARD - ISOLATED STYLES
+       Diese Styles sind komplett isoliert vom Rest des Management Systems
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    /* Analytics-spezifische CSS Variablen */
+    #analytics-section {
+      /* Backgrounds */
+      --analytics-bg-000: #ffffff;
+      --analytics-bg-100: #fafafa;
+      --analytics-bg-200: #f5f5f5;
+      --analytics-bg-300: #ebebeb;
+      --analytics-bg-400: #e0e0e0;
+      --analytics-bg-500: #d4d4d4;
+      --analytics-bg-600: #a3a3a3;
+
+      /* Text Colors */
+      --analytics-text-100: #0a0a0a;
+      --analytics-text-200: #171717;
+      --analytics-text-300: #404040;
+      --analytics-text-400: #737373;
+      --analytics-text-500: #a3a3a3;
+
+      /* Accent Colors */
+      --analytics-accent-blue: #0070f3;
+      --analytics-accent-cyan: #06b6d4;
+      --analytics-accent-green: #10b981;
+      --analytics-accent-purple: #8b5cf6;
+      --analytics-accent-pink: #ec4899;
+      --analytics-accent-orange: #f59e0b;
+      --analytics-accent-red: #ef4444;
+
+      /* Borders & Shadows */
+      --analytics-border-color: rgba(0, 0, 0, 0.08);
+      --analytics-border-color-hover: rgba(0, 0, 0, 0.15);
+      --analytics-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --analytics-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+      --analytics-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+      /* Layout */
+      --analytics-sidebar-width: 240px;
+      --analytics-header-height: 56px;
+
+      /* Animation */
+      --analytics-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .analytics-sidebar {
-      width: 260px;
-      background: var(--macos-nav-bg);
-      border-right: 1px solid var(--macos-stroke-primary);
-      padding: 20px 0;
+    /* Dark Mode für Analytics */
+    [data-theme="dark"] #analytics-section {
+      --analytics-bg-000: #000000;
+      --analytics-bg-100: #0a0a0a;
+      --analytics-bg-200: #111111;
+      --analytics-bg-300: #171717;
+      --analytics-bg-400: #1f1f1f;
+      --analytics-bg-500: #262626;
+      --analytics-bg-600: #404040;
+
+      --analytics-text-100: #fafafa;
+      --analytics-text-200: #e5e5e5;
+      --analytics-text-300: #a3a3a3;
+      --analytics-text-400: #737373;
+      --analytics-text-500: #525252;
+
+      --analytics-border-color: rgba(255, 255, 255, 0.08);
+      --analytics-border-color-hover: rgba(255, 255, 255, 0.15);
+      --analytics-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --analytics-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+      --analytics-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Layout Structure */
+    #analytics-section .analytics-layout {
+      display: flex;
+      min-height: calc(100vh - 60px);
+      background: var(--analytics-bg-100);
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Sidebar */
+    #analytics-section .analytics-sidebar {
+      width: var(--analytics-sidebar-width);
+      background: var(--analytics-bg-000);
+      border-right: 1px solid var(--analytics-border-color);
       position: sticky;
       top: 0;
-      height: 100vh;
+      height: calc(100vh - 60px);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: background 0.3s ease, border-color 0.3s ease;
       overflow-y: auto;
       flex-shrink: 0;
     }
 
-    .analytics-sidebar-header {
-      padding: 0 20px 20px;
-      border-bottom: 1px solid var(--macos-stroke-primary);
-      margin-bottom: 16px;
+    #analytics-section .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--analytics-border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    .analytics-sidebar-title {
-      font-size: 18px;
+    #analytics-section .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
       font-weight: 600;
-      color: var(--macos-text-primary);
+      color: var(--analytics-text-100);
     }
 
-    .analytics-nav-section {
-      margin-bottom: 24px;
+    #analytics-section .sidebar-logo svg {
+      width: 20px;
+      height: 20px;
     }
 
-    .analytics-nav-section-title {
-      padding: 8px 20px;
+    /* Navigation */
+    #analytics-section .sidebar-nav {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+    }
+
+    #analytics-section .nav-section {
+      margin-bottom: 20px;
+    }
+
+    #analytics-section .nav-section-title {
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--macos-text-tertiary);
+      color: var(--analytics-text-500);
+      padding: 8px 12px 6px;
     }
 
-    .analytics-nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      font-size: 13px;
-      color: var(--macos-text-secondary);
-      cursor: pointer;
-      transition: all 0.15s ease;
-      border-left: 3px solid transparent;
-    }
-
-    .analytics-nav-item:hover {
-      background: var(--macos-fill-quaternary);
-      color: var(--macos-text-primary);
-    }
-
-    .analytics-nav-item.active {
-      background: rgba(0, 112, 243, 0.08);
-      color: var(--macos-accent-blue);
-      border-left-color: var(--macos-accent-blue);
-      font-weight: 500;
-    }
-
-    .analytics-nav-item svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-
-    .analytics-main {
-      flex: 1;
-      padding: 24px 32px;
-      overflow-y: auto;
-    }
-
-    .analytics-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .analytics-header-controls {
+    #analytics-section .nav-item {
       display: flex;
       align-items: center;
       gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    /* Time Filter Pills */
-    .analytics-time-filter {
-      display: flex;
-      background: var(--macos-fill-quaternary);
+      padding: 10px 12px;
       border-radius: 8px;
-      padding: 3px;
-      gap: 2px;
+      color: var(--analytics-text-400);
+      font-size: 13px;
+      font-weight: 450;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
     }
 
-    .analytics-time-pill {
-      padding: 6px 12px;
+    #analytics-section .nav-item:hover {
+      background: var(--analytics-bg-200);
+      color: var(--analytics-text-200);
+    }
+
+    #analytics-section .nav-item.active {
+      background: var(--analytics-bg-300);
+      color: var(--analytics-text-100);
+    }
+
+    #analytics-section .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 20px;
+      background: var(--analytics-accent-blue);
+      border-radius: 0 2px 2px 0;
+    }
+
+    #analytics-section .nav-item svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    #analytics-section .nav-item.active svg {
+      opacity: 1;
+    }
+
+    /* Main Content */
+    #analytics-section .analytics-main {
+      flex: 1;
+      min-height: calc(100vh - 60px);
+      background: var(--analytics-bg-100);
+      transition: background 0.3s ease;
+    }
+
+    /* Header */
+    #analytics-section .analytics-header {
+      height: var(--analytics-header-height);
+      border-bottom: 1px solid var(--analytics-border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--analytics-bg-000);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    #analytics-section .header-breadcrumb {
+      font-size: 13px;
+      color: var(--analytics-text-300);
+    }
+
+    #analytics-section .header-breadcrumb span {
+      color: var(--analytics-text-500);
+      margin: 0 6px;
+    }
+
+    #analytics-section .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Time Filter */
+    #analytics-section .time-filter {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--analytics-bg-200);
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    #analytics-section .time-pill {
+      padding: 6px 10px;
       font-size: 12px;
-      font-weight: 500;
-      color: var(--macos-text-secondary);
+      font-weight: 450;
+      color: var(--analytics-text-400);
       background: transparent;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.15s ease;
+      font-family: inherit;
     }
 
-    .analytics-time-pill:hover {
-      color: var(--macos-text-primary);
+    #analytics-section .time-pill:hover {
+      color: var(--analytics-text-200);
     }
 
-    .analytics-time-pill.active {
-      background: white;
-      color: var(--macos-text-primary);
-      box-shadow: var(--macos-shadow-small);
+    #analytics-section .time-pill.active {
+      background: var(--analytics-bg-000);
+      color: var(--analytics-text-100);
+      box-shadow: var(--analytics-shadow-sm);
     }
 
-    [data-theme="dark"] .analytics-time-pill.active {
-      background: var(--macos-elevated);
+    /* Location Select */
+    #analytics-section .location-select {
+      background: var(--analytics-bg-200);
+      border: 1px solid var(--analytics-border-color);
+      color: var(--analytics-text-200);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
 
-    /* Analytics View Container */
-    .analytics-view {
+    #analytics-section .location-select:hover {
+      border-color: var(--analytics-border-color-hover);
+    }
+
+    #analytics-section .location-select:focus {
+      outline: none;
+      border-color: var(--analytics-accent-blue);
+    }
+
+    /* Content Area */
+    #analytics-section .analytics-content {
+      padding: 24px;
+    }
+
+    /* Page Views */
+    #analytics-section .analytics-view {
       display: none;
+      animation: analyticsViewFadeIn 0.4s var(--analytics-ease-out-expo) forwards;
     }
 
-    .analytics-view.active {
+    #analytics-section .analytics-view.active {
       display: block;
-      animation: fadeIn 0.2s ease;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
+    @keyframes analyticsViewFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Analytics Page Header */
-    .analytics-page-header {
+    /* Page Header */
+    #analytics-section .page-header {
       margin-bottom: 24px;
     }
 
-    .analytics-page-header h2 {
-      font-size: 24px;
+    #analytics-section .page-header h2 {
+      font-size: 22px;
       font-weight: 600;
-      color: var(--macos-text-primary);
-      margin: 0 0 4px 0;
+      color: var(--analytics-text-100);
+      margin-bottom: 6px;
     }
 
-    .analytics-page-header p {
+    #analytics-section .page-header p {
       font-size: 14px;
-      color: var(--macos-text-secondary);
+      color: var(--analytics-text-400);
       margin: 0;
     }
 
-    /* Analytics KPI Grid */
-    .analytics-kpi-grid {
+    /* KPI Cards */
+    #analytics-section .kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 24px;
     }
 
-    .analytics-kpi-card {
-      background: var(--macos-panel);
-      backdrop-filter: var(--macos-blur-medium);
-      border: 1px solid var(--macos-stroke-primary);
+    #analytics-section .kpi-card {
+      background: var(--analytics-bg-000);
+      border: 1px solid var(--analytics-border-color);
       border-radius: 12px;
       padding: 20px;
       transition: all 0.2s ease;
     }
 
-    .analytics-kpi-card:hover {
-      border-color: var(--macos-stroke-secondary);
-      box-shadow: var(--macos-shadow-small);
+    #analytics-section .kpi-card:hover {
+      border-color: var(--analytics-border-color-hover);
+      box-shadow: var(--analytics-shadow-md);
     }
 
-    .analytics-kpi-label {
+    #analytics-section .kpi-label {
       font-size: 12px;
       font-weight: 500;
-      color: var(--macos-text-secondary);
+      color: var(--analytics-text-400);
       margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .analytics-kpi-value {
+    #analytics-section .kpi-label svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.6;
+    }
+
+    #analytics-section .kpi-value {
       font-size: 28px;
       font-weight: 600;
-      color: var(--macos-text-primary);
-      font-family: 'Geist', monospace;
+      color: var(--analytics-text-100);
+      font-family: 'Geist Mono', 'Geist', monospace;
+      letter-spacing: -0.02em;
     }
 
-    .analytics-kpi-change {
+    #analytics-section .kpi-change {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       font-size: 12px;
-      font-weight: 500;
+      margin-top: 8px;
       padding: 2px 8px;
       border-radius: 4px;
-      margin-top: 8px;
     }
 
-    .analytics-kpi-change.positive {
-      background: rgba(52, 199, 89, 0.1);
-      color: var(--macos-accent-green);
+    #analytics-section .kpi-change.positive {
+      color: var(--analytics-accent-green);
+      background: rgba(16, 185, 129, 0.1);
     }
 
-    .analytics-kpi-change.negative {
-      background: rgba(255, 59, 48, 0.1);
-      color: var(--macos-accent-red);
+    #analytics-section .kpi-change.negative {
+      color: var(--analytics-accent-red);
+      background: rgba(239, 68, 68, 0.1);
     }
 
-    /* Analytics Charts */
-    .analytics-charts-row {
+    #analytics-section .kpi-change svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Chart Cards */
+    #analytics-section .charts-row {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-
-    .analytics-chart-card {
-      background: var(--macos-panel);
-      backdrop-filter: var(--macos-blur-medium);
-      border: 1px solid var(--macos-stroke-primary);
-      border-radius: 12px;
-      padding: 20px;
-    }
-
-    .analytics-chart-card.full-width {
-      grid-column: 1 / -1;
-    }
-
-    .analytics-chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
       margin-bottom: 16px;
     }
 
-    .analytics-chart-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--macos-text-primary);
+    #analytics-section .chart-card {
+      background: var(--analytics-bg-000);
+      border: 1px solid var(--analytics-border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.2s ease;
     }
 
-    .analytics-chart-container {
-      position: relative;
-      height: 300px;
+    #analytics-section .chart-card:hover {
+      box-shadow: var(--analytics-shadow-md);
     }
 
-    /* Analytics Pie Chart Layout */
-    .analytics-pie-layout {
+    #analytics-section .chart-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    #analytics-section .chart-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--analytics-border-color);
       display: flex;
       align-items: center;
-      gap: 24px;
+      justify-content: space-between;
     }
 
-    .analytics-pie-wrapper {
+    #analytics-section .chart-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--analytics-text-200);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #analytics-section .chart-title svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.5;
+    }
+
+    #analytics-section .chart-body {
+      padding: 20px;
+    }
+
+    /* Chart Container */
+    #analytics-section .chart-container {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+
+    #analytics-section .chart-container.small {
+      height: 200px;
+    }
+
+    /* Pie Chart Layout */
+    #analytics-section .pie-chart-layout {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    #analytics-section .pie-chart-wrapper {
       width: 200px;
       height: 200px;
       flex-shrink: 0;
     }
 
-    .analytics-pie-legend {
+    #analytics-section .pie-legend {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
 
-    .analytics-legend-item {
+    #analytics-section .legend-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--analytics-border-color);
     }
 
-    .analytics-legend-color {
-      width: 12px;
-      height: 12px;
+    #analytics-section .legend-item:last-child {
+      border-bottom: none;
+    }
+
+    #analytics-section .legend-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #analytics-section .legend-dot {
+      width: 10px;
+      height: 10px;
       border-radius: 3px;
-      flex-shrink: 0;
     }
 
-    .analytics-legend-label {
-      flex: 1;
-      color: var(--macos-text-secondary);
+    #analytics-section .legend-text {
+      font-size: 13px;
+      color: var(--analytics-text-300);
     }
 
-    .analytics-legend-value {
+    #analytics-section .legend-value {
+      font-size: 13px;
       font-weight: 600;
-      color: var(--macos-text-primary);
-      font-family: 'Geist', monospace;
+      color: var(--analytics-text-100);
+      font-family: 'Geist Mono', 'Geist', monospace;
     }
 
-    /* Analytics Data Tables */
-    .analytics-table-container {
-      overflow-x: auto;
-      margin-top: 24px;
+    #analytics-section .legend-extra {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--analytics-border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .analytics-table {
+    #analytics-section .legend-extra-label {
+      font-size: 12px;
+      color: var(--analytics-text-400);
+    }
+
+    #analytics-section .legend-extra-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--analytics-accent-blue);
+      font-family: 'Geist Mono', 'Geist', monospace;
+    }
+
+    /* Data Table */
+    #analytics-section .data-table-container {
+      background: var(--analytics-bg-000);
+      border: 1px solid var(--analytics-border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+
+    #analytics-section .data-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
     }
 
-    .analytics-table th {
+    #analytics-section .data-table th {
+      background: var(--analytics-bg-200);
+      padding: 12px 16px;
       text-align: left;
-      padding: 12px 16px;
+      font-size: 11px;
       font-weight: 600;
-      color: var(--macos-text-secondary);
-      border-bottom: 1px solid var(--macos-stroke-primary);
-      background: var(--macos-fill-quaternary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--analytics-text-400);
+      border-bottom: 1px solid var(--analytics-border-color);
     }
 
-    .analytics-table td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--macos-stroke-secondary);
-      color: var(--macos-text-primary);
+    #analytics-section .data-table th:last-child,
+    #analytics-section .data-table td:last-child {
+      text-align: right;
     }
 
-    .analytics-table td.mono {
-      font-family: 'Geist', monospace;
+    #analytics-section .data-table td {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--analytics-text-300);
+      border-bottom: 1px solid var(--analytics-border-color);
     }
 
-    .analytics-table td.name {
+    #analytics-section .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    #analytics-section .data-table tbody tr {
+      transition: background 0.15s ease;
+    }
+
+    #analytics-section .data-table tbody tr:hover {
+      background: var(--analytics-bg-100);
+    }
+
+    #analytics-section .data-table .mono {
+      font-family: 'Geist Mono', 'Geist', monospace;
+      color: var(--analytics-text-200);
+    }
+
+    #analytics-section .data-table .name {
+      color: var(--analytics-text-100);
       font-weight: 500;
     }
 
-    .analytics-table tr:hover {
-      background: var(--macos-fill-quaternary);
+    /* Status Badge */
+    #analytics-section .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 500;
     }
 
-    /* Revenue Streams Grid */
-    .analytics-revenue-streams {
+    #analytics-section .status-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    #analytics-section .status-badge.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--analytics-accent-green);
+    }
+
+    #analytics-section .status-badge.warning {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--analytics-accent-orange);
+    }
+
+    #analytics-section .status-badge.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--analytics-accent-red);
+    }
+
+    /* Category Cards */
+    #analytics-section .category-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
       margin-bottom: 24px;
     }
 
-    .analytics-revenue-stream-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
-      background: var(--macos-panel);
-      border: 1px solid var(--macos-stroke-primary);
+    #analytics-section .category-card {
+      background: var(--analytics-bg-000);
+      border: 1px solid var(--analytics-border-color);
       border-radius: 12px;
+      padding: 20px;
+      text-align: center;
       transition: all 0.2s ease;
     }
 
-    .analytics-revenue-stream-card:hover {
-      border-color: var(--macos-stroke-secondary);
-      box-shadow: var(--macos-shadow-small);
+    #analytics-section .category-card:hover {
+      border-color: var(--analytics-border-color-hover);
+      box-shadow: var(--analytics-shadow-md);
     }
 
-    .analytics-revenue-stream-card.total {
-      background: var(--macos-fill-quaternary);
-      border-style: dashed;
-    }
-
-    .analytics-revenue-stream-icon {
+    #analytics-section .category-icon {
       width: 48px;
       height: 48px;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      margin: 0 auto 12px;
     }
 
-    .analytics-revenue-stream-icon svg {
+    #analytics-section .category-icon svg {
       width: 24px;
       height: 24px;
     }
 
-    .analytics-revenue-stream-icon.green { background: rgba(52, 199, 89, 0.1); color: var(--macos-accent-green); }
-    .analytics-revenue-stream-icon.blue { background: rgba(0, 113, 227, 0.1); color: var(--macos-accent-blue); }
-    .analytics-revenue-stream-icon.purple { background: rgba(88, 86, 214, 0.1); color: var(--macos-accent-purple); }
-    .analytics-revenue-stream-icon.orange { background: rgba(255, 149, 0, 0.1); color: var(--macos-accent-orange); }
-
-    .analytics-revenue-stream-content {
-      flex: 1;
-      min-width: 0;
+    #analytics-section .category-icon.blue {
+      background: rgba(0, 112, 243, 0.1);
+      color: var(--analytics-accent-blue);
     }
 
-    .analytics-revenue-stream-label {
-      font-size: 13px;
-      color: var(--macos-text-secondary);
-      margin-bottom: 4px;
+    #analytics-section .category-icon.green {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--analytics-accent-green);
     }
 
-    .analytics-revenue-stream-value {
-      font-size: 20px;
-      font-weight: 600;
-      font-family: 'Geist', monospace;
-      color: var(--macos-text-primary);
+    #analytics-section .category-icon.purple {
+      background: rgba(139, 92, 246, 0.1);
+      color: var(--analytics-accent-purple);
     }
 
-    .analytics-revenue-stream-sub {
-      font-size: 11px;
-      color: var(--macos-text-tertiary);
-      margin-top: 2px;
-    }
-
-    .analytics-revenue-stream-percent {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--macos-text-secondary);
-      padding: 4px 10px;
-      background: var(--macos-fill-quaternary);
-      border-radius: 6px;
-    }
-
-    /* Search Components */
-    .analytics-search-container {
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .analytics-search-input {
-      width: 100%;
-      max-width: 400px;
-      padding: 10px 16px 10px 40px;
-      border: 1px solid var(--macos-stroke-primary);
-      border-radius: 8px;
-      font-size: 14px;
-      background: var(--macos-panel);
-      color: var(--macos-text-primary);
-      transition: all 0.15s ease;
-    }
-
-    .analytics-search-input:focus {
-      outline: none;
-      border-color: var(--macos-accent-blue);
-      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
-    }
-
-    .analytics-search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 18px;
-      height: 18px;
-      color: var(--macos-text-tertiary);
-    }
-
-    /* Date Picker Inline */
-    .analytics-date-picker {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .analytics-date-picker input[type="date"] {
-      padding: 8px 12px;
-      background: var(--macos-fill-quaternary);
-      border: 1px solid var(--macos-stroke-primary);
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--macos-text-primary);
-      cursor: pointer;
-      transition: all 0.15s ease;
-      width: 140px;
-    }
-
-    .analytics-date-picker input[type="date"]:hover {
-      background: var(--macos-fill-tertiary);
-      border-color: var(--macos-stroke-secondary);
-    }
-
-    .analytics-date-picker input[type="date"]:focus {
-      outline: none;
-      border-color: var(--macos-accent-blue);
-      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
-    }
-
-    .analytics-date-separator {
-      font-size: 13px;
-      color: var(--macos-text-tertiary);
-    }
-
-    /* Status Badges */
-    .analytics-status-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 10px;
-      border-radius: 6px;
+    #analytics-section .category-card h4 {
       font-size: 12px;
       font-weight: 500;
+      color: var(--analytics-text-400);
+      margin-bottom: 8px;
     }
 
-    .analytics-status-badge.success {
-      background: rgba(52, 199, 89, 0.1);
-      color: var(--macos-accent-green);
+    #analytics-section .category-card .value {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--analytics-text-100);
+      font-family: 'Geist Mono', 'Geist', monospace;
     }
 
-    .analytics-status-badge.warning {
-      background: rgba(255, 149, 0, 0.1);
-      color: var(--macos-accent-orange);
+    #analytics-section .category-card .sub {
+      font-size: 12px;
+      color: var(--analytics-text-500);
+      margin-top: 4px;
     }
 
-    .analytics-status-badge.info {
-      background: rgba(0, 113, 227, 0.1);
-      color: var(--macos-accent-blue);
+    /* Location Cards */
+    #analytics-section .location-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
-    /* Location Select */
-    .analytics-location-select {
-      padding: 8px 32px 8px 12px;
-      background: var(--macos-fill-quaternary);
-      border: 1px solid var(--macos-stroke-primary);
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--macos-text-primary);
+    #analytics-section .location-card {
+      background: var(--analytics-bg-000);
+      border: 1px solid var(--analytics-border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s ease;
       cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
+    }
+
+    #analytics-section .location-card:hover,
+    #analytics-section .location-card.active {
+      border-color: var(--analytics-accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+    }
+
+    #analytics-section .location-card h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--analytics-text-100);
+      margin-bottom: 12px;
+    }
+
+    #analytics-section .location-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--analytics-text-400);
+      margin-bottom: 6px;
+    }
+
+    #analytics-section .location-stat .value {
+      font-weight: 500;
+      color: var(--analytics-text-200);
+      font-family: 'Geist Mono', 'Geist', monospace;
     }
 
     /* Responsive */
+    @media (max-width: 1400px) {
+      #analytics-section .location-cards {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
     @media (max-width: 1200px) {
-      .analytics-kpi-grid {
+      #analytics-section .kpi-grid {
         grid-template-columns: repeat(2, 1fr);
       }
-      .analytics-revenue-streams {
+      #analytics-section .location-cards {
         grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      #analytics-section .charts-row {
+        grid-template-columns: 1fr;
+      }
+      #analytics-section .category-cards {
+        grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 768px) {
-      .analytics-sidebar {
+      #analytics-section .analytics-sidebar {
         display: none;
       }
-      .analytics-main {
+      #analytics-section .analytics-content {
         padding: 16px;
       }
-      .analytics-kpi-grid {
+      #analytics-section .kpi-grid {
         grid-template-columns: 1fr;
       }
-      .analytics-charts-row {
-        grid-template-columns: 1fr;
+      #analytics-section .time-filter {
+        flex-wrap: wrap;
       }
-      .analytics-revenue-streams {
-        grid-template-columns: 1fr;
-      }
-      .analytics-header-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
+    }
+
+    /* Analytics-spezifische Scrollbar */
+    #analytics-section .analytics-sidebar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #analytics-section .analytics-sidebar::-webkit-scrollbar-track {
+      background: var(--analytics-bg-200);
+    }
+
+    #analytics-section .analytics-sidebar::-webkit-scrollbar-thumb {
+      background: var(--analytics-bg-500);
+      border-radius: 4px;
+    }
+
+    #analytics-section .analytics-sidebar::-webkit-scrollbar-thumb:hover {
+      background: var(--analytics-bg-600);
     }
 
   </style>
