@@ -11838,6 +11838,7 @@
       min-height: calc(100vh - 60px);
       background: var(--analytics-bg-100);
       font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+      position: relative;
     }
 
     /* Sidebar */
@@ -11845,8 +11846,9 @@
       width: var(--analytics-sidebar-width);
       background: var(--analytics-bg-000);
       border-right: 1px solid var(--analytics-border-color);
-      position: sticky;
-      top: 0;
+      position: fixed;
+      left: 0;
+      top: 60px; /* Navbar height */
       height: calc(100vh - 60px);
       display: flex;
       flex-direction: column;
@@ -11948,6 +11950,7 @@
     /* Main Content */
     #analytics-section .analytics-main {
       flex: 1;
+      margin-left: var(--analytics-sidebar-width);
       min-height: calc(100vh - 60px);
       background: var(--analytics-bg-100);
       transition: background 0.3s ease;
@@ -21281,7 +21284,8 @@
       // Zeigt Events mit Anwesenheitspflicht die noch nicht vorbei sind
       // ============================================
 
-      let pinnedEventsInterval = null;
+      // Using var to avoid TDZ issues when called from loadInitialData
+      var pinnedEventsInterval = null;
 
       async function loadPinnedEvents() {
         console.log('📍 Loading Pinned Events from events table...');
@@ -21449,7 +21453,7 @@
           }
 
           // Get all profiles for avatar lookup
-          const allProfiles = window.centralDataManager?.data?.profiles || [];
+          const allProfiles = window.CentralDataManager?.data?.profiles || [];
 
           const messagesHTML = messages.map(msg => {
             const createdDate = new Date(msg.created_at);
@@ -35788,7 +35792,7 @@
     window.selectSlotArtist = selectSlotArtist;
     window.saveNewSlot = saveNewSlot;
     // NOTE: openAddWaitlistSlotModal is exposed later where it's defined
-    window.switchListType = switchListType;
+    // NOTE: switchListType is exposed later where it's defined (around line 42351)
 
     // Load Work Tracking Data from database with BATCH LOADING
     async function loadWorkTrackingData() {
@@ -41817,11 +41821,18 @@
       const colors = getAnalyticsChartColors();
 
       try {
-        // Use cached data from centralDataManager
-        const requests = window.centralDataManager?.data?.requests || [];
-        const appointments = window.centralDataManager?.data?.appointments || [];
-        const artists = window.centralDataManager?.data?.artists || [];
-        const locations = window.centralDataManager?.data?.locations || [];
+        // Use cached data from CentralDataManager (note: capital C!)
+        const requests = window.CentralDataManager?.data?.requests || [];
+        const appointments = window.CentralDataManager?.data?.appointments || [];
+        const artists = window.CentralDataManager?.data?.artists || [];
+        const locations = window.CentralDataManager?.data?.locations || [];
+
+        console.log('📊 Analytics V2 - Data loaded:', {
+          requests: requests.length,
+          appointments: appointments.length,
+          artists: artists.length,
+          locations: locations.length
+        });
 
         switch(viewId) {
           case 'dashboard':
