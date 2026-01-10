@@ -1,8 +1,32 @@
 # Culture Over Money - Master Context
 
 > **Zuletzt aktualisiert:** 2026-01-10
-> **Version:** 3.1118
+> **Version:** 3.1200
 > **Security Scan:** COMPLETE
+
+---
+
+## ⚠️ KRITISCHE WORKFLOW-REGEL
+
+**NIEMALS lokales Git verwenden!**
+
+| ❌ VERBOTEN | ✅ RICHTIG |
+|-------------|-----------|
+| `git add` | GitHub MCP `create_or_update_file` |
+| `git commit` | GitHub MCP `push_files` |
+| `git push` | GitHub MCP Tools |
+| Lokale Temp-Repos erstellen | Direkt via API pushen |
+| User bitten lokal zu pushen | Alles via GitHub MCP |
+
+**Warum?**
+- Konsistenz: Alle Änderungen gehen durch die API
+- Keine lokalen Auth-Probleme
+- Keine vergessenen Pushes
+- management-system.html muss IMMER aus GitHub aufrufbar sein
+
+**Für große Dateien (>1MB):**
+- GitHub hat ein 1MB Limit für Contents API
+- Bei größeren Dateien: User informieren + alternative Lösung finden
 
 ---
 
@@ -13,7 +37,7 @@
 | **System** | Tattoo Studio Management System |
 | **Architektur** | Single-File HTML (2.2 MB) |
 | **Backend** | Supabase (PostgreSQL + Edge Functions) |
-| **Auth** | Custom (profiles Tabelle, NICHT Supabase Auth) |
+| **Auth** | Supabase Auth (signInWithPassword) |
 | **Payments** | Stripe (via Edge Functions) |
 | **Emails** | Resend (via Edge Functions) |
 | **Hosting** | GitHub Pages / Webflow Embeds |
@@ -23,21 +47,20 @@
 
 ## ⚠️ Kritische Constraints
 
-### 1. Custom Auth System
+### 1. Supabase Auth System
 ```
-- NICHT Supabase Auth, sondern Custom Auth
-- Login via profiles Tabelle
-- Passwort: profiles.hashed_password (bcrypt)
-- Session: localStorage (currentUser, user_role)
-- Alle DB-Queries laufen als "anon" User!
+- Supabase Auth (NICHT Custom Auth)
+- Login via supabase.auth.signInWithPassword()
+- profiles Tabelle für User-Daten
+- Session: Supabase Session + localStorage
 ```
 
-### 2. Anon User & RLS
+### 2. Auth Hardening (INTEGRIERT)
 ```
-- Frontend nutzt immer supabase-anon-key
-- RLS Policies müssen "anon" Role erlauben
-- KEINE user_id() Funktion nutzbar (auth.uid() ist NULL)
-- Aktuell: simple_all_access Policies (overpermissive)
+- Rate Limiting: 5 Versuche/Min, 5 Min Lockout
+- Session Expiry: 24h Timeout
+- Activity Tracking: Refresh bei Interaktion
+- Funktionen: checkLoginRateLimit(), saveSession(), etc.
 ```
 
 ### 3. Single-File Architecture
@@ -63,10 +86,10 @@
 ### Auth Security
 | Check | Status |
 |-------|--------|
-| Password Hashing | ✅ bcrypt |
-| Rate Limiting | ❌ FEHLT |
-| Session Expiry | ❌ FEHLT |
-| Backend Role Check | ❌ FEHLT |
+| Password Hashing | ✅ Supabase Auth |
+| Rate Limiting | ✅ IMPLEMENTIERT |
+| Session Expiry | ✅ IMPLEMENTIERT |
+| Backend Role Check | ⚠️ BACKLOG |
 
 ### RLS Status
 | Check | Status |
@@ -106,14 +129,17 @@
 
 ---
 
-## 🐛 Bekannte Issues
+## 🎛️ Admin Panel (IMPLEMENTIERT)
 
-| Issue | Severity | Status |
-|-------|----------|--------|
-| Kein Rate Limiting | HOCH | OFFEN |
-| Session ohne Expiry | MITTEL | OFFEN |
-| Overpermissive RLS | MITTEL | BACKLOG |
-| Single-File (2.2 MB) | MITTEL | AKZEPTIERT |
+| Feature | Status |
+|---------|--------|
+| System Status | ✅ |
+| Database Stats | ✅ |
+| Payment Overview | ✅ |
+| Cron Jobs Table | ✅ |
+| Edge Functions Table | ✅ |
+| Manual Actions | ✅ |
+| Mobile Nav (Admin-only) | ✅ |
 
 ---
 
@@ -122,7 +148,9 @@
 ### Git & GitHub
 ```
 ❌ NIEMALS lokal git push
+❌ NIEMALS lokale Temp-Repos
 ✅ IMMER GitHub MCP Tools nutzen
+✅ Dateien direkt via API pushen
 ✅ Commit Messages: type: description
 ✅ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
