@@ -13337,9 +13337,446 @@
       animation: analyticsFadeIn 0.3s ease-out forwards !important;
     }
 
+    /* ═══════════════════════════════════════════════════════════════════════
+       ERROR TRACKING SYSTEM STYLES (Phase 3)
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    /* Error Badge */
+    .error-badge {
+      position: relative;
+    }
+    .error-badge-count {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 5px;
+      border-radius: 10px;
+      min-width: 16px;
+      text-align: center;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .error-badge.has-errors {
+      animation: pulse-error 2s infinite;
+    }
+    .error-badge.has-errors svg {
+      color: #ef4444;
+    }
+
+    @keyframes pulse-error {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Error Panel Overlay */
+    .error-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10000;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 80px;
+    }
+    .error-panel-overlay.active {
+      display: flex;
+    }
+
+    /* Error Panel */
+    .error-panel {
+      background: var(--bg-secondary, white);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 70vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .error-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color, #e5e7eb);
+      background: #fef2f2;
+    }
+    [data-theme="dark"] .error-panel-header {
+      background: #450a0a;
+    }
+    .error-panel-title {
+      font-weight: 600;
+      color: #991b1b;
+      font-size: 16px;
+    }
+    [data-theme="dark"] .error-panel-title {
+      color: #fca5a5;
+    }
+    .error-panel-body {
+      padding: 16px;
+      max-height: 55vh;
+      overflow-y: auto;
+    }
+
+    /* Error Items */
+    .error-item {
+      background: var(--bg-tertiary, #f9fafb);
+      border: 1px solid var(--border-color, #e5e7eb);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .error-item.unseen {
+      border-left: 3px solid #ef4444;
+      background: #fef2f2;
+    }
+    [data-theme="dark"] .error-item.unseen {
+      background: #450a0a;
+    }
+    .error-item-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary, #6b7280);
+      margin-bottom: 8px;
+    }
+    .error-item-message {
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+      font-size: 13px;
+      color: var(--text-primary, #1f2937);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .error-item-stack {
+      margin-top: 8px;
+      padding: 8px;
+      background: #1f2937;
+      color: #f3f4f6;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+      font-size: 11px;
+      border-radius: 4px;
+      overflow-x: auto;
+      display: none;
+      white-space: pre;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .error-item-stack.expanded {
+      display: block;
+    }
+    .error-item-toggle {
+      font-size: 11px;
+      color: var(--text-secondary, #6b7280);
+      cursor: pointer;
+      margin-top: 8px;
+      user-select: none;
+    }
+    .error-item-toggle:hover {
+      color: #3b82f6;
+    }
+
+    /* ==========================================
+       ADMIN PANEL STYLES
+       ========================================== */
+    #admin-section {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      margin-top: 60px;
+    }
+
+    .admin-panel-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .admin-panel-header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .admin-panel-header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .admin-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .admin-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .admin-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--card-header-bg, var(--card-bg));
+    }
+
+    .admin-card-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .admin-card-body {
+      padding: 20px;
+    }
+
+    .admin-refresh-btn {
+      background: var(--accent-color, #3b82f6);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .admin-refresh-btn:hover {
+      opacity: 0.9;
+    }
+
+    .admin-refresh-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .admin-status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .admin-status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--bg-secondary, #f9fafb);
+      border-radius: 8px;
+    }
+
+    [data-theme="dark"] .admin-status-item {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .admin-status-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .admin-status-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+    }
+
+    .admin-stat-box {
+      text-align: center;
+      padding: 20px 16px;
+      background: var(--bg-secondary, #f9fafb);
+      border-radius: 10px;
+      transition: transform 0.2s;
+    }
+
+    [data-theme="dark"] .admin-stat-box {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .admin-stat-box:hover {
+      transform: translateY(-2px);
+    }
+
+    .admin-stat-number {
+      display: block;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent-color, #3b82f6);
+      margin-bottom: 4px;
+    }
+
+    .admin-stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .admin-table th,
+    .admin-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .admin-table th {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--bg-secondary, #f9fafb);
+    }
+
+    [data-theme="dark"] .admin-table th {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .admin-table td {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .admin-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .admin-status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .admin-status-badge.active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    [data-theme="dark"] .admin-status-badge.active {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    .admin-status-badge.inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .admin-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .admin-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--bg-secondary, #f9fafb);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    [data-theme="dark"] .admin-action-btn {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .admin-action-btn:hover {
+      background: var(--accent-color, #3b82f6);
+      border-color: var(--accent-color, #3b82f6);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .admin-action-btn:hover .admin-action-text {
+      color: white;
+    }
+
+    .admin-action-icon {
+      font-size: 24px;
+    }
+
+    .admin-action-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+      #admin-section {
+        padding: 16px;
+        margin-top: 20px;
+      }
+
+      .admin-panel-header h2 {
+        font-size: 20px;
+      }
+
+      .admin-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .admin-stat-number {
+        font-size: 22px;
+      }
+
+      .admin-actions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- ERROR PANEL OVERLAY (Phase 3 Error Tracking) -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="error-panel-overlay" id="errorPanelOverlay" onclick="if(event.target === this) closeErrorPanel()">
+    <div class="error-panel">
+      <div class="error-panel-header">
+        <span class="error-panel-title">❌ System Errors</span>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="clearErrorLog()" style="background: #fee2e2; color: #991b1b; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Clear All</button>
+          <button onclick="closeErrorPanel()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6b7280;">✕</button>
+        </div>
+      </div>
+      <div class="error-panel-body" id="errorPanelContent">
+        <div style="padding: 40px; text-align: center; color: #6b7280;">
+          <div style="font-weight: 500;">Keine Fehler</div>
+          <div style="font-size: 13px; margin-top: 4px;">Das System läuft einwandfrei</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- FULLSCREEN LOADING SCREEN WITH BACKGROUND IMAGE -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -13437,6 +13874,14 @@
           <path d="M3 8L12 13L21 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span id="invitationsBadge" style="position: absolute; top: 2px; right: 2px; background: #ff3b30; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center;">0</span>
+      </button>
+
+      <!-- Error Badge (Admin Only) -->
+      <button class="icon-button error-badge" id="errorBadge" onclick="openErrorPanel()" title="System Errors">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13M12 17H12.01M4.93 19H19.07C20.14 19 20.85 17.87 20.32 16.94L13.25 4.53C12.72 3.6 11.28 3.6 10.75 4.53L3.68 16.94C3.15 17.87 3.86 19 4.93 19Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="error-badge-count" id="errorBadgeCount" style="display: none;">0</span>
       </button>
 
       <!-- Profile Icon (Desktop only) -->
@@ -13716,7 +14161,7 @@
         <h1 id="dashboardWelcomeText">Willkommen</h1>
         <p>Deine Übersicht über alle wichtigen Aktivitäten</p>
       </div>
-      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1124</span>
+      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1118</span>
     </div>
 
     <!-- Dashboard Grid Layout - New 30/70 Split -->
@@ -16796,6 +17241,163 @@
     </div>
   </section>
 
+  <!-- ==========================================
+       ADMIN PANEL SECTION (Admin-only)
+       System Status, DB Stats, Payment Overview
+       ========================================== -->
+  <section id="admin-section" style="display: none;">
+    <div class="admin-panel-container">
+      <div class="admin-panel-header">
+        <h2>Admin Panel</h2>
+        <p class="admin-subtitle">System Status & Management</p>
+      </div>
+
+      <!-- System Status Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3>System Status</h3>
+          <button class="admin-refresh-btn" onclick="refreshAdminData()">Refresh</button>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-status-grid">
+            <div class="admin-status-item">
+              <span class="admin-status-label">Supabase Connection</span>
+              <span class="admin-status-value" id="adminSupabaseStatus">-</span>
+            </div>
+            <div class="admin-status-item">
+              <span class="admin-status-label">Auth Session</span>
+              <span class="admin-status-value" id="adminAuthStatus">-</span>
+            </div>
+            <div class="admin-status-item">
+              <span class="admin-status-label">Last Refresh</span>
+              <span class="admin-status-value" id="adminLastRefresh">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Database Stats Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3>Database Stats</h3>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-stats-grid">
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminTotalRequests">-</span>
+              <span class="admin-stat-label">Total Requests</span>
+            </div>
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminTotalCustomers">-</span>
+              <span class="admin-stat-label">Customers</span>
+            </div>
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminTotalArtists">-</span>
+              <span class="admin-stat-label">Artists</span>
+            </div>
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminTotalEvents">-</span>
+              <span class="admin-stat-label">Events</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Stats Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3>Payment Overview</h3>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-stats-grid">
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminPendingPayments">-</span>
+              <span class="admin-stat-label">Pending Payments</span>
+            </div>
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminPaidPayments">-</span>
+              <span class="admin-stat-label">Paid</span>
+            </div>
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminExpiredLinks">-</span>
+              <span class="admin-stat-label">Expired Links (>6d)</span>
+            </div>
+            <div class="admin-stat-box">
+              <span class="admin-stat-number" id="adminPaymentTotal">-</span>
+              <span class="admin-stat-label">Total Revenue</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cron Jobs Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3>Cron Jobs Status</h3>
+        </div>
+        <div class="admin-card-body">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Job Name</th>
+                <th>Schedule</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="adminCronJobsTable">
+              <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Manual Actions Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3>Manual Actions</h3>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-actions-grid">
+            <button class="admin-action-btn" onclick="triggerPaymentReminders()">
+              <span class="admin-action-icon">📧</span>
+              <span class="admin-action-text">Send Payment Reminders</span>
+            </button>
+            <button class="admin-action-btn" onclick="cleanupExpiredLinks()">
+              <span class="admin-action-icon">🧹</span>
+              <span class="admin-action-text">Cleanup Expired Links</span>
+            </button>
+            <button class="admin-action-btn" onclick="refreshAllStats()">
+              <span class="admin-action-icon">🔄</span>
+              <span class="admin-action-text">Refresh All Stats</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edge Functions Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3>Edge Functions</h3>
+        </div>
+        <div class="admin-card-body">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Function</th>
+                <th>Version</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="adminEdgeFunctionsTable">
+              <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- Add Artist Modal -->
   <div class="modal-backdrop" id="addArtistModal">
     <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
@@ -19001,6 +19603,244 @@
   </div>
 
   <script>
+    /* ============================================
+       ERROR TRACKING SYSTEM v1.0
+       Phase 3 Implementation - 2026-01-10
+       ============================================ */
+
+    // ═══════════════════════════════════════════════════════════════
+    // ERROR COLLECTOR - Collects all console errors and unhandled exceptions
+    // ═══════════════════════════════════════════════════════════════
+
+    window.errorLog = [];
+    window.ERROR_LOG_MAX = 100;
+    window.errorLogUnseenCount = 0;
+
+    // Generate unique error ID
+    function generateErrorId() {
+      return 'err_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    }
+
+    // Get current context for error logging
+    function getErrorContext() {
+      return {
+        url: window.location.href,
+        currentUser: typeof currentUser !== 'undefined' && currentUser ? currentUser.username : 'unknown',
+        currentView: typeof currentView !== 'undefined' ? currentView : 'unknown',
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    // Main error collection function
+    window.collectError = function(errorData) {
+      const error = {
+        id: generateErrorId(),
+        timestamp: new Date().toISOString(),
+        type: errorData.type || 'error',
+        source: errorData.source || 'unknown',
+        message: errorData.message || 'Unknown error',
+        stack: errorData.stack || null,
+        context: { ...getErrorContext(), ...(errorData.context || {}) },
+        seen: false
+      };
+
+      // Add to log (newest first)
+      window.errorLog.unshift(error);
+
+      // Trim to max size
+      if (window.errorLog.length > window.ERROR_LOG_MAX) {
+        window.errorLog = window.errorLog.slice(0, window.ERROR_LOG_MAX);
+      }
+
+      // Update unseen count
+      window.errorLogUnseenCount = window.errorLog.filter(e => !e.seen).length;
+
+      // Update badge
+      updateErrorBadge();
+
+      return error;
+    };
+
+    // Update error badge in header
+    function updateErrorBadge() {
+      const badge = document.getElementById('errorBadge');
+      const badgeCount = document.getElementById('errorBadgeCount');
+      if (badge && badgeCount) {
+        if (window.errorLogUnseenCount > 0) {
+          badge.classList.add('has-errors');
+          badgeCount.textContent = window.errorLogUnseenCount > 99 ? '99+' : window.errorLogUnseenCount;
+          badgeCount.style.display = 'flex';
+        } else {
+          badge.classList.remove('has-errors');
+          badgeCount.style.display = 'none';
+        }
+      }
+    }
+
+    // Store original console methods
+    const originalConsole = {
+      error: console.error.bind(console),
+      warn: console.warn.bind(console),
+      log: console.log.bind(console)
+    };
+
+    // Override console.error
+    console.error = function(...args) {
+      // Call original
+      originalConsole.error.apply(console, args);
+
+      // Collect error
+      const message = args.map(arg => {
+        if (arg instanceof Error) return arg.message;
+        if (typeof arg === 'object') {
+          try { return JSON.stringify(arg); } catch { return String(arg); }
+        }
+        return String(arg);
+      }).join(' ');
+
+      window.collectError({
+        type: 'error',
+        source: 'console',
+        message: message,
+        stack: new Error().stack
+      });
+    };
+
+    // Override console.warn
+    console.warn = function(...args) {
+      // Call original
+      originalConsole.warn.apply(console, args);
+
+      // Collect warning
+      const message = args.map(arg => {
+        if (typeof arg === 'object') {
+          try { return JSON.stringify(arg); } catch { return String(arg); }
+        }
+        return String(arg);
+      }).join(' ');
+
+      window.collectError({
+        type: 'warning',
+        source: 'console',
+        message: message,
+        stack: new Error().stack
+      });
+    };
+
+    // Global error handler for uncaught errors
+    window.onerror = function(message, source, lineno, colno, error) {
+      window.collectError({
+        type: 'error',
+        source: 'window',
+        message: message,
+        stack: error?.stack || `at ${source}:${lineno}:${colno}`,
+        context: { source, lineno, colno }
+      });
+      return false; // Don't suppress the error
+    };
+
+    // Unhandled promise rejection handler
+    window.onunhandledrejection = function(event) {
+      window.collectError({
+        type: 'unhandled',
+        source: 'promise',
+        message: event.reason?.message || String(event.reason),
+        stack: event.reason?.stack
+      });
+    };
+
+    // Open error panel
+    window.openErrorPanel = function() {
+      const panel = document.getElementById('errorPanelOverlay');
+      if (panel) {
+        panel.classList.add('active');
+        renderErrorPanel();
+        // Mark all as seen
+        window.errorLog.forEach(e => e.seen = true);
+        window.errorLogUnseenCount = 0;
+        updateErrorBadge();
+      }
+    };
+
+    // Close error panel
+    window.closeErrorPanel = function() {
+      const panel = document.getElementById('errorPanelOverlay');
+      if (panel) {
+        panel.classList.remove('active');
+      }
+    };
+
+    // Clear all errors
+    window.clearErrorLog = function() {
+      window.errorLog = [];
+      window.errorLogUnseenCount = 0;
+      updateErrorBadge();
+      renderErrorPanel();
+    };
+
+    // Toggle stack trace visibility
+    window.toggleErrorStack = function(errorId) {
+      const stackEl = document.getElementById('stack-' + errorId);
+      const toggleEl = document.getElementById('toggle-' + errorId);
+      if (stackEl && toggleEl) {
+        if (stackEl.classList.contains('expanded')) {
+          stackEl.classList.remove('expanded');
+          toggleEl.textContent = '▶ Stack Trace';
+        } else {
+          stackEl.classList.add('expanded');
+          toggleEl.textContent = '▼ Stack Trace';
+        }
+      }
+    };
+
+    // Render error panel content
+    function renderErrorPanel() {
+      const content = document.getElementById('errorPanelContent');
+      if (!content) return;
+
+      if (window.errorLog.length === 0) {
+        content.innerHTML = `
+          <div style="padding: 40px; text-align: center; color: #6b7280;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 16px; opacity: 0.5;">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+            <div style="font-weight: 500;">Keine Fehler</div>
+            <div style="font-size: 13px; margin-top: 4px;">Das System läuft einwandfrei</div>
+          </div>
+        `;
+        return;
+      }
+
+      content.innerHTML = window.errorLog.map(error => {
+        const typeIcon = error.type === 'warning' ? '🟡' : (error.type === 'unhandled' ? '🟠' : '🔴');
+        const time = new Date(error.timestamp).toLocaleTimeString('de-DE');
+        const escapedMessage = (error.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escapedStack = (error.stack || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        return `
+          <div class="error-item ${!error.seen ? 'unseen' : ''}">
+            <div class="error-item-header">
+              <span>${typeIcon} ${time} | ${error.source}</span>
+              <span style="color: #9ca3af;">${error.context?.currentView || ''}</span>
+            </div>
+            <div class="error-item-message">${escapedMessage}</div>
+            ${error.stack ? `
+              <div class="error-item-toggle" id="toggle-${error.id}" onclick="toggleErrorStack('${error.id}')">▶ Stack Trace</div>
+              <pre class="error-item-stack" id="stack-${error.id}">${escapedStack}</pre>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Initialize error badge on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+      updateErrorBadge();
+    });
+
+    console.log('✅ Error Tracking System initialized');
+
     /* ============================================
        TATTOO STUDIO MANAGEMENT SYSTEM v81
        ============================================
@@ -38169,6 +39009,10 @@
         if (typeof showMobileDienstplan === 'function') {
           showMobileDienstplan();
         }
+      } else if (viewName === 'admin') {
+        if (typeof showAdminSection === 'function') {
+          showAdminSection();
+        }
       }
 
       // Update desktop nav too
@@ -38347,6 +39191,425 @@
       }
     }
 
+    // ============================================
+    // AUTH HARDENING: RATE LIMITING & SESSION EXPIRY
+    // Integrated 2025-01-10
+    // ============================================
+
+    const RATE_LIMIT_CONFIG = {
+      maxAttempts: 5,
+      windowMs: 60000,      // 1 minute window
+      lockoutMs: 300000     // 5 minute lockout
+    };
+
+    const SESSION_CONFIG = {
+      expiryMs: 24 * 60 * 60 * 1000,    // 24 hours
+      refreshThrottleMs: 60000
+    };
+
+    // Rate Limiting Storage
+    const loginAttempts = new Map();
+
+    function checkLoginRateLimit(identifier) {
+      const now = Date.now();
+      const attempts = loginAttempts.get(identifier);
+
+      if (!attempts) {
+        return { allowed: true, remainingAttempts: RATE_LIMIT_CONFIG.maxAttempts };
+      }
+
+      // Clean old attempts outside window
+      const recentAttempts = attempts.filter(t => now - t < RATE_LIMIT_CONFIG.windowMs);
+      loginAttempts.set(identifier, recentAttempts);
+
+      // Check lockout
+      if (attempts.lockoutUntil && now < attempts.lockoutUntil) {
+        const waitSeconds = Math.ceil((attempts.lockoutUntil - now) / 1000);
+        return {
+          allowed: false,
+          message: `Zu viele Versuche. Bitte warte ${waitSeconds} Sekunden.`,
+          lockoutRemaining: waitSeconds
+        };
+      }
+
+      if (recentAttempts.length >= RATE_LIMIT_CONFIG.maxAttempts) {
+        const lockoutUntil = now + RATE_LIMIT_CONFIG.lockoutMs;
+        loginAttempts.set(identifier, { ...recentAttempts, lockoutUntil });
+        return {
+          allowed: false,
+          message: 'Zu viele Versuche. Account gesperrt für 5 Minuten.',
+          lockoutRemaining: RATE_LIMIT_CONFIG.lockoutMs / 1000
+        };
+      }
+
+      return { allowed: true, remainingAttempts: RATE_LIMIT_CONFIG.maxAttempts - recentAttempts.length };
+    }
+
+    function recordLoginAttempt(identifier, success) {
+      const now = Date.now();
+
+      if (success) {
+        loginAttempts.delete(identifier);
+        console.log('Auth Hardening: Login attempts cleared for', identifier);
+        return;
+      }
+
+      let attempts = loginAttempts.get(identifier) || [];
+      if (Array.isArray(attempts)) {
+        attempts.push(now);
+      } else {
+        attempts = [now];
+      }
+      loginAttempts.set(identifier, attempts);
+      console.log('Auth Hardening: Failed attempt recorded for', identifier, '- Total:', attempts.length);
+    }
+
+    // Session Management
+    function saveSession(userData) {
+      const sessionData = {
+        userId: userData.id,
+        username: userData.username,
+        role: userData.role,
+        createdAt: Date.now(),
+        lastActivity: Date.now()
+      };
+      localStorage.setItem('com_session', JSON.stringify(sessionData));
+      console.log('Auth Hardening: Session saved');
+    }
+
+    function isSessionValid() {
+      const sessionStr = localStorage.getItem('com_session');
+      if (!sessionStr) return false;
+
+      try {
+        const session = JSON.parse(sessionStr);
+        const now = Date.now();
+
+        // Check absolute expiry (24h from creation)
+        if (now - session.createdAt > SESSION_CONFIG.expiryMs) {
+          console.log('Auth Hardening: Session expired (24h limit)');
+          clearSession();
+          return false;
+        }
+
+        return true;
+      } catch (e) {
+        clearSession();
+        return false;
+      }
+    }
+
+    function refreshSessionActivity() {
+      const sessionStr = localStorage.getItem('com_session');
+      if (!sessionStr) return;
+
+      try {
+        const session = JSON.parse(sessionStr);
+        const now = Date.now();
+
+        // Throttle updates
+        if (now - session.lastActivity < SESSION_CONFIG.refreshThrottleMs) return;
+
+        session.lastActivity = now;
+        localStorage.setItem('com_session', JSON.stringify(session));
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    function clearSession() {
+      localStorage.removeItem('com_session');
+      console.log('Auth Hardening: Session cleared');
+    }
+
+    async function checkSessionOnLoad() {
+      if (!isSessionValid()) {
+        console.log('Auth Hardening: No valid session, showing login');
+        return false;
+      }
+
+      // Verify with Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        clearSession();
+        return false;
+      }
+
+      console.log('Auth Hardening: Valid session found');
+      refreshSessionActivity();
+      return true;
+    }
+
+    // Track activity for session refresh
+    document.addEventListener('click', refreshSessionActivity);
+    document.addEventListener('keydown', refreshSessionActivity);
+
+    // Global exposure
+    window.checkLoginRateLimit = checkLoginRateLimit;
+    window.recordLoginAttempt = recordLoginAttempt;
+    window.saveSession = saveSession;
+    window.isSessionValid = isSessionValid;
+    window.clearSession = clearSession;
+    window.checkSessionOnLoad = checkSessionOnLoad;
+
+    console.log('Auth Hardening: Rate Limiting + Session Expiry initialized');
+
+    // ============================================
+    // END AUTH HARDENING
+    // ============================================
+
+    // ============================================
+    // ADMIN PANEL FUNCTIONS
+    // ============================================
+
+    // Show/hide admin nav item based on user role
+    function updateAdminNavVisibility() {
+      const adminNavItem = document.querySelector('.admin-only-nav');
+      if (!adminNavItem) return;
+
+      const userRole = window.currentUser?.role || localStorage.getItem('userRole');
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        adminNavItem.style.display = 'flex';
+        console.log('Admin Panel: Navigation visible for admin user');
+      } else {
+        adminNavItem.style.display = 'none';
+      }
+    }
+
+    // Load all admin panel data
+    async function loadAdminPanelData() {
+      console.log('Admin Panel: Loading data...');
+
+      try {
+        // System Status
+        await updateSystemStatus();
+
+        // Database Stats
+        await updateDatabaseStats();
+
+        // Payment Stats
+        await updatePaymentStats();
+
+        // Cron Jobs
+        updateCronJobsTable();
+
+        // Edge Functions
+        updateEdgeFunctionsTable();
+
+        // Update last refresh time
+        document.getElementById('adminLastRefresh').textContent = new Date().toLocaleTimeString('de-DE');
+
+        console.log('Admin Panel: Data loaded successfully');
+      } catch (err) {
+        console.error('Admin Panel: Error loading data:', err);
+      }
+    }
+
+    async function updateSystemStatus() {
+      // Check Supabase connection
+      const supabaseStatus = document.getElementById('adminSupabaseStatus');
+      const authStatus = document.getElementById('adminAuthStatus');
+
+      try {
+        const { data, error } = await supabase.from('profiles').select('id').limit(1);
+        supabaseStatus.textContent = error ? 'Disconnected' : 'Connected';
+        supabaseStatus.style.color = error ? '#ef4444' : '#22c55e';
+      } catch (e) {
+        supabaseStatus.textContent = 'Error';
+        supabaseStatus.style.color = '#ef4444';
+      }
+
+      // Check auth session
+      const { data: { session } } = await supabase.auth.getSession();
+      authStatus.textContent = session ? 'Active' : 'None';
+      authStatus.style.color = session ? '#22c55e' : '#f59e0b';
+    }
+
+    async function updateDatabaseStats() {
+      // Total Requests
+      const { count: requestCount } = await supabase.from('requests').select('*', { count: 'exact', head: true });
+      document.getElementById('adminTotalRequests').textContent = requestCount || 0;
+
+      // Total Customers
+      const { count: customerCount } = await supabase.from('customers').select('*', { count: 'exact', head: true });
+      document.getElementById('adminTotalCustomers').textContent = customerCount || 0;
+
+      // Total Artists
+      const { count: artistCount } = await supabase.from('artists').select('*', { count: 'exact', head: true });
+      document.getElementById('adminTotalArtists').textContent = artistCount || 0;
+
+      // Total Events
+      const { count: eventCount } = await supabase.from('events').select('*', { count: 'exact', head: true });
+      document.getElementById('adminTotalEvents').textContent = eventCount || 0;
+    }
+
+    async function updatePaymentStats() {
+      // Pending Payments
+      const { count: pendingCount } = await supabase
+        .from('requests')
+        .select('*', { count: 'exact', head: true })
+        .in('payment_status', ['pending', 'unpaid']);
+      document.getElementById('adminPendingPayments').textContent = pendingCount || 0;
+
+      // Paid Payments
+      const { count: paidCount } = await supabase
+        .from('requests')
+        .select('*', { count: 'exact', head: true })
+        .in('payment_status', ['paid', 'fully_paid', 'deposit_paid']);
+      document.getElementById('adminPaidPayments').textContent = paidCount || 0;
+
+      // Expired Links (>6 days)
+      const sixDaysAgo = new Date();
+      sixDaysAgo.setDate(sixDaysAgo.getDate() - 6);
+      const { count: expiredCount } = await supabase
+        .from('requests')
+        .select('*', { count: 'exact', head: true })
+        .not('stripe_payment_link', 'is', null)
+        .lt('payment_link_sent_at', sixDaysAgo.toISOString())
+        .in('payment_status', ['pending', 'unpaid']);
+      document.getElementById('adminExpiredLinks').textContent = expiredCount || 0;
+
+      // Total Revenue (sum of paid amounts)
+      const { data: paidRequests } = await supabase
+        .from('requests')
+        .select('payment_amount')
+        .in('payment_status', ['paid', 'fully_paid']);
+
+      const totalRevenue = paidRequests?.reduce((sum, r) => sum + (r.payment_amount || 0), 0) || 0;
+      document.getElementById('adminPaymentTotal').textContent = totalRevenue.toLocaleString('de-DE') + ' €';
+    }
+
+    function updateCronJobsTable() {
+      const tbody = document.getElementById('adminCronJobsTable');
+      const cronJobs = [
+        { name: 'payment-reminders-daily', schedule: '08:00 UTC', status: 'active' },
+        { name: 'auto-cancel-unpaid', schedule: '06:00 UTC', status: 'active' },
+        { name: 'auto-cancel-unpaid-requests', schedule: '06:00 UTC', status: 'active' },
+        { name: 'daily-session-cleanup', schedule: '03:00 UTC', status: 'active' },
+        { name: 'check-expired-payments', schedule: '00:00 UTC', status: 'active' }
+      ];
+
+      tbody.innerHTML = cronJobs.map(job => `
+        <tr>
+          <td>${job.name}</td>
+          <td>${job.schedule}</td>
+          <td><span class="admin-status-badge ${job.status}">${job.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function updateEdgeFunctionsTable() {
+      const tbody = document.getElementById('adminEdgeFunctionsTable');
+      const edgeFunctions = [
+        { name: 'stripe-webhook', version: 'v15', status: 'active' },
+        { name: 'payment-reminders', version: 'v3', status: 'active' },
+        { name: 'create-payment-link', version: 'v23', status: 'active' },
+        { name: 'auto-cancel-unpaid', version: 'v2', status: 'active' },
+        { name: 'send-request-confirmation', version: 'v3', status: 'active' },
+        { name: 'create-booking-draft', version: 'v1', status: 'active' },
+        { name: 'check-artist-availability', version: 'v1', status: 'active' }
+      ];
+
+      tbody.innerHTML = edgeFunctions.map(fn => `
+        <tr>
+          <td>${fn.name}</td>
+          <td>${fn.version}</td>
+          <td><span class="admin-status-badge ${fn.status}">${fn.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    async function refreshAdminData() {
+      const btn = document.querySelector('.admin-refresh-btn');
+      if (btn) {
+        btn.textContent = 'Loading...';
+        btn.disabled = true;
+      }
+      await loadAdminPanelData();
+      if (btn) {
+        btn.textContent = 'Refresh';
+        btn.disabled = false;
+      }
+    }
+
+    async function triggerPaymentReminders() {
+      if (!confirm('Payment Reminders jetzt manuell auslösen?')) return;
+
+      try {
+        const { data, error } = await supabase.functions.invoke('payment-reminders');
+        if (error) throw error;
+        alert('Payment Reminders erfolgreich ausgelöst!\n\n' + JSON.stringify(data, null, 2));
+        await updatePaymentStats();
+      } catch (err) {
+        console.error('Error triggering payment reminders:', err);
+        alert('Fehler: ' + err.message);
+      }
+    }
+
+    async function cleanupExpiredLinks() {
+      if (!confirm('Abgelaufene Payment Links bereinigen (>6 Tage)?')) return;
+
+      try {
+        const sixDaysAgo = new Date();
+        sixDaysAgo.setDate(sixDaysAgo.getDate() - 6);
+
+        const { data, error } = await supabase
+          .from('requests')
+          .update({
+            payment_status: 'canceled',
+            payment_auto_canceled_at: new Date().toISOString()
+          })
+          .not('stripe_payment_link', 'is', null)
+          .lt('payment_link_sent_at', sixDaysAgo.toISOString())
+          .in('payment_status', ['pending', 'unpaid'])
+          .select();
+
+        if (error) throw error;
+        alert(`${data?.length || 0} abgelaufene Links bereinigt.`);
+        await updatePaymentStats();
+      } catch (err) {
+        console.error('Error cleaning up expired links:', err);
+        alert('Fehler: ' + err.message);
+      }
+    }
+
+    async function refreshAllStats() {
+      await refreshAdminData();
+      alert('Alle Statistiken aktualisiert.');
+    }
+
+    // Show Admin Section
+    function showAdminSection() {
+      // Hide all sections
+      document.querySelectorAll('section').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+      });
+
+      // Show admin section
+      const adminSection = document.getElementById('admin-section');
+      if (adminSection) {
+        adminSection.style.display = 'block';
+        adminSection.classList.add('active');
+        loadAdminPanelData();
+      }
+    }
+
+    // Global exposure
+    window.updateAdminNavVisibility = updateAdminNavVisibility;
+    window.loadAdminPanelData = loadAdminPanelData;
+    window.refreshAdminData = refreshAdminData;
+    window.triggerPaymentReminders = triggerPaymentReminders;
+    window.cleanupExpiredLinks = cleanupExpiredLinks;
+    window.refreshAllStats = refreshAllStats;
+    window.showAdminSection = showAdminSection;
+
+    console.log('Admin Panel: Functions initialized');
+
+    // ============================================
+    // END ADMIN PANEL FUNCTIONS
+    // ============================================
+
     // Login function - SECURE SUPABASE AUTH VERSION
     async function handleLogin(e) {
       e.preventDefault();
@@ -38357,6 +39620,14 @@
 
       if (!username || !password) {
         alert('Bitte fülle alle Felder aus');
+        return;
+      }
+
+      // AUTH HARDENING: Rate Limit Check
+      const rateLimitResult = checkLoginRateLimit(username.toLowerCase());
+      if (!rateLimitResult.allowed) {
+        alert(rateLimitResult.message);
+        console.log('Auth Hardening: Login blocked -', rateLimitResult.message);
         return;
       }
 
@@ -38402,6 +39673,9 @@
         if (authError) {
           console.error('❌ Auth error:', authError.message);
 
+          // AUTH HARDENING: Record failed attempt
+          recordLoginAttempt(username.toLowerCase(), false);
+
           if (authError.message.includes('Invalid login credentials')) {
             alert('Falsches Passwort');
           } else if (authError.message.includes('Email not confirmed')) {
@@ -38445,6 +39719,15 @@
         console.log('✅ Login successful for:', profile.username);
         currentUser = profile;
         window.currentUser = profile;
+
+        // AUTH HARDENING: Clear attempts and save session
+        recordLoginAttempt(username.toLowerCase(), true);
+        saveSession(profile);
+
+        // Show admin nav if user is admin
+        if (typeof updateAdminNavVisibility === 'function') {
+          updateAdminNavVisibility();
+        }
 
         // Remember Me
         if (rememberMe) {
@@ -38809,6 +40092,9 @@
         localStorage.removeItem('username');
         localStorage.removeItem('userRole');
         localStorage.removeItem('avatarUrl');
+
+        // AUTH HARDENING: Clear session
+        clearSession();
 
         console.log('🗑️ Session data cleared');
 
@@ -56110,6 +57396,19 @@
       <!-- Fill Icon (Aktiv) -->
       <svg class="mobile-nav-icon nav-icon-fill" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/>
+      </svg>
+    </div>
+
+    <!-- Admin Tab (only visible for admin users) -->
+    <div class="mobile-nav-item admin-only-nav" data-mobile-view="admin" onclick="handleMobileNav('admin', this)" style="display:none;">
+      <!-- Outline Icon (Standard) - Settings/Gear -->
+      <svg class="mobile-nav-icon nav-icon-outline" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <!-- Fill Icon (Aktiv) -->
+      <svg class="mobile-nav-icon nav-icon-fill" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M19.14 12.94C19.18 12.64 19.2 12.33 19.2 12C19.2 11.68 19.18 11.36 19.13 11.06L21.16 9.48C21.34 9.34 21.39 9.07 21.28 8.87L19.36 5.55C19.24 5.33 18.99 5.26 18.77 5.33L16.38 6.29C15.88 5.91 15.35 5.59 14.76 5.35L14.4 2.81C14.36 2.57 14.16 2.4 13.92 2.4H10.08C9.84 2.4 9.65 2.57 9.61 2.81L9.25 5.35C8.66 5.59 8.12 5.92 7.63 6.29L5.24 5.33C5.02 5.25 4.77 5.33 4.65 5.55L2.74 8.87C2.62 9.08 2.66 9.34 2.86 9.48L4.89 11.06C4.84 11.36 4.8 11.69 4.8 12C4.8 12.31 4.82 12.64 4.87 12.94L2.84 14.52C2.66 14.66 2.61 14.93 2.72 15.13L4.64 18.45C4.76 18.67 5.01 18.74 5.23 18.67L7.62 17.71C8.12 18.09 8.65 18.41 9.24 18.65L9.6 21.19C9.65 21.43 9.84 21.6 10.08 21.6H13.92C14.16 21.6 14.36 21.43 14.39 21.19L14.75 18.65C15.34 18.41 15.88 18.09 16.37 17.71L18.76 18.67C18.98 18.75 19.23 18.67 19.35 18.45L21.27 15.13C21.39 14.91 21.34 14.66 21.15 14.52L19.14 12.94ZM12 15.6C10.02 15.6 8.4 13.98 8.4 12C8.4 10.02 10.02 8.4 12 8.4C13.98 8.4 15.6 10.02 15.6 12C15.6 13.98 13.98 15.6 12 15.6Z"/>
       </svg>
     </div>
   </div>
