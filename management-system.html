@@ -44159,12 +44159,12 @@
         });
 
         switch(viewId) {
-          case 'dashboard':
+          case 'dashboard': {
             // KPIs
             const totalRequests = requests.length;
             const totalAppointments = appointments.length;
-            const convertedRequests = requests.filter(r => r.status === 'scheduled' || r.status === 'finished').length;
-            const conversionRate = totalRequests > 0 ? ((convertedRequests / totalRequests) * 100).toFixed(1) : 0;
+            const convertedReqs = requests.filter(r => r.status === 'scheduled' || r.status === 'finished').length;
+            const conversionRate = totalRequests > 0 ? ((convertedReqs / totalRequests) * 100).toFixed(1) : 0;
             const totalRevenue = appointments.reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0), 0);
 
             // Update KPI elements
@@ -44243,8 +44243,9 @@
               }]);
             }
             break;
+          }
 
-          case 'request-origins':
+          case 'request-origins': {
             // Request Origins Sub-View
             const origCounts = {};
             let unknownCount = 0;
@@ -44315,8 +44316,9 @@
               createAnalyticsLineChart('originsTimeline', originMonths, originDatasets);
             }
             break;
+          }
 
-          case 'conversion':
+          case 'conversion': {
             // Conversion Funnel Sub-View - NEU basierend auf appointment_id
             const convTotal = requests.length;
             const convAlleTermine = appointments.length;
@@ -44402,8 +44404,9 @@
               }]);
             }
             break;
+          }
 
-          case 'residents':
+          case 'residents': {
             const residents = artists.filter(a => a.type === 'resident' || !a.type);
             const artistStats = {};
             appointments.forEach(a => {
@@ -44436,12 +44439,13 @@
               true
             );
             break;
+          }
 
           case 'revenue-overview':
             renderAnalyticsRevenueOverview();
             break;
 
-          case 'locations':
+          case 'locations': {
             const locStats = {};
             locations.forEach(l => {
               locStats[l.id] = { name: l.name || l.city, requests: 0, appointments: 0, revenue: 0 };
@@ -44496,6 +44500,7 @@
               }))
             );
             break;
+          }
 
           case 'team':
             renderAnalyticsTeamPerformance();
