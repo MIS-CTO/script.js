@@ -6,7 +6,7 @@
   <title>Management System v87</title>
   
   <!-- iOS Web App Configuration -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Management System">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📊</text></svg>">
@@ -20949,6 +20949,9 @@
       window.addEventListener('resize', updateActiveIndicator);
     }
 
+    // Export für globalen Zugriff
+    window.setupNavbarHover = setupNavbarHover;
+
     // ==========================================
     // MOBILE NAVIGATION
     // ==========================================
@@ -20964,6 +20967,9 @@
         mobileFooterNav.style.display = 'none';
       }
     }
+
+    // Export für globalen Zugriff
+    window.setupMobileNavigation = setupMobileNavigation;
 
     // Named handler function for mobile navigation clicks
     function handleMobileNavClick(e) {
@@ -36134,6 +36140,14 @@
           { value: 'consultation', label: 'Beratung' }
         ];
 
+        // Payment Status Optionen
+        const paymentStatusOptions = [
+          { value: 'unpaid', label: 'Unpaid' },
+          { value: 'pending', label: 'Pending (Anzahlung)' },
+          { value: 'paid', label: 'Paid' },
+          { value: 'canceled', label: 'Canceled' }
+        ];
+
         // Formatiere Datum und Zeit
         const startDate = appointment.start_time || appointment.start ? new Date(appointment.start_time || appointment.start) : new Date();
         const dateStr = startDate.toISOString().split('T')[0];
@@ -36297,6 +36311,41 @@
                           placeholder="Besondere Hinweise...">${appointment.notice || ''}</textarea>
               </div>
 
+              <!-- PAYMENT SECTION -->
+              <div class="appointment-edit-section" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #eaeaea;">
+                <h4 style="font-size: 14px; font-weight: 600; color: #000; margin: 0 0 16px 0;">Payment & Abrechnung</h4>
+
+                <div class="appointment-edit-row">
+                  <div class="appointment-edit-field">
+                    <label class="appointment-edit-label">Preis (€)</label>
+                    <input type="number" class="appointment-edit-input" id="editAppointmentPrice"
+                           value="${appointment.price || ''}" placeholder="0.00" step="0.01">
+                  </div>
+                  <div class="appointment-edit-field">
+                    <label class="appointment-edit-label">Payment Status</label>
+                    <select class="appointment-edit-input" id="editAppointmentPaymentStatus">
+                      ${paymentStatusOptions.map(p => `
+                        <option value="${p.value}" ${p.value === (appointment.payment_status || 'unpaid') ? 'selected' : ''}>
+                          ${p.label}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+                </div>
+
+                <div class="appointment-edit-section" style="margin-top: 12px;">
+                  <label class="appointment-edit-label">Payment Intent (Stripe)</label>
+                  <input type="text" class="appointment-edit-input" id="editAppointmentPaymentIntent"
+                         value="${appointment.payment_intent || ''}" placeholder="pi_...">
+                </div>
+
+                <div class="appointment-edit-section" style="margin-top: 12px;">
+                  <label class="appointment-edit-label">Zahlungsnotizen</label>
+                  <textarea class="appointment-edit-textarea" id="editAppointmentPaymentNotice"
+                            placeholder="Zahlungshinweise, Raten, etc...">${appointment.payment_notice || ''}</textarea>
+                </div>
+              </div>
+
             </div>
             <div class="appointment-edit-actions">
               <button class="appointment-edit-btn cancel" onclick="closeAppointmentEditPopup()">Abbrechen</button>
@@ -36341,6 +36390,12 @@
         const internalNotes = document.getElementById('editAppointmentInternalNotes').value;
         const notice = document.getElementById('editAppointmentNotice').value;
 
+        // Payment Felder
+        const price = document.getElementById('editAppointmentPrice').value;
+        const paymentStatus = document.getElementById('editAppointmentPaymentStatus').value;
+        const paymentIntent = document.getElementById('editAppointmentPaymentIntent').value;
+        const paymentNotice = document.getElementById('editAppointmentPaymentNotice').value;
+
         if (!date || !startTime || !status) {
           alert('Bitte alle Pflichtfelder ausfüllen (Datum, Start Zeit, Status)');
           return;
@@ -36367,7 +36422,12 @@
             description: description || null,
             notes: notes || null,
             internal_notes: internalNotes || null,
-            notice: notice || null
+            notice: notice || null,
+            // Payment Felder
+            price: price ? parseFloat(price) : null,
+            payment_status: paymentStatus || null,
+            payment_intent: paymentIntent || null,
+            payment_notice: paymentNotice || null
           };
 
           const { error } = await supabase
@@ -49291,8 +49351,8 @@
       // ==========================================
 
       // Initialize navbar hover and mobile navigation
-      setupNavbarHover();
-      setupMobileNavigation();
+      if (typeof window.setupNavbarHover === 'function') window.setupNavbarHover();
+      if (typeof window.setupMobileNavigation === 'function') window.setupMobileNavigation();
 
       // Header Title - Return to Dashboard
       const headerTitle = document.querySelector('.header-title');
@@ -51276,7 +51336,7 @@
     // in the file (after chart instances) to ensure Desktop rendering works correctly
 
     // Alias für Mobile-Kompatibilität
-    const mobileCalCategoryConfig = calendarCategoryConfig;
+    const mobileCalCategoryConfig = window.calendarCategoryConfig;
 
     // Render Multi-Artist Calendar Grid
     function renderMobileCalendarGrid() {
