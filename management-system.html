@@ -13481,79 +13481,120 @@
     }
 
     /* ==========================================
-       ADMIN PANEL STYLES
+       ADMIN PANEL STYLES - VERCEL DESIGN SYSTEM
        ========================================== */
+
+    /* Vercel Design Variables */
     #admin-section {
-      padding: 20px;
+      --vercel-bg: #fff;
+      --vercel-bg-secondary: #fafafa;
+      --vercel-text: #000;
+      --vercel-text-secondary: #666;
+      --vercel-text-tertiary: #888;
+      --vercel-border: #eaeaea;
+      --vercel-success: #50e3c2;
+      --vercel-error: #e00;
+      --vercel-warning: #f5a623;
+      --vercel-radius: 12px;
+      --vercel-radius-sm: 6px;
+    }
+
+    [data-theme="dark"] #admin-section {
+      --vercel-bg: #000;
+      --vercel-bg-secondary: #111;
+      --vercel-text: #fff;
+      --vercel-text-secondary: #888;
+      --vercel-text-tertiary: #666;
+      --vercel-border: #333;
+    }
+
+    #admin-section {
+      background: var(--vercel-bg-secondary);
+      padding: 24px;
       max-width: 1200px;
       margin: 0 auto;
       margin-top: 60px;
+      min-height: calc(100vh - 60px);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     }
 
     .admin-panel-container {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     .admin-panel-header {
-      text-align: center;
-      margin-bottom: 10px;
+      text-align: left;
+      margin-bottom: 8px;
+      padding: 0 4px;
     }
 
     .admin-panel-header h2 {
       font-size: 24px;
-      font-weight: 700;
-      color: var(--text-primary);
+      font-weight: 600;
+      color: var(--vercel-text);
       margin: 0;
+      letter-spacing: -0.5px;
     }
 
     .admin-subtitle {
       font-size: 14px;
-      color: var(--text-secondary);
+      color: var(--vercel-text-secondary);
       margin-top: 4px;
     }
 
+    /* Vercel-style Cards */
     .admin-card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
+      background: var(--vercel-bg);
+      border-radius: var(--vercel-radius);
+      border: 1px solid var(--vercel-border);
       overflow: hidden;
+      box-shadow: none;
     }
 
     .admin-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border-color);
-      background: var(--card-header-bg, var(--card-bg));
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--vercel-border);
+      background: var(--vercel-bg);
     }
 
     .admin-card-header h3 {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
-      color: var(--text-primary);
+      color: var(--vercel-text);
       margin: 0;
+      text-transform: none;
+      letter-spacing: 0;
     }
 
     .admin-card-body {
-      padding: 20px;
+      padding: 24px;
+      background: var(--vercel-bg);
     }
 
+    /* Vercel-style Buttons */
     .admin-refresh-btn {
-      background: var(--accent-color, #3b82f6);
-      color: white;
+      background: var(--vercel-text);
+      color: var(--vercel-bg);
       border: none;
       padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 13px;
+      border-radius: var(--vercel-radius-sm);
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: background 0.15s ease;
     }
 
     .admin-refresh-btn:hover {
-      opacity: 0.9;
+      background: #333;
+    }
+
+    [data-theme="dark"] .admin-refresh-btn:hover {
+      background: #ccc;
     }
 
     .admin-refresh-btn:disabled {
@@ -13561,73 +13602,89 @@
       cursor: not-allowed;
     }
 
+    /* Status Grid */
     .admin-status-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
+      gap: 0;
+      border: 1px solid var(--vercel-border);
+      border-radius: 8px;
+      overflow: hidden;
     }
 
     .admin-status-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px;
-      background: var(--bg-secondary, #f9fafb);
-      border-radius: 8px;
+      padding: 16px 20px;
+      background: var(--vercel-bg);
+      border-right: 1px solid var(--vercel-border);
+      border-bottom: 1px solid var(--vercel-border);
     }
 
-    [data-theme="dark"] .admin-status-item {
-      background: rgba(255, 255, 255, 0.05);
+    .admin-status-item:last-child {
+      border-right: none;
     }
 
     .admin-status-label {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .admin-status-value {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .admin-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 16px;
-    }
-
-    .admin-stat-box {
-      text-align: center;
-      padding: 20px 16px;
-      background: var(--bg-secondary, #f9fafb);
-      border-radius: 10px;
-      transition: transform 0.2s;
-    }
-
-    [data-theme="dark"] .admin-stat-box {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .admin-stat-box:hover {
-      transform: translateY(-2px);
-    }
-
-    .admin-stat-number {
-      display: block;
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--accent-color, #3b82f6);
-      margin-bottom: 4px;
-    }
-
-    .admin-stat-label {
       font-size: 12px;
-      color: var(--text-secondary);
+      font-weight: 500;
+      color: var(--vercel-text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
+    .admin-status-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--vercel-text);
+    }
+
+    .admin-status-value.connected {
+      color: var(--vercel-success);
+    }
+
+    /* Stats Grid - Vercel Style */
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .admin-stat-box {
+      text-align: center;
+      padding: 24px 16px;
+      background: var(--vercel-bg);
+      border-right: 1px solid var(--vercel-border);
+      transition: none;
+    }
+
+    .admin-stat-box:last-child {
+      border-right: none;
+    }
+
+    .admin-stat-box:hover {
+      transform: none;
+    }
+
+    .admin-stat-number {
+      display: block;
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--vercel-text);
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .admin-stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--vercel-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Tables - Vercel Style */
     .admin-table {
       width: 100%;
       border-collapse: collapse;
@@ -13635,50 +13692,52 @@
 
     .admin-table th,
     .admin-table td {
-      padding: 12px 16px;
+      padding: 12px 24px;
       text-align: left;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--vercel-border);
     }
 
     .admin-table th {
       font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
+      font-weight: 500;
+      color: var(--vercel-text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      background: var(--bg-secondary, #f9fafb);
-    }
-
-    [data-theme="dark"] .admin-table th {
-      background: rgba(255, 255, 255, 0.03);
+      background: transparent;
     }
 
     .admin-table td {
       font-size: 14px;
-      color: var(--text-primary);
+      color: var(--vercel-text);
     }
 
     .admin-table tr:last-child td {
       border-bottom: none;
     }
 
+    .admin-table tbody tr:hover td {
+      background: var(--vercel-bg-secondary);
+    }
+
+    /* Status Badges - Vercel Türkis */
     .admin-status-badge {
       display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
+      padding: 2px 8px;
+      border-radius: 4px;
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .admin-status-badge.active {
-      background: #dcfce7;
-      color: #166534;
+      background: var(--vercel-success);
+      color: #000;
     }
 
     [data-theme="dark"] .admin-status-badge.active {
-      background: rgba(34, 197, 94, 0.2);
-      color: #4ade80;
+      background: var(--vercel-success);
+      color: #000;
     }
 
     .admin-status-badge.inactive {
@@ -13686,6 +13745,12 @@
       color: #991b1b;
     }
 
+    [data-theme="dark"] .admin-status-badge.inactive {
+      background: rgba(224, 0, 0, 0.2);
+      color: #f87171;
+    }
+
+    /* Action Buttons Grid */
     .admin-actions-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -13697,39 +13762,41 @@
       align-items: center;
       gap: 12px;
       padding: 16px 20px;
-      background: var(--bg-secondary, #f9fafb);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
+      background: var(--vercel-bg);
+      border: 1px solid var(--vercel-border);
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: border-color 0.15s ease;
       text-align: left;
     }
 
-    [data-theme="dark"] .admin-action-btn {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
     .admin-action-btn:hover {
-      background: var(--accent-color, #3b82f6);
-      border-color: var(--accent-color, #3b82f6);
-      color: white;
-      transform: translateY(-2px);
+      border-color: var(--vercel-text);
+      background: var(--vercel-bg);
+      color: var(--vercel-text);
+      transform: none;
     }
 
     .admin-action-btn:hover .admin-action-text {
-      color: white;
+      color: var(--vercel-text);
     }
 
     .admin-action-icon {
-      font-size: 24px;
+      font-size: 20px;
+      color: var(--vercel-text-secondary);
+    }
+
+    .admin-action-btn:hover .admin-action-icon {
+      color: var(--vercel-text);
     }
 
     .admin-action-text {
       font-size: 14px;
       font-weight: 500;
-      color: var(--text-primary);
+      color: var(--vercel-text);
     }
 
+    /* Mobile Responsive */
     @media (max-width: 768px) {
       #admin-section {
         padding: 16px;
@@ -13744,12 +13811,25 @@
         grid-template-columns: repeat(2, 1fr);
       }
 
+      .admin-stat-box {
+        border-bottom: 1px solid var(--vercel-border);
+      }
+
+      .admin-stat-box:nth-child(2n) {
+        border-right: none;
+      }
+
       .admin-stat-number {
-        font-size: 22px;
+        font-size: 24px;
       }
 
       .admin-actions-grid {
         grid-template-columns: 1fr;
+      }
+
+      .admin-table th,
+      .admin-table td {
+        padding: 12px 16px;
       }
     }
 
@@ -14169,7 +14249,7 @@
         <h1 id="dashboardWelcomeText">Willkommen</h1>
         <p>Deine Übersicht über alle wichtigen Aktivitäten</p>
       </div>
-      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1128</span>
+      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1129</span>
     </div>
 
     <!-- Dashboard Grid Layout - New 30/70 Split -->
