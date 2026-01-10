@@ -12340,8 +12340,12 @@
       flex-shrink: 0 !important;
     }
 
-    #analytics-section .pie-legend {
+    #analytics-section .pie-legend,
+    #analytics-section .chart-legend {
       flex: 1 !important;
+      max-height: 250px !important;
+      overflow-y: auto !important;
+      max-width: 280px !important;
     }
 
     #analytics-section .legend-item {
@@ -12378,6 +12382,10 @@
       color: var(--analytics-text-300) !important;
       margin: 0 !important;
       padding: 0 !important;
+      max-width: 120px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
     }
 
     #analytics-section .legend-value {
@@ -42352,16 +42360,21 @@
         }
       });
 
-      // Render custom legend
+      // Render custom legend mit % Werten
       const legendContainer = document.getElementById(legendId);
       if (legendContainer) {
-        legendContainer.innerHTML = data.map(d => `
+        const total = data.reduce((sum, d) => sum + (d.value || 0), 0);
+        legendContainer.innerHTML = data.map(d => {
+          const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : 0;
+          const displayValue = d.display || d.value;
+          return `
           <div class="analytics-legend-item">
             <div class="analytics-legend-color" style="background: ${d.color}"></div>
             <span class="analytics-legend-label">${d.label}</span>
-            <span class="analytics-legend-value">${d.display || d.value}</span>
+            <span class="analytics-legend-value">${displayValue} (${pct}%)</span>
           </div>
-        `).join('');
+        `;
+        }).join('');
       }
     }
 
@@ -44016,15 +44029,21 @@
       if (showLegend && legendId) {
         const legendContainer = document.getElementById(legendId);
         if (legendContainer) {
-          legendContainer.innerHTML = data.map(d => `
+          // Berechne Total für % Werte
+          const total = data.reduce((sum, d) => sum + (d.value || 0), 0);
+          legendContainer.innerHTML = data.map(d => {
+            const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : 0;
+            const displayValue = d.display || d.value.toLocaleString('de-DE');
+            return `
             <div class="legend-item">
               <div class="legend-label">
                 <div class="legend-dot" style="background: ${d.color};"></div>
                 <span class="legend-text">${d.label}</span>
               </div>
-              <span class="legend-value">${d.display || d.value.toLocaleString('de-DE')}</span>
+              <span class="legend-value">${displayValue} (${pct}%)</span>
             </div>
-          `).join('');
+          `;
+          }).join('');
         }
       }
 
@@ -44407,37 +44426,77 @@
           }
 
           case 'residents': {
-            const residents = artists.filter(a => a.type === 'resident' || !a.type);
+            // Resident Artists = is_guest !== true (default zu Resident)
+            const residents = artists.filter(a => a.is_guest !== true);
+
+            // Aggregiere Stats pro Artist
             const artistStats = {};
+            residents.forEach(artist => {
+              artistStats[artist.id] = {
+                id: artist.id,
+                name: artist.name,
+                location: artist.location_name || artist.studio || 'Unknown',
+                rank: artist.rank || '—',
+                appointments: 0,
+                revenue: 0
+              };
+            });
+
             appointments.forEach(a => {
-              if (a.artist_id) {
-                artistStats[a.artist_id] = artistStats[a.artist_id] || { count: 0, revenue: 0 };
-                artistStats[a.artist_id].count++;
-                artistStats[a.artist_id].revenue += parseFloat(a.total_amount) || 0;
+              if (a.artist_id && artistStats[a.artist_id]) {
+                artistStats[a.artist_id].appointments++;
+                artistStats[a.artist_id].revenue += parseFloat(a.total_amount || a.price || 0);
               }
             });
 
-            const topByRevenue = residents
-              .map(a => ({ name: a.name, revenue: artistStats[a.id]?.revenue || 0 }))
+            // Sortieren für Charts
+            const allStats = Object.values(artistStats);
+            const topByRevenue = [...allStats]
+              .filter(a => a.revenue > 0)
               .sort((a, b) => b.revenue - a.revenue)
               .slice(0, 10);
 
-            const topByAppointments = residents
-              .map(a => ({ name: a.name, count: artistStats[a.id]?.count || 0 }))
-              .sort((a, b) => b.count - a.count)
+            const topByAppointments = [...allStats]
+              .filter(a => a.appointments > 0)
+              .sort((a, b) => b.appointments - a.appointments)
               .slice(0, 10);
 
-            createAnalyticsBarChart('residentRevenueChart',
-              topByRevenue.map(a => a.name),
-              [{ label: 'Revenue €', data: topByRevenue.map(a => a.revenue), backgroundColor: colors.green }],
-              true
-            );
+            // Charts rendern
+            if (topByRevenue.length > 0) {
+              createAnalyticsBarChart('residentRevenueChart',
+                topByRevenue.map(a => a.name),
+                [{ label: 'Revenue €', data: topByRevenue.map(a => a.revenue), backgroundColor: colors.green }],
+                true
+              );
+            }
 
-            createAnalyticsBarChart('residentAppointmentsChart',
-              topByAppointments.map(a => a.name),
-              [{ label: 'Appointments', data: topByAppointments.map(a => a.count), backgroundColor: colors.blue }],
-              true
-            );
+            if (topByAppointments.length > 0) {
+              createAnalyticsBarChart('residentAppointmentsChart',
+                topByAppointments.map(a => a.name),
+                [{ label: 'Appointments', data: topByAppointments.map(a => a.appointments), backgroundColor: colors.blue }],
+                true
+              );
+            }
+
+            // Tabelle rendern
+            const tableBody = document.querySelector('#residentArtistsTable tbody');
+            if (tableBody) {
+              const tableData = allStats.filter(a => a.appointments > 0).sort((a, b) => b.revenue - a.revenue);
+              if (tableData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 40px;">Keine Resident Artists Daten für diesen Zeitraum.</td></tr>';
+              } else {
+                tableBody.innerHTML = tableData.map(artist => `
+                  <tr>
+                    <td class="name">${artist.name}</td>
+                    <td>${artist.location}</td>
+                    <td style="text-align: center;">${artist.rank}</td>
+                    <td class="mono" style="text-align: right;">${artist.appointments.toLocaleString()}</td>
+                    <td class="mono" style="text-align: right; font-weight: 600;">${artist.revenue.toLocaleString('de-DE')} €</td>
+                    <td class="mono" style="text-align: right; color: #34C759;">—</td>
+                  </tr>
+                `).join('');
+              }
+            }
             break;
           }
 
@@ -45046,11 +45105,30 @@
         const studioShare = totalIncome * 0.3; // 30% Studio Share
         const artistShare = totalIncome * 0.7;
 
+        // Zeitraum berechnen (erste und letzte Appointment)
+        let zeitraum = '—';
+        if (artistAppointments.length > 0) {
+          const dates = artistAppointments
+            .map(apt => new Date(apt.start || apt.created_at))
+            .filter(d => !isNaN(d.getTime()))
+            .sort((a, b) => a - b);
+          if (dates.length > 0) {
+            const first = dates[0];
+            const last = dates[dates.length - 1];
+            const formatOpt = { month: 'short', year: '2-digit' };
+            if (first.getMonth() === last.getMonth() && first.getFullYear() === last.getFullYear()) {
+              zeitraum = first.toLocaleDateString('de-DE', formatOpt);
+            } else {
+              zeitraum = `${first.toLocaleDateString('de-DE', formatOpt)} - ${last.toLocaleDateString('de-DE', formatOpt)}`;
+            }
+          }
+        }
+
         return {
           id: artist.id,
           name: artist.name,
           location: artist.location_name || artist.primary_location || 'Unknown',
-          spots: artist.guest_spot_count || 1,
+          zeitraum: zeitraum,
           income: totalIncome,
           studioShare: studioShare,
           artistShare: artistShare,
@@ -45058,30 +45136,31 @@
         };
       }).sort((a, b) => b.income - a.income);
 
-      // KPIs
+      // KPIs berechnen
       const totalGuestArtists = guestArtists.length;
       const totalStudioShare = guestStats.reduce((sum, g) => sum + g.studioShare, 0);
       const avgSharePerArtist = totalGuestArtists > 0 ? totalStudioShare / totalGuestArtists : 0;
-      const returningGuests = guestStats.filter(g => g.spots > 1).length;
+      const bestPerformer = guestStats.length > 0 ? guestStats[0] : null;
 
-      const guestKPIs = document.getElementById('guestKPIs');
-      if (guestKPIs) {
-        guestKPIs.innerHTML = `
-          <div class="kpi-card"><div class="kpi-label">Unique Guest Artists</div><div class="kpi-value">${totalGuestArtists}</div></div>
-          <div class="kpi-card"><div class="kpi-label">Total Studio Share</div><div class="kpi-value">${formatAnalyticsCurrency(totalStudioShare)}</div></div>
-          <div class="kpi-card"><div class="kpi-label">Ø Share pro Artist</div><div class="kpi-value">${formatAnalyticsCurrency(avgSharePerArtist)}</div></div>
-          <div class="kpi-card"><div class="kpi-label">Wiederkehrende</div><div class="kpi-value">${returningGuests}</div></div>
-        `;
-      }
+      // KPIs auf individuelle Elemente updaten
+      const elTotalSpots = document.getElementById('guestsTotalSpots');
+      const elStudioShare = document.getElementById('guestsStudioShare');
+      const elAvgPerGuest = document.getElementById('guestsAvgPerGuest');
+      const elBestPerformer = document.getElementById('guestsBestPerformer');
+
+      if (elTotalSpots) elTotalSpots.textContent = totalGuestArtists;
+      if (elStudioShare) elStudioShare.textContent = formatAnalyticsCurrency(totalStudioShare);
+      if (elAvgPerGuest) elAvgPerGuest.textContent = formatAnalyticsCurrency(avgSharePerArtist);
+      if (elBestPerformer) elBestPerformer.textContent = bestPerformer ? bestPerformer.name.split(' ')[0] : '—';
 
       // Tabelle
       const guestTable = document.querySelector('#guestArtistsTable tbody');
       if (guestTable) {
-        guestTable.innerHTML = guestStats.slice(0, 10).map(g => `
+        guestTable.innerHTML = guestStats.slice(0, 15).map(g => `
           <tr>
             <td class="name">${g.name}</td>
             <td>${g.location}</td>
-            <td class="mono">${g.spots}</td>
+            <td class="mono">${g.zeitraum}</td>
             <td class="mono">${formatAnalyticsCurrency(g.income)}</td>
             <td class="mono">${formatAnalyticsCurrency(g.studioShare)}</td>
             <td class="mono">${formatAnalyticsCurrency(g.artistShare)}</td>
@@ -45089,7 +45168,7 @@
         `).join('') || '<tr><td colspan="6" style="text-align:center; color: var(--text-400);">Keine Guest Artists gefunden</td></tr>';
       }
 
-      console.log(`📊 Guest Artists rendered: ${totalGuestArtists} artists`);
+      console.log(`📊 Guest Artists rendered: ${totalGuestArtists} artists, Total Studio Share: ${formatAnalyticsCurrency(totalStudioShare)}`);
     }
     window.renderAnalyticsGuestArtists = renderAnalyticsGuestArtists;
 
@@ -45222,9 +45301,12 @@
         }
       });
 
-      // Metriken berechnen und sortieren
+      // UUID-Pattern für Filterung (entfernt ungültige User-Namen)
+      const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+      // Metriken berechnen und sortieren (UUID/Unknown User ausfiltern)
       const teamData = Object.values(userStats)
-        .filter(u => u.requests > 0)
+        .filter(u => u.requests > 0 && !isUUID(u.name) && u.name !== 'Unknown')
         .map(user => ({
           ...user,
           conversionRate: user.requests > 0
