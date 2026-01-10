@@ -21849,19 +21849,22 @@
         window.allCustomers = this.data.customers;
         window.customersCache = this.data.customers;
         window.allLocations = this.data.locations;
+        window.allAppointments = this.data.appointments;
+        window.appointmentsCache = this.data.appointments;
         window.dienstplanCache = this.data.dienstplan;
         window.workTrackingCache = this.data.workTracking;
         window.artistsCache = this.data.artists;
         window.projectsCache = this.data.projects;
+        window.requestsCache = this.data.requests;
 
-        // Auch lokale Variablen setzen
-        allRequests = this.data.requests;
-        allArtists = this.data.artists;
-        allCustomers = this.data.customers;
-        customersCache = this.data.customers;
-        allLocations = this.data.locations;
-        dienstplanCache = this.data.dienstplan;
-        artistsCache = this.data.artists;
+        // Auch lokale Variablen setzen (nur wenn im Scope deklariert)
+        if (typeof allRequests !== 'undefined') allRequests = this.data.requests;
+        if (typeof allArtists !== 'undefined') allArtists = this.data.artists;
+        if (typeof allCustomers !== 'undefined') allCustomers = this.data.customers;
+        if (typeof customersCache !== 'undefined') customersCache = this.data.customers;
+        if (typeof allLocations !== 'undefined') allLocations = this.data.locations;
+        if (typeof dienstplanCache !== 'undefined') dienstplanCache = this.data.dienstplan;
+        if (typeof artistsCache !== 'undefined') artistsCache = this.data.artists;
 
         // DataCache auch befüllen
         DataCache.set('requests', this.data.requests);
@@ -44182,8 +44185,8 @@
             // KPIs
             const totalRequests = requests.length;
             const totalAppointments = appointments.length;
-            const convertedReqs = requests.filter(r => r.status === 'scheduled' || r.status === 'finished').length;
-            const conversionRate = totalRequests > 0 ? ((convertedReqs / totalRequests) * 100).toFixed(1) : 0;
+            const convertedRequests = requests.filter(r => r.appointment_id).length;
+            const conversionRate = totalRequests > 0 ? ((convertedRequests / totalRequests) * 100).toFixed(1) : 0;
             const totalRevenue = appointments.reduce((sum, a) => sum + (parseFloat(a.total_amount) || 0), 0);
 
             // Update KPI elements
@@ -44429,16 +44432,25 @@
             // Resident Artists = is_guest !== true (default zu Resident)
             const residents = artists.filter(a => a.is_guest !== true);
 
+            // Location Lookup Map erstellen
+            const locationMap = {};
+            locations.forEach(loc => {
+              locationMap[loc.id] = loc.name || loc.city || 'Unknown';
+            });
+
             // Aggregiere Stats pro Artist
             const artistStats = {};
             residents.forEach(artist => {
+              // Location Name aus locations Array nachschlagen
+              const locationName = artist.location_id ? (locationMap[artist.location_id] || 'Unknown') : 'Unknown';
               artistStats[artist.id] = {
                 id: artist.id,
                 name: artist.name,
-                location: artist.location_name || artist.studio || 'Unknown',
+                location: locationName,
                 rank: artist.rank || '—',
                 appointments: 0,
-                revenue: 0
+                revenue: 0,
+                finishedCount: 0
               };
             });
 
@@ -44446,6 +44458,10 @@
               if (a.artist_id && artistStats[a.artist_id]) {
                 artistStats[a.artist_id].appointments++;
                 artistStats[a.artist_id].revenue += parseFloat(a.total_amount || a.price || 0);
+                // Finished/Completed zählen für Conversion
+                if (a.status === 'finished' || a.state === 'Finished' || a.status === 'completed') {
+                  artistStats[a.artist_id].finishedCount++;
+                }
               }
             });
 
@@ -44485,16 +44501,21 @@
               if (tableData.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 40px;">Keine Resident Artists Daten für diesen Zeitraum.</td></tr>';
               } else {
-                tableBody.innerHTML = tableData.map(artist => `
+                tableBody.innerHTML = tableData.map(artist => {
+                  const conversion = artist.appointments > 0
+                    ? ((artist.finishedCount / artist.appointments) * 100).toFixed(1)
+                    : 0;
+                  return `
                   <tr>
                     <td class="name">${artist.name}</td>
                     <td>${artist.location}</td>
                     <td style="text-align: center;">${artist.rank}</td>
                     <td class="mono" style="text-align: right;">${artist.appointments.toLocaleString()}</td>
                     <td class="mono" style="text-align: right; font-weight: 600;">${artist.revenue.toLocaleString('de-DE')} €</td>
-                    <td class="mono" style="text-align: right; color: #34C759;">—</td>
+                    <td class="mono" style="text-align: right; color: #34C759;">${conversion}%</td>
                   </tr>
-                `).join('');
+                `;
+                }).join('');
               }
             }
             break;
