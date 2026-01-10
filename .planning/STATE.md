@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-10 | Version: 3.1120**
-**UPDATE: Auth Hardening + Payment Status Fixes!**
+**Stand: 2026-01-10 | Version: 3.1200**
+**UPDATE: Auth Hardening INTEGRATED + Admin Panel IMPLEMENTED!**
 
 ---
 
@@ -22,31 +22,80 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 4.5: PAYMENT STATUS FIX                       ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 4.6: AUTH HARDENING INLINE INTEGRATION        ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 4.7: ADMIN PANEL                              ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5: PERFORMANCE & POLISH                       → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## Auth Hardening (2026-01-10) ✅ IMPLEMENTIERT
+## Auth Hardening INLINE (2026-01-10) ✅ VOLLSTÄNDIG INTEGRIERT
 
-### Neue Datei: `auth-hardening.js`
+### In management-system.html integriert (NICHT mehr als externe Datei)
 
-| Feature | Status | Details |
+| Feature | Status | Location |
 |---------|--------|----------|
-| Rate Limiting | ✅ BEREIT | Max 5 Versuche/Min, 5 Min Sperre |
-| Session Expiry | ✅ BEREIT | 24h Timeout mit Activity Refresh |
-| Auto-Logout | ✅ BEREIT | Bei abgelaufener Session |
+| Rate Limiting | ✅ LIVE | Zeile 38765-38812 |
+| Session Expiry | ✅ LIVE | Zeile 38833-38907 |
+| handleLogin Check | ✅ LIVE | Zeile 38940-38946 |
+| Logout Session Clear | ✅ LIVE | Zeile 39405-39406 |
 
-### Integration
+### Funktionen
 
-| Schritt | Status | Details |
-|---------|--------|----------|
-| Script erstellt | ✅ | `auth-hardening.js` gepusht |
-| Integrations-Anleitung | ✅ | `.planning/AUTH_HARDENING_INTEGRATION.md` |
-| In HTML einbinden | ⚠️ PENDING | Muss manuell eingebunden werden |
+| Funktion | Beschreibung |
+|----------|--------------|
+| `checkLoginRateLimit(id)` | Prüft Rate Limit vor Login |
+| `recordLoginAttempt(id, success)` | Zeichnet Versuch auf |
+| `saveSession(userData)` | Speichert Session (24h) |
+| `isSessionValid()` | Prüft Session-Gültigkeit |
+| `clearSession()` | Löscht Session |
 
-**Nächster Schritt:** Script in `management-system.html` einbinden gemäß Integrations-Anleitung.
+---
+
+## Admin Panel (2026-01-10) ✅ IMPLEMENTIERT
+
+### HTML Section: `#admin-section`
+
+| Card | Inhalt |
+|------|--------|
+| System Status | Supabase Connection, Auth Session, Last Refresh |
+| Database Stats | Total Requests, Customers, Artists, Events |
+| Payment Overview | Pending, Paid, Expired Links (>6d), Total Revenue |
+| Cron Jobs | Tabelle aller Cron Jobs mit Status |
+| Manual Actions | Payment Reminders, Cleanup Expired Links, Refresh All |
+| Edge Functions | Tabelle aller Edge Functions mit Version |
+
+### JavaScript Funktionen
+
+| Funktion | Beschreibung |
+|----------|--------------|
+| `updateAdminNavVisibility()` | Zeigt Admin-Tab nur für Admins |
+| `loadAdminPanelData()` | Lädt alle Admin-Daten |
+| `updateSystemStatus()` | Supabase & Auth Status |
+| `updateDatabaseStats()` | Zählt Datensätze |
+| `updatePaymentStats()` | Payment-Statistiken |
+| `triggerPaymentReminders()` | Manueller Reminder-Versand |
+| `cleanupExpiredLinks()` | Bereinigt alte Payment Links |
+
+### Mobile Navigation
+
+Admin-Tab hinzugefügt:
+- Gear/Settings Icon
+- Nur sichtbar für `role === 'admin'` oder `role === 'superadmin'`
+- Route: `handleMobileNav('admin')` -> `showAdminSection()`
+
+### CSS Styles
+
+Vollständiges Styling für:
+- Admin Cards mit Header/Body
+- Status Grid & Stats Grid
+- Tabellen für Cron Jobs & Edge Functions
+- Action Buttons mit Hover-Effekten
+- Dark Mode Support
+- Mobile Responsive
 
 ---
 
@@ -65,27 +114,6 @@
 | `auto_cancel_unpaid_requests()` erweitert | ✅ | Prüft jetzt auch `finished` und `open_request` |
 | 8 alte Links bereinigt | ✅ | payment_status auf 'canceled' gesetzt |
 
-### Payment Status Check Report
-
-| Check | Status | Details |
-|-------|--------|----------|
-| Request paid → Appointment paid | ✅ OK | 0 paid requests (noch keine Zahlungen) |
-| Alte Links (>6 Tage) aktiv | ✅ FIXED | 8 → 0 (alle bereinigt) |
-| Alte Links (>30 Tage) aktiv | ✅ FIXED | 8 → 0 (alle bereinigt) |
-| Auto-Cancel Cron läuft | ✅ OK | Täglich 06:00 UTC, alle succeeded |
-| Stripe Links Deaktivierung | ⚠️ N/A | Via payment-reminders (nach 6 Tagen) |
-
----
-
-## Supabase Migration (2026-01-10)
-
-Neue Migration: `fix_auto_cancel_unpaid_requests`
-
-```sql
--- Erweitert um auch 'finished' und 'open_request' Status zu erfassen
-WHERE status IN ('scheduled', 'pending', 'finished', 'open_request')
-```
-
 ---
 
 ## Cron Jobs Status
@@ -99,18 +127,14 @@ WHERE status IN ('scheduled', 'pending', 'finished', 'open_request')
 
 ## Nächste Schritte
 
-### Sofort (Manuell)
+### Sofort
 
-1. **Auth Hardening in HTML integrieren**
-   - Script-Tag einfügen
-   - handleLogin anpassen
-   - Siehe: `.planning/AUTH_HARDENING_INTEGRATION.md`
+1. **management-system.html zu GitHub pushen** (2.2MB - benötigt spezielle Lösung)
 
 ### Backlog
 
 2. **Overpermissive RLS Policies reviewen**
 3. **Performance Optimierung**
-4. **Admin Panel erweitern**
 
 ---
 
