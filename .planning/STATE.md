@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-10 | Version: 3.1118**
-**UPDATE: Phase 3 Error Tracking IMPLEMENTIERT!**
+**Stand: 2026-01-10 | Version: 3.1119**
+**UPDATE: Security Scan durchgeführt!**
 
 ---
 
@@ -16,9 +16,65 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 3: ERROR TRACKING                             ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 3.5: SECURITY SCAN                            ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 4: PERFORMANCE & CLEANUP                      → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## Security Scan Ergebnisse (2026-01-10)
+
+### Secrets Scan
+
+| Secret Type | Found? | Location |
+|-------------|--------|----------|
+| Stripe Secret Key (sk_live_, sk_test_) | ✅ CLEAN | Nicht im Frontend |
+| Stripe Publishable Key | ✅ OK | Frontend (erwartet) |
+| Resend API Key (re_) | ✅ CLEAN | Nicht im Frontend |
+| Supabase Anon Key | ✅ OK | Frontend (erwartet) |
+| Supabase Service Key | ✅ CLEAN | Nur in Edge Functions |
+
+### Auth System Analyse
+
+| Aspekt | Status | Details |
+|--------|--------|----------|
+| Login-Funktion | ⚠️ CUSTOM | Via profiles Tabelle |
+| Passwort-Hashing | ✅ bcrypt | profiles.hashed_password |
+| Rate Limiting | ❌ FEHLT | Brute-Force möglich |
+| Session Management | ⚠️ BASIC | localStorage, kein Expiry |
+| Token Rotation | ❌ FEHLT | Kein Token-System |
+| Rollen-Check | ⚠️ FRONTEND | Nur in localStorage |
+
+### Angriffsvektoren
+
+| Vektor | Risiko | Details |
+|--------|--------|----------|
+| Brute Force | 6/10 | Kein Rate Limiting |
+| Session Hijacking | 5/10 | localStorage ohne Expiry |
+| Privilege Escalation | 4/10 | Rolle in localStorage änderbar |
+| SQL Injection | 2/10 | Supabase schützt |
+| XSS | 3/10 | Teilweise innerHTML |
+| Secret Exposure | 1/10 | Alle Secrets sicher |
+
+### Edge Functions Status
+
+| Function | Version | Status | Issues |
+|----------|---------|--------|--------|
+| stripe-webhook | v15 | ✅ ACTIVE | Payment Status wird updated |
+| payment-reminders | v3 | ✅ ACTIVE | Cron läuft, Emails gehen raus |
+| create-payment-link | v23 | ✅ ACTIVE | Secrets sicher via ENV |
+| send-cancellation-email | v3 | ✅ ACTIVE | - |
+| send-manual-reminder | v2 | ✅ ACTIVE | - |
+| seed-auth-from-profiles | v3 | ✅ ACTIVE | - |
+| create-wannado-checkout | v2 | ✅ ACTIVE | - |
+
+### Cron Jobs Status
+
+| Job | Schedule | Letzte 5 Runs |
+|-----|----------|---------------|
+| payment-reminders-daily | 08:00 UTC | ✅ ALLE SUCCEEDED |
 
 ---
 
@@ -31,20 +87,11 @@
 | **Edge Functions** | "0 deployed" | **7 AKTIV deployed!** |
 | **Payment Reminders** | "fehlen" | **✓ payment-reminders v3** |
 | **Auto-Cancel** | "fehlt" | **✓ Teil von payment-reminders** |
-| **Stripe Webhook** | "unklar" | **✓ stripe-webhook v13** |
+| **Stripe Webhook** | "unklar" | **✓ stripe-webhook v15** |
 | **Appointment Creation** | "Trigger broken" | **✓ Via create-payment-link** |
+| **Secrets Exposed** | "unklar" | **✓ KEINE im Frontend** |
 
-### ~~ALARMSTUFE ROT~~ → ✅ RESOLVED (2026-01-10)
-
-| Finding | Impact | Status |
-|---------|--------|--------|
-| ~~7 Tabellen mit Policies aber RLS DISABLED~~ | ~~Policies haben KEINE WIRKUNG!~~ | **✅ RLS AKTIVIERT** |
-| ~~`projects` (25.543 Rows) ohne RLS~~ | ~~Tattoo-Projekte öffentlich~~ | **✅ RLS AKTIVIERT** |
-| ~~Backup-Tabellen ohne RLS~~ | ~~Alte Kundendaten exponiert~~ | **✅ TABELLEN GELÖSCHT** |
-| ~~5 Temp-Tabellen mit Emails~~ | ~~DSGVO-Risiko~~ | **✅ TABELLEN GELÖSCHT** |
-| ~~Infinite Recursion in Task-Policies~~ | ~~System-Crash~~ | **✅ SIMPLE POLICIES** |
-
-### RLS Fix Details (2026-01-10)
+### RLS Status (RESOLVED 2026-01-10)
 
 | Aktion | Details |
 |--------|----------|
@@ -52,63 +99,6 @@
 | **Policies gelöscht** | 18 Policies mit zirkulären Referenzen |
 | **Policies erstellt** | 5 × `simple_all_access` ohne Subqueries |
 | **Tabellen gelöscht** | 7 Backup/Temp-Tabellen mit sensiblen Daten |
-| **Playwright Test** | ✅ BESTANDEN - System funktioniert |
-
-### ALARMSTUFE GELB
-
-| Finding | Impact | Aktion |
-|---------|--------|--------|
-| ~~RLS Status unklar~~ | ~~Potenzielle Datenlecks~~ | **✅ RESOLVED** - RLS aktiviert & getestet! |
-| Overpermissive Policies | `qual=true` erlaubt alles | Review nötig (BACKLOG) |
-| ~~Kein Error Tracking~~ | ~~Fehler bleiben unbemerkt~~ | **✅ RESOLVED** - Error Panel implementiert! |
-| ~~79 Tabellen/Views~~ | ~~Cleanup nötig~~ | **✅ 7 Tabellen gelöscht** |
-| ~~Cron Job Status~~ | ~~payment-reminders Auto-Trigger?~~ | **✅ VERIFIZIERT** - Läuft täglich 08:00 UTC |
-
-### Error Tracking System (2026-01-10) ✅ IMPLEMENTIERT
-
-| Komponente | Status | Details |
-|------------|--------|----------|
-| **Error Collector** | ✅ AKTIV | `window.errorLog[]` mit max 100 Einträgen |
-| **Error Panel UI** | ✅ AKTIV | Badge im Header + Modal Panel |
-| **Global Handler** | ✅ AKTIV | `window.onerror` + `unhandledrejection` |
-| **Console Override** | ✅ AKTIV | `console.error` + `console.warn` werden gefangen |
-| **Playwright Test** | ✅ BESTANDEN | 3 Warnings erfolgreich erfasst |
-
-**Analyse-Ergebnisse:**
-
-| Pattern | Anzahl |
-|---------|--------|
-| `console.error` | 298 |
-| `console.log` | 770 |
-| `console.warn` | 43 |
-| `try-catch` Blöcke | 204 |
-| Error Notifications | 49 |
-
-### pg_cron Jobs (VERIFIZIERT - 9 Jobs AKTIV!)
-
-| Job | Schedule | Funktion |
-|-----|----------|----------|
-| `payment-reminders-daily` | **08:00 UTC täglich** | **Edge Function payment-reminders** |
-| `auto-cancel-unpaid` | 06:00 UTC täglich | SQL: `auto_cancel_unpaid_requests()` |
-| `auto-finish-appointments` | Alle 15 Min | SQL: `auto_finish_past_appointments()` |
-| `auto-archive-old-requests` | 03:00 UTC täglich | SQL: `auto_archive_old_requests()` |
-| `roll_upcoming_status_daily` | 02:00 UTC täglich | Upcoming Slots Status Update |
-| `permanent-delete-old-requests` | 03:00 UTC täglich | Hard Delete nach 5 Tagen |
-| `auto-complete-past-guest-slots` | 03:00 UTC täglich | Guest Slots abschließen |
-| `refresh-analytics-hourly` | Stündlich | Analytics Views refreshen |
-
----
-
-## Blockierende Issues (ALLE RESOLVED!)
-
-| Issue | Status | Kommentar |
-|-------|--------|-----------|
-| ~~ISSUE-001: Payment Reminders~~ | **RESOLVED** | payment-reminders v3 AKTIV |
-| ~~ISSUE-002: Auto-Cancel~~ | **RESOLVED** | Teil von payment-reminders |
-| ~~ISSUE-003: Stripe Webhook~~ | **RESOLVED** | stripe-webhook v13 AKTIV |
-| ~~ISSUE-004: Appointment Trigger~~ | **RESOLVED** | create-payment-link erstellt Appointment |
-| ~~ISSUE-005: RLS Policies~~ | **RESOLVED** | RLS aktiviert, Policies gefixt |
-| ~~ISSUE-007: Error Tracking~~ | **RESOLVED** | Error Panel v1.0 implementiert |
 
 ---
 
@@ -117,26 +107,41 @@
 ### Abgeschlossen ✓
 
 1. **~~Cron Job für payment-reminders prüfen~~** ✓ VERIFIZIERT
-2. **~~RLS Audit durchführen~~** ✓ DONE - 8 Tabellen aktiviert
-3. **~~Error Tracking implementieren~~** ✓ DONE - Error Panel v1.0
+2. **~~RLS Audit durchführen~~** ✓ DONE
+3. **~~Error Tracking implementieren~~** ✓ DONE
+4. **~~Security Scan durchführen~~** ✓ DONE
 
-### Diese Woche (Backlog)
+### Diese Woche (Priorität)
 
-4. **Overpermissive Policies reviewen**
-   - `qual=true` Policies identifizieren
-   - Rollenbasierte Policies erstellen
+5. **Rate Limiting implementieren** (HOCH)
+   - Login-Funktion absichern
+   - Max 5 Versuche pro Minute
 
-5. **Error Tracking V2 (Optional)**
-   - Supabase Logging für persistente Errors
-   - Email-Alerts bei kritischen Fehlern
+6. **Session Expiry einführen** (MITTEL)
+   - 24h Timeout
+   - Auto-Logout
 
-### Später
+### Backlog
 
-6. **Performance Optimierung**
-   - Code Splitting evaluieren
-   - Lazy Loading für große Komponenten
+7. **Overpermissive Policies reviewen**
+8. **Backend Role Checks** (RLS erweitern)
+9. **Performance Optimierung**
 
 ---
 
-*Aktualisiert am 2026-01-10 mit Claude Code*
-*Phase 3 Error Tracking implementiert am 2026-01-10!*
+## pg_cron Jobs (9 Jobs AKTIV!)
+
+| Job | Schedule | Funktion |
+|-----|----------|----------|
+| `payment-reminders-daily` | **08:00 UTC täglich** | Edge Function |
+| `auto-cancel-unpaid` | 06:00 UTC täglich | SQL Function |
+| `auto-finish-appointments` | Alle 15 Min | SQL Function |
+| `auto-archive-old-requests` | 03:00 UTC täglich | SQL Function |
+| `roll_upcoming_status_daily` | 02:00 UTC täglich | Status Update |
+| `permanent-delete-old-requests` | 03:00 UTC täglich | Hard Delete |
+| `auto-complete-past-guest-slots` | 03:00 UTC täglich | Guest Slots |
+| `refresh-analytics-hourly` | Stündlich | Analytics Views |
+
+---
+
+*Aktualisiert am 2026-01-10 mit Claude Code - Security Scan*
