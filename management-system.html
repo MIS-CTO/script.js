@@ -2193,17 +2193,17 @@
     }
     .request-badge {
       padding:4px 10px;
-      border-radius:12px;
-      font-size:10px;
-      font-weight:700;
+      border-radius:4px;
+      font-size:11px;
+      font-weight:600;
       text-transform:uppercase;
-      letter-spacing:0.5px;
+      letter-spacing:0.3px;
     }
-    .request-badge.open_request { background:#dc3545; color:white; }
-    .request-badge.pending { background:#ffc107; color:#000; }
-    .request-badge.scheduled { background:#28a745; color:white; }
-    .request-badge.finished { background:#6c757d; color:white; }
-    .request-badge.canceled { background:#dc3545; color:white; }
+    .request-badge.open_request { background:#fee2e2; color:#dc2626; }
+    .request-badge.pending { background:#fef3c7; color:#d97706; }
+    .request-badge.scheduled { background:#d1fae5; color:#059669; }
+    .request-badge.finished { background:#f3f4f6; color:#6b7280; }
+    .request-badge.canceled { background:#fecaca; color:#b91c1c; }
 
     /* Priority Badges */
     .priority-badge {
@@ -2234,26 +2234,26 @@
       color:#6B7280;
     }
 
-    /* Reference Images */
+    /* Reference Images - Vercel Style */
     .reference-images {
       display:flex;
       gap:8px;
       flex-wrap:wrap;
-      margin-top:12px;
+      margin-top:8px;
     }
     .reference-image-thumb {
-      width:80px;
-      height:80px;
-      border-radius:8px;
+      width:72px;
+      height:72px;
+      border-radius:6px;
       overflow:hidden;
       cursor:pointer;
-      border:2px solid rgba(0,0,0,0.06);
-      transition:all 0.2s;
+      border:1px solid #eaeaea;
+      transition:all 0.15s ease;
     }
     .reference-image-thumb:hover {
-      transform:scale(1.05);
-      border-color:var(--accent);
-      box-shadow:0 4px 12px rgba(0,0,0,0.15);
+      transform:scale(1.03);
+      border-color:#0070f3;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
     .reference-image-thumb img {
       width:100%;
@@ -2963,23 +2963,23 @@
     }
     .artist-tag {
       display:inline-block;
-      padding:6px 12px;
-      background:#f3f4f6;
-      border:1px solid #d1d5db;
-      border-radius:6px;
-      font-size:13px;
-      font-weight:600;
-      color:#374151;
+      padding:4px 10px;
+      background:#f0f9ff;
+      border:1px solid #bae6fd;
+      border-radius:4px;
+      font-size:12px;
+      font-weight:500;
+      color:#0369a1;
     }
     .artist-tag-small {
       display:inline-block;
-      padding:4px 10px;
-      background:#f3f4f6;
-      border:1px solid #d1d5db;
-      border-radius:6px;
+      padding:3px 8px;
+      background:#f0f9ff;
+      border:1px solid #bae6fd;
+      border-radius:4px;
       font-size:11px;
-      font-weight:600;
-      color:#374151;
+      font-weight:500;
+      color:#0369a1;
     }
 
     .request-name {
@@ -2993,39 +2993,68 @@
       color:var(--muted);
     }
     
-    /* Request Detail Styles */
+    /* Request Detail Styles - Vercel Design */
     .detail-section {
-      margin-bottom:32px;
+      margin-bottom:20px;
+      padding:16px 20px;
+      background:#fafafa;
+      border:1px solid #eaeaea;
+      border-radius:8px;
     }
     .detail-section h3 {
-      font-size:1rem;
+      font-size:12px;
       font-weight:600;
       margin:0 0 12px 0;
-      color:#1d1d1f;
-      border-bottom:2px solid rgba(0,0,0,0.06);
-      padding-bottom:8px;
+      color:#666;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .detail-section h3::before {
+      content:'';
+      display:inline-block;
+      width:3px;
+      height:12px;
+      background:#0070f3;
+      border-radius:2px;
     }
     .detail-grid {
       display:grid;
-      grid-template-columns:repeat(2, 1fr);
-      gap:16px;
+      grid-template-columns:repeat(4, 1fr);
+      gap:12px 16px;
+    }
+    @media (max-width:768px) {
+      .detail-grid {
+        grid-template-columns:repeat(2, 1fr);
+      }
     }
     .detail-item {
       display:flex;
       flex-direction:column;
-      gap:6px;
+      gap:4px;
     }
     .detail-label {
-      font-size:11px;
-      font-weight:700;
-      color:var(--muted);
+      font-size:10px;
+      font-weight:600;
+      color:#888;
       text-transform:uppercase;
-      letter-spacing:0.8px;
+      letter-spacing:0.4px;
     }
     .detail-value {
-      font-size:15px;
-      color:var(--ink);
+      font-size:14px;
+      color:#000;
       font-weight:500;
+      line-height:1.4;
+    }
+    .detail-value .no-data-placeholder {
+      color:#999;
+      font-style:italic;
+      font-weight:400;
+    }
+    .detail-item.full-width {
+      grid-column:1/-1;
     }
     .action-buttons {
       display:flex;
@@ -15388,12 +15417,13 @@
 
           <div class="header-controls">
             <div class="time-filter">
-              <button class="time-pill" data-range="12h" onclick="setAnalyticsTimeRange('12h')">12h</button>
               <button class="time-pill" data-range="24h" onclick="setAnalyticsTimeRange('24h')">24h</button>
-              <button class="time-pill" data-range="3d" onclick="setAnalyticsTimeRange('3d')">3d</button>
               <button class="time-pill" data-range="7d" onclick="setAnalyticsTimeRange('7d')">7d</button>
+              <button class="time-pill" data-range="14d" onclick="setAnalyticsTimeRange('14d')">14d</button>
               <button class="time-pill" data-range="30d" onclick="setAnalyticsTimeRange('30d')">30d</button>
-              <button class="time-pill" data-range="90d" onclick="setAnalyticsTimeRange('90d')">90d</button>
+              <button class="time-pill" data-range="3m" onclick="setAnalyticsTimeRange('3m')">3m</button>
+              <button class="time-pill" data-range="6m" onclick="setAnalyticsTimeRange('6m')">6m</button>
+              <button class="time-pill" data-range="1y" onclick="setAnalyticsTimeRange('1y')">1y</button>
               <button class="time-pill active" data-range="all" onclick="setAnalyticsTimeRange('all')">All</button>
             </div>
 
@@ -26043,7 +26073,7 @@
         const container = document.getElementById('requestStatusChart');
 
         if (!container) {
-          console.warn('⚠️ Request status chart container not found');
+          // Container optional - silent skip wenn nicht vorhanden
           return;
         }
 
@@ -26153,7 +26183,7 @@
         const container = document.getElementById('appointmentStatusChart');
 
         if (!container) {
-          console.warn('⚠️ Appointment status chart container not found');
+          // Container optional - silent skip wenn nicht vorhanden
           return;
         }
 
@@ -26265,7 +26295,7 @@
         // RACE-CONDITION FIX: Check if calculateProjectMetrics is available
         // ═══════════════════════════════════════════════════════════════
         if (typeof window.calculateProjectMetrics !== 'function') {
-          console.warn('⚠️ calculateProjectMetrics not yet available, skipping KPIs');
+          // Funktion noch nicht geladen - silent skip
           return;
         }
 
@@ -27719,20 +27749,22 @@
         var activityCardsHtml = await generateActivityCards(requestId, request);
 
         detailEl.innerHTML = `
-          <div style="margin-bottom:24px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-              <h2 style="margin:0; font-size:24px; font-weight:600;">
-                ${request.request_number || `#${request.id.substring(0, 8).toUpperCase()}`}
-              </h2>
-              <span class="request-badge ${request.status}" style="font-size:13px; padding:6px 16px;">
+          <div style="margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #eaeaea;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <h2 style="margin:0; font-size:18px; font-weight:600; color:#000;">
+                  ${request.request_number || `#${request.id.substring(0, 8).toUpperCase()}`}
+                </h2>
+                ${request.location ? `
+                  <span style="color:#666; font-size:13px;">
+                    ${request.location.name}${request.location.city ? ` • ${request.location.city}` : ''}
+                  </span>
+                ` : ''}
+              </div>
+              <span class="request-badge ${request.status}">
                 ${statusNames[request.status] || request.status}
               </span>
             </div>
-            ${request.location ? `
-              <div style="color:var(--muted); font-size:14px;">
-                ${request.location.name}${request.location.city ? ` (${request.location.city})` : ''}
-              </div>
-            ` : ''}
           </div>
 
           <div class="detail-section">
@@ -27817,15 +27849,19 @@
             <div class="detail-item" style="margin-top:16px;">
               <div class="detail-label">Artist Präferenz</div>
               <div class="detail-value">
-                ${request.artist_preference && request.artist_preference.trim() ? `
-                  <div class="artist-preference-tags">
-                    ${request.artist_preference.split(',')
-                      .map(name => name.trim())
-                      .filter(name => name.length > 0)
-                      .map(name => `<span class="artist-tag">${name}</span>`)
-                      .join('')}
-                  </div>
-                ` : '<span class="no-data-placeholder">No entry data</span>'}
+                ${(() => {
+                  const artistPref = request.artist_preference || request.preferred_artist;
+                  if (artistPref && artistPref.trim()) {
+                    return `<div class="artist-preference-tags">
+                      ${artistPref.split(',')
+                        .map(name => name.trim())
+                        .filter(name => name.length > 0)
+                        .map(name => '<span class="artist-tag">' + name + '</span>')
+                        .join('')}
+                    </div>`;
+                  }
+                  return '<span class="no-data-placeholder">No entry data</span>';
+                })()}
               </div>
             </div>
 
@@ -43756,7 +43792,7 @@
 
     // Analytics State (V2) - Using existing analyticsCharts object
     let analyticsCurrentView = 'dashboard';
-    let analyticsTimeRange = '30d';
+    let analyticsTimeRange = 'all';
     let analyticsLocationFilter = '';
     // NOTE: analyticsCharts already defined above, reusing it
 
@@ -44098,11 +44134,22 @@
             if (legConv) legConv.textContent = convertedRequests.toLocaleString('de-DE');
             if (legNotConv) legNotConv.textContent = (totalRequests - convertedRequests).toLocaleString('de-DE');
 
-            // Origins Pie Chart
+            // Origins Pie Chart (ohne "unknown")
             const originCounts = {};
+            const dashboardOriginColors = {
+              'Contactform': '#0070f3',
+              'WhatsApp': '#25D366',
+              'Phone': '#6366f1',
+              'Instagram': '#E4405F',
+              'Facebook': '#1877F2',
+              'booking_form': '#10b981'
+            };
             requests.forEach(r => {
               const origin = r.origin || 'Unknown';
-              originCounts[origin] = (originCounts[origin] || 0) + 1;
+              // Skip "unknown" für Dashboard
+              if (origin.toLowerCase() !== 'unknown') {
+                originCounts[origin] = (originCounts[origin] || 0) + 1;
+              }
             });
 
             const originData = Object.entries(originCounts)
@@ -44111,7 +44158,7 @@
               .map(([label, value], i) => ({
                 label: label,
                 value: value,
-                color: [colors.blue, colors.purple, colors.green, colors.orange, colors.gray][i],
+                color: dashboardOriginColors[label] || [colors.blue, colors.purple, colors.green, colors.orange, colors.gray][i],
                 display: value.toLocaleString('de-DE')
               }));
 
@@ -44151,32 +44198,57 @@
           case 'request-origins':
             // Request Origins Sub-View
             const origCounts = {};
+            let unknownCount = 0;
             requests.forEach(r => {
               const origin = r.origin || 'Unknown';
-              origCounts[origin] = (origCounts[origin] || 0) + 1;
+              // Zähle "unknown" separat - nicht im Pie Chart
+              if (origin.toLowerCase() === 'unknown') {
+                unknownCount++;
+              } else {
+                origCounts[origin] = (origCounts[origin] || 0) + 1;
+              }
             });
+
+            // Vercel-Style Farben für Origins
+            const originColors = {
+              'Contactform': '#0070f3',
+              'WhatsApp': '#25D366',
+              'Phone': '#6366f1',
+              'Instagram': '#E4405F',
+              'Facebook': '#1877F2',
+              'booking_form': '#10b981'
+            };
 
             const origData = Object.entries(origCounts)
               .sort((a, b) => b[1] - a[1])
               .map(([label, value], i) => ({
                 label: label,
                 value: value,
-                color: [colors.blue, colors.purple, colors.green, colors.orange, colors.cyan, colors.gray][i % 6],
+                color: originColors[label] || [colors.blue, colors.purple, colors.green, colors.orange, colors.cyan, colors.gray][i % 6],
                 display: value.toLocaleString('de-DE')
               }));
+
+            // Update unknown count indicator if exists
+            const unknownIndicator = document.getElementById('originsUnknownCount');
+            if (unknownIndicator) {
+              unknownIndicator.textContent = unknownCount.toLocaleString('de-DE');
+            }
 
             if (origData.length > 0) {
               createAnalyticsPieChart('originsMainPie', 'originsMainLegend', origData);
             }
 
-            // Sources Over Time Chart
+            // Sources Over Time Chart (ohne "unknown")
             const monthlyOrigins = {};
             requests.forEach(r => {
+              const origin = r.origin || 'Unknown';
+              // Skip "unknown" für Timeline
+              if (origin.toLowerCase() === 'unknown') return;
+
               const date = new Date(r.created_at);
               if (!isNaN(date.getTime())) {
                 const monthKey = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
                 if (!monthlyOrigins[monthKey]) monthlyOrigins[monthKey] = {};
-                const origin = r.origin || 'Unknown';
                 monthlyOrigins[monthKey][origin] = (monthlyOrigins[monthKey][origin] || 0) + 1;
               }
             });
@@ -44188,8 +44260,8 @@
               const originDatasets = topOrigins.map((origin, i) => ({
                 label: origin,
                 data: originMonths.map(m => monthlyOrigins[m]?.[origin] || 0),
-                borderColor: [colors.blue, colors.purple, colors.green][i],
-                backgroundColor: [`rgba(0, 112, 243, 0.1)`, `rgba(139, 92, 246, 0.1)`, `rgba(16, 185, 129, 0.1)`][i]
+                borderColor: originColors[origin] || [colors.blue, colors.purple, colors.green][i],
+                backgroundColor: `${originColors[origin] || colors.blue}20`
               }));
               createAnalyticsLineChart('originsTimeline', originMonths, originDatasets);
             }
@@ -45020,19 +45092,24 @@
     // ========================================
     function renderAnalyticsTeamPerformance() {
       const colors = getAnalyticsChartColors();
-      const requests = window.requestsCache || CentralDataManager?.data?.requests || [];
-      const appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
+      // Nutze gefilterte Daten nach Zeitraum
+      let requests = window.requestsCache || CentralDataManager?.data?.requests || [];
+      let appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
 
-      // Booking Team Members (IDs oder Namen aus profiles)
+      // Zeit-Filter anwenden
+      requests = getTimeFilteredData(requests, 'created_at');
+      appointments = getTimeFilteredData(appointments, 'created_at');
+
+      // Booking Team Members
       const bookingTeam = ['Cara', 'Aman', 'Bennet', 'Fay', 'Jan'];
 
       // Berechne Stats pro Team-Member
       const teamStats = bookingTeam.map(memberName => {
         // Finde Requests die von diesem Team-Member bearbeitet wurden
+        // Nutze assigned_to (enthält direkt den Namen, nicht _name Suffix)
         const memberRequests = requests.filter(r =>
-          r.assigned_to_name === memberName ||
-          r.processed_by_name === memberName ||
-          r.created_by_name === memberName
+          r.assigned_to === memberName ||
+          r.booking_team_member_name === memberName
         );
 
         // Finde konvertierte Requests (die zu Appointments wurden)
