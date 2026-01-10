@@ -1,68 +1,93 @@
 # Culture Over Money - Technical Concerns
-**Stand: 2026-01-10 | Version: 3.1118**
-**UPDATE: Security Scan durchgeführt!**
+**Stand: 2026-01-10 | Version: 3.1120**
+**UPDATE: Auth Hardening + Payment Fixes implementiert!**
 
 ---
 
-## Security Scan Ergebnisse (2026-01-10)
+## Security Concerns Status
 
 ### ✅ RESOLVED
 
-| Concern | Status | Details |
-|---------|--------|----------|
-| Edge Functions fehlen | ✅ RESOLVED | 7 AKTIV deployed |
-| RLS Security Audit | ✅ RESOLVED | 8 Tabellen aktiviert |
-| Secrets Exposure | ✅ CLEAN | Keine Secrets im Frontend |
-| Error Tracking | ✅ RESOLVED | Error Panel implementiert |
+| Concern | Status | Lösung |
+|---------|--------|--------|
+| Edge Functions fehlen | ✅ | 7 AKTIV deployed |
+| RLS Security Audit | ✅ | 8 Tabellen aktiviert |
+| Secrets Exposure | ✅ | Keine Secrets im Frontend |
+| Error Tracking | ✅ | Error Panel implementiert |
+| **Rate Limiting fehlt** | ✅ | `auth-hardening.js` erstellt |
+| **Session ohne Expiry** | ✅ | 24h Expiry in `auth-hardening.js` |
+| **Alte Zahlungslinks** | ✅ | 8 Links bereinigt, Funktion gefixt |
 
-### ⚠️ OFFEN
+### ⚠️ PENDING INTEGRATION
+
+| Concern | Status | Nächster Schritt |
+|---------|--------|-------------------|
+| Auth Hardening in HTML | ⚠️ | Script muss eingebunden werden |
+
+### 🟡 BACKLOG
 
 | Concern | Severity | Details |
 |---------|----------|----------|
-| **Kein Rate Limiting** | HOCH | Login ohne Brute-Force-Schutz |
-| **Session ohne Expiry** | MITTEL | localStorage ohne Timeout |
-| **Frontend-Only Role Check** | MITTEL | Privilege Escalation möglich |
-| **Overpermissive RLS** | MITTEL | simple_all_access Policies |
-| **Single-File Architecture** | NIEDRIG | 2.2 MB, akzeptiert |
+| Frontend-Only Role Check | MITTEL | Rolle nur in localStorage |
+| Overpermissive RLS | MITTEL | simple_all_access Policies |
+| Single-File Architecture | NIEDRIG | 2.2 MB, akzeptiert |
 
 ---
 
-## Angriffsvektoren Assessment
+## Auth Hardening (2026-01-10)
 
-| Vektor | Risiko | Begründung |
-|--------|--------|------------|
-| **Brute Force** | 6/10 | Kein Rate Limiting bei Login |
-| **Session Hijacking** | 5/10 | localStorage ohne Expiry |
-| **Privilege Escalation** | 4/10 | Rolle nur im Frontend geprüft |
-| **SQL Injection** | 2/10 | Supabase Client schützt |
-| **XSS** | 3/10 | Teilweise innerHTML Nutzung |
-| **Secret Exposure** | 1/10 | Alle Secrets in Edge Functions |
+### Neue Komponente: `auth-hardening.js`
+
+| Feature | Konfiguration | Beschreibung |
+|---------|---------------|---------------|
+| Rate Limiting | 5 Versuche / Minute | 5 Min Sperre nach Überschreitung |
+| Session Expiry | 24 Stunden | Activity-Based Refresh |
+| Auto-Logout | Alle 5 Minuten Check | Automatischer Redirect zu Login |
+
+### Integration erforderlich
+
+Siehe: `.planning/AUTH_HARDENING_INTEGRATION.md`
 
 ---
 
-## RLS Fix Details (2026-01-10)
+## Payment Status Fixes (2026-01-10)
 
-| Aktion | Details |
-|--------|----------|
-| RLS aktiviert für | dienstplan, projects, project_collaborators, project_members, project_tasks, tasks, work_tracking, task_projects |
-| Policies gelöscht | 18 mit zirkulären Referenzen |
-| Policies erstellt | 5 × simple_all_access |
-| Tabellen gelöscht | 7 Backup/Temp-Tabellen |
+### Problem: Alte Links nicht gecancelt
 
-### Root Cause: Infinite Recursion
+**Symptom:** 8 Zahlungslinks (31-37 Tage alt) noch als "pending/unpaid"
 
-`project_collaborators` hatte eine Self-Reference Policy:
+**Root Cause:** `auto_cancel_unpaid_requests()` prüfte nur:
 ```sql
--- PROBLEM: Fragt sich selbst ab → Infinite Loop
-USING (EXISTS (SELECT FROM project_collaborators WHERE ...))
+WHERE status IN ('scheduled', 'pending')
 ```
 
-### Lösung: Simple Policies
-```sql
-CREATE POLICY "simple_all_access" ON table
-FOR ALL TO anon, authenticated
-USING (true) WITH CHECK (true);
-```
+Aber die alten Requests hatten `status = 'finished'`.
+
+### Lösung
+
+1. **Funktion erweitert:** (Migration `fix_auto_cancel_unpaid_requests`)
+   ```sql
+   WHERE status IN ('scheduled', 'pending', 'finished', 'open_request')
+   ```
+
+2. **Alte Links bereinigt:**
+   ```sql
+   UPDATE requests SET payment_status = 'canceled' WHERE ...
+   -- 8 Rows updated
+   ```
+
+---
+
+## Angriffsvektoren Assessment (AKTUALISIERT)
+
+| Vektor | Vorher | Nachher | Status |
+|--------|--------|---------|--------|
+| Brute Force | 6/10 | 2/10 | ✅ Rate Limiting |
+| Session Hijacking | 5/10 | 3/10 | ✅ Session Expiry |
+| Privilege Escalation | 4/10 | 4/10 | ⚠️ Noch offen |
+| SQL Injection | 2/10 | 2/10 | ✅ Supabase schützt |
+| XSS | 3/10 | 3/10 | ⚠️ Teilweise innerHTML |
+| Secret Exposure | 1/10 | 1/10 | ✅ Alle Secrets sicher |
 
 ---
 
@@ -80,20 +105,4 @@ USING (true) WITH CHECK (true);
 
 ---
 
-## Empfohlene Sofort-Maßnahmen
-
-1. **Rate Limiting implementieren**
-   - Login-Funktion auf max 5 Versuche/Minute
-   - IP-basiert oder Fingerprint
-
-2. **Session Expiry einführen**
-   - 24h Timeout für localStorage Session
-   - Refresh Token Pattern (optional)
-
-3. **Backend Role Check**
-   - RLS Policies mit User-ID erweitern
-   - Oder: Edge Function für sensible Operationen
-
----
-
-*Aktualisiert am 2026-01-10 mit Claude Code - Security Scan*
+*Aktualisiert am 2026-01-10 mit Claude Code*

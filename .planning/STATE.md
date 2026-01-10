@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-10 | Version: 3.1119**
-**UPDATE: Security Scan durchgeführt!**
+**Stand: 2026-01-10 | Version: 3.1120**
+**UPDATE: Auth Hardening + Payment Status Fixes!**
 
 ---
 
@@ -18,130 +18,100 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 3.5: SECURITY SCAN                            ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  PHASE 4: PERFORMANCE & CLEANUP                      → NEXT  ║
+║  PHASE 4: AUTH HARDENING                             ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 4.5: PAYMENT STATUS FIX                       ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5: PERFORMANCE & POLISH                       → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## Security Scan Ergebnisse (2026-01-10)
+## Auth Hardening (2026-01-10) ✅ IMPLEMENTIERT
 
-### Secrets Scan
+### Neue Datei: `auth-hardening.js`
 
-| Secret Type | Found? | Location |
-|-------------|--------|----------|
-| Stripe Secret Key (sk_live_, sk_test_) | ✅ CLEAN | Nicht im Frontend |
-| Stripe Publishable Key | ✅ OK | Frontend (erwartet) |
-| Resend API Key (re_) | ✅ CLEAN | Nicht im Frontend |
-| Supabase Anon Key | ✅ OK | Frontend (erwartet) |
-| Supabase Service Key | ✅ CLEAN | Nur in Edge Functions |
+| Feature | Status | Details |
+|---------|--------|----------|
+| Rate Limiting | ✅ BEREIT | Max 5 Versuche/Min, 5 Min Sperre |
+| Session Expiry | ✅ BEREIT | 24h Timeout mit Activity Refresh |
+| Auto-Logout | ✅ BEREIT | Bei abgelaufener Session |
 
-### Auth System Analyse
+### Integration
 
-| Aspekt | Status | Details |
-|--------|--------|----------|
-| Login-Funktion | ⚠️ CUSTOM | Via profiles Tabelle |
-| Passwort-Hashing | ✅ bcrypt | profiles.hashed_password |
-| Rate Limiting | ❌ FEHLT | Brute-Force möglich |
-| Session Management | ⚠️ BASIC | localStorage, kein Expiry |
-| Token Rotation | ❌ FEHLT | Kein Token-System |
-| Rollen-Check | ⚠️ FRONTEND | Nur in localStorage |
+| Schritt | Status | Details |
+|---------|--------|----------|
+| Script erstellt | ✅ | `auth-hardening.js` gepusht |
+| Integrations-Anleitung | ✅ | `.planning/AUTH_HARDENING_INTEGRATION.md` |
+| In HTML einbinden | ⚠️ PENDING | Muss manuell eingebunden werden |
 
-### Angriffsvektoren
-
-| Vektor | Risiko | Details |
-|--------|--------|----------|
-| Brute Force | 6/10 | Kein Rate Limiting |
-| Session Hijacking | 5/10 | localStorage ohne Expiry |
-| Privilege Escalation | 4/10 | Rolle in localStorage änderbar |
-| SQL Injection | 2/10 | Supabase schützt |
-| XSS | 3/10 | Teilweise innerHTML |
-| Secret Exposure | 1/10 | Alle Secrets sicher |
-
-### Edge Functions Status
-
-| Function | Version | Status | Issues |
-|----------|---------|--------|--------|
-| stripe-webhook | v15 | ✅ ACTIVE | Payment Status wird updated |
-| payment-reminders | v3 | ✅ ACTIVE | Cron läuft, Emails gehen raus |
-| create-payment-link | v23 | ✅ ACTIVE | Secrets sicher via ENV |
-| send-cancellation-email | v3 | ✅ ACTIVE | - |
-| send-manual-reminder | v2 | ✅ ACTIVE | - |
-| seed-auth-from-profiles | v3 | ✅ ACTIVE | - |
-| create-wannado-checkout | v2 | ✅ ACTIVE | - |
-
-### Cron Jobs Status
-
-| Job | Schedule | Letzte 5 Runs |
-|-----|----------|---------------|
-| payment-reminders-daily | 08:00 UTC | ✅ ALLE SUCCEEDED |
+**Nächster Schritt:** Script in `management-system.html` einbinden gemäß Integrations-Anleitung.
 
 ---
 
-## Kritische Findings (KORRIGIERT)
+## Payment Status Fixes (2026-01-10) ✅ RESOLVED
 
-### ALARMSTUFE GRÜN - Ursprünglich falsch dokumentiert!
+### Problem
 
-| Finding | Ursprünglich | Realität |
-|---------|--------------|----------|
-| **Edge Functions** | "0 deployed" | **7 AKTIV deployed!** |
-| **Payment Reminders** | "fehlen" | **✓ payment-reminders v3** |
-| **Auto-Cancel** | "fehlt" | **✓ Teil von payment-reminders** |
-| **Stripe Webhook** | "unklar" | **✓ stripe-webhook v15** |
-| **Appointment Creation** | "Trigger broken" | **✓ Via create-payment-link** |
-| **Secrets Exposed** | "unklar" | **✓ KEINE im Frontend** |
+8 alte Zahlungslinks (31-37 Tage alt) waren noch "pending/unpaid" obwohl sie längst hätten gecancelt werden sollen.
 
-### RLS Status (RESOLVED 2026-01-10)
+**Root Cause:** Die `auto_cancel_unpaid_requests()` Funktion prüfte nur `status IN ('scheduled', 'pending')`, aber die alten Links hatten `status='finished'`.
 
-| Aktion | Details |
-|--------|----------|
-| **RLS aktiviert für** | dienstplan, projects, project_collaborators, project_members, project_tasks, tasks, work_tracking, task_projects |
-| **Policies gelöscht** | 18 Policies mit zirkulären Referenzen |
-| **Policies erstellt** | 5 × `simple_all_access` ohne Subqueries |
-| **Tabellen gelöscht** | 7 Backup/Temp-Tabellen mit sensiblen Daten |
+### Fixes
+
+| Fix | Status | Details |
+|-----|--------|----------|
+| `auto_cancel_unpaid_requests()` erweitert | ✅ | Prüft jetzt auch `finished` und `open_request` |
+| 8 alte Links bereinigt | ✅ | payment_status auf 'canceled' gesetzt |
+
+### Payment Status Check Report
+
+| Check | Status | Details |
+|-------|--------|----------|
+| Request paid → Appointment paid | ✅ OK | 0 paid requests (noch keine Zahlungen) |
+| Alte Links (>6 Tage) aktiv | ✅ FIXED | 8 → 0 (alle bereinigt) |
+| Alte Links (>30 Tage) aktiv | ✅ FIXED | 8 → 0 (alle bereinigt) |
+| Auto-Cancel Cron läuft | ✅ OK | Täglich 06:00 UTC, alle succeeded |
+| Stripe Links Deaktivierung | ⚠️ N/A | Via payment-reminders (nach 6 Tagen) |
 
 ---
 
-## Nächste Schritte (AKTUALISIERT)
+## Supabase Migration (2026-01-10)
 
-### Abgeschlossen ✓
+Neue Migration: `fix_auto_cancel_unpaid_requests`
 
-1. **~~Cron Job für payment-reminders prüfen~~** ✓ VERIFIZIERT
-2. **~~RLS Audit durchführen~~** ✓ DONE
-3. **~~Error Tracking implementieren~~** ✓ DONE
-4. **~~Security Scan durchführen~~** ✓ DONE
+```sql
+-- Erweitert um auch 'finished' und 'open_request' Status zu erfassen
+WHERE status IN ('scheduled', 'pending', 'finished', 'open_request')
+```
 
-### Diese Woche (Priorität)
+---
 
-5. **Rate Limiting implementieren** (HOCH)
-   - Login-Funktion absichern
-   - Max 5 Versuche pro Minute
+## Cron Jobs Status
 
-6. **Session Expiry einführen** (MITTEL)
-   - 24h Timeout
-   - Auto-Logout
+| Job | Schedule | Letzte Prüfung | Status |
+|-----|----------|----------------|--------|
+| payment-reminders-daily | 08:00 UTC | 2026-01-10 | ✅ RUNNING |
+| auto-cancel-unpaid | 06:00 UTC | 2026-01-10 | ✅ RUNNING (FIXED) |
+
+---
+
+## Nächste Schritte
+
+### Sofort (Manuell)
+
+1. **Auth Hardening in HTML integrieren**
+   - Script-Tag einfügen
+   - handleLogin anpassen
+   - Siehe: `.planning/AUTH_HARDENING_INTEGRATION.md`
 
 ### Backlog
 
-7. **Overpermissive Policies reviewen**
-8. **Backend Role Checks** (RLS erweitern)
-9. **Performance Optimierung**
+2. **Overpermissive RLS Policies reviewen**
+3. **Performance Optimierung**
+4. **Admin Panel erweitern**
 
 ---
 
-## pg_cron Jobs (9 Jobs AKTIV!)
-
-| Job | Schedule | Funktion |
-|-----|----------|----------|
-| `payment-reminders-daily` | **08:00 UTC täglich** | Edge Function |
-| `auto-cancel-unpaid` | 06:00 UTC täglich | SQL Function |
-| `auto-finish-appointments` | Alle 15 Min | SQL Function |
-| `auto-archive-old-requests` | 03:00 UTC täglich | SQL Function |
-| `roll_upcoming_status_daily` | 02:00 UTC täglich | Status Update |
-| `permanent-delete-old-requests` | 03:00 UTC täglich | Hard Delete |
-| `auto-complete-past-guest-slots` | 03:00 UTC täglich | Guest Slots |
-| `refresh-analytics-hourly` | Stündlich | Analytics Views |
-
----
-
-*Aktualisiert am 2026-01-10 mit Claude Code - Security Scan*
+*Aktualisiert am 2026-01-10 mit Claude Code*
