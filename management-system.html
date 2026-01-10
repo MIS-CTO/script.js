@@ -12075,6 +12075,28 @@
       box-shadow: var(--analytics-shadow-sm);
     }
 
+    /* Metric Switcher Buttons */
+    #analytics-section .metric-btn {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--analytics-text-400);
+      background: var(--analytics-bg-000);
+      border: 1px solid var(--analytics-border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    #analytics-section .metric-btn:hover {
+      border-color: var(--analytics-text-200);
+    }
+    #analytics-section .metric-btn.active {
+      background: var(--analytics-text-100);
+      color: var(--analytics-bg-000);
+      border-color: var(--analytics-text-100);
+    }
+
     /* Location Select */
     #analytics-section .location-select {
       background: var(--analytics-bg-200);
@@ -15627,10 +15649,14 @@
               <p>Analyse der Umwandlungsrate von Anfragen zu Terminen</p>
             </div>
 
-            <div class="kpi-grid">
+            <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
               <div class="kpi-card">
                 <div class="kpi-label">Total Requests</div>
                 <div class="kpi-value" id="conversionTotalRequests">--</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Alle Termine</div>
+                <div class="kpi-value" id="conversionAlleTermine">--</div>
               </div>
               <div class="kpi-card">
                 <div class="kpi-label">Umgesetzte Termine</div>
@@ -15683,29 +15709,52 @@
               <p>Performance des Booking Teams bei der Request-Bearbeitung</p>
             </div>
 
-            <div class="charts-row">
-              <div class="chart-card full-width">
+            <!-- Metric Switcher Buttons -->
+            <div class="team-metric-switcher" style="display: flex; gap: 8px; margin-bottom: 20px;">
+              <button onclick="switchTeamMetric('requests')" class="metric-btn active" data-metric="requests">Requests</button>
+              <button onclick="switchTeamMetric('converted')" class="metric-btn" data-metric="converted">Converted</button>
+              <button onclick="switchTeamMetric('conversion')" class="metric-btn" data-metric="conversion">Conversion Rate</button>
+              <button onclick="switchTeamMetric('time')" class="metric-btn" data-metric="time">Ø Zeit</button>
+            </div>
+
+            <!-- Team Charts Row -->
+            <div class="charts-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+              <!-- Team Conversion Pie Chart -->
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">Team Distribution</div>
+                </div>
+                <div class="chart-body">
+                  <div class="pie-chart-wrapper" style="display: flex; align-items: center; gap: 24px;">
+                    <div style="flex: 1; max-width: 200px;"><canvas id="teamConversionPie"></canvas></div>
+                    <div id="teamConversionLegend" class="chart-legend"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Team Bar Chart -->
+              <div class="chart-card">
                 <div class="chart-header">
                   <div class="chart-title">Team Comparison</div>
                 </div>
                 <div class="chart-body">
                   <div class="chart-container">
-                    <canvas id="teamComparisonChart"></canvas>
+                    <canvas id="teamRevenuePie"></canvas>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="data-table-container">
+            <!-- Data Table -->
+            <div class="data-table-container" style="margin-top: 24px;">
               <table class="data-table" id="teamPerformanceTable">
                 <thead>
                   <tr>
                     <th>Team Member</th>
-                    <th>Bearbeitete Requests</th>
-                    <th>Umgesetzte Termine</th>
-                    <th>Conversion Rate</th>
-                    <th>Ø Umsetzungszeit</th>
-                    <th>Status</th>
+                    <th>Requests</th>
+                    <th>Converted</th>
+                    <th>Rate</th>
+                    <th>Ø Zeit</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -44268,34 +44317,63 @@
             break;
 
           case 'conversion':
-            // Conversion Funnel Sub-View
+            // Conversion Funnel Sub-View - NEU basierend auf appointment_id
             const convTotal = requests.length;
+            const convAlleTermine = appointments.length;
+
+            // Umgesetzte Termine = Requests mit appointment_id (konvertiert)
+            const convertedRequests = requests.filter(r => r.appointment_id);
+            const convConverted = convertedRequests.length;
+
+            // Conversion Rate basierend auf tatsächlichem Matching
+            const convRate = convTotal > 0 ? ((convConverted / convTotal) * 100).toFixed(1) : 0;
+
+            // Ø Umsetzungszeit berechnen
+            let totalConversionDays = 0;
+            let validConversionCount = 0;
+            convertedRequests.forEach(req => {
+              const appointment = appointments.find(a => a.id === req.appointment_id);
+              if (appointment) {
+                const reqDate = new Date(req.created_at);
+                const aptDate = new Date(appointment.created_at);
+                const daysDiff = (aptDate - reqDate) / (1000 * 60 * 60 * 24);
+                if (daysDiff >= 0 && daysDiff <= 21) {
+                  totalConversionDays += daysDiff;
+                  validConversionCount++;
+                }
+              }
+            });
+            const avgConvTime = validConversionCount > 0
+              ? (totalConversionDays / validConversionCount).toFixed(1)
+              : '--';
+
+            // Status breakdown für Pie Chart
             const convScheduled = requests.filter(r => r.status === 'scheduled').length;
             const convFinished = requests.filter(r => r.status === 'finished').length;
-            const convConverted = convScheduled + convFinished;
             const convCanceled = requests.filter(r => r.status === 'canceled').length;
             const convPending = requests.filter(r => r.status === 'pending' || r.status === 'open_request').length;
-            const convRate = convTotal > 0 ? ((convConverted / convTotal) * 100).toFixed(1) : 0;
 
             // Update KPIs
             const convKpi1 = document.getElementById('conversionTotalRequests');
-            const convKpi2 = document.getElementById('conversionConverted');
+            const convKpiAlleTermine = document.getElementById('conversionAlleTermine');
+            const convKpi2 = document.getElementById('conversionConvertedCount');
             const convKpi3 = document.getElementById('conversionRate');
             const convKpi4 = document.getElementById('conversionAvgTime');
             if (convKpi1) convKpi1.textContent = convTotal.toLocaleString('de-DE');
+            if (convKpiAlleTermine) convKpiAlleTermine.textContent = convAlleTermine.toLocaleString('de-DE');
             if (convKpi2) convKpi2.textContent = convConverted.toLocaleString('de-DE');
             if (convKpi3) convKpi3.textContent = convRate + '%';
-            if (convKpi4) convKpi4.textContent = '4.2 Tage'; // Placeholder
+            if (convKpi4) convKpi4.textContent = avgConvTime !== '--' ? avgConvTime + ' Tage' : '--';
 
-            // Conversion Breakdown Pie
+            // Conversion Breakdown Pie (Request Status)
             createAnalyticsPieChart('conversionPie', 'conversionLegend', [
-              { label: 'Scheduled', value: convScheduled, color: colors.green, display: convScheduled.toLocaleString('de-DE') },
-              { label: 'Finished', value: convFinished, color: colors.blue, display: convFinished.toLocaleString('de-DE') },
+              { label: 'Converted', value: convConverted, color: colors.green, display: convConverted.toLocaleString('de-DE') },
+              { label: 'Scheduled', value: convScheduled - convertedRequests.filter(r => r.status === 'scheduled').length, color: colors.blue, display: (convScheduled - convertedRequests.filter(r => r.status === 'scheduled').length).toLocaleString('de-DE') },
               { label: 'Canceled', value: convCanceled, color: colors.red, display: convCanceled.toLocaleString('de-DE') },
               { label: 'Pending', value: convPending, color: colors.orange, display: convPending.toLocaleString('de-DE') }
-            ]);
+            ].filter(d => d.value > 0));
 
-            // Conversion Over Time
+            // Conversion Over Time (basierend auf appointment_id)
             const convMonthly = {};
             requests.forEach(r => {
               const date = new Date(r.created_at);
@@ -44303,7 +44381,7 @@
                 const monthKey = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
                 if (!convMonthly[monthKey]) convMonthly[monthKey] = { total: 0, converted: 0 };
                 convMonthly[monthKey].total++;
-                if (r.status === 'scheduled' || r.status === 'finished') {
+                if (r.appointment_id) {
                   convMonthly[monthKey].converted++;
                 }
               }
@@ -45088,10 +45166,11 @@
     window.renderAnalyticsRankings = renderAnalyticsRankings;
 
     // ========================================
-    // TEAM PERFORMANCE - BOOKING TEAM
+    // TEAM PERFORMANCE - DYNAMISCH ALLE USER
     // ========================================
     function renderAnalyticsTeamPerformance() {
       const colors = getAnalyticsChartColors();
+
       // Nutze gefilterte Daten nach Zeitraum
       let requests = window.requestsCache || CentralDataManager?.data?.requests || [];
       let appointments = window.appointmentsCache || CentralDataManager?.data?.appointments || [];
@@ -45100,108 +45179,200 @@
       requests = getTimeFilteredData(requests, 'created_at');
       appointments = getTimeFilteredData(appointments, 'created_at');
 
-      // Booking Team Members
-      const bookingTeam = ['Cara', 'Aman', 'Bennet', 'Fay', 'Jan'];
+      // Dynamisch alle User aggregieren basierend auf assigned_to
+      const userStats = {};
 
-      // Berechne Stats pro Team-Member
-      const teamStats = bookingTeam.map(memberName => {
-        // Finde Requests die von diesem Team-Member bearbeitet wurden
-        // Nutze assigned_to (enthält direkt den Namen, nicht _name Suffix)
-        const memberRequests = requests.filter(r =>
-          r.assigned_to === memberName ||
-          r.booking_team_member_name === memberName
-        );
+      requests.forEach(req => {
+        const userName = req.assigned_to;
+        if (!userName || userName.trim() === '') return;
 
-        // Finde konvertierte Requests (die zu Appointments wurden)
-        const convertedRequests = memberRequests.filter(r =>
-          r.status === 'converted' ||
-          r.status === 'scheduled' ||
-          r.status === 'completed' ||
-          r.appointment_id
-        );
+        if (!userStats[userName]) {
+          userStats[userName] = {
+            name: userName,
+            requests: 0,
+            converted: 0,
+            totalConversionTime: 0,
+            conversionCount: 0
+          };
+        }
 
-        // Berechne Revenue aus konvertierten Appointments
-        const memberAppointments = appointments.filter(apt =>
-          convertedRequests.some(r => r.appointment_id === apt.id)
-        );
-        const revenue = memberAppointments.reduce((sum, apt) => sum + (parseFloat(apt.total_amount) || 0), 0);
+        userStats[userName].requests++;
 
-        const conversionRate = memberRequests.length > 0
-          ? (convertedRequests.length / memberRequests.length * 100).toFixed(1)
-          : 0;
+        // Hat appointment_id = konvertiert
+        if (req.appointment_id) {
+          userStats[userName].converted++;
 
-        return {
-          name: memberName,
-          requests: memberRequests.length,
-          converted: convertedRequests.length,
-          conversionRate: conversionRate,
-          revenue: revenue
-        };
+          // Umsetzungszeit berechnen
+          const appointment = appointments.find(a => a.id === req.appointment_id);
+          if (appointment) {
+            const reqDate = new Date(req.created_at);
+            const aptDate = new Date(appointment.created_at);
+            const daysDiff = (aptDate - reqDate) / (1000 * 60 * 60 * 24);
+
+            if (daysDiff >= 0 && daysDiff <= 21) {
+              userStats[userName].totalConversionTime += daysDiff;
+              userStats[userName].conversionCount++;
+            }
+          }
+        }
       });
 
-      // Sortiere nach Conversions
-      const sortedByConversions = [...teamStats].sort((a, b) => b.converted - a.converted);
+      // Metriken berechnen und sortieren
+      const teamData = Object.values(userStats)
+        .filter(u => u.requests > 0)
+        .map(user => ({
+          ...user,
+          conversionRate: user.requests > 0
+            ? ((user.converted / user.requests) * 100).toFixed(1)
+            : '0.0',
+          avgConversionTime: user.conversionCount > 0
+            ? (user.totalConversionTime / user.conversionCount).toFixed(1)
+            : null
+        }))
+        .sort((a, b) => b.requests - a.requests);
 
-      // Conversion Pie
-      const conversionData = sortedByConversions.filter(m => m.converted > 0).map((m, idx) => ({
-        label: m.name,
-        value: m.converted,
-        color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx % 5],
-        display: `${m.converted} (${(m.converted / sortedByConversions.reduce((s, x) => s + x.converted, 0) * 100 || 0).toFixed(1)}%)`
-      }));
+      // Cache für Chart-Wechsel
+      window.teamPerformanceData = teamData;
 
-      if (conversionData.length > 0) {
-        createAnalyticsPieChart('teamConversionPie', 'teamConversionLegend', conversionData);
-      } else {
-        // Zeige Placeholder wenn keine Daten
-        createAnalyticsPieChart('teamConversionPie', 'teamConversionLegend',
-          bookingTeam.map((name, idx) => ({
-            label: name,
-            value: 1,
-            color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx],
-            display: '0 Conversions'
-          }))
-        );
-      }
+      // Charts rendern mit Default-Metrik
+      renderTeamCharts(teamData, 'requests');
 
-      // Revenue Pie
-      const revenueData = sortedByConversions.filter(m => m.revenue > 0).map((m, idx) => ({
-        label: m.name,
-        value: m.revenue,
-        color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx % 5],
-        display: formatAnalyticsCurrency(m.revenue)
-      }));
-
-      if (revenueData.length > 0) {
-        createAnalyticsPieChart('teamRevenuePie', 'teamRevenueLegend', revenueData);
-      } else {
-        createAnalyticsPieChart('teamRevenuePie', 'teamRevenueLegend',
-          bookingTeam.map((name, idx) => ({
-            label: name,
-            value: 1,
-            color: [colors.blue, colors.green, colors.orange, colors.purple, colors.pink][idx],
-            display: '€0'
-          }))
-        );
-      }
-
-      // Tabelle
+      // Tabelle rendern
       const teamTable = document.querySelector('#teamPerformanceTable tbody');
       if (teamTable) {
-        teamTable.innerHTML = sortedByConversions.map(m => `
-          <tr>
-            <td class="name">${m.name}</td>
-            <td class="mono">${m.requests}</td>
-            <td class="mono">${m.converted}</td>
-            <td class="mono">${m.conversionRate}%</td>
-            <td class="mono">${formatAnalyticsCurrency(m.revenue)}</td>
-          </tr>
-        `).join('');
+        if (teamData.length === 0) {
+          teamTable.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666; padding: 40px;">Keine Team-Daten für diesen Zeitraum.</td></tr>';
+        } else {
+          teamTable.innerHTML = teamData.map(m => `
+            <tr>
+              <td class="name">${m.name}</td>
+              <td class="mono">${m.requests.toLocaleString()}</td>
+              <td class="mono" style="color: #34C759;">${m.converted.toLocaleString()}</td>
+              <td class="mono" style="color: #007AFF;">${m.conversionRate}%</td>
+              <td class="mono">${m.avgConversionTime ? m.avgConversionTime + ' Tage' : '—'}</td>
+            </tr>
+          `).join('');
+        }
       }
-
-      console.log('📊 Team Performance rendered with booking team: Cara, Aman, Bennet, Fay, Jan');
     }
     window.renderAnalyticsTeamPerformance = renderAnalyticsTeamPerformance;
+
+    // Metric Switcher für Team Charts
+    function switchTeamMetric(metric) {
+      // Button-States updaten
+      document.querySelectorAll('.metric-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.metric === metric);
+      });
+
+      // Charts mit neuer Metrik rendern
+      const data = window.teamPerformanceData || [];
+      renderTeamCharts(data, metric);
+    }
+    window.switchTeamMetric = switchTeamMetric;
+
+    // Team Charts rendern
+    function renderTeamCharts(data, metric) {
+      const colors = getAnalyticsChartColors();
+      const colorPalette = [colors.blue, colors.green, colors.orange, colors.purple, colors.pink, '#FF3B30', '#00C7BE', '#5856D6'];
+
+      if (!data || data.length === 0) return;
+
+      // Daten basierend auf Metrik
+      let chartData, chartLabel;
+      switch(metric) {
+        case 'requests':
+          chartData = data.map(u => u.requests);
+          chartLabel = 'Requests';
+          break;
+        case 'converted':
+          chartData = data.map(u => u.converted);
+          chartLabel = 'Converted';
+          break;
+        case 'conversion':
+          chartData = data.map(u => parseFloat(u.conversionRate));
+          chartLabel = 'Conversion Rate (%)';
+          break;
+        case 'time':
+          chartData = data.map(u => parseFloat(u.avgConversionTime) || 0);
+          chartLabel = 'Ø Umsetzungszeit (Tage)';
+          break;
+        default:
+          chartData = data.map(u => u.requests);
+          chartLabel = 'Requests';
+      }
+
+      const labels = data.map(u => u.name);
+
+      // Pie Chart
+      const pieData = data.filter((_, idx) => chartData[idx] > 0).map((u, idx) => ({
+        label: u.name,
+        value: chartData[data.indexOf(u)],
+        color: colorPalette[idx % colorPalette.length],
+        display: metric === 'conversion'
+          ? chartData[data.indexOf(u)] + '%'
+          : metric === 'time'
+            ? chartData[data.indexOf(u)] + ' Tage'
+            : chartData[data.indexOf(u)].toLocaleString()
+      }));
+
+      if (pieData.length > 0) {
+        createAnalyticsPieChart('teamConversionPie', 'teamConversionLegend', pieData);
+      }
+
+      // Bar Chart
+      createAnalyticsBarChart('teamRevenuePie', labels, chartData, chartLabel);
+    }
+    window.renderTeamCharts = renderTeamCharts;
+
+    // Bar Chart Helper für Team Performance
+    function createAnalyticsBarChart(canvasId, labels, data, label) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return null;
+
+      const ctx = canvas.getContext('2d');
+      const colors = getAnalyticsChartColors();
+
+      // Destroy existing chart
+      if (window.analyticsCharts && window.analyticsCharts[canvasId]) {
+        window.analyticsCharts[canvasId].destroy();
+      }
+
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: label,
+            data: data,
+            backgroundColor: colors.blue,
+            borderRadius: 4,
+            barThickness: 24
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            y: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      if (!window.analyticsCharts) window.analyticsCharts = {};
+      window.analyticsCharts[canvasId] = chart;
+      return chart;
+    }
+    window.createAnalyticsBarChart = createAnalyticsBarChart;
 
     // ========================================
     // REVENUE CATEGORIES - MIT TIMELINE
