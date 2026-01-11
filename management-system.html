@@ -35322,14 +35322,6 @@
               customer_notes,
               internal_notes,
               priority
-            ),
-            project:projects(
-              id,
-              project_number,
-              payment_state,
-              payment_notice,
-              payment_intent,
-              price
             )
           `)
           .eq('id', appointmentId)
@@ -35339,6 +35331,18 @@
           console.error('Error loading appointment:', error);
           alert('Failed to load appointment details');
           return;
+        }
+
+        // Load project data separately (no FK constraint exists)
+        if (appointment.project_id) {
+          const { data: projectData } = await supabase
+            .from('projects')
+            .select('id, project_number, payment_state, payment_notice, payment_intent, price')
+            .eq('id', appointment.project_id)
+            .single();
+          if (projectData) {
+            appointment.project = projectData;
+          }
         }
 
         console.log('✅ Loaded appointment:', appointment);
