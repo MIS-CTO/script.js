@@ -15351,6 +15351,12 @@
               </svg>
               Website Traffic
             </div>
+            <div class="nav-item" data-view="web-analytics" onclick="switchAnalyticsView('web-analytics')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+              </svg>
+              Web Analytics
+            </div>
             <div class="nav-item" data-view="customers" onclick="switchAnalyticsView('customers')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -16716,6 +16722,44 @@
                     <div class="pie-legend" id="locationRequestsLegend"></div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════
+               VIEW: Web Analytics (PostHog)
+               ═══════════════════════════════════════════════════ -->
+          <div class="analytics-view" id="view-web-analytics">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h2>Web Analytics</h2>
+                <p>Website traffic analytics powered by PostHog</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <!-- Period Filter Pills -->
+                <div class="posthog-period-filter" style="display:flex; gap:4px; background:#f5f5f5; padding:4px; border-radius:8px;">
+                  <button class="posthog-period-pill" data-period="24h" onclick="setPostHogPeriod('24h')" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:#666; transition:all 0.2s;">24h</button>
+                  <button class="posthog-period-pill active" data-period="7d" onclick="setPostHogPeriod('7d')" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:#fff; color:#1d1d1f; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:all 0.2s;">7d</button>
+                  <button class="posthog-period-pill" data-period="14d" onclick="setPostHogPeriod('14d')" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:#666; transition:all 0.2s;">14d</button>
+                  <button class="posthog-period-pill" data-period="30d" onclick="setPostHogPeriod('30d')" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:#666; transition:all 0.2s;">30d</button>
+                  <button class="posthog-period-pill" data-period="3m" onclick="setPostHogPeriod('3m')" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:#666; transition:all 0.2s;">3m</button>
+                </div>
+                <!-- Settings Button -->
+                <button onclick="openPostHogSettingsModal()" style="padding:8px 16px; background:#f5f5f5; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:#666; display:flex; align-items:center; gap:6px; transition:all 0.2s;" onmouseover="this.style.background='#eaeaea'" onmouseout="this.style.background='#f5f5f5'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                  Settings
+                </button>
+              </div>
+            </div>
+
+            <!-- Web Analytics Content Container -->
+            <div id="webAnalyticsContent">
+              <!-- Content will be rendered dynamically by renderWebAnalyticsDashboard() -->
+              <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:400px;">
+                <div class="loading-spinner" style="width:40px; height:40px; border:3px solid #eaeaea; border-top-color:#000; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                <p style="margin-top:16px; color:#86868b;">Loading...</p>
               </div>
             </div>
           </div>
@@ -39674,10 +39718,119 @@
     </div>
   </div>
 
+  <!-- ========================================
+       POSTHOG SETTINGS MODAL
+       ======================================== -->
+  <div id="postHogSettingsModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; max-width:500px; width:90%; padding:32px; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+
+      <!-- Header -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:40px; height:40px; background:#f5f5f5; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:18px; font-weight:600; color:#1d1d1f;">PostHog Settings</h3>
+            <p style="margin:0; font-size:13px; color:#86868b;">Configure your PostHog API credentials</p>
+          </div>
+        </div>
+        <button onclick="closePostHogSettingsModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#86868b; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+          &times;
+        </button>
+      </div>
+
+      <!-- Form Fields -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+
+        <!-- Host -->
+        <div>
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; margin-bottom:6px;">API Host</label>
+          <select id="postHogHostInput" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:8px; font-size:14px; background:#fff;">
+            <option value="https://eu.posthog.com">EU Cloud (eu.posthog.com)</option>
+            <option value="https://app.posthog.com">US Cloud (app.posthog.com)</option>
+          </select>
+          <p style="margin:4px 0 0; font-size:12px; color:#86868b;">Select your PostHog cloud region</p>
+        </div>
+
+        <!-- Project ID -->
+        <div>
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; margin-bottom:6px;">Project ID</label>
+          <input type="text" id="postHogProjectIdInput" placeholder="e.g., 12345" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <p style="margin:4px 0 0; font-size:12px; color:#86868b;">Found in Project Settings &gt; Project ID</p>
+        </div>
+
+        <!-- API Key -->
+        <div>
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; margin-bottom:6px;">Personal API Key</label>
+          <input type="password" id="postHogApiKeyInput" placeholder="phx_..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <p style="margin:4px 0 0; font-size:12px; color:#86868b;">Create at Settings &gt; Personal API Keys (requires read access)</p>
+        </div>
+
+        <!-- Info Box -->
+        <div style="background:#f5f5f5; border-radius:8px; padding:12px; margin-top:8px;">
+          <div style="display:flex; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2" style="flex-shrink:0; margin-top:2px;">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <p style="margin:0; font-size:12px; color:#666; line-height:1.5;">
+              Your credentials are stored locally in your browser and never sent to our servers. They are only used to communicate directly with the PostHog API.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div style="display:flex; gap:12px; margin-top:24px;">
+        <button onclick="closePostHogSettingsModal()" style="flex:1; padding:12px 20px; background:#f5f5f5; color:#1d1d1f; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#eaeaea'" onmouseout="this.style.background='#f5f5f5'">
+          Cancel
+        </button>
+        <button onclick="savePostHogSettings()" style="flex:1; padding:12px 20px; background:#000; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#000'">
+          Save & Connect
+        </button>
+      </div>
+    </div>
+  </div>
+
   <style>
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+  }
+
+  /* PostHog Period Pills */
+  .posthog-period-pill:hover:not(.active) {
+    background: rgba(0,0,0,0.05) !important;
+    color: #1d1d1f !important;
+  }
+  .posthog-period-pill.active {
+    background: #fff !important;
+    color: #1d1d1f !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  }
+
+  /* PostHog Web Analytics responsive grid */
+  @media (max-width: 900px) {
+    #webAnalyticsContent .kpi-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+    #webAnalyticsContent > div:last-child {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  @media (max-width: 600px) {
+    #webAnalyticsContent .kpi-grid {
+      grid-template-columns: 1fr !important;
+    }
+    #view-web-analytics .page-header {
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+    .posthog-period-filter {
+      flex-wrap: wrap !important;
+    }
   }
   </style>
 
@@ -42548,6 +42701,818 @@
     let analyticsDateRange = { start: null, end: null };
     let analyticsStudioFilter = '';
 
+    // ========================================
+    // POSTHOG WEB ANALYTICS CONFIGURATION
+    // ========================================
+
+    // PostHog Configuration - stored in localStorage
+    let postHogConfig = {
+      host: localStorage.getItem('postHogHost') || 'https://eu.posthog.com',
+      projectId: localStorage.getItem('postHogProjectId') || '',
+      apiKey: localStorage.getItem('postHogApiKey') || ''
+    };
+
+    // PostHog Web Analytics State
+    let postHogWebAnalyticsData = {
+      pageviews: 0,
+      uniqueVisitors: 0,
+      sessions: 0,
+      avgSessionDuration: 0,
+      bounceRate: 0,
+      topPages: [],
+      topReferrers: [],
+      browsers: [],
+      devices: [],
+      countries: [],
+      pageviewsOverTime: []
+    };
+
+    let postHogPeriod = '7d'; // Default period
+    let postHogLoading = false;
+    let postHogError = null;
+
+    // PostHog API Headers
+    function getPostHogHeaders() {
+      return {
+        'Authorization': `Bearer ${postHogConfig.apiKey}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    // Check if PostHog is configured
+    function isPostHogConfigured() {
+      return postHogConfig.projectId && postHogConfig.apiKey;
+    }
+
+    // Save PostHog Config
+    function savePostHogConfig(host, projectId, apiKey) {
+      postHogConfig.host = host || 'https://eu.posthog.com';
+      postHogConfig.projectId = projectId;
+      postHogConfig.apiKey = apiKey;
+
+      localStorage.setItem('postHogHost', postHogConfig.host);
+      localStorage.setItem('postHogProjectId', postHogConfig.projectId);
+      localStorage.setItem('postHogApiKey', postHogConfig.apiKey);
+
+      console.log('✅ PostHog config saved');
+    }
+
+    // Execute HogQL Query
+    async function queryPostHog(hogqlQuery) {
+      if (!isPostHogConfigured()) {
+        throw new Error('PostHog is not configured');
+      }
+
+      const url = `${postHogConfig.host}/api/projects/${postHogConfig.projectId}/query`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: getPostHogHeaders(),
+        body: JSON.stringify({
+          query: {
+            kind: 'HogQLQuery',
+            query: hogqlQuery
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`PostHog API Error: ${response.status} - ${errorText}`);
+      }
+
+      return await response.json();
+    }
+
+    // Get date range for HogQL queries
+    function getPostHogDateRange() {
+      const now = new Date();
+      let startDate;
+
+      switch(postHogPeriod) {
+        case '24h':
+          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case '7d':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '14d':
+          startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '3m':
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        case '6m':
+          startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+          break;
+        case '1y':
+          startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+
+      return {
+        start: startDate.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0]
+      };
+    }
+
+    // HogQL Queries for Web Analytics
+    async function fetchPostHogPageviews() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT count() as pageviews
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+      `;
+      const result = await queryPostHog(query);
+      return result.results?.[0]?.[0] || 0;
+    }
+
+    async function fetchPostHogUniqueVisitors() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT count(DISTINCT person_id) as unique_visitors
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+      `;
+      const result = await queryPostHog(query);
+      return result.results?.[0]?.[0] || 0;
+    }
+
+    async function fetchPostHogSessions() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT count(DISTINCT properties.$session_id) as sessions
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+      `;
+      const result = await queryPostHog(query);
+      return result.results?.[0]?.[0] || 0;
+    }
+
+    async function fetchPostHogTopPages() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          properties.$pathname as page,
+          count() as views
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+        GROUP BY properties.$pathname
+        ORDER BY views DESC
+        LIMIT 10
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        page: row[0] || '/',
+        views: row[1] || 0
+      }));
+    }
+
+    async function fetchPostHogTopReferrers() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          properties.$referrer as referrer,
+          count() as visits
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+          AND properties.$referrer IS NOT NULL
+          AND properties.$referrer != ''
+        GROUP BY properties.$referrer
+        ORDER BY visits DESC
+        LIMIT 10
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        referrer: row[0] || 'Direct',
+        visits: row[1] || 0
+      }));
+    }
+
+    async function fetchPostHogBrowsers() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          properties.$browser as browser,
+          count() as count
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+        GROUP BY properties.$browser
+        ORDER BY count DESC
+        LIMIT 5
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        browser: row[0] || 'Unknown',
+        count: row[1] || 0
+      }));
+    }
+
+    async function fetchPostHogDevices() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          properties.$device_type as device,
+          count() as count
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+        GROUP BY properties.$device_type
+        ORDER BY count DESC
+        LIMIT 5
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        device: row[0] || 'Unknown',
+        count: row[1] || 0
+      }));
+    }
+
+    async function fetchPostHogCountries() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          properties.$geoip_country_name as country,
+          count() as count
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+        GROUP BY properties.$geoip_country_name
+        ORDER BY count DESC
+        LIMIT 10
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        country: row[0] || 'Unknown',
+        count: row[1] || 0
+      }));
+    }
+
+    async function fetchPostHogPageviewsOverTime() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          toDate(timestamp) as date,
+          count() as pageviews
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+        GROUP BY toDate(timestamp)
+        ORDER BY date ASC
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        date: row[0],
+        pageviews: row[1] || 0
+      }));
+    }
+
+    async function fetchPostHogBounceRate() {
+      const { start, end } = getPostHogDateRange();
+      // Bounce rate = sessions with only 1 pageview / total sessions
+      const query = `
+        WITH session_pageviews AS (
+          SELECT
+            properties.$session_id as session_id,
+            count() as pageview_count
+          FROM events
+          WHERE event = '$pageview'
+            AND timestamp >= '${start}'
+            AND timestamp <= '${end} 23:59:59'
+          GROUP BY properties.$session_id
+        )
+        SELECT
+          countIf(pageview_count = 1) as bounced_sessions,
+          count() as total_sessions
+        FROM session_pageviews
+      `;
+      const result = await queryPostHog(query);
+      const bouncedSessions = result.results?.[0]?.[0] || 0;
+      const totalSessions = result.results?.[0]?.[1] || 1;
+      return totalSessions > 0 ? ((bouncedSessions / totalSessions) * 100).toFixed(1) : 0;
+    }
+
+    async function fetchPostHogAvgSessionDuration() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        WITH session_durations AS (
+          SELECT
+            properties.$session_id as session_id,
+            dateDiff('second', min(timestamp), max(timestamp)) as duration_seconds
+          FROM events
+          WHERE event = '$pageview'
+            AND timestamp >= '${start}'
+            AND timestamp <= '${end} 23:59:59'
+          GROUP BY properties.$session_id
+          HAVING duration_seconds > 0
+        )
+        SELECT avg(duration_seconds) as avg_duration
+        FROM session_durations
+      `;
+      const result = await queryPostHog(query);
+      const avgSeconds = result.results?.[0]?.[0] || 0;
+      return Math.round(avgSeconds);
+    }
+
+    // Load all PostHog Web Analytics data
+    async function loadPostHogWebAnalytics() {
+      if (!isPostHogConfigured()) {
+        postHogError = 'PostHog not configured. Click Settings to add your API credentials.';
+        renderWebAnalyticsDashboard();
+        return;
+      }
+
+      postHogLoading = true;
+      postHogError = null;
+      renderWebAnalyticsDashboard();
+
+      try {
+        console.log('📊 Loading PostHog Web Analytics data...');
+
+        // Fetch all data in parallel
+        const [
+          pageviews,
+          uniqueVisitors,
+          sessions,
+          topPages,
+          topReferrers,
+          browsers,
+          devices,
+          countries,
+          pageviewsOverTime,
+          bounceRate,
+          avgSessionDuration
+        ] = await Promise.all([
+          fetchPostHogPageviews(),
+          fetchPostHogUniqueVisitors(),
+          fetchPostHogSessions(),
+          fetchPostHogTopPages(),
+          fetchPostHogTopReferrers(),
+          fetchPostHogBrowsers(),
+          fetchPostHogDevices(),
+          fetchPostHogCountries(),
+          fetchPostHogPageviewsOverTime(),
+          fetchPostHogBounceRate(),
+          fetchPostHogAvgSessionDuration()
+        ]);
+
+        postHogWebAnalyticsData = {
+          pageviews,
+          uniqueVisitors,
+          sessions,
+          avgSessionDuration,
+          bounceRate,
+          topPages,
+          topReferrers,
+          browsers,
+          devices,
+          countries,
+          pageviewsOverTime
+        };
+
+        console.log('✅ PostHog data loaded:', postHogWebAnalyticsData);
+        postHogLoading = false;
+        renderWebAnalyticsDashboard();
+
+      } catch (error) {
+        console.error('❌ PostHog API Error:', error);
+        postHogLoading = false;
+        postHogError = error.message;
+        renderWebAnalyticsDashboard();
+      }
+    }
+
+    // Set PostHog period filter
+    function setPostHogPeriod(period) {
+      postHogPeriod = period;
+
+      // Update active pill
+      document.querySelectorAll('.posthog-period-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.period === period);
+      });
+
+      // Reload data
+      loadPostHogWebAnalytics();
+    }
+    window.setPostHogPeriod = setPostHogPeriod;
+
+    // Format duration (seconds to mm:ss)
+    function formatDuration(seconds) {
+      if (!seconds || seconds < 0) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Render Web Analytics Dashboard
+    function renderWebAnalyticsDashboard() {
+      const container = document.getElementById('webAnalyticsContent');
+      if (!container) return;
+
+      // If not configured, show setup message
+      if (!isPostHogConfigured()) {
+        container.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:400px; text-align:center; padding:40px;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="1.5" style="margin-bottom:16px;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:600; color:#1d1d1f;">PostHog Web Analytics</h3>
+            <p style="margin:0 0 24px 0; color:#86868b; max-width:400px;">
+              Connect your PostHog account to view website analytics including pageviews, visitors, top pages, referrers, and more.
+            </p>
+            <button onclick="openPostHogSettingsModal()" style="
+              padding:12px 24px;
+              background:#000;
+              color:#fff;
+              border:none;
+              border-radius:8px;
+              font-size:14px;
+              font-weight:500;
+              cursor:pointer;
+              display:flex;
+              align-items:center;
+              gap:8px;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v10M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M1 12h6m6 0h10M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24"/>
+              </svg>
+              Configure PostHog
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // If loading, show spinner
+      if (postHogLoading) {
+        container.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:400px;">
+            <div class="loading-spinner" style="width:40px; height:40px; border:3px solid #eaeaea; border-top-color:#000; border-radius:50%; animation:spin 1s linear infinite;"></div>
+            <p style="margin-top:16px; color:#86868b;">Loading PostHog analytics...</p>
+          </div>
+        `;
+        return;
+      }
+
+      // If error, show error message
+      if (postHogError) {
+        container.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:400px; text-align:center; padding:40px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="1.5" style="margin-bottom:16px;">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <h3 style="margin:0 0 8px 0; font-size:18px; font-weight:600; color:#1d1d1f;">Error Loading Analytics</h3>
+            <p style="margin:0 0 24px 0; color:#86868b; max-width:500px; font-size:14px;">${postHogError}</p>
+            <div style="display:flex; gap:12px;">
+              <button onclick="loadPostHogWebAnalytics()" style="padding:10px 20px; background:#000; color:#fff; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Retry</button>
+              <button onclick="openPostHogSettingsModal()" style="padding:10px 20px; background:#f5f5f5; color:#1d1d1f; border:none; border-radius:8px; font-size:14px; cursor:pointer;">Settings</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Render the full dashboard
+      const data = postHogWebAnalyticsData;
+
+      container.innerHTML = `
+        <!-- KPI Cards -->
+        <div class="kpi-grid" style="margin-bottom:24px;">
+          <div class="kpi-card">
+            <div class="kpi-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Pageviews
+            </div>
+            <div class="kpi-value">${data.pageviews.toLocaleString('de-DE')}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Unique Visitors
+            </div>
+            <div class="kpi-value">${data.uniqueVisitors.toLocaleString('de-DE')}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Sessions
+            </div>
+            <div class="kpi-value">${data.sessions.toLocaleString('de-DE')}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Avg. Duration
+            </div>
+            <div class="kpi-value">${formatDuration(data.avgSessionDuration)}</div>
+          </div>
+        </div>
+
+        <!-- Bounce Rate Card -->
+        <div style="background:#fff; border:1px solid #eaeaea; border-radius:12px; padding:20px; margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:13px; color:#86868b; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Bounce Rate</div>
+              <div style="font-size:32px; font-weight:600; color:#1d1d1f;">${data.bounceRate}%</div>
+            </div>
+            <div style="width:120px; height:8px; background:#eaeaea; border-radius:4px; overflow:hidden;">
+              <div style="width:${data.bounceRate}%; height:100%; background:${parseFloat(data.bounceRate) > 70 ? '#ff3b30' : parseFloat(data.bounceRate) > 50 ? '#ff9500' : '#34c759'}; border-radius:4px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pageviews Chart -->
+        <div class="chart-card" style="margin-bottom:24px;">
+          <div class="chart-header">
+            <div class="chart-title">Pageviews Over Time</div>
+          </div>
+          <div class="chart-body">
+            <div class="chart-container" style="height:300px;">
+              <canvas id="postHogPageviewsChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="charts-row" style="margin-bottom:24px;">
+          <!-- Top Pages -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Top Pages</div>
+            </div>
+            <div class="chart-body" style="padding:0;">
+              <div style="max-height:350px; overflow-y:auto;">
+                <table style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr style="background:#fafafa; border-bottom:1px solid #eaeaea;">
+                      <th style="text-align:left; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase;">Page</th>
+                      <th style="text-align:right; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase;">Views</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.topPages.length > 0 ? data.topPages.map((item, i) => `
+                      <tr style="border-bottom:1px solid #eaeaea;">
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.page}">${item.page}</td>
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; text-align:right; font-weight:500;">${item.views.toLocaleString('de-DE')}</td>
+                      </tr>
+                    `).join('') : '<tr><td colspan="2" style="padding:20px; text-align:center; color:#86868b;">No data available</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Referrers -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Top Referrers</div>
+            </div>
+            <div class="chart-body" style="padding:0;">
+              <div style="max-height:350px; overflow-y:auto;">
+                <table style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr style="background:#fafafa; border-bottom:1px solid #eaeaea;">
+                      <th style="text-align:left; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase;">Referrer</th>
+                      <th style="text-align:right; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase;">Visits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.topReferrers.length > 0 ? data.topReferrers.map((item, i) => `
+                      <tr style="border-bottom:1px solid #eaeaea;">
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.referrer}">${extractDomain(item.referrer)}</td>
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; text-align:right; font-weight:500;">${item.visits.toLocaleString('de-DE')}</td>
+                      </tr>
+                    `).join('') : '<tr><td colspan="2" style="padding:20px; text-align:center; color:#86868b;">No referrer data</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Three Column Layout for Browsers, Devices, Countries -->
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+          <!-- Browsers -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Browsers</div>
+            </div>
+            <div class="chart-body">
+              <div class="pie-chart-layout">
+                <div class="pie-chart-wrapper" style="max-width:150px;">
+                  <canvas id="postHogBrowsersChart"></canvas>
+                </div>
+                <div id="postHogBrowsersLegend" class="pie-legend"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Devices -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Devices</div>
+            </div>
+            <div class="chart-body">
+              <div class="pie-chart-layout">
+                <div class="pie-chart-wrapper" style="max-width:150px;">
+                  <canvas id="postHogDevicesChart"></canvas>
+                </div>
+                <div id="postHogDevicesLegend" class="pie-legend"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Countries -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Countries</div>
+            </div>
+            <div class="chart-body">
+              <div class="pie-chart-layout">
+                <div class="pie-chart-wrapper" style="max-width:150px;">
+                  <canvas id="postHogCountriesChart"></canvas>
+                </div>
+                <div id="postHogCountriesLegend" class="pie-legend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Render charts after DOM update
+      setTimeout(() => {
+        renderPostHogCharts();
+      }, 50);
+    }
+
+    // Extract domain from referrer URL
+    function extractDomain(url) {
+      if (!url) return 'Direct';
+      try {
+        const urlObj = new URL(url);
+        return urlObj.hostname.replace('www.', '');
+      } catch {
+        return url.substring(0, 30);
+      }
+    }
+
+    // Render PostHog Charts
+    function renderPostHogCharts() {
+      const data = postHogWebAnalyticsData;
+      const colors = ['#0070f3', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+
+      // Destroy existing charts
+      ['postHogPageviewsChart', 'postHogBrowsersChart', 'postHogDevicesChart', 'postHogCountriesChart'].forEach(id => {
+        if (analyticsCharts[id]) {
+          analyticsCharts[id].destroy();
+          delete analyticsCharts[id];
+        }
+      });
+
+      // Pageviews Line Chart
+      const pageviewsCanvas = document.getElementById('postHogPageviewsChart');
+      if (pageviewsCanvas && data.pageviewsOverTime.length > 0) {
+        const labels = data.pageviewsOverTime.map(d => {
+          const date = new Date(d.date);
+          return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+        });
+        const values = data.pageviewsOverTime.map(d => d.pageviews);
+
+        analyticsCharts['postHogPageviewsChart'] = new Chart(pageviewsCanvas, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Pageviews',
+              data: values,
+              borderColor: '#0070f3',
+              backgroundColor: 'rgba(0, 112, 243, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 3,
+              pointHoverRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              },
+              x: {
+                grid: { display: false }
+              }
+            }
+          }
+        });
+      }
+
+      // Browsers Pie Chart
+      if (data.browsers.length > 0) {
+        createAnalyticsPieChart('postHogBrowsersChart', 'postHogBrowsersLegend',
+          data.browsers.map((item, i) => ({
+            label: item.browser,
+            value: item.count,
+            color: colors[i % colors.length],
+            display: item.count.toLocaleString('de-DE')
+          }))
+        );
+      }
+
+      // Devices Pie Chart
+      if (data.devices.length > 0) {
+        createAnalyticsPieChart('postHogDevicesChart', 'postHogDevicesLegend',
+          data.devices.map((item, i) => ({
+            label: item.device || 'Unknown',
+            value: item.count,
+            color: colors[i % colors.length],
+            display: item.count.toLocaleString('de-DE')
+          }))
+        );
+      }
+
+      // Countries Pie Chart
+      if (data.countries.length > 0) {
+        createAnalyticsPieChart('postHogCountriesChart', 'postHogCountriesLegend',
+          data.countries.slice(0, 5).map((item, i) => ({
+            label: item.country,
+            value: item.count,
+            color: colors[i % colors.length],
+            display: item.count.toLocaleString('de-DE')
+          }))
+        );
+      }
+    }
+
+    // Open PostHog Settings Modal
+    function openPostHogSettingsModal() {
+      const modal = document.getElementById('postHogSettingsModal');
+      if (modal) {
+        // Pre-fill current values
+        document.getElementById('postHogHostInput').value = postHogConfig.host;
+        document.getElementById('postHogProjectIdInput').value = postHogConfig.projectId;
+        document.getElementById('postHogApiKeyInput').value = postHogConfig.apiKey;
+        modal.style.display = 'flex';
+      }
+    }
+    window.openPostHogSettingsModal = openPostHogSettingsModal;
+
+    // Close PostHog Settings Modal
+    function closePostHogSettingsModal() {
+      const modal = document.getElementById('postHogSettingsModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+    window.closePostHogSettingsModal = closePostHogSettingsModal;
+
+    // Save PostHog Settings from Modal
+    function savePostHogSettings() {
+      const host = document.getElementById('postHogHostInput').value.trim();
+      const projectId = document.getElementById('postHogProjectIdInput').value.trim();
+      const apiKey = document.getElementById('postHogApiKeyInput').value.trim();
+
+      if (!projectId || !apiKey) {
+        alert('Please enter Project ID and API Key');
+        return;
+      }
+
+      savePostHogConfig(host, projectId, apiKey);
+      closePostHogSettingsModal();
+
+      // Reload data
+      loadPostHogWebAnalytics();
+    }
+    window.savePostHogSettings = savePostHogSettings;
+
     // Show specific analytics view
     function showAnalyticsView(viewName) {
       console.log('📊 Switching to analytics view:', viewName);
@@ -42624,6 +43589,9 @@
           break;
         case 'studio-breakdown':
           await loadStudioBreakdownData();
+          break;
+        case 'web-analytics':
+          await loadPostHogWebAnalytics();
           break;
         default:
           console.log('Unknown view:', viewName);
@@ -45436,6 +46404,11 @@
           case 'revenue-gutscheine':
             // Gutscheine Analytics V2
             renderAnalyticsGutscheine(colors);
+            break;
+
+          case 'web-analytics':
+            // PostHog Web Analytics
+            loadPostHogWebAnalytics();
             break;
 
           default:
