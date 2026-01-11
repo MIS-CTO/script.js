@@ -13909,7 +13909,7 @@
   <div class="error-panel-overlay" id="errorPanelOverlay" onclick="if(event.target === this) closeErrorPanel()">
     <div class="error-panel">
       <div class="error-panel-header">
-        <span class="error-panel-title">❌ System Errors</span>
+        <span class="error-panel-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>System Errors</span>
         <div style="display: flex; gap: 8px;">
           <button onclick="clearErrorLog()" style="background: #fee2e2; color: #991b1b; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Clear All</button>
           <button onclick="closeErrorPanel()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6b7280;">✕</button>
@@ -14119,7 +14119,7 @@
   <!-- Project Invitations Dropdown -->
   <div class="profile-dropdown" id="invitationsDropdown" style="display: none; min-width: 320px; max-width: 400px;">
     <div class="profile-header">
-      <div class="profile-username">🔔 Projekt-Einladungen</div>
+      <div class="profile-username"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Projekt-Einladungen</div>
     </div>
     <div id="invitationsContent" style="max-height: 400px; overflow-y: auto;">
       <div style="padding: 20px; text-align: center; color: var(--text-secondary); font-size: 14px;">
@@ -17847,10 +17847,10 @@
             <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Priority</label>
             <select id="editPriority">
               <option value="">-- Select Priority --</option>
-              <option value="low">Low 💤</option>
-              <option value="normal">Normal ✓</option>
-              <option value="high">High ⚡</option>
-              <option value="urgent">Urgent 🔥</option>
+              <option value="low">Low</option>
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
             </select>
           </div>
           <div class="form-group">
@@ -17924,10 +17924,10 @@
           <h4 style="font-size:1rem; font-weight:600; margin-bottom:12px; color:#1d1d1f;">Quick Actions</h4>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn" onclick="resetRequestToOpen()" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">
-              🔄 Reset to Open
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Reset to Open
             </button>
             <button type="button" class="btn" onclick="deleteRequestPermanently()" style="background:#dc3545; color:white; border:none;">
-              🗑️ Delete Permanently
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>Delete Permanently
             </button>
           </div>
         </div>
@@ -17992,10 +17992,10 @@
             <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Priority</label>
             <select id="createPriority">
               <option value="">-- Select Priority --</option>
-              <option value="low">Low 💤</option>
-              <option value="normal" selected>Normal ✓</option>
-              <option value="high">High ⚡</option>
-              <option value="urgent">Urgent 🔥</option>
+              <option value="low">Low</option>
+              <option value="normal" selected>Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
             </select>
           </div>
           <div class="form-group">
@@ -19996,7 +19996,11 @@
       }
 
       content.innerHTML = window.errorLog.map(error => {
-        const typeIcon = error.type === 'warning' ? '🟡' : (error.type === 'unhandled' ? '🟠' : '🔴');
+        const typeIcon = error.type === 'warning'
+          ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>'
+          : (error.type === 'unhandled'
+            ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="#fb923c" stroke="#fb923c" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>'
+            : '<svg width="12" height="12" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>');
         const time = new Date(error.timestamp).toLocaleTimeString('de-DE');
         const escapedMessage = (error.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const escapedStack = (error.stack || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -22760,10 +22764,10 @@
 
       menu.innerHTML = `
         <button onclick="editProject('${projectId}')" style="width:100%;padding:10px 16px;border:none;background:none;text-align:left;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px;">
-          <span>✏️</span> Bearbeiten
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Bearbeiten
         </button>
         <button onclick="confirmDeleteProject('${projectId}')" style="width:100%;padding:10px 16px;border:none;background:none;text-align:left;cursor:pointer;font-size:14px;color:#ff3b30;display:flex;align-items:center;gap:8px;">
-          <span>🗑️</span> Löschen
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg> Löschen
         </button>
       `;
 
@@ -26398,7 +26402,7 @@
                 </div>
 
                 <div class="kpi-card active">
-                  <div class="kpi-icon">🔄</div>
+                  <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></div>
                   <div class="kpi-content">
                     <div class="kpi-value">${metrics.activeProjects.toLocaleString()}</div>
                     <div class="kpi-label">Active Projects</div>
@@ -26406,7 +26410,7 @@
                 </div>
 
                 <div class="kpi-card completed">
-                  <div class="kpi-icon">✅</div>
+                  <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div>
                   <div class="kpi-content">
                     <div class="kpi-value">${metrics.completedProjects.toLocaleString()}</div>
                     <div class="kpi-label">Completed Projects</div>
@@ -26414,7 +26418,7 @@
                 </div>
 
                 <div class="kpi-card revenue">
-                  <div class="kpi-icon">💰</div>
+                  <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg></div>
                   <div class="kpi-content">
                     <div class="kpi-value">€${metrics.totalRevenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</div>
                     <div class="kpi-label">Total Revenue</div>
@@ -26422,7 +26426,7 @@
                 </div>
 
                 <div class="kpi-card">
-                  <div class="kpi-icon">📊</div>
+                  <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></div>
                   <div class="kpi-content">
                     <div class="kpi-value">${metrics.avgAppointmentsPerProject.toFixed(1)}</div>
                     <div class="kpi-label">Avg Sessions/Project</div>
@@ -26430,7 +26434,7 @@
                 </div>
 
                 <div class="kpi-card">
-                  <div class="kpi-icon">✨</div>
+                  <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div>
                   <div class="kpi-content">
                     <div class="kpi-value">${metrics.completionRate.toFixed(1)}%</div>
                     <div class="kpi-label">Completion Rate</div>
@@ -26452,13 +26456,13 @@
         const allCanceled = statuses.every(s => s === 'canceled');
 
         if (allFinished) {
-          return '<span class="project-status-badge completed">✅ Completed</span>';
+          return '<span class="project-status-badge completed"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Completed</span>';
         } else if (allCanceled) {
-          return '<span class="project-status-badge canceled">❌ Canceled</span>';
+          return '<span class="project-status-badge canceled"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>Canceled</span>';
         } else if (hasScheduled) {
-          return '<span class="project-status-badge active">🔄 Active</span>';
+          return '<span class="project-status-badge active"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Active</span>';
         } else {
-          return '<span class="project-status-badge completed">✅ Completed</span>';
+          return '<span class="project-status-badge completed"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Completed</span>';
         }
       }
 
@@ -26898,7 +26902,7 @@
 
         container.innerHTML = `
           <div class="stats-summary">
-            <h3>🌟 VIP Customers: ${customers.length} customers with multiple projects</h3>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>VIP Customers: ${customers.length} customers with multiple projects</h3>
           </div>
           <div class="performance-table-wrapper">
             <table class="performance-table">
@@ -27284,13 +27288,13 @@
 
         // PRIORITÄT 1: Bezahlt (höchste Priorität)
         if (paymentStatus === 'paid' || paymentStatus === 'fully_paid') {
-          indicator = '✅ Bezahlt';
+          indicator = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M20 6 9 17l-5-5"/></svg> Bezahlt';
           bgColor = '#e8f5e9';
           textColor = '#2e7d32';
         }
         // PRIORITÄT 2: Payment Failed
         else if (paymentStatus === 'failed' || lastAction === 'payment_failed') {
-          indicator = '❌ Fehlgeschlagen';
+          indicator = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Fehlgeschlagen';
           bgColor = '#ffebee';
           textColor = '#c62828';
         }
@@ -27320,7 +27324,7 @@
         }
         // PRIORITÄT 7: Payment Pending (Zahlungslink gesendet, noch nicht bezahlt)
         else if (request.stripe_payment_link && paymentStatus === 'pending') {
-          indicator = '⏳ Offen';
+          indicator = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Offen';
           bgColor = '#fff3e0';
           textColor = '#e65100';
         }
@@ -27351,7 +27355,7 @@
         var daysElapsed = Math.floor((now.getTime() - deletedAt.getTime()) / (1000 * 60 * 60 * 24));
         var daysLeft = Math.max(0, 5 - daysElapsed);
 
-        return '<div style="background:#fff3cd;padding:6px 10px;border-radius:6px;margin-top:8px;font-size:11px;color:#856404">⏳ Wird in ' + daysLeft + ' Tag' + (daysLeft !== 1 ? 'en' : '') + ' permanent geloescht</div>';
+        return '<div style="background:#fff3cd;padding:6px 10px;border-radius:6px;margin-top:8px;font-size:11px;color:#856404"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Wird in ' + daysLeft + ' Tag' + (daysLeft !== 1 ? 'en' : '') + ' permanent geloescht</div>';
       }
 
       window.getDeletedCountdown = getDeletedCountdown;
@@ -27650,18 +27654,18 @@
         switch (action) {
           case 'payment_link_sent':
           case 'scheduled_with_payment':
-            icon = '✅';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>';
             title = 'Zahlungslink versendet';
             bgColor = '#e8f5e9';
             borderColor = '#4caf50';
             var paymentLink = details.payment_link || request.stripe_payment_link || '';
             var amount = details.amount || request.total_amount || 0;
-            extraContent = '<p style="margin:8px 0 4px;font-size:13px;color:#424245">🔗 <a href="' + paymentLink + '" target="_blank" style="color:#0071e3">' + paymentLink + '</a></p>';
+            extraContent = '<p style="margin:8px 0 4px;font-size:13px;color:#424245"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> <a href="' + paymentLink + '" target="_blank" style="color:#0071e3">' + paymentLink + '</a></p>';
             extraContent += '<p style="margin:0;font-size:13px;color:#424245">Gesamtpreis: ' + Number(amount).toFixed(2) + ' EUR</p>';
             break;
 
           case 'scheduled':
-            icon = '📅';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>';
             title = 'Scheduled';
             bgColor = '#e3f2fd';
             borderColor = '#2196f3';
@@ -27669,7 +27673,7 @@
 
           case 'reminder_1_sent':
           case 'auto_reminder_1':
-            icon = '📧';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffc107" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
             title = '1st Reminder sent';
             bgColor = '#fff8e1';
             borderColor = '#ffc107';
@@ -27678,7 +27682,7 @@
 
           case 'reminder_2_sent':
           case 'auto_reminder_2':
-            icon = '📧⚠️';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
             title = '2nd Reminder sent';
             bgColor = '#fff3e0';
             borderColor = '#ff9800';
@@ -27686,14 +27690,14 @@
             break;
 
           case 'rescheduled':
-            icon = '🔄';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3f51b5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>';
             title = 'Rescheduled';
             bgColor = '#e8eaf6';
             borderColor = '#3f51b5';
             break;
 
           case 'canceled':
-            icon = '⏸️';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>';
             title = 'Canceled';
             bgColor = '#fff3e0';
             borderColor = '#ff9800';
@@ -27701,7 +27705,7 @@
 
           case 'storniert':
           case 'auto_storniert':
-            icon = '❌';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>';
             title = 'Storniert';
             bgColor = '#ffebee';
             borderColor = '#f44336';
@@ -27712,21 +27716,21 @@
             break;
 
           case 'deleted':
-            icon = '🗑️';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>';
             title = 'Geloescht';
             bgColor = '#fce4ec';
             borderColor = '#e91e63';
             break;
 
           case 'restored':
-            icon = '♻️';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
             title = 'Wiederhergestellt';
             bgColor = '#e8f5e9';
             borderColor = '#4caf50';
             break;
 
           case 'assigned':
-            icon = '👤';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
             title = 'Assigned';
             bgColor = '#e3f2fd';
             borderColor = '#2196f3';
@@ -27736,14 +27740,14 @@
             break;
 
           case 'payment_received':
-            icon = '💰';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>';
             title = 'Zahlung eingegangen';
             bgColor = '#e8f5e9';
             borderColor = '#4caf50';
             break;
 
           default:
-            icon = '📝';
+            icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>';
             title = action;
             break;
         }
@@ -27940,8 +27944,8 @@
               <div class="detail-label" style="display:flex;align-items:center;justify-content:space-between;">
                 <span>Reference Images${request.reference_images && request.reference_images.length > 0 ? ` (${request.reference_images.length})` : ''}</span>
                 ${request.reference_images && request.reference_images.length > 0 ? `
-                  <button onclick="downloadAllImages('${request.id}')" style="padding:4px 12px;background:#0071e3;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600">
-                    ⬇ Download All
+                  <button onclick="downloadAllImages('${request.id}')" style="padding:4px 12px;background:#0071e3;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:4px">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Download All
                   </button>
                 ` : ''}
               </div>
@@ -27953,7 +27957,7 @@
                         <div class="reference-image-thumb" onclick="openImageModal('${img}')" style="cursor:pointer;">
                           <img src="${img}" alt="Reference ${idx + 1}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
                         </div>
-                        <button onclick="event.stopPropagation();downloadSingleImage('${img}', 'reference_${idx + 1}')" style="position:absolute;bottom:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px" title="Download">⬇</button>
+                        <button onclick="event.stopPropagation();downloadSingleImage('${img}', 'reference_${idx + 1}')" style="position:absolute;bottom:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center" title="Download"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
                       </div>
                     `).join('')}
                   </div>
@@ -28486,10 +28490,10 @@
                     <div class="detail-label">Priority</div>
                     <select id="fullEditPriority" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
                       <option value="">-- Select Priority --</option>
-                      <option value="low" ${request.priority === 'low' ? 'selected' : ''}>Low 💤</option>
-                      <option value="normal" ${request.priority === 'normal' ? 'selected' : ''}>Normal ✓</option>
-                      <option value="high" ${request.priority === 'high' ? 'selected' : ''}>High ⚡</option>
-                      <option value="urgent" ${request.priority === 'urgent' ? 'selected' : ''}>Urgent 🔥</option>
+                      <option value="low" ${request.priority === 'low' ? 'selected' : ''}>Low</option>
+                      <option value="normal" ${request.priority === 'normal' ? 'selected' : ''}>Normal</option>
+                      <option value="high" ${request.priority === 'high' ? 'selected' : ''}>High</option>
+                      <option value="urgent" ${request.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
                     </select>
                   </div>
                   <div class="detail-item">
@@ -28597,7 +28601,7 @@
 
               <!-- Work Process -->
               <div class="detail-section">
-                <h3>🎨 Work Process</h3>
+                <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg>Work Process</h3>
                 <div class="detail-item">
                   <div class="detail-label">Art des Termins</div>
                   <select id="fullEditWorkProcess" style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
@@ -28613,8 +28617,8 @@
 
             <!-- Action Button (Fixed Footer) -->
             <div style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1); background:rgba(255,255,255,0.95);">
-              <button type="submit" class="btn" style="background:var(--ink); color:white; border:none; width:100%; padding:14px;">
-                💾 Save Changes
+              <button type="submit" class="btn" style="background:var(--ink); color:white; border:none; width:100%; padding:14px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Changes
               </button>
             </div>
           </form>
@@ -30339,7 +30343,7 @@
         img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;border-radius:8px';
 
         var downloadBtn = document.createElement('button');
-        downloadBtn.innerHTML = '⬇ Download';
+        downloadBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Download';
         downloadBtn.style.cssText = 'position:absolute;bottom:20px;right:20px;padding:12px 24px;background:#0071e3;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer';
         downloadBtn.onclick = function(e) {
           e.stopPropagation();
@@ -31653,7 +31657,7 @@
             <div style="padding: 24px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                  📌 Artist Note
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>Artist Note
                 </h2>
                 <button onclick="closeArtistInfoModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #86868b; line-height: 1; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='none'">×</button>
               </div>
@@ -32002,15 +32006,15 @@
 
                     const typeLabel = cell.event.type ? typeLabels[cell.event.type] || cell.event.type : '';
 
-                    // Payment status text labels
+                    // Payment status text labels (SVG icons)
                     const paymentLabels = {
-                      'paid': '✅ Bezahlt',
-                      'fully_paid': '✅ Bezahlt',
-                      'deposit_paid': '💰 Anzahlung',
-                      'pending': '⏳ Offen',
-                      'failed': '❌ Fehlgeschlagen',
-                      'refunded': '↩️ Rückerstattet',
-                      'unpaid': '💳 Unbezahlt'
+                      'paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M20 6 9 17l-5-5"/></svg> Bezahlt',
+                      'fully_paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M20 6 9 17l-5-5"/></svg> Bezahlt',
+                      'deposit_paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg> Anzahlung',
+                      'pending': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Offen',
+                      'failed': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Fehlgeschlagen',
+                      'refunded': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Rückerstattet',
+                      'unpaid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Unbezahlt'
                     };
                     const paymentLabel = cell.event.isAppointment && cell.event.paymentStatus
                       ? paymentLabels[cell.event.paymentStatus] || paymentLabels['unpaid']
@@ -33560,7 +33564,7 @@
                       display: flex;
                       align-items: center;
                       gap: 6px;
-                    ">✏️ Edit</button>
+                    "><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>Edit</button>
                   </div>
 
                   <!-- Tab Content -->
@@ -35247,13 +35251,13 @@
       // ============================================
       window.getStateBadge = function(state) {
         const badges = {
-          'Zugesagt': '<span class="state-badge confirmed">✅ Zugesagt</span>',
-          'Unbekannt': '<span class="state-badge unknown">❓ Unbekannt</span>',
-          'Ill/No Show': '<span class="state-badge no-show">👻 Ill/No Show</span>',
-          'Verschoben': '<span class="state-badge rescheduled">🔄 Verschoben</span>',
-          'Reserviert': '<span class="state-badge reserved">📌 Reserviert</span>'
+          'Zugesagt': '<span class="state-badge confirmed"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Zugesagt</span>',
+          'Unbekannt': '<span class="state-badge unknown"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>Unbekannt</span>',
+          'Ill/No Show': '<span class="state-badge no-show"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg>Ill/No Show</span>',
+          'Verschoben': '<span class="state-badge rescheduled"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Verschoben</span>',
+          'Reserviert': '<span class="state-badge reserved"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>Reserviert</span>'
         };
-        return badges[state] || '<span class="state-badge unknown">❓ Unbekannt</span>';
+        return badges[state] || '<span class="state-badge unknown"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>Unbekannt</span>';
       };
 
       // ============================================
@@ -35261,13 +35265,13 @@
       // ============================================
       window.getStatusBadge = function(status) {
         const badges = {
-          'scheduled': '<span class="status-badge scheduled">📅 Scheduled</span>',
-          'finished': '<span class="status-badge finished">✅ Finished</span>',
-          'canceled': '<span class="status-badge canceled">❌ Canceled</span>',
-          'no_show': '<span class="status-badge no-show">👻 No Show</span>',
-          'reserved': '<span class="status-badge reserved">📌 Reserved</span>',
-          'unknown': '<span class="status-badge unknown">❓ Unknown</span>',
-          'rescheduled': '<span class="status-badge rescheduled">🔄 Rescheduled</span>'
+          'scheduled': '<span class="status-badge scheduled"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>Scheduled</span>',
+          'finished': '<span class="status-badge finished"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Finished</span>',
+          'canceled': '<span class="status-badge canceled"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>Canceled</span>',
+          'no_show': '<span class="status-badge no-show"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg>No Show</span>',
+          'reserved': '<span class="status-badge reserved"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>Reserved</span>',
+          'unknown': '<span class="status-badge unknown"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>Unknown</span>',
+          'rescheduled': '<span class="status-badge rescheduled"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Rescheduled</span>'
         };
         return badges[status] || badges['unknown'];
       };
@@ -35277,13 +35281,13 @@
       // ============================================
       window.getPaymentStatusBadge = function(paymentStatus) {
         const badges = {
-          'paid': '<span class="payment-badge paid">✅ Bezahlt</span>',
-          'fully_paid': '<span class="payment-badge paid">✅ Bezahlt</span>',
-          'deposit_paid': '<span class="payment-badge deposit">💰 Anzahlung</span>',
-          'pending': '<span class="payment-badge pending" style="background:#fff3e0;color:#e65100">⏳ Offen</span>',
-          'failed': '<span class="payment-badge failed" style="background:#ffebee;color:#c62828">❌ Fehlgeschlagen</span>',
-          'refunded': '<span class="payment-badge refunded">↩️ Rückerstattet</span>',
-          'unpaid': '<span class="payment-badge unpaid">💳 Unbezahlt</span>'
+          'paid': '<span class="payment-badge paid"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Bezahlt</span>',
+          'fully_paid': '<span class="payment-badge paid"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Bezahlt</span>',
+          'deposit_paid': '<span class="payment-badge deposit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>Anzahlung</span>',
+          'pending': '<span class="payment-badge pending" style="background:#fff3e0;color:#e65100"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Offen</span>',
+          'failed': '<span class="payment-badge failed" style="background:#ffebee;color:#c62828"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>Fehlgeschlagen</span>',
+          'refunded': '<span class="payment-badge refunded"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Rückerstattet</span>',
+          'unpaid': '<span class="payment-badge unpaid"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>Unbezahlt</span>'
         };
         return badges[paymentStatus] || badges['unpaid'];
       };
@@ -39098,8 +39102,8 @@
 
       <!-- Header -->
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid rgba(0,0,0,0.1);">
-        <h3 style="color:var(--macos-text-primary); font-weight:600; margin:0; font-size:20px;">
-          💳 Zahlungsabwicklung
+        <h3 style="color:var(--macos-text-primary); font-weight:600; margin:0; font-size:20px; display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>Zahlungsabwicklung
         </h3>
         <button onclick="closePaymentWorkflowModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--macos-text-secondary); padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:all 0.2s;">
           ×
@@ -39109,7 +39113,7 @@
       <!-- SECTION 1: Customer Info Summary -->
       <div style="background:rgba(255,255,255,0.9); backdrop-filter:saturate(180%) blur(20px); padding:20px; border-radius:12px; margin-bottom:16px; border:1px solid rgba(0,0,0,0.08);">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-          <span style="font-size:20px;">👤</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <h4 style="font-size:15px; font-weight:600; margin:0; color:var(--macos-text-primary);">Kundeninformationen</h4>
         </div>
         <div id="paymentCustomerSummary" style="font-size:13px; line-height:1.6;"></div>
@@ -39118,7 +39122,7 @@
       <!-- SECTION 2: Tattoo Details Summary -->
       <div style="background:rgba(255,255,255,0.9); backdrop-filter:saturate(180%) blur(20px); padding:20px; border-radius:12px; margin-bottom:16px; border:1px solid rgba(0,0,0,0.08);">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-          <span style="font-size:20px;">🎨</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg>
           <h4 style="font-size:15px; font-weight:600; margin:0; color:var(--macos-text-primary);">Tattoo Details</h4>
         </div>
         <div id="paymentTattooSummary" style="font-size:13px; line-height:1.6;"></div>
@@ -39127,7 +39131,7 @@
       <!-- SECTION 3: Appointment Details -->
       <div style="background:rgba(255,255,255,0.9); backdrop-filter:saturate(180%) blur(20px); padding:20px; border-radius:12px; margin-bottom:16px; border:1px solid rgba(0,0,0,0.08);">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-          <span style="font-size:20px;">📅</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
           <h4 style="font-size:15px; font-weight:600; margin:0; color:var(--macos-text-primary);">Termindetails</h4>
         </div>
         <div id="paymentAppointmentSummary" style="font-size:13px; line-height:1.6;"></div>
@@ -39136,7 +39140,7 @@
       <!-- SECTION 4: Price Input -->
       <div style="background:linear-gradient(135deg, rgba(0,113,227,0.05), rgba(0,113,227,0.12)); backdrop-filter:saturate(180%) blur(20px); padding:24px; border-radius:12px; margin-bottom:16px; border:2px solid rgba(0,113,227,0.3);">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-          <span style="font-size:20px;">💶</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--macos-accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
           <h4 style="font-size:15px; font-weight:600; margin:0; color:var(--macos-accent-blue);">Preisgestaltung</h4>
         </div>
 
@@ -39199,13 +39203,13 @@
                 onclick="executePaymentWorkflow()"
                 disabled
                 style="flex:2; background:var(--macos-accent-green); color:white; padding:12px 32px; border-radius:10px; font-weight:600; border:none; cursor:not-allowed; opacity:0.5; font-size:14px; transition:all 0.2s;">
-          📧 Zahlungslink versenden
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Zahlungslink versenden
         </button>
       </div>
 
       <!-- Loading State Overlay -->
       <div id="paymentWorkflowLoading" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.95); backdrop-filter:saturate(180%) blur(20px); border-radius:16px; flex-direction:column; align-items:center; justify-content:center; z-index:10;">
-        <div style="font-size:48px; margin-bottom:16px; animation:spin 2s linear infinite;">⏳</div>
+        <div style="margin-bottom:16px; animation:spin 2s linear infinite;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
         <div style="font-size:16px; font-weight:600; color:var(--macos-text-primary); margin-bottom:8px;">Zahlungslink wird erstellt...</div>
         <div style="font-size:13px; color:var(--macos-text-secondary);">Email wird an Kunden versendet</div>
       </div>
@@ -43092,7 +43096,7 @@
                              status === 'Anzahlung bezahlt' ? '#fff3cd' : '#f8d7da';
               return `
                 <div style="text-align:center; padding:20px; background:${bgColor}; border-radius:8px;">
-                  <div style="font-size:14px; margin-bottom:8px;">💰 ${status}</div>
+                  <div style="font-size:14px; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>${status}</div>
                   <div style="font-size:24px; font-weight:600; margin-bottom:4px;">
                     €${data.revenue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
@@ -43226,7 +43230,7 @@
     function renderArtistPerformance(appointments) {
       const performanceHTML = `
         <div style="background:white; padding:24px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:30px;">
-          <h3 style="margin:0 0 16px 0;">🎨 Artist Performance</h3>
+          <h3 style="margin:0 0 16px 0; display:flex; align-items:center; gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg>Artist Performance</h3>
           <div style="height:200px; display:flex; align-items:center; justify-content:center; background:#f8f9fa; border-radius:8px;">
             <p style="color:var(--muted);">Detailed artist performance metrics coming soon</p>
           </div>
@@ -47279,8 +47283,12 @@
       // ============================================
       function showNotification(message, type = 'info') {
         // Simple alert for now - could be enhanced with custom UI later
-        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-        alert(`${icon} ${message}`);
+        const iconMap = {
+          'success': '[OK]',
+          'error': '[ERROR]',
+          'info': '[INFO]'
+        };
+        alert(`${iconMap[type] || iconMap.info} ${message}`);
       }
 
       // Export showNotification globally
@@ -53407,7 +53415,7 @@
         // Info-Text aktualisieren
         const sourceInfo = document.getElementById('shareSourceInfo');
         if (sourceInfo) {
-          sourceInfo.innerHTML = '<span style="color:#ff9500;">⚙️ Custom Share Split aktiv</span>';
+          sourceInfo.innerHTML = '<span style="color:#ff9500;display:flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Custom Share Split aktiv</span>';
         }
       } else {
         sliderContainer.style.opacity = '0.4';
