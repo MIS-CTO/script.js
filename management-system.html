@@ -42726,23 +42726,30 @@
       console.log('📊 Loading dashboard data...');
 
       try {
-        // Load appointments count
-        const { count: appointmentsCount } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true });
+        // Use cached data from CentralDataManager
+        const appointments = CentralDataManager.getAppointments() || [];
+        const requests = CentralDataManager.getRequests() || [];
 
-        // Load requests count
-        const { count: requestsCount } = await supabase
-          .from('requests')
-          .select('*', { count: 'exact', head: true });
+        const appointmentsCount = appointments.length;
+        const requestsCount = requests.length;
 
-        // Load revenue data
-        const { data: revenueData } = await supabase
-          .from('appointments')
-          .select('total_amount')
-          .not('total_amount', 'is', null);
+        // Calculate revenue from appointments (using price, total_amount, or payment_amount)
+        let totalRevenue = 0;
+        let paidRevenue = 0;
+        let unpaidRevenue = 0;
 
-        const totalRevenue = revenueData?.reduce((sum, apt) => sum + (parseFloat(apt.total_amount) || 0), 0) || 0;
+        appointments.forEach(apt => {
+          const price = parseFloat(apt.price || apt.total_amount || apt.payment_amount || 0);
+          if (price > 0) {
+            totalRevenue += price;
+            const status = (apt.payment_status || 'unpaid').toLowerCase();
+            if (status === 'paid' || status === 'bezahlt') {
+              paidRevenue += price;
+            } else {
+              unpaidRevenue += price;
+            }
+          }
+        });
 
         // Calculate conversion rate
         const conversionRate = requestsCount > 0 ? ((appointmentsCount / requestsCount) * 100).toFixed(1) : 0;
@@ -42753,10 +42760,12 @@
         const kpiRequests = document.getElementById('kpiRequests');
         const kpiConversion = document.getElementById('kpiConversion');
 
-        if (kpiRevenue) kpiRevenue.textContent = `€${totalRevenue.toLocaleString('de-DE')}`;
+        if (kpiRevenue) kpiRevenue.textContent = `€${totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}`;
         if (kpiAppointments) kpiAppointments.textContent = appointmentsCount?.toLocaleString('de-DE') || '0';
         if (kpiRequests) kpiRequests.textContent = requestsCount?.toLocaleString('de-DE') || '0';
         if (kpiConversion) kpiConversion.textContent = `${conversionRate}%`;
+
+        console.log('📊 Dashboard revenue:', { total: totalRevenue, paid: paidRevenue, unpaid: unpaidRevenue });
 
         // Render charts
         renderDashboardCharts();
@@ -42768,7 +42777,154 @@
 
     async function loadRevenueOverviewData() {
       console.log('📊 Loading revenue overview data...');
-      renderRevenueOverviewCharts();
+
+      try {
+        // Get appointments from cache
+        const appointments = CentralDataManager.getAppointments() || [];
+        const locations = CentralDataManager.getLocations() || [];
+
+        console.log('📊 Processing', appointments.length, 'appointments for revenue...');
+
+        // Calculate revenue by payment status
+        let totalRevenue = 0;
+        let paidRevenue = 0;
+        let unpaidRevenue = 0;
+        let pendingRevenue = 0;
+        let depositRevenue = 0;
+        let tattooRevenue = 0;
+        let appointmentCount = 0;
+
+        // Revenue by location
+        const revenueByLocation = {};
+        locations.forEach(loc => {
+          revenueByLocation[loc.id] = { name: loc.name, revenue: 0 };
+        });
+
+        appointments.forEach(apt => {
+          const price = parseFloat(apt.price || apt.total_amount || apt.payment_amount || 0);
+          if (price <= 0) return;
+
+          totalRevenue += price;
+          appointmentCount++;
+
+          // Group by payment status
+          const status = (apt.payment_status || 'unpaid').toLowerCase();
+          if (status === 'paid' || status === 'bezahlt') {
+            paidRevenue += price;
+            tattooRevenue += price; // Only count paid as realized tattoo revenue
+          } else if (status === 'pending' || status === 'teilzahlung') {
+            pendingRevenue += price;
+          } else if (status === 'deposit' || status === 'anzahlung') {
+            depositRevenue += price;
+          } else {
+            unpaidRevenue += price;
+          }
+
+          // Group by location
+          if (apt.location_id && revenueByLocation[apt.location_id]) {
+            revenueByLocation[apt.location_id].revenue += price;
+          }
+        });
+
+        console.log('📊 Revenue breakdown:', {
+          total: totalRevenue,
+          paid: paidRevenue,
+          unpaid: unpaidRevenue,
+          pending: pendingRevenue,
+          deposit: depositRevenue
+        });
+
+        // Format currency helper
+        const formatEuro = (val) => {
+          if (val >= 1000000) return `€${(val/1000000).toFixed(2)}M`;
+          if (val >= 1000) return `€${(val/1000).toFixed(1)}K`;
+          return `€${val.toFixed(0)}`;
+        };
+
+        const formatEuroFull = (val) => {
+          return `€${val.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        };
+
+        // Update KPI Cards
+        const revTotalGesamt = document.getElementById('revTotalGesamt');
+        const revTattooTermine = document.getElementById('revTattooTermine');
+        const revOffeneZahlungen = document.getElementById('revOffeneZahlungen');
+        const revAnzahlungen = document.getElementById('revAnzahlungen');
+        const revTattooPercent = document.getElementById('revTattooPercent');
+        const revTotalGesamtSub = document.getElementById('revTotalGesamtSub');
+
+        if (revTotalGesamt) revTotalGesamt.textContent = formatEuroFull(totalRevenue);
+        if (revTattooTermine) revTattooTermine.textContent = formatEuroFull(paidRevenue);
+        if (revOffeneZahlungen) revOffeneZahlungen.textContent = formatEuroFull(unpaidRevenue + pendingRevenue);
+        if (revAnzahlungen) revAnzahlungen.textContent = formatEuroFull(depositRevenue);
+        if (revTattooPercent && totalRevenue > 0) {
+          revTattooPercent.textContent = `${((paidRevenue / totalRevenue) * 100).toFixed(1)}%`;
+        }
+        if (revTotalGesamtSub) {
+          revTotalGesamtSub.textContent = `${appointmentCount} Termine`;
+        }
+
+        // Update Revenue Stream Cards
+        const revStreamTattoo = document.getElementById('revStreamTattoo');
+        const revStreamTattooPercent = document.getElementById('revStreamTattooPercent');
+        const revStreamGesamt = document.getElementById('revStreamGesamt');
+
+        if (revStreamTattoo) revStreamTattoo.textContent = formatEuroFull(paidRevenue);
+        if (revStreamTattooPercent && totalRevenue > 0) {
+          revStreamTattooPercent.textContent = `${((paidRevenue / totalRevenue) * 100).toFixed(1)}%`;
+        }
+        if (revStreamGesamt) revStreamGesamt.textContent = formatEuroFull(paidRevenue);
+
+        // Render charts with real data
+        renderRevenueOverviewChartsWithData(paidRevenue, revenueByLocation, locations);
+
+      } catch (error) {
+        console.error('❌ Error loading revenue overview data:', error);
+        // Fall back to placeholder charts
+        renderRevenueOverviewCharts();
+      }
+    }
+
+    function renderRevenueOverviewChartsWithData(tattooRevenue, revenueByLocation, locations) {
+      const colors = getAnalyticsChartColors();
+
+      // Prepare location data for bar chart
+      const locationNames = [];
+      const locationRevenues = [];
+
+      // Sort locations by revenue descending
+      const sortedLocations = Object.entries(revenueByLocation)
+        .filter(([id, data]) => data.revenue > 0)
+        .sort((a, b) => b[1].revenue - a[1].revenue);
+
+      sortedLocations.forEach(([id, data]) => {
+        locationNames.push(data.name);
+        locationRevenues.push(Math.round(data.revenue / 1000)); // Convert to K
+      });
+
+      // Calculate total for percentages
+      const totalRevenue = tattooRevenue; // For now, just tattoo revenue
+
+      // Pie chart data - for now showing tattoo revenue as main source
+      const pieData = [
+        { label: 'Tattoo-Termine (Bezahlt)', value: tattooRevenue, color: colors.green, display: `€${(tattooRevenue/1000).toFixed(1)}K (100%)` }
+      ];
+
+      // Create pie chart
+      createAnalyticsPieChart('revenueSourcePie', 'revenueSourceLegend', pieData);
+
+      // Create bar chart for revenue by studio
+      if (locationNames.length > 0) {
+        createAnalyticsBarChart('revenueStudioChart',
+          locationNames,
+          [{ label: 'Revenue €K', data: locationRevenues, backgroundColor: colors.blue }]
+        );
+      } else {
+        createAnalyticsBarChart('revenueStudioChart',
+          ['No Data'],
+          [{ label: 'Revenue €K', data: [0], backgroundColor: colors.blue }]
+        );
+      }
     }
 
     async function loadMerchData() {
@@ -42823,12 +42979,134 @@
 
     async function loadRevenueTimelineData() {
       console.log('📊 Loading revenue timeline data...');
-      // TODO: Implement with real data
+
+      try {
+        const appointments = CentralDataManager.getAppointments() || [];
+        const colors = getAnalyticsChartColors();
+
+        // Group revenue by month
+        const revenueByMonth = {};
+        const paidByMonth = {};
+        const unpaidByMonth = {};
+
+        appointments.forEach(apt => {
+          if (!apt.start) return;
+          const price = parseFloat(apt.price || apt.total_amount || apt.payment_amount || 0);
+          if (price <= 0) return;
+
+          const date = new Date(apt.start);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+          if (!revenueByMonth[monthKey]) {
+            revenueByMonth[monthKey] = 0;
+            paidByMonth[monthKey] = 0;
+            unpaidByMonth[monthKey] = 0;
+          }
+
+          revenueByMonth[monthKey] += price;
+
+          const status = (apt.payment_status || 'unpaid').toLowerCase();
+          if (status === 'paid' || status === 'bezahlt') {
+            paidByMonth[monthKey] += price;
+          } else {
+            unpaidByMonth[monthKey] += price;
+          }
+        });
+
+        // Sort months and get last 12
+        const sortedMonths = Object.keys(revenueByMonth).sort().slice(-12);
+        const revenues = sortedMonths.map(m => Math.round(revenueByMonth[m] / 1000));
+        const paidRevenues = sortedMonths.map(m => Math.round(paidByMonth[m] / 1000));
+        const unpaidRevenues = sortedMonths.map(m => Math.round(unpaidByMonth[m] / 1000));
+
+        // Format month labels
+        const monthLabels = sortedMonths.map(m => {
+          const [year, month] = m.split('-');
+          const date = new Date(year, parseInt(month) - 1);
+          return date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+        });
+
+        // Create stacked bar chart
+        createAnalyticsBarChart('revenueMonthlyChart',
+          monthLabels,
+          [
+            { label: 'Bezahlt €K', data: paidRevenues, backgroundColor: colors.green },
+            { label: 'Offen €K', data: unpaidRevenues, backgroundColor: colors.orange }
+          ]
+        );
+
+        console.log('📊 Revenue timeline loaded:', sortedMonths.length, 'months');
+
+      } catch (error) {
+        console.error('❌ Error loading revenue timeline:', error);
+      }
     }
 
     async function loadStudioBreakdownData() {
       console.log('📊 Loading studio breakdown data...');
-      // TODO: Implement with real data
+
+      try {
+        const appointments = CentralDataManager.getAppointments() || [];
+        const locations = CentralDataManager.getLocations() || [];
+        const colors = getAnalyticsChartColors();
+
+        // Revenue by location
+        const revenueByLocation = {};
+        const appointmentsByLocation = {};
+
+        locations.forEach(loc => {
+          revenueByLocation[loc.id] = { name: loc.name, revenue: 0, paid: 0, unpaid: 0 };
+          appointmentsByLocation[loc.id] = { name: loc.name, count: 0 };
+        });
+
+        appointments.forEach(apt => {
+          const price = parseFloat(apt.price || apt.total_amount || apt.payment_amount || 0);
+
+          if (apt.location_id) {
+            if (!revenueByLocation[apt.location_id]) {
+              revenueByLocation[apt.location_id] = { name: apt.location_id, revenue: 0, paid: 0, unpaid: 0 };
+            }
+            if (!appointmentsByLocation[apt.location_id]) {
+              appointmentsByLocation[apt.location_id] = { name: apt.location_id, count: 0 };
+            }
+
+            appointmentsByLocation[apt.location_id].count++;
+
+            if (price > 0) {
+              revenueByLocation[apt.location_id].revenue += price;
+              const status = (apt.payment_status || 'unpaid').toLowerCase();
+              if (status === 'paid' || status === 'bezahlt') {
+                revenueByLocation[apt.location_id].paid += price;
+              } else {
+                revenueByLocation[apt.location_id].unpaid += price;
+              }
+            }
+          }
+        });
+
+        // Sort and prepare data
+        const sortedLocations = Object.entries(revenueByLocation)
+          .filter(([id, data]) => data.revenue > 0)
+          .sort((a, b) => b[1].revenue - a[1].revenue);
+
+        const locationNames = sortedLocations.map(([id, data]) => data.name);
+        const paidRevenues = sortedLocations.map(([id, data]) => Math.round(data.paid / 1000));
+        const unpaidRevenues = sortedLocations.map(([id, data]) => Math.round(data.unpaid / 1000));
+
+        // Create stacked bar chart
+        createAnalyticsBarChart('studioBreakdownChart',
+          locationNames,
+          [
+            { label: 'Bezahlt €K', data: paidRevenues, backgroundColor: colors.green },
+            { label: 'Offen €K', data: unpaidRevenues, backgroundColor: colors.orange }
+          ]
+        );
+
+        console.log('📊 Studio breakdown loaded:', sortedLocations.length, 'locations');
+
+      } catch (error) {
+        console.error('❌ Error loading studio breakdown:', error);
+      }
     }
 
     // ========================================
