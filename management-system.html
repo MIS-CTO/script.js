@@ -18040,82 +18040,7 @@
     </div>
   </div>
 
-  <!-- Edit Appointment Modal -->
-  <div class="modal-backdrop" id="editAppointmentModal">
-    <div class="modal">
-      <h3 style="color:var(--ink); font-weight:500;">Edit Appointment</h3>
-      <form class="modal-form" id="editAppointmentForm">
-        <div class="form-group">
-          <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Artist</label>
-          <select id="editAppointmentArtist" required>
-            <option value="">-- Select Artist --</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Date</label>
-          <input type="date" id="editAppointmentDate" required>
-        </div>
-        <div class="form-group">
-          <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Start Time</label>
-          <select id="editAppointmentStartTime" required>
-            <option value="">-- Select Time --</option>
-            <option value="10:00">10:00</option>
-            <option value="10:30">10:30</option>
-            <option value="11:00">11:00</option>
-            <option value="11:30">11:30</option>
-            <option value="12:00">12:00</option>
-            <option value="12:30">12:30</option>
-            <option value="13:00">13:00</option>
-            <option value="13:30">13:30</option>
-            <option value="14:00">14:00</option>
-            <option value="14:30">14:30</option>
-            <option value="15:00">15:00</option>
-            <option value="15:30">15:30</option>
-            <option value="16:00">16:00</option>
-            <option value="16:30">16:30</option>
-            <option value="17:00">17:00</option>
-            <option value="17:30">17:30</option>
-            <option value="18:00">18:00</option>
-            <option value="18:30">18:30</option>
-            <option value="19:00">19:00</option>
-            <option value="19:30">19:30</option>
-            <option value="20:00">20:00</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">End Time</label>
-          <select id="editAppointmentEndTime" required>
-            <option value="">-- Select Time --</option>
-            <option value="10:00">10:00</option>
-            <option value="10:30">10:30</option>
-            <option value="11:00">11:00</option>
-            <option value="11:30">11:30</option>
-            <option value="12:00">12:00</option>
-            <option value="12:30">12:30</option>
-            <option value="13:00">13:00</option>
-            <option value="13:30">13:30</option>
-            <option value="14:00">14:00</option>
-            <option value="14:30">14:30</option>
-            <option value="15:00">15:00</option>
-            <option value="15:30">15:30</option>
-            <option value="16:00">16:00</option>
-            <option value="16:30">16:30</option>
-            <option value="17:00">17:00</option>
-            <option value="17:30">17:30</option>
-            <option value="18:00">18:00</option>
-            <option value="18:30">18:30</option>
-            <option value="19:00">19:00</option>
-            <option value="19:30">19:30</option>
-            <option value="20:00">20:00</option>
-          </select>
-        </div>
-        <div class="modal-actions" style="gap:8px;">
-          <button type="button" class="btn btn-secondary" id="cancelEditAppointment" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">Cancel</button>
-          <button type="submit" class="btn" style="background:var(--ink); color:white; border:none;">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- Old Edit Appointment Modal removed - replaced by dynamic popup in openAppointmentEditPopup() -->
 
   <!-- Cancel Appointment Modal -->
   <div class="modal-backdrop" id="cancelModal">
@@ -19477,44 +19402,249 @@
     </div>
   </div>
 
-  <!-- Appointment Details Modal -->
-  <div class="modal-backdrop" id="appointmentDetailsModal">
-    <div class="modal" style="max-width:800px; max-height:90vh; overflow-y:auto;">
-      <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:16px;">
-        <h3 style="margin:0;">Appointment Details</h3>
-        <button type="button" class="btn btn-icon" onclick="closeAppointmentDetailsModal()" style="padding:4px 12px; font-size:20px; line-height:1;">×</button>
+  <!-- Appointment Details Modal - Vercel Design System -->
+  <div class="modal-overlay" id="appointmentDetailModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:9999; overflow-y:auto; padding:40px 20px;">
+    <div class="modal-container" style="max-width:900px; margin:0 auto; background:#fafafa; border-radius:12px; border:1px solid #eaeaea; overflow:hidden;">
+
+      <!-- Modal Header -->
+      <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; background:#fff; border-bottom:1px solid #eaeaea;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <h2 style="margin:0; font-size:18px; font-weight:600; color:#000;">Appointment Details</h2>
+          <span id="modalAppointmentId" style="font-size:12px; color:#666; background:#f5f5f5; padding:4px 8px; border-radius:4px; font-family:monospace;"></span>
+        </div>
+        <button onclick="closeAppointmentDetailModal()" style="background:none; border:none; cursor:pointer; padding:8px; border-radius:6px; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
       </div>
-      <div id="appointmentDetailsContent" style="display:flex; flex-direction:column; gap:24px;">
-        <!-- Content will be dynamically inserted -->
+
+      <!-- PROJECT SECTION -->
+      <div class="project-section" style="padding:24px; background:#fff; border-bottom:1px solid #eaeaea;">
+        <h3 style="margin:0 0 16px 0; font-size:14px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Project</h3>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <!-- Artist Profile Card -->
+          <div class="artist-card" style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+              <div id="modalArtistAvatar" style="width:48px; height:48px; border-radius:50%; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:18px;"></div>
+              <div style="flex:1;">
+                <div id="modalArtistName" style="font-weight:600; color:#000; font-size:15px;"></div>
+                <div style="display:flex; gap:8px; margin-top:4px;">
+                  <span id="modalArtistRank" style="font-size:11px; padding:2px 8px; border-radius:4px; font-weight:500;"></span>
+                  <span id="modalArtistType" style="font-size:11px; padding:2px 8px; border-radius:4px; background:#f5f5f5; color:#666;"></span>
+                </div>
+              </div>
+            </div>
+            <div id="modalArtistEmail" style="font-size:13px; color:#666; margin-bottom:8px;"></div>
+            <button id="modalViewArtistBtn" onclick="viewArtistProfile()" style="width:100%; padding:8px 12px; background:#000; color:#fff; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              View Artist Profile
+            </button>
+          </div>
+
+          <!-- Project Details Card -->
+          <div class="project-details-card" style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+            <div style="display:grid; gap:12px;">
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Project Number</div>
+                <div id="modalProjectNumber" style="font-size:14px; font-weight:600; color:#000; font-family:monospace;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Price</div>
+                <div id="modalProjectPrice" style="font-size:14px; font-weight:600; color:#000;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Created</div>
+                <div id="modalProjectCreated" style="font-size:13px; color:#333;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Section -->
+        <div class="payment-section" style="margin-top:20px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+          <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Payment Information
+          </h4>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Price</div>
+              <div id="modalPaymentPrice" style="font-size:14px; font-weight:600; color:#000;">-</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Payment State</div>
+              <div id="modalPaymentState"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Payment Intent</div>
+              <div id="modalPaymentIntent" style="font-size:13px; color:#333;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Payment Notice</div>
+              <div id="modalPaymentNotice" style="font-size:13px; color:#333;"></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="appointment-detail-actions">
-        <button type="button" class="appointment-btn close" onclick="closeAppointmentDetailsModal()">
-          Schließen
+
+      <!-- APPOINTMENT SECTION -->
+      <div class="appointment-section" style="padding:24px; background:#fff;">
+        <h3 style="margin:0 0 16px 0; font-size:14px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Appointment</h3>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <!-- Customer Info Card -->
+          <div class="customer-card" style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+            <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Customer
+            </h4>
+            <div style="display:grid; gap:8px;">
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Name</div>
+                <div id="modalCustomerName" style="font-size:14px; font-weight:500; color:#000;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Email</div>
+                <div id="modalCustomerEmail" style="font-size:13px; color:#333;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Phone</div>
+                <div id="modalCustomerPhone" style="font-size:13px; color:#333;"></div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Instagram</div>
+                <div id="modalCustomerInstagram" style="font-size:13px; color:#333;"></div>
+              </div>
+            </div>
+            <button id="viewCustomerProfileBtn" onclick="openCustomerProfileFromModal()" style="margin-top:12px; padding:8px 12px; background:#000; border:1px solid #000; border-radius:6px; font-size:12px; color:#fff; cursor:pointer; display:flex; align-items:center; gap:6px; width:100%; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#000'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              View Customer Profile
+            </button>
+          </div>
+
+          <!-- Request Details Card -->
+          <div class="request-details-container" style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+            <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Request Details
+            </h4>
+            <div style="display:grid; gap:8px;">
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Request ID</div>
+                <div id="modalRequestId" style="font-size:14px; font-weight:500; color:#000;">-</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Status</div>
+                <div id="modalRequestStatus" style="font-size:13px; color:#333;">-</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Placement</div>
+                <div id="modalTattooPlacement" style="font-size:13px; color:#333;">-</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Size</div>
+                <div id="modalTattooSize" style="font-size:13px; color:#333;">-</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Style</div>
+                <div id="modalTattooStyle" style="font-size:13px; color:#333;">-</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Colorway</div>
+                <div id="modalTattooColorway" style="font-size:13px; color:#333;">-</div>
+              </div>
+              <div>
+                <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Description</div>
+                <div id="modalTattooDescription" style="font-size:13px; color:#333; white-space:pre-wrap; max-height:60px; overflow-y:auto;">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointment Details Grid -->
+        <div class="appointment-details-grid" style="margin-top:20px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+          <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Appointment Details
+          </h4>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Date</div>
+              <div id="modalAppointmentDate" style="font-size:14px; font-weight:500; color:#000;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Time</div>
+              <div id="modalAppointmentTime" style="font-size:14px; font-weight:500; color:#000;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Duration</div>
+              <div id="modalAppointmentDuration" style="font-size:14px; font-weight:500; color:#000;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Location</div>
+              <div id="modalAppointmentLocation" style="font-size:14px; font-weight:500; color:#000;"></div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-top:16px;">
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Status</div>
+              <div id="modalAppointmentStatus"></div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Type</div>
+              <div id="modalAppointmentType" style="font-size:13px; color:#333;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="notes-section" style="margin-top:20px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+          <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Notes
+          </h4>
+          <div id="modalAppointmentNotes" style="font-size:13px; color:#333; white-space:pre-wrap; line-height:1.5;"></div>
+        </div>
+
+        <!-- Reference Images Section -->
+        <div class="images-section" id="modalImagesSection" style="margin-top:20px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; display:none;">
+          <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Reference Images
+          </h4>
+          <div id="modalImagesGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:12px;"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px; background:#fff; border-top:1px solid #eaeaea;">
+        <button onclick="closeAppointmentDetailModal()" style="padding:10px 20px; background:#fff; color:#666; border:1px solid #eaeaea; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer;">
+          Close
         </button>
-        <button type="button" class="appointment-btn edit" id="appointmentDetailsEditBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          Bearbeiten
-        </button>
-        <button type="button" class="appointment-btn cancel" id="appointmentDetailsCancelBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="15" y1="9" x2="9" y2="15"/>
-            <line x1="9" y1="9" x2="15" y2="15"/>
-          </svg>
-          Stornieren
-        </button>
-        <button type="button" class="appointment-btn delete" id="appointmentDetailsDeleteBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          </svg>
-          Löschen
-        </button>
+        <div style="display:flex; gap:12px;">
+          <button id="modalEditBtn" style="padding:10px 20px; background:#fff; color:#000; border:1px solid #eaeaea; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </button>
+          <button id="modalCancelBtn" style="padding:10px 20px; background:#fff; color:#f59e0b; border:1px solid #f59e0b; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Cancel
+          </button>
+          <button id="modalDeleteBtn" style="padding:10px 20px; background:#ef4444; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Delete
+          </button>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Image Lightbox -->
+  <div id="imageLightbox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:none; align-items:center; justify-content:center; cursor:pointer;" onclick="closeLightbox()">
+    <img id="lightboxImage" style="max-width:90%; max-height:90%; object-fit:contain; border-radius:8px;">
+    <button onclick="closeLightbox()" style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
   </div>
 
   <!-- Create Booking Modal -->
@@ -34153,6 +34283,20 @@
         renderCustomerAppointmentsSection(appointments);
       }
 
+      // Open customer profile from appointment detail modal
+      window.openCustomerProfileFromModal = function() {
+        const customerId = window.currentModalCustomerId;
+        if (!customerId) {
+          alert('Kein Kunde mit diesem Termin verknüpft');
+          return;
+        }
+        // Close the appointment modal first
+        const detailModal = document.getElementById('appointmentDetailModal');
+        if (detailModal) detailModal.style.display = 'none';
+        // Open customer profile
+        openCustomerProfile(customerId);
+      }
+
       // NEW: Customer Project Timeline
       function renderCustomerProjectsTimeline(requests, appointments) {
         const container = document.getElementById('customerProjectsTimeline');
@@ -35293,405 +35437,335 @@
       };
 
       // ============================================
-      // COMPLETE APPOINTMENT DETAILS POPUP
+      // NEW APPOINTMENT DETAIL MODAL - VERCEL DESIGN
       // ============================================
-      window.showAppointmentDetails = async function(appointmentId) {
-        console.log('📋 Loading complete appointment details:', appointmentId);
+      let currentAppointmentData = null;
 
-        // Fetch complete appointment data WITH linked request
-        const { data: appointment, error } = await supabase
-          .from('appointments')
-          .select(`
-            *,
-            customer:customers(id, first_name, last_name, email, phone, instagram),
-            artist:artists(id, name, email, instagram, phone),
-            location:locations!appointments_location_id_fkey(id, name, city),
-            request:requests!fk_appointments_request_id(
-              id,
-              request_number,
-              placement,
-              size,
-              style,
-              colorway,
-              description,
-              booking_type,
-              work_process,
-              preferred_artist,
-              image_url,
-              reference_images,
-              customer_notes,
-              internal_notes,
-              priority
-            )
-          `)
-          .eq('id', appointmentId)
-          .single();
+      // Helper: Get Artist Rank Color
+      window.getRankColor = function(rank) {
+        const colors = {
+          'Owner': { bg: '#000', color: '#fff' },
+          'Senior': { bg: '#7c3aed', color: '#fff' },
+          'Resident': { bg: '#2563eb', color: '#fff' },
+          'Guest': { bg: '#f59e0b', color: '#fff' },
+          'Apprentice': { bg: '#10b981', color: '#fff' }
+        };
+        return colors[rank] || { bg: '#6b7280', color: '#fff' };
+      };
 
-        if (error || !appointment) {
-          console.error('Error loading appointment:', error);
-          alert('Failed to load appointment details');
+      // Helper: Format DateTime
+      window.formatModalDateTime = function(dateStr) {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+      };
+
+      // Helper: Format Time
+      window.formatModalTime = function(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      };
+
+      // Helper: Calculate Duration
+      window.calculateDuration = function(start, end) {
+        if (!start || !end) return '-';
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const diffMs = endDate - startDate;
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        if (hours === 0) return `${minutes}min`;
+        if (minutes === 0) return `${hours}h`;
+        return `${hours}h ${minutes}min`;
+      };
+
+      // Helper: Get Request Status Badge (Vercel Style)
+      window.getRequestStatusBadgeVercel = function(status) {
+        const badges = {
+          'new': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#dbeafe;color:#1e40af;">New</span>',
+          'pending': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fef3c7;color:#92400e;">Pending</span>',
+          'accepted': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#d1fae5;color:#065f46;">Accepted</span>',
+          'booked': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#000;color:#fff;">Booked</span>',
+          'completed': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#10b981;color:#fff;">Completed</span>',
+          'canceled': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fee2e2;color:#991b1b;">Canceled</span>'
+        };
+        return badges[status] || `<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#f5f5f5;color:#666;">${status || 'Unknown'}</span>`;
+      };
+
+      // Helper: Get Appointment Status Badge (Vercel Style)
+      window.getAppointmentStatusBadgeVercel = function(status) {
+        const badges = {
+          'scheduled': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#dbeafe;color:#1e40af;">Scheduled</span>',
+          'finished': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#d1fae5;color:#065f46;">Finished</span>',
+          'canceled': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fee2e2;color:#991b1b;">Canceled</span>',
+          'no_show': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fef3c7;color:#92400e;">No Show</span>',
+          'rescheduled': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#e0e7ff;color:#4338ca;">Rescheduled</span>'
+        };
+        return badges[status] || `<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#f5f5f5;color:#666;">${status || 'Unknown'}</span>`;
+      };
+
+      // Helper: Get Payment Status Badge (Vercel Style)
+      window.getPaymentStatusBadgeVercel = function(paymentState) {
+        const badges = {
+          'Komplett bezahlt': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#d1fae5;color:#065f46;">Komplett bezahlt</span>',
+          'Anzahlung bezahlt': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fef3c7;color:#92400e;">Anzahlung bezahlt</span>',
+          'Offen': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fee2e2;color:#991b1b;">Offen</span>',
+          'archiviert': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#e5e7eb;color:#6b7280;">Archiviert</span>'
+        };
+        return badges[paymentState] || `<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#f5f5f5;color:#666;">${paymentState || '-'}</span>`;
+      };
+
+      // Open Appointment Detail Modal
+      window.openAppointmentDetailModal = async function(appointmentId) {
+        console.log('📋 Opening new appointment detail modal:', appointmentId);
+
+        const modal = document.getElementById('appointmentDetailModal');
+        if (!modal) {
+          console.error('Modal not found');
           return;
         }
 
-        // Load project data separately (no FK constraint exists)
-        if (appointment.project_id) {
-          const { data: projectData } = await supabase
-            .from('projects')
-            .select('id, project_number, payment_state, payment_notice, payment_intent, price')
-            .eq('id', appointment.project_id)
+        // Show loading state
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+
+        try {
+          // Fetch appointment with relations
+          const { data: appointment, error } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              customer:customers(id, first_name, last_name, email, phone, instagram),
+              artist:artists(id, name, email, instagram, phone, rank),
+              location:locations!appointments_location_id_fkey(id, name, city),
+              request:requests!fk_appointments_request_id(
+                id, request_number, placement, size, style, colorway, description,
+                booking_type, work_process, preferred_artist, image_url, reference_images,
+                customer_notes, internal_notes, priority, origin, status, created_at
+              )
+            `)
+            .eq('id', appointmentId)
             .single();
-          if (projectData) {
-            appointment.project = projectData;
+
+          if (error || !appointment) {
+            throw new Error(error?.message || 'Appointment not found');
           }
+
+          // Load project separately (no FK constraint)
+          if (appointment.project_id) {
+            const { data: projectData } = await supabase
+              .from('projects')
+              .select('id, project_number, payment_state, payment_notice, payment_intent, price, created_at')
+              .eq('id', appointment.project_id)
+              .single();
+            if (projectData) {
+              appointment.project = projectData;
+            }
+          }
+
+          console.log('✅ Loaded appointment data:', appointment);
+          currentAppointmentData = appointment;
+
+          // Populate modal
+          populateAppointmentDetailModal(appointment);
+
+          // Setup button handlers
+          setupModalButtons(appointmentId, appointment);
+
+        } catch (err) {
+          console.error('Error loading appointment:', err);
+          alert('Fehler beim Laden des Termins: ' + err.message);
+          closeAppointmentDetailModal();
+        }
+      };
+
+      // Populate Modal with Data
+      window.populateAppointmentDetailModal = function(data) {
+        // Header
+        document.getElementById('modalAppointmentId').textContent = `#${data.id?.substring(0, 8) || ''}`;
+
+        // Artist Profile
+        const artistInitial = data.artist?.name?.charAt(0)?.toUpperCase() || '?';
+        document.getElementById('modalArtistAvatar').textContent = artistInitial;
+        document.getElementById('modalArtistName').textContent = data.artist?.name || 'Unknown Artist';
+
+        const rankColors = getRankColor(data.artist?.rank);
+        const rankEl = document.getElementById('modalArtistRank');
+        rankEl.textContent = data.artist?.rank || 'Artist';
+        rankEl.style.background = rankColors.bg;
+        rankEl.style.color = rankColors.color;
+
+        document.getElementById('modalArtistType').textContent = 'Tattoo';
+        document.getElementById('modalArtistEmail').textContent = data.artist?.email || '-';
+
+        // Store artist ID for view button
+        const viewArtistBtn = document.getElementById('modalViewArtistBtn');
+        viewArtistBtn.setAttribute('data-artist-id', data.artist?.id || data.artist_id || '');
+
+        // Project Details
+        document.getElementById('modalProjectNumber').textContent = data.project?.project_number || data.project_number || '-';
+        document.getElementById('modalProjectPrice').textContent = data.project?.price ? `€${parseFloat(data.project.price).toFixed(2)}` : '-';
+        document.getElementById('modalProjectCreated').textContent = data.project?.created_at ? formatModalDateTime(data.project.created_at) : '-';
+
+        // Payment Section
+        const price = data.price || data.project?.price;
+        document.getElementById('modalPaymentPrice').textContent = price ? `€${parseFloat(price).toFixed(2)}` : '-';
+        document.getElementById('modalPaymentState').innerHTML = getPaymentStatusBadgeVercel(data.payment_status || data.project?.payment_state);
+        document.getElementById('modalPaymentIntent').textContent = data.payment_intent || data.project?.payment_intent ? (data.payment_intent || data.project?.payment_intent).substring(0, 25) + '...' : '-';
+        document.getElementById('modalPaymentNotice').textContent = data.payment_notice || data.project?.payment_notice || '-';
+
+        // Customer Info
+        const customerName = `${data.first_name || data.customer?.first_name || ''} ${data.last_name || data.customer?.last_name || ''}`.trim() || '-';
+        document.getElementById('modalCustomerName').textContent = customerName;
+        document.getElementById('modalCustomerEmail').textContent = data.customer_email || data.customer?.email || '-';
+        document.getElementById('modalCustomerPhone').textContent = data.customer_phone || data.customer?.phone || '-';
+        document.getElementById('modalCustomerInstagram').textContent = data.instagram || data.customer?.instagram || '-';
+
+        // Request Details (from appointment or request)
+        document.getElementById('modalRequestId').textContent = data.request?.request_id || data.request_id || '-';
+        document.getElementById('modalRequestStatus').textContent = data.request?.status || '-';
+        document.getElementById('modalTattooPlacement').textContent = data.placement || data.request?.placement || '-';
+        document.getElementById('modalTattooSize').textContent = data.size || data.request?.size || '-';
+        document.getElementById('modalTattooStyle').textContent = data.style || data.request?.style || '-';
+        document.getElementById('modalTattooColorway').textContent = data.colorway || data.request?.colorway || '-';
+        document.getElementById('modalTattooDescription').textContent = data.description || data.request?.description || '-';
+
+        // Store customer ID for profile button
+        window.currentModalCustomerId = data.customer_id || data.customer?.id || null;
+
+        // Appointment Details
+        document.getElementById('modalAppointmentDate').textContent = formatModalDateTime(data.start);
+        document.getElementById('modalAppointmentTime').textContent = `${formatModalTime(data.start)} - ${formatModalTime(data.end)}`;
+        document.getElementById('modalAppointmentDuration').textContent = calculateDuration(data.start, data.end);
+        document.getElementById('modalAppointmentLocation').textContent = data.location?.name || '-';
+        document.getElementById('modalAppointmentStatus').innerHTML = getAppointmentStatusBadgeVercel(data.status);
+        document.getElementById('modalAppointmentType').textContent = data.booking_type || data.request?.booking_type || '-';
+
+        // Notes
+        const notesContent = data.notice || data.description || data.customer_notes || data.internal_notes || '-';
+        document.getElementById('modalAppointmentNotes').textContent = notesContent;
+
+        // Reference Images
+        populateRequestImages(data.request);
+      };
+
+      // Populate Reference Images
+      window.populateRequestImages = function(request) {
+        const section = document.getElementById('modalImagesSection');
+        const grid = document.getElementById('modalImagesGrid');
+
+        if (!request || (!request.image_url && !request.reference_images?.length)) {
+          section.style.display = 'none';
+          return;
         }
 
-        console.log('✅ Loaded appointment:', appointment);
+        section.style.display = 'block';
+        grid.innerHTML = '';
 
-        // Render complete details
-        const content = document.getElementById('appointmentDetailsContent');
-        const modal = document.getElementById('appointmentDetailsModal');
+        const images = [];
+        if (request.image_url) images.push(request.image_url);
+        if (request.reference_images?.length) images.push(...request.reference_images);
 
-        if (!content || !modal) return;
+        images.forEach(url => {
+          const imgContainer = document.createElement('div');
+          imgContainer.style.cssText = 'aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;border:1px solid #eaeaea;';
+          imgContainer.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" onclick="openImageLightbox('${url}')">`;
+          grid.appendChild(imgContainer);
+        });
+      };
 
-        const customerName = `${appointment.first_name || ''} ${appointment.last_name || ''}`.trim() ||
-                             `${appointment.customer?.first_name || ''} ${appointment.customer?.last_name || ''}`.trim() ||
-                             'Unknown Customer';
-
-        const artistName = appointment.artist?.name || 'Unknown Artist';
-
-        // Format dates
-        const startDateTime = appointment.start ? new Date(appointment.start).toLocaleString('de-DE', {
-          weekday: 'short',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }) : '-';
-
-        const endTime = appointment.end ? new Date(appointment.end).toLocaleTimeString('de-DE', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }) : '-';
-
-        // Get badges
-        const stateBadge = getStateBadge(appointment.state);
-        const statusBadge = getStatusBadge(appointment.status);
-        const paymentBadge = getPaymentStatusBadge(appointment.payment_status);
-
-        content.innerHTML = `
-          <!-- Header Row -->
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:2px solid rgba(0,0,0,0.1);">
-            <div>
-              <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:700; color:#1d1d1f;">${appointment.project?.project_number || appointment.project_number || 'Kein Projekt'}</h3>
-              <span style="font-size:13px; color:#86868b;">${appointment.location?.name || 'Unknown Location'} ${appointment.location?.city ? '- ' + appointment.location.city : ''}</span>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              ${stateBadge}
-              ${statusBadge}
-            </div>
-          </div>
-
-          <!-- Two Column Layout -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-
-            <!-- LEFT COLUMN -->
-            <div style="display:flex; flex-direction:column; gap:20px;">
-
-              <!-- Customer Information -->
-              <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Customer Information</h4>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">VORNAME</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.first_name || appointment.customer?.first_name || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">NACHNAME</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.last_name || appointment.customer?.last_name || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">EMAIL</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.customer_email || appointment.customer?.email || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PHONE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.customer_phone || appointment.customer?.phone || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">INSTAGRAM</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.instagram || appointment.customer?.instagram || 'No entry data'}</span>
-                  </div>
-                </div>
-                <!-- View Profile Buttons -->
-                <div style="display:flex; gap:8px; margin-top:12px;">
-                  ${appointment.customer?.id || appointment.customer_id ? `
-                  <button onclick="openCustomerSidePanel('${appointment.customer?.id || appointment.customer_id}')"
-                    style="flex:1; padding:8px 12px; background:#1d1d1f; color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    View Customer
-                  </button>
-                  ` : ''}
-                  ${appointment.artist?.id || appointment.artist_id ? `
-                  <button onclick="openArtistSidePanel('${appointment.artist?.id || appointment.artist_id}')"
-                    style="flex:1; padding:8px 12px; background:#1d1d1f; color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-                    View Artist
-                  </button>
-                  ` : ''}
-                </div>
-              </div>
-
-              <!-- Request Details -->
-              <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Request Details</h4>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PLACEMENT</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.placement || appointment.request?.placement || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">SIZE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.size || appointment.request?.size || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">STYLE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.style || appointment.request?.style || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">COLORWAY</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.colorway || appointment.request?.colorway || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">BOOKING TYPE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.booking_type || appointment.request?.booking_type || 'No entry data'}</span>
-                  </div>
-                  ${(appointment.description || appointment.request?.description) ? `
-                  <div style="padding:10px 0 0 0;">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase; display:block; margin-bottom:8px;">DESCRIPTION</span>
-                    <div style="background:white; padding:10px; border-radius:6px; font-size:13px; color:#1d1d1f; line-height:1.5; max-height:120px; overflow-y:auto;">
-                      ${appointment.description || appointment.request?.description}
-                    </div>
-                  </div>
-                  ` : ''}
-                </div>
-              </div>
-
-            </div>
-
-            <!-- RIGHT COLUMN -->
-            <div style="display:flex; flex-direction:column; gap:20px;">
-
-              <!-- Appointment Details -->
-              <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Appointment Details</h4>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">ARTIST</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${artistName}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">START</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${startDateTime}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">END</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${endTime}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">CREATOR</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.creator_email || 'No entry data'}</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">WORK PROCESS</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">${appointment.work_process || 'No entry data'}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Payment Information -->
-              <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Payment Information</h4>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAYMENT STATUS</span>
-                    ${paymentBadge}
-                  </div>
-                  ${appointment.price ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PRICE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:600;">€${parseFloat(appointment.price).toFixed(2)}</span>
-                  </div>
-                  ` : ''}
-                  ${appointment.price_estimate ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PRICE ESTIMATE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">€${parseFloat(appointment.price_estimate).toFixed(2)}</span>
-                  </div>
-                  ` : ''}
-                  ${appointment.deposit_amount ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">DEPOSIT</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">€${parseFloat(appointment.deposit_amount).toFixed(2)}</span>
-                  </div>
-                  ` : ''}
-                  ${appointment.payment_amount ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAID</span>
-                    <span style="font-size:14px; color:#34c759; font-weight:600;">€${parseFloat(appointment.payment_amount).toFixed(2)}</span>
-                  </div>
-                  ` : ''}
-                  ${appointment.total_amount ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">TOTAL</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:500;">€${parseFloat(appointment.total_amount).toFixed(2)}</span>
-                  </div>
-                  ` : ''}
-                </div>
-              </div>
-
-              ${appointment.project ? `
-              <!-- Project Payment Details -->
-              <div style="background:#f0f5ff; padding:16px; border-radius:8px; border:1px solid rgba(0,122,255,0.15);">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f; display:flex; align-items:center; gap:8px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                  Project Payment
-                </h4>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAYMENT STATE</span>
-                    <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:600;
-                      ${appointment.project.payment_state === 'Komplett bezahlt' ? 'background:#d1fae5; color:#065f46;' :
-                        appointment.project.payment_state === 'Anzahlung bezahlt' ? 'background:#fef3c7; color:#92400e;' :
-                        appointment.project.payment_state === 'Offen' ? 'background:#fee2e2; color:#991b1b;' :
-                        appointment.project.payment_state === 'archiviert' ? 'background:#e5e7eb; color:#6b7280;' :
-                        'background:#f3f4f6; color:#6b7280;'}">
-                      ${appointment.project.payment_state === 'Komplett bezahlt' ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' :
-                        appointment.project.payment_state === 'Anzahlung bezahlt' ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' :
-                        appointment.project.payment_state === 'Offen' ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' :
-                        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>'}
-                      ${appointment.project.payment_state || 'Unbekannt'}
-                    </span>
-                  </div>
-                  ${appointment.project.payment_notice ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAYMENT NOTICE</span>
-                    <span style="font-size:13px; color:#1d1d1f; font-weight:500; max-width:200px; text-align:right;">${appointment.project.payment_notice}</span>
-                  </div>
-                  ` : ''}
-                  ${appointment.project.payment_intent ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PAYMENT INTENT</span>
-                    <span style="font-size:11px; color:#007aff; font-family:monospace; background:#f0f0f5; padding:2px 6px; border-radius:4px;">${appointment.project.payment_intent.substring(0, 20)}...</span>
-                  </div>
-                  ` : ''}
-                  ${appointment.project.price ? `
-                  <div style="display:flex; justify-content:space-between; padding:6px 0;">
-                    <span style="font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">PROJECT PRICE</span>
-                    <span style="font-size:14px; color:#1d1d1f; font-weight:600;">€${parseFloat(appointment.project.price).toFixed(2)}</span>
-                  </div>
-                  ` : ''}
-                </div>
-              </div>
-              ` : ''}
-
-              ${appointment.customer_notes || appointment.internal_notes || appointment.description || appointment.notice ? `
-              <!-- Notes & Description -->
-              <div style="background:#fafafa; padding:16px; border-radius:8px;">
-                <h4 style="margin:0 0 12px 0; font-size:15px; font-weight:600; color:#1d1d1f;">Notes & Description</h4>
-                ${appointment.description ? `
-                <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
-                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">DESCRIPTION</strong>
-                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.description}</p>
-                </div>
-                ` : ''}
-                ${appointment.notice ? `
-                <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
-                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">NOTICE</strong>
-                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.notice}</p>
-                </div>
-                ` : ''}
-                ${appointment.customer_notes ? `
-                <div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px;">
-                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">CUSTOMER NOTES</strong>
-                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.customer_notes}</p>
-                </div>
-                ` : ''}
-                ${appointment.internal_notes ? `
-                <div style="background:white; padding:10px; border-radius:6px;">
-                  <strong style="display:block; font-size:11px; color:#86868b; margin-bottom:6px;">INTERNAL NOTES</strong>
-                  <p style="font-size:13px; color:#1d1d1f; margin:0; line-height:1.5;">${appointment.internal_notes}</p>
-                </div>
-                ` : ''}
-              </div>
-              ` : ''}
-
-            </div>
-
-          </div>
-        `;
-
-        // Set up buttons
-        document.getElementById('appointmentDetailsEditBtn').onclick = () => {
-          closeAppointmentDetailsModal();
-          openAppointmentEditPopup(appointmentId);
-        };
-
-        document.getElementById('appointmentDetailsCancelBtn').onclick = async () => {
-          if (!confirm('Möchtest du diesen Termin wirklich stornieren?')) return;
-
-          try {
-            // Update appointment state to Cancelled
-            const { error: appointmentError } = await supabase
-              .from('appointments')
-              .update({ state: 'Cancelled' })
-              .eq('id', appointmentId);
-
-            if (appointmentError) throw appointmentError;
-
-            // If linked to a request, update request status too
-            if (appointment.request_id) {
-              const { error: requestError } = await supabase
-                .from('requests')
-                .update({ status: 'canceled' })
-                .eq('id', appointment.request_id);
-
-              if (requestError) console.error('Error updating request:', requestError);
-            }
-
-            showToast('Termin wurde storniert', 'success');
-            closeAppointmentDetailsModal();
-            loadCalendarData();
-            loadAllRequests();
-          } catch (error) {
-            console.error('Error cancelling appointment:', error);
-            showToast('Fehler beim Stornieren', 'error');
+      // Setup Modal Button Handlers
+      function setupModalButtons(appointmentId, appointment) {
+        // Edit Button
+        document.getElementById('modalEditBtn').onclick = () => {
+          closeAppointmentDetailModal();
+          if (typeof openAppointmentEditPopup === 'function') {
+            openAppointmentEditPopup(appointmentId);
           }
         };
 
-        document.getElementById('appointmentDetailsDeleteBtn').onclick = async () => {
-          if (!confirm('Möchtest du diesen Termin wirklich PERMANENT löschen?')) return;
-          if (!confirm('ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden! Wirklich löschen?')) return;
+        // Cancel Button
+        document.getElementById('modalCancelBtn').onclick = async () => {
+          if (!confirm('Möchtest du diesen Termin wirklich stornieren?')) return;
 
           try {
             const { error } = await supabase
               .from('appointments')
-              .delete()
+              .update({ status: 'canceled', state: 'Cancelled' })
               .eq('id', appointmentId);
 
             if (error) throw error;
 
-            showToast('Termin wurde gelöscht', 'success');
-            closeAppointmentDetailsModal();
-            loadCalendarData();
-          } catch (error) {
-            console.error('Error deleting appointment:', error);
-            showToast('Fehler beim Löschen', 'error');
+            if (appointment.request_id) {
+              await supabase.from('requests').update({ status: 'canceled' }).eq('id', appointment.request_id);
+            }
+
+            showToast('Termin wurde storniert', 'success');
+            closeAppointmentDetailModal();
+            if (typeof loadCalendarData === 'function') loadCalendarData();
+          } catch (err) {
+            console.error('Error cancelling:', err);
+            showToast('Fehler beim Stornieren', 'error');
           }
         };
 
-        modal.classList.add('active');
+        // Delete Button
+        document.getElementById('modalDeleteBtn').onclick = async () => {
+          if (!confirm('Möchtest du diesen Termin wirklich PERMANENT löschen?')) return;
+          if (!confirm('ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!')) return;
+
+          try {
+            const { error } = await supabase.from('appointments').delete().eq('id', appointmentId);
+            if (error) throw error;
+
+            showToast('Termin wurde gelöscht', 'success');
+            closeAppointmentDetailModal();
+            if (typeof loadCalendarData === 'function') loadCalendarData();
+          } catch (err) {
+            console.error('Error deleting:', err);
+            showToast('Fehler beim Löschen', 'error');
+          }
+        };
+      }
+
+      // Close Modal
+      window.closeAppointmentDetailModal = function() {
+        const modal = document.getElementById('appointmentDetailModal');
+        if (modal) {
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+        }
+        currentAppointmentData = null;
       };
+
+      // View Artist Profile
+      window.viewArtistProfile = function() {
+        const btn = document.getElementById('modalViewArtistBtn');
+        const artistId = btn?.getAttribute('data-artist-id');
+        if (artistId && typeof openArtistSidePanel === 'function') {
+          openArtistSidePanel(artistId);
+        }
+      };
+
+      // Image Lightbox
+      window.openImageLightbox = function(url) {
+        const lightbox = document.getElementById('imageLightbox');
+        const img = document.getElementById('lightboxImage');
+        if (lightbox && img) {
+          img.src = url;
+          lightbox.style.display = 'flex';
+        }
+      };
+
+      window.closeLightbox = function() {
+        const lightbox = document.getElementById('imageLightbox');
+        if (lightbox) {
+          lightbox.style.display = 'none';
+        }
+      };
+
+      // Alias for backwards compatibility
+      window.showAppointmentDetails = window.openAppointmentDetailModal;
 
       // ============================================
       // SIDE PANEL FUNCTIONS FOR CUSTOMER/ARTIST
@@ -36006,11 +36080,14 @@
         }
       };
 
-      // Close Appointment Details Modal
+      // Close Appointment Details Modal (legacy alias)
       window.closeAppointmentDetailsModal = function() {
-        const modal = document.getElementById('appointmentDetailsModal');
-        if (modal) {
-          modal.classList.remove('active');
+        // Close new modal
+        closeAppointmentDetailModal();
+        // Close old modal if exists
+        const oldModal = document.getElementById('appointmentDetailsModal');
+        if (oldModal) {
+          oldModal.classList.remove('active');
         }
         // Also close side panel
         closeProfileSidePanel();
@@ -36146,7 +36223,8 @@
           .from('appointments')
           .select(`
             *,
-            artist:artists(id, name)
+            artist:artists(id, name, email, rank),
+            customer:customers(id, first_name, last_name, email, phone, instagram)
           `)
           .eq('id', appointmentId)
           .single();
@@ -36218,17 +36296,20 @@
         const endTimeStr = endDate.toTimeString().slice(0, 5);
 
         // Kundenname
-        const customerName = appointment.customer_name ||
+        const customerName = (appointment.customer?.first_name && appointment.customer?.last_name
+          ? `${appointment.customer.first_name} ${appointment.customer.last_name}`
+          : (appointment.customer?.first_name || appointment.customer?.last_name)) ||
+          appointment.customer_name ||
           (appointment.first_name && appointment.last_name ? `${appointment.first_name} ${appointment.last_name}` :
           (appointment.first_name || appointment.last_name || 'Unbekannt'));
 
         // Artist Name (READ-ONLY) - Mehrere Fallbacks
-        // 1. Aus dem JOIN (appointment.artist.name)
-        // 2. Aus dem Artists-Cache lookup
-        // 3. Aus appointment.artist_name falls vorhanden
         const artistFromJoin = appointment.artist?.name;
         const artistFromCache = artists.find(a => a.id === appointment.artist_id)?.name;
         const artistName = artistFromJoin || artistFromCache || appointment.artist_name || 'Kein Artist zugewiesen';
+        const artistInitial = artistName.charAt(0).toUpperCase();
+        const artistEmail = appointment.artist?.email || '';
+        const artistRank = appointment.artist?.rank || '';
 
         console.log('🎨 Artist Lookup Result:', {
           artist_id: appointment.artist_id,
@@ -36237,180 +36318,212 @@
           final: artistName
         });
 
+        // Rank Color Helper
+        const getRankBg = (rank) => {
+          const colors = {
+            'Fam': { bg: '#000', color: '#fff' },
+            'Senior': { bg: '#6366f1', color: '#fff' },
+            'Resident': { bg: '#22c55e', color: '#fff' },
+            'Junior': { bg: '#f59e0b', color: '#fff' },
+            'Newcomer': { bg: '#ef4444', color: '#fff' }
+          };
+          return colors[rank] || { bg: '#666', color: '#fff' };
+        };
+        const rankStyle = getRankBg(artistRank);
+
         const popup = document.createElement('div');
         popup.id = 'appointmentEditPopup';
-        popup.className = 'appointment-edit-overlay';
+        popup.style.cssText = 'position:fixed; inset:0; background:rgba(250,250,250,0.95); backdrop-filter:blur(4px); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;';
+
         popup.innerHTML = `
-          <div class="appointment-edit-popup">
-            <div class="appointment-edit-header">
-              <h3 class="appointment-edit-title">Termin bearbeiten</h3>
-              <button class="appointment-edit-close" onclick="closeAppointmentEditPopup()">✕</button>
+          <div style="background:#fff; border-radius:12px; width:100%; max-width:700px; max-height:90vh; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display:flex; flex-direction:column; border:1px solid #eaeaea;">
+
+            <!-- Header -->
+            <div style="padding:20px 24px; border-bottom:1px solid #eaeaea; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <h2 style="margin:0; font-size:18px; font-weight:600; color:#000;">Edit Appointment</h2>
+                <span style="font-size:12px; color:#666; font-family:monospace; background:#f5f5f5; padding:4px 8px; border-radius:4px;">#${appointmentId.substring(0, 8)}</span>
+              </div>
+              <button onclick="closeAppointmentEditPopup()" style="background:none; border:none; cursor:pointer; padding:8px; border-radius:6px; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
             </div>
-            <div class="appointment-edit-body">
 
-              <!-- Customer Information (Read-only) -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Kunde</label>
-                <div class="appointment-edit-readonly">
-                  ${customerName}
-                </div>
-              </div>
+            <!-- Scrollable Content -->
+            <div style="flex:1; overflow-y:auto; padding:24px;">
 
-              <!-- Artist (Read-only) -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Artist</label>
-                <div class="appointment-edit-readonly">
-                  ${artistName}
-                </div>
-              </div>
+              <!-- Artist & Customer Info Cards -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
 
-              <!-- Datum und Zeit -->
-              <div class="appointment-edit-row">
-                <div class="appointment-edit-field">
-                  <label class="appointment-edit-label">Datum *</label>
-                  <input type="date" class="appointment-edit-input" id="editAppointmentDate" value="${dateStr}">
-                </div>
-                <div class="appointment-edit-field">
-                  <label class="appointment-edit-label">Start Zeit *</label>
-                  <input type="time" class="appointment-edit-input" id="editAppointmentStartTime" value="${timeStr}">
-                </div>
-                <div class="appointment-edit-field">
-                  <label class="appointment-edit-label">End Zeit</label>
-                  <input type="time" class="appointment-edit-input" id="editAppointmentEndTime" value="${endTimeStr}">
-                </div>
-              </div>
-
-              <!-- Status -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Status *</label>
-                <select class="appointment-edit-input" id="editAppointmentStatus">
-                  ${statusOptions.map(s => `
-                    <option value="${s.value}" ${s.value === appointment.status ? 'selected' : ''}>
-                      ${s.label}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <!-- Work Process -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Work Process</label>
-                <select class="appointment-edit-input" id="editAppointmentWorkProcess">
-                  ${workProcessOptions.map(w => `
-                    <option value="${w.value}" ${w.value === appointment.work_process ? 'selected' : ''}>
-                      ${w.label}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <!-- Booking Type -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Booking Type</label>
-                <select class="appointment-edit-input" id="editAppointmentBookingType">
-                  ${bookingTypeOptions.map(b => `
-                    <option value="${b.value}" ${b.value === appointment.booking_type ? 'selected' : ''}>
-                      ${b.label}
-                    </option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <!-- Placement -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Placement</label>
-                <input type="text" class="appointment-edit-input" id="editAppointmentPlacement"
-                       value="${appointment.placement || ''}" placeholder="z.B. Unterarm, Rücken...">
-              </div>
-
-              <!-- Size -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Größe</label>
-                <input type="text" class="appointment-edit-input" id="editAppointmentSize"
-                       value="${appointment.size || ''}" placeholder="z.B. 10cm, A4...">
-              </div>
-
-              <!-- Style -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Style</label>
-                <input type="text" class="appointment-edit-input" id="editAppointmentStyle"
-                       value="${appointment.style || ''}" placeholder="z.B. Fineline, Traditional...">
-              </div>
-
-              <!-- Colorway -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Colorway</label>
-                <input type="text" class="appointment-edit-input" id="editAppointmentColorway"
-                       value="${appointment.colorway || ''}" placeholder="z.B. Black & Grey, Color...">
-              </div>
-
-              <!-- Description -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Beschreibung</label>
-                <textarea class="appointment-edit-textarea" id="editAppointmentDescription"
-                          placeholder="Motiv-Beschreibung...">${appointment.description || ''}</textarea>
-              </div>
-
-              <!-- Notes -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Notizen</label>
-                <textarea class="appointment-edit-textarea" id="editAppointmentNotes"
-                          placeholder="Allgemeine Notizen...">${appointment.notes || ''}</textarea>
-              </div>
-
-              <!-- Internal Notes -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Interne Notizen</label>
-                <textarea class="appointment-edit-textarea" id="editAppointmentInternalNotes"
-                          placeholder="Interne Notizen (nur für Team sichtbar)...">${appointment.internal_notes || ''}</textarea>
-              </div>
-
-              <!-- Notice -->
-              <div class="appointment-edit-section">
-                <label class="appointment-edit-label">Hinweis</label>
-                <textarea class="appointment-edit-textarea" id="editAppointmentNotice"
-                          placeholder="Besondere Hinweise...">${appointment.notice || ''}</textarea>
-              </div>
-
-              <!-- PAYMENT SECTION -->
-              <div class="appointment-edit-section" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #eaeaea;">
-                <h4 style="font-size: 14px; font-weight: 600; color: #000; margin: 0 0 16px 0;">Payment & Abrechnung</h4>
-
-                <div class="appointment-edit-row">
-                  <div class="appointment-edit-field">
-                    <label class="appointment-edit-label">Preis (€)</label>
-                    <input type="number" class="appointment-edit-input" id="editAppointmentPrice"
-                           value="${appointment.price || ''}" placeholder="0.00" step="0.01">
+                <!-- Artist Card (Read-only) -->
+                <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span style="font-size:12px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Artist</span>
                   </div>
-                  <div class="appointment-edit-field">
-                    <label class="appointment-edit-label">Payment Status</label>
-                    <select class="appointment-edit-input" id="editAppointmentPaymentStatus">
-                      ${paymentStatusOptions.map(p => `
-                        <option value="${p.value}" ${p.value === (appointment.payment_status || 'unpaid') ? 'selected' : ''}>
-                          ${p.label}
-                        </option>
-                      `).join('')}
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; background:#000; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:16px;">${artistInitial}</div>
+                    <div>
+                      <div style="font-weight:600; color:#000; font-size:14px;">${artistName}</div>
+                      ${artistRank ? `<span style="display:inline-block; font-size:10px; padding:2px 6px; border-radius:4px; background:${rankStyle.bg}; color:${rankStyle.color}; font-weight:500; margin-top:4px;">${artistRank}</span>` : ''}
+                    </div>
+                  </div>
+                  ${artistEmail ? `<div style="font-size:12px; color:#666; margin-top:8px;">${artistEmail}</div>` : ''}
+                </div>
+
+                <!-- Customer Card (Read-only) -->
+                <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span style="font-size:12px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Customer</span>
+                  </div>
+                  <div style="font-weight:600; color:#000; font-size:14px;">${customerName}</div>
+                  ${appointment.customer?.email ? `<div style="font-size:12px; color:#666; margin-top:4px;">${appointment.customer.email}</div>` : ''}
+                  ${appointment.customer?.phone ? `<div style="font-size:12px; color:#666; margin-top:2px;">${appointment.customer.phone}</div>` : ''}
+                </div>
+              </div>
+
+              <!-- Schedule Section -->
+              <div style="background:#fff; border:1px solid #eaeaea; border-radius:8px; padding:20px; margin-bottom:16px;">
+                <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Schedule
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Date *</label>
+                    <input type="date" id="editAppointmentDate" value="${dateStr}" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Start Time *</label>
+                    <input type="time" id="editAppointmentStartTime" value="${timeStr}" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">End Time</label>
+                    <input type="time" id="editAppointmentEndTime" value="${endTimeStr}" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Section -->
+              <div style="background:#fff; border:1px solid #eaeaea; border-radius:8px; padding:20px; margin-bottom:16px;">
+                <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Status & Type
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Status *</label>
+                    <select id="editAppointmentStatus" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; cursor:pointer;">
+                      ${statusOptions.map(s => `<option value="${s.value}" ${s.value === appointment.status ? 'selected' : ''}>${s.label}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Work Process</label>
+                    <select id="editAppointmentWorkProcess" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; cursor:pointer;">
+                      ${workProcessOptions.map(w => `<option value="${w.value}" ${w.value === appointment.work_process ? 'selected' : ''}>${w.label}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Booking Type</label>
+                    <select id="editAppointmentBookingType" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; cursor:pointer;">
+                      ${bookingTypeOptions.map(b => `<option value="${b.value}" ${b.value === appointment.booking_type ? 'selected' : ''}>${b.label}</option>`).join('')}
                     </select>
                   </div>
                 </div>
+              </div>
 
-                <div class="appointment-edit-section" style="margin-top: 12px;">
-                  <label class="appointment-edit-label">Payment Intent (Stripe)</label>
-                  <input type="text" class="appointment-edit-input" id="editAppointmentPaymentIntent"
-                         value="${appointment.payment_intent || ''}" placeholder="pi_...">
+              <!-- Tattoo Details Section -->
+              <div style="background:#fff; border:1px solid #eaeaea; border-radius:8px; padding:20px; margin-bottom:16px;">
+                <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                  Tattoo Details
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Placement</label>
+                    <input type="text" id="editAppointmentPlacement" value="${appointment.placement || ''}" placeholder="z.B. Unterarm, Rücken..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Size</label>
+                    <input type="text" id="editAppointmentSize" value="${appointment.size || ''}" placeholder="z.B. 10cm, A4..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
                 </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Style</label>
+                    <input type="text" id="editAppointmentStyle" value="${appointment.style || ''}" placeholder="z.B. Fineline, Traditional..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Colorway</label>
+                    <input type="text" id="editAppointmentColorway" value="${appointment.colorway || ''}" placeholder="z.B. Black & Grey, Color..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                </div>
+                <div style="margin-top:12px;">
+                  <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Description</label>
+                  <textarea id="editAppointmentDescription" placeholder="Motiv-Beschreibung..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; min-height:60px; resize:vertical; font-family:inherit;">${appointment.description || ''}</textarea>
+                </div>
+              </div>
 
-                <div class="appointment-edit-section" style="margin-top: 12px;">
-                  <label class="appointment-edit-label">Zahlungsnotizen</label>
-                  <textarea class="appointment-edit-textarea" id="editAppointmentPaymentNotice"
-                            placeholder="Zahlungshinweise, Raten, etc...">${appointment.payment_notice || ''}</textarea>
+              <!-- Notes Section -->
+              <div style="background:#fff; border:1px solid #eaeaea; border-radius:8px; padding:20px; margin-bottom:16px;">
+                <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Notes
+                </h4>
+                <div style="margin-bottom:12px;">
+                  <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">General Notes</label>
+                  <textarea id="editAppointmentNotes" placeholder="Allgemeine Notizen..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; min-height:60px; resize:vertical; font-family:inherit;">${appointment.notes || ''}</textarea>
+                </div>
+                <div style="margin-bottom:12px;">
+                  <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Internal Notes</label>
+                  <textarea id="editAppointmentInternalNotes" placeholder="Interne Notizen (nur für Team sichtbar)..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fefce8; box-sizing:border-box; min-height:60px; resize:vertical; font-family:inherit;">${appointment.internal_notes || ''}</textarea>
+                </div>
+                <div>
+                  <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Notice / Hinweis</label>
+                  <textarea id="editAppointmentNotice" placeholder="Besondere Hinweise..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; min-height:60px; resize:vertical; font-family:inherit;">${appointment.notice || ''}</textarea>
+                </div>
+              </div>
+
+              <!-- Payment Section -->
+              <div style="background:#fff; border:1px solid #eaeaea; border-radius:8px; padding:20px;">
+                <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  Payment & Billing
+                </h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Price (€)</label>
+                    <input type="number" id="editAppointmentPrice" value="${appointment.price || ''}" placeholder="0.00" step="0.01" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Payment Status</label>
+                    <select id="editAppointmentPaymentStatus" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; cursor:pointer;">
+                      ${paymentStatusOptions.map(p => `<option value="${p.value}" ${p.value === (appointment.payment_status || 'unpaid') ? 'selected' : ''}>${p.label}</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                  <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Payment Intent (Stripe)</label>
+                  <input type="text" id="editAppointmentPaymentIntent" value="${appointment.payment_intent || ''}" placeholder="pi_..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; font-family:monospace;">
+                </div>
+                <div>
+                  <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Payment Notes</label>
+                  <textarea id="editAppointmentPaymentNotice" placeholder="Zahlungshinweise, Raten, etc..." style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; min-height:60px; resize:vertical; font-family:inherit;">${appointment.payment_notice || ''}</textarea>
                 </div>
               </div>
 
             </div>
-            <div class="appointment-edit-actions">
-              <button class="appointment-edit-btn cancel" onclick="closeAppointmentEditPopup()">Abbrechen</button>
-              <button class="appointment-edit-btn save" onclick="saveAppointmentEdit('${appointmentId}')">Speichern</button>
+
+            <!-- Footer -->
+            <div style="padding:16px 24px; border-top:1px solid #eaeaea; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; background:#fafafa;">
+              <button onclick="closeAppointmentEditPopup()" style="padding:10px 20px; background:#fff; color:#666; border:1px solid #eaeaea; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer;">
+                Cancel
+              </button>
+              <button onclick="saveAppointmentEdit('${appointmentId}')" style="padding:10px 24px; background:#000; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Changes
+              </button>
             </div>
           </div>
         `;
@@ -36468,10 +36581,9 @@
 
         try {
           // WICHTIG: artist_id wird NICHT geändert (ist read-only)
+          // Spalten in appointments: start, end (NICHT start_time, end_time!)
           const updateData = {
-            start_time: startDateTime,
             start: startDateTime,
-            end_time: endDateTime,
             end: endDateTime,
             status: status,
             work_process: workProcess || null,
@@ -36503,7 +36615,7 @@
 
           // Schließe auch das Detail-Popup und refresh Calendar
           const detailPopup = document.querySelector('.appointment-detail-modal, #appointmentDetailModal');
-          if (detailPopup) detailPopup.remove();
+          if (detailPopup) detailPopup.style.display = 'none';
 
           // Refresh Calendar
           if (typeof loadCalendarData === 'function') {
