@@ -17942,101 +17942,133 @@
 
   <!-- Create Request Modal -->
   <div class="modal-backdrop" id="createRequestModal">
-    <div class="modal" style="max-width:700px; max-height:90vh; overflow-y:auto;">
-      <h3 style="color:var(--ink); font-weight:500;">Create New Request</h3>
-      <form class="modal-form" id="createRequestForm" style="max-height:calc(90vh - 150px); overflow-y:auto;">
+    <div class="modal" style="max-width:700px; max-height:90vh; background:#fafafa; border-radius:12px; padding:0; overflow:hidden;">
+      <!-- Header -->
+      <div style="padding:20px 24px; border-bottom:1px solid #eaeaea; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:18px; font-weight:600; color:#1d1d1f;">Create New Request</h3>
+        <button type="button" onclick="document.getElementById('createRequestModal').classList.remove('active')" style="background:none; border:none; padding:4px; cursor:pointer; color:#666;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
 
-        <!-- Customer Information -->
-        <div style="margin-bottom:24px;">
-          <h4 style="font-size:1rem; font-weight:600; margin-bottom:12px; color:#1d1d1f;">Customer Information</h4>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Vorname</label>
-            <input type="text" id="createFirstName" required>
+      <form class="modal-form" id="createRequestForm" style="max-height:calc(90vh - 140px); overflow-y:auto; padding:24px;">
+        <!-- Customer Information Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Customer Information</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">First Name *</label>
+              <input type="text" id="createFirstName" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Last Name *</label>
+              <input type="text" id="createLastName" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
           </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Nachname</label>
-            <input type="text" id="createLastName" required>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Email *</label>
+              <input type="email" id="createEmail" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Phone *</label>
+              <input type="tel" id="createPhone" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
           </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Email</label>
-            <input type="email" id="createEmail" required>
-          </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Phone</label>
-            <input type="tel" id="createPhone" required>
-          </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Instagram</label>
-            <input type="text" id="createInstagram" placeholder="@username">
+          <div>
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Instagram</label>
+            <input type="text" id="createInstagram" placeholder="@username" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
           </div>
         </div>
 
-        <!-- Request Details -->
-        <div style="margin-bottom:24px;">
-          <h4 style="font-size:1rem; font-weight:600; margin-bottom:12px; color:#1d1d1f;">Request Details</h4>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Booking Source</label>
-            <select id="createOrigin" required>
-              <option value="">-- Select Booking Source --</option>
-              <option value="Booking form">Booking form</option>
-              <option value="Whatsapp">Whatsapp</option>
-              <option value="Instagram">Instagram</option>
-              <option value="Facebook">Facebook</option>
-              <option value="Phone">Phone</option>
-              <option value="E-mail">E-mail</option>
-              <option value="Walk-in">Walk-in</option>
-              <option value="Self-Booking">Self-Booking</option>
-            </select>
+        <!-- Request Details Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Request Details</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Booking Source *</label>
+              <select id="createOrigin" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+                <option value="">-- Select --</option>
+                <option value="Booking form">Booking form</option>
+                <option value="Whatsapp">Whatsapp</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Phone">Phone</option>
+                <option value="E-mail">E-mail</option>
+                <option value="Walk-in">Walk-in</option>
+                <option value="Self-Booking">Self-Booking</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Priority</label>
+              <select id="createPriority" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+                <option value="">-- Select --</option>
+                <option value="low">Low</option>
+                <option value="normal" selected>Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Priority</label>
-            <select id="createPriority">
-              <option value="">-- Select Priority --</option>
-              <option value="low">Low</option>
-              <option value="normal" selected>Normal</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Placement</label>
+              <input type="text" id="createPlacement" placeholder="e.g., Arm, Leg, Back" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Size</label>
+              <input type="text" id="createSize" placeholder="e.g., 10x10 cm" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
           </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Placement</label>
-            <input type="text" id="createPlacement" placeholder="e.g., Arm, Leg, Back">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Style</label>
+              <input type="text" id="createStyle" placeholder="e.g., Traditional, Realism" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Colorway</label>
+              <input type="text" id="createColorway" placeholder="e.g., Black & Grey" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
           </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Size</label>
-            <input type="text" id="createSize" placeholder="e.g., 10x10 cm">
-          </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Style</label>
-            <input type="text" id="createStyle" placeholder="e.g., Traditional, Realism">
-          </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Colorway</label>
-            <input type="text" id="createColorway" placeholder="e.g., Black & Grey, Full Color">
-          </div>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Description</label>
-            <textarea id="createDescription" rows="4" placeholder="Describe the tattoo idea..."></textarea>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Description</label>
+            <textarea id="createDescription" rows="3" placeholder="Describe the tattoo idea..." style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; resize:vertical;"></textarea>
           </div>
         </div>
 
-        <!-- Location Selection -->
-        <div style="margin-bottom:24px;">
-          <h4 style="font-size:1rem; font-weight:600; margin-bottom:12px; color:#1d1d1f;">Location</h4>
-          <div class="form-group">
-            <label style="font-size:1rem; font-weight:600; color:#1d1d1f;">Select Location</label>
-            <select id="createLocation" required>
+        <!-- Assignment Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Assignment</label>
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Location *</label>
+            <select id="createLocation" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
               <option value="">-- Select Location --</option>
               <!-- Locations will be loaded dynamically -->
             </select>
           </div>
-        </div>
-
-        <div class="modal-actions" style="gap:8px;">
-          <button type="button" class="btn btn-secondary" id="cancelCreateRequest" style="background:#f5f5f7; color:var(--ink); border:1px solid rgba(0,0,0,0.1);">Cancel</button>
-          <button type="submit" class="btn" style="background:var(--ink); color:white; border:none;">Create Request</button>
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist Type</label>
+            <div style="display:flex; gap:8px;">
+              <button type="button" id="createRequestResidentBtn" onclick="setCreateRequestArtistType('resident')" style="flex:1; padding:8px 16px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; cursor:pointer; background:#fff; color:#666; transition:all 0.2s;">Resident</button>
+              <button type="button" id="createRequestGuestBtn" onclick="setCreateRequestArtistType('guest')" style="flex:1; padding:8px 16px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; cursor:pointer; background:#fff; color:#666; transition:all 0.2s;">Guest</button>
+            </div>
+          </div>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist</label>
+            <div style="position:relative;">
+              <input type="text" id="createRequestArtistSearch" placeholder="Search artist..." disabled style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#f5f5f5;">
+              <input type="hidden" id="createRequestArtistId">
+              <div id="createRequestArtistResults" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; border:1px solid #eaeaea; border-radius:6px; margin-top:4px; background:#fff; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+            </div>
+          </div>
         </div>
       </form>
+
+      <!-- Footer -->
+      <div style="padding:16px 24px; border-top:1px solid #eaeaea; display:flex; justify-content:flex-end; gap:8px; background:#fafafa;">
+        <button type="button" id="cancelCreateRequest" style="padding:8px 16px; background:#f5f5f5; border:1px solid #eaeaea; border-radius:6px; font-size:14px; color:#666; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#eaeaea'" onmouseout="this.style.background='#f5f5f5'">Cancel</button>
+        <button type="submit" form="createRequestForm" style="padding:8px 16px; background:#000; border:1px solid #000; border-radius:6px; font-size:14px; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#000'">Create Request</button>
+      </div>
     </div>
   </div>
 
@@ -19649,118 +19681,184 @@
 
   <!-- Create Booking Modal -->
   <div class="modal-backdrop" id="createBookingModal">
-    <div class="modal" style="max-width:600px;">
-      <h3>Create New Booking</h3>
-      <form class="modal-form" id="createBookingForm">
-        <div class="form-group">
-          <label>Customer Name</label>
-          <input type="text" id="createBookingCustomer" placeholder="e.g. John Doe" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Booking Type</label>
-          <select id="createBookingType" required>
-            <option value="">-- Select Type --</option>
-            <option value="consultation">Consultation</option>
-            <option value="new_tattoo">New Tattoo</option>
-            <option value="continuing_tattoo">Continuing Tattoo</option>
-            <option value="touch_up">Touch Up</option>
-            <option value="selfbooking">Selfbooking</option>
-            <option value="wannado">WannaDo</option>
-            <option value="internal">Internal</option>
-            <option value="move">Move</option>
-            <option value="reserved">Reserved</option>
-            <option value="no_show">No Show</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Artist Type</label>
-          <select id="createBookingArtistType" required>
-            <option value="">-- Select Artist Type --</option>
-            <option value="resident">Resident</option>
-            <option value="guest">Guest</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label>Search Artist</label>
-          <input type="text" id="createBookingArtistSearch" placeholder="Type to search artist..." disabled>
-          <input type="hidden" id="createBookingArtistId">
-          <div id="artistSearchResults" style="display:none; max-height:200px; overflow-y:auto; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-top:4px; background:white;"></div>
-        </div>
-        
-        <div style="display:grid; grid-template-columns:1fr; gap:16px;">
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="createBookingDate" required>
+    <div class="modal" style="max-width:700px; max-height:90vh; background:#fafafa; border-radius:12px; padding:0; overflow:hidden;">
+      <!-- Header -->
+      <div style="padding:20px 24px; border-bottom:1px solid #eaeaea; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:18px; font-weight:600; color:#1d1d1f;">Create New Booking</h3>
+        <button type="button" onclick="document.getElementById('createBookingModal').classList.remove('active')" style="background:none; border:none; padding:4px; cursor:pointer; color:#666;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form class="modal-form" id="createBookingForm" style="max-height:calc(90vh - 140px); overflow-y:auto; padding:24px;">
+        <!-- Customer Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Customer</label>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Customer Name *</label>
+            <input type="text" id="createBookingCustomer" placeholder="e.g. John Doe" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
           </div>
         </div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-          <div class="form-group">
-            <label>Start Time</label>
-            <select id="createBookingStartTime" required>
-              <option value="">-- Select Time --</option>
-              <option value="10.0">10:00</option>
-              <option value="10.5">10:30</option>
-              <option value="11.0">11:00</option>
-              <option value="11.5">11:30</option>
-              <option value="12.0">12:00</option>
-              <option value="12.5">12:30</option>
-              <option value="13.0">13:00</option>
-              <option value="13.5">13:30</option>
-              <option value="14.0">14:00</option>
-              <option value="14.5">14:30</option>
-              <option value="15.0">15:00</option>
-              <option value="15.5">15:30</option>
-              <option value="16.0">16:00</option>
-              <option value="16.5">16:30</option>
-              <option value="17.0">17:00</option>
-              <option value="17.5">17:30</option>
-              <option value="18.0">18:00</option>
-              <option value="18.5">18:30</option>
-              <option value="19.0">19:00</option>
-              <option value="19.5">19:30</option>
+
+        <!-- Booking Details Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Booking Details</label>
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Booking Type *</label>
+            <select id="createBookingType" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+              <option value="">-- Select Type --</option>
+              <option value="consultation">Consultation</option>
+              <option value="new_tattoo">New Tattoo</option>
+              <option value="continuing_tattoo">Continuing Tattoo</option>
+              <option value="touch_up">Touch Up</option>
+              <option value="selfbooking">Selfbooking</option>
+              <option value="wannado">WannaDo</option>
+              <option value="internal">Internal</option>
+              <option value="move">Move</option>
+              <option value="reserved">Reserved</option>
+              <option value="no_show">No Show</option>
             </select>
           </div>
-          
-          <div class="form-group">
-            <label>End Time</label>
-            <select id="createBookingEndTime" required>
-              <option value="">-- Select Time --</option>
-              <option value="10.0">10:00</option>
-              <option value="10.5">10:30</option>
-              <option value="11.0">11:00</option>
-              <option value="11.5">11:30</option>
-              <option value="12.0">12:00</option>
-              <option value="12.5">12:30</option>
-              <option value="13.0">13:00</option>
-              <option value="13.5">13:30</option>
-              <option value="14.0">14:00</option>
-              <option value="14.5">14:30</option>
-              <option value="15.0">15:00</option>
-              <option value="15.5">15:30</option>
-              <option value="16.0">16:00</option>
-              <option value="16.5">16:30</option>
-              <option value="17.0">17:00</option>
-              <option value="17.5">17:30</option>
-              <option value="18.0">18:00</option>
-              <option value="18.5">18:30</option>
-              <option value="19.0">19:00</option>
-              <option value="19.5">19:30</option>
-              <option value="20.0">20:00</option>
-              <option value="20.5">20:30</option>
-              <option value="21.0">21:00</option>
-            </select>
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist Type *</label>
+            <div style="display:flex; gap:8px;">
+              <button type="button" id="createBookingResidentBtn" onclick="setCreateBookingArtistType('resident')" style="flex:1; padding:8px 16px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; cursor:pointer; background:#fff; color:#666; transition:all 0.2s;">Resident</button>
+              <button type="button" id="createBookingGuestBtn" onclick="setCreateBookingArtistType('guest')" style="flex:1; padding:8px 16px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; cursor:pointer; background:#fff; color:#666; transition:all 0.2s;">Guest</button>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist *</label>
+            <div style="position:relative;">
+              <input type="text" id="createBookingArtistSearch" placeholder="Search artist..." disabled style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#f5f5f5;">
+              <input type="hidden" id="createBookingArtistId">
+              <div id="artistSearchResults" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; border:1px solid #eaeaea; border-radius:6px; margin-top:4px; background:#fff; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Date *</label>
+              <input type="date" id="createBookingDate" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Start Time *</label>
+              <select id="createBookingStartTime" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+                <option value="">-- Select --</option>
+                <option value="10.0">10:00</option>
+                <option value="10.5">10:30</option>
+                <option value="11.0">11:00</option>
+                <option value="11.5">11:30</option>
+                <option value="12.0">12:00</option>
+                <option value="12.5">12:30</option>
+                <option value="13.0">13:00</option>
+                <option value="13.5">13:30</option>
+                <option value="14.0">14:00</option>
+                <option value="14.5">14:30</option>
+                <option value="15.0">15:00</option>
+                <option value="15.5">15:30</option>
+                <option value="16.0">16:00</option>
+                <option value="16.5">16:30</option>
+                <option value="17.0">17:00</option>
+                <option value="17.5">17:30</option>
+                <option value="18.0">18:00</option>
+                <option value="18.5">18:30</option>
+                <option value="19.0">19:00</option>
+                <option value="19.5">19:30</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">End Time *</label>
+              <select id="createBookingEndTime" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+                <option value="">-- Select --</option>
+                <option value="10.0">10:00</option>
+                <option value="10.5">10:30</option>
+                <option value="11.0">11:00</option>
+                <option value="11.5">11:30</option>
+                <option value="12.0">12:00</option>
+                <option value="12.5">12:30</option>
+                <option value="13.0">13:00</option>
+                <option value="13.5">13:30</option>
+                <option value="14.0">14:00</option>
+                <option value="14.5">14:30</option>
+                <option value="15.0">15:00</option>
+                <option value="15.5">15:30</option>
+                <option value="16.0">16:00</option>
+                <option value="16.5">16:30</option>
+                <option value="17.0">17:00</option>
+                <option value="17.5">17:30</option>
+                <option value="18.0">18:00</option>
+                <option value="18.5">18:30</option>
+                <option value="19.0">19:00</option>
+                <option value="19.5">19:30</option>
+                <option value="20.0">20:00</option>
+                <option value="20.5">20:30</option>
+                <option value="21.0">21:00</option>
+              </select>
+            </div>
           </div>
         </div>
-        
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="cancelCreateBooking">Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Booking</button>
+
+        <!-- Tattoo Details Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Tattoo Details</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Placement</label>
+              <input type="text" id="createBookingPlacement" placeholder="e.g., Arm, Leg, Back" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Size</label>
+              <input type="text" id="createBookingSize" placeholder="e.g., 10x10 cm" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Style</label>
+              <input type="text" id="createBookingStyle" placeholder="e.g., Traditional, Realism" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Colorway</label>
+              <input type="text" id="createBookingColorway" placeholder="e.g., Black & Grey" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Payment</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Price</label>
+              <div style="position:relative;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#666; font-size:14px;">€</span>
+                <input type="number" id="createBookingPrice" placeholder="0.00" step="0.01" min="0" style="width:100%; padding:8px 12px 8px 28px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+              </div>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Payment Status</label>
+              <select id="createBookingPaymentStatus" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+                <option value="unpaid">Unpaid</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Notes</label>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Notes</label>
+            <textarea id="createBookingNotes" rows="3" placeholder="Additional notes about the booking..." style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; resize:vertical;"></textarea>
+          </div>
         </div>
       </form>
+
+      <!-- Footer -->
+      <div style="padding:16px 24px; border-top:1px solid #eaeaea; display:flex; justify-content:flex-end; gap:8px; background:#fafafa;">
+        <button type="button" id="cancelCreateBooking" style="padding:8px 16px; background:#f5f5f5; border:1px solid #eaeaea; border-radius:6px; font-size:14px; color:#666; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#eaeaea'" onmouseout="this.style.background='#f5f5f5'">Cancel</button>
+        <button type="submit" form="createBookingForm" style="padding:8px 16px; background:#000; border:1px solid #000; border-radius:6px; font-size:14px; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#000'">Create Booking</button>
+      </div>
     </div>
   </div>
 
@@ -29785,6 +29883,14 @@
 
       // Create Request Button - Opens Create Request Modal
       document.getElementById('createRequestBtn')?.addEventListener('click', () => {
+        // Reset form
+        document.getElementById('createRequestForm').reset();
+
+        // Reset artist selection
+        if (typeof resetCreateRequestArtistSelection === 'function') {
+          resetCreateRequestArtistSelection();
+        }
+
         // Load locations into dropdown
         const locationSelect = document.getElementById('createLocation');
         if (locationSelect && allLocations) {
@@ -29803,6 +29909,122 @@
       document.getElementById('cancelCreateRequest')?.addEventListener('click', () => {
         document.getElementById('createRequestModal').classList.remove('active');
         document.getElementById('createRequestForm').reset();
+        resetCreateRequestArtistSelection();
+      });
+
+      // Create Request Artist Type Toggle
+      let createRequestArtistType = null;
+
+      window.setCreateRequestArtistType = function(type) {
+        createRequestArtistType = type;
+        const residentBtn = document.getElementById('createRequestResidentBtn');
+        const guestBtn = document.getElementById('createRequestGuestBtn');
+        const searchInput = document.getElementById('createRequestArtistSearch');
+
+        if (type === 'resident') {
+          residentBtn.style.background = '#000';
+          residentBtn.style.color = '#fff';
+          residentBtn.style.borderColor = '#000';
+          guestBtn.style.background = '#fff';
+          guestBtn.style.color = '#666';
+          guestBtn.style.borderColor = '#eaeaea';
+        } else {
+          guestBtn.style.background = '#000';
+          guestBtn.style.color = '#fff';
+          guestBtn.style.borderColor = '#000';
+          residentBtn.style.background = '#fff';
+          residentBtn.style.color = '#666';
+          residentBtn.style.borderColor = '#eaeaea';
+        }
+
+        // Enable search input
+        searchInput.disabled = false;
+        searchInput.style.background = '#fff';
+        searchInput.value = '';
+        document.getElementById('createRequestArtistId').value = '';
+        document.getElementById('createRequestArtistResults').style.display = 'none';
+      };
+
+      function resetCreateRequestArtistSelection() {
+        createRequestArtistType = null;
+        const residentBtn = document.getElementById('createRequestResidentBtn');
+        const guestBtn = document.getElementById('createRequestGuestBtn');
+        const searchInput = document.getElementById('createRequestArtistSearch');
+
+        if (residentBtn) {
+          residentBtn.style.background = '#fff';
+          residentBtn.style.color = '#666';
+          residentBtn.style.borderColor = '#eaeaea';
+        }
+        if (guestBtn) {
+          guestBtn.style.background = '#fff';
+          guestBtn.style.color = '#666';
+          guestBtn.style.borderColor = '#eaeaea';
+        }
+        if (searchInput) {
+          searchInput.disabled = true;
+          searchInput.style.background = '#f5f5f5';
+          searchInput.value = '';
+        }
+        const artistIdInput = document.getElementById('createRequestArtistId');
+        if (artistIdInput) artistIdInput.value = '';
+        const resultsDiv = document.getElementById('createRequestArtistResults');
+        if (resultsDiv) resultsDiv.style.display = 'none';
+      }
+
+      // Create Request Artist Search
+      document.getElementById('createRequestArtistSearch')?.addEventListener('input', async function() {
+        const query = this.value.trim();
+        const resultsDiv = document.getElementById('createRequestArtistResults');
+
+        if (query.length < 2 || !createRequestArtistType) {
+          resultsDiv.style.display = 'none';
+          return;
+        }
+
+        try {
+          const { data: artists, error } = await supabase
+            .from('artists')
+            .select('id, name, email')
+            .eq('artist_type', createRequestArtistType)
+            .ilike('name', `%${query}%`)
+            .limit(10);
+
+          if (error) throw error;
+
+          if (artists && artists.length > 0) {
+            resultsDiv.innerHTML = artists.map(artist => `
+              <div onclick="selectCreateRequestArtist('${artist.id}', '${artist.name.replace(/'/g, "\\'")}')"
+                   style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #eaeaea; transition:background 0.2s;"
+                   onmouseover="this.style.background='#f5f5f5'"
+                   onmouseout="this.style.background='#fff'">
+                <div style="font-weight:500; color:#1d1d1f;">${artist.name}</div>
+                ${artist.email ? `<div style="font-size:12px; color:#666;">${artist.email}</div>` : ''}
+              </div>
+            `).join('');
+            resultsDiv.style.display = 'block';
+          } else {
+            resultsDiv.innerHTML = '<div style="padding:10px 12px; color:#666; font-size:14px;">No artists found</div>';
+            resultsDiv.style.display = 'block';
+          }
+        } catch (err) {
+          console.error('Error searching artists:', err);
+        }
+      });
+
+      window.selectCreateRequestArtist = function(artistId, artistName) {
+        document.getElementById('createRequestArtistSearch').value = artistName;
+        document.getElementById('createRequestArtistId').value = artistId;
+        document.getElementById('createRequestArtistResults').style.display = 'none';
+      };
+
+      // Hide artist results when clicking outside
+      document.addEventListener('click', function(e) {
+        const searchInput = document.getElementById('createRequestArtistSearch');
+        const resultsDiv = document.getElementById('createRequestArtistResults');
+        if (searchInput && resultsDiv && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+          resultsDiv.style.display = 'none';
+        }
       });
 
       // Submit handler for create request form
@@ -29833,6 +30055,9 @@
             // Continue without customer_id - not critical
           }
 
+          // Get artist_id if selected
+          const artistId = document.getElementById('createRequestArtistId')?.value || null;
+
           const requestData = {
             first_name: firstName,
             last_name: lastName,
@@ -29840,6 +30065,7 @@
             customer_phone: phone,
             instagram: instagram,
             customer_id: customerId,  // Link to customer
+            artist_id: artistId || null,  // Optional artist assignment
             priority: document.getElementById('createPriority').value || 'normal',
             placement: document.getElementById('createPlacement').value || null,
             size: document.getElementById('createSize').value || null,
@@ -29881,8 +30107,9 @@
 
           document.getElementById('createRequestModal').classList.remove('active');
           document.getElementById('createRequestForm').reset();
+          resetCreateRequestArtistSelection();
 
-          alert('✅ Request created successfully!');
+          alert('Request created successfully!');
         } catch (err) {
           console.error('Error creating request:', err);
           alert('❌ Error creating request: ' + err.message);
@@ -34971,72 +35198,119 @@
         if (dateInput) {
           dateInput.value = currentDate.toISOString().split('T')[0];
         }
-        
-        // Reset artist search
-        document.getElementById('createBookingArtistSearch').value = '';
-        document.getElementById('createBookingArtistSearch').disabled = true;
-        document.getElementById('createBookingArtistId').value = '';
-        document.getElementById('artistSearchResults').style.display = 'none';
-        
+
+        // Reset form
+        document.getElementById('createBookingForm').reset();
+        if (dateInput) {
+          dateInput.value = currentDate.toISOString().split('T')[0];
+        }
+
+        // Reset artist selection (will be called after toggle functions are defined)
+        if (typeof resetCreateBookingArtistSelection === 'function') {
+          resetCreateBookingArtistSelection();
+        }
+
         // Open modal
         document.getElementById('createBookingModal').classList.add('active');
       });
       
-      // Artist Type change handler
-      document.getElementById('createBookingArtistType')?.addEventListener('change', (e) => {
-        const artistType = e.target.value;
+      // Create Booking Artist Type Toggle
+      let createBookingArtistType = null;
+
+      window.setCreateBookingArtistType = function(type) {
+        createBookingArtistType = type;
+        const residentBtn = document.getElementById('createBookingResidentBtn');
+        const guestBtn = document.getElementById('createBookingGuestBtn');
         const searchInput = document.getElementById('createBookingArtistSearch');
-        
-        if (artistType) {
-          searchInput.disabled = false;
-          searchInput.value = '';
-          document.getElementById('createBookingArtistId').value = '';
-          document.getElementById('artistSearchResults').style.display = 'none';
+
+        if (type === 'resident') {
+          residentBtn.style.background = '#000';
+          residentBtn.style.color = '#fff';
+          residentBtn.style.borderColor = '#000';
+          guestBtn.style.background = '#fff';
+          guestBtn.style.color = '#666';
+          guestBtn.style.borderColor = '#eaeaea';
         } else {
-          searchInput.disabled = true;
-          searchInput.value = '';
-          document.getElementById('createBookingArtistId').value = '';
-          document.getElementById('artistSearchResults').style.display = 'none';
+          guestBtn.style.background = '#000';
+          guestBtn.style.color = '#fff';
+          guestBtn.style.borderColor = '#000';
+          residentBtn.style.background = '#fff';
+          residentBtn.style.color = '#666';
+          residentBtn.style.borderColor = '#eaeaea';
         }
-      });
+
+        // Enable search input
+        searchInput.disabled = false;
+        searchInput.style.background = '#fff';
+        searchInput.value = '';
+        document.getElementById('createBookingArtistId').value = '';
+        document.getElementById('artistSearchResults').style.display = 'none';
+      };
+
+      function resetCreateBookingArtistSelection() {
+        createBookingArtistType = null;
+        const residentBtn = document.getElementById('createBookingResidentBtn');
+        const guestBtn = document.getElementById('createBookingGuestBtn');
+        const searchInput = document.getElementById('createBookingArtistSearch');
+
+        if (residentBtn) {
+          residentBtn.style.background = '#fff';
+          residentBtn.style.color = '#666';
+          residentBtn.style.borderColor = '#eaeaea';
+        }
+        if (guestBtn) {
+          guestBtn.style.background = '#fff';
+          guestBtn.style.color = '#666';
+          guestBtn.style.borderColor = '#eaeaea';
+        }
+        if (searchInput) {
+          searchInput.disabled = true;
+          searchInput.style.background = '#f5f5f5';
+          searchInput.value = '';
+        }
+        const artistIdInput = document.getElementById('createBookingArtistId');
+        if (artistIdInput) artistIdInput.value = '';
+        const resultsDiv = document.getElementById('artistSearchResults');
+        if (resultsDiv) resultsDiv.style.display = 'none';
+      }
       
       // Artist search functionality
       document.getElementById('createBookingArtistSearch')?.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase().trim();
-        const artistType = document.getElementById('createBookingArtistType').value;
         const resultsDiv = document.getElementById('artistSearchResults');
-        
-        if (!searchTerm || !artistType) {
+
+        if (!searchTerm || !createBookingArtistType) {
           resultsDiv.style.display = 'none';
           return;
         }
-        
+
         // Filter artists by type and search term
-        const isGuest = artistType === 'guest';
-        const filteredArtists = allArtists.filter(artist => 
-          artist.is_guest === isGuest && 
+        const isGuest = createBookingArtistType === 'guest';
+        const filteredArtists = allArtists.filter(artist =>
+          artist.is_guest === isGuest &&
           artist.active &&
           artist.name.toLowerCase().includes(searchTerm)
         );
-        
+
         if (filteredArtists.length === 0) {
-          resultsDiv.innerHTML = '<div style="padding:12px; color:var(--muted); font-size:13px;">No artists found</div>';
+          resultsDiv.innerHTML = '<div style="padding:12px; color:#666; font-size:14px;">No artists found</div>';
           resultsDiv.style.display = 'block';
           return;
         }
-        
+
         resultsDiv.innerHTML = filteredArtists.map(artist => `
-          <div class="artist-search-result" data-id="${artist.id}" data-name="${artist.name}" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.06); font-size:14px; transition:background 0.15s;">
-            ${artist.name}${artist.instagram ? ` <span style="color:var(--muted); font-size:12px;">@${artist.instagram}</span>` : ''}
+          <div class="artist-search-result" data-id="${artist.id}" data-name="${artist.name}" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #eaeaea; font-size:14px; transition:background 0.15s;">
+            <div style="font-weight:500; color:#1d1d1f;">${artist.name}</div>
+            ${artist.instagram ? `<div style="font-size:12px; color:#666;">@${artist.instagram}</div>` : ''}
           </div>
         `).join('');
-        
+
         resultsDiv.style.display = 'block';
-        
+
         // Add click handlers
         document.querySelectorAll('.artist-search-result').forEach(item => {
           item.addEventListener('mouseenter', function() {
-            this.style.background = 'rgba(0,113,227,0.06)';
+            this.style.background = '#f5f5f5';
           });
           item.addEventListener('mouseleave', function() {
             this.style.background = '';
@@ -35056,18 +35330,28 @@
       document.getElementById('cancelCreateBooking')?.addEventListener('click', () => {
         document.getElementById('createBookingModal').classList.remove('active');
         document.getElementById('createBookingForm').reset();
+        resetCreateBookingArtistSelection();
       });
       
       document.getElementById('createBookingForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const customerName = document.getElementById('createBookingCustomer').value.trim();
         const type = document.getElementById('createBookingType').value;
         const artistId = document.getElementById('createBookingArtistId').value;
         const date = document.getElementById('createBookingDate').value;
         const startHour = parseFloat(document.getElementById('createBookingStartTime').value);
         const endHour = parseFloat(document.getElementById('createBookingEndTime').value);
-        
+
+        // New fields
+        const placement = document.getElementById('createBookingPlacement')?.value || null;
+        const size = document.getElementById('createBookingSize')?.value || null;
+        const style = document.getElementById('createBookingStyle')?.value || null;
+        const colorway = document.getElementById('createBookingColorway')?.value || null;
+        const price = document.getElementById('createBookingPrice')?.value ? parseFloat(document.getElementById('createBookingPrice').value) : null;
+        const paymentStatus = document.getElementById('createBookingPaymentStatus')?.value || 'unpaid';
+        const notes = document.getElementById('createBookingNotes')?.value || null;
+
         // Validation
         if (!customerName || !type || !artistId || !date || !startHour || !endHour) {
           return alert('Please fill in all required fields');
@@ -35144,8 +35428,14 @@
             booking_type: type,
             work_process: type,
             status: 'scheduled',
-            payment_status: 'unpaid',
+            payment_status: paymentStatus,
             duration_minutes: durationMinutes,
+            placement: placement,
+            size: size,
+            style: style,
+            colorway: colorway,
+            price: price,
+            notes: notes,
             created_at: new Date().toISOString()
           }).select();
 
@@ -35154,9 +35444,7 @@
           // Close modal and reset form
           document.getElementById('createBookingModal').classList.remove('active');
           document.getElementById('createBookingForm').reset();
-          document.getElementById('createBookingArtistSearch').disabled = true;
-          document.getElementById('createBookingArtistId').value = '';
-          document.getElementById('artistSearchResults').style.display = 'none';
+          resetCreateBookingArtistSelection();
           
           // Reload events and refresh calendar
           await loadEvents();
