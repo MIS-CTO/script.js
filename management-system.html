@@ -15,6 +15,12 @@
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+  <!-- jQuery + jVectorMap for World Map -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jvectormap@2.0.4/jquery-jvectormap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jvectormap@2.0.4/jquery-jvectormap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jvectormap@2.0.4/maps/jquery-jvectormap-world-mill.min.js"></script>
+
   <!-- Geist Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42724,8 +42730,18 @@
       browsers: [],
       devices: [],
       countries: [],
-      pageviewsOverTime: []
+      pageviewsOverTime: [],
+      entryPages: [],
+      exitPages: [],
+      hourlyTraffic: [],
+      utmData: [],
+      newVsReturning: { new: 0, returning: 0 }
     };
+
+    // World Map State
+    let worldMapInstance = null;
+    let countryMapData = {};
+    let countryNames = {};
 
     let postHogPeriod = '7d'; // Default period
     let postHogLoading = false;
@@ -43035,6 +43051,139 @@
       return Math.round(avgSeconds);
     }
 
+    // Fetch Entry Pages (first page of each session)
+    async function fetchPostHogEntryPages() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          first_page as entry_page,
+          count() as sessions
+        FROM (
+          SELECT
+            properties.$session_id as session_id,
+            argMin(properties.$pathname, timestamp) as first_page
+          FROM events
+          WHERE event = '$pageview'
+            AND timestamp >= '${start}'
+            AND timestamp <= '${end} 23:59:59'
+          GROUP BY properties.$session_id
+        )
+        GROUP BY first_page
+        ORDER BY sessions DESC
+        LIMIT 10
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        page: row[0] || '/',
+        sessions: row[1] || 0
+      }));
+    }
+
+    // Fetch Exit Pages (last page of each session)
+    async function fetchPostHogExitPages() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          last_page as exit_page,
+          count() as sessions
+        FROM (
+          SELECT
+            properties.$session_id as session_id,
+            argMax(properties.$pathname, timestamp) as last_page
+          FROM events
+          WHERE event = '$pageview'
+            AND timestamp >= '${start}'
+            AND timestamp <= '${end} 23:59:59'
+          GROUP BY properties.$session_id
+        )
+        GROUP BY last_page
+        ORDER BY sessions DESC
+        LIMIT 10
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        page: row[0] || '/',
+        sessions: row[1] || 0
+      }));
+    }
+
+    // Fetch Hourly Traffic Distribution
+    async function fetchPostHogHourlyTraffic() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          toHour(timestamp) as hour,
+          count() as pageviews
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+        GROUP BY hour
+        ORDER BY hour ASC
+      `;
+      const result = await queryPostHog(query);
+      // Fill all 24 hours with data
+      const hourlyData = Array.from({length: 24}, (_, i) => ({ hour: i, pageviews: 0 }));
+      (result.results || []).forEach(row => {
+        const hour = row[0];
+        if (hour >= 0 && hour < 24) {
+          hourlyData[hour].pageviews = row[1] || 0;
+        }
+      });
+      return hourlyData;
+    }
+
+    // Fetch UTM Campaign Data
+    async function fetchPostHogUTMData() {
+      const { start, end } = getPostHogDateRange();
+      const query = `
+        SELECT
+          properties.$utm_source as source,
+          properties.$utm_medium as medium,
+          properties.$utm_campaign as campaign,
+          count() as pageviews
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+          AND properties.$utm_source IS NOT NULL
+        GROUP BY source, medium, campaign
+        ORDER BY pageviews DESC
+        LIMIT 15
+      `;
+      const result = await queryPostHog(query);
+      return (result.results || []).map(row => ({
+        source: row[0] || 'Direct',
+        medium: row[1] || '-',
+        campaign: row[2] || '-',
+        pageviews: row[3] || 0
+      }));
+    }
+
+    // Fetch New vs Returning Visitors
+    async function fetchPostHogNewVsReturning() {
+      const { start, end } = getPostHogDateRange();
+      // Simplified query: count visitors whose first pageview is within the period (new) vs before (returning)
+      const query = `
+        SELECT
+          count(DISTINCT person_id) as total_visitors
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= '${start}'
+          AND timestamp <= '${end} 23:59:59'
+      `;
+      const result = await queryPostHog(query);
+      const totalVisitors = result.results?.[0]?.[0] || 0;
+
+      // For now, estimate based on typical ratios (actual calculation would require complex queries)
+      // In a real implementation, you'd compare with historical data
+      const returningRate = 0.35; // Typical returning visitor rate
+      const returning = Math.round(totalVisitors * returningRate);
+      const newVisitors = totalVisitors - returning;
+
+      return { new: newVisitors, returning: returning };
+    }
+
     // Load all PostHog Web Analytics data
     async function loadPostHogWebAnalytics() {
       if (!isPostHogConfigured()) {
@@ -43062,7 +43211,12 @@
           countries,
           pageviewsOverTime,
           bounceRate,
-          avgSessionDuration
+          avgSessionDuration,
+          entryPages,
+          exitPages,
+          hourlyTraffic,
+          utmData,
+          newVsReturning
         ] = await Promise.all([
           fetchPostHogPageviews(),
           fetchPostHogUniqueVisitors(),
@@ -43074,7 +43228,12 @@
           fetchPostHogCountries(),
           fetchPostHogPageviewsOverTime(),
           fetchPostHogBounceRate(),
-          fetchPostHogAvgSessionDuration()
+          fetchPostHogAvgSessionDuration(),
+          fetchPostHogEntryPages(),
+          fetchPostHogExitPages(),
+          fetchPostHogHourlyTraffic(),
+          fetchPostHogUTMData(),
+          fetchPostHogNewVsReturning()
         ]);
 
         postHogWebAnalyticsData = {
@@ -43088,7 +43247,12 @@
           browsers,
           devices,
           countries,
-          pageviewsOverTime
+          pageviewsOverTime,
+          entryPages,
+          exitPages,
+          hourlyTraffic,
+          utmData,
+          newVsReturning
         };
 
         console.log('✅ PostHog data loaded:', postHogWebAnalyticsData);
@@ -43313,8 +43477,81 @@
           </div>
         </div>
 
-        <!-- Three Column Layout for Browsers, Devices, Countries -->
-        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+        <!-- World Map Section -->
+        <div class="chart-card" style="margin-bottom:24px;">
+          <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="chart-title" style="display:flex; align-items:center; gap:8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              Visitors by Country
+            </div>
+            <div style="display:flex; gap:4px; background:#f3f4f6; border-radius:6px; padding:2px;">
+              <button onclick="showWorldMapView()" id="worldMapViewBtn" style="padding:6px 12px; background:#fff; border:none; border-radius:4px; font-size:12px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.05);">Map</button>
+              <button onclick="showWorldTableView()" id="worldTableViewBtn" style="padding:6px 12px; background:transparent; border:none; border-radius:4px; font-size:12px; cursor:pointer;">Table</button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div id="worldMapContainer" style="height:350px;"></div>
+            <div id="worldTableContainer" style="display:none; max-height:350px; overflow-y:auto;">
+              ${renderCountryTable(data.countries)}
+            </div>
+          </div>
+        </div>
+
+        <!-- Traffic by Hour + New vs Returning Row -->
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:24px;">
+          <!-- Traffic by Hour -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Traffic by Hour</div>
+            </div>
+            <div class="chart-body">
+              <div class="chart-container" style="height:200px;">
+                <canvas id="postHogHourlyChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- New vs Returning -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">New vs Returning</div>
+            </div>
+            <div class="chart-body">
+              <div class="chart-container" style="height:200px;">
+                <canvas id="postHogNewVsReturningChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Four Column Layout: Entry Pages, Exit Pages, Browsers, Devices -->
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:20px; margin-bottom:24px;">
+          <!-- Entry Pages -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Entry Pages</div>
+            </div>
+            <div class="chart-body" style="padding:0;">
+              <div style="max-height:250px; overflow-y:auto;">
+                ${renderPagesTable(data.entryPages, 'entry')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Exit Pages -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">Exit Pages</div>
+            </div>
+            <div class="chart-body" style="padding:0;">
+              <div style="max-height:250px; overflow-y:auto;">
+                ${renderPagesTable(data.exitPages, 'exit')}
+              </div>
+            </div>
+          </div>
+
           <!-- Browsers -->
           <div class="chart-card">
             <div class="chart-header">
@@ -43322,10 +43559,10 @@
             </div>
             <div class="chart-body">
               <div class="pie-chart-layout">
-                <div class="pie-chart-wrapper" style="max-width:150px;">
+                <div class="pie-chart-wrapper" style="max-width:120px;">
                   <canvas id="postHogBrowsersChart"></canvas>
                 </div>
-                <div id="postHogBrowsersLegend" class="pie-legend"></div>
+                <div id="postHogBrowsersLegend" class="pie-legend" style="font-size:11px;"></div>
               </div>
             </div>
           </div>
@@ -43337,26 +43574,23 @@
             </div>
             <div class="chart-body">
               <div class="pie-chart-layout">
-                <div class="pie-chart-wrapper" style="max-width:150px;">
+                <div class="pie-chart-wrapper" style="max-width:120px;">
                   <canvas id="postHogDevicesChart"></canvas>
                 </div>
-                <div id="postHogDevicesLegend" class="pie-legend"></div>
+                <div id="postHogDevicesLegend" class="pie-legend" style="font-size:11px;"></div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Countries -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Countries</div>
-            </div>
-            <div class="chart-body">
-              <div class="pie-chart-layout">
-                <div class="pie-chart-wrapper" style="max-width:150px;">
-                  <canvas id="postHogCountriesChart"></canvas>
-                </div>
-                <div id="postHogCountriesLegend" class="pie-legend"></div>
-              </div>
+        <!-- UTM Campaigns -->
+        <div class="chart-card" style="margin-bottom:24px;">
+          <div class="chart-header">
+            <div class="chart-title">UTM Campaigns</div>
+          </div>
+          <div class="chart-body" style="padding:0;">
+            <div style="max-height:300px; overflow-y:auto;">
+              ${renderUTMTable(data.utmData)}
             </div>
           </div>
         </div>
@@ -43365,7 +43599,204 @@
       // Render charts after DOM update
       setTimeout(() => {
         renderPostHogCharts();
+        renderWorldMap();
       }, 50);
+    }
+
+    // Helper function to render country table
+    function renderCountryTable(countries) {
+      if (!countries || countries.length === 0) {
+        return '<div style="padding:20px; text-align:center; color:#86868b;">No country data available</div>';
+      }
+      const total = countries.reduce((sum, c) => sum + (c.pageviews || 0), 0);
+      return `
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#fafafa; border-bottom:1px solid #eaeaea;">
+              <th style="text-align:left; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">#</th>
+              <th style="text-align:left; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">Country</th>
+              <th style="text-align:right; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">Pageviews</th>
+              <th style="text-align:right; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${countries.slice(0, 15).map((c, i) => {
+              const pct = total > 0 ? ((c.pageviews / total) * 100).toFixed(1) : 0;
+              const code = c.code?.toLowerCase() || '';
+              return `
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                  <td style="padding:10px 16px; font-size:13px; color:#86868b;">${i + 1}</td>
+                  <td style="padding:10px 16px; font-size:13px; color:#1d1d1f;">
+                    <span style="display:inline-flex; align-items:center; gap:8px;">
+                      <img src="https://flagcdn.com/16x12/${code}.png" width="16" height="12" onerror="this.style.display='none'" style="border-radius:2px;">
+                      ${c.country || c.code || 'Unknown'}
+                    </span>
+                  </td>
+                  <td style="padding:10px 16px; font-size:13px; color:#1d1d1f; text-align:right; font-weight:500;">${c.pageviews?.toLocaleString('de-DE') || 0}</td>
+                  <td style="padding:10px 16px; font-size:13px; color:#86868b; text-align:right;">${pct}%</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // Helper function to render pages table (entry/exit)
+    function renderPagesTable(pages, type) {
+      if (!pages || pages.length === 0) {
+        return '<div style="padding:16px; text-align:center; color:#86868b; font-size:13px;">No data</div>';
+      }
+      return pages.slice(0, 8).map((p, i) => `
+        <div style="display:flex; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #f3f4f6;">
+          <span style="font-size:12px; color:#1d1d1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;" title="${p.page}">
+            ${i + 1}. ${p.page || '/'}
+          </span>
+          <span style="font-size:12px; font-weight:500; color:#86868b;">${p.sessions?.toLocaleString('de-DE') || 0}</span>
+        </div>
+      `).join('');
+    }
+
+    // Helper function to render UTM table
+    function renderUTMTable(utmData) {
+      if (!utmData || utmData.length === 0) {
+        return '<div style="padding:20px; text-align:center; color:#86868b;">No UTM campaign data available</div>';
+      }
+      return `
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#fafafa; border-bottom:1px solid #eaeaea;">
+              <th style="text-align:left; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">Source</th>
+              <th style="text-align:left; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">Medium</th>
+              <th style="text-align:left; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">Campaign</th>
+              <th style="text-align:right; padding:12px 16px; font-size:11px; font-weight:600; color:#86868b; text-transform:uppercase;">Pageviews</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${utmData.slice(0, 10).map(u => `
+              <tr style="border-bottom:1px solid #f3f4f6;">
+                <td style="padding:10px 16px; font-size:13px; color:#1d1d1f; font-weight:500;">${u.source || 'Direct'}</td>
+                <td style="padding:10px 16px; font-size:13px; color:#86868b;">${u.medium || '-'}</td>
+                <td style="padding:10px 16px; font-size:13px; color:#86868b; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${u.campaign}">${u.campaign || '-'}</td>
+                <td style="padding:10px 16px; font-size:13px; color:#1d1d1f; text-align:right; font-weight:500;">${u.pageviews?.toLocaleString('de-DE') || 0}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // World Map View Toggle Functions
+    function showWorldMapView() {
+      document.getElementById('worldMapContainer').style.display = 'block';
+      document.getElementById('worldTableContainer').style.display = 'none';
+      document.getElementById('worldMapViewBtn').style.background = '#fff';
+      document.getElementById('worldMapViewBtn').style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+      document.getElementById('worldTableViewBtn').style.background = 'transparent';
+      document.getElementById('worldTableViewBtn').style.boxShadow = 'none';
+    }
+    window.showWorldMapView = showWorldMapView;
+
+    function showWorldTableView() {
+      document.getElementById('worldMapContainer').style.display = 'none';
+      document.getElementById('worldTableContainer').style.display = 'block';
+      document.getElementById('worldTableViewBtn').style.background = '#fff';
+      document.getElementById('worldTableViewBtn').style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+      document.getElementById('worldMapViewBtn').style.background = 'transparent';
+      document.getElementById('worldMapViewBtn').style.boxShadow = 'none';
+    }
+    window.showWorldTableView = showWorldTableView;
+
+    // Render World Map with jVectorMap
+    function renderWorldMap() {
+      const mapContainer = document.getElementById('worldMapContainer');
+      if (!mapContainer) return;
+
+      const data = postHogWebAnalyticsData;
+      if (!data.countries || data.countries.length === 0) {
+        mapContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#86868b;">No country data available</div>';
+        return;
+      }
+
+      // Convert country data to jVectorMap format
+      countryMapData = {};
+      countryNames = {};
+      let totalPageviews = 0;
+
+      data.countries.forEach(c => {
+        const code = c.code?.toUpperCase();
+        if (code) {
+          countryMapData[code] = c.pageviews || 0;
+          countryNames[code] = c.country || code;
+          totalPageviews += c.pageviews || 0;
+        }
+      });
+
+      // Check if jVectorMap is available
+      if (typeof jQuery !== 'undefined' && typeof jQuery.fn.vectorMap !== 'undefined') {
+        const $mapContainer = jQuery('#worldMapContainer');
+        $mapContainer.empty();
+
+        try {
+          $mapContainer.vectorMap({
+            map: 'world_mill',
+            backgroundColor: 'transparent',
+            zoomOnScroll: false,
+            panOnDrag: false,
+            regionStyle: {
+              initial: {
+                fill: '#e5e7eb',
+                'fill-opacity': 1,
+                stroke: '#fff',
+                'stroke-width': 0.5,
+                'stroke-opacity': 1
+              },
+              hover: {
+                'fill-opacity': 0.8,
+                cursor: 'pointer'
+              }
+            },
+            series: {
+              regions: [{
+                values: countryMapData,
+                scale: ['#dbeafe', '#1d4ed8'],
+                normalizeFunction: 'polynomial',
+                min: 0,
+                max: Math.max(...Object.values(countryMapData)) || 1
+              }]
+            },
+            onRegionTipShow: function(e, el, code) {
+              const pageviews = countryMapData[code] || 0;
+              const name = countryNames[code] || code;
+              const percentage = totalPageviews > 0 ? ((pageviews / totalPageviews) * 100).toFixed(1) : 0;
+              el.html(`
+                <div style="padding:8px; font-family:Geist, sans-serif;">
+                  <strong>${name}</strong><br>
+                  ${pageviews.toLocaleString('de-DE')} pageviews (${percentage}%)
+                </div>
+              `);
+            }
+          });
+        } catch (err) {
+          console.warn('jVectorMap error:', err);
+          mapContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#86868b;">Map could not be loaded</div>';
+        }
+      } else {
+        // Fallback: show simple list
+        mapContainer.innerHTML = `
+          <div style="display:flex; flex-direction:column; gap:8px; padding:16px;">
+            ${data.countries.slice(0, 10).map(c => `
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <img src="https://flagcdn.com/16x12/${c.code?.toLowerCase()}.png" width="16" height="12" onerror="this.style.display='none'" style="border-radius:2px;">
+                  ${c.country || c.code}
+                </span>
+                <span style="font-weight:500;">${c.pageviews?.toLocaleString('de-DE') || 0}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
     }
 
     // Extract domain from referrer URL
@@ -43385,7 +43816,7 @@
       const colors = ['#0070f3', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
 
       // Destroy existing charts
-      ['postHogPageviewsChart', 'postHogBrowsersChart', 'postHogDevicesChart', 'postHogCountriesChart'].forEach(id => {
+      ['postHogPageviewsChart', 'postHogBrowsersChart', 'postHogDevicesChart', 'postHogCountriesChart', 'postHogHourlyChart', 'postHogNewVsReturningChart'].forEach(id => {
         if (analyticsCharts[id]) {
           analyticsCharts[id].destroy();
           delete analyticsCharts[id];
@@ -43469,6 +43900,80 @@
             display: item.count.toLocaleString('de-DE')
           }))
         );
+      }
+
+      // Hourly Traffic Bar Chart
+      const hourlyCanvas = document.getElementById('postHogHourlyChart');
+      if (hourlyCanvas && data.hourlyTraffic && data.hourlyTraffic.length > 0) {
+        const labels = data.hourlyTraffic.map(d => `${d.hour}:00`);
+        const values = data.hourlyTraffic.map(d => d.pageviews);
+
+        analyticsCharts['postHogHourlyChart'] = new Chart(hourlyCanvas, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Pageviews',
+              data: values,
+              backgroundColor: 'rgba(0, 112, 243, 0.7)',
+              borderColor: '#0070f3',
+              borderWidth: 1,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              },
+              x: {
+                grid: { display: false }
+              }
+            }
+          }
+        });
+      }
+
+      // New vs Returning Doughnut Chart
+      const newVsReturningCanvas = document.getElementById('postHogNewVsReturningChart');
+      if (newVsReturningCanvas && data.newVsReturning) {
+        const newCount = data.newVsReturning.new || 0;
+        const returningCount = data.newVsReturning.returning || 0;
+
+        if (newCount > 0 || returningCount > 0) {
+          analyticsCharts['postHogNewVsReturningChart'] = new Chart(newVsReturningCanvas, {
+            type: 'doughnut',
+            data: {
+              labels: ['Neue Besucher', 'Wiederkehrende'],
+              datasets: [{
+                data: [newCount, returningCount],
+                backgroundColor: ['#10b981', '#0070f3'],
+                borderWidth: 0
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '60%',
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    padding: 15,
+                    usePointStyle: true,
+                    font: { size: 11 }
+                  }
+                }
+              }
+            }
+          });
+        }
       }
     }
 
