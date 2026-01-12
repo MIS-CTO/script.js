@@ -43851,9 +43851,30 @@
 
       if (jQueryAvailable && vectorMapAvailable) {
         const $mapContainer = jQuery('#worldMapContainer');
+
+        // Check container dimensions
+        const containerWidth = $mapContainer.width();
+        const containerHeight = $mapContainer.height();
+        console.log('🗺️ Container dimensions:', containerWidth, 'x', containerHeight);
+
+        if (containerWidth === 0 || containerHeight === 0) {
+          console.warn('🗺️ Container has zero dimensions, waiting for layout...');
+          // Retry after a short delay to allow CSS to apply
+          setTimeout(() => renderWorldMap(), 200);
+          return;
+        }
+
         $mapContainer.empty();
 
         try {
+          // Check if world_en map is registered
+          const mapRegistered = jQuery.fn.vectorMap.maps && jQuery.fn.vectorMap.maps['world_en'];
+          console.log('🗺️ world_en map registered:', !!mapRegistered);
+
+          if (!mapRegistered) {
+            throw new Error('Map "world_en" is not registered. The map data file may not have loaded correctly.');
+          }
+
           $mapContainer.vectorMap({
             map: 'world_en',
             backgroundColor: 'transparent',
@@ -43877,8 +43898,22 @@
           });
           console.log('✅ World map rendered successfully');
         } catch (err) {
-          console.error('❌ jQVMap error:', err);
-          mapContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#86868b;">Map could not be loaded</div>';
+          console.error('❌ jQVMap error:', err.message || err);
+          console.error('❌ jQVMap stack:', err.stack || 'No stack trace');
+          // Show fallback list instead of error message
+          mapContainer.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:8px; padding:16px;">
+              ${data.countries.slice(0, 10).map(c => `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="display:flex; align-items:center; gap:8px;">
+                    <img src="https://flagcdn.com/16x12/${c.code?.toLowerCase()}.png" width="16" height="12" onerror="this.style.display='none'" style="border-radius:2px;">
+                    ${c.country || c.code}
+                  </span>
+                  <span style="font-weight:500;">${(c.pageviews || 0).toLocaleString('de-DE')}</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
         }
       } else {
         console.log('🗺️ jQVMap not available, showing fallback list');
