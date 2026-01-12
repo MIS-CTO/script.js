@@ -2,9 +2,52 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- ============================================ -->
+  <!-- PWA CONFIGURATION - iPad Standalone Mode    -->
+  <!-- ============================================ -->
+
+  <!-- PWA: Standalone Mode (keine Browser-UI) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MIS Agreement">
+
+  <!-- Android/Chrome Standalone -->
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Theme Color für Status Bar -->
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- Viewport: Kein Zoom, kein Scroll-Bounce -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+  <!-- App Icons für Homescreen -->
+  <link rel="apple-touch-icon" href="icons/agreement-icon-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/agreement-icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/agreement-icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/agreement-icon-180.png">
+
+  <!-- Splash Screens für iPad -->
+  <!-- iPad Pro 12.9" -->
+  <link rel="apple-touch-startup-image"
+        href="splash/splash-2048x2732.png"
+        media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)">
+  <!-- iPad Pro 11" -->
+  <link rel="apple-touch-startup-image"
+        href="splash/splash-1668x2388.png"
+        media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)">
+  <!-- iPad Pro 10.5" -->
+  <link rel="apple-touch-startup-image"
+        href="splash/splash-1668x2224.png"
+        media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)">
+  <!-- iPad Mini, Air -->
+  <link rel="apple-touch-startup-image"
+        href="splash/splash-1536x2048.png"
+        media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)">
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest-agreement.json">
+
   <title>MOMMY I'M SORRY - Agreement</title>
 
   <!-- Typography -->
@@ -13,6 +56,58 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 
   <style>
+    /* ============================================ */
+    /* KIOSK MODE / PWA STYLES                     */
+    /* ============================================ */
+
+    /* Verhindert Pull-to-Refresh und Overscroll */
+    html, body {
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Verhindert Text-Selektion (Kiosk-Sicherheit) */
+    * {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* Inputs und Textareas erlauben Selektion */
+    input,
+    textarea,
+    [contenteditable="true"] {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
+
+    /* Verhindert Zoom bei Input-Focus auf iOS */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+
+    /* Extra padding wenn als PWA (für Status Bar) */
+    .pwa-standalone .app-container {
+      padding-top: calc(20px + env(safe-area-inset-top));
+    }
+
+    /* ============================================ */
+    /* END KIOSK MODE                              */
+    /* ============================================ */
+
     * {
       margin: 0;
       padding: 0;
@@ -1278,6 +1373,45 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
+    // ============================================
+    // PWA STANDALONE DETECTION
+    // ============================================
+
+    // Check if running as installed PWA
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone
+      || document.referrer.includes('android-app://');
+
+    // Add class to body for conditional styling
+    document.addEventListener('DOMContentLoaded', () => {
+      if (isStandalone) {
+        document.body.classList.add('pwa-standalone');
+        console.log('✅ Running as PWA Standalone');
+      } else {
+        document.body.classList.add('pwa-browser');
+        console.log('ℹ️ Running in Browser');
+      }
+    });
+
+    // Prevent accidental navigation away (only in standalone)
+    if (isStandalone) {
+      window.addEventListener('beforeunload', (e) => {
+        e.preventDefault();
+        e.returnValue = '';
+      });
+    }
+
+    // Register Service Worker (optional - for offline support)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw-agreement.js')
+        .then(reg => console.log('✅ Service Worker registered'))
+        .catch(err => console.log('ℹ️ Service Worker not available'));
+    }
+
+    // ============================================
+    // END PWA DETECTION
+    // ============================================
+
     // Supabase Configuration
     const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";

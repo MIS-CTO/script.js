@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MIS Icon Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 40px;
+      min-height: 100vh;
+    }
+    h1 { margin-bottom: 20px; }
+    .info { color: #888; margin-bottom: 30px; }
+    .icons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .icon-item {
+      background: #222;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .icon-item canvas {
+      border-radius: 16px;
+      margin-bottom: 10px;
+      max-width: 100%;
+    }
+    .icon-item .size { color: #888; font-size: 14px; margin-bottom: 10px; }
+    .icon-item button {
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .icon-item button:hover { background: #444; }
+    .download-all {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+    .download-all:hover { background: #1d4ed8; }
+    h2 { margin: 30px 0 20px; }
+    .splash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .splash-item {
+      background: #222;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .splash-item canvas {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>MIS Agreement Icon Generator</h1>
+  <p class="info">Klicke auf die einzelnen Buttons oder "Alle herunterladen" um die Icons zu speichern.</p>
+
+  <button class="download-all" onclick="downloadAll()">Alle Icons herunterladen</button>
+
+  <h2>App Icons</h2>
+  <div class="icons-grid" id="iconsGrid"></div>
+
+  <h2>Splash Screens</h2>
+  <div class="splash-grid" id="splashGrid"></div>
+
+  <script>
+    const ICON_SIZES = [72, 96, 128, 144, 152, 167, 180, 192, 512];
+    const SPLASH_SCREENS = [
+      { name: 'iPad Pro 12.9"', width: 2048, height: 2732 },
+      { name: 'iPad Pro 11"', width: 1668, height: 2388 },
+      { name: 'iPad 10.5"', width: 1668, height: 2224 },
+      { name: 'iPad Mini/Air', width: 1536, height: 2048 },
+      { name: 'iPad Landscape 12.9"', width: 2732, height: 2048 },
+      { name: 'iPad Landscape 11"', width: 2388, height: 1668 }
+    ];
+
+    function drawIcon(ctx, size) {
+      const scale = size / 512;
+
+      // Background gradient
+      const bgGradient = ctx.createLinearGradient(0, 0, size, size);
+      bgGradient.addColorStop(0, '#1a1a1a');
+      bgGradient.addColorStop(1, '#0a0a0a');
+
+      // Rounded rect background
+      const radius = 80 * scale;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+      ctx.fillStyle = bgGradient;
+      ctx.fill();
+
+      // Border
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2 * scale;
+      const borderRadius = 65 * scale;
+      const borderOffset = 20 * scale;
+      ctx.beginPath();
+      ctx.moveTo(borderOffset + borderRadius, borderOffset);
+      ctx.lineTo(size - borderOffset - borderRadius, borderOffset);
+      ctx.quadraticCurveTo(size - borderOffset, borderOffset, size - borderOffset, borderOffset + borderRadius);
+      ctx.lineTo(size - borderOffset, size - borderOffset - borderRadius);
+      ctx.quadraticCurveTo(size - borderOffset, size - borderOffset, size - borderOffset - borderRadius, size - borderOffset);
+      ctx.lineTo(borderOffset + borderRadius, size - borderOffset);
+      ctx.quadraticCurveTo(borderOffset, size - borderOffset, borderOffset, size - borderOffset - borderRadius);
+      ctx.lineTo(borderOffset, borderOffset + borderRadius);
+      ctx.quadraticCurveTo(borderOffset, borderOffset, borderOffset + borderRadius, borderOffset);
+      ctx.closePath();
+      ctx.stroke();
+
+      // MIS Text
+      const fontSize = 160 * scale;
+      ctx.font = `bold ${fontSize}px Georgia, "Times New Roman", serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('MIS', size / 2, size * 0.52);
+
+      // Only show subtitle on larger icons
+      if (size >= 128) {
+        const subtitleSize = 36 * scale;
+        ctx.font = `${subtitleSize}px Arial, sans-serif`;
+        ctx.fillStyle = '#666666';
+        ctx.letterSpacing = `${8 * scale}px`;
+        ctx.fillText('AGREEMENT', size / 2, size * 0.7);
+
+        // Decorative line
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 2 * scale;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.23, size * 0.76);
+        ctx.lineTo(size * 0.77, size * 0.76);
+        ctx.stroke();
+      }
+    }
+
+    function drawSplash(ctx, width, height) {
+      // Background
+      const bgGradient = ctx.createLinearGradient(0, 0, width, height);
+      bgGradient.addColorStop(0, '#0a0a0a');
+      bgGradient.addColorStop(1, '#1a1a1a');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Center icon
+      const iconSize = Math.min(width, height) * 0.3;
+      ctx.save();
+      ctx.translate((width - iconSize) / 2, (height - iconSize) / 2);
+
+      // Draw scaled icon
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = iconSize;
+      tempCanvas.height = iconSize;
+      const tempCtx = tempCanvas.getContext('2d');
+      drawIcon(tempCtx, iconSize);
+      ctx.drawImage(tempCanvas, 0, 0);
+
+      ctx.restore();
+
+      // Studio name at bottom
+      const fontSize = Math.min(width, height) * 0.03;
+      ctx.font = `${fontSize}px Arial, sans-serif`;
+      ctx.fillStyle = '#444';
+      ctx.textAlign = 'center';
+      ctx.fillText('Mommy I\'m Sorry Tattoo Studios', width / 2, height * 0.85);
+    }
+
+    function createIconElement(size) {
+      const div = document.createElement('div');
+      div.className = 'icon-item';
+
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      canvas.style.width = Math.min(size, 150) + 'px';
+      canvas.style.height = Math.min(size, 150) + 'px';
+
+      const ctx = canvas.getContext('2d');
+      drawIcon(ctx, size);
+
+      const sizeLabel = document.createElement('div');
+      sizeLabel.className = 'size';
+      sizeLabel.textContent = `${size}x${size}px`;
+
+      const button = document.createElement('button');
+      button.textContent = 'Download';
+      button.onclick = () => downloadCanvas(canvas, `agreement-icon-${size}.png`);
+
+      div.appendChild(canvas);
+      div.appendChild(sizeLabel);
+      div.appendChild(button);
+
+      return div;
+    }
+
+    function createSplashElement(splash) {
+      const div = document.createElement('div');
+      div.className = 'splash-item';
+
+      const canvas = document.createElement('canvas');
+      canvas.width = splash.width;
+      canvas.height = splash.height;
+      canvas.style.width = '100%';
+
+      const ctx = canvas.getContext('2d');
+      drawSplash(ctx, splash.width, splash.height);
+
+      const label = document.createElement('div');
+      label.className = 'size';
+      label.textContent = `${splash.name} (${splash.width}x${splash.height})`;
+
+      const button = document.createElement('button');
+      button.textContent = 'Download';
+      const filename = `splash-${splash.width}x${splash.height}.png`;
+      button.onclick = () => downloadCanvas(canvas, filename);
+
+      div.appendChild(canvas);
+      div.appendChild(label);
+      div.appendChild(button);
+
+      return div;
+    }
+
+    function downloadCanvas(canvas, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadAll() {
+      // Download all icons
+      ICON_SIZES.forEach((size, index) => {
+        setTimeout(() => {
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          drawIcon(ctx, size);
+          downloadCanvas(canvas, `agreement-icon-${size}.png`);
+        }, index * 200);
+      });
+
+      // Download splash screens after icons
+      SPLASH_SCREENS.forEach((splash, index) => {
+        setTimeout(() => {
+          const canvas = document.createElement('canvas');
+          canvas.width = splash.width;
+          canvas.height = splash.height;
+          const ctx = canvas.getContext('2d');
+          drawSplash(ctx, splash.width, splash.height);
+          const filename = `splash-${splash.width}x${splash.height}.png`;
+          downloadCanvas(canvas, filename);
+        }, (ICON_SIZES.length + index) * 200);
+      });
+
+      alert(`Es werden ${ICON_SIZES.length} Icons und ${SPLASH_SCREENS.length} Splash Screens heruntergeladen...`);
+    }
+
+    // Initialize
+    const iconsGrid = document.getElementById('iconsGrid');
+    ICON_SIZES.forEach(size => {
+      iconsGrid.appendChild(createIconElement(size));
+    });
+
+    const splashGrid = document.getElementById('splashGrid');
+    SPLASH_SCREENS.forEach(splash => {
+      splashGrid.appendChild(createSplashElement(splash));
+    });
+  </script>
+</body>
+</html>
