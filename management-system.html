@@ -21504,6 +21504,10 @@
     const EMAIL_FROM = 'onboarding@resend.dev'; // Testing email - no domain verification needed
     const EMAIL_REPLY_TO = 'info@mommyimsorry.com';
 
+    // Admin Email Configuration (for new request notifications)
+    const ADMIN_EMAIL_FROM = "Mommy I'm Sorry <noreply@mommyimsorry.com>";
+    const ADMIN_EMAIL_RECIPIENTS = ['info@mommyimsorry.com', 'workspacemis0@gmail.com']; // Test: beide, Prod: nur info@
+
     // Business Information (used in email template)
     const BUSINESS_INFO = {
       name: 'Mommy I\'m Sorry Verwaltung GmbH',
@@ -30216,6 +30220,11 @@
 
             if (newRequestWithRelations) {
               addRequestToCache(newRequestWithRelations);
+
+              // Send admin notification email (async, non-blocking)
+              sendNewRequestAdminEmail(newRequestWithRelations, newRequestWithRelations.customer).catch(err => {
+                console.error('Failed to send admin notification:', err);
+              });
             }
           }
 
@@ -51761,6 +51770,281 @@
           };
         }
       }
+
+      // ============================================
+      // ADMIN EMAIL NOTIFICATION FOR NEW REQUESTS
+      // ============================================
+
+      // Rang-Farben fuer E-Mail Badge
+      const rankEmailColors = {
+        'Neukunde': { bg: '#1e3a5f', text: '#ffffff' },
+        'Bronze': { bg: '#CD7F32', text: '#ffffff' },
+        'Silver': { bg: '#A8A9AD', text: '#ffffff' },
+        'Gold': { bg: '#FFD700', text: '#1a1a1a' },
+        'Platinum': { bg: '#7C6FB5', text: '#ffffff' },
+        'VIP': { bg: '#1a1a1a', text: '#ffffff' },
+        'Fam': { bg: '#1e3a5f', text: '#ffffff' }
+      };
+
+      /**
+       * Send Admin Notification Email for New Booking Requests
+       * Aesop-style design (minimalist, elegant, whitespace)
+       */
+      async function sendNewRequestAdminEmail(request, customer) {
+        try {
+          console.log('📧 Preparing admin notification email for new request...');
+
+          // Rang-Farben
+          const rankColors = rankEmailColors[customer?.rank] || { bg: '#f7f6f5', text: '#1a1a1a' };
+
+          // Bilder als Array
+          let images = [];
+          if (request.images) {
+            if (typeof request.images === 'string') {
+              try { images = JSON.parse(request.images); } catch { images = [request.images]; }
+            } else if (Array.isArray(request.images)) {
+              images = request.images;
+            }
+          }
+
+          // Bilder-HTML generieren (max 5)
+          const imagesHtml = images.slice(0, 5).map(img => `
+            <td width="120" style="padding: 0 8px 8px 0;">
+              <a href="${img}" target="_blank" style="display: block;">
+                <img src="${img}" alt="Reference" style="
+                  width: 100px;
+                  height: 100px;
+                  object-fit: cover;
+                  border-radius: 2px;
+                  border: 1px solid #e5e5e5;
+                ">
+              </a>
+            </td>
+          `).join('');
+
+          // Timestamp
+          const timestamp = new Date().toLocaleString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          // Location Name
+          const locationName = request.location?.name || request.location_name || "Mommy I'm Sorry";
+
+          // Customer data
+          const customerFirstName = customer?.first_name || request.first_name || '';
+          const customerLastName = customer?.last_name || request.last_name || '';
+          const customerEmail = customer?.email || request.email || '–';
+          const customerPhone = customer?.phone || request.customer_phone || '–';
+          const customerInstagram = customer?.instagram || request.instagram || '';
+          const customerRank = customer?.rank || 'Neukunde';
+
+          // E-Mail HTML (Aesop-Style)
+          const emailHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neue Anfrage eingegangen</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f7f6f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;line-height:1.6;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7f6f5;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;max-width:600px;width:100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding:48px 48px 32px 48px;text-align:center;">
+              <p style="margin:0 0 8px 0;font-size:12px;color:#666666;text-transform:uppercase;letter-spacing:1px;">Neue Anfrage eingegangen</p>
+              <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:400;color:#1a1a1a;">Booking Request</h1>
+            </td>
+          </tr>
+
+          <tr><td style="padding:0 48px;"><hr style="border:none;border-top:1px solid #e5e5e5;margin:0;"></td></tr>
+
+          <!-- Customer Section -->
+          <tr>
+            <td style="padding:32px 48px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 4px 0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:1px;">Kunde</p>
+                    <h2 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:400;color:#1a1a1a;">${customerFirstName} ${customerLastName}</h2>
+                  </td>
+                  <td align="right" valign="top">
+                    <span style="display:inline-block;padding:6px 16px;background-color:${rankColors.bg};color:${rankColors.text};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;border-radius:2px;">${customerRank}</span>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+                <tr>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">E-Mail</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${customerEmail}</p>
+                  </td>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Telefon</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${customerPhone}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Instagram</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${customerInstagram ? '@' + customerInstagram.replace('@', '') : '–'}</p>
+                  </td>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Location</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${locationName}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr><td style="padding:0 48px;"><hr style="border:none;border-top:1px solid #e5e5e5;margin:0;"></td></tr>
+
+          <!-- Request Details Section -->
+          <tr>
+            <td style="padding:32px 48px;">
+              <p style="margin:0 0 4px 0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:1px;">Anfrage Details</p>
+              <h2 style="margin:0 0 24px 0;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:400;color:#1a1a1a;">Request #${(request.id || '').toString().slice(0, 8).toUpperCase()}</h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Placement</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${request.placement || '–'}</p>
+                  </td>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Size</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${request.size || '–'}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Style</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${request.style || '–'}</p>
+                  </td>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Colorway</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${request.colorway || '–'}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Booking Type</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${request.booking_type || '–'}</p>
+                  </td>
+                  <td width="50%" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Origin</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${request.origin || 'booking_form'}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding:8px 0;vertical-align:top;">
+                    <p style="margin:0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;">Artist Praeferenz</p>
+                    <p style="margin:4px 0 0 0;font-size:14px;color:#1a1a1a;">${request.artist_preference || request.preferred_artist || request.artist?.name || '–'}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${request.description ? `
+          <!-- Description -->
+          <tr>
+            <td style="padding:0 48px 32px 48px;">
+              <div style="background-color:#f7f6f5;padding:24px;border-radius:2px;">
+                <p style="margin:0 0 8px 0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:1px;">Beschreibung</p>
+                <p style="margin:0;font-size:14px;color:#1a1a1a;white-space:pre-wrap;">${request.description}</p>
+              </div>
+            </td>
+          </tr>
+          ` : ''}
+
+          ${images.length > 0 ? `
+          <!-- Reference Images -->
+          <tr>
+            <td style="padding:0 48px 32px 48px;">
+              <p style="margin:0 0 16px 0;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:1px;">Referenzbilder (${images.length})</p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>${imagesHtml}</tr>
+              </table>
+            </td>
+          </tr>
+          ` : ''}
+
+          <tr><td style="padding:0 48px;"><hr style="border:none;border-top:1px solid #e5e5e5;margin:0;"></td></tr>
+
+          <!-- CTA -->
+          <tr>
+            <td style="padding:32px 48px;text-align:center;">
+              <a href="https://mis-cto.github.io/script.js/management-system.html#requests" style="display:inline-block;padding:14px 32px;background-color:#1a1a1a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.5px;border-radius:2px;">Im System ansehen</a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:32px 48px;background-color:#1a1a1a;text-align:center;">
+              <p style="margin:0 0 8px 0;font-family:Georgia,'Times New Roman',serif;font-size:16px;color:#ffffff;">Mommy I'm Sorry</p>
+              <p style="margin:0;font-size:12px;color:#999999;">Stuttgart, Germany</p>
+              <p style="margin:16px 0 0 0;font-size:11px;color:#666666;">${timestamp}</p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+          `;
+
+          console.log('📧 Admin Email HTML generated (', emailHTML.length, 'characters)');
+
+          // Resend API Call
+          const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              from: ADMIN_EMAIL_FROM,
+              to: ADMIN_EMAIL_RECIPIENTS,
+              subject: `Neue Anfrage: ${customerFirstName} ${customerLastName} - ${request.placement || 'Tattoo'}`,
+              html: emailHTML
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ Resend API Error:', errorData);
+            throw new Error(`Resend API Error: ${errorData.message || response.statusText}`);
+          }
+
+          const data = await response.json();
+          console.log('✅ Admin email sent for new request:', data.id);
+          return { success: true, messageId: data.id };
+
+        } catch (error) {
+          console.error('❌ Error sending admin email:', error);
+          return { success: false, error: error.message };
+        }
+      }
+
+      // Make function available globally
+      window.sendNewRequestAdminEmail = sendNewRequestAdminEmail;
 
       /**
        * Log Payment Action to payment_logs table
