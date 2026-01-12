@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>MOMMY I'M SORRY - Agreement</title>
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      /* Dark Mode Editorial Palette */
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-elevated: #1a1a1a;
+      --bg-card: #1f1f1f;
+
+      --text-primary: #f5f5f5;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+
+      --border-subtle: #2a2a2a;
+      --border-default: #333333;
+      --border-strong: #444444;
+
+      --accent: #b8b8b8;
+      --accent-soft: rgba(184, 184, 184, 0.15);
+      --success: #4ade80;
+      --error: #f87171;
+
+      /* Typography */
+      --font-display: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+
+      /* Spacing */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+
+      /* Transitions */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    /* Subtle noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.02;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Container */
+    .app-container {
+      max-width: 720px;
+      margin: 0 auto;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-2xl) var(--space-xl);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Logo - Hidden */
+    .logo-container {
+      display: none;
+    }
+
+    .logo svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: var(--space-md);
+      opacity: 0.9;
+    }
+
+    .logo svg line {
+      stroke: var(--text-primary);
+    }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* Language Toggle */
+    .language-toggle {
+      position: absolute;
+      top: var(--space-xl);
+      right: var(--space-xl);
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .lang-btn {
+      width: 32px;
+      height: 24px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s var(--ease-out);
+      overflow: hidden;
+      opacity: 0.5;
+    }
+
+    .lang-btn:hover {
+      opacity: 0.8;
+    }
+
+    .lang-btn.active {
+      opacity: 1;
+    }
+
+    .lang-btn .flag-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lang-btn .flag-icon svg {
+      width: 24px;
+      height: 18px;
+      border-radius: 2px;
+    }
+
+    /* Screens */
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      animation: screenEnter 0.5s var(--ease-out);
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes screenEnter {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(-20px); }
+    }
+
+    /* Start Screen */
+    .start-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .start-question {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 300;
+      margin-bottom: var(--space-3xl);
+      line-height: 1.35;
+      color: var(--text-primary);
+      max-width: 500px;
+    }
+
+    .choice-buttons {
+      display: flex;
+      gap: var(--space-lg);
+    }
+
+    .choice-btn {
+      width: 220px;
+      padding: var(--space-xl) var(--space-lg);
+      border: none;
+      border-radius: 16px;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.4s var(--ease-out);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .choice-btn::before {
+      display: none;
+    }
+
+    .choice-btn:hover {
+      transform: translateY(-6px);
+    }
+
+    .choice-btn:hover .choice-btn-icon {
+      border-color: var(--accent);
+    }
+
+    .choice-btn:active {
+      transform: translateY(-2px);
+    }
+
+    .choice-btn-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto var(--space-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border-default);
+      border-radius: 14px;
+      position: relative;
+      z-index: 1;
+      transition: border-color 0.3s var(--ease-out);
+    }
+
+    .choice-btn-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .choice-btn-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+      color: var(--text-primary);
+      position: relative;
+      z-index: 1;
+    }
+
+    .choice-btn-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Search Screen - REMOVED FOR GDPR COMPLIANCE */
+
+    /* Form Screen */
+    .form-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-2xl);
+      padding: var(--space-md) 0;
+    }
+
+    .progress-step {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-subtle);
+      transition: all 0.4s var(--ease-out);
+      position: relative;
+    }
+
+    .progress-step.active {
+      background: var(--accent);
+      transform: scale(1.4);
+      box-shadow: 0 0 12px var(--accent-soft);
+    }
+
+    .progress-step.completed {
+      background: var(--accent);
+    }
+
+    .progress-line {
+      width: 36px;
+      height: 1px;
+      background: var(--border-subtle);
+      transition: all 0.4s var(--ease-out);
+    }
+
+    .progress-line.completed {
+      background: var(--accent);
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: var(--space-md);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Form Steps */
+    .form-step {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      animation: fadeIn 0.5s var(--ease-out);
+    }
+
+    .form-step.active {
+      display: flex;
+    }
+
+    .step-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 300;
+      margin-bottom: var(--space-xl);
+      color: var(--text-primary);
+    }
+
+    .form-group {
+      margin-bottom: var(--space-lg);
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .form-label .required {
+      color: var(--error);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: var(--space-md) var(--space-lg);
+      font-family: var(--font-body);
+      font-size: 16px;
+      border: 1px solid var(--border-default);
+      border-radius: 0;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      transition: all 0.3s var(--ease-out);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .form-input.error {
+      border-color: var(--error);
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.5;
+    }
+
+    /* Date input styling for dark mode */
+    input[type="date"].form-input {
+      color-scheme: dark;
+    }
+
+    input[type="date"].form-input::-webkit-calendar-picker-indicator {
+      filter: invert(0.8);
+      cursor: pointer;
+    }
+
+    /* Checkbox */
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-md);
+      padding: var(--space-lg);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0;
+      margin-bottom: var(--space-md);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-out);
+      background: var(--bg-secondary);
+    }
+
+    .checkbox-group:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-card);
+    }
+
+    .checkbox-group.checked {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .checkbox-custom {
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--border-strong);
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.3s var(--ease-out);
+      background: var(--bg-card);
+    }
+
+    .checkbox-custom svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--bg-primary);
+      stroke-width: 3;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.25s var(--ease-out);
+    }
+
+    .checkbox-group.checked .checkbox-custom {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .checkbox-group.checked .checkbox-custom svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .checkbox-label {
+      flex: 1;
+    }
+
+    .checkbox-label-title {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+      color: var(--text-primary);
+    }
+
+    .checkbox-label-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      display: none;
+    }
+
+    /* Instagram Handle Input (conditional) */
+    .conditional-input {
+      margin-left: 38px;
+      margin-top: var(--space-sm);
+      padding: var(--space-md);
+      background: var(--bg-elevated);
+      border-radius: 0;
+      display: none;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .conditional-input.visible {
+      display: block;
+      animation: fadeIn 0.3s var(--ease-out);
+    }
+
+    .instagram-input {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .instagram-input span {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .instagram-input input {
+      flex: 1;
+      padding: var(--space-sm) var(--space-md);
+      font-family: var(--font-body);
+      font-size: 15px;
+      border: 1px solid var(--border-default);
+      border-radius: 0;
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .instagram-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Signature Canvas */
+    .signature-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .signature-info {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: var(--space-md);
+      text-align: center;
+    }
+
+    .signature-canvas-wrapper {
+      flex: 1;
+      min-height: 250px;
+      border: 1px solid var(--border-default);
+      border-radius: 0;
+      position: relative;
+      background: #fafafa;
+      overflow: hidden;
+    }
+
+    .signature-canvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .signature-placeholder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--text-muted);
+      font-size: 15px;
+      pointer-events: none;
+      transition: opacity 0.3s var(--ease-out);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .signature-placeholder svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--text-muted);
+      stroke-width: 1.5;
+      fill: none;
+      opacity: 0.5;
+    }
+
+    .signature-canvas-wrapper.has-signature .signature-placeholder {
+      opacity: 0;
+    }
+
+    .clear-signature-btn {
+      margin-top: var(--space-md);
+      padding: var(--space-sm) var(--space-lg);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--border-default);
+      border-radius: 0;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      align-self: flex-start;
+      transition: all 0.3s var(--ease-out);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .clear-signature-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .clear-signature-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    /* Confirmation Summary */
+    .confirmation-summary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0;
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
+
+    .summary-section {
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .summary-section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .summary-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: var(--space-md);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: var(--space-sm);
+    }
+
+    .summary-label {
+      color: var(--text-muted);
+    }
+
+    .summary-value {
+      font-weight: 500;
+      text-align: right;
+      color: var(--text-primary);
+    }
+
+    .summary-value.success {
+      color: var(--success);
+    }
+
+    .summary-value.error {
+      color: var(--error);
+    }
+
+    .summary-signature {
+      max-width: 180px;
+      max-height: 70px;
+      border: 1px solid var(--border-default);
+      border-radius: 0;
+      background: #fff;
+    }
+
+    /* Navigation Buttons */
+    .form-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-md);
+      margin-top: auto;
+      padding-top: var(--space-xl);
+    }
+
+    .btn {
+      padding: var(--space-md) var(--space-xl);
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 0;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-out);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-default);
+    }
+
+    .btn-secondary svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-primary);
+      flex: 1;
+    }
+
+    .btn-primary svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(184, 184, 184, 0.3);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    /* Success Screen */
+    .success-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .success-checkmark {
+      width: 100px;
+      height: 100px;
+      margin-bottom: var(--space-xl);
+    }
+
+    .success-checkmark circle {
+      stroke: var(--success);
+      stroke-width: 3;
+      fill: none;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      animation: circleAnim 0.6s var(--ease-out) forwards;
+    }
+
+    .success-checkmark path {
+      stroke: var(--success);
+      stroke-width: 3;
+      fill: none;
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      animation: checkAnim 0.4s var(--ease-out) forwards 0.4s;
+    }
+
+    @keyframes circleAnim {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes checkAnim {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 300;
+      margin-bottom: var(--space-sm);
+      color: var(--text-primary);
+    }
+
+    .success-message {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: var(--space-2xl);
+    }
+
+    .countdown-bar {
+      width: 180px;
+      height: 3px;
+      background: var(--border-subtle);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .countdown-progress {
+      height: 100%;
+      background: var(--accent);
+      animation: countdown 5s linear forwards;
+    }
+
+    @keyframes countdown {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    /* Back Button */
+    .back-btn {
+      position: absolute;
+      top: var(--space-xl);
+      left: var(--space-xl);
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s var(--ease-out);
+      opacity: 0.6;
+    }
+
+    .back-btn:hover {
+      opacity: 1;
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Loading Spinner */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s var(--ease-out);
+    }
+
+    .loading-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--border-subtle);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error Toast */
+    .toast {
+      position: fixed;
+      bottom: var(--space-xl);
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: var(--space-md) var(--space-lg);
+      background: var(--error);
+      color: #fff;
+      border-radius: 0;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1001;
+      opacity: 0;
+      transition: all 0.4s var(--ease-out);
+    }
+
+    .toast.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* AGB Link */
+    .agb-link {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent);
+      transition: opacity 0.2s;
+    }
+
+    .agb-link:hover {
+      opacity: 0.8;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .app-container {
+        padding: var(--space-lg) var(--space-md);
+      }
+
+      .language-toggle {
+        top: var(--space-lg);
+        right: var(--space-md);
+      }
+
+      .back-btn {
+        top: var(--space-lg);
+        left: var(--space-md);
+      }
+
+      .choice-buttons {
+        flex-direction: column;
+        gap: var(--space-md);
+      }
+
+      .choice-btn {
+        width: 100%;
+      }
+
+      .start-question {
+        font-size: 28px;
+      }
+
+      .step-title {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Language Toggle -->
+    <div class="language-toggle">
+      <button class="lang-btn active" data-lang="de" aria-label="Deutsch">
+        <span class="flag-icon">
+          <svg viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg">
+            <rect width="5" height="1" y="0" fill="#000"/>
+            <rect width="5" height="1" y="1" fill="#D00"/>
+            <rect width="5" height="1" y="2" fill="#FFCE00"/>
+          </svg>
+        </span>
+      </button>
+      <button class="lang-btn" data-lang="en" aria-label="English">
+        <span class="flag-icon">
+          <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+            <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+            <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+            <g clip-path="url(#s)">
+              <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+              <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+              <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+              <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+            </g>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <!-- Logo -->
+    <div class="logo-container">
+      <div class="logo">
+        <svg viewBox="0 0 100 100">
+          <line x1="25" y1="35" x2="75" y2="35" stroke="#000" stroke-width="3"/>
+          <line x1="25" y1="65" x2="75" y2="65" stroke="#000" stroke-width="3"/>
+          <line x1="70" y1="20" x2="30" y2="80" stroke="#000" stroke-width="3"/>
+        </svg>
+      </div>
+      <div class="logo-text">MOMMY I'M SORRY</div>
+    </div>
+
+    <!-- Screen 1: Start -->
+    <div id="screen-start" class="screen active">
+      <div class="start-content">
+        <h1 class="start-question" data-i18n="firstVisit">Ist dies dein erster Besuch bei uns?</h1>
+        <div class="choice-buttons">
+          <button class="choice-btn" onclick="handleFirstVisit(true)">
+            <div class="choice-btn-icon">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22V12M12 12C12 12 12 8 8 5C4 2 2 4 2 4C2 4 4 10 8 12C10 13 12 12 12 12ZM12 12C12 12 12 8 16 5C20 2 22 4 22 4C22 4 20 10 16 12C14 13 12 12 12 12Z"/>
+              </svg>
+            </div>
+            <div class="choice-btn-title" data-i18n="yes">Ja</div>
+            <div class="choice-btn-subtitle" data-i18n="firstTime">Erster Besuch</div>
+          </button>
+          <button class="choice-btn" onclick="handleFirstVisit(false)">
+            <div class="choice-btn-icon">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 21V19C20 16.79 18.21 15 16 15H8C5.79 15 4 16.79 4 19V21M12 11C14.21 11 16 9.21 16 7C16 4.79 14.21 3 12 3C9.79 3 8 4.79 8 7C8 9.21 9.79 11 12 11Z"/>
+                <path d="M19 8L21 6M21 8L19 6" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="choice-btn-title" data-i18n="no">Nein</div>
+            <div class="choice-btn-subtitle" data-i18n="beenHere">War schon hier</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Search - REMOVED FOR GDPR COMPLIANCE -->
+
+    <!-- Screen 3: Form -->
+    <div id="screen-form" class="screen">
+      <button class="back-btn" onclick="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+
+      <div class="form-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+          <div class="progress-step active" data-step="1"></div>
+          <div class="progress-line"></div>
+          <div class="progress-step" data-step="2"></div>
+          <div class="progress-line"></div>
+          <div class="progress-step" data-step="3"></div>
+          <div class="progress-line"></div>
+          <div class="progress-step" data-step="4"></div>
+          <div class="progress-line"></div>
+          <div class="progress-step" data-step="5"></div>
+          <span class="progress-text"><span data-i18n="step">Schritt</span> <span id="currentStepNum">1</span> <span data-i18n="of">von</span> 5</span>
+        </div>
+
+        <!-- Step 1: Personal Data -->
+        <div class="form-step active" data-step="1">
+          <h2 class="step-title" data-i18n="personalData">Persönliche Daten</h2>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="firstName">Vorname <span class="required">*</span></label>
+            <input type="text" class="form-input" id="firstName" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="lastName">Nachname <span class="required">*</span></label>
+            <input type="text" class="form-input" id="lastName" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="dateOfBirth">Geburtsdatum <span class="required">*</span></label>
+            <input type="date" class="form-input" id="dateOfBirth" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="email">E-Mail</label>
+            <input type="email" class="form-input" id="email">
+          </div>
+
+          <div class="form-nav">
+            <div></div>
+            <button class="btn btn-primary" onclick="nextStep()" data-i18n="next">Weiter</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Health -->
+        <div class="form-step" data-step="2">
+          <h2 class="step-title" data-i18n="health">Gesundheit</h2>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="allergies">Allergien</label>
+            <textarea class="form-input" id="allergies" data-i18n-placeholder="allergiesPlaceholder"
+                      placeholder="z.B. Latex, bestimmte Farben..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="medications">Medikamente</label>
+            <textarea class="form-input" id="medications" data-i18n-placeholder="medicationsPlaceholder"
+                      placeholder="Aktuelle Medikamente..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-group" id="healthConditionsGroup">
+              <input type="checkbox" id="hasHealthConditions">
+              <div class="checkbox-custom">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="checkbox-label">
+                <div class="checkbox-label-title" data-i18n="healthConditions">Gesundheitliche Bedingungen</div>
+                <div class="checkbox-label-desc" data-i18n="healthConditionsInfo">HIV, Hepatitis, Epilepsie, Diabetes oder andere relevante Bedingungen</div>
+              </div>
+            </label>
+
+            <div class="conditional-input" id="healthDetailsWrapper">
+              <textarea class="form-input" id="healthDetails" data-i18n-placeholder="healthDetailsPlaceholder"
+                        placeholder="Bitte beschreibe deine gesundheitlichen Bedingungen"></textarea>
+            </div>
+          </div>
+
+          <div class="form-nav">
+            <button class="btn btn-secondary" onclick="prevStep()" data-i18n="back">Zurück</button>
+            <button class="btn btn-primary" onclick="nextStep()" data-i18n="next">Weiter</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Consent -->
+        <div class="form-step" data-step="3">
+          <h2 class="step-title" data-i18n="consent">Einwilligungen</h2>
+
+          <label class="checkbox-group" id="termsGroup">
+            <input type="checkbox" id="termsAccepted" required>
+            <div class="checkbox-custom">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="checkbox-label">
+              <div class="checkbox-label-title">
+                <span data-i18n="termsAcceptPre">Ich habe die </span>
+                <a href="#" class="agb-link" onclick="event.stopPropagation(); showAGB()">AGB</a>
+                <span data-i18n="termsAcceptPost"> gelesen und akzeptiere diese</span>
+                <span class="required">*</span>
+              </div>
+            </div>
+          </label>
+
+          <label class="checkbox-group" id="imageRightsGroup">
+            <input type="checkbox" id="imageRightsAccepted">
+            <div class="checkbox-custom">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="checkbox-label">
+              <div class="checkbox-label-title" data-i18n="imageRights">Ich erlaube die Verwendung von Fotos für Social Media</div>
+            </div>
+          </label>
+
+          <label class="checkbox-group" id="socialMediaTagGroup">
+            <input type="checkbox" id="socialMediaTagAccepted">
+            <div class="checkbox-custom">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="checkbox-label">
+              <div class="checkbox-label-title" data-i18n="socialMediaTag">Mein Profil darf verlinkt werden</div>
+            </div>
+          </label>
+
+          <div class="conditional-input" id="instagramHandleWrapper">
+            <div class="instagram-input">
+              <span>@</span>
+              <input type="text" id="instagramHandle" data-i18n-placeholder="instagramPlaceholder" placeholder="dein_handle">
+            </div>
+          </div>
+
+          <div class="form-nav">
+            <button class="btn btn-secondary" onclick="prevStep()" data-i18n="back">Zurück</button>
+            <button class="btn btn-primary" onclick="nextStep()" data-i18n="next">Weiter</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Signature -->
+        <div class="form-step" data-step="4">
+          <h2 class="step-title" data-i18n="signature">Unterschrift</h2>
+
+          <div class="signature-container">
+            <p class="signature-info" data-i18n="signatureInfo">Bitte unterschreibe mit deinem Finger im Feld unten</p>
+
+            <div class="signature-canvas-wrapper" id="signatureWrapper">
+              <canvas class="signature-canvas" id="signatureCanvas"></canvas>
+              <div class="signature-placeholder" data-i18n="signHere">Hier unterschreiben</div>
+            </div>
+
+            <button class="clear-signature-btn" onclick="clearSignature()" data-i18n="clear">Löschen</button>
+          </div>
+
+          <div class="form-nav">
+            <button class="btn btn-secondary" onclick="prevStep()" data-i18n="back">Zurück</button>
+            <button class="btn btn-primary" onclick="nextStep()" data-i18n="next">Weiter</button>
+          </div>
+        </div>
+
+        <!-- Step 5: Confirmation -->
+        <div class="form-step" data-step="5">
+          <h2 class="step-title" data-i18n="confirmation">Bestätigung</h2>
+
+          <p style="color: var(--muted); margin-bottom: 24px;" data-i18n="reviewData">Bitte überprüfe deine Angaben</p>
+
+          <div class="confirmation-summary" id="confirmationSummary">
+            <!-- Filled by JavaScript -->
+          </div>
+
+          <div class="form-nav">
+            <button class="btn btn-secondary" onclick="prevStep()" data-i18n="back">Zurück</button>
+            <button class="btn btn-primary" onclick="submitAgreement()" data-i18n="submit">Absenden</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Success -->
+    <div id="screen-success" class="screen">
+      <div class="success-content">
+        <svg class="success-checkmark" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45"/>
+          <path d="M30 50 L45 65 L70 35"/>
+        </svg>
+        <h2 class="success-title" data-i18n="thankYou">Vielen Dank!</h2>
+        <p class="success-message" data-i18n="saved">Deine Einwilligung wurde gespeichert.</p>
+        <div class="countdown-bar">
+          <div class="countdown-progress"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = "https://auxxyehgzkozdjylhqnx.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Translations
+    const translations = {
+      de: {
+        firstVisit: 'Ist dies dein erster Besuch bei uns?',
+        yes: 'Ja',
+        no: 'Nein',
+        firstTime: 'Erster Besuch',
+        beenHere: 'War schon hier',
+        personalData: 'Persönliche Daten',
+        firstName: 'Vorname',
+        lastName: 'Nachname',
+        dateOfBirth: 'Geburtsdatum',
+        email: 'E-Mail',
+        health: 'Gesundheit',
+        allergies: 'Allergien',
+        allergiesPlaceholder: 'z.B. Latex, bestimmte Farben...',
+        medications: 'Medikamente',
+        medicationsPlaceholder: 'Aktuelle Medikamente...',
+        healthConditions: 'Gesundheitliche Bedingungen',
+        healthConditionsInfo: 'HIV, Hepatitis, Epilepsie, Diabetes oder andere relevante Bedingungen',
+        healthDetailsPlaceholder: 'Bitte beschreibe deine gesundheitlichen Bedingungen',
+        consent: 'Einwilligungen',
+        termsAcceptPre: 'Ich habe die ',
+        termsAcceptPost: ' gelesen und akzeptiere diese',
+        imageRights: 'Ich erlaube die Verwendung von Fotos für Social Media',
+        socialMediaTag: 'Mein Profil darf verlinkt werden',
+        instagramPlaceholder: 'dein_handle',
+        signature: 'Unterschrift',
+        signatureInfo: 'Bitte unterschreibe mit deinem Finger im Feld unten',
+        signHere: 'Hier unterschreiben',
+        clear: 'Löschen',
+        confirmation: 'Bestätigung',
+        reviewData: 'Bitte überprüfe deine Angaben',
+        submit: 'Absenden',
+        back: 'Zurück',
+        next: 'Weiter',
+        thankYou: 'Vielen Dank!',
+        saved: 'Deine Einwilligung wurde gespeichert.',
+        step: 'Schritt',
+        of: 'von',
+        required: 'Pflichtfeld',
+        summaryPersonal: 'Persönliche Daten',
+        summaryHealth: 'Gesundheit',
+        summaryConsent: 'Einwilligungen',
+        summarySignature: 'Unterschrift',
+        none: 'Keine Angabe',
+        accepted: 'Akzeptiert',
+        notAccepted: 'Nicht akzeptiert',
+        errorRequired: 'Bitte fülle alle Pflichtfelder aus',
+        errorSignature: 'Bitte unterschreibe das Formular',
+        errorTerms: 'Bitte akzeptiere die AGB',
+        errorSubmit: 'Fehler beim Speichern. Bitte versuche es erneut.',
+        errorAge: 'Du musst mindestens 18 Jahre alt sein'
+      },
+      en: {
+        firstVisit: 'Is this your first visit?',
+        yes: 'Yes',
+        no: 'No',
+        firstTime: 'First visit',
+        beenHere: 'Been here before',
+        personalData: 'Personal Information',
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        email: 'Email',
+        health: 'Health',
+        allergies: 'Allergies',
+        allergiesPlaceholder: 'e.g. Latex, certain inks...',
+        medications: 'Medications',
+        medicationsPlaceholder: 'Current medications...',
+        healthConditions: 'Health Conditions',
+        healthConditionsInfo: 'HIV, Hepatitis, Epilepsy, Diabetes or other relevant conditions',
+        healthDetailsPlaceholder: 'Please describe your health conditions',
+        consent: 'Consent',
+        termsAcceptPre: 'I have read and accept the ',
+        termsAcceptPost: '',
+        imageRights: 'I allow the use of photos for social media',
+        socialMediaTag: 'My profile may be tagged',
+        instagramPlaceholder: 'your_handle',
+        signature: 'Signature',
+        signatureInfo: 'Please sign with your finger in the field below',
+        signHere: 'Sign here',
+        clear: 'Clear',
+        confirmation: 'Confirmation',
+        reviewData: 'Please review your information',
+        submit: 'Submit',
+        back: 'Back',
+        next: 'Next',
+        thankYou: 'Thank you!',
+        saved: 'Your consent has been saved.',
+        step: 'Step',
+        of: 'of',
+        required: 'Required',
+        summaryPersonal: 'Personal Information',
+        summaryHealth: 'Health',
+        summaryConsent: 'Consent',
+        summarySignature: 'Signature',
+        none: 'Not specified',
+        accepted: 'Accepted',
+        notAccepted: 'Not accepted',
+        errorRequired: 'Please fill in all required fields',
+        errorSignature: 'Please sign the form',
+        errorTerms: 'Please accept the terms and conditions',
+        errorSubmit: 'Error saving. Please try again.',
+        errorAge: 'You must be at least 18 years old'
+      }
+    };
+
+    // State
+    let currentLang = 'de';
+    let currentStep = 1;
+    let selectedCustomer = null;
+    let signatureCanvas = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initLanguageToggle();
+      initCheckboxes();
+      initSignatureCanvas();
+      updateTranslations();
+    });
+
+    // Language Toggle
+    function initLanguageToggle() {
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const lang = btn.dataset.lang;
+          if (lang !== currentLang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.documentElement.lang = lang;
+            updateTranslations();
+          }
+        });
+      });
+    }
+
+    function updateTranslations() {
+      const t = translations[currentLang];
+
+      // Text content
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (t[key]) {
+          el.textContent = t[key];
+        }
+      });
+
+      // Placeholders
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.dataset.i18nPlaceholder;
+        if (t[key]) {
+          el.placeholder = t[key];
+        }
+      });
+    }
+
+    function t(key) {
+      return translations[currentLang][key] || key;
+    }
+
+    // Navigation
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    window.goToStart = function() {
+      selectedCustomer = null;
+      currentStep = 1;
+      resetForm();
+      showScreen('screen-start');
+    };
+
+    window.goBack = function() {
+      if (currentStep === 1) {
+        window.goToStart();
+      }
+    };
+
+    // First Visit Handler - Both options go to form (GDPR compliant)
+    window.handleFirstVisit = function(isFirst) {
+      // Both paths lead to the same form for GDPR compliance
+      // No customer search/listing to avoid data exposure
+      window.startNewCustomerForm();
+    };
+
+    window.startNewCustomerForm = function() {
+      selectedCustomer = null;
+      resetForm();
+      currentStep = 1;
+      updateProgressBar();
+      showScreen('screen-form');
+    };
+
+    // Customer Search - REMOVED FOR GDPR COMPLIANCE
+    // No customer data is displayed or searched to protect privacy
+
+    // Checkboxes
+    function initCheckboxes() {
+      // Toggle checkbox styling
+      document.querySelectorAll('.checkbox-group').forEach(group => {
+        const checkbox = group.querySelector('input[type="checkbox"]');
+
+        group.addEventListener('click', (e) => {
+          if (e.target.tagName === 'A') return;
+          checkbox.checked = !checkbox.checked;
+          group.classList.toggle('checked', checkbox.checked);
+
+          // Handle conditional inputs
+          if (checkbox.id === 'hasHealthConditions') {
+            document.getElementById('healthDetailsWrapper').classList.toggle('visible', checkbox.checked);
+          }
+          if (checkbox.id === 'socialMediaTagAccepted') {
+            document.getElementById('instagramHandleWrapper').classList.toggle('visible', checkbox.checked);
+          }
+        });
+      });
+    }
+
+    // Signature Canvas
+    function initSignatureCanvas() {
+      const canvas = document.getElementById('signatureCanvas');
+      const wrapper = document.getElementById('signatureWrapper');
+      const ctx = canvas.getContext('2d');
+
+      let isDrawing = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      function setupCanvas() {
+        const rect = wrapper.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#000';
+      }
+
+      function getPosition(e) {
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches ? e.touches[0] : e;
+        return {
+          x: touch.clientX - rect.left,
+          y: touch.clientY - rect.top
+        };
+      }
+
+      function startDrawing(e) {
+        e.preventDefault();
+        isDrawing = true;
+        const pos = getPosition(e);
+        lastX = pos.x;
+        lastY = pos.y;
+        wrapper.classList.add('has-signature');
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+
+        const pos = getPosition(e);
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+
+        lastX = pos.x;
+        lastY = pos.y;
+      }
+
+      function stopDrawing() {
+        isDrawing = false;
+      }
+
+      // Touch events
+      canvas.addEventListener('touchstart', startDrawing);
+      canvas.addEventListener('touchmove', draw);
+      canvas.addEventListener('touchend', stopDrawing);
+
+      // Mouse events (for testing)
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+
+      // Setup on resize
+      window.addEventListener('resize', setupCanvas);
+      setTimeout(setupCanvas, 100);
+
+      signatureCanvas = {
+        canvas,
+        ctx,
+        wrapper,
+        resize: setupCanvas,
+        clear: () => {
+          const rect = wrapper.getBoundingClientRect();
+          ctx.clearRect(0, 0, rect.width, rect.height);
+          wrapper.classList.remove('has-signature');
+        },
+        isEmpty: () => {
+          return !wrapper.classList.contains('has-signature');
+        },
+        toDataURL: () => {
+          return canvas.toDataURL('image/png');
+        }
+      };
+    }
+
+    window.clearSignature = function() {
+      if (signatureCanvas) {
+        signatureCanvas.clear();
+      }
+    };
+
+    // Form Steps
+    function updateProgressBar() {
+      document.querySelectorAll('.progress-step').forEach((step, index) => {
+        const stepNum = index + 1;
+        step.classList.remove('active', 'completed');
+
+        if (stepNum === currentStep) {
+          step.classList.add('active');
+        } else if (stepNum < currentStep) {
+          step.classList.add('completed');
+        }
+      });
+
+      document.querySelectorAll('.progress-line').forEach((line, index) => {
+        line.classList.toggle('completed', index + 1 < currentStep);
+      });
+
+      document.getElementById('currentStepNum').textContent = currentStep;
+
+      document.querySelectorAll('.form-step').forEach(step => {
+        step.classList.toggle('active', parseInt(step.dataset.step) === currentStep);
+      });
+    }
+
+    function validateStep(step) {
+      if (step === 1) {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const dob = document.getElementById('dateOfBirth').value;
+
+        if (!firstName || !lastName || !dob) {
+          showToast(t('errorRequired'));
+          return false;
+        }
+
+        // Check if customer is at least 18 years old
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          showToast(t('errorAge'));
+          return false;
+        }
+      }
+
+      if (step === 3) {
+        const termsAccepted = document.getElementById('termsAccepted').checked;
+        if (!termsAccepted) {
+          showToast(t('errorTerms'));
+          return false;
+        }
+      }
+
+      if (step === 4) {
+        if (signatureCanvas.isEmpty()) {
+          showToast(t('errorSignature'));
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    window.nextStep = function() {
+      if (!validateStep(currentStep)) return;
+
+      if (currentStep < 5) {
+        currentStep++;
+        updateProgressBar();
+
+        if (currentStep === 4) {
+          // Resize signature canvas when step becomes visible
+          setTimeout(() => {
+            if (signatureCanvas) signatureCanvas.resize();
+          }, 50);
+        }
+
+        if (currentStep === 5) {
+          renderConfirmationSummary();
+        }
+      }
+    };
+
+    window.prevStep = function() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateProgressBar();
+
+        if (currentStep === 4) {
+          // Resize signature canvas when step becomes visible
+          setTimeout(() => {
+            if (signatureCanvas) signatureCanvas.resize();
+          }, 50);
+        }
+      }
+    };
+
+    function renderConfirmationSummary() {
+      const summary = document.getElementById('confirmationSummary');
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const dob = document.getElementById('dateOfBirth').value;
+      const email = document.getElementById('email').value;
+      const allergies = document.getElementById('allergies').value;
+      const medications = document.getElementById('medications').value;
+      const termsAccepted = document.getElementById('termsAccepted').checked;
+      const imageRights = document.getElementById('imageRightsAccepted').checked;
+      const socialMediaTag = document.getElementById('socialMediaTagAccepted').checked;
+      const instagramHandle = document.getElementById('instagramHandle').value;
+      const signatureData = signatureCanvas.toDataURL();
+
+      const dobFormatted = dob ? new Date(dob).toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-GB') : '-';
+
+      summary.innerHTML = `
+        <div class="summary-section">
+          <div class="summary-section-title">${t('summaryPersonal')}</div>
+          <div class="summary-row">
+            <span class="summary-label">${t('firstName')}</span>
+            <span class="summary-value">${firstName}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">${t('lastName')}</span>
+            <span class="summary-value">${lastName}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">${t('dateOfBirth')}</span>
+            <span class="summary-value">${dobFormatted}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">${t('email')}</span>
+            <span class="summary-value">${email || '-'}</span>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <div class="summary-section-title">${t('summaryHealth')}</div>
+          <div class="summary-row">
+            <span class="summary-label">${t('allergies')}</span>
+            <span class="summary-value">${allergies || t('none')}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">${t('medications')}</span>
+            <span class="summary-value">${medications || t('none')}</span>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <div class="summary-section-title">${t('summaryConsent')}</div>
+          <div class="summary-row">
+            <span class="summary-label">AGB</span>
+            <span class="summary-value">${termsAccepted ? t('accepted') : t('notAccepted')}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">${t('imageRights')}</span>
+            <span class="summary-value">${imageRights ? t('accepted') : t('notAccepted')}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">${t('socialMediaTag')}</span>
+            <span class="summary-value">${socialMediaTag ? (instagramHandle ? '@' + instagramHandle : t('accepted')) : t('notAccepted')}</span>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <div class="summary-section-title">${t('summarySignature')}</div>
+          <img src="${signatureData}" alt="Signature" class="summary-signature">
+        </div>
+      `;
+    }
+
+    // Submit
+    window.submitAgreement = async function() {
+      showLoading(true);
+
+      try {
+        const formData = {
+          firstName: document.getElementById('firstName').value.trim(),
+          lastName: document.getElementById('lastName').value.trim(),
+          dateOfBirth: document.getElementById('dateOfBirth').value || null,
+          email: document.getElementById('email').value.trim() || null,
+          allergies: document.getElementById('allergies').value.trim() || null,
+          medications: document.getElementById('medications').value.trim() || null,
+          hasHealthConditions: document.getElementById('hasHealthConditions').checked,
+          healthDetails: document.getElementById('healthDetails').value.trim() || null,
+          termsAccepted: document.getElementById('termsAccepted').checked,
+          imageRightsAccepted: document.getElementById('imageRightsAccepted').checked,
+          socialMediaTagAccepted: document.getElementById('socialMediaTagAccepted').checked,
+          instagramHandle: document.getElementById('instagramHandle').value.trim() || null
+        };
+
+        const signatureData = signatureCanvas.toDataURL();
+        const customerId = selectedCustomer?.id || null;
+
+        // Auto-match appointment
+        let appointmentId = null;
+        if (customerId) {
+          appointmentId = await autoMatchAppointment(customerId);
+        }
+
+        // Save agreement
+        const { data: agreement, error } = await supabaseClient
+          .from('agreements')
+          .insert([{
+            customer_id: customerId,
+            appointment_id: appointmentId,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            date_of_birth: formData.dateOfBirth,
+            email: formData.email,
+            allergies: formData.allergies,
+            medications: formData.medications,
+            has_health_conditions: formData.hasHealthConditions,
+            health_conditions_details: formData.healthDetails,
+            terms_accepted: formData.termsAccepted,
+            image_rights_accepted: formData.imageRightsAccepted,
+            social_media_tag_accepted: formData.socialMediaTagAccepted,
+            social_media_handle: formData.instagramHandle,
+            signature_data: signatureData,
+            signed_at: new Date().toISOString(),
+            language: currentLang
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Update customer allergies if known customer
+        if (customerId && (formData.allergies || formData.medications)) {
+          await supabaseClient
+            .from('customers')
+            .update({
+              allergies: formData.allergies,
+              medications: formData.medications,
+              health_notes: formData.healthDetails
+            })
+            .eq('id', customerId);
+        }
+
+        showLoading(false);
+        showSuccessScreen();
+
+      } catch (err) {
+        console.error('Submit error:', err);
+        showLoading(false);
+        showToast(t('errorSubmit'));
+      }
+    };
+
+    async function autoMatchAppointment(customerId) {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data: appointments, error } = await supabaseClient
+          .from('appointments')
+          .select('id')
+          .eq('customer_id', customerId)
+          .gte('start', `${today}T00:00:00`)
+          .lte('start', `${today}T23:59:59`)
+          .order('start', { ascending: true })
+          .limit(1);
+
+        if (error) throw error;
+
+        if (appointments && appointments.length > 0) {
+          return appointments[0].id;
+        }
+
+        return null;
+      } catch (err) {
+        console.error('Auto-match error:', err);
+        return null;
+      }
+    }
+
+    function showSuccessScreen() {
+      showScreen('screen-success');
+
+      // Auto-reset after 5 seconds
+      setTimeout(() => {
+        goToStart();
+      }, 5000);
+    }
+
+    // UI Helpers
+    function showLoading(show) {
+      document.getElementById('loadingOverlay').classList.toggle('visible', show);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('visible');
+
+      setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 3000);
+    }
+
+    function resetForm() {
+      document.getElementById('firstName').value = '';
+      document.getElementById('lastName').value = '';
+      document.getElementById('dateOfBirth').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('allergies').value = '';
+      document.getElementById('medications').value = '';
+      document.getElementById('healthDetails').value = '';
+      document.getElementById('instagramHandle').value = '';
+
+      document.querySelectorAll('.checkbox-group').forEach(group => {
+        const checkbox = group.querySelector('input[type="checkbox"]');
+        checkbox.checked = false;
+        group.classList.remove('checked');
+      });
+
+      document.getElementById('healthDetailsWrapper').classList.remove('visible');
+      document.getElementById('instagramHandleWrapper').classList.remove('visible');
+
+      if (signatureCanvas) {
+        signatureCanvas.clear();
+      }
+    }
+
+    window.showAGB = function() {
+      // TODO: Show AGB modal or link
+      window.open('https://mommyimsorry.de/agb', '_blank');
+    };
+
+    // Expose showSuccessScreen for testing
+    window.showSuccessScreen = showSuccessScreen;
+  </script>
+</body>
+</html>

@@ -17082,31 +17082,47 @@
   <section id="agreements-section">
     <div class="tab-header">
       <h2 class="tab-header-title">Agreements</h2>
-      <p class="tab-header-subtitle">Verwalte Verträge und Vereinbarungen</p>
+      <p class="tab-header-subtitle">Digitale Einwilligungserklaerungen verwalten</p>
     </div>
 
-    <!-- Agreements List Section -->
+    <!-- Agreements Header Actions -->
     <div style="margin-top:48px;">
-      <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:22px; font-weight:600;">Today's Agreements</h2>
-        <div id="agreementsDateDisplay" style="font-weight:600; font-size:22px; color:var(--ink);"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <h2 style="margin:0; font-size:22px; font-weight:600;">Agreements</h2>
+          <div id="agreementsDateDisplay" style="font-weight:600; font-size:22px; color:var(--ink);"></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <input type="text" id="agreementSearchInput" placeholder="Suche nach Name..."
+                 style="padding:10px 16px; border:1px solid var(--border); border-radius:10px; font-size:14px; width:200px;">
+          <a href="agreement-form.html" target="_blank" class="request-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            iPad Form
+          </a>
+        </div>
       </div>
-      
+
       <div class="calendar-controls" style="margin-bottom:24px;">
         <button id="agreementsPrevDayBtn" class="btn-nav">‹ Prev</button>
         <input type="date" id="agreementsDatePickerInput">
         <button id="agreementsTodayBtn" class="btn-nav">Today</button>
         <button id="agreementsNextDayBtn" class="btn-nav">Next ›</button>
       </div>
-      
+
       <table id="agreementsTable">
         <thead>
           <tr>
-            <th>Customer Name</th>
-            <th>Email</th>
-            <th>Artist</th>
-            <th>Time</th>
-            <th style="text-align:center;">Signed</th>
+            <th>Kunde</th>
+            <th>E-Mail</th>
+            <th>Allergien</th>
+            <th>Termin</th>
+            <th>Uhrzeit</th>
+            <th style="text-align:center;">Status</th>
+            <th style="text-align:center;">Aktionen</th>
           </tr>
         </thead>
         <tbody id="agreementsTableBody"></tbody>
@@ -19272,6 +19288,19 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" id="closeFileUpload">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agreement Detail Modal -->
+  <div class="modal-backdrop" id="agreementDetailModal">
+    <div class="modal" style="max-width:500px;">
+      <h3>Agreement Details</h3>
+      <div id="agreementDetailContent" style="padding:8px 0;">
+        <!-- Content filled by JS -->
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('agreementDetailModal').classList.remove('active')">Schließen</button>
       </div>
     </div>
   </div>
@@ -31367,17 +31396,23 @@
       async function loadAgreements() {
         try {
           const dateStr = agreementsDate.toISOString().split('T')[0];
+          const searchQuery = document.getElementById('agreementSearchInput')?.value?.toLowerCase() || '';
 
-          // Load agreements from agreements table for the selected date
+          // Load agreements with appointment and artist info
           const { data: agreementData, error } = await supabase
             .from('agreements')
-            .select('*')
+            .select(`
+              *,
+              appointments:appointments!agreements_appointment_id_fkey(
+                id, start, end,
+                artists:artists!appointments_artist_id_fkey(id, name)
+              )
+            `)
             .gte('signed_at', `${dateStr}T00:00:00`)
             .lte('signed_at', `${dateStr}T23:59:59`)
-            .order('signed_at', { ascending: false });  // Newest first
+            .order('signed_at', { ascending: false });
 
           if (error) {
-            // Check if table doesn't exist (404)
             if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('does not exist')) {
               console.log('Agreements table not yet created - showing empty state');
               renderAgreements([]);
@@ -31388,29 +31423,43 @@
 
           console.log(`Agreements loaded for ${dateStr}:`, agreementData?.length);
 
-          // Get artist details
-          const agreements = (agreementData || []).map((agreement) => {
-            let artistName = '-';
-            if (agreement.artist_id) {
-              const artist = allArtists.find(a => a.id === agreement.artist_id);
-              if (artist) {
-                artistName = artist.name;
-              }
-            }
+          // Transform data
+          let agreements = (agreementData || []).map((agreement) => {
+            const customerName = `${agreement.first_name || ''} ${agreement.last_name || ''}`.trim() || 'Unbekannt';
+            const artistName = agreement.appointments?.artists?.name || '-';
+            const appointmentStart = agreement.appointments?.start;
 
             const signedTime = new Date(agreement.signed_at);
             const timeStr = signedTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
+            let appointmentInfo = '-';
+            if (appointmentStart) {
+              const aptDate = new Date(appointmentStart);
+              appointmentInfo = aptDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            }
+
             return {
               id: agreement.id,
-              customerName: agreement.full_name || 'Unknown',
+              customerName,
               customerEmail: agreement.email || '-',
+              allergies: agreement.allergies || '-',
               artistName,
-              time: timeStr,
+              appointmentTime: appointmentInfo,
+              signedTime: timeStr,
               language: agreement.language,
-              signatureData: agreement.signature_data
+              signatureData: agreement.signature_data,
+              hasHealthConditions: agreement.has_health_conditions,
+              healthDetails: agreement.health_conditions_details
             };
           });
+
+          // Filter by search query
+          if (searchQuery) {
+            agreements = agreements.filter(a =>
+              a.customerName.toLowerCase().includes(searchQuery) ||
+              a.customerEmail.toLowerCase().includes(searchQuery)
+            );
+          }
 
           renderAgreements(agreements);
         } catch (err) {
@@ -31418,31 +31467,125 @@
           renderAgreements([]);
         }
       }
-      
+
       function renderAgreements(agreements) {
         const tbody = document.getElementById('agreementsTableBody');
-        
+
         if (!agreements || agreements.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted);">No agreements for this date</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">Keine Agreements fuer dieses Datum</td></tr>';
           return;
         }
-        
-        tbody.innerHTML = agreements.map(agreement => `
-          <tr style="transition:background 0.15s ease;">
-            <td>
-              <span style="font-weight:500;">${agreement.customerName}</span>
-            </td>
-            <td>${agreement.customerEmail}</td>
-            <td>${agreement.artistName}</td>
-            <td style="font-weight:500;">${agreement.time}</td>
-            <td style="text-align:center;">
-              ${agreement.signatureData 
-                ? '<span style="color:#34c759; font-size:20px; font-weight:600;">✓</span>' 
-                : '<span style="color:#ff3b30; font-size:20px; font-weight:600;">✕</span>'}
-            </td>
-          </tr>
-        `).join('');
+
+        tbody.innerHTML = agreements.map(agreement => {
+          const allergiesDisplay = agreement.allergies !== '-'
+            ? `<span style="color:#ff9500; font-weight:500;">${agreement.allergies}</span>`
+            : '<span style="color:var(--muted);">-</span>';
+
+          const healthWarning = agreement.hasHealthConditions
+            ? `<span title="${agreement.healthDetails || 'Gesundheitliche Bedingungen'}" style="color:#ff3b30; cursor:help;">⚠️</span>`
+            : '';
+
+          return `
+            <tr style="transition:background 0.15s ease;" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='transparent'">
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-weight:500;">${agreement.customerName}</span>
+                  ${healthWarning}
+                </div>
+              </td>
+              <td style="color:var(--muted);">${agreement.customerEmail}</td>
+              <td>${allergiesDisplay}</td>
+              <td>${agreement.artistName}</td>
+              <td style="font-weight:500;">${agreement.signedTime}</td>
+              <td style="text-align:center;">
+                ${agreement.signatureData
+                  ? '<span style="color:#34c759; font-size:18px;" title="Unterschrieben">✓</span>'
+                  : '<span style="color:#ff3b30; font-size:18px;" title="Nicht unterschrieben">✕</span>'}
+              </td>
+              <td style="text-align:center;">
+                <button onclick="viewAgreementDetail('${agreement.id}')" class="btn-icon" title="Details ansehen" style="background:none; border:none; cursor:pointer; font-size:16px;">👁️</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
       }
+
+      // View Agreement Detail Modal
+      window.viewAgreementDetail = async function(agreementId) {
+        try {
+          const { data: agreement, error } = await supabase
+            .from('agreements')
+            .select('*')
+            .eq('id', agreementId)
+            .single();
+
+          if (error) throw error;
+
+          const customerName = `${agreement.first_name || ''} ${agreement.last_name || ''}`.trim();
+          const signedDate = agreement.signed_at ? new Date(agreement.signed_at).toLocaleString('de-DE') : '-';
+
+          const content = `
+            <div style="display:grid; gap:12px;">
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">Name:</span>
+                <span style="font-weight:500;">${customerName}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">Geburtsdatum:</span>
+                <span>${agreement.date_of_birth ? new Date(agreement.date_of_birth).toLocaleDateString('de-DE') : '-'}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">E-Mail:</span>
+                <span>${agreement.email || '-'}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">Allergien:</span>
+                <span style="${agreement.allergies ? 'color:#ff9500; font-weight:500;' : ''}">${agreement.allergies || 'Keine'}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">Medikamente:</span>
+                <span>${agreement.medications || 'Keine'}</span>
+              </div>
+              ${agreement.has_health_conditions ? `
+                <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                  <span style="color:var(--muted); font-size:14px;">Gesundheit:</span>
+                  <span style="color:#ff3b30;">${agreement.health_conditions_details || 'Angegeben'}</span>
+                </div>
+              ` : ''}
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">AGB akzeptiert:</span>
+                <span>${agreement.terms_accepted ? '<span style="color:#34c759;">✓ Ja</span>' : '<span style="color:#ff3b30;">✕ Nein</span>'}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">Bildrechte:</span>
+                <span>${agreement.image_rights_accepted ? '<span style="color:#34c759;">✓ Ja</span>' : '<span style="color:#ff3b30;">✕ Nein</span>'}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">Social Media:</span>
+                <span>${agreement.social_media_tag_accepted ? (agreement.social_media_handle ? '@' + agreement.social_media_handle : '<span style="color:#34c759;">✓ Ja</span>') : '<span style="color:#ff3b30;">✕ Nein</span>'}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
+                <span style="color:var(--muted); font-size:14px;">Unterschrieben:</span>
+                <span>${signedDate}</span>
+              </div>
+              ${agreement.signature_data ? `
+                <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+                  <span style="color:var(--muted); font-size:14px; display:block; margin-bottom:8px;">Unterschrift:</span>
+                  <img src="${agreement.signature_data}" alt="Unterschrift" style="max-width:100%; max-height:120px; border:1px solid var(--border); border-radius:8px; background:#fff;">
+                </div>
+              ` : ''}
+            </div>
+          `;
+
+          document.getElementById('agreementDetailContent').innerHTML = content;
+          document.getElementById('agreementDetailModal').classList.add('active');
+        } catch (err) {
+          console.error('Error loading agreement detail:', err);
+          if (typeof showNotification === 'function') {
+            showNotification('Fehler beim Laden', 'error');
+          }
+        }
+      };
       
       function updateAgreementsDateDisplay() {
         const dateDisplayEl = document.getElementById('agreementsDateDisplay');
@@ -31487,7 +31630,16 @@
         updateAgreementsDateDisplay();
         loadAgreements();
       });
-      
+
+      // Agreements Search
+      let agreementSearchTimeout;
+      document.getElementById('agreementSearchInput')?.addEventListener('input', (e) => {
+        clearTimeout(agreementSearchTimeout);
+        agreementSearchTimeout = setTimeout(() => {
+          loadAgreements();
+        }, 300);
+      });
+
       // Customer Detail Modal
       window.showCustomerDetail = async function(customerId) {
         if (!customerId) return;
