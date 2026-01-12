@@ -505,6 +505,31 @@
       display: none;
     }
 
+    /* Consent Scroll Box */
+    .consent-scroll-box {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: var(--space-lg);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-secondary);
+      margin-bottom: var(--space-lg);
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .consent-scroll-box::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .consent-scroll-box::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    .consent-scroll-box::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+    }
+
     /* Instagram Handle Input (conditional) */
     .conditional-input {
       margin-left: 38px;
@@ -1150,6 +1175,11 @@
         <div class="form-step" data-step="3">
           <h2 class="step-title" data-i18n="consent">Einwilligungen</h2>
 
+          <!-- Scrollable Consent Text -->
+          <div class="consent-scroll-box" id="consentText" data-i18n-html="consentScrollText">
+            Ich erlaube die Verwendung von Fotos für Social Media
+          </div>
+
           <label class="checkbox-group" id="termsGroup">
             <input type="checkbox" id="termsAccepted" required>
             <div class="checkbox-custom">
@@ -1164,18 +1194,6 @@
                 <span data-i18n="termsAcceptPost"> gelesen und akzeptiere diese</span>
                 <span class="required">*</span>
               </div>
-            </div>
-          </label>
-
-          <label class="checkbox-group" id="imageRightsGroup">
-            <input type="checkbox" id="imageRightsAccepted">
-            <div class="checkbox-custom">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="checkbox-label">
-              <div class="checkbox-label-title" data-i18n="imageRights">Ich erlaube die Verwendung von Fotos für Social Media</div>
             </div>
           </label>
 
@@ -1300,7 +1318,7 @@
         consent: 'Einwilligungen',
         termsAcceptPre: 'Ich habe die ',
         termsAcceptPost: ' gelesen und akzeptiere diese',
-        imageRights: 'Ich erlaube die Verwendung von Fotos für Social Media',
+        consentScrollText: 'Ich erlaube die Verwendung von Fotos für Social Media',
         socialMediaTag: 'Mein Profil darf verlinkt werden',
         instagramPlaceholder: 'dein_handle',
         signature: 'Unterschrift',
@@ -1352,7 +1370,7 @@
         consent: 'Consent',
         termsAcceptPre: 'I have read and accept the ',
         termsAcceptPost: '',
-        imageRights: 'I allow the use of photos for social media',
+        consentScrollText: 'I allow the use of photos for social media',
         socialMediaTag: 'My profile may be tagged',
         instagramPlaceholder: 'your_handle',
         signature: 'Signature',
@@ -1415,21 +1433,29 @@
     }
 
     function updateTranslations() {
-      const t = translations[currentLang];
+      const tr = translations[currentLang];
 
       // Text content
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
-        if (t[key]) {
-          el.textContent = t[key];
+        if (tr[key]) {
+          el.textContent = tr[key];
         }
       });
 
       // Placeholders
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.dataset.i18nPlaceholder;
-        if (t[key]) {
-          el.placeholder = t[key];
+        if (tr[key]) {
+          el.placeholder = tr[key];
+        }
+      });
+
+      // HTML content (for scroll boxes)
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.dataset.i18nHtml;
+        if (tr[key]) {
+          el.innerHTML = tr[key];
         }
       });
     }
@@ -1710,7 +1736,6 @@
       const allergies = document.getElementById('allergies').value;
       const medications = document.getElementById('medications').value;
       const termsAccepted = document.getElementById('termsAccepted').checked;
-      const imageRights = document.getElementById('imageRightsAccepted').checked;
       const socialMediaTag = document.getElementById('socialMediaTagAccepted').checked;
       const instagramHandle = document.getElementById('instagramHandle').value;
       const signatureData = signatureCanvas.toDataURL();
@@ -1757,10 +1782,6 @@
             <span class="summary-value">${termsAccepted ? t('accepted') : t('notAccepted')}</span>
           </div>
           <div class="summary-row">
-            <span class="summary-label">${t('imageRights')}</span>
-            <span class="summary-value">${imageRights ? t('accepted') : t('notAccepted')}</span>
-          </div>
-          <div class="summary-row">
             <span class="summary-label">${t('socialMediaTag')}</span>
             <span class="summary-value">${socialMediaTag ? (instagramHandle ? '@' + instagramHandle : t('accepted')) : t('notAccepted')}</span>
           </div>
@@ -1788,7 +1809,6 @@
           hasHealthConditions: document.getElementById('hasHealthConditions').checked,
           healthDetails: document.getElementById('healthDetails').value.trim() || null,
           termsAccepted: document.getElementById('termsAccepted').checked,
-          imageRightsAccepted: document.getElementById('imageRightsAccepted').checked,
           socialMediaTagAccepted: document.getElementById('socialMediaTagAccepted').checked,
           instagramHandle: document.getElementById('instagramHandle').value.trim() || null
         };
@@ -1817,7 +1837,6 @@
             has_health_conditions: formData.hasHealthConditions,
             health_conditions_details: formData.healthDetails,
             terms_accepted: formData.termsAccepted,
-            image_rights_accepted: formData.imageRightsAccepted,
             social_media_tag_accepted: formData.socialMediaTagAccepted,
             social_media_handle: formData.instagramHandle,
             signature_data: signatureData,
