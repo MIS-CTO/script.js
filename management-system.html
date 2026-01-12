@@ -15,11 +15,25 @@
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- jQuery + jQVMap for World Map -->
+  <!-- jQuery + jQVMap for World Map (using jsdelivr CDN) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqvmap/1.5.1/jqvmap.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqvmap/1.5.1/jquery.vmap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqvmap/1.5.1/maps/jquery.vmap.world.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jqvmap@1.5.1/dist/jqvmap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jqvmap@1.5.1/dist/jquery.vmap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jqvmap@1.5.1/dist/maps/jquery.vmap.world.js" onerror="console.error('❌ Failed to load jQVMap world map data!')"></script>
+  <script>
+    // Verify jQVMap loaded correctly
+    window.addEventListener('DOMContentLoaded', function() {
+      if (typeof jQuery !== 'undefined' && jQuery.fn.vectorMap) {
+        var maps = jQuery.fn.vectorMap.maps || {};
+        console.log('🗺️ jQVMap loaded. Available maps:', Object.keys(maps));
+        if (!maps['world_en']) {
+          console.warn('⚠️ world_en map not found in jQVMap.maps');
+        }
+      } else {
+        console.error('❌ jQVMap not loaded properly');
+      }
+    });
+  </script>
 
   <!-- Geist Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
