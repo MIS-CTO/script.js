@@ -4,22 +4,35 @@
   <meta charset="UTF-8">
 
   <!-- ============================================ -->
-  <!-- PWA CONFIGURATION - iPad Standalone Mode    -->
+  <!-- PWA META-TAGS - iPhone + iPad Kompatibel    -->
   <!-- ============================================ -->
 
-  <!-- PWA: Standalone Mode (keine Browser-UI) -->
+  <!-- Basis PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- iPad-spezifische Ergänzungen -->
+  <meta name="apple-touch-fullscreen" content="yes">
+  <meta name="HandheldFriendly" content="true">
+  <meta name="MobileOptimized" content="width">
+
+  <!-- Status Bar Styling -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MIS Agreement">
 
-  <!-- Android/Chrome Standalone -->
-  <meta name="mobile-web-app-capable" content="yes">
+  <!-- Theme -->
+  <meta name="theme-color" content="#000000">
+  <meta name="msapplication-navbutton-color" content="#000000">
+  <meta name="msapplication-TileColor" content="#000000">
 
-  <!-- Theme Color für Status Bar -->
-  <meta name="theme-color" content="#0a0a0a">
+  <!-- Viewport - iPad-optimiert -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
 
-  <!-- Viewport: Kein Zoom, kein Scroll-Bounce -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Verhindert automatische Erkennung -->
+  <meta name="format-detection" content="telephone=no">
+  <meta name="format-detection" content="date=no">
+  <meta name="format-detection" content="address=no">
+  <meta name="format-detection" content="email=no">
 
   <!-- App Icons für Homescreen -->
   <link rel="apple-touch-icon" href="icons/agreement-icon-180.png">
@@ -106,6 +119,172 @@
 
     /* ============================================ */
     /* END KIOSK MODE                              */
+    /* ============================================ */
+
+    /* ============================================ */
+    /* IPAD-SPEZIFISCHE PWA STYLES                 */
+    /* ============================================ */
+
+    /* iPad Safe Areas (für Home Indicator) */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .app-container {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+    }
+
+    /* iPad Landscape (falls rotiert) */
+    @media screen and (min-width: 768px) and (orientation: landscape) {
+      .device-ipad .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+    }
+
+    /* iPad Viewport Height Fix (100vh Bug) */
+    .device-ipad.pwa-standalone {
+      height: 100%;
+      height: -webkit-fill-available;
+    }
+
+    /* Verstecke "Add to Homescreen" Hinweis wenn bereits Standalone */
+    .pwa-standalone .install-hint,
+    .pwa-standalone .browser-warning {
+      display: none !important;
+    }
+
+    /* iPad Touch Optimierungen */
+    .device-ipad button,
+    .device-ipad .btn,
+    .device-ipad input,
+    .device-ipad select,
+    .device-ipad textarea {
+      /* Größere Touch-Targets für iPad */
+      min-height: 50px;
+      font-size: 17px; /* Verhindert Zoom bei Focus */
+    }
+
+    /* iPad Signature Canvas größer */
+    .device-ipad .signature-canvas {
+      height: 250px;
+    }
+
+    /* Verhindere Rubber-Band Effekt auf iPad */
+    .device-ipad.pwa-standalone {
+      position: fixed;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
+    .device-ipad.pwa-standalone .scroll-content {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      height: 100%;
+    }
+
+    /* ============================================ */
+    /* INSTALL HINT POPUP STYLES                   */
+    /* ============================================ */
+
+    .install-hint {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      z-index: 10000;
+      animation: slideUp 0.4s ease;
+    }
+
+    .install-hint-content {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 16px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      position: relative;
+      border: 1px solid #333;
+    }
+
+    .install-hint-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      min-height: auto !important;
+    }
+
+    .install-hint-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      background: #333;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .install-hint-text {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .install-hint .share-icon {
+      display: inline-block;
+      background: #007AFF;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Verstecke im Standalone Modus */
+    .pwa-standalone .install-hint {
+      display: none !important;
+    }
+
+    /* App Wrapper für Scroll-Fix */
+    .app-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
+
+    .scroll-content {
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    /* ============================================ */
+    /* END IPAD STYLES                             */
     /* ============================================ */
 
     * {
@@ -1089,7 +1268,9 @@
   </style>
 </head>
 <body>
-  <div class="app-container">
+  <div class="app-wrapper">
+    <div class="scroll-content">
+      <div class="app-container">
     <!-- Language Toggle -->
     <div class="language-toggle">
       <button class="lang-btn active" data-lang="de" aria-label="Deutsch">
@@ -1359,7 +1540,9 @@
         </div>
       </div>
     </div>
-  </div>
+  </div><!-- /.app-container -->
+    </div><!-- /.scroll-content -->
+  </div><!-- /.app-wrapper -->
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
@@ -1374,39 +1557,128 @@
 
   <script>
     // ============================================
-    // PWA STANDALONE DETECTION
+    // PWA STANDALONE DETECTION - iPhone + iPad
     // ============================================
 
-    // Check if running as installed PWA
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-      || window.navigator.standalone
-      || document.referrer.includes('android-app://');
+    // Mehrere Methoden zur Erkennung (iPad braucht mehr Checks)
+    const isStandalone = (function() {
+      // Method 1: Standard display-mode
+      if (window.matchMedia('(display-mode: standalone)').matches) return true;
 
-    // Add class to body for conditional styling
+      // Method 2: iOS Safari (navigator.standalone)
+      if (window.navigator.standalone === true) return true;
+
+      // Method 3: URL Parameter (Fallback)
+      if (window.location.search.includes('standalone=true')) return true;
+
+      // Method 4: Android TWA
+      if (document.referrer.includes('android-app://')) return true;
+
+      // Method 5: Check if opened from homescreen (kein Referrer, kein Opener)
+      if (!document.referrer && !window.opener && window.history.length === 1) {
+        // Könnte Standalone sein, aber nicht 100% sicher
+        return 'maybe';
+      }
+
+      return false;
+    })();
+
+    // iPad-spezifische Erkennung (neue iPads melden sich als "MacIntel")
+    const isIPad = (function() {
+      return navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform);
+    })();
+
+    const isIPhone = /iPhone/.test(navigator.userAgent);
+    const isIOS = isIPad || isIPhone;
+
+    // Logging
+    console.log('📱 Device Detection:', {
+      isStandalone,
+      isIPad,
+      isIPhone,
+      isIOS,
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      standalone: navigator.standalone
+    });
+
+    // Body-Klassen für CSS
     document.addEventListener('DOMContentLoaded', () => {
-      if (isStandalone) {
-        document.body.classList.add('pwa-standalone');
+      document.body.classList.add(isStandalone ? 'pwa-standalone' : 'pwa-browser');
+      document.body.classList.add(isIPad ? 'device-ipad' : 'device-other');
+      document.body.classList.add(isIOS ? 'device-ios' : 'device-non-ios');
+
+      if (isStandalone === true) {
         console.log('✅ Running as PWA Standalone');
+      } else if (isStandalone === 'maybe') {
+        console.log('❓ Possibly running as PWA Standalone');
       } else {
-        document.body.classList.add('pwa-browser');
         console.log('ℹ️ Running in Browser');
       }
     });
 
-    // Prevent accidental navigation away (only in standalone)
-    if (isStandalone) {
+    // Wenn Standalone: Verhindere versehentliche Navigation
+    if (isStandalone === true) {
+      // Verhindere "Verlassen" der App
       window.addEventListener('beforeunload', (e) => {
         e.preventDefault();
         e.returnValue = '';
+      });
+
+      // Verhindere Link-Klicks die aus der App führen würden
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (link && link.href && !link.href.includes(window.location.hostname)) {
+          e.preventDefault();
+          console.log('🚫 External link blocked:', link.href);
+        }
       });
     }
 
     // Register Service Worker (optional - for offline support)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw-agreement.js')
+      navigator.serviceWorker.register('./sw-agreement.js')
         .then(reg => console.log('✅ Service Worker registered'))
         .catch(err => console.log('ℹ️ Service Worker not available'));
     }
+
+    // ============================================
+    // INSTALL PROMPT FÜR IPAD (wenn nicht Standalone)
+    // ============================================
+
+    function showInstallInstructions() {
+      // Nur anzeigen wenn: iPad + nicht Standalone + noch nicht dismissed
+      if (!isIPad || isStandalone === true || sessionStorage.getItem('installDismissed')) {
+        return;
+      }
+
+      const installHint = document.createElement('div');
+      installHint.className = 'install-hint';
+      installHint.innerHTML = `
+        <div class="install-hint-content">
+          <button class="install-hint-close" onclick="this.parentElement.parentElement.remove(); sessionStorage.setItem('installDismissed', 'true');">✕</button>
+          <div class="install-hint-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"></path>
+              <polyline points="16 6 12 2 8 6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <div class="install-hint-text">
+            <strong>Für beste Erfahrung:</strong><br>
+            Tippe auf <span class="share-icon">□↑</span> und dann<br>
+            <strong>"Zum Home-Bildschirm"</strong>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(installHint);
+    }
+
+    // Nach 2 Sekunden anzeigen
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(showInstallInstructions, 2000);
+    });
 
     // ============================================
     // END PWA DETECTION
