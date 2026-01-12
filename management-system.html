@@ -2312,8 +2312,8 @@
       margin-top:8px;
     }
     .reference-image-thumb {
-      width:72px;
-      height:72px;
+      width:150px;
+      height:150px;
       border-radius:6px;
       overflow:hidden;
       cursor:pointer;
@@ -3081,14 +3081,6 @@
       display:flex;
       align-items:center;
       gap:8px;
-    }
-    .detail-section h3::before {
-      content:'';
-      display:inline-block;
-      width:3px;
-      height:12px;
-      background:#0070f3;
-      border-radius:2px;
     }
     .detail-grid {
       display:grid;
@@ -28216,6 +28208,17 @@
                 </div>
               </div>
             </div>
+            ${request.customer_id ? `
+              <div style="margin-top:16px; padding-top:16px; border-top:1px solid #eaeaea;">
+                <button onclick="viewCustomerFromRequest('${request.customer_id}')" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; background:#000; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  View Customer Profile
+                </button>
+              </div>
+            ` : ''}
           </div>
 
           <div class="detail-section">
@@ -28297,7 +28300,7 @@
                     ${request.reference_images.map((img, idx) => `
                       <div style="position:relative;">
                         <div class="reference-image-thumb" onclick="openImageModal('${img}')" style="cursor:pointer;">
-                          <img src="${img}" alt="Reference ${idx + 1}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                          <img src="${img}" alt="Reference ${idx + 1}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2216%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
                         </div>
                         <button onclick="event.stopPropagation();downloadSingleImage('${img}', 'reference_${idx + 1}')" style="position:absolute;bottom:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center" title="Download"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
                       </div>
@@ -28331,52 +28334,6 @@
             </div>
           ` : ''}
 
-          ${request.scheduled_date || request.payment_status ? `
-            <div class="detail-section">
-              <h3>Appointment & Payment</h3>
-              <div class="detail-grid">
-                ${request.scheduled_date ? `
-                  <div class="detail-item">
-                    <div class="detail-label">Scheduled Date</div>
-                    <div class="detail-value">${new Date(request.scheduled_date).toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                  </div>
-                ` : ''}
-                ${request.start_time ? `
-                  <div class="detail-item">
-                    <div class="detail-label">Start Time</div>
-                    <div class="detail-value">${request.start_time}</div>
-                  </div>
-                ` : ''}
-                ${request.end_time ? `
-                  <div class="detail-item">
-                    <div class="detail-label">End Time</div>
-                    <div class="detail-value">${request.end_time}</div>
-                  </div>
-                ` : ''}
-                ${request.payment_status ? `
-                  <div class="detail-item">
-                    <div class="detail-label">Payment Status</div>
-                    <div class="detail-value">
-                      <span style="padding:4px 12px; border-radius:999px; font-size:12px; font-weight:500; ${
-                        request.payment_status === 'fully_paid' ? 'background:#D1FAE5; color:#065F46;' :
-                        request.payment_status === 'deposit_paid' ? 'background:#DBEAFE; color:#1E40AF;' :
-                        request.payment_status === 'refunded' ? 'background:#FEE2E2; color:#991B1B;' :
-                        'background:#FEF3C7; color:#92400E;'
-                      }">
-                        ${request.payment_status}
-                      </span>
-                    </div>
-                  </div>
-                ` : ''}
-                ${request.total_amount ? `
-                  <div class="detail-item">
-                    <div class="detail-label">Total Amount</div>
-                    <div class="detail-value">${request.total_amount}€</div>
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-          ` : ''}
 
           ${request.cancel_reason ? `
             <div class="detail-section">
@@ -28488,6 +28445,26 @@
       if (typeof updateRequestBadges === 'function') window.updateRequestBadges = updateRequestBadges;
 
       console.log('✅ UI functions exposed to window');
+
+      // View Customer Profile from Request Detail Modal
+      window.viewCustomerFromRequest = function(customerId) {
+        if (!customerId) {
+          console.warn('No customer ID provided');
+          return;
+        }
+
+        // Close request detail modal
+        if (typeof closeRequestDetail === 'function') {
+          closeRequestDetail();
+        }
+
+        // Open customer detail modal
+        if (typeof showCustomerDetail === 'function') {
+          showCustomerDetail(customerId);
+        } else {
+          console.warn('showCustomerDetail function not found');
+        }
+      };
 
       // Assign Request
       let assigningRequestId = null; // Track which request is being assigned
