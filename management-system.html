@@ -15,23 +15,73 @@
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- jQuery + jQVMap for World Map (using jsdelivr CDN) -->
+  <!-- jQuery + jQVMap for World Map -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jqvmap@1.5.1/dist/jqvmap.min.css">
   <script src="https://cdn.jsdelivr.net/npm/jqvmap@1.5.1/dist/jquery.vmap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jqvmap@1.5.1/dist/maps/jquery.vmap.world.js" onerror="console.error('❌ Failed to load jQVMap world map data!')"></script>
   <script>
-    // Verify jQVMap loaded correctly
-    window.addEventListener('DOMContentLoaded', function() {
-      if (typeof jQuery !== 'undefined' && jQuery.fn.vectorMap) {
-        var maps = jQuery.fn.vectorMap.maps || {};
-        console.log('🗺️ jQVMap loaded. Available maps:', Object.keys(maps));
-        if (!maps['world_en']) {
-          console.warn('⚠️ world_en map not found in jQVMap.maps');
-        }
-      } else {
-        console.error('❌ jQVMap not loaded properly');
+    // Flag to track if map is ready
+    window.jqvmapWorldReady = false;
+
+    // Function to dynamically load world map script with multiple CDN fallbacks
+    function loadWorldMapScript(urls, index) {
+      if (index >= urls.length) {
+        console.warn('⚠️ All CDN attempts failed for world map. Table view will be used.');
+        window.jqvmapWorldReady = false;
+        return;
       }
+
+      var script = document.createElement('script');
+      script.src = urls[index];
+      script.onload = function() {
+        // Check if map was registered
+        if (jQuery.fn.vectorMap && jQuery.fn.vectorMap.maps && jQuery.fn.vectorMap.maps['world_en']) {
+          console.log('✅ world_en map loaded from:', urls[index]);
+          window.jqvmapWorldReady = true;
+        } else {
+          console.warn('⚠️ Script loaded but map not registered, trying next CDN...');
+          loadWorldMapScript(urls, index + 1);
+        }
+      };
+      script.onerror = function() {
+        console.warn('⚠️ Failed to load from:', urls[index]);
+        loadWorldMapScript(urls, index + 1);
+      };
+      document.head.appendChild(script);
+    }
+
+    // Wait for jQuery and jQVMap to be ready, then load world map
+    window.addEventListener('DOMContentLoaded', function() {
+      if (typeof jQuery === 'undefined') {
+        console.error('❌ jQuery not loaded');
+        return;
+      }
+      if (!jQuery.fn.vectorMap) {
+        console.error('❌ jQVMap not loaded');
+        return;
+      }
+
+      // Initialize maps object if needed
+      if (!jQuery.fn.vectorMap.maps) {
+        jQuery.fn.vectorMap.maps = {};
+      }
+
+      // Check if already loaded
+      if (jQuery.fn.vectorMap.maps['world_en']) {
+        console.log('✅ world_en already registered');
+        window.jqvmapWorldReady = true;
+        return;
+      }
+
+      // Try loading from multiple CDNs
+      var cdnUrls = [
+        'https://cdn.jsdelivr.net/npm/jqvmap@1.5.1/dist/maps/jquery.vmap.world.js',
+        'https://unpkg.com/jqvmap@1.5.1/dist/maps/jquery.vmap.world.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/jqvmap/1.5.1/maps/jquery.vmap.world.js'
+      ];
+
+      console.log('🔄 Loading world map from CDN fallbacks...');
+      loadWorldMapScript(cdnUrls, 0);
     });
   </script>
 
@@ -43826,7 +43876,46 @@
 
     // Render World Map with jQVMap
     let worldMapRetryCount = 0;
-    const MAX_WORLD_MAP_RETRIES = 5;
+    const MAX_WORLD_MAP_RETRIES = 10;
+
+    function renderWorldMapFallback(container, countries, totalPageviews) {
+      // Beautiful visual fallback with color-coded bars
+      const maxPageviews = Math.max(...countries.map(c => c.pageviews || 0));
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:10px; padding:16px; height:100%; overflow-y:auto;">
+          <div style="font-size:12px; color:#86868b; margin-bottom:4px;">📍 Top Countries by Pageviews</div>
+          ${countries.slice(0, 12).map((c, i) => {
+            const pv = c.pageviews || 0;
+            const pct = totalPageviews > 0 ? ((pv / totalPageviews) * 100).toFixed(1) : 0;
+            const barWidth = maxPageviews > 0 ? Math.max(5, (pv / maxPageviews) * 100) : 5;
+            const colors = ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'];
+            const color = colors[Math.min(i, colors.length - 1)];
+            return `
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:24px; text-align:center;">
+                  <img src="https://flagcdn.com/24x18/${c.code?.toLowerCase()}.png"
+                       width="24" height="18"
+                       onerror="this.outerHTML='<span style=font-size:16px>🌍</span>'"
+                       style="border-radius:3px; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                    <span style="font-weight:500; font-size:13px; color:#1d1d1f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.country || c.code}</span>
+                    <span style="font-size:12px; color:#86868b; margin-left:8px;">${pct}%</span>
+                  </div>
+                  <div style="height:6px; background:#f3f4f6; border-radius:3px; overflow:hidden;">
+                    <div style="height:100%; width:${barWidth}%; background:${color}; border-radius:3px; transition:width 0.3s ease;"></div>
+                  </div>
+                </div>
+                <div style="font-weight:600; font-size:13px; color:#1d1d1f; min-width:60px; text-align:right;">
+                  ${pv.toLocaleString('de-DE')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
 
     function renderWorldMap() {
       console.log('🗺️ renderWorldMap() called, retry:', worldMapRetryCount);
@@ -43836,15 +43925,13 @@
         console.log('🗺️ worldMapContainer not found');
         return;
       }
-      console.log('🗺️ worldMapContainer found:', mapContainer);
 
       const data = postHogWebAnalyticsData;
       if (!data || !data.countries || data.countries.length === 0) {
-        console.log('🗺️ No countries data available:', data?.countries);
+        console.log('🗺️ No countries data available');
         mapContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#86868b;">No country data available</div>';
         return;
       }
-      console.log('🗺️ Countries data:', data.countries.length, 'countries');
 
       // Convert country data to jQVMap format (uses lowercase codes)
       countryMapData = {};
@@ -43859,102 +43946,77 @@
           totalPageviews += c.pageviews || 0;
         }
       });
-      console.log('🗺️ Country map data prepared:', Object.keys(countryMapData).length, 'countries, total:', totalPageviews);
 
       // Check if jQVMap is available
       const jQueryAvailable = typeof jQuery !== 'undefined';
       const vectorMapAvailable = jQueryAvailable && typeof jQuery.fn.vectorMap !== 'undefined';
-      console.log('🗺️ jQuery:', jQueryAvailable, 'vectorMap:', vectorMapAvailable);
+      const mapRegistered = vectorMapAvailable && jQuery.fn.vectorMap.maps && jQuery.fn.vectorMap.maps['world_en'];
 
-      if (jQueryAvailable && vectorMapAvailable) {
-        const $mapContainer = jQuery('#worldMapContainer');
+      console.log('🗺️ jQuery:', jQueryAvailable, 'vectorMap:', vectorMapAvailable, 'world_en:', !!mapRegistered);
 
-        // Check container dimensions
-        const containerWidth = $mapContainer.width();
-        const containerHeight = $mapContainer.height();
-        console.log('🗺️ Container dimensions:', containerWidth, 'x', containerHeight);
+      // If map not ready yet, wait and retry
+      if (!mapRegistered && worldMapRetryCount < MAX_WORLD_MAP_RETRIES) {
+        worldMapRetryCount++;
+        console.log('🗺️ Map not ready, waiting... retry', worldMapRetryCount, 'of', MAX_WORLD_MAP_RETRIES);
+        mapContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#86868b;"><span style="margin-right:8px;">🔄</span>Loading world map...</div>';
+        setTimeout(() => renderWorldMap(), 300);
+        return;
+      }
 
-        if (containerWidth === 0 || containerHeight === 0) {
-          if (worldMapRetryCount < MAX_WORLD_MAP_RETRIES) {
-            worldMapRetryCount++;
-            console.warn('🗺️ Container has zero dimensions, retry', worldMapRetryCount, 'of', MAX_WORLD_MAP_RETRIES);
-            setTimeout(() => renderWorldMap(), 200);
-            return;
-          } else {
-            console.warn('🗺️ Max retries reached for zero dimensions');
-          }
-        }
-
-        // Reset retry counter on successful dimension check
+      // If still not ready after max retries, show fallback
+      if (!mapRegistered) {
+        console.log('🗺️ Map not available after retries, showing fallback view');
+        renderWorldMapFallback(mapContainer, data.countries, totalPageviews);
         worldMapRetryCount = 0;
+        return;
+      }
 
-        $mapContainer.empty();
+      const $mapContainer = jQuery('#worldMapContainer');
 
-        try {
-          // Check if world_en map is registered
-          const mapRegistered = jQuery.fn.vectorMap.maps && jQuery.fn.vectorMap.maps['world_en'];
-          console.log('🗺️ world_en map registered:', !!mapRegistered);
+      // Check container dimensions
+      const containerWidth = $mapContainer.width();
+      const containerHeight = $mapContainer.height();
 
-          if (!mapRegistered) {
-            throw new Error('Map "world_en" is not registered. The map data file may not have loaded correctly.');
-          }
-
-          $mapContainer.vectorMap({
-            map: 'world_en',
-            backgroundColor: 'transparent',
-            borderColor: '#ffffff',
-            borderWidth: 0.5,
-            color: '#e5e7eb',
-            hoverColor: '#93c5fd',
-            hoverOpacity: 0.8,
-            enableZoom: false,
-            showTooltip: true,
-            values: countryMapData,
-            scaleColors: ['#dbeafe', '#1d4ed8'],
-            normalizeFunction: 'polynomial',
-            onLabelShow: function(e, el, code) {
-              const lowerCode = code.toLowerCase();
-              const pageviews = countryMapData[lowerCode] || 0;
-              const name = countryNames[lowerCode] || code.toUpperCase();
-              const percentage = totalPageviews > 0 ? ((pageviews / totalPageviews) * 100).toFixed(1) : 0;
-              el.html(`<div style="padding:8px; font-family:Geist, sans-serif;"><strong>${name}</strong><br>${pageviews.toLocaleString('de-DE')} pageviews (${percentage}%)</div>`);
-            }
-          });
-          console.log('✅ World map rendered successfully');
-        } catch (err) {
-          console.error('❌ jQVMap error:', err.message || err);
-          console.error('❌ jQVMap stack:', err.stack || 'No stack trace');
-          // Show fallback list instead of error message
-          mapContainer.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:8px; padding:16px;">
-              ${data.countries.slice(0, 10).map(c => `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span style="display:flex; align-items:center; gap:8px;">
-                    <img src="https://flagcdn.com/16x12/${c.code?.toLowerCase()}.png" width="16" height="12" onerror="this.style.display='none'" style="border-radius:2px;">
-                    ${c.country || c.code}
-                  </span>
-                  <span style="font-weight:500;">${(c.pageviews || 0).toLocaleString('de-DE')}</span>
-                </div>
-              `).join('')}
-            </div>
-          `;
+      if (containerWidth === 0 || containerHeight === 0) {
+        if (worldMapRetryCount < MAX_WORLD_MAP_RETRIES) {
+          worldMapRetryCount++;
+          console.warn('🗺️ Container has zero dimensions, retry', worldMapRetryCount);
+          setTimeout(() => renderWorldMap(), 200);
+          return;
         }
-      } else {
-        console.log('🗺️ jQVMap not available, showing fallback list');
-        // Fallback: show simple list with flags
-        mapContainer.innerHTML = `
-          <div style="display:flex; flex-direction:column; gap:8px; padding:16px;">
-            ${data.countries.slice(0, 10).map(c => `
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="display:flex; align-items:center; gap:8px;">
-                  <img src="https://flagcdn.com/16x12/${c.code?.toLowerCase()}.png" width="16" height="12" onerror="this.style.display='none'" style="border-radius:2px;">
-                  ${c.country || c.code}
-                </span>
-                <span style="font-weight:500;">${(c.pageviews || 0).toLocaleString('de-DE')}</span>
-              </div>
-            `).join('')}
-          </div>
-        `;
+      }
+
+      // Reset retry counter
+      worldMapRetryCount = 0;
+      $mapContainer.empty();
+
+      try {
+        $mapContainer.vectorMap({
+          map: 'world_en',
+          backgroundColor: 'transparent',
+          borderColor: '#ffffff',
+          borderWidth: 0.5,
+          color: '#e5e7eb',
+          hoverColor: '#93c5fd',
+          hoverOpacity: 0.8,
+          enableZoom: false,
+          showTooltip: true,
+          values: countryMapData,
+          scaleColors: ['#dbeafe', '#1d4ed8'],
+          normalizeFunction: 'polynomial',
+          onLabelShow: function(e, el, code) {
+            const lowerCode = code.toLowerCase();
+            const pageviews = countryMapData[lowerCode] || 0;
+            const name = countryNames[lowerCode] || code.toUpperCase();
+            const percentage = totalPageviews > 0 ? ((pageviews / totalPageviews) * 100).toFixed(1) : 0;
+            el.html(`<div style="padding:8px; font-family:Geist, sans-serif;"><strong>${name}</strong><br>${pageviews.toLocaleString('de-DE')} pageviews (${percentage}%)</div>`);
+          }
+        });
+        console.log('✅ World map rendered successfully');
+      } catch (err) {
+        console.error('❌ jQVMap error:', err.message || err);
+        // Show fallback on error
+        renderWorldMapFallback(mapContainer, data.countries, totalPageviews);
       }
     }
 
