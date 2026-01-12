@@ -15,11 +15,11 @@
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- jQuery + jVectorMap for World Map -->
+  <!-- jQuery + jQVMap for World Map (jvectormap fork with better compatibility) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jvectormap@2.0.4/jquery-jvectormap.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/jvectormap@2.0.4/jquery-jvectormap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jvectormap@2.0.4/maps/jquery-jvectormap-world-mill.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jqvmap@1.5.1/dist/jqvmap.min.css">
+  <script src="https://unpkg.com/jqvmap@1.5.1/dist/jquery.vmap.min.js"></script>
+  <script src="https://unpkg.com/jqvmap@1.5.1/dist/maps/jquery.vmap.world.js"></script>
 
   <!-- Geist Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42967,20 +42967,22 @@
       const { start, end } = getPostHogDateRange();
       const query = `
         SELECT
+          properties.$geoip_country_code as code,
           properties.$geoip_country_name as country,
-          count() as count
+          count() as pageviews
         FROM events
         WHERE event = '$pageview'
           AND timestamp >= '${start}'
           AND timestamp <= '${end} 23:59:59'
-        GROUP BY properties.$geoip_country_name
-        ORDER BY count DESC
-        LIMIT 10
+        GROUP BY properties.$geoip_country_code, properties.$geoip_country_name
+        ORDER BY pageviews DESC
+        LIMIT 20
       `;
       const result = await queryPostHog(query);
       return (result.results || []).map(row => ({
-        country: row[0] || 'Unknown',
-        count: row[1] || 0
+        code: row[0] || '',
+        country: row[1] || 'Unknown',
+        pageviews: row[2] || 0
       }));
     }
 
@@ -43256,6 +43258,10 @@
         };
 
         console.log('✅ PostHog data loaded:', postHogWebAnalyticsData);
+        console.log('🗺️ Countries data from PostHog:', postHogWebAnalyticsData.countries?.length || 0, 'countries');
+        if (postHogWebAnalyticsData.countries && postHogWebAnalyticsData.countries.length > 0) {
+          console.log('🗺️ Sample country data:', postHogWebAnalyticsData.countries[0]);
+        }
         postHogLoading = false;
         renderWebAnalyticsDashboard();
 
@@ -43266,6 +43272,102 @@
         renderWebAnalyticsDashboard();
       }
     }
+
+    // Load Website Traffic data using PostHog
+    async function loadWebsiteTrafficData() {
+      console.log('📊 Loading Website Traffic data...');
+      const colors = getAnalyticsChartColors ? getAnalyticsChartColors() : {
+        blue: '#0070f3', green: '#10b981', purple: '#8b5cf6', orange: '#f59e0b', pink: '#ec4899'
+      };
+
+      // Check if PostHog is configured
+      if (!isPostHogConfigured()) {
+        // Show message in KPIs
+        const el1 = document.getElementById('trafficTotalVisitors');
+        const el2 = document.getElementById('trafficPageViews');
+        const el3 = document.getElementById('trafficAvgSession');
+        const el4 = document.getElementById('trafficBounceRate');
+        if (el1) el1.textContent = '--';
+        if (el2) el2.textContent = '--';
+        if (el3) el3.textContent = '--';
+        if (el4) el4.textContent = '--';
+        console.log('⚠️ PostHog not configured for Website Traffic');
+        return;
+      }
+
+      try {
+        // Load PostHog data if not already loaded
+        if (!postHogWebAnalyticsData || !postHogWebAnalyticsData.pageviews) {
+          await loadPostHogWebAnalytics();
+        }
+
+        const data = postHogWebAnalyticsData;
+        if (!data) {
+          console.log('⚠️ No PostHog data available');
+          return;
+        }
+
+        // Update KPIs
+        const el1 = document.getElementById('trafficTotalVisitors');
+        const el2 = document.getElementById('trafficPageViews');
+        const el3 = document.getElementById('trafficAvgSession');
+        const el4 = document.getElementById('trafficBounceRate');
+
+        if (el1) el1.textContent = (data.uniqueVisitors || 0).toLocaleString('de-DE');
+        if (el2) el2.textContent = (data.pageviews || 0).toLocaleString('de-DE');
+        if (el3) el3.textContent = formatDuration(data.avgSessionDuration || 0);
+        const bounceRateNum = parseFloat(data.bounceRate) || 0;
+        if (el4) el4.textContent = bounceRateNum.toFixed(1) + '%';
+
+        // Visitors Over Time Chart
+        if (data.pageviewsOverTime && data.pageviewsOverTime.length > 0) {
+          const labels = data.pageviewsOverTime.map(d => {
+            const date = new Date(d.date);
+            return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+          });
+          const values = data.pageviewsOverTime.map(d => d.pageviews || 0);
+
+          createAnalyticsLineChart('trafficTimelineChart', labels, [{
+            label: 'Visitors',
+            data: values,
+            borderColor: colors.blue,
+            backgroundColor: 'rgba(0, 112, 243, 0.1)'
+          }]);
+        }
+
+        // Traffic Sources Pie Chart (from referrers)
+        if (data.topReferrers && data.topReferrers.length > 0) {
+          const sourceColors = [colors.blue, colors.green, colors.purple, colors.orange, colors.pink];
+          createAnalyticsPieChart('trafficSourcesChart', 'trafficSourcesLegend',
+            data.topReferrers.slice(0, 5).map((item, i) => ({
+              label: item.referrer === '$direct' ? 'Direct' : (item.referrer || 'Unknown'),
+              value: item.visits || 0,
+              color: sourceColors[i % sourceColors.length],
+              display: (item.visits || 0).toLocaleString('de-DE')
+            }))
+          );
+        }
+
+        // Devices Pie Chart
+        if (data.devices && data.devices.length > 0) {
+          const deviceColors = [colors.blue, colors.green, colors.purple];
+          createAnalyticsPieChart('trafficDevicesChart', 'trafficDevicesLegend',
+            data.devices.slice(0, 5).map((item, i) => ({
+              label: item.device || 'Unknown',
+              value: item.count || 0,
+              color: deviceColors[i % deviceColors.length],
+              display: (item.count || 0).toLocaleString('de-DE')
+            }))
+          );
+        }
+
+        console.log('✅ Website Traffic data loaded successfully');
+
+      } catch (error) {
+        console.error('❌ Error loading Website Traffic data:', error);
+      }
+    }
+    window.loadWebsiteTrafficData = loadWebsiteTrafficData;
 
     // Set PostHog period filter
     function setPostHogPeriod(period) {
@@ -43370,21 +43472,21 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               Pageviews
             </div>
-            <div class="kpi-value">${data.pageviews.toLocaleString('de-DE')}</div>
+            <div class="kpi-value">${(data.pageviews || 0).toLocaleString('de-DE')}</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               Unique Visitors
             </div>
-            <div class="kpi-value">${data.uniqueVisitors.toLocaleString('de-DE')}</div>
+            <div class="kpi-value">${(data.uniqueVisitors || 0).toLocaleString('de-DE')}</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
               Sessions
             </div>
-            <div class="kpi-value">${data.sessions.toLocaleString('de-DE')}</div>
+            <div class="kpi-value">${(data.sessions || 0).toLocaleString('de-DE')}</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">
@@ -43437,10 +43539,10 @@
                     </tr>
                   </thead>
                   <tbody>
-                    ${data.topPages.length > 0 ? data.topPages.map((item, i) => `
+                    ${data.topPages && data.topPages.length > 0 ? data.topPages.map((item, i) => `
                       <tr style="border-bottom:1px solid #eaeaea;">
-                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.page}">${item.page}</td>
-                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; text-align:right; font-weight:500;">${item.views.toLocaleString('de-DE')}</td>
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.page || ''}">${item.page || 'Unknown'}</td>
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; text-align:right; font-weight:500;">${(item.views || 0).toLocaleString('de-DE')}</td>
                       </tr>
                     `).join('') : '<tr><td colspan="2" style="padding:20px; text-align:center; color:#86868b;">No data available</td></tr>'}
                   </tbody>
@@ -43464,10 +43566,10 @@
                     </tr>
                   </thead>
                   <tbody>
-                    ${data.topReferrers.length > 0 ? data.topReferrers.map((item, i) => `
+                    ${data.topReferrers && data.topReferrers.length > 0 ? data.topReferrers.map((item, i) => `
                       <tr style="border-bottom:1px solid #eaeaea;">
-                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.referrer}">${extractDomain(item.referrer)}</td>
-                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; text-align:right; font-weight:500;">${item.visits.toLocaleString('de-DE')}</td>
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.referrer || ''}">${extractDomain(item.referrer || '')}</td>
+                        <td style="padding:12px 16px; font-size:14px; color:#1d1d1f; text-align:right; font-weight:500;">${(item.visits || 0).toLocaleString('de-DE')}</td>
                       </tr>
                     `).join('') : '<tr><td colspan="2" style="padding:20px; text-align:center; color:#86868b;">No referrer data</td></tr>'}
                   </tbody>
@@ -43621,7 +43723,8 @@
           </thead>
           <tbody>
             ${countries.slice(0, 15).map((c, i) => {
-              const pct = total > 0 ? ((c.pageviews / total) * 100).toFixed(1) : 0;
+              const pageviews = c.pageviews || 0;
+              const pct = total > 0 ? ((pageviews / total) * 100).toFixed(1) : 0;
               const code = c.code?.toLowerCase() || '';
               return `
                 <tr style="border-bottom:1px solid #f3f4f6;">
@@ -43632,7 +43735,7 @@
                       ${c.country || c.code || 'Unknown'}
                     </span>
                   </td>
-                  <td style="padding:10px 16px; font-size:13px; color:#1d1d1f; text-align:right; font-weight:500;">${c.pageviews?.toLocaleString('de-DE') || 0}</td>
+                  <td style="padding:10px 16px; font-size:13px; color:#1d1d1f; text-align:right; font-weight:500;">${pageviews.toLocaleString('de-DE')}</td>
                   <td style="padding:10px 16px; font-size:13px; color:#86868b; text-align:right;">${pct}%</td>
                 </tr>
               `;
@@ -43707,82 +43810,79 @@
     }
     window.showWorldTableView = showWorldTableView;
 
-    // Render World Map with jVectorMap
+    // Render World Map with jQVMap
     function renderWorldMap() {
+      console.log('🗺️ renderWorldMap() called');
+
       const mapContainer = document.getElementById('worldMapContainer');
-      if (!mapContainer) return;
+      if (!mapContainer) {
+        console.log('🗺️ worldMapContainer not found');
+        return;
+      }
+      console.log('🗺️ worldMapContainer found:', mapContainer);
 
       const data = postHogWebAnalyticsData;
-      if (!data.countries || data.countries.length === 0) {
+      if (!data || !data.countries || data.countries.length === 0) {
+        console.log('🗺️ No countries data available:', data?.countries);
         mapContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#86868b;">No country data available</div>';
         return;
       }
+      console.log('🗺️ Countries data:', data.countries.length, 'countries');
 
-      // Convert country data to jVectorMap format
+      // Convert country data to jQVMap format (uses lowercase codes)
       countryMapData = {};
       countryNames = {};
       let totalPageviews = 0;
 
       data.countries.forEach(c => {
-        const code = c.code?.toUpperCase();
+        const code = c.code?.toLowerCase();
         if (code) {
           countryMapData[code] = c.pageviews || 0;
-          countryNames[code] = c.country || code;
+          countryNames[code] = c.country || code.toUpperCase();
           totalPageviews += c.pageviews || 0;
         }
       });
+      console.log('🗺️ Country map data prepared:', Object.keys(countryMapData).length, 'countries, total:', totalPageviews);
 
-      // Check if jVectorMap is available
-      if (typeof jQuery !== 'undefined' && typeof jQuery.fn.vectorMap !== 'undefined') {
+      // Check if jQVMap is available
+      const jQueryAvailable = typeof jQuery !== 'undefined';
+      const vectorMapAvailable = jQueryAvailable && typeof jQuery.fn.vectorMap !== 'undefined';
+      console.log('🗺️ jQuery:', jQueryAvailable, 'vectorMap:', vectorMapAvailable);
+
+      if (jQueryAvailable && vectorMapAvailable) {
         const $mapContainer = jQuery('#worldMapContainer');
         $mapContainer.empty();
 
         try {
           $mapContainer.vectorMap({
-            map: 'world_mill',
+            map: 'world_en',
             backgroundColor: 'transparent',
-            zoomOnScroll: false,
-            panOnDrag: false,
-            regionStyle: {
-              initial: {
-                fill: '#e5e7eb',
-                'fill-opacity': 1,
-                stroke: '#fff',
-                'stroke-width': 0.5,
-                'stroke-opacity': 1
-              },
-              hover: {
-                'fill-opacity': 0.8,
-                cursor: 'pointer'
-              }
-            },
-            series: {
-              regions: [{
-                values: countryMapData,
-                scale: ['#dbeafe', '#1d4ed8'],
-                normalizeFunction: 'polynomial',
-                min: 0,
-                max: Math.max(...Object.values(countryMapData)) || 1
-              }]
-            },
-            onRegionTipShow: function(e, el, code) {
-              const pageviews = countryMapData[code] || 0;
-              const name = countryNames[code] || code;
+            borderColor: '#ffffff',
+            borderWidth: 0.5,
+            color: '#e5e7eb',
+            hoverColor: '#93c5fd',
+            hoverOpacity: 0.8,
+            enableZoom: false,
+            showTooltip: true,
+            values: countryMapData,
+            scaleColors: ['#dbeafe', '#1d4ed8'],
+            normalizeFunction: 'polynomial',
+            onLabelShow: function(e, el, code) {
+              const lowerCode = code.toLowerCase();
+              const pageviews = countryMapData[lowerCode] || 0;
+              const name = countryNames[lowerCode] || code.toUpperCase();
               const percentage = totalPageviews > 0 ? ((pageviews / totalPageviews) * 100).toFixed(1) : 0;
-              el.html(`
-                <div style="padding:8px; font-family:Geist, sans-serif;">
-                  <strong>${name}</strong><br>
-                  ${pageviews.toLocaleString('de-DE')} pageviews (${percentage}%)
-                </div>
-              `);
+              el.html(`<div style="padding:8px; font-family:Geist, sans-serif;"><strong>${name}</strong><br>${pageviews.toLocaleString('de-DE')} pageviews (${percentage}%)</div>`);
             }
           });
+          console.log('✅ World map rendered successfully');
         } catch (err) {
-          console.warn('jVectorMap error:', err);
+          console.error('❌ jQVMap error:', err);
           mapContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#86868b;">Map could not be loaded</div>';
         }
       } else {
-        // Fallback: show simple list
+        console.log('🗺️ jQVMap not available, showing fallback list');
+        // Fallback: show simple list with flags
         mapContainer.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:8px; padding:16px;">
             ${data.countries.slice(0, 10).map(c => `
@@ -43791,7 +43891,7 @@
                   <img src="https://flagcdn.com/16x12/${c.code?.toLowerCase()}.png" width="16" height="12" onerror="this.style.display='none'" style="border-radius:2px;">
                   ${c.country || c.code}
                 </span>
-                <span style="font-weight:500;">${c.pageviews?.toLocaleString('de-DE') || 0}</span>
+                <span style="font-weight:500;">${(c.pageviews || 0).toLocaleString('de-DE')}</span>
               </div>
             `).join('')}
           </div>
@@ -43825,7 +43925,7 @@
 
       // Pageviews Line Chart
       const pageviewsCanvas = document.getElementById('postHogPageviewsChart');
-      if (pageviewsCanvas && data.pageviewsOverTime.length > 0) {
+      if (pageviewsCanvas && data.pageviewsOverTime && data.pageviewsOverTime.length > 0) {
         const labels = data.pageviewsOverTime.map(d => {
           const date = new Date(d.date);
           return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
@@ -43867,37 +43967,38 @@
       }
 
       // Browsers Pie Chart
-      if (data.browsers.length > 0) {
+      if (data.browsers && data.browsers.length > 0) {
         createAnalyticsPieChart('postHogBrowsersChart', 'postHogBrowsersLegend',
           data.browsers.map((item, i) => ({
-            label: item.browser,
-            value: item.count,
+            label: item.browser || 'Unknown',
+            value: item.count || 0,
             color: colors[i % colors.length],
-            display: item.count.toLocaleString('de-DE')
+            display: (item.count || 0).toLocaleString('de-DE')
           }))
         );
       }
 
       // Devices Pie Chart
-      if (data.devices.length > 0) {
+      if (data.devices && data.devices.length > 0) {
         createAnalyticsPieChart('postHogDevicesChart', 'postHogDevicesLegend',
           data.devices.map((item, i) => ({
             label: item.device || 'Unknown',
-            value: item.count,
+            value: item.count || 0,
             color: colors[i % colors.length],
-            display: item.count.toLocaleString('de-DE')
+            display: (item.count || 0).toLocaleString('de-DE')
           }))
         );
       }
 
-      // Countries Pie Chart
-      if (data.countries.length > 0) {
+      // Countries Pie Chart (only if canvas exists - countries are also shown in world map)
+      const countriesCanvas = document.getElementById('postHogCountriesChart');
+      if (countriesCanvas && data.countries && data.countries.length > 0) {
         createAnalyticsPieChart('postHogCountriesChart', 'postHogCountriesLegend',
           data.countries.slice(0, 5).map((item, i) => ({
-            label: item.country,
-            value: item.count,
+            label: item.country || 'Unknown',
+            value: item.pageviews || item.count || 0,
             color: colors[i % colors.length],
-            display: item.count.toLocaleString('de-DE')
+            display: (item.pageviews || item.count || 0).toLocaleString('de-DE')
           }))
         );
       }
@@ -46307,8 +46408,9 @@
           // Berechne Total für % Werte
           const total = data.reduce((sum, d) => sum + (d.value || 0), 0);
           legendContainer.innerHTML = data.map(d => {
-            const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : 0;
-            const displayValue = d.display || d.value.toLocaleString('de-DE');
+            const val = d.value || 0;
+            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+            const displayValue = d.display || val.toLocaleString('de-DE');
             return `
             <div class="legend-item">
               <div class="legend-label">
@@ -46914,6 +47016,11 @@
           case 'web-analytics':
             // PostHog Web Analytics
             loadPostHogWebAnalytics();
+            break;
+
+          case 'traffic':
+            // Website Traffic - Uses PostHog data
+            loadWebsiteTrafficData();
             break;
 
           default:
