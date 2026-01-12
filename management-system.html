@@ -28447,44 +28447,22 @@
       console.log('✅ UI functions exposed to window');
 
       // View Customer Profile from Request Detail Modal
-      window.viewCustomerFromRequest = async function(customerId) {
+      window.viewCustomerFromRequest = function(customerId) {
         if (!customerId) {
           console.warn('No customer ID provided');
           return;
         }
 
-        try {
-          // Get customer email for search
-          const { data: customer, error } = await supabase
-            .from('customers')
-            .select('email, first_name, last_name')
-            .eq('id', customerId)
-            .single();
+        // Close request detail modal first
+        if (typeof closeRequestDetail === 'function') {
+          closeRequestDetail();
+        }
 
-          if (error) throw error;
-
-          // Close request detail modal
-          if (typeof closeRequestDetail === 'function') {
-            closeRequestDetail();
-          }
-
-          // Navigate to customers tab
-          const customersTab = document.getElementById('tab-customers');
-          if (customersTab) {
-            showSection(customersTab);
-
-            // Set search filter to customer email or name after tab loads
-            setTimeout(() => {
-              const searchInput = document.querySelector('#customers-section input[type="text"]');
-              if (searchInput && customer) {
-                const searchTerm = customer.email || `${customer.first_name} ${customer.last_name}`.trim();
-                searchInput.value = searchTerm;
-                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-              }
-            }, 300);
-          }
-        } catch (err) {
-          console.error('Error navigating to customer:', err);
+        // Open customer profile modal (same as on Customers page)
+        if (typeof openCustomerProfile === 'function') {
+          openCustomerProfile(customerId);
+        } else {
+          console.error('openCustomerProfile function not found');
         }
       };
 
