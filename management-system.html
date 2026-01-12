@@ -3067,9 +3067,9 @@
     .detail-section {
       margin-bottom:20px;
       padding:16px 20px;
-      background:#fafafa;
+      background:#fff;
       border:1px solid #eaeaea;
-      border-radius:8px;
+      border-radius:12px;
     }
     .detail-section h3 {
       font-size:12px;
@@ -20683,7 +20683,7 @@
           }
         }
 
-        // 3. Neuen Customer erstellen
+        // 3. Neuen Customer erstellen (mit "Neukunde" Rang - wird bei erstem Termin auf "Bronze" upgraded)
         const { data: newCustomer, error: insertError } = await supabase
           .from('customers')
           .insert({
@@ -20692,7 +20692,7 @@
             email: email?.trim().toLowerCase() || null,
             phone: phone?.trim() || null,
             instagram: instagram?.trim() || null,
-            rank: 'Bronze',
+            rank: 'Neukunde',
             total_bookings: 0,
             total_spent: 0
           })
@@ -20798,6 +20798,19 @@
         .from('requests')
         .update({ appointment_id: appointment.id })
         .eq('id', request.id);
+
+      // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem Termin
+      if (request.customer_id) {
+        const { error: rankError } = await supabase
+          .from('customers')
+          .update({ rank: 'Bronze' })
+          .eq('id', request.customer_id)
+          .eq('rank', 'Neukunde');  // Nur wenn aktuell "Neukunde"
+
+        if (!rankError) {
+          console.log('🎖️ Customer upgraded from Neukunde to Bronze');
+        }
+      }
 
       console.log('✅ Appointment created:', appointment.id);
       return appointment;
@@ -28139,10 +28152,11 @@
 
         // Rank badge styling
         const rankBadgeStyle = customer.rank ? {
-          'Platinum': 'background:#FFD700; color:#1d1d1f;',
-          'Gold': 'background:#FF8C00; color:white;',
-          'Silver': 'background:#C0C0C0; color:#1d1d1f;',
-          'Bronze': 'background:#CD7F32; color:white;'
+          'Platinum': 'background:linear-gradient(135deg, #7C6FB5 0%, #5856D6 100%); color:white;',
+          'Gold': 'background:linear-gradient(135deg, #FFD700 0%, #D4AF37 100%); color:#1d1d1f;',
+          'Silver': 'background:linear-gradient(135deg, #A8A9AD 0%, #71706E 100%); color:white;',
+          'Bronze': 'background:linear-gradient(135deg, #CD7F32 0%, #B87333 100%); color:white;',
+          'Neukunde': 'background:#1e3a5f; color:white;'
         }[customer.rank] || '' : '';
 
         // Action Buttons generieren
@@ -28738,10 +28752,11 @@
 
         // Rank badge styling
         const rankBadgeStyle = customer.rank ? {
-          'Platinum': 'background:#FFD700; color:#1d1d1f;',
-          'Gold': 'background:#FF8C00; color:white;',
-          'Silver': 'background:#C0C0C0; color:#1d1d1f;',
-          'Bronze': 'background:#CD7F32; color:white;'
+          'Platinum': 'background:linear-gradient(135deg, #7C6FB5 0%, #5856D6 100%); color:white;',
+          'Gold': 'background:linear-gradient(135deg, #FFD700 0%, #D4AF37 100%); color:#1d1d1f;',
+          'Silver': 'background:linear-gradient(135deg, #A8A9AD 0%, #71706E 100%); color:white;',
+          'Bronze': 'background:linear-gradient(135deg, #CD7F32 0%, #B87333 100%); color:white;',
+          'Neukunde': 'background:#1e3a5f; color:white;'
         }[customer.rank] || '' : '';
 
         detailEl.innerHTML = `
@@ -35532,15 +35547,24 @@
 
           if (error) throw error;
 
+          // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem Termin
+          if (customerId) {
+            await supabase
+              .from('customers')
+              .update({ rank: 'Bronze' })
+              .eq('id', customerId)
+              .eq('rank', 'Neukunde');
+          }
+
           // Close modal and reset form
           document.getElementById('createBookingModal').classList.remove('active');
           document.getElementById('createBookingForm').reset();
           resetCreateBookingArtistSelection();
-          
+
           // Reload events and refresh calendar
           await loadEvents();
           renderCalendar();
-          
+
           alert('Booking created successfully!');
         } catch (err) {
           console.error('Error creating booking:', err);
@@ -59656,6 +59680,15 @@
           .select();
 
         if (error) throw error;
+
+        // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem Termin
+        if (appointmentData.customer_id) {
+          await supabase
+            .from('customers')
+            .update({ rank: 'Bronze' })
+            .eq('id', appointmentData.customer_id)
+            .eq('rank', 'Neukunde');
+        }
 
         console.log('✅ Guest Spot Appointment created:', data);
         showNotification('Appointment erstellt!', 'success');
