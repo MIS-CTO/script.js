@@ -28178,15 +28178,15 @@
           'canceled': 'Canceled'
         };
 
-        // Get customer data directly from requests table (first_name, last_name, email, customer_phone columns)
+        // Get customer data directly from request_cards_view fields
         // Use customer relation only for rank and instagram
         const customer = {
           first_name: request.first_name,
           last_name: request.last_name,
-          email: request.email,
+          email: request.customer_email || request.email,
           phone: request.customer_phone,
-          rank: request.customer?.rank || null,
-          instagram: request.customer?.instagram || request.instagram || null
+          rank: request.customer?.rank || request.customer_rank || null,
+          instagram: request.customer?.instagram || request.customer_instagram || request.instagram || null
         };
 
         const customerName = `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unbekannt';
@@ -28375,7 +28375,7 @@
                     <div class="detail-label">Artist</div>
                     <div class="detail-value">
                       ${request.artist.name}
-                      ${request.artist.email ? `<br/><small style="color:var(--muted);">${request.artist.email}</small>` : ''}
+                      ${request.artist.email ? `<br/><small><a href="mailto:${request.artist.email}" style="color:var(--accent);">${request.artist.email}</a></small>` : ''}
                       ${request.artist.instagram ? `<br/><a href="https://instagram.com/${request.artist.instagram}" target="_blank" style="color:var(--accent); font-size:13px;">@${request.artist.instagram}</a>` : ''}
                     </div>
                   </div>
@@ -28785,10 +28785,10 @@
         const customer = {
           first_name: request.first_name,
           last_name: request.last_name,
-          email: request.email,
+          email: request.customer_email || request.email,
           phone: request.customer_phone,
-          rank: request.customer?.rank || null,
-          instagram: request.customer?.instagram || request.instagram || null
+          rank: request.customer?.rank || request.customer_rank || null,
+          instagram: request.customer?.instagram || request.customer_instagram || request.instagram || null
         };
 
         // Rank badge styling
@@ -28841,7 +28841,7 @@
                   </div>
                   <div class="detail-item">
                     <div class="detail-label">Email</div>
-                    <input type="email" id="fullEditEmail" value="${request.email || ''}" required
+                    <input type="email" id="fullEditEmail" value="${request.customer_email || request.email || ''}" required
                            style="width:100%; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:14px;">
                   </div>
                   <div class="detail-item">
@@ -31341,8 +31341,8 @@
             <tr>
               <td>${customer.first_name || '-'}</td>
               <td>${customer.last_name || '-'}</td>
-              <td>${customer.email || '-'}</td>
-              <td>${customer.phone || '-'}</td>
+              <td>${customer.email ? `<a href="mailto:${customer.email}" style="color:var(--accent);">${customer.email}</a>` : '-'}</td>
+              <td>${customer.phone ? `<a href="tel:${customer.phone}" style="color:var(--accent);">${customer.phone}</a>` : '-'}</td>
               <td>${instagramDisplay}</td>
               <td>${rankBadge} ${blacklistBadge}</td>
               <td style="font-size:13px; color:var(--muted);">${new Date(customer.created_at).toLocaleDateString()}</td>
@@ -31536,7 +31536,7 @@
               </div>
               <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
                 <span style="color:var(--muted); font-size:14px;">E-Mail:</span>
-                <span>${agreement.email || '-'}</span>
+                <span>${agreement.email ? `<a href="mailto:${agreement.email}" style="color:var(--accent);">${agreement.email}</a>` : '-'}</span>
               </div>
               <div style="display:grid; grid-template-columns:130px 1fr; gap:8px; align-items:start;">
                 <span style="color:var(--muted); font-size:14px;">Allergien:</span>
@@ -31662,11 +31662,11 @@
             </div>
             <div class="detail-item">
               <div class="detail-label">Email</div>
-              <div class="detail-value">${customer.email || '-'}</div>
+              <div class="detail-value">${customer.email ? `<a href="mailto:${customer.email}" style="color:var(--accent);">${customer.email}</a>` : '-'}</div>
             </div>
             <div class="detail-item">
               <div class="detail-label">Phone</div>
-              <div class="detail-value">${customer.phone || '-'}</div>
+              <div class="detail-value">${customer.phone ? `<a href="tel:${customer.phone}" style="color:var(--accent);">${customer.phone}</a>` : '-'}</div>
             </div>
             ${customer.rank ? `
               <div class="detail-item">
@@ -34085,7 +34085,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Email</label>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.email || 'N/A'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.email ? `<a href="mailto:${artist.email}" style="color: #007AFF; text-decoration: none;">${artist.email}</a>` : 'N/A'}</p>
                   </div>
 
                   <div>
@@ -36401,15 +36401,15 @@
             <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Email</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.email || '-'}</span>
+                <span style="font-size:13px; font-weight:500;">${customer.email ? `<a href="mailto:${customer.email}" style="color:#007aff; text-decoration:none;">${customer.email}</a>` : '-'}</span>
               </div>
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Phone</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.phone || '-'}</span>
+                <span style="font-size:13px; font-weight:500;">${customer.phone ? `<a href="tel:${customer.phone}" style="color:#007aff; text-decoration:none;">${customer.phone}</a>` : '-'}</span>
               </div>
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Instagram</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${customer.instagram || '-'}</span>
+                <span style="font-size:13px; font-weight:500;">${customer.instagram ? `<a href="https://instagram.com/${customer.instagram.replace('@', '')}" target="_blank" style="color:#007aff; text-decoration:none;">@${customer.instagram.replace('@', '')}</a>` : '-'}</span>
               </div>
             </div>
           </div>
@@ -36556,15 +36556,15 @@
             <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Email</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.email || '-'}</span>
+                <span style="font-size:13px; font-weight:500;">${artist.email ? `<a href="mailto:${artist.email}" style="color:#007aff; text-decoration:none;">${artist.email}</a>` : '-'}</span>
               </div>
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Phone</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.phone || '-'}</span>
+                <span style="font-size:13px; font-weight:500;">${artist.phone ? `<a href="tel:${artist.phone}" style="color:#007aff; text-decoration:none;">${artist.phone}</a>` : '-'}</span>
               </div>
               <div style="display:flex; justify-content:space-between;">
                 <span style="font-size:12px; color:#86868b;">Instagram</span>
-                <span style="font-size:13px; color:#1d1d1f; font-weight:500;">${artist.instagram || '-'}</span>
+                <span style="font-size:13px; font-weight:500;">${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color:#007aff; text-decoration:none;">@${artist.instagram.replace('@', '')}</a>` : '-'}</span>
               </div>
             </div>
           </div>
@@ -36950,8 +36950,8 @@
                     <span style="font-size:12px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.5px;">Customer</span>
                   </div>
                   <div style="font-weight:600; color:#000; font-size:14px;">${customerName}</div>
-                  ${appointment.customer?.email ? `<div style="font-size:12px; color:#666; margin-top:4px;">${appointment.customer.email}</div>` : ''}
-                  ${appointment.customer?.phone ? `<div style="font-size:12px; color:#666; margin-top:2px;">${appointment.customer.phone}</div>` : ''}
+                  ${appointment.customer?.email ? `<div style="font-size:12px; margin-top:4px;"><a href="mailto:${appointment.customer.email}" style="color:#007aff; text-decoration:none;">${appointment.customer.email}</a></div>` : ''}
+                  ${appointment.customer?.phone ? `<div style="font-size:12px; margin-top:2px;"><a href="tel:${appointment.customer.phone}" style="color:#007aff; text-decoration:none;">${appointment.customer.phone}</a></div>` : ''}
                 </div>
               </div>
 
@@ -51076,19 +51076,20 @@
           return;
         }
 
+        const email = customer.email || request.customer_email || request.email || null;
         const html = `
           <div style="display:grid; grid-template-columns:140px 1fr; gap:12px 24px;">
             <div style="color:var(--macos-text-secondary);">Name:</div>
             <div style="font-weight:600;">${customer.first_name || ''} ${customer.last_name || ''}</div>
 
             <div style="color:var(--macos-text-secondary);">Email:</div>
-            <div style="font-weight:500; color:var(--macos-accent-blue);">${customer.email || request.email || 'Keine Email'}</div>
+            <div style="font-weight:500;">${email ? `<a href="mailto:${email}" style="color:var(--macos-accent-blue); text-decoration:none;">${email}</a>` : 'Keine Email'}</div>
 
             <div style="color:var(--macos-text-secondary);">Telefon:</div>
-            <div>${customer.phone || 'N/A'}</div>
+            <div>${customer.phone ? `<a href="tel:${customer.phone}" style="color:var(--macos-accent-blue); text-decoration:none;">${customer.phone}</a>` : 'N/A'}</div>
 
             <div style="color:var(--macos-text-secondary);">Instagram:</div>
-            <div>${customer.instagram ? '@' + customer.instagram.replace('@', '') : 'N/A'}</div>
+            <div>${customer.instagram ? `<a href="https://instagram.com/${customer.instagram.replace('@', '')}" target="_blank" style="color:var(--macos-accent-blue); text-decoration:none;">@${customer.instagram.replace('@', '')}</a>` : 'N/A'}</div>
           </div>
         `;
         document.getElementById('paymentCustomerSummary').innerHTML = html;
@@ -52007,10 +52008,10 @@
           // Customer data
           const customerFirstName = customer?.first_name || request.first_name || '';
           const customerLastName = customer?.last_name || request.last_name || '';
-          const customerEmail = customer?.email || request.email || '–';
+          const customerEmail = customer?.email || request.customer_email || request.email || '–';
           const customerPhone = customer?.phone || request.customer_phone || '–';
-          const customerInstagram = customer?.instagram || request.instagram || '';
-          const customerRank = customer?.rank || 'Neukunde';
+          const customerInstagram = customer?.instagram || request.customer_instagram || request.instagram || '';
+          const customerRank = customer?.rank || request.customer_rank || 'Neukunde';
 
           // E-Mail HTML (Aesop-Style)
           const emailHTML = `
@@ -54685,15 +54686,15 @@
           </div>
           <div class="mobile-event-field">
             <span class="mobile-event-label">Email</span>
-            <span class="mobile-event-value ${!customer?.email ? 'empty' : ''}">${customer?.email || 'Nicht angegeben'}</span>
+            <span class="mobile-event-value ${!customer?.email ? 'empty' : ''}">${customer?.email ? `<a href="mailto:${customer.email}" style="color:#007aff;">${customer.email}</a>` : 'Nicht angegeben'}</span>
           </div>
           <div class="mobile-event-field">
             <span class="mobile-event-label">Phone</span>
-            <span class="mobile-event-value ${!customer?.phone ? 'empty' : ''}">${customer?.phone || 'Nicht angegeben'}</span>
+            <span class="mobile-event-value ${!customer?.phone ? 'empty' : ''}">${customer?.phone ? `<a href="tel:${customer.phone}" style="color:#007aff;">${customer.phone}</a>` : 'Nicht angegeben'}</span>
           </div>
           <div class="mobile-event-field">
             <span class="mobile-event-label">Instagram</span>
-            <span class="mobile-event-value ${!customer?.instagram ? 'empty' : ''}">${customer?.instagram || 'Nicht angegeben'}</span>
+            <span class="mobile-event-value ${!customer?.instagram ? 'empty' : ''}">${customer?.instagram ? `<a href="https://instagram.com/${customer.instagram.replace('@', '')}" target="_blank" style="color:#007aff;">@${customer.instagram.replace('@', '')}</a>` : 'Nicht angegeben'}</span>
           </div>
         </div>
 
