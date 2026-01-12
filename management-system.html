@@ -15,11 +15,11 @@
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- jQuery + jQVMap for World Map (jvectormap fork with better compatibility) -->
+  <!-- jQuery + jQVMap for World Map -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/jqvmap@1.5.1/dist/jqvmap.min.css">
-  <script src="https://unpkg.com/jqvmap@1.5.1/dist/jquery.vmap.min.js"></script>
-  <script src="https://unpkg.com/jqvmap@1.5.1/dist/maps/jquery.vmap.world.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqvmap/1.5.1/jqvmap.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqvmap/1.5.1/jquery.vmap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqvmap/1.5.1/maps/jquery.vmap.world.min.js"></script>
 
   <!-- Geist Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43811,8 +43811,11 @@
     window.showWorldTableView = showWorldTableView;
 
     // Render World Map with jQVMap
+    let worldMapRetryCount = 0;
+    const MAX_WORLD_MAP_RETRIES = 5;
+
     function renderWorldMap() {
-      console.log('🗺️ renderWorldMap() called');
+      console.log('🗺️ renderWorldMap() called, retry:', worldMapRetryCount);
 
       const mapContainer = document.getElementById('worldMapContainer');
       if (!mapContainer) {
@@ -43858,11 +43861,18 @@
         console.log('🗺️ Container dimensions:', containerWidth, 'x', containerHeight);
 
         if (containerWidth === 0 || containerHeight === 0) {
-          console.warn('🗺️ Container has zero dimensions, waiting for layout...');
-          // Retry after a short delay to allow CSS to apply
-          setTimeout(() => renderWorldMap(), 200);
-          return;
+          if (worldMapRetryCount < MAX_WORLD_MAP_RETRIES) {
+            worldMapRetryCount++;
+            console.warn('🗺️ Container has zero dimensions, retry', worldMapRetryCount, 'of', MAX_WORLD_MAP_RETRIES);
+            setTimeout(() => renderWorldMap(), 200);
+            return;
+          } else {
+            console.warn('🗺️ Max retries reached for zero dimensions');
+          }
         }
+
+        // Reset retry counter on successful dimension check
+        worldMapRetryCount = 0;
 
         $mapContainer.empty();
 
