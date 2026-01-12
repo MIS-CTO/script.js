@@ -28267,7 +28267,7 @@
               </div>
               <div class="detail-item">
                 <div class="detail-label">Size</div>
-                <div class="detail-value">${request.size || '<span class="no-data-placeholder">No entry data</span>'}</div>
+                <div class="detail-value">${formatSizeWithDimensions(request.size) || '<span class="no-data-placeholder">No entry data</span>'}</div>
               </div>
               <div class="detail-item">
                 <div class="detail-label">Style</div>
@@ -34814,7 +34814,7 @@
                   ${request.scheduled_date ? `• Scheduled: ${new Date(request.scheduled_date).toLocaleDateString()}` : ''}
                 </div>
                 ${request.placement ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${request.placement}</div>` : ''}
-                ${request.size ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${request.size}</div>` : ''}
+                ${request.size ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${formatSizeWithDimensions(request.size)}</div>` : ''}
                 ${request.style ? `<div style="font-size:13px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Style:</strong> ${request.style}</div>` : ''}
                 ${request.description ? `<div style="font-size:13px; color:var(--macos-text-secondary); margin-top:8px; line-height:1.5;">${request.description.substring(0, 150)}${request.description.length > 150 ? '...' : ''}</div>` : ''}
               </div>
@@ -34868,7 +34868,7 @@
                         Created: ${new Date(request.created_at).toLocaleDateString()}
                       </div>
                       ${request.placement ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${request.placement}</div>` : ''}
-                      ${request.size ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${request.size}</div>` : ''}
+                      ${request.size ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Size:</strong> ${formatSizeWithDimensions(request.size)}</div>` : ''}
                       ${request.style ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Style:</strong> ${request.style}</div>` : ''}
                     </div>
                   `;
@@ -34993,7 +34993,7 @@
                         <strong>Location:</strong> ${locationInfo}
                       </div>
                       ${appointment.placement ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;"><strong>Placement:</strong> ${appointment.placement}</div>` : ''}
-                      ${appointment.size || appointment.style ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;">${appointment.size ? `<strong>Size:</strong> ${appointment.size}` : ''} ${appointment.size && appointment.style ? '|' : ''} ${appointment.style ? `<strong>Style:</strong> ${appointment.style}` : ''}</div>` : ''}
+                      ${appointment.size || appointment.style ? `<div style="font-size:12px; color:var(--macos-text-primary); margin-bottom:4px;">${appointment.size ? `<strong>Size:</strong> ${formatSizeWithDimensions(appointment.size)}` : ''} ${appointment.size && appointment.style ? '|' : ''} ${appointment.style ? `<strong>Style:</strong> ${appointment.style}` : ''}</div>` : ''}
                       ${appointment.description ? `<div style="font-size:12px; color:var(--macos-text-secondary); margin-top:6px; line-height:1.4;">${appointment.description.substring(0, 100)}${appointment.description.length > 100 ? '...' : ''}</div>` : ''}
                     </div>
                   `;
@@ -36045,7 +36045,7 @@
         document.getElementById('modalRequestId').textContent = data.request?.request_id || data.request_id || '-';
         document.getElementById('modalRequestStatus').textContent = data.request?.status || '-';
         document.getElementById('modalTattooPlacement').textContent = data.placement || data.request?.placement || '-';
-        document.getElementById('modalTattooSize').textContent = data.size || data.request?.size || '-';
+        document.getElementById('modalTattooSize').textContent = formatSizeWithDimensions(data.size || data.request?.size) || '-';
         document.getElementById('modalTattooStyle').textContent = data.style || data.request?.style || '-';
         document.getElementById('modalTattooColorway').textContent = data.colorway || data.request?.colorway || '-';
         document.getElementById('modalTattooDescription').textContent = data.description || data.request?.description || '-';
@@ -37605,6 +37605,24 @@
       if (!dateString) return 'N/A';
       const date = new Date(dateString);
       return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // Helper function: Format size with dimensions
+    function formatSizeWithDimensions(size) {
+      if (!size) return null;
+      const sizeMap = {
+        'Small': 'Small - 2-6cm',
+        'small': 'Small - 2-6cm',
+        'Medium': 'Medium - 7-12cm',
+        'medium': 'Medium - 7-12cm',
+        'Large': 'Large - 13-19cm',
+        'large': 'Large - 13-19cm',
+        'Extra Large': 'Extra Large - 20cm+',
+        'extra large': 'Extra Large - 20cm+',
+        'XL': 'Extra Large - 20cm+',
+        'xl': 'Extra Large - 20cm+'
+      };
+      return sizeMap[size] || size;
     }
 
     // Load Dienstplan Data from database with BATCH LOADING
@@ -50934,7 +50952,7 @@
             <div style="font-weight:500;">${request.placement || 'N/A'}</div>
 
             <div style="color:var(--macos-text-secondary);">Size:</div>
-            <div>${request.size || 'N/A'}</div>
+            <div>${formatSizeWithDimensions(request.size) || 'N/A'}</div>
 
             <div style="color:var(--macos-text-secondary);">Style:</div>
             <div>${request.style || 'N/A'}</div>
