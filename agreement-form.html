@@ -417,16 +417,6 @@
       line-height: 1.5;
     }
 
-    /* Date input styling for dark mode */
-    input[type="date"].form-input {
-      color-scheme: dark;
-    }
-
-    input[type="date"].form-input::-webkit-calendar-picker-indicator {
-      filter: invert(0.8);
-      cursor: pointer;
-    }
-
     /* Checkbox */
     .checkbox-group {
       display: flex;
@@ -976,8 +966,7 @@
       }
 
       .language-toggle {
-        top: var(--space-lg);
-        right: var(--space-md);
+        display: none;
       }
 
       .back-btn {
@@ -1115,7 +1104,7 @@
 
           <div class="form-group">
             <label class="form-label" data-i18n="dateOfBirth">Geburtsdatum <span class="required">*</span></label>
-            <input type="date" class="form-input" id="dateOfBirth" required>
+            <input type="text" class="form-input" id="dateOfBirth" placeholder="TT.MM.JJJJ" data-i18n-placeholder="dateOfBirthPlaceholder" required maxlength="10">
           </div>
 
           <div class="form-group">
@@ -1306,6 +1295,7 @@
         firstName: 'Vorname',
         lastName: 'Nachname',
         dateOfBirth: 'Geburtsdatum',
+        dateOfBirthPlaceholder: 'TT.MM.JJJJ',
         email: 'E-Mail',
         health: 'Gesundheit',
         allergies: 'Allergien',
@@ -1346,7 +1336,8 @@
         errorSignature: 'Bitte unterschreibe das Formular',
         errorTerms: 'Bitte akzeptiere die AGB',
         errorSubmit: 'Fehler beim Speichern. Bitte versuche es erneut.',
-        errorAge: 'Du musst mindestens 18 Jahre alt sein'
+        errorAge: 'Du musst mindestens 18 Jahre alt sein',
+        errorDateFormat: 'Bitte gib das Datum im Format TT.MM.JJJJ ein'
       },
       en: {
         firstVisit: 'Is this your first visit?',
@@ -1358,6 +1349,7 @@
         firstName: 'First Name',
         lastName: 'Last Name',
         dateOfBirth: 'Date of Birth',
+        dateOfBirthPlaceholder: 'DD.MM.YYYY',
         email: 'Email',
         health: 'Health',
         allergies: 'Allergies',
@@ -1398,7 +1390,8 @@
         errorSignature: 'Please sign the form',
         errorTerms: 'Please accept the terms and conditions',
         errorSubmit: 'Error saving. Please try again.',
-        errorAge: 'You must be at least 18 years old'
+        errorAge: 'You must be at least 18 years old',
+        errorDateFormat: 'Please enter the date in DD.MM.YYYY format'
       }
     };
 
@@ -1650,19 +1643,45 @@
       });
     }
 
+    // Parse DD.MM.YYYY date format
+    function parseDateDMY(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.split('.');
+      if (parts.length !== 3) return null;
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+      if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > 2100) return null;
+      return new Date(year, month - 1, day);
+    }
+
+    // Convert DD.MM.YYYY to YYYY-MM-DD for database
+    function convertToISODate(dateStr) {
+      const date = parseDateDMY(dateStr);
+      if (!date) return null;
+      return date.toISOString().split('T')[0];
+    }
+
     function validateStep(step) {
       if (step === 1) {
         const firstName = document.getElementById('firstName').value.trim();
         const lastName = document.getElementById('lastName').value.trim();
-        const dob = document.getElementById('dateOfBirth').value;
+        const dob = document.getElementById('dateOfBirth').value.trim();
 
         if (!firstName || !lastName || !dob) {
           showToast(t('errorRequired'));
           return false;
         }
 
+        // Parse DD.MM.YYYY format
+        const birthDate = parseDateDMY(dob);
+        if (!birthDate) {
+          showToast(t('errorDateFormat'));
+          return false;
+        }
+
         // Check if customer is at least 18 years old
-        const birthDate = new Date(dob);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -1740,7 +1759,8 @@
       const instagramHandle = document.getElementById('instagramHandle').value;
       const signatureData = signatureCanvas.toDataURL();
 
-      const dobFormatted = dob ? new Date(dob).toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-GB') : '-';
+      const dobParsed = parseDateDMY(dob);
+      const dobFormatted = dobParsed ? dobParsed.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-GB') : (dob || '-');
 
       summary.innerHTML = `
         <div class="summary-section">
@@ -1802,7 +1822,7 @@
         const formData = {
           firstName: document.getElementById('firstName').value.trim(),
           lastName: document.getElementById('lastName').value.trim(),
-          dateOfBirth: document.getElementById('dateOfBirth').value || null,
+          dateOfBirth: convertToISODate(document.getElementById('dateOfBirth').value.trim()) || null,
           email: document.getElementById('email').value.trim() || null,
           allergies: document.getElementById('allergies').value.trim() || null,
           medications: document.getElementById('medications').value.trim() || null,
