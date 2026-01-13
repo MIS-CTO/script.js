@@ -9423,6 +9423,33 @@
       box-shadow: inset 0 0 0 2px #0071e3;
     }
 
+    /* Tage mit bestehenden Terminen - Oranger Punkt als Warnung */
+    .availability-calendar-day.has-appointment {
+      position: relative;
+    }
+
+    .availability-calendar-day.has-appointment::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 6px;
+      height: 6px;
+      background: #ff9500;
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(255, 149, 0, 0.5);
+    }
+
+    .availability-calendar-day.available.has-appointment {
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(52, 199, 89, 0.12),
+        rgba(52, 199, 89, 0.12) 4px,
+        rgba(255, 149, 0, 0.15) 4px,
+        rgba(255, 149, 0, 0.15) 8px
+      );
+    }
+
     /* Time Slots Container - Now in right column */
     .time-slots-container {
       animation: slideDown 0.3s ease;
@@ -29122,6 +29149,7 @@
       }
 
       let artistAvailabilityData = [];
+      let artistExistingAppointments = []; // Bestehende Termine des Artists
       let selectedAvailabilityArtistId = null;
       let availabilityCalendarMonth = new Date();
       let selectedAppointmentDate = null;
@@ -29130,10 +29158,12 @@
 
       /**
        * Lädt Verfügbarkeitsdaten für einen Artist aus der dienstplan Tabelle
+       * und bestehende Termine für Collision Check
        */
       async function loadArtistAvailability(artistId) {
         if (!artistId) {
           artistAvailabilityData = [];
+          artistExistingAppointments = [];
           return;
         }
 
@@ -29142,26 +29172,44 @@
         oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
 
         try {
-          const { data, error } = await supabase
-            .from('dienstplan')
-            .select('id, start_date, end_date, state, working_start, working_end')
-            .eq('artist_id', artistId)
-            .eq('state', 'Available')
-            .gte('start_date', today.toISOString().split('T')[0])
-            .lte('start_date', oneYearLater.toISOString().split('T')[0])
-            .order('start_date', { ascending: true });
+          // Parallel: Verfügbarkeit und bestehende Termine laden
+          const [availabilityResult, appointmentsResult] = await Promise.all([
+            supabase
+              .from('dienstplan')
+              .select('id, start_date, end_date, state, working_start, working_end')
+              .eq('artist_id', artistId)
+              .eq('state', 'Available')
+              .gte('start_date', today.toISOString().split('T')[0])
+              .lte('start_date', oneYearLater.toISOString().split('T')[0])
+              .order('start_date', { ascending: true }),
+            supabase
+              .from('appointments')
+              .select('id, start, end, status, customer_id, customers(first_name, last_name)')
+              .eq('artist_id', artistId)
+              .gte('start', today.toISOString())
+              .not('status', 'in', '("canceled","cancelled")')
+              .order('start', { ascending: true })
+          ]);
 
-          if (error) {
-            console.error('Error loading artist availability:', error);
+          if (availabilityResult.error) {
+            console.error('Error loading artist availability:', availabilityResult.error);
             artistAvailabilityData = [];
-            return;
+          } else {
+            artistAvailabilityData = availabilityResult.data || [];
+            console.log(`✅ Loaded ${artistAvailabilityData.length} availability entries for artist`);
           }
 
-          artistAvailabilityData = data || [];
-          console.log(`✅ Loaded ${artistAvailabilityData.length} availability entries for artist`);
+          if (appointmentsResult.error) {
+            console.error('Error loading artist appointments:', appointmentsResult.error);
+            artistExistingAppointments = [];
+          } else {
+            artistExistingAppointments = appointmentsResult.data || [];
+            console.log(`📅 Loaded ${artistExistingAppointments.length} existing appointments for artist`);
+          }
         } catch (err) {
           console.error('Exception loading availability:', err);
           artistAvailabilityData = [];
+          artistExistingAppointments = [];
         }
       }
 
@@ -29259,6 +29307,15 @@
           }
         });
 
+        // Build dates with existing appointments for visual indicator
+        const datesWithAppointments = new Set();
+        (artistExistingAppointments || []).forEach(apt => {
+          if (apt.start) {
+            const aptDate = new Date(apt.start).toISOString().split('T')[0];
+            datesWithAppointments.add(aptDate);
+          }
+        });
+
         let html = `
           <div class="availability-calendar-container">
             <div class="availability-calendar-layout">
@@ -29302,6 +29359,7 @@
           const isPast = date < new Date(today.toDateString());
           const isAvailable = availableDates.has(dateStr) && !isPast;
           const isSelected = selectedAppointmentDate === dateStr;
+          const hasAppointment = datesWithAppointments.has(dateStr) && !isPast;
 
           let dayClass = 'availability-calendar-day';
           if (isToday) dayClass += ' today';
@@ -29313,10 +29371,12 @@
             dayClass += ' unavailable';
           }
           if (isSelected) dayClass += ' selected';
+          if (hasAppointment) dayClass += ' has-appointment';
 
           const clickHandler = isAvailable ? `onclick="selectAvailabilityDate('${dateStr}')"` : '';
+          const titleAttr = hasAppointment ? 'title="Artist hat bereits Termin(e) an diesem Tag"' : '';
 
-          html += `<div class="${dayClass}" ${clickHandler}>${day}</div>`;
+          html += `<div class="${dayClass}" ${clickHandler} ${titleAttr}>${day}</div>`;
         }
 
         html += `
@@ -29356,6 +29416,33 @@
        * Wählt ein Datum aus und zeigt die verfügbaren Time Slots
        */
       function selectAvailabilityDate(dateStr) {
+        // Prüfe ob Artist an diesem Tag bereits Termine hat
+        const existingOnDay = (artistExistingAppointments || []).filter(apt => {
+          if (!apt.start) return false;
+          const aptDate = new Date(apt.start).toISOString().split('T')[0];
+          return aptDate === dateStr;
+        });
+
+        if (existingOnDay.length > 0) {
+          // Zeige Warnung mit Termin-Details
+          const times = existingOnDay.map(apt => {
+            const start = apt.start ? new Date(apt.start).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '?';
+            const end = apt.end ? new Date(apt.end).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '?';
+            const customer = apt.customers ? `${apt.customers.first_name || ''} ${apt.customers.last_name || ''}`.trim() : '';
+            return `${start} - ${end}${customer ? ' (' + customer + ')' : ''}`;
+          }).join('\n');
+
+          const confirmBook = confirm(
+            `⚠️ Achtung: Der Artist hat an diesem Tag bereits ${existingOnDay.length} Termin(e):\n\n` +
+            `${times}\n\n` +
+            `Trotzdem dieses Datum auswählen?`
+          );
+
+          if (!confirmBook) {
+            return; // Abbrechen
+          }
+        }
+
         selectedAppointmentDate = dateStr;
         selectedStartTime = null;
         selectedEndTime = null;
