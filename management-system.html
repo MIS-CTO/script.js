@@ -27813,6 +27813,14 @@
           const daysDiff = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
           const oldStatusClass = req.status === 'open_request' && daysDiff >= 7 ? 'old-status' : '';
 
+          // Format scheduled date if present
+          const scheduledDate = req.scheduled_date || req.preferred_date_from;
+          let scheduledDateStr = '';
+          if (scheduledDate) {
+            const schedDate = new Date(scheduledDate);
+            scheduledDateStr = schedDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          }
+
           return `
             <div class="request-item ${oldStatusClass}" data-id="${req.id}">
               <div class="request-card-header">
@@ -27825,6 +27833,7 @@
               <div class="request-card-name">${customerName}</div>
               ${locationName ? `<div class="request-card-location">${locationName}</div>` : ''}
               <div class="request-card-date">${dateStr}</div>
+              ${scheduledDateStr ? `<div class="request-card-scheduled" style="font-size:12px; color:#34c759; margin-top:4px;">📅 Scheduled: ${scheduledDateStr}</div>` : ''}
               ${getDeletedCountdown(req)}
             </div>
           `;
@@ -27876,6 +27885,8 @@
         var hasPrice = request.total_amount && request.total_amount > 0;
         var isDeleted = !!request.deleted_at;
         var allDataComplete = hasArtist && hasDate && hasPrice;
+        var paymentStatus = request.payment_status || 'unpaid';
+        var canResendPaymentEmail = hasPaymentLink && (paymentStatus === 'pending' || paymentStatus === 'unpaid');
 
         // Gelöschte Requests
         if (isDeleted) {
@@ -27908,6 +27919,11 @@
         else if (status === 'scheduled') {
           buttons.push('<button onclick="editRequestInfos(\'' + request.id + '\')" style="padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Edit Infos</button>');
           buttons.push('<button onclick="rescheduleRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>');
+
+          // Resend Payment Email Button - only if payment link exists and payment is pending/unpaid
+          if (canResendPaymentEmail) {
+            buttons.push('<button onclick="resendPaymentEmail(\'' + request.id + '\')" style="padding:12px 16px;background:#007aff;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">📧 Resend Payment</button>');
+          }
 
           if (hasPaymentLink) {
             buttons.push('<button onclick="storniereRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Stornierung</button>');
@@ -29094,6 +29110,17 @@
       // Artist Availability Calendar System
       // ========================================
 
+      /**
+       * Formatiert ein Date-Objekt zu YYYY-MM-DD String in LOKALER Zeit (nicht UTC!)
+       * Dies verhindert dass das Datum durch Timezone-Konvertierung verschoben wird.
+       */
+      function formatLocalDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
       let artistAvailabilityData = [];
       let selectedAvailabilityArtistId = null;
       let availabilityCalendarMonth = new Date();
@@ -29143,10 +29170,26 @@
        */
       async function showArtistAvailabilityCalendar(artistId, artistName) {
         selectedAvailabilityArtistId = artistId;
-        availabilityCalendarMonth = new Date();
-        selectedAppointmentDate = null;
-        selectedStartTime = null;
-        selectedEndTime = null;
+
+        // Prüfe ob bereits ein Datum ausgewählt ist (beim Editieren einer Request)
+        const existingDateValue = document.getElementById('fullEditScheduledDate')?.value;
+        const existingStartTime = document.getElementById('fullEditStartTime')?.value;
+        const existingEndTime = document.getElementById('fullEditEndTime')?.value;
+
+        if (existingDateValue) {
+          // Navigiere zum Monat des vorhandenen Datums
+          const existingDate = new Date(existingDateValue);
+          availabilityCalendarMonth = new Date(existingDate.getFullYear(), existingDate.getMonth(), 1);
+          selectedAppointmentDate = existingDateValue;
+          selectedStartTime = existingStartTime || null;
+          selectedEndTime = existingEndTime || null;
+          console.log('📅 Pre-selecting existing date:', existingDateValue);
+        } else {
+          availabilityCalendarMonth = new Date();
+          selectedAppointmentDate = null;
+          selectedStartTime = null;
+          selectedEndTime = null;
+        }
 
         // Lade Verfügbarkeitsdaten
         await loadArtistAvailability(artistId);
@@ -29156,6 +29199,12 @@
 
         container.style.display = 'block';
         renderAvailabilityCalendar(artistName);
+
+        // Wenn Datum vorausgewählt, zeige auch Time Slots
+        if (selectedAppointmentDate) {
+          showTimeSlots(selectedAppointmentDate);
+          updateSelectedTimeDisplay();
+        }
       }
 
       /**
@@ -29206,7 +29255,7 @@
           const start = new Date(entry.start_date);
           const end = entry.end_date ? new Date(entry.end_date) : start;
           for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            availableDates.add(d.toISOString().split('T')[0]);
+            availableDates.add(formatLocalDate(d));
           }
         });
 
@@ -29247,8 +29296,9 @@
         // Days of month
         for (let day = 1; day <= daysInMonth; day++) {
           const date = new Date(currentYear, currentMonth, day);
-          const dateStr = date.toISOString().split('T')[0];
-          const isToday = dateStr === today.toISOString().split('T')[0];
+          const dateStr = formatLocalDate(date);
+          const todayStr = formatLocalDate(today);
+          const isToday = dateStr === todayStr;
           const isPast = date < new Date(today.toDateString());
           const isAvailable = availableDates.has(dateStr) && !isPast;
           const isSelected = selectedAppointmentDate === dateStr;
@@ -30701,6 +30751,77 @@
         }
       }
       window.storniereRequest = storniereRequest;
+
+      /**
+       * Resend Payment Email - Sendet die Payment Email erneut
+       * Nur verfügbar wenn: status=scheduled, payment_link existiert, payment_status=pending/unpaid
+       */
+      async function resendPaymentEmail(requestId) {
+        if (!confirm('Payment Email erneut senden?')) return;
+
+        try {
+          // Request aus Cache holen
+          const request = allRequests.find(r => r.id === requestId);
+          if (!request) {
+            alert('❌ Request nicht gefunden');
+            return;
+          }
+
+          if (!request.stripe_payment_link) {
+            alert('❌ Kein Payment Link vorhanden');
+            return;
+          }
+
+          // Notification anzeigen
+          if (typeof showNotification === 'function') {
+            showNotification('Sende Payment Email...', 'info');
+          }
+
+          // Edge Function aufrufen um Email zu senden
+          const response = await fetch(
+            `${SUPABASE_URL}/functions/v1/send-payment-reminder`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+              },
+              body: JSON.stringify({
+                request_id: requestId,
+                force_resend: true
+              })
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to send email');
+          }
+
+          // Activity Log eintragen
+          await supabase.from('request_activity_log').insert({
+            request_id: requestId,
+            action: 'payment_link_resent',
+            action_at: new Date().toISOString(),
+            action_by: window.currentUsername || 'Unknown',
+            details: {
+              payment_link: request.stripe_payment_link,
+              email: request.email
+            }
+          });
+
+          alert('✅ Payment Email wurde erneut gesendet!');
+
+          // Request Detail neu laden
+          await refreshSingleRequest(requestId);
+          showRequestDetail(requestId);
+
+        } catch (err) {
+          console.error('Error resending payment email:', err);
+          alert('❌ Fehler beim Senden: ' + err.message);
+        }
+      }
+      window.resendPaymentEmail = resendPaymentEmail;
 
       /**
        * Reschedule - Zurück zu Pending
