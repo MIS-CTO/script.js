@@ -30866,7 +30866,7 @@
 
           // Edge Function aufrufen um Email zu senden
           const response = await fetch(
-            `${SUPABASE_URL}/functions/v1/send-payment-reminder`,
+            `${SUPABASE_URL}/functions/v1/send-manual-reminder`,
             {
               method: 'POST',
               headers: {
@@ -30875,7 +30875,8 @@
               },
               body: JSON.stringify({
                 request_id: requestId,
-                force_resend: true
+                reminder_type: 'reminder_1',
+                action_by: window.currentUsername || 'Manual'
               })
             }
           );
