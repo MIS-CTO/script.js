@@ -1114,12 +1114,13 @@
         const slotStart = new Date(dateStr + 'T11:00:00');
         const slotEnd = new Date(dateStr + 'T13:00:00'); // Extended to 13:00 for buffer
 
-        return !existingAppointments.some(apt => {
+        const hasOverlap = existingAppointments.some(apt => {
           const aptStart = new Date(apt.start);
           const aptEnd = new Date(apt.end);
-          // Check for any overlap in the 11:00-13:00 window
-          return (slotStart < aptEnd && slotEnd > aptStart);
+          return (slotStart < aptEnd && slotEnd >= aptStart);
         });
+
+        return !hasOverlap;
       }
 
       function validateForm() {
