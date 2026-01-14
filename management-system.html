@@ -9261,8 +9261,8 @@
 
     .availability-calendar-right {
       min-width: 0;
-      padding-left: 30px;
-      margin-left: 10px;
+      padding-left: 40px;
+      margin-left: 30px;
     }
 
     .availability-calendar-right.empty {
@@ -9469,9 +9469,9 @@
 
     .time-slots-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      max-height: 200px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      max-height: 220px;
       overflow-y: auto;
     }
 
@@ -27842,6 +27842,11 @@
           'undefined': 'Neukunde'
         };
 
+        // Build artist lookup map for performance
+        const artistsCache = window.artistsCache || CentralDataManager?.data?.artists || [];
+        const artistMap = {};
+        artistsCache.forEach(a => { if (a.id) artistMap[a.id] = a; });
+
         listEl.innerHTML = requests.map(req => {
           // ✅ NEU: Felder direkt aus request_cards_view
           // customer_name ist bereits gejoint in der View
@@ -27881,6 +27886,23 @@
             scheduledDateStr = schedDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
           }
 
+          // Get artist name and time for assignment display
+          const artistName = req.artist?.name || (req.artist_id && artistMap[req.artist_id]?.name) || '';
+          const startTime = req.start_time || '';
+          const endTime = req.end_time || '';
+          const hasAssignment = artistName || (startTime && endTime);
+          let assignmentHtml = '';
+          if (hasAssignment) {
+            assignmentHtml = `<div class="request-card-assignment" style="font-size:12px; color:#007aff; margin-top:4px;">`;
+            if (artistName) {
+              assignmentHtml += `<div>${artistName}</div>`;
+            }
+            if (startTime && endTime) {
+              assignmentHtml += `<div style="color:#86868b;">${startTime} - ${endTime}</div>`;
+            }
+            assignmentHtml += `</div>`;
+          }
+
           return `
             <div class="request-item ${oldStatusClass}" data-id="${req.id}">
               <div class="request-card-header">
@@ -27893,7 +27915,8 @@
               <div class="request-card-name">${customerName}</div>
               ${locationName ? `<div class="request-card-location">${locationName}</div>` : ''}
               <div class="request-card-date">${dateStr}</div>
-              ${scheduledDateStr ? `<div class="request-card-scheduled" style="font-size:12px; color:#34c759; margin-top:4px;">📅 Scheduled: ${scheduledDateStr}</div>` : ''}
+              ${scheduledDateStr ? `<div class="request-card-scheduled" style="font-size:12px; color:#34c759; margin-top:4px;">Scheduled: ${scheduledDateStr}</div>` : ''}
+              ${assignmentHtml}
               ${getDeletedCountdown(req)}
             </div>
           `;
