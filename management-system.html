@@ -17146,7 +17146,7 @@
             <th>Kunde</th>
             <th>E-Mail</th>
             <th>Allergien</th>
-            <th>Termin</th>
+            <th>Artist</th>
             <th>Uhrzeit</th>
             <th style="text-align:center;">Status</th>
             <th style="text-align:center;">Aktionen</th>
@@ -31608,11 +31608,12 @@
           const dateStr = agreementsDate.toISOString().split('T')[0];
           const searchQuery = document.getElementById('agreementSearchInput')?.value?.toLowerCase() || '';
 
-          // Load agreements with appointment and artist info
+          // Load agreements with appointment and artist info (direct + via appointment)
           const { data: agreementData, error } = await supabase
             .from('agreements')
             .select(`
               *,
+              artist:artists!agreements_artist_id_fkey(id, name),
               appointments:appointments!agreements_appointment_id_fkey(
                 id, start, end,
                 artists:artists!appointments_artist_id_fkey(id, name)
@@ -31636,7 +31637,8 @@
           // Transform data
           let agreements = (agreementData || []).map((agreement) => {
             const customerName = `${agreement.first_name || ''} ${agreement.last_name || ''}`.trim() || 'Unbekannt';
-            const artistName = agreement.appointments?.artists?.name || '-';
+            // Prefer direct artist from agreement, fallback to appointment artist
+            const artistName = agreement.artist?.name || agreement.appointments?.artists?.name || '-';
             const appointmentStart = agreement.appointments?.start;
 
             const signedTime = new Date(agreement.signed_at);
