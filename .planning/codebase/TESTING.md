@@ -1,45 +1,113 @@
-# Culture Over Money - Testing Guide
-**Stand: 2026-01-10 | Version: 3.1117**
+# Testing Patterns
 
----
+**Analysis Date:** 2026-01-14
+**Version:** 3.1175
 
-## Test-Strategie
+## Test Framework
 
-Manuelles Testing + strukturierte Checklisten (keine automatisierten Tests)
+**Runner:**
+- Playwright MCP - Browser automation for UI testing
+- Manual testing documented in `.planning/TESTING.md`
+- No unit test framework (Jest, Vitest not configured)
 
----
-
-## Kritische Test-Flows
-
-### Flow 1: Request Erstellen
-1. Requests Tab öffnen
-2. "Neuer Request" Button klicken
-3. Pflichtfelder ausfüllen
-4. Request speichern
-5. Datenbank prüfen
-
-### Flow 2: Payment Link Senden
-1. Request öffnen
-2. "Payment Link senden" klicken
-3. Stripe Link wird generiert
-4. Email wird versendet
-5. payment_link_sent_at gesetzt
-
-### Flow 3: Playwright Test
+**Run Commands:**
 ```bash
-# RLS Fix verifizieren
-npx playwright test
+# Local development server
+python3 -m http.server 8765
+
+# No automated test commands
+# Tests run via Playwright MCP in Claude Code
 ```
 
----
+## Test Documentation
 
-## Stripe Test-Karten
+**Location:**
+- `.planning/TESTING.md` - Complete test results
+- `.planning/ROADMAP.md` - Phase tracking with test status
+- No dedicated test files (`.test.ts`, `.spec.ts`)
 
-| Nummer | Beschreibung |
-|--------|---------------|
-| 4242 4242 4242 4242 | Erfolgreiche Zahlung |
+**Test Archive Format:**
+```markdown
+## Test-Archiv
+
+| Datum | Test | Status | Details |
+|-------|------|--------|---------|
+| 2026-01-10 | Phase 3 Error Tracking | ALL PASS | 5/5 Tests |
+| 2026-01-09 | Phase 2 RLS Policies | PASS | No recursion |
+```
+
+## Critical Test Flows
+
+**Flow 1: Request Creation**
+1. Open Requests Tab
+2. Click "Neuer Request" button
+3. Fill required fields
+4. Save request
+5. Verify in database
+
+**Flow 2: Payment Link**
+1. Open request details
+2. Click "Payment Link senden"
+3. Verify Stripe link generated
+4. Verify email sent
+5. Check `payment_link_sent_at` set
+
+**Flow 3: Stripe Webhook**
+1. Use Stripe test card
+2. Complete checkout
+3. Verify webhook received
+4. Check `payment_status = 'deposit_paid'`
+5. Verify activity log entry
+
+## Stripe Test Cards
+
+| Number | Result |
+|--------|--------|
+| 4242 4242 4242 4242 | Success |
 | 4000 0000 0000 0002 | Declined |
+| 4000 0000 0000 9995 | Insufficient funds |
+
+## Test Types
+
+**UI Tests (Playwright MCP):**
+- Full user flows in browser
+- Setup: Start local server, navigate to page
+
+**Database Tests:**
+- RLS policies verification
+- Direct SQL in Supabase SQL Editor
+
+**Integration Tests:**
+- Request → Payment → Webhook → Status update
+- End-to-end manual testing
+
+## Edge Function Testing
+
+**Method:**
+1. Deploy to Supabase
+2. Test via HTTP requests or webhook simulation
+3. Monitor logs in Supabase dashboard
+
+**Tested Functions:**
+- `stripe-webhook` - Payment event handling
+- `payment-page` - Status page rendering
+- `create-payment-link` - Stripe link generation
+
+**Webhook Testing:**
+```bash
+# Local webhook testing (Stripe CLI)
+stripe listen --forward-to localhost:54321/functions/v1/stripe-webhook
+```
+
+## Test Coverage Gaps
+
+| Area | Risk | Priority |
+|------|------|----------|
+| Edge Function error paths | Payment failures unnoticed | High |
+| RLS policy edge cases | Unauthorized access | High |
+| Auth hardening flows | Auth bypass issues | Medium |
 
 ---
 
-*Erstellt am 2026-01-10 mit Claude Code*
+*Testing analysis: 2026-01-14*
+*Update when test patterns change*
