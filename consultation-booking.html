@@ -1106,13 +1106,13 @@
         });
         if (!isInDienstplan) return false;
 
-        // Block if ANY appointment overlaps with 11:00-13:00 CET window
+        // Block if ANY appointment overlaps with 11:00-12:00 CET window
         // Database stores times in UTC, so we compare in UTC
-        // CET = UTC+1 (winter), so 11:00-13:00 CET = 10:00-12:00 UTC
-        // CEST = UTC+2 (summer), so 11:00-13:00 CEST = 09:00-11:00 UTC
+        // CET = UTC+1 (winter), so 11:00-12:00 CET = 10:00-11:00 UTC
+        // CEST = UTC+2 (summer), so 11:00-12:00 CEST = 09:00-10:00 UTC
         // We use local time construction which auto-adjusts for DST
         const slotStart = new Date(dateStr + 'T11:00:00');
-        const slotEnd = new Date(dateStr + 'T13:00:00'); // Extended to 13:00 for buffer
+        const slotEnd = new Date(dateStr + 'T12:00:00');
 
         const hasOverlap = existingAppointments.some(apt => {
           const aptStart = new Date(apt.start);
