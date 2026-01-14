@@ -322,7 +322,7 @@
     .booking-summary {
       max-width: 500px;
       margin: 0 auto;
-      background: #f5f5f7;
+      background: #ffffff;
       border: none;
       border-radius: 0;
       padding: 32px;
@@ -389,6 +389,7 @@
 
     .button-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 32px; }
     .button-row .btn { flex: 1; }
+    .button-row .btn-secondary { flex: 0 0 300px; max-width: 300px; }
 
     .loading-overlay {
       position: fixed;
@@ -527,6 +528,8 @@
 
       .form-row { grid-template-columns: 1fr; }
       .button-row { flex-direction: column; align-items: center; }
+      .button-row .btn-secondary { flex: 0 0 auto; width: 100%; max-width: 300px; }
+      .button-row .btn { width: 100%; max-width: none; }
 
       .btn-next {
         width: 100%;
@@ -828,67 +831,79 @@
           }
         }, 3000);
 
-        // Timeout after 10 minutes
-        setTimeout(() => {
+        // Timeout after 5 minutes - cancel appointment
+        setTimeout(async () => {
           if (paymentCheckInterval) {
             clearInterval(paymentCheckInterval);
             paymentCheckInterval = null;
-            showPaymentTimeout();
+            await cancelUnpaidAppointment();
           }
-        }, 600000);
+        }, 300000);
       }
 
-      function cancelPaymentWait() {
+      async function cancelPaymentWait() {
         if (paymentCheckInterval) {
           clearInterval(paymentCheckInterval);
           paymentCheckInterval = null;
         }
+
+        // Delete the unpaid appointment
+        const appointmentId = localStorage.getItem('consultation_appointment_id');
+        if (appointmentId) {
+          try {
+            await supabase
+              .from('appointments')
+              .delete()
+              .eq('id', appointmentId)
+              .eq('payment_status', 'pending');
+            console.log('Appointment canceled by user:', appointmentId);
+          } catch (err) {
+            console.error('Error deleting appointment:', err);
+          }
+          localStorage.removeItem('consultation_appointment_id');
+        }
+
         goToStep(3);
       }
 
-      function showPaymentTimeout() {
+      async function cancelUnpaidAppointment() {
+        const appointmentId = localStorage.getItem('consultation_appointment_id');
+
+        if (appointmentId) {
+          // Delete the unpaid appointment
+          try {
+            await supabase
+              .from('appointments')
+              .delete()
+              .eq('id', appointmentId)
+              .eq('payment_status', 'pending');
+            console.log('Unpaid appointment deleted:', appointmentId);
+          } catch (err) {
+            console.error('Error deleting appointment:', err);
+          }
+        }
+
+        // Clear local storage
+        localStorage.removeItem('consultation_email');
+        localStorage.removeItem('consultation_appointment_id');
+
+        // Show timeout message
         const buttonRow = document.querySelector('.booking-step[data-step="4"] .button-row');
         if (buttonRow) {
           buttonRow.innerHTML = `
             <div style="width: 100%; text-align: center; padding: 20px;">
               <p style="font-size: 16px; color: #1d1d1f; margin-bottom: 16px;">
-                Zahlung nicht abgeschlossen
+                Buchung abgelaufen
               </p>
               <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">
-                Falls du die Zahlung abgeschlossen hast, warte kurz und versuche es erneut.
+                Die Zahlung wurde nicht innerhalb von 5 Minuten abgeschlossen.<br>
+                Bitte starte eine neue Buchung.
               </p>
-              <button class="btn btn-primary" onclick="retryPaymentCheck()">
-                Erneut prüfen
-              </button>
-              <button class="btn btn-secondary" style="margin-top: 10px;" onclick="goToStep(3)">
-                Zurück
+              <button class="btn btn-primary" onclick="window.location.reload()">
+                Neue Buchung starten
               </button>
             </div>
           `;
-        }
-      }
-
-      async function retryPaymentCheck() {
-        const appointmentId = localStorage.getItem('consultation_appointment_id');
-        if (!appointmentId) {
-          showError('Keine Buchung gefunden.');
-          return;
-        }
-
-        showLoading('Zahlung wird überprüft...');
-
-        const { data, error } = await supabase
-          .from('appointments')
-          .select('payment_status')
-          .eq('id', appointmentId)
-          .single();
-
-        hideLoading();
-
-        if (data && data.payment_status === 'paid') {
-          showPaymentSuccess();
-        } else {
-          showPaymentWaitingMessage();
         }
       }
 
@@ -904,7 +919,6 @@
 
       // Make functions globally available
       window.cancelPaymentWait = cancelPaymentWait;
-      window.retryPaymentCheck = retryPaymentCheck;
       window.goToStep = goToStep;
 
       function formatDate(date) {
