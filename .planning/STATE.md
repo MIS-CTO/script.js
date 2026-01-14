@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-10 | Version: 3.1200**
-**UPDATE: Auth Hardening INTEGRATED + Admin Panel IMPLEMENTED!**
+**Stand: 2026-01-14 | Version: 3.1179**
+**UPDATE: Phase 5.1 Agreement Form UX Fixes COMPLETE!**
 
 ---
 
@@ -26,8 +26,50 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 4.7: ADMIN PANEL                              ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  PHASE 5: PERFORMANCE & POLISH                       → NEXT  ║
+║  PHASE 5.1: AGREEMENT FORM UX FIXES                  ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Phase 5.1: Agreement Form UX Fixes (2026-01-14) ✅ COMPLETE
+
+### Änderungen in agreement-form.html
+
+| Feature | Status | Beschreibung |
+|---------|--------|--------------|
+| Artist Selection (Step 0) | ✅ LIVE | Neuer erster Schritt: Artist-Suche nach Name/@instagram |
+| Birthdate Auto-Format | ✅ LIVE | Automatische Formatierung: 15031990 → 15.03.1990 |
+| Health Questions Wording | ✅ LIVE | Persönlichere Formulierung der Gesundheitsfragen |
+| Last Page Scroll Fix | ✅ LIVE | 100vh Constraint entfernt, Submit-Button sichtbar |
+| Artist Query Fix | ✅ LIVE | `is_active` → `active` Column-Name korrigiert |
+
+### Änderungen in management-system.html
+
+| Feature | Status | Beschreibung |
+|---------|--------|--------------|
+| Artist Column | ✅ LIVE | Agreements-Tabelle zeigt jetzt Artist-Spalte |
+| Direct Artist Join | ✅ LIVE | Query joined `artist:artists!agreements_artist_id_fkey` |
+
+### Database Migration
+
+| Migration | Status | Beschreibung |
+|-----------|--------|--------------|
+| add_artist_id_to_agreements | ✅ APPLIED | `artist_id UUID REFERENCES artists(id)` hinzugefügt |
+
+### Commits
+
+```
+d52106b fix(agreement): remove 100vh constraints for iPad scroll
+aaf1b33 fix(agreement): use correct column name 'active' for artists
+4a59a81 feat(management): add artist column to agreements table
+f246154 feat(agreement): add artist selection as first step
+9ac9412 fix(agreement): resolve last page scroll bug
+8a64385 fix(agreement): make medical questions more personal
+a177ed1 fix(agreement): improve health conditions wording
+9a74772 feat(agreement): add birthdate auto-formatting
 ```
 
 ---
@@ -127,15 +169,19 @@ Vollständiges Styling für:
 
 ## Nächste Schritte
 
-### Sofort
+### Phase 5.2: Performance & Polish (Optional)
 
-1. **management-system.html zu GitHub pushen** (2.2MB - benötigt spezielle Lösung)
+1. **Overpermissive RLS Policies reviewen**
+   - `qual=true` Policies durch rollenbasierte ersetzen
 
-### Backlog
+2. **Code Cleanup**
+   - Unused console.log entfernen
+   - Dead Code entfernen
 
-2. **Overpermissive RLS Policies reviewen**
-3. **Performance Optimierung**
+3. **Error Tracking V2** (Optional)
+   - Persistente Errors in Supabase
+   - Email-Alerts bei kritischen Fehlern
 
 ---
 
-*Aktualisiert am 2026-01-10 mit Claude Code*
+*Aktualisiert am 2026-01-14 mit Claude Code*
