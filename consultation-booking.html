@@ -771,21 +771,94 @@
         setTimeout(() => errorMessage.classList.remove('visible'), 5000);
       }
 
+      let paymentCheckInterval = null;
+
       function showPaymentWaitingMessage() {
-        // Show step 4 with payment instructions
         const buttonRow = document.querySelector('.booking-step[data-step="4"] .button-row');
 
         if (buttonRow) {
           buttonRow.innerHTML = `
             <div style="width: 100%; text-align: center; padding: 20px;">
-              <p style="font-size: 16px; color: #86868b; margin-bottom: 16px;">
-                Zahlung wird in neuem Tab durchgeführt...
+              <div style="margin-bottom: 20px;">
+                <div class="payment-spinner" style="width: 40px; height: 40px; border: 3px solid #e5e5e5; border-top: 3px solid #1d1d1f; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+              </div>
+              <p style="font-size: 16px; color: #1d1d1f; margin-bottom: 8px; font-weight: 500;">
+                Warte auf Zahlungsbestätigung...
               </p>
               <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">
-                Nach erfolgreicher Zahlung klicke auf den Button unten.
+                Bitte schließe die Zahlung im neuen Tab ab.<br>Diese Seite aktualisiert sich automatisch.
               </p>
-              <button class="btn btn-primary" onclick="checkPaymentAndRedirect()">
-                Zahlung abgeschlossen
+              <button class="btn btn-secondary" onclick="cancelPaymentWait()">
+                Abbrechen
+              </button>
+            </div>
+          `;
+        }
+
+        // Start polling for payment confirmation
+        startPaymentPolling();
+      }
+
+      function startPaymentPolling() {
+        const appointmentId = localStorage.getItem('consultation_appointment_id');
+        if (!appointmentId) return;
+
+        // Poll every 3 seconds for payment status
+        paymentCheckInterval = setInterval(async () => {
+          try {
+            const { data, error } = await supabase
+              .from('appointments')
+              .select('payment_status, status')
+              .eq('id', appointmentId)
+              .single();
+
+            if (error) {
+              console.error('Polling error:', error);
+              return;
+            }
+
+            // Check if payment was confirmed by Stripe webhook
+            if (data && data.payment_status === 'paid') {
+              clearInterval(paymentCheckInterval);
+              paymentCheckInterval = null;
+              showPaymentSuccess();
+            }
+          } catch (err) {
+            console.error('Polling error:', err);
+          }
+        }, 3000);
+
+        // Timeout after 10 minutes
+        setTimeout(() => {
+          if (paymentCheckInterval) {
+            clearInterval(paymentCheckInterval);
+            paymentCheckInterval = null;
+            showPaymentTimeout();
+          }
+        }, 600000);
+      }
+
+      function cancelPaymentWait() {
+        if (paymentCheckInterval) {
+          clearInterval(paymentCheckInterval);
+          paymentCheckInterval = null;
+        }
+        goToStep(3);
+      }
+
+      function showPaymentTimeout() {
+        const buttonRow = document.querySelector('.booking-step[data-step="4"] .button-row');
+        if (buttonRow) {
+          buttonRow.innerHTML = `
+            <div style="width: 100%; text-align: center; padding: 20px;">
+              <p style="font-size: 16px; color: #1d1d1f; margin-bottom: 16px;">
+                Zahlung nicht abgeschlossen
+              </p>
+              <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">
+                Falls du die Zahlung abgeschlossen hast, warte kurz und versuche es erneut.
+              </p>
+              <button class="btn btn-primary" onclick="retryPaymentCheck()">
+                Erneut prüfen
               </button>
               <button class="btn btn-secondary" style="margin-top: 10px;" onclick="goToStep(3)">
                 Zurück
@@ -795,23 +868,31 @@
         }
       }
 
-      async function checkPaymentAndRedirect() {
+      async function retryPaymentCheck() {
         const appointmentId = localStorage.getItem('consultation_appointment_id');
         if (!appointmentId) {
-          showError('Keine Buchung gefunden. Bitte erneut versuchen.');
+          showError('Keine Buchung gefunden.');
           return;
         }
 
         showLoading('Zahlung wird überprüft...');
 
-        // Mark as completed since user clicked the button
-        await supabase.from('appointments').update({
-          status: 'scheduled',
-          state: 'Zugesagt',
-          payment_status: 'paid'
-        }).eq('id', appointmentId);
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('payment_status')
+          .eq('id', appointmentId)
+          .single();
 
-        // Show success
+        hideLoading();
+
+        if (data && data.payment_status === 'paid') {
+          showPaymentSuccess();
+        } else {
+          showPaymentWaitingMessage();
+        }
+      }
+
+      function showPaymentSuccess() {
         document.getElementById('successEmail').textContent = localStorage.getItem('consultation_email') || 'deine E-Mail';
         document.querySelectorAll('.progress-step').forEach(el => el.classList.add('completed'));
         document.querySelectorAll('.booking-step').forEach(el => el.classList.remove('active'));
@@ -819,18 +900,28 @@
 
         localStorage.removeItem('consultation_email');
         localStorage.removeItem('consultation_appointment_id');
-        hideLoading();
       }
 
       // Make functions globally available
-      window.checkPaymentAndRedirect = checkPaymentAndRedirect;
+      window.cancelPaymentWait = cancelPaymentWait;
+      window.retryPaymentCheck = retryPaymentCheck;
       window.goToStep = goToStep;
 
       function formatDate(date) {
         return date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       }
 
-      function formatDateISO(date) { return date.toISOString().split('T')[0]; }
+      function formatDateISO(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function parseLocalDate(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      }
 
       function goToStep(step) {
         document.querySelectorAll('.progress-step').forEach(el => {
@@ -983,7 +1074,7 @@
             selectedDate = day.dataset.date;
             document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
             day.classList.add('selected');
-            selectedDateText.textContent = formatDate(new Date(selectedDate));
+            selectedDateText.textContent = formatDate(parseLocalDate(selectedDate));
             selectedDateDisplay.style.display = 'block';
             document.getElementById('btnToStep3').disabled = false;
           });
@@ -1029,7 +1120,7 @@
 
       function updateSummary() {
         document.getElementById('summaryArtist').textContent = selectedArtist?.name || '-';
-        document.getElementById('summaryDate').textContent = selectedDate ? formatDate(new Date(selectedDate)) : '-';
+        document.getElementById('summaryDate').textContent = selectedDate ? formatDate(parseLocalDate(selectedDate)) : '-';
         document.getElementById('summaryName').textContent = `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`;
         document.getElementById('summaryEmail').textContent = document.getElementById('email').value;
         document.getElementById('summaryPhone').textContent = document.getElementById('phone').value;
