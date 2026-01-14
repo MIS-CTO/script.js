@@ -1014,6 +1014,124 @@
       }
     }
 
+    /* Artist Search Styles */
+    .step-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+      font-size: 15px;
+    }
+
+    .artist-search-container {
+      margin: var(--space-lg) 0;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      margin-bottom: var(--space-md);
+    }
+
+    .search-input-wrapper .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .search-input-wrapper .form-input {
+      padding-left: 48px;
+    }
+
+    .search-results {
+      max-height: 300px;
+      overflow-y: auto;
+      border-radius: 12px;
+      background: var(--bg-primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .search-results:empty {
+      display: none;
+    }
+
+    .artist-result-item {
+      padding: 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+    }
+
+    .artist-result-item:hover {
+      background: var(--bg-secondary);
+    }
+
+    .artist-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .artist-result-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .artist-result-instagram {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .artist-result-item.no-results {
+      color: var(--text-secondary);
+      cursor: default;
+    }
+
+    .artist-result-item.no-results:hover {
+      background: transparent;
+    }
+
+    /* Selected Artist Display */
+    .selected-artist-display {
+      margin: var(--space-md) 0;
+    }
+
+    .selected-artist-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(67, 160, 71, 0.1);
+      border-radius: 12px;
+      border: 1px solid #43A047;
+    }
+
+    .selected-label {
+      color: #2E7D32;
+      font-size: 13px;
+    }
+
+    .selected-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .clear-artist-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+
+    .clear-artist-btn:hover {
+      color: var(--text-primary);
+    }
+
     .btn {
       padding: var(--space-md) var(--space-xl);
       font-family: var(--font-body);
@@ -1366,7 +1484,9 @@
       <div class="form-container">
         <!-- Progress Bar -->
         <div class="progress-bar">
-          <div class="progress-step active" data-step="1"></div>
+          <div class="progress-step active" data-step="0"></div>
+          <div class="progress-line"></div>
+          <div class="progress-step" data-step="1"></div>
           <div class="progress-line"></div>
           <div class="progress-step" data-step="2"></div>
           <div class="progress-line"></div>
@@ -1375,11 +1495,55 @@
           <div class="progress-step" data-step="4"></div>
           <div class="progress-line"></div>
           <div class="progress-step" data-step="5"></div>
-          <span class="progress-text"><span data-i18n="step">Schritt</span> <span id="currentStepNum">1</span> <span data-i18n="of">von</span> 5</span>
+          <span class="progress-text"><span data-i18n="step">Schritt</span> <span id="currentStepNum">1</span> <span data-i18n="of">von</span> 6</span>
+        </div>
+
+        <!-- Step 0: Artist Selection (NEU) -->
+        <div class="form-step active" data-step="0">
+          <h2 class="step-title" data-i18n="artistSelect">Bei wem hast du deinen Termin?</h2>
+          <p class="step-subtitle" data-i18n="artistSelectSubtitle">Suche deinen Artist nach Name oder Instagram</p>
+
+          <div class="artist-search-container">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                id="artistSearch"
+                class="form-input"
+                placeholder="Name oder @instagram..."
+                data-i18n-placeholder="artistSearchPlaceholder"
+                autocomplete="off"
+                oninput="searchArtists(this.value)"
+              >
+            </div>
+
+            <div id="artistSearchResults" class="search-results">
+              <!-- Dynamisch gefüllt -->
+            </div>
+
+            <input type="hidden" id="selectedArtistId" name="artist_id">
+            <input type="hidden" id="selectedArtistName" name="artist_name">
+          </div>
+
+          <div class="selected-artist-display" id="selectedArtistDisplay" style="display:none;">
+            <div class="selected-artist-card">
+              <span class="selected-label" data-i18n="selectedArtist">Ausgewählt:</span>
+              <span class="selected-name" id="selectedArtistNameDisplay"></span>
+              <button type="button" onclick="clearArtistSelection()" class="clear-artist-btn">×</button>
+            </div>
+          </div>
+
+          <div class="form-nav">
+            <div></div>
+            <button class="btn btn-primary" id="artistNextBtn" onclick="nextStep()" disabled data-i18n="next">Weiter</button>
+          </div>
         </div>
 
         <!-- Step 1: Personal Data -->
-        <div class="form-step active" data-step="1">
+        <div class="form-step" data-step="1">
           <h2 class="step-title" data-i18n="personalData">Persönliche Daten</h2>
 
           <div class="form-group">
@@ -1757,7 +1921,14 @@
         errorTerms: 'Bitte akzeptiere die AGB',
         errorSubmit: 'Fehler beim Speichern. Bitte versuche es erneut.',
         errorAge: 'Du musst mindestens 18 Jahre alt sein',
-        errorDateFormat: 'Bitte gib das Datum im Format TT.MM.JJJJ ein'
+        errorDateFormat: 'Bitte gib das Datum im Format TT.MM.JJJJ ein',
+        artistSelect: 'Bei wem hast du deinen Termin?',
+        artistSelectSubtitle: 'Suche deinen Artist nach Name oder Instagram',
+        artistSearchPlaceholder: 'Name oder @instagram...',
+        selectedArtist: 'Ausgewählt:',
+        errorArtistRequired: 'Bitte wähle deinen Artist aus',
+        noArtistsFound: 'Keine Artists gefunden',
+        summaryArtist: 'Artist'
       },
       en: {
         firstVisit: 'Is this your first visit?',
@@ -1811,15 +1982,94 @@
         errorTerms: 'Please accept the terms and conditions',
         errorSubmit: 'Error saving. Please try again.',
         errorAge: 'You must be at least 18 years old',
-        errorDateFormat: 'Please enter the date in DD.MM.YYYY format'
+        errorDateFormat: 'Please enter the date in DD.MM.YYYY format',
+        artistSelect: 'Who is your appointment with?',
+        artistSelectSubtitle: 'Search for your artist by name or Instagram',
+        artistSearchPlaceholder: 'Name or @instagram...',
+        selectedArtist: 'Selected:',
+        errorArtistRequired: 'Please select your artist',
+        noArtistsFound: 'No artists found',
+        summaryArtist: 'Artist'
       }
     };
 
     // State
     let currentLang = 'de';
-    let currentStep = 1;
+    let currentStep = 0;
     let selectedCustomer = null;
     let signatureCanvas = null;
+    let selectedArtist = null;
+    let allArtistsForSearch = [];
+
+    // Artist Search & Selection
+    async function loadArtistsForSearch() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('artists')
+          .select('id, name, instagram')
+          .eq('is_active', true)
+          .order('name');
+        if (error) throw error;
+        allArtistsForSearch = data || [];
+      } catch (err) {
+        console.error('❌ Artists laden fehlgeschlagen:', err);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    window.searchArtists = function(query) {
+      const resultsContainer = document.getElementById('artistSearchResults');
+      if (!query || query.length < 2) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.style.display = 'none';
+        return;
+      }
+
+      const q = query.toLowerCase();
+      const matches = allArtistsForSearch.filter(a =>
+        a.name?.toLowerCase().includes(q) ||
+        a.instagram?.toLowerCase().includes(q)
+      );
+
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="artist-result-item no-results">${t('noArtistsFound')}</div>`;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+
+      resultsContainer.innerHTML = matches.map(a => `
+        <div class="artist-result-item" onclick="selectArtist('${a.id}', '${escapeHtml(a.name)}', '${escapeHtml(a.instagram || '')}')">
+          <div class="artist-result-name">${escapeHtml(a.name)}</div>
+          ${a.instagram ? `<div class="artist-result-instagram">@${escapeHtml(a.instagram)}</div>` : ''}
+        </div>
+      `).join('');
+      resultsContainer.style.display = 'block';
+    };
+
+    window.selectArtist = function(id, name, instagram) {
+      selectedArtist = { id, name, instagram };
+      document.getElementById('selectedArtistId').value = id;
+      document.getElementById('selectedArtistName').value = name;
+      document.getElementById('selectedArtistNameDisplay').textContent = instagram ? `${name} (@${instagram})` : name;
+      document.getElementById('selectedArtistDisplay').style.display = 'block';
+      document.getElementById('artistSearch').value = '';
+      document.getElementById('artistSearchResults').style.display = 'none';
+      document.getElementById('artistNextBtn').disabled = false;
+    };
+
+    window.clearArtistSelection = function() {
+      selectedArtist = null;
+      document.getElementById('selectedArtistId').value = '';
+      document.getElementById('selectedArtistName').value = '';
+      document.getElementById('selectedArtistDisplay').style.display = 'none';
+      document.getElementById('artistNextBtn').disabled = true;
+    };
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -1827,6 +2077,7 @@
       initCheckboxes();
       initSignatureCanvas();
       updateTranslations();
+      loadArtistsForSearch();
     });
 
     // Language Toggle
@@ -1885,14 +2136,19 @@
 
     window.goToStart = function() {
       selectedCustomer = null;
-      currentStep = 1;
+      selectedArtist = null;
+      currentStep = 0;
       resetForm();
+      clearArtistSelection();
       showScreen('screen-start');
     };
 
     window.goBack = function() {
-      if (currentStep === 1) {
+      if (currentStep === 0) {
         window.goToStart();
+      } else if (currentStep > 0) {
+        currentStep--;
+        updateProgressBar();
       }
     };
 
@@ -1905,8 +2161,10 @@
 
     window.startNewCustomerForm = function() {
       selectedCustomer = null;
+      selectedArtist = null;
       resetForm();
-      currentStep = 1;
+      clearArtistSelection();
+      currentStep = 0;
       updateProgressBar();
       showScreen('screen-form');
     };
@@ -2042,7 +2300,7 @@
     // Form Steps
     function updateProgressBar() {
       document.querySelectorAll('.progress-step').forEach((step, index) => {
-        const stepNum = index + 1;
+        const stepNum = index; // Steps now start at 0
         step.classList.remove('active', 'completed');
 
         if (stepNum === currentStep) {
@@ -2053,10 +2311,11 @@
       });
 
       document.querySelectorAll('.progress-line').forEach((line, index) => {
-        line.classList.toggle('completed', index + 1 < currentStep);
+        line.classList.toggle('completed', index < currentStep);
       });
 
-      document.getElementById('currentStepNum').textContent = currentStep;
+      // Display step as 1-based for users (step 0 = "1 von 6")
+      document.getElementById('currentStepNum').textContent = currentStep + 1;
 
       document.querySelectorAll('.form-step').forEach(step => {
         step.classList.toggle('active', parseInt(step.dataset.step) === currentStep);
@@ -2084,6 +2343,15 @@
     }
 
     function validateStep(step) {
+      // Step 0: Artist Selection
+      if (step === 0) {
+        if (!selectedArtist) {
+          showToast(t('errorArtistRequired'));
+          return false;
+        }
+      }
+
+      // Step 1: Personal Data
       if (step === 1) {
         const firstName = document.getElementById('firstName').value.trim();
         const lastName = document.getElementById('lastName').value.trim();
@@ -2114,6 +2382,7 @@
         }
       }
 
+      // Step 3: Consent
       if (step === 3) {
         const termsAccepted = document.getElementById('termsAccepted').checked;
         if (!termsAccepted) {
@@ -2122,6 +2391,7 @@
         }
       }
 
+      // Step 4: Signature
       if (step === 4) {
         if (signatureCanvas.isEmpty()) {
           showToast(t('errorSignature'));
@@ -2153,7 +2423,7 @@
     };
 
     window.prevStep = function() {
-      if (currentStep > 1) {
+      if (currentStep > 0) {
         currentStep--;
         updateProgressBar();
 
@@ -2182,7 +2452,17 @@
       const dobParsed = parseDateDMY(dob);
       const dobFormatted = dobParsed ? dobParsed.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-GB') : (dob || '-');
 
+      const artistDisplay = selectedArtist ? (selectedArtist.instagram ? `${selectedArtist.name} (@${selectedArtist.instagram})` : selectedArtist.name) : '-';
+
       summary.innerHTML = `
+        <div class="summary-section">
+          <div class="summary-section-title">${t('summaryArtist')}</div>
+          <div class="summary-row">
+            <span class="summary-label">${t('summaryArtist')}</span>
+            <span class="summary-value">${artistDisplay}</span>
+          </div>
+        </div>
+
         <div class="summary-section">
           <div class="summary-section-title">${t('summaryPersonal')}</div>
           <div class="summary-row">
@@ -2268,6 +2548,7 @@
           .insert([{
             customer_id: customerId,
             appointment_id: appointmentId,
+            artist_id: selectedArtist?.id || null,
             first_name: formData.firstName,
             last_name: formData.lastName,
             date_of_birth: formData.dateOfBirth,
