@@ -9512,6 +9512,20 @@
     .time-slot.disabled {
       opacity: 0.4;
       cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .time-slot.booked {
+      background: rgba(255,59,48,0.1);
+      border-color: rgba(255,59,48,0.3);
+      color: #86868b;
+      text-decoration: line-through;
+    }
+
+    .time-slot.booked:hover {
+      background: rgba(255,59,48,0.1);
+      border-color: rgba(255,59,48,0.3);
+      color: #86868b;
     }
 
     /* End Time Selection */
@@ -29547,6 +29561,31 @@
           }
         }
 
+        // Get existing appointments for this date to check conflicts
+        const appointmentsOnDate = (artistExistingAppointments || []).filter(apt => {
+          if (!apt.start) return false;
+          const aptDate = apt.start.split('T')[0];
+          return aptDate === dateStr;
+        });
+
+        // Helper: Check if a time slot is during an existing appointment
+        function isSlotBooked(slotTime) {
+          const [slotH, slotM] = slotTime.split(':').map(Number);
+          const slotMinutes = slotH * 60 + slotM;
+
+          return appointmentsOnDate.some(apt => {
+            const aptStartTime = apt.start.split('T')[1]?.substring(0, 5) || '00:00';
+            const aptEndTime = apt.end?.split('T')[1]?.substring(0, 5) || '23:59';
+            const [aptStartH, aptStartM] = aptStartTime.split(':').map(Number);
+            const [aptEndH, aptEndM] = aptEndTime.split(':').map(Number);
+            const aptStartMinutes = aptStartH * 60 + aptStartM;
+            const aptEndMinutes = aptEndH * 60 + aptEndM;
+
+            // Slot is booked if it falls within appointment time range
+            return slotMinutes >= aptStartMinutes && slotMinutes < aptEndMinutes;
+          });
+        }
+
         // Format date for display
         const dateObj = new Date(dateStr);
         const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -29561,11 +29600,16 @@
             <div class="time-slots-grid">
         `;
 
+        // Store appointments for use in showEndTimeSlots
+        window.currentDateAppointments = appointmentsOnDate;
+
         slots.forEach(slot => {
           const isSelected = selectedStartTime === slot;
+          const isBooked = isSlotBooked(slot);
           html += `
-            <div class="time-slot ${isSelected ? 'selected' : ''}"
-                 onclick="selectStartTime('${slot}', '${workingEnd.substring(0,5)}')">
+            <div class="time-slot ${isSelected ? 'selected' : ''} ${isBooked ? 'disabled booked' : ''}"
+                 ${isBooked ? '' : `onclick="selectStartTime('${slot}', '${workingEnd.substring(0,5)}')" `}
+                 ${isBooked ? 'title="Bereits gebucht"' : ''}>
               ${slot}
             </div>
           `;
@@ -29614,7 +29658,36 @@
         if (!container) return;
 
         const [startHour, startMin] = startTime.split(':').map(Number);
-        const [maxHour, maxMin] = maxEndTime.split(':').map(Number);
+        let [maxHour, maxMin] = maxEndTime.split(':').map(Number);
+        const startMinutes = startHour * 60 + startMin;
+
+        // Find the next appointment after the selected start time
+        const appointments = window.currentDateAppointments || [];
+        let nextAptStart = null;
+
+        appointments.forEach(apt => {
+          const aptStartTime = apt.start?.split('T')[1]?.substring(0, 5) || '00:00';
+          const [aptH, aptM] = aptStartTime.split(':').map(Number);
+          const aptMinutes = aptH * 60 + aptM;
+
+          // If this appointment starts after our start time, it could limit our end time
+          if (aptMinutes > startMinutes) {
+            if (nextAptStart === null || aptMinutes < nextAptStart) {
+              nextAptStart = aptMinutes;
+            }
+          }
+        });
+
+        // If there's a next appointment, limit max end time to its start
+        if (nextAptStart !== null) {
+          const limitedMaxHour = Math.floor(nextAptStart / 60);
+          const limitedMaxMin = nextAptStart % 60;
+          // Use the earlier of working end or next appointment start
+          if (limitedMaxHour < maxHour || (limitedMaxHour === maxHour && limitedMaxMin < maxMin)) {
+            maxHour = limitedMaxHour;
+            maxMin = limitedMaxMin;
+          }
+        }
 
         // Generate end time slots (mindestens 30 min nach Start)
         const slots = [];
@@ -29637,9 +29710,10 @@
           }
         }
 
-        // Add max end time if not already included
-        if (!slots.includes(maxEndTime) && slots.length > 0) {
-          slots.push(maxEndTime);
+        // Add max end time if not already included and it's after start+30min
+        const maxEndTimeStr = `${String(maxHour).padStart(2, '0')}:${String(maxMin).padStart(2, '0')}`;
+        if (!slots.includes(maxEndTimeStr) && slots.length > 0) {
+          slots.push(maxEndTimeStr);
         }
 
         let html = `
