@@ -112,8 +112,94 @@ serve(async (req: Request) => {
             }
           })
           .catch(err => console.error('Activity log error:', err));
-      } else {
-        console.log('No request_id in metadata, skipping DB update');
+      }
+
+      // Handle consultation payment
+      // Consultation payments use client_reference_id as appointment ID
+      // and may have type: 'consultation' in metadata
+      const paymentType = session.metadata?.type;
+      const appointmentId = session.metadata?.appointment_id || session.client_reference_id;
+
+      // If no request_id but has appointmentId, treat as consultation
+      if (appointmentId && !requestId) {
+        console.log('Processing consultation payment for appointment:', appointmentId);
+
+        // Get appointment details for the email
+        const { data: appointment, error: fetchError } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            customer:customers!appointments_customer_id_fkey(id, name, email),
+            artist:artists!appointments_artist_id_fkey(id, name)
+          `)
+          .eq('id', appointmentId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching appointment:', fetchError);
+        } else if (appointment) {
+          // Update appointment status
+          const { error: updateError } = await supabase
+            .from('appointments')
+            .update({
+              status: 'scheduled',
+              payment_status: 'paid',
+              stripe_payment_id: session.id || session.payment_intent,
+              paid_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', appointmentId);
+
+          if (updateError) {
+            console.error('Error updating appointment:', updateError);
+          } else {
+            console.log('Consultation payment updated for:', appointmentId);
+
+            // Send confirmation email
+            if (appointment.customer?.email) {
+              const appointmentDate = new Date(appointment.date);
+              const formattedDate = appointmentDate.toLocaleDateString('de-DE', {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+              });
+
+              try {
+                const emailResponse = await fetch(
+                  `${supabaseUrl}/functions/v1/send-consultation-confirmation`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseServiceKey}`
+                    },
+                    body: JSON.stringify({
+                      customer_email: appointment.customer.email,
+                      customer_name: appointment.customer.name,
+                      artist_name: appointment.artist?.name || 'Artist',
+                      appointment_date: formattedDate,
+                      appointment_time: appointment.time || '11:00',
+                      location_name: 'MOMMY I\'M SORRY',
+                      location_address: session.metadata?.location_address || ''
+                    })
+                  }
+                );
+
+                if (emailResponse.ok) {
+                  console.log('✅ Confirmation email sent for consultation:', appointmentId);
+                } else {
+                  const emailError = await emailResponse.text();
+                  console.error('Email send failed:', emailError);
+                }
+              } catch (emailErr) {
+                console.error('Error sending confirmation email:', emailErr);
+              }
+            }
+          }
+        }
+      } else if (!requestId && !appointmentId) {
+        console.log('No request_id or appointment_id in metadata, skipping DB update');
       }
     }
 
