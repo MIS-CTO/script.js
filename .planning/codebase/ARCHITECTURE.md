@@ -16,7 +16,12 @@ A single-file HTML application (2.4MB) paired with Supabase backend and Deno Edg
 │                           FRONTEND                                       │
 │  management-system.html (2.4 MB, 61,149 lines) - Single-File App        │
 │  agreement-form.html (82 KB, 2,385 lines) - Consent Form PWA            │
-│  Tabs: Requests | Calendar | Dienstplan | Artists | Customers           │
+│                                                                          │
+│  11 TABS: Dashboard | Requests | Calendar | Guest Spots | Waitlist |    │
+│           Artists | Customers | Dienstplan | Agreements | Analytics |   │
+│           Wannados                                                       │
+│                                                                          │
+│  ~894 JavaScript Functions (675 regular + 219 async)                    │
 └─────────────────────────────────────────────────────────────────────────┘
                                    │
                                    │ HTTPS / @supabase/supabase-js@2
@@ -112,18 +117,46 @@ A single-file HTML application (2.4MB) paired with Supabase backend and Deno Edg
    auto-archive-old-requests  03:00 UTC
 ```
 
-## Module Boundaries
+## Module Boundaries (management-system.html)
 
-| Module | Location | Responsibility |
-|--------|----------|----------------|
-| Auth | `auth-hardening.js` (269 lines) | Rate limiting, sessions |
-| Requests | Lines ~7000-9000 | CRUD operations |
-| Payments | Lines ~3000-5000 | Stripe integration |
-| Calendar | Lines ~10000-15000 | Scheduling UI |
-| Analytics | Lines ~1000-3000 | Chart.js dashboards |
-| Admin | Lines ~500-1000 | System monitoring |
+| Module | Line Range | Key Functions | Responsibility |
+|--------|------------|---------------|----------------|
+| Navigation | ~14280-14430 | Tab switching, mobile nav | UI routing between 11 tabs |
+| Booking/Calendar | ~20400-21500 | `createAppointmentFromRequest()` | Appointment creation, mappings |
+| Auth | ~22000-22700 | Session check, login handlers | Secure Supabase auth |
+| Dashboard | ~24000-24700 | `loadDashboard()`, `loadPinnedEvents()` | Overview, pinned events |
+| To-Do System | ~24700-26300 | `loadTodoProjects()`, `saveTodoTask()` | Project task management |
+| Requests | ~27300-31100 | `loadRequests()`, `loadArtistAvailability()` | Request CRUD, filtering |
+| Entities | ~31100-35000 | `loadArtists()`, `loadCustomers()`, `loadAgreements()` | Entity management |
+| Dienstplan | ~38000-40400 | `loadDienstplanData()`, `saveNewSlot()` | Work schedule management |
+| Admin Panel | ~40700-41000 | `loadAdminPanelData()`, `updateSystemStatus()` | System monitoring, stats |
+| Auth Login | ~40996-42300 | `handleLogin()` | Login flow, rate limiting |
+| Analytics | ~43300-47100 | PostHog fetches, `loadAnalytics()` | 16+ analytics data loaders |
+| Guest Spots | ~48900-50000 | `loadWaitlistSlots()`, `loadUpcomingGuestSpotsTab()` | Guest artist management |
+| Payment Workflow | ~51500-51700 | `executePaymentWorkflow()` | Stripe payment links |
+
+## agreement-form.html Modules
+
+| Module | Line Range | Key Functions | Responsibility |
+|--------|------------|---------------|----------------|
+| PWA Config | ~1-70 | Meta tags, manifest | iPad/iPhone kiosk mode |
+| Kiosk Styles | ~71-200 | CSS | Prevent zoom, selection |
+| Form UI | ~200-1500 | Styles, HTML | 5-step form flow |
+| Supabase Init | ~1690-1700 | Client setup | Database connection |
+| i18n | ~1700-1870 | `t()`, `updateTranslations()` | DE/EN translations |
+| Form Logic | ~1870-2100 | `validateStep()`, `initSignatureCanvas()` | Validation, signature |
+| Submit | ~2220-2300 | `submitAgreement()`, `autoMatchAppointment()` | Save to agreements table |
+
+## Edge Function Invocations (from frontend)
+
+| Function | Called From | Line | Trigger |
+|----------|-------------|------|---------|
+| create-payment-link | management-system.html | 20966 | Payment workflow |
+| send-cancellation-email | management-system.html | 30840 | Cancel request |
+| send-manual-reminder | management-system.html | 30908 | Resend payment email |
+| payment-reminders | management-system.html | 40922 | Admin panel trigger |
 
 ---
 
-*Architecture analysis: 2026-01-14*
+*Architecture analysis: 2026-01-14 (deep code analysis)*
 *Update when patterns change*

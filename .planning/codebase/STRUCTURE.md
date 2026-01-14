@@ -55,11 +55,18 @@ script-js-temp/
 - `manifest-agreement.json` - PWA manifest
 - No `.env` file (secrets in Supabase dashboard)
 
-**Core Logic:**
-- `management-system.html:7000-9000` - Request CRUD
-- `management-system.html:3000-5000` - Payment workflow
-- `management-system.html:10000-15000` - Calendar/scheduling
-- `supabase/functions/stripe-webhook/index.ts` - Payment processing
+**Core Logic (Verified Line Numbers):**
+- `management-system.html:14280-14430` - Navigation & Tab switching (11 tabs)
+- `management-system.html:20400-21500` - Booking/Calendar, `createAppointmentFromRequest()`
+- `management-system.html:20966` - Edge Function call: `create-payment-link`
+- `management-system.html:27300-31100` - Request CRUD, `loadRequests()`
+- `management-system.html:30840` - Edge Function call: `send-cancellation-email`
+- `management-system.html:30908` - Edge Function call: `send-manual-reminder`
+- `management-system.html:38000-40400` - Dienstplan/Work scheduling
+- `management-system.html:40996-42300` - Auth login, `handleLogin()`
+- `management-system.html:43300-47100` - Analytics (16+ PostHog fetches)
+- `management-system.html:51589` - Payment workflow, `executePaymentWorkflow()`
+- `supabase/functions/stripe-webhook/index.ts` - Payment processing (constructEventAsync)
 
 ## Naming Conventions
 
