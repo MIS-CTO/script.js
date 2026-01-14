@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-14 | Version: 3.1179**
-**UPDATE: Phase 5.1 Agreement Form UX Fixes COMPLETE!**
+**Stand: 2026-01-14 | Version: 3.1180**
+**UPDATE: Phase 5.3 Consultation Payment Bug - NEXT UP**
 
 ---
 
@@ -28,9 +28,116 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.1: AGREEMENT FORM UX FIXES                  ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
+║  PHASE 5.3: CONSULTATION PAYMENT FIX                 → NEXT  ║
+╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5.2: PERFORMANCE & POLISH                     ○ LATER ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## Phase 5.3: Consultation Payment Fix (NEXT UP) 🔴 BUG
+
+### Problem Description
+
+After paying for consultation via Stripe, the consultation booking page (`consultation-booking.html`) continues showing "Waiting for payment confirmation" even though the payment was successful.
+
+### Current Payment Flow
+
+```
+1. User selects artist, date, time → Fills contact info
+2. Click "Jetzt bezahlen" → Creates appointment in DB:
+   - status: 'pending_payment'
+   - payment_status: 'pending'
+3. Opens Stripe Payment Link in new tab:
+   URL: https://buy.stripe.com/xxx?prefilled_email=...&client_reference_id={apt.id}
+4. Shows "Waiting for payment" spinner
+5. Polls DB every 3 seconds checking: payment_status === 'paid'
+6. PROBLEM: payment_status never changes to 'paid'
+```
+
+### Root Cause Analysis
+
+**Stripe Payment Links vs Checkout Sessions:**
+- The code uses a **Stripe Payment Link** (line 743: `https://buy.stripe.com/...`)
+- Payment Links have LIMITED metadata support compared to Checkout Sessions
+- The `client_reference_id` URL parameter may NOT be passed to the webhook as `session.client_reference_id`
+
+**Webhook Handler** (`supabase/functions/stripe-webhook/index.ts`):
+```javascript
+// Line 121 - Tries to get appointment ID:
+const appointmentId = session.metadata?.appointment_id || session.client_reference_id;
+
+// Line 124-151 - If appointmentId found, updates:
+// payment_status: 'paid', status: 'scheduled'
+```
+
+**Likely Issue:** The webhook receives the event but `appointmentId` is null/undefined because Payment Links don't pass `client_reference_id` the same way.
+
+### Key Files
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `consultation-booking.html` | Booking UI & polling | 742-1215 |
+| `supabase/functions/stripe-webhook/index.ts` | Webhook handler | 117-203 |
+| `supabase/functions/send-consultation-confirmation/index.ts` | Email after payment | Full file |
+
+### Code Locations
+
+**consultation-booking.html:**
+- Stripe Payment Link constant: line 743
+- Appointment creation: lines 1177-1195
+- Payment URL construction: line 1203
+- Polling function: lines 805-842
+- Success check: line 824 (`payment_status === 'paid'`)
+
+**stripe-webhook/index.ts:**
+- Consultation payment handling: lines 117-203
+- Appointment ID extraction: line 121
+- Appointment update: lines 142-151
+
+### Potential Solutions
+
+1. **Switch to Stripe Checkout API** (Recommended)
+   - Create Checkout Session via Edge Function
+   - Full control over metadata and client_reference_id
+   - Requires new Edge Function: `create-consultation-checkout`
+
+2. **Use Success URL Redirect**
+   - After payment, Stripe redirects to success_url
+   - Pass appointment_id in URL, update locally
+   - Less reliable (user might close browser)
+
+3. **Lookup by Customer Email**
+   - Webhook finds most recent pending appointment by email
+   - Works but less precise (multiple pending appointments)
+
+4. **Store in Stripe Metadata via API**
+   - Use Stripe API to update Payment Link metadata per transaction
+   - Complex, not recommended
+
+### Database Schema Context
+
+**appointments table:**
+```sql
+id UUID PRIMARY KEY
+customer_id UUID REFERENCES customers(id)
+artist_id UUID REFERENCES artists(id)
+date DATE
+time TEXT
+status TEXT ('pending_payment', 'scheduled', 'completed', 'canceled')
+payment_status TEXT ('pending', 'paid', 'refunded')
+stripe_payment_id TEXT
+paid_at TIMESTAMPTZ
+```
+
+### Artist Assignment Context
+
+The consultation booking also involves artist assignment:
+- User selects artist in step 1 (artist selection UI)
+- Artist ID stored in `appointments.artist_id`
+- Artist availability checked via `artist_availability` table
+- Time slots restricted to 11:00-12:00 Berlin time (consultation slots)
 
 ---
 
@@ -169,7 +276,22 @@ Vollständiges Styling für:
 
 ## Nächste Schritte
 
-### Phase 5.2: Performance & Polish (Optional)
+### Phase 5.3: Consultation Payment Fix (PRIORITY 🔴)
+
+**Problem:** Consultation payment confirmation not working - page waits indefinitely after Stripe payment.
+
+**Action Items:**
+1. Check Supabase Edge Function logs for webhook events
+2. Verify if `client_reference_id` arrives in webhook payload
+3. Implement fix (likely: switch to Stripe Checkout API)
+4. Test full payment flow end-to-end
+
+**Files to modify:**
+- `consultation-booking.html` - payment initiation
+- `supabase/functions/stripe-webhook/index.ts` - webhook handler
+- NEW: `supabase/functions/create-consultation-checkout/index.ts` (if switching to Checkout API)
+
+### Phase 5.2: Performance & Polish (LATER)
 
 1. **Overpermissive RLS Policies reviewen**
    - `qual=true` Policies durch rollenbasierte ersetzen
@@ -181,6 +303,18 @@ Vollständiges Styling für:
 3. **Error Tracking V2** (Optional)
    - Persistente Errors in Supabase
    - Email-Alerts bei kritischen Fehlern
+
+---
+
+## Recent Session (2026-01-14) - Request Scheduling UI
+
+Completed improvements to request scheduling funnel:
+- Added 70px spacing between date picker and time picker
+- Changed time slots from 2 to 3 columns for better overview
+- Added artist name and time display in request cards
+- Pre-selection of date/time when reopening edit mode (already implemented)
+
+**Commit:** `997eedf feat(requests): show artist name and time in request cards`
 
 ---
 
