@@ -139,7 +139,8 @@ serve(async (req: Request) => {
               last_name: m.customer_last_name,
               email: m.customer_email,
               phone: m.customer_phone,
-              instagram: m.customer_instagram || null
+              instagram: m.customer_instagram || null,
+              rank: 'Neukunde'
             })
             .select()
             .single();
