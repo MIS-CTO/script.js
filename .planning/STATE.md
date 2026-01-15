@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-15 | Version: 3.1203**
-**UPDATE: Phase 5.5 Calendar, Search, Attachments & Rank - COMPLETE ✓**
+**Stand: 2026-01-15 | Version: 3.1204**
+**UPDATE: Phase 5.5 Hotfixes - Timezone & Artist Popup Fixes ✓**
 
 ---
 
@@ -129,6 +129,8 @@ WHERE rank = 'Bronze' AND id NOT IN (
 })
 ```
 
+**Deployed:** stripe-webhook v26
+
 ### PR & Commits
 
 **PR #590:** `feat(phase-5.5): Calendar grouping, search fix, attachments & rank fix`
@@ -137,6 +139,68 @@ WHERE rank = 'Bronze' AND id NOT IN (
 445be51 feat(phase-5.5): calendar grouping, search fix, attachments & rank fix
 3b05976 fix(calendar): restore proper event container design
 ```
+
+---
+
+## Phase 5.5 Hotfixes (2026-01-15) ✅ COMPLETE
+
+### Hotfix 1: Appointment Edit Timezone Shift (PR #592)
+
+**Problem:** When opening appointment edit popup, times shifted +1 hour (e.g., 12:00-14:00 became 13:00-15:00).
+
+**Cause:** `new Date()` interpreted ISO strings as UTC, then `toTimeString()` converted to local time.
+
+**Fix:** Extract date/time directly from ISO string without Date parsing.
+
+**Location:** `management-system.html` lines 37299-37305
+
+```javascript
+// Before: const timeStr = startDate.toTimeString().slice(0, 5);
+// After:
+const startStr = appointment.start_time || appointment.start || '';
+const timeStr = startStr && startStr.includes('T') ? startStr.split('T')[1].substring(0, 5) : '09:00';
+```
+
+### Hotfix 2: Appointment Details Timezone Shift (PR #593)
+
+**Problem:** Time displayed in appointment details modal also shifted +1 hour.
+
+**Fix:** Updated `formatModalTime` function to extract time directly from ISO string.
+
+**Location:** `management-system.html` lines 36473-36480
+
+```javascript
+window.formatModalTime = function(dateStr) {
+  if (!dateStr) return '-';
+  if (dateStr.includes('T')) {
+    return dateStr.split('T')[1].substring(0, 5);
+  }
+  return new Date(dateStr).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+};
+```
+
+### Hotfix 3: Artist Profile Popup Restoration (PR #594)
+
+**Problem:** Artist profile popup (with background image, profile picture, edit button) was replaced by a slide-in side panel on Artists page and Guest Spot page.
+
+**Cause:** A second `viewArtistProfile` function definition at line 36755 was overriding the original popup function and redirecting to `openArtistSidePanel`.
+
+**Fix:** Renamed the override to `viewArtistFromModal` so it only applies when clicking from the appointment detail modal.
+
+**Location:** `management-system.html` lines 36755 and 19645
+
+```javascript
+// Renamed: window.viewArtistProfile → window.viewArtistFromModal
+// Updated button: onclick="viewArtistFromModal()"
+```
+
+### Hotfix PRs
+
+| PR | Description | Commit |
+|----|-------------|--------|
+| #592 | Appointment edit timezone fix | `514a626` |
+| #593 | Appointment details timezone fix | `2950e73` |
+| #594 | Artist profile popup restoration | `88a8553` |
 
 ---
 
@@ -199,17 +263,15 @@ After paying for consultation via Stripe, the booking page showed "Waiting for p
 
 ---
 
-## Recent Session (2026-01-15) - Phase 5.5
+## Recent Session (2026-01-15) - Phase 5.5 Hotfixes
 
 **Completed:**
-- Calendar slot grouping by artist (non-overlapping appointments share row)
-- Consultation 100€ price display in calendar
-- Request search now includes phone and instagram
-- Schwarzes Brett attachments (upload images/PDFs)
-- Customer rank fix (new customers get Neukunde)
-- Restored proper calendar event container design
+- Timezone fix for appointment edit popup (PR #592)
+- Timezone fix for appointment details time display (PR #593)
+- Deployed stripe-webhook v26 with Neukunde rank fix
+- Restored artist profile popup on Artists page and Guest Spot page (PR #594)
 
-**PR:** #590 merged
+**PRs Merged:** #592, #593, #594
 
 ---
 
