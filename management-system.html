@@ -33104,37 +33104,153 @@
                       };
                       const paymentLabel = evt.isAppointment && evt.paymentStatus ? paymentLabels[evt.paymentStatus] || '' : '';
 
-                      // Build content (simplified for grouped view)
+                      // Build content with proper container design
                       let content = '';
                       const isConsultation = (evt.workProcess === 'Consultation' || evt.type === 'consultation' || eventCategory === 'consultation');
                       const showPrice = isConsultation ? '100 €' : (evt.price ? `€${evt.price}` : '');
+                      const isArtistInfoEvent = evt.isArtistInfo === true;
+
+                      // Get category config for icons
+                      const catConfig = (window.calendarCategoryConfig || {})[eventCategory] || {};
+                      const typeIcon = catConfig.icon || '';
 
                       if (evt.isGuestSpot) {
                         if (evt.isGuestSpotAppointment) {
-                          content = `<div style="font-weight:600;font-size:11px;margin-bottom:2px;">${timeStr}</div>
-                            <div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${evt.customerName || 'Kunde'}</div>`;
+                          content = `
+                            <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                              </svg>
+                              <span style="font-weight:600; font-size:12px;">${timeStr}</span>
+                            </div>
+                            <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px;">
+                              ${evt.customerName || 'Kunde'}
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                              <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${evt.type || 'Termin'}</span>
+                              ${evt.price ? `<span style="font-size:10px; font-weight:600; opacity:0.9;">€${evt.price}</span>` : ''}
+                            </div>`;
                         } else {
-                          content = `<div style="font-weight:600;font-size:11px;margin-bottom:2px;">${timeStr}</div>
-                            <div style="font-weight:700;font-size:12px;">${evt.artistName || 'Guest'}</div>`;
+                          const gsTypeLabel = evt.bookingType === 'internal' ? 'Intern' : 'Extern';
+                          content = `
+                            <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                              </svg>
+                              <span style="font-weight:600; font-size:12px;">${timeStr}</span>
+                            </div>
+                            <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">
+                              ${evt.artistName}
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                              <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsTypeLabel}</span>
+                            </div>`;
                         }
-                      } else if (evt.isArtistInfo) {
-                        content = `<div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${evt.artistName || evt.title}</div>
-                          <div style="font-size:11px;opacity:0.8;">${evt.description || ''}</div>`;
-                      } else {
-                        const displayLabel = evt.workProcess ? (typeLabels[evt.workProcess] || evt.workProcess) : typeLabel;
-                        content = `<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
-                            <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;opacity:0.9;">${displayLabel}</span>
-                            ${showPrice ? `<span style="font-size:10px;font-weight:600;opacity:0.8;margin-left:auto;">${showPrice}</span>` : ''}
+                      } else if (evt.isStay) {
+                        content = `
+                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                              <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            <span style="font-weight:600; font-size:11px; color:#8e8e93;">Unterkunft</span>
                           </div>
-                          <span style="font-weight:600;font-size:11px;opacity:0.8;white-space:nowrap;">${timeStr}</span>
-                          <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:2px 0;">${evt.customerName || evt.title || ''}</div>
-                          ${paymentLabel ? `<div style="font-size:10px;opacity:0.85;display:flex;align-items:center;gap:3px;">${paymentLabel}</div>` : ''}`;
+                          <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">
+                            ${evt.artistName}
+                          </div>
+                          <div style="font-size:10px; opacity:0.8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                            ${evt.stayLocationName || ''}${evt.stayLocationCity ? ' • ' + evt.stayLocationCity : ''}
+                          </div>`;
+                      } else if (isArtistInfoEvent) {
+                        content = `<div style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${evt.title}</div>`;
+                      } else if (evt.category === 'events') {
+                        const displayLabel = catConfig.label || typeLabel || 'Event';
+                        const titleContent = evt.artistId
+                          ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline; font-weight:600;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">${evt.title}</div>`
+                          : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; font-weight:600;">${evt.title}</div>`;
+                        content = `
+                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                            <span style="display:inline-flex; align-items:center;">${typeIcon || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'}</span>
+                            <span style="font-weight:600; font-size:12px;">${timeStr}</span>
+                          </div>
+                          ${titleContent}
+                          ${displayLabel ? `<div style="font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:0.3px; opacity:0.8;">${displayLabel}</div>` : ''}`;
+                      } else {
+                        // Regular bookings
+                        const customerName = evt.customerName || 'Kunde';
+                        const customerLink = evt.customerId
+                          ? `<span style="cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${evt.customerId}');">${customerName}</span>`
+                          : customerName;
+                        const displayLabel = catConfig.label || (evt.workProcess ? (typeLabels[evt.workProcess] || evt.workProcess) : typeLabel) || eventCategory;
+
+                        // Payment badge
+                        const paymentBadges = {
+                          'paid': { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>', label: 'Bezahlt', bg: 'rgba(46, 125, 50, 0.15)', color: '#2E7D32' },
+                          'fully_paid': { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>', label: 'Bezahlt', bg: 'rgba(46, 125, 50, 0.15)', color: '#2E7D32' },
+                          'deposit_paid': { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', label: 'Anzahlung', bg: 'rgba(21, 101, 192, 0.15)', color: '#1565C0' },
+                          'pending': { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', label: 'Offen', bg: 'rgba(245, 127, 23, 0.15)', color: '#F57F17' },
+                          'unpaid': { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>', label: 'Unbezahlt', bg: 'rgba(198, 40, 40, 0.1)', color: '#C62828' }
+                        };
+                        const paymentInfo = evt.isAppointment && evt.paymentStatus ? paymentBadges[evt.paymentStatus] || paymentBadges['unpaid'] : null;
+
+                        content = `
+                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+                            ${typeIcon ? `<span style="display:inline-flex; align-items:center;">${typeIcon}</span>` : ''}
+                            <span style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; opacity:0.9;">${displayLabel}</span>
+                            ${showPrice ? `<span style="font-size:10px; font-weight:600; opacity:0.8; margin-left:auto;">${showPrice}</span>` : ''}
+                          </div>
+                          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; gap:6px; width:100%;">
+                            <span style="font-weight:600; font-size:11px; opacity:0.8; white-space:nowrap;">${timeStr}</span>
+                            <span style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:right;">${customerLink}</span>
+                          </div>
+                          ${paymentInfo ? `
+                            <div style="display:inline-flex; align-items:center; gap:3px; padding:2px 6px; border-radius:4px; background:${paymentInfo.bg}; margin-top:2px;">
+                              <span style="display:inline-flex; color:${paymentInfo.color};">${paymentInfo.icon}</span>
+                              <span style="font-size:9px; font-weight:600; color:${paymentInfo.color}; text-transform:uppercase;">${paymentInfo.label}</span>
+                            </div>
+                          ` : ''}`;
                       }
 
-                      html += `<div class="slot-cell booking ${isHalfHour ? 'half-hour' : ''}" ${typeAttr}
-                        style="grid-column: span ${cell.span};"
-                        data-event-id="${evt.id}"
-                        onclick="openCalendarEventDetail('${evt.id}')">${content}</div>`;
+                      // Attendance indicator for events
+                      const attendanceIndicator = (evt.category === 'events' && evt.attendanceRequired)
+                        ? `<div style="position:absolute; top:8px; right:8px; width:8px; height:8px; background:#ff3b30; border-radius:50%; box-shadow:0 1px 3px rgba(255,59,48,0.4);"></div>`
+                        : '';
+
+                      // CSS classes for different event types
+                      const artistInfoClass = isArtistInfoEvent ? 'artist-info-event' : '';
+                      const stayClass = evt.isStay ? 'stay-event' : '';
+                      const guestSpotCanceledClass = evt.isCanceled ? 'canceled' : '';
+                      const guestSpotAppointmentClass = evt.isGuestSpotAppointment ? 'guest_spot_appointment' : '';
+                      const guestSpotClass = evt.isGuestSpot ? `guest_spot ${guestSpotCanceledClass} ${guestSpotAppointmentClass}` : '';
+                      const cat = evt.category || 'resident';
+
+                      // Click handler based on event type
+                      let clickHandler;
+                      if (evt.isGuestSpotAppointment) {
+                        clickHandler = `onclick="openEditEventModal('${evt.id}')"`;
+                      } else if (evt.isGuestSpot) {
+                        clickHandler = `onclick="handleGuestSpotCalendarClick('${evt.id}')"`;
+                      } else if (evt.isStay) {
+                        clickHandler = evt.guestSpotId
+                          ? `onclick="openGuestSpotDetailModal({ id: '${evt.guestSpotId}' })"`
+                          : `onclick="showToast('Stay-Details können über den verknüpften Guest Spot geöffnet werden', 'info')"`;
+                      } else if (isArtistInfoEvent) {
+                        clickHandler = `onclick="openArtistInfoModal('${evt.originalId}', ${JSON.stringify(evt).replace(/"/g, '&quot;')})"`;
+                      } else {
+                        clickHandler = `onclick="openEditEventModal('${evt.id}')"`;
+                      }
+
+                      // Proper container structure with event div
+                      html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
+                        <div class="event ${cat} ${artistInfoClass} ${stayClass} ${guestSpotClass}" ${typeAttr} data-event-id="${evt.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent || evt.isStay ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
+                          ${content}
+                          ${attendanceIndicator}
+                        </div>
+                      </div>`;
                     } else {
                       // Empty cell
                       const isHalfHour = (index % 2) === 1;
