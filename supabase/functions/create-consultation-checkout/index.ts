@@ -1,7 +1,7 @@
 import Stripe from 'https://esm.sh/stripe@14?target=denonext';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2024-11-20'
+  apiVersion: '2023-10-16'
 });
 
 const corsHeaders = {
