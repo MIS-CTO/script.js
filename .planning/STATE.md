@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-15 | Version: 3.1204**
-**UPDATE: Phase 5.5 Hotfixes - Timezone & Artist Popup Fixes ✓**
+**Stand: 2026-01-15 | Version: 3.1211**
+**UPDATE: Phase 5.6 Calendar Availability Visualization ✓**
 
 ---
 
@@ -34,8 +34,70 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.5: CALENDAR, SEARCH, ATTACHMENTS & RANK     ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5.6: CALENDAR AVAILABILITY VISUALIZATION      ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Phase 5.6: Calendar Availability Visualization (2026-01-15) ✅ COMPLETE
+
+### Overview
+
+Complete refactoring of the calendar tab to show artist availability from dienstplan and improve slot labeling.
+
+### Changes Implemented
+
+| Feature | Description | PR/Commit |
+|---------|-------------|-----------|
+| Slot Labels | Artist name + Instagram handle (vertical layout) | PR #595 |
+| Green Availability | Background coloring for available time slots | PR #595 |
+| Guest Spots Removal | Category removed (replaced by availability coloring) | PR #595 |
+| Underline Removal | Removed from customer and artist name links | PR #595 |
+| Availability-Only Rows | Smaller height (44px) for rows without appointments | `2e03f57` |
+| Event Background Wrapper | White/dark background behind appointment containers | `2e03f57` |
+| Hidden Tabs | Termine/Work Tracking tabs hidden (not in use) | `8c83f62` |
+
+### Technical Details
+
+**Slot Label Structure (line ~33033):**
+```javascript
+const slotLabelContent = artistName
+  ? `<div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+      <span style="font-weight:600; font-size:12px;">${artistName}</span>
+      ${artistInstagram ? `<a href="https://instagram.com/${artistInstagram.replace('@', '')}" ...>@${artistInstagram}</a>` : ''}
+    </div>`
+  : `<span style="font-size:12px; color:var(--muted);">Empty</span>`;
+```
+
+**Availability Map Loading (line ~32943):**
+```javascript
+let artistAvailabilityMap = new Map(); // artistId -> { start, end }
+dienstplanData.forEach(entry => {
+  if (entry.state === 'Available' && entry.start_date <= currentDateStr && entry.end_date >= currentDateStr) {
+    artistAvailabilityMap.set(entry.artist_id, {
+      start: entry.working_start || '09:00',
+      end: entry.working_end || '21:00'
+    });
+  }
+});
+```
+
+**CSS Classes Added:**
+```css
+.slot-row.availability-only-row .slot-cell { min-height: 44px; }
+.event-bg-wrapper { position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; background: #fff; border-radius: 8px; }
+[data-theme="dark"] .event-bg-wrapper { background: #2c2c2e; }
+```
+
+### Commits
+
+```
+19c1fe9 feat(calendar): add availability visualization and refactor slot labels (#595)
+2e03f57 feat(calendar): improve availability visualization
+8c83f62 chore(calendar): hide unused Termine/Work Tracking tabs
 ```
 
 ---
@@ -263,15 +325,23 @@ After paying for consultation via Stripe, the booking page showed "Waiting for p
 
 ---
 
-## Recent Session (2026-01-15) - Phase 5.5 Hotfixes
+## Recent Session (2026-01-15) - Phase 5.6 Calendar Availability
 
 **Completed:**
-- Timezone fix for appointment edit popup (PR #592)
-- Timezone fix for appointment details time display (PR #593)
-- Deployed stripe-webhook v26 with Neukunde rank fix
-- Restored artist profile popup on Artists page and Guest Spot page (PR #594)
+- Calendar slot labels refactored to show artist name + Instagram handle
+- Green availability background from dienstplan data
+- Removed Guest Spots category (replaced by availability coloring)
+- Removed underline styling from clickable names
+- Smaller availability-only rows (44px min-height)
+- White/dark background wrapper behind appointment containers
+- Hidden unused Termine/Work Tracking tabs
 
-**PRs Merged:** #592, #593, #594
+**PRs Merged:** #595
+
+**Commits:**
+- `19c1fe9` feat(calendar): add availability visualization and refactor slot labels
+- `2e03f57` feat(calendar): improve availability visualization
+- `8c83f62` chore(calendar): hide unused Termine/Work Tracking tabs
 
 ---
 
