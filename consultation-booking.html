@@ -739,9 +739,6 @@
       // Placeholder Bild
       const PLACEHOLDER_IMAGE = 'https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/artist-images/Bildschirmfoto%202025-11-25%20um%2016.13.50.png';
 
-      // Stripe Payment Link (100 EUR Consultation)
-      const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kCeOq6aIgmj15t2Ji0d';
-
       // ============================================
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -774,151 +771,7 @@
         setTimeout(() => errorMessage.classList.remove('visible'), 5000);
       }
 
-      let paymentCheckInterval = null;
-
-      function showPaymentWaitingMessage() {
-        const buttonRow = document.querySelector('.booking-step[data-step="4"] .button-row');
-
-        if (buttonRow) {
-          buttonRow.innerHTML = `
-            <div style="width: 100%; text-align: center; padding: 20px;">
-              <div style="margin-bottom: 20px;">
-                <div class="payment-spinner" style="width: 40px; height: 40px; border: 3px solid #e5e5e5; border-top: 3px solid #1d1d1f; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-              </div>
-              <p style="font-size: 16px; color: #1d1d1f; margin-bottom: 8px; font-weight: 500;">
-                Warte auf Zahlungsbestätigung...
-              </p>
-              <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">
-                Bitte schließe die Zahlung im neuen Tab ab.<br>Diese Seite aktualisiert sich automatisch.
-              </p>
-              <button class="btn btn-secondary" onclick="cancelPaymentWait()">
-                Abbrechen
-              </button>
-            </div>
-          `;
-        }
-
-        // Start polling for payment confirmation
-        startPaymentPolling();
-      }
-
-      function startPaymentPolling() {
-        const appointmentId = localStorage.getItem('consultation_appointment_id');
-        if (!appointmentId) return;
-
-        // Poll every 3 seconds for payment status
-        paymentCheckInterval = setInterval(async () => {
-          try {
-            const { data, error } = await supabase
-              .from('appointments')
-              .select('payment_status, status')
-              .eq('id', appointmentId)
-              .single();
-
-            if (error) {
-              console.error('Polling error:', error);
-              return;
-            }
-
-            // Check if payment was confirmed by Stripe webhook
-            if (data && data.payment_status === 'paid') {
-              clearInterval(paymentCheckInterval);
-              paymentCheckInterval = null;
-              showPaymentSuccess();
-            }
-          } catch (err) {
-            console.error('Polling error:', err);
-          }
-        }, 3000);
-
-        // Timeout after 5 minutes - cancel appointment
-        setTimeout(async () => {
-          if (paymentCheckInterval) {
-            clearInterval(paymentCheckInterval);
-            paymentCheckInterval = null;
-            await cancelUnpaidAppointment();
-          }
-        }, 300000);
-      }
-
-      async function cancelPaymentWait() {
-        if (paymentCheckInterval) {
-          clearInterval(paymentCheckInterval);
-          paymentCheckInterval = null;
-        }
-
-        // Delete the unpaid appointment
-        const appointmentId = localStorage.getItem('consultation_appointment_id');
-        if (appointmentId) {
-          try {
-            await supabase
-              .from('appointments')
-              .delete()
-              .eq('id', appointmentId)
-              .eq('payment_status', 'pending');
-            console.log('Appointment canceled by user:', appointmentId);
-          } catch (err) {
-            console.error('Error deleting appointment:', err);
-          }
-          localStorage.removeItem('consultation_appointment_id');
-        }
-
-        goToStep(3);
-      }
-
-      async function cancelUnpaidAppointment() {
-        const appointmentId = localStorage.getItem('consultation_appointment_id');
-
-        if (appointmentId) {
-          // Delete the unpaid appointment
-          try {
-            await supabase
-              .from('appointments')
-              .delete()
-              .eq('id', appointmentId)
-              .eq('payment_status', 'pending');
-            console.log('Unpaid appointment deleted:', appointmentId);
-          } catch (err) {
-            console.error('Error deleting appointment:', err);
-          }
-        }
-
-        // Clear local storage
-        localStorage.removeItem('consultation_email');
-        localStorage.removeItem('consultation_appointment_id');
-
-        // Show timeout message
-        const buttonRow = document.querySelector('.booking-step[data-step="4"] .button-row');
-        if (buttonRow) {
-          buttonRow.innerHTML = `
-            <div style="width: 100%; text-align: center; padding: 20px;">
-              <p style="font-size: 16px; color: #1d1d1f; margin-bottom: 16px;">
-                Buchung abgelaufen
-              </p>
-              <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">
-                Die Zahlung wurde nicht innerhalb von 5 Minuten abgeschlossen.<br>
-                Bitte starte eine neue Buchung.
-              </p>
-              <button class="btn btn-primary" onclick="window.location.reload()">
-                Neue Buchung starten
-              </button>
-            </div>
-          `;
-        }
-      }
-
-      function showPaymentSuccess() {
-        document.getElementById('successEmail').textContent = localStorage.getItem('consultation_email') || 'deine E-Mail';
-        document.querySelectorAll('.progress-step').forEach(el => el.classList.add('completed'));
-        document.querySelectorAll('.booking-step').forEach(el => el.classList.remove('active'));
-        document.querySelector('.booking-step[data-step="success"]').classList.add('active');
-
-        localStorage.removeItem('consultation_email');
-        localStorage.removeItem('consultation_appointment_id');
-      }
-
       // Make functions globally available
-      window.cancelPaymentWait = cancelPaymentWait;
       window.goToStep = goToStep;
 
       function formatDate(date) {
@@ -1146,7 +999,7 @@
       }
 
       async function processPayment() {
-        showLoading('Buchung wird verarbeitet...');
+        showLoading('Checkout wird erstellt...');
 
         try {
           const firstName = document.getElementById('firstName').value.trim();
@@ -1155,106 +1008,74 @@
           const phone = document.getElementById('phone').value.trim();
           const instagram = document.getElementById('instagram').value.trim();
 
-          let customerId = null;
-          const { data: existing } = await supabase.from('customers').select('id').eq('email', email).single();
+          // Store email for success page
+          localStorage.setItem('consultation_email', email);
 
-          if (existing) {
-            customerId = existing.id;
-          } else {
-            const { data: newCust, error } = await supabase.from('customers')
-              .insert({ first_name: firstName, last_name: lastName, email, phone, instagram: instagram || null })
-              .select().single();
-            if (error) throw error;
-            customerId = newCust.id;
+          // Call edge function to create Stripe Checkout Session
+          const response = await fetch(
+            'https://auxxyehgzkozdjylhqnx.supabase.co/functions/v1/create-consultation-checkout',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                customer_email: email,
+                customer_first_name: firstName,
+                customer_last_name: lastName,
+                customer_phone: phone,
+                customer_instagram: instagram || null,
+                artist_id: selectedArtist.id,
+                artist_name: selectedArtist.name,
+                location_id: LOCATION_ID,
+                date: selectedDate,
+                success_url: window.location.origin + '/consultation-booking.html?success=true',
+                cancel_url: window.location.origin + '/consultation-booking.html?canceled=true'
+              })
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Checkout konnte nicht erstellt werden');
           }
 
-          const startDateTime = new Date(selectedDate + 'T11:00:00');
-          const endDateTime = new Date(selectedDate + 'T12:00:00');
-
-          const { data: apt, error: aptError } = await supabase.from('appointments')
-            .insert({
-              customer_id: customerId,
-              artist_id: selectedArtist.id,
-              location_id: LOCATION_ID,
-              customer_email: email,
-              customer_phone: phone,
-              first_name: firstName,
-              last_name: lastName,
-              instagram: instagram || null,
-              start: startDateTime.toISOString(),
-              end: endDateTime.toISOString(),
-              booking_type: 'consultation',
-              status: 'pending_payment',
-              state: 'Offen',
-              payment_status: 'pending',
-              payment_amount: 10000,
-              work_process: 'Consultation'
-            })
-            .select().single();
-
-          if (aptError) throw aptError;
-
-          console.log('✅ Created appointment:', apt.id);
-
-          localStorage.setItem('consultation_email', email);
-          localStorage.setItem('consultation_appointment_id', apt.id);
-
-          // Open Stripe Payment Link in new tab
-          const paymentUrl = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}&client_reference_id=${apt.id}`;
-          window.open(paymentUrl, '_blank');
-
-          // Show waiting message
-          hideLoading();
-          showPaymentWaitingMessage();
+          if (data.url) {
+            // Redirect to Stripe Checkout (same tab)
+            window.location.href = data.url;
+          } else {
+            throw new Error('Keine Checkout-URL erhalten');
+          }
 
         } catch (err) {
           console.error('Error:', err);
-          showError('Fehler bei der Buchung: ' + err.message);
+          showError('Fehler beim Erstellen der Zahlung: ' + err.message);
           hideLoading();
         }
       }
 
       async function checkForSuccess() {
-        // Check both iframe and top-level URL for success parameter
         const urlParams = new URLSearchParams(window.location.search);
-        let topUrlParams = urlParams;
-        try {
-          if (window.top !== window) {
-            topUrlParams = new URLSearchParams(window.top.location.search);
-          }
-        } catch (e) {
-          console.log('Cannot access top window (cross-origin)');
-        }
-        const success = urlParams.get('success') || topUrlParams.get('success');
-        const appointmentId = urlParams.get('appointment_id') || topUrlParams.get('appointment_id') || localStorage.getItem('consultation_appointment_id');
+        const success = urlParams.get('success');
+        const canceled = urlParams.get('canceled');
 
-        if (success === 'true' && appointmentId) {
-          showLoading('Buchung wird bestätigt...');
+        if (success === 'true') {
+          // Show success screen (appointment was created by webhook)
+          const email = localStorage.getItem('consultation_email') || 'deine E-Mail';
+          document.getElementById('successEmail').textContent = email;
 
-          await supabase.from('appointments').update({
-            status: 'scheduled',
-            state: 'Zugesagt',
-            payment_status: 'paid'
-          }).eq('id', appointmentId);
-
-          console.log('✅ Appointment confirmed:', appointmentId);
-
-          document.getElementById('successEmail').textContent = localStorage.getItem('consultation_email') || 'deine E-Mail';
           document.querySelectorAll('.progress-step').forEach(el => el.classList.add('completed'));
           document.querySelectorAll('.booking-step').forEach(el => el.classList.remove('active'));
           document.querySelector('.booking-step[data-step="success"]').classList.add('active');
 
           localStorage.removeItem('consultation_email');
-          localStorage.removeItem('consultation_appointment_id');
-          try {
-            window.history.replaceState({}, document.title, window.location.pathname);
-            if (window.top !== window) {
-              window.top.history.replaceState({}, document.title, window.top.location.pathname);
-            }
-          } catch (e) {
-            console.log('Could not clear URL params:', e);
-          }
-          hideLoading();
+
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (canceled === 'true') {
+          // Payment was canceled, show message and clean URL
+          console.log('Zahlung abgebrochen');
+          showError('Zahlung wurde abgebrochen. Du kannst es erneut versuchen.');
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
 
