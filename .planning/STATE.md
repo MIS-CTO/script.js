@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-14 | Version: 3.1180**
-**UPDATE: Phase 5.3 Consultation Payment Bug - NEXT UP**
+**Stand: 2026-01-15 | Version: 3.1181**
+**UPDATE: Phase 5.3 Consultation Payment Fix - COMPLETE ✓**
 
 ---
 
@@ -28,116 +28,126 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.1: AGREEMENT FORM UX FIXES                  ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  PHASE 5.3: CONSULTATION PAYMENT FIX                 → NEXT  ║
+║  PHASE 5.3: CONSULTATION PAYMENT FIX                 ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
-║  PHASE 5.2: PERFORMANCE & POLISH                     ○ LATER ║
+║  PHASE 5.4: SECURITY AUDIT                           ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## Phase 5.3: Consultation Payment Fix (NEXT UP) 🔴 BUG
+## Phase 5.3: Consultation Payment Fix (2026-01-15) ✅ COMPLETE
 
-### Problem Description
+### Problem (WAS)
 
-After paying for consultation via Stripe, the consultation booking page (`consultation-booking.html`) continues showing "Waiting for payment confirmation" even though the payment was successful.
+After paying for consultation via Stripe, the booking page showed "Waiting for payment confirmation" indefinitely because Stripe Payment Links don't properly pass `client_reference_id` to webhooks.
 
-### Current Payment Flow
+### Solution (IMPLEMENTED)
+
+**Replaced Stripe Payment Links with Checkout Sessions:**
+
+| Old Flow | New Flow |
+|----------|----------|
+| User fills form → Creates appointment → Opens Payment Link → Waits | User fills form → Creates Checkout Session → Pays → Webhook creates appointment |
+
+**Key Change:** Appointments are now created **ONLY AFTER** successful payment (via webhook), not before.
+
+### New Edge Functions
+
+| Function | Version | Purpose |
+|----------|---------|---------|
+| `create-consultation-checkout` | v5 | Creates Stripe Checkout Session with metadata |
+| `stripe-webhook` | v25 | Creates appointment from checkout metadata |
+| `verify-checkout-session` | v1 | Verifies payment status on success page |
+| `send-consultation-confirmation` | v2 | Sends email (verify_jwt: false) |
+
+### Architecture
 
 ```
-1. User selects artist, date, time → Fills contact info
-2. Click "Jetzt bezahlen" → Creates appointment in DB:
-   - status: 'pending_payment'
-   - payment_status: 'pending'
-3. Opens Stripe Payment Link in new tab:
-   URL: https://buy.stripe.com/xxx?prefilled_email=...&client_reference_id={apt.id}
-4. Shows "Waiting for payment" spinner
-5. Polls DB every 3 seconds checking: payment_status === 'paid'
-6. PROBLEM: payment_status never changes to 'paid'
+NEW FLOW:
+1. User fills form (artist, date, contact info)
+2. Frontend calls create-consultation-checkout
+3. Edge function creates Stripe Checkout Session with ALL data in metadata
+4. User redirects to checkout.stripe.com
+5. User pays → Stripe sends webhook
+6. stripe-webhook creates customer + appointment from metadata
+7. stripe-webhook calls send-consultation-confirmation
+8. User returns to success page
 ```
 
-### Root Cause Analysis
+### Metadata Structure
 
-**Stripe Payment Links vs Checkout Sessions:**
-- The code uses a **Stripe Payment Link** (line 743: `https://buy.stripe.com/...`)
-- Payment Links have LIMITED metadata support compared to Checkout Sessions
-- The `client_reference_id` URL parameter may NOT be passed to the webhook as `session.client_reference_id`
-
-**Webhook Handler** (`supabase/functions/stripe-webhook/index.ts`):
 ```javascript
-// Line 121 - Tries to get appointment ID:
-const appointmentId = session.metadata?.appointment_id || session.client_reference_id;
-
-// Line 124-151 - If appointmentId found, updates:
-// payment_status: 'paid', status: 'scheduled'
+metadata: {
+  type: 'consultation',
+  customer_email, customer_first_name, customer_last_name,
+  customer_phone, customer_instagram,
+  artist_id, artist_name, location_id,
+  date: '2026-01-20', time: '11:00'
+}
 ```
 
-**Likely Issue:** The webhook receives the event but `appointmentId` is null/undefined because Payment Links don't pass `client_reference_id` the same way.
+### Database Columns Added
 
-### Key Files
+| Column | Table | Purpose |
+|--------|-------|---------|
+| `stripe_checkout_session_id` | appointments | Checkout Session ID |
+| `stripe_payment_intent_id` | appointments | Payment Intent ID |
+| `payment_received_at` | appointments | Timestamp of payment |
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `consultation-booking.html` | Booking UI & polling | 742-1215 |
-| `supabase/functions/stripe-webhook/index.ts` | Webhook handler | 117-203 |
-| `supabase/functions/send-consultation-confirmation/index.ts` | Email after payment | Full file |
+### Files Modified
 
-### Code Locations
+| File | Changes |
+|------|---------|
+| `consultation-booking.html` | Removed appointment creation, calls new checkout function |
+| `supabase/functions/stripe-webhook/index.ts` | Creates appointment from metadata |
+| `supabase/functions/create-consultation-checkout/index.ts` | NEW - Creates Checkout Session |
+| `supabase/functions/verify-checkout-session/index.ts` | NEW - Verifies payment |
+| `supabase/functions/send-consultation-confirmation/index.ts` | Fixed verify_jwt |
 
-**consultation-booking.html:**
-- Stripe Payment Link constant: line 743
-- Appointment creation: lines 1177-1195
-- Payment URL construction: line 1203
-- Polling function: lines 805-842
-- Success check: line 824 (`payment_status === 'paid'`)
+### Commits
 
-**stripe-webhook/index.ts:**
-- Consultation payment handling: lines 117-203
-- Appointment ID extraction: line 121
-- Appointment update: lines 142-151
-
-### Potential Solutions
-
-1. **Switch to Stripe Checkout API** (Recommended)
-   - Create Checkout Session via Edge Function
-   - Full control over metadata and client_reference_id
-   - Requires new Edge Function: `create-consultation-checkout`
-
-2. **Use Success URL Redirect**
-   - After payment, Stripe redirects to success_url
-   - Pass appointment_id in URL, update locally
-   - Less reliable (user might close browser)
-
-3. **Lookup by Customer Email**
-   - Webhook finds most recent pending appointment by email
-   - Works but less precise (multiple pending appointments)
-
-4. **Store in Stripe Metadata via API**
-   - Use Stripe API to update Payment Link metadata per transaction
-   - Complex, not recommended
-
-### Database Schema Context
-
-**appointments table:**
-```sql
-id UUID PRIMARY KEY
-customer_id UUID REFERENCES customers(id)
-artist_id UUID REFERENCES artists(id)
-date DATE
-time TEXT
-status TEXT ('pending_payment', 'scheduled', 'completed', 'canceled')
-payment_status TEXT ('pending', 'paid', 'refunded')
-stripe_payment_id TEXT
-paid_at TIMESTAMPTZ
+```
+feat(edge): add create-consultation-checkout function
+feat(webhook): create appointment from checkout metadata
+refactor(consultation): use checkout session instead of payment link
+fix(edge): set verify_jwt=false for send-consultation-confirmation
 ```
 
-### Artist Assignment Context
+---
 
-The consultation booking also involves artist assignment:
-- User selects artist in step 1 (artist selection UI)
-- Artist ID stored in `appointments.artist_id`
-- Artist availability checked via `artist_availability` table
-- Time slots restricted to 11:00-12:00 Berlin time (consultation slots)
+## Phase 5.4: Security Audit (2026-01-15) ✅ COMPLETE
+
+### Audit Scope
+
+Frontend files checked for dangerous keys:
+- `consultation-booking.html`
+- `management-system.html`
+
+### Results
+
+| Key Type | Status | Details |
+|----------|--------|---------|
+| `sk_live_` / `sk_test_` (Stripe Secret) | ✅ Not found | Safe |
+| `service_role` (Supabase Service Key) | ✅ Not found | Safe |
+| `re_` (Resend API Key) | ✅ Not found | Safe |
+| `whsec_` (Webhook Secret) | ✅ Not found | Safe |
+| `-----BEGIN PRIVATE KEY-----` | ✅ Not found | Safe |
+| Hardcoded passwords | ✅ Not found | Safe |
+
+### JWT Verification
+
+```json
+{"iss":"supabase","ref":"auxxyehgzkozdjylhqnx","role":"anon"}
+```
+
+**Confirmed:** All frontend keys have `role: "anon"` → Public keys, SAFE
+
+### Conclusion
+
+**All sensitive keys are properly stored in Supabase Edge Function environment variables only.**
 
 ---
 
@@ -276,22 +286,7 @@ Vollständiges Styling für:
 
 ## Nächste Schritte
 
-### Phase 5.3: Consultation Payment Fix (PRIORITY 🔴)
-
-**Problem:** Consultation payment confirmation not working - page waits indefinitely after Stripe payment.
-
-**Action Items:**
-1. Check Supabase Edge Function logs for webhook events
-2. Verify if `client_reference_id` arrives in webhook payload
-3. Implement fix (likely: switch to Stripe Checkout API)
-4. Test full payment flow end-to-end
-
-**Files to modify:**
-- `consultation-booking.html` - payment initiation
-- `supabase/functions/stripe-webhook/index.ts` - webhook handler
-- NEW: `supabase/functions/create-consultation-checkout/index.ts` (if switching to Checkout API)
-
-### Phase 5.2: Performance & Polish (LATER)
+### Phase 5.2: Performance & Polish (NEXT)
 
 1. **Overpermissive RLS Policies reviewen**
    - `qual=true` Policies durch rollenbasierte ersetzen
@@ -303,6 +298,26 @@ Vollständiges Styling für:
 3. **Error Tracking V2** (Optional)
    - Persistente Errors in Supabase
    - Email-Alerts bei kritischen Fehlern
+
+---
+
+## Recent Session (2026-01-15) - Consultation Payment Fix & Security Audit
+
+**Phase 5.3 Consultation Payment - COMPLETED:**
+- Replaced Stripe Payment Links with Checkout Sessions
+- Created `create-consultation-checkout` edge function (v5)
+- Modified `stripe-webhook` to create appointments from metadata (v25)
+- Created `verify-checkout-session` for success page verification (v1)
+- Fixed `send-consultation-confirmation` JWT issue (v2, verify_jwt: false)
+- Tested with 1€ amount, then restored to 100€
+- Cleaned up test appointments
+
+**Phase 5.4 Security Audit - COMPLETED:**
+- Scanned `consultation-booking.html` and `management-system.html`
+- Verified no sensitive keys (sk_live_, service_role, re_, whsec_) exposed
+- Confirmed all JWT tokens have `role: "anon"` (public, safe)
+
+**Commits:** `feat(edge): consultation checkout flow improvements`
 
 ---
 
@@ -318,4 +333,4 @@ Completed improvements to request scheduling funnel:
 
 ---
 
-*Aktualisiert am 2026-01-14 mit Claude Code*
+*Aktualisiert am 2026-01-15 mit Claude Code*

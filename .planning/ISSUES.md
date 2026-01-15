@@ -1,5 +1,5 @@
 # Culture Over Money - Known Issues
-**Stand: 2026-01-14 | Version: 3.1180**
+**Stand: 2026-01-15 | Version: 3.1181**
 
 ---
 
@@ -7,43 +7,14 @@
 
 | Severity | Count |
 |----------|-------|
-| KRITISCH | 1 (Consultation Payment) |
-| HOCH | 1 (Error Tracking) |
+| KRITISCH | 0 |
+| HOCH | 0 |
 | MITTEL | 1 |
 | NIEDRIG | 0 |
 
 ---
 
 ## OPEN Issues
-
-### ISSUE-009: Consultation Payment Confirmation Not Working (KRITISCH) 🔴
-
-**Reported:** 2026-01-14
-**Status:** OPEN - Next Priority
-
-**Symptom:** After successful Stripe payment for consultation, the booking page (`consultation-booking.html`) continues showing "Waiting for payment confirmation" indefinitely.
-
-**Affected Flow:**
-1. User books consultation → Creates appointment with `payment_status: 'pending'`
-2. Opens Stripe Payment Link → User pays successfully
-3. Page polls DB for `payment_status === 'paid'`
-4. **BUG:** Status never changes, user stuck on waiting screen
-
-**Root Cause:** Stripe Payment Links don't properly pass `client_reference_id` to webhook. The webhook receives the payment event but cannot identify which appointment to update.
-
-**Files:**
-- `consultation-booking.html:742-1215` - Payment flow
-- `supabase/functions/stripe-webhook/index.ts:117-203` - Webhook handler
-
-**Recommended Fix:** Switch from Stripe Payment Link to Stripe Checkout API (create session via Edge Function).
-
----
-
-### ISSUE-007: Kein Error Tracking (HOCH)
-
-Kein Error Tracking implementiert. Frontend-Fehler und Edge Function Fehler bleiben unbemerkt.
-
-**Lösung**: Sentry, LogRocket, oder Custom Logging implementieren
 
 ### ISSUE-008: Overpermissive Policies (MITTEL)
 
@@ -55,12 +26,27 @@ Einige Tabellen haben RLS mit `qual = true` (erlaubt alles).
 
 ## RESOLVED Issues
 
-- ~~ISSUE-001: Payment Reminders~~ → **RESOLVED** (payment-reminders v3 aktiv)
-- ~~ISSUE-002: Auto-Cancel~~ → **RESOLVED** (Teil von payment-reminders)
-- ~~ISSUE-003: Stripe Webhook~~ → **RESOLVED** (stripe-webhook v14 aktiv)
-- ~~ISSUE-004: Appointment Trigger~~ → **RESOLVED** (via create-payment-link)
+- ~~ISSUE-009: Consultation Payment~~ → **RESOLVED** (2026-01-15)
+  - Replaced Stripe Payment Links with Checkout Sessions
+  - New edge function: `create-consultation-checkout` v5
+  - Webhook now creates appointment from metadata
+  - Email confirmation fixed (verify_jwt: false)
+
+- ~~ISSUE-007: Kein Error Tracking~~ → **RESOLVED** (Phase 3)
+  - Custom In-Memory Error Panel implemented
+  - Error Badge + Modal in management-system.html
+
+- ~~ISSUE-006: Security Audit~~ → **RESOLVED** (2026-01-15)
+  - Frontend files scanned for dangerous keys
+  - All keys verified as public (anon role)
+  - No sensitive keys exposed
+
 - ~~ISSUE-005: RLS Policies~~ → **RESOLVED** (RLS aktiviert, Policies gefixt)
+- ~~ISSUE-004: Appointment Trigger~~ → **RESOLVED** (via create-payment-link)
+- ~~ISSUE-003: Stripe Webhook~~ → **RESOLVED** (stripe-webhook v25 aktiv)
+- ~~ISSUE-002: Auto-Cancel~~ → **RESOLVED** (Teil von payment-reminders)
+- ~~ISSUE-001: Payment Reminders~~ → **RESOLVED** (payment-reminders v3 aktiv)
 
 ---
 
-*Aktualisiert am 2026-01-14 mit Claude Code*
+*Aktualisiert am 2026-01-15 mit Claude Code*
