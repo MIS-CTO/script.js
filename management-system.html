@@ -36472,6 +36472,10 @@
       // Helper: Format Time
       window.formatModalTime = function(dateStr) {
         if (!dateStr) return '-';
+        // Extract time directly from ISO string to avoid timezone shift
+        if (dateStr.includes('T')) {
+          return dateStr.split('T')[1].substring(0, 5);
+        }
         return new Date(dateStr).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
       };
 
