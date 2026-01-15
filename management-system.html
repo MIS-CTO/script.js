@@ -14479,6 +14479,12 @@
                   <option value="Paris">Paris</option>
                 </select>
               </div>
+              <!-- File Attachments -->
+              <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 13px; color: #86868b; margin-bottom: 8px;">Anhänge (Bilder/PDFs)</label>
+                <input type="file" id="boardAttachments" multiple accept="image/*,.pdf" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); font-size: 13px; color: var(--text-primary); font-family: inherit;">
+                <div id="attachmentPreview" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+              </div>
               <button id="submitMessageBtn" style="width: 100%; padding: 12px; background: #1d1d1f; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;">
                 Veröffentlichen
               </button>
@@ -24440,6 +24446,30 @@
                   <!-- Message Content -->
                   <div style="font-size:15px; line-height:1.5; color:#1d1d1f; margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
 
+                  <!-- Attachments -->
+                  ${(msg.attachments && msg.attachments.length > 0) ? `
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                      ${msg.attachments.map(att => {
+                        const isImage = att.type?.startsWith('image/');
+                        const isPdf = att.type === 'application/pdf';
+                        if (isImage) {
+                          return `<a href="${att.url}" target="_blank" style="display:block; max-width:200px;">
+                            <img src="${att.url}" alt="${att.name}" style="max-width:100%; border-radius:8px; cursor:pointer;" loading="lazy">
+                          </a>`;
+                        } else if (isPdf) {
+                          return `<a href="${att.url}" target="_blank" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:#f5f5f7; border-radius:8px; text-decoration:none; color:#1d1d1f; font-size:13px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff3b30" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 11h6"/></svg>
+                            ${att.name}
+                          </a>`;
+                        }
+                        return `<a href="${att.url}" target="_blank" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:#f5f5f7; border-radius:8px; text-decoration:none; color:#1d1d1f; font-size:13px;">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                          ${att.name}
+                        </a>`;
+                      }).join('')}
+                    </div>
+                  ` : ''}
+
                   <!-- Category Tag -->
                   <div style="display:flex; gap:8px;">
                     <span style="font-size:12px; padding:4px 10px; background:rgba(0,0,0,0.04); border-radius:999px; color:#666;">${msg.category || 'Info'}</span>
@@ -24627,7 +24657,7 @@
       // ============================================
       // SCHWARZES BRETT - ADD NEW MESSAGE
       // ============================================
-      async function addNewMessage(content, category, location) {
+      async function addNewMessage(content, category, location, attachments = []) {
         console.log('📝 Adding new message...');
 
         try {
@@ -24649,7 +24679,8 @@
               content: content,
               category: category,
               location: location,
-              is_active: true
+              is_active: true,
+              attachments: attachments
             }]);
 
           if (error) throw error;
@@ -24678,19 +24709,103 @@
 
       document.getElementById('closePopupBtn')?.addEventListener('click', function() {
         document.getElementById('newMessagePopup').classList.remove('active');
+        // Reset form
+        document.getElementById('messageContent').value = '';
+        const fileInput = document.getElementById('boardAttachments');
+        if (fileInput) fileInput.value = '';
+        const preview = document.getElementById('attachmentPreview');
+        if (preview) preview.innerHTML = '';
       });
 
       document.getElementById('submitMessageBtn')?.addEventListener('click', async function() {
         const content = document.getElementById('messageContent').value.trim();
         const category = document.getElementById('messageCategory').value;
         const location = document.getElementById('messageLocation').value;
+        const fileInput = document.getElementById('boardAttachments');
 
         if (!content) {
           alert('Bitte gib eine Nachricht ein.');
           return;
         }
 
-        await addNewMessage(content, category, location);
+        // Upload attachments if any
+        let attachments = [];
+        if (fileInput?.files?.length > 0) {
+          this.disabled = true;
+          this.textContent = 'Uploading...';
+          attachments = await uploadBoardAttachments(fileInput.files);
+          this.disabled = false;
+          this.textContent = 'Veröffentlichen';
+        }
+
+        await addNewMessage(content, category, location, attachments);
+
+        // Reset file input and preview
+        if (fileInput) fileInput.value = '';
+        const preview = document.getElementById('attachmentPreview');
+        if (preview) preview.innerHTML = '';
+      });
+
+      // Upload files to board-attachments bucket
+      async function uploadBoardAttachments(files) {
+        const attachments = [];
+        const messageId = Date.now().toString();
+
+        for (const file of files) {
+          try {
+            const ext = file.name.split('.').pop();
+            const path = `${messageId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+            const { error } = await supabase.storage
+              .from('board-attachments')
+              .upload(path, file);
+
+            if (!error) {
+              const { data } = supabase.storage
+                .from('board-attachments')
+                .getPublicUrl(path);
+
+              attachments.push({
+                name: file.name,
+                url: data.publicUrl,
+                type: file.type,
+                size: file.size
+              });
+              console.log('✅ Uploaded:', file.name);
+            } else {
+              console.error('❌ Upload error:', error);
+            }
+          } catch (err) {
+            console.error('❌ Upload failed:', file.name, err);
+          }
+        }
+
+        return attachments;
+      }
+
+      // Preview attachments when selected
+      document.getElementById('boardAttachments')?.addEventListener('change', function() {
+        const preview = document.getElementById('attachmentPreview');
+        if (!preview) return;
+
+        preview.innerHTML = '';
+        for (const file of this.files) {
+          const isImage = file.type.startsWith('image/');
+          const isPdf = file.type === 'application/pdf';
+
+          const tag = document.createElement('div');
+          tag.style.cssText = 'display:flex; align-items:center; gap:4px; padding:4px 8px; background:#f5f5f7; border-radius:6px; font-size:12px;';
+
+          if (isImage) {
+            tag.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> ${file.name}`;
+          } else if (isPdf) {
+            tag.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg> ${file.name}`;
+          } else {
+            tag.textContent = file.name;
+          }
+
+          preview.appendChild(tag);
+        }
       });
 
       // ============================================
@@ -27612,7 +27727,9 @@
               r.first_name || '', r.last_name || '',
               r.customer?.first_name || '', r.customer?.last_name || '',
               r.customer?.email || '', r.email || '',
-              r.phone || '', r.description || '', r.notes || '',
+              r.phone || '', r.customer_phone || '',
+              r.instagram || '', r.customer?.instagram || '',
+              r.description || '', r.notes || '',
               r.artist?.name || '', r.location?.name || '',
               r.request_number || '', r.id || ''
             ].join(' ').toLowerCase();
@@ -32859,8 +32976,8 @@
               console.log(`📅 Rendering ${categoryEvents.length} ${label} for ${dateStr}`);
             }
 
-            // CRITICAL: Each appointment gets its OWN ROW
-            // Sort by start time
+            // Group non-overlapping appointments by artist into shared slots
+            // Sort by start time first
             const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
             // If no events, show at least one empty slot (but not for artist users)
@@ -32875,298 +32992,158 @@
 
               html += '</div>';
             } else {
-              // Render each event in its own row
-              sortedEvents.forEach((evt, index) => {
-                const slotNumber = index + 1;
-                const artistName = evt.artistName || '';
-                const slotLabel = artistName ? `Slot ${slotNumber} - ${artistName}` : `Slot ${slotNumber}`;
+              // Group events by artist, then pack non-overlapping into shared slots
+              const artistSlots = new Map(); // artistId -> array of slots, each slot is array of events
 
-                html += `<div class="slot-row"><div class="slot-label">${slotLabel}</div>`;
+              sortedEvents.forEach(evt => {
+                const artistKey = evt.artistId || 'no-artist';
 
-                // Create cells for time slots 09:00 - 21:00
-                const cells = [];
-                for (let h = 9; h <= 21; h++) {
-                  [0, 0.5].forEach(offset => {
-                    const currentTime = h + offset;
-                    cells.push({
-                      time: currentTime,
-                      isEventStart: false,
-                      span: 0
+                if (!artistSlots.has(artistKey)) {
+                  artistSlots.set(artistKey, []);
+                }
+
+                const slots = artistSlots.get(artistKey);
+
+                // Find first slot where this event doesn't overlap
+                let placed = false;
+                for (const slot of slots) {
+                  const overlaps = slot.some(e =>
+                    (evt.startHour < e.endHour && evt.endHour > e.startHour)
+                  );
+                  if (!overlaps) {
+                    slot.push(evt);
+                    placed = true;
+                    break;
+                  }
+                }
+
+                // No available slot found, create new one
+                if (!placed) {
+                  slots.push([evt]);
+                }
+              });
+
+              // Render each artist's slots
+              let globalSlotNumber = 0;
+              artistSlots.forEach((slots, artistKey) => {
+                slots.forEach((slotEvents, slotIdx) => {
+                  globalSlotNumber++;
+                  const firstEvent = slotEvents[0];
+                  const artistName = firstEvent?.artistName || '';
+                  const slotLabel = artistName ? `Slot ${globalSlotNumber} - ${artistName}` : `Slot ${globalSlotNumber}`;
+
+                  html += `<div class="slot-row"><div class="slot-label">${slotLabel}</div>`;
+
+                  // Create cells for time slots 09:00 - 21:00
+                  const cells = [];
+                  for (let h = 9; h <= 21; h++) {
+                    [0, 0.5].forEach(offset => {
+                      const currentTime = h + offset;
+                      cells.push({
+                        time: currentTime,
+                        isEventStart: false,
+                        span: 0
+                      });
                     });
+                  }
+
+                  // Mark all events in this slot
+                  slotEvents.forEach(evt => {
+                    const startIndex = Math.max(0, Math.floor((evt.startHour - 9) * 2));
+                    const endIndex = Math.min(cells.length, Math.floor((evt.endHour - 9) * 2));
+                    const span = endIndex - startIndex;
+
+                    if (span > 0 && startIndex < cells.length) {
+                      cells[startIndex].isEventStart = true;
+                      cells[startIndex].span = span;
+                      cells[startIndex].event = evt;
+
+                      // Mark occupied cells
+                      for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
+                        cells[i].occupied = true;
+                      }
+                    }
                   });
-                }
 
-                // Mark where this event starts and its span
-                const startIndex = Math.max(0, Math.floor((evt.startHour - 9) * 2));
-                const endIndex = Math.min(cells.length, Math.floor((evt.endHour - 9) * 2));
-                const span = endIndex - startIndex;
+                  // Render cells
+                  cells.forEach((cell, index) => {
+                    if (cell.occupied) return; // Skip - covered by span
 
-                if (span > 0 && startIndex < cells.length) {
-                  cells[startIndex].isEventStart = true;
-                  cells[startIndex].span = span;
-                  cells[startIndex].event = evt;
+                    if (cell.isEventStart && cell.event) {
+                      const evt = cell.event;
+                      const isHalfHour = (index % 2) === 1;
+                      const eventCategory = window.getAppointmentCategory ?
+                        window.getAppointmentCategory(evt.fullData || evt) :
+                        (evt.type || 'unknown');
+                      const typeAttr = `data-type="${eventCategory}"`;
 
-                  // Mark occupied cells
-                  for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
-                    cells[i].occupied = true;
-                  }
-                }
+                      // Format time
+                      const startHour = Math.floor(evt.startHour);
+                      const startMin = Math.round((evt.startHour % 1) * 60);
+                      const endHour = Math.floor(evt.endHour);
+                      const endMin = Math.round((evt.endHour % 1) * 60);
+                      const startTimeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+                      const endTimeStr = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+                      const timeStr = `${startTimeStr} - ${endTimeStr}`;
 
-                // Render cells
-                cells.forEach((cell, index) => {
-                  if (cell.occupied) {
-                    // Skip - covered by span
-                    return;
-                  }
-
-                  if (cell.isEventStart && cell.event) {
-                    // This is the start of an event
-                    const isHalfHour = (index % 2) === 1;
-                    // Kategorie für data-type Attribut ermitteln (work_process > booking_type > status)
-                    const eventCategory = window.getAppointmentCategory ?
-                      window.getAppointmentCategory(cell.event.fullData || cell.event) :
-                      (cell.event.type || 'unknown');
-                    const typeAttr = `data-type="${eventCategory}"`;
-
-                    // Format start and end time
-                    const startHour = Math.floor(cell.event.startHour);
-                    const startMin = Math.round((cell.event.startHour % 1) * 60);
-                    const endHour = Math.floor(cell.event.endHour);
-                    const endMin = Math.round((cell.event.endHour % 1) * 60);
-                    const startTimeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-                    const endTimeStr = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
-                    const timeStr = `${startTimeStr} - ${endTimeStr}`;
-
-                    // Type label mapping
-                    const typeLabels = {
-                      'consultation': 'Beratung',
-                      'new_tattoo': 'Neustechen',
-                      'continuing_tattoo': 'Weiterstechen',
-                      'touch_up': 'Nachstechen',
-                      'selfbooking': 'Selfbooking',
-                      'wannado': 'WannaDo',
-                      'internal': 'Intern',
-                      'move': 'Verschiebung',
-                      'reserved': 'Reserviert',
-                      'no_show': 'No Show'
-                    };
-
-                    const typeLabel = cell.event.type ? typeLabels[cell.event.type] || cell.event.type : '';
-
-                    // Payment status text labels (SVG icons)
-                    const paymentLabels = {
-                      'paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M20 6 9 17l-5-5"/></svg> Bezahlt',
-                      'fully_paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M20 6 9 17l-5-5"/></svg> Bezahlt',
-                      'deposit_paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg> Anzahlung',
-                      'pending': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Offen',
-                      'failed': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Fehlgeschlagen',
-                      'refunded': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Rückerstattet',
-                      'unpaid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Unbezahlt'
-                    };
-                    const paymentLabel = cell.event.isAppointment && cell.event.paymentStatus
-                      ? paymentLabels[cell.event.paymentStatus] || paymentLabels['unpaid']
-                      : '';
-
-                    // Build content based on category
-                    let content = '';
-                    let isArtistInfoEvent = cell.event.isArtistInfo === true;
-
-                    if (cell.event.isGuestSpot) {
-                      // Check if this is a Guest Spot Appointment (has customer) vs Guest Spot Availability
-                      if (cell.event.isGuestSpotAppointment) {
-                        // Guest Spot APPOINTMENT: Show customer, time, price
-                        const gsAptCustomer = cell.event.customerName || 'Kunde';
-                        const gsAptPrice = cell.event.price ? `€${cell.event.price}` : '';
-                        const gsAptType = cell.event.type || 'Termin';
-
-                        content = `
-                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                              <line x1="16" y1="2" x2="16" y2="6"></line>
-                              <line x1="8" y1="2" x2="8" y2="6"></line>
-                              <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
-                            <span style="font-weight:600; font-size:12px;">${timeStr}</span>
-                          </div>
-                          <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px;">
-                            ${gsAptCustomer}
-                          </div>
-                          <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsAptType}</span>
-                            ${gsAptPrice ? `<span style="font-size:10px; font-weight:600; opacity:0.9;">${gsAptPrice}</span>` : ''}
-                          </div>
-                        `;
-                      } else {
-                        // Guest Spot AVAILABILITY: Show artist name, time, and booking type (paid status shown in detail modal)
-                        const gsTypeLabel = cell.event.bookingType === 'internal' ? 'Intern' : 'Extern';
-
-                        content = `
-                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                              <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                            <span style="font-weight:600; font-size:12px;">${timeStr}</span>
-                          </div>
-                          <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">
-                            ${cell.event.artistName}
-                          </div>
-                          <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:10px; font-weight:600; text-transform:uppercase; opacity:0.7;">${gsTypeLabel}</span>
-                          </div>
-                        `;
-                      }
-                    } else if (cell.event.isStay) {
-                      // Stay: Show house icon, artist name, and location
-                      content = `
-                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                            <polyline points="9 22 9 12 15 12 15 22"/>
-                          </svg>
-                          <span style="font-weight:600; font-size:11px; color:#8e8e93;">Unterkunft</span>
-                        </div>
-                        <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">
-                          ${cell.event.artistName}
-                        </div>
-                        <div style="font-size:10px; opacity:0.8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                          ${cell.event.stayLocationName || ''}${cell.event.stayLocationCity ? ' • ' + cell.event.stayLocationCity : ''}
-                        </div>
-                      `;
-                    } else if (isArtistInfoEvent) {
-                      // Artist Info: Compact display with just notice text
-                      content = `<div style="font-weight:600; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cell.event.title}</div>`;
-                    } else if (cat === 'events') {
-                      // For events: SVG icon + time, title, and type
-                      const catConfig = (window.calendarCategoryConfig || {})[eventCategory] || {};
-                      const typeIcon = catConfig.icon || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
-                      const displayLabel = catConfig.label || typeLabel || 'Event';
-
-                      const titleContent = cell.event.artistId
-                        ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline; font-weight:600;" onclick="event.stopPropagation(); viewArtistProfile('${cell.event.artistId}');">${cell.event.title}</div>`
-                        : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; font-weight:600;">${cell.event.title}</div>`;
-
-                      content = `
-                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
-                          <span style="display:inline-flex; align-items:center;">${typeIcon}</span>
-                          <span style="font-weight:600; font-size:12px;">${timeStr}</span>
-                        </div>
-                        ${titleContent}
-                        ${displayLabel ? `<div style="font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:0.3px; opacity:0.8;">${displayLabel}</div>` : ''}
-                      `;
-                    } else {
-                      // For bookings: SVG Icon + Type, Time + Name, Payment Badge
-                      const customerName = cell.event.customerName || 'Kunde';
-                      const customerLink = cell.event.customerId
-                        ? `<span style="cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${cell.event.customerId}');">${customerName}</span>`
-                        : customerName;
-
-                      // Get category config for icon (uses eventCategory calculated above)
-                      const catConfig = (window.calendarCategoryConfig || {})[eventCategory] || {};
-                      const typeIcon = catConfig.icon || '';
-                      const displayLabel = catConfig.label || typeLabel || eventCategory;
-
-                      // Payment status badge with SVG icons
-                      const paymentBadges = {
-                        'paid': {
-                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>',
-                          label: 'Bezahlt', bg: 'rgba(46, 125, 50, 0.15)', color: '#2E7D32'
-                        },
-                        'fully_paid': {
-                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>',
-                          label: 'Bezahlt', bg: 'rgba(46, 125, 50, 0.15)', color: '#2E7D32'
-                        },
-                        'deposit_paid': {
-                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-                          label: 'Anzahlung', bg: 'rgba(21, 101, 192, 0.15)', color: '#1565C0'
-                        },
-                        'pending': {
-                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-                          label: 'Offen', bg: 'rgba(245, 127, 23, 0.15)', color: '#F57F17'
-                        },
-                        'failed': {
-                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
-                          label: 'Fehlgeschlagen', bg: 'rgba(198, 40, 40, 0.15)', color: '#C62828'
-                        },
-                        'refunded': {
-                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M3 10h10a5 5 0 0 1 0 10H3"/><path d="M7 6l-4 4 4 4"/></svg>',
-                          label: 'Erstattet', bg: 'rgba(69, 90, 100, 0.15)', color: '#455A64'
-                        },
-                        'unpaid': {
-                          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>',
-                          label: 'Unbezahlt', bg: 'rgba(198, 40, 40, 0.1)', color: '#C62828'
-                        }
+                      // Type labels
+                      const typeLabels = {
+                        'consultation': 'Beratung', 'new_tattoo': 'Neustechen', 'continuing_tattoo': 'Weiterstechen',
+                        'touch_up': 'Nachstechen', 'selfbooking': 'Selfbooking', 'wannado': 'WannaDo',
+                        'internal': 'Intern', 'move': 'Verschiebung', 'reserved': 'Reserviert', 'no_show': 'No Show'
                       };
-                      const paymentInfo = cell.event.isAppointment && cell.event.paymentStatus
-                        ? paymentBadges[cell.event.paymentStatus] || paymentBadges['unpaid']
-                        : null;
+                      const typeLabel = evt.type ? typeLabels[evt.type] || evt.type : '';
 
-                      content = `
-                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
-                          ${typeIcon ? `<span style="display:inline-flex; align-items:center;">${typeIcon}</span>` : ''}
-                          <span style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; opacity:0.9;">${displayLabel}</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; gap:6px; width:100%;">
-                          <span style="font-weight:600; font-size:11px; opacity:0.8; white-space:nowrap;">${timeStr}</span>
-                          <span style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:right;">${customerLink}</span>
-                        </div>
-                        ${paymentInfo ? `
-                          <div style="display:inline-flex; align-items:center; gap:3px; padding:2px 6px; border-radius:4px; background:${paymentInfo.bg}; margin-top:2px;">
-                            <span style="display:inline-flex; color:${paymentInfo.color};">${paymentInfo.icon}</span>
-                            <span style="font-size:9px; font-weight:600; color:${paymentInfo.color}; text-transform:uppercase;">${paymentInfo.label}</span>
-                          </div>
-                        ` : ''}
-                      `;
-                    }
+                      // Payment labels
+                      const paymentLabels = {
+                        'paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Bezahlt',
+                        'fully_paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Bezahlt',
+                        'deposit_paid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg> Anzahlung',
+                        'pending': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Offen',
+                        'unpaid': '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> Unbezahlt'
+                      };
+                      const paymentLabel = evt.isAppointment && evt.paymentStatus ? paymentLabels[evt.paymentStatus] || '' : '';
 
-                    // Add attendance required indicator for events
-                    const attendanceIndicator = (cat === 'events' && cell.event.attendanceRequired) ?
-                      `<div style="position:absolute; top:8px; right:8px; width:8px; height:8px; background:#ff3b30; border-radius:50%; box-shadow:0 1px 3px rgba(255,59,48,0.4);"></div>` : '';
+                      // Build content (simplified for grouped view)
+                      let content = '';
+                      const isConsultation = (evt.workProcess === 'Consultation' || evt.type === 'consultation' || eventCategory === 'consultation');
+                      const showPrice = isConsultation ? '100 €' : (evt.price ? `€${evt.price}` : '');
 
-                    // Artist Info: Use special CSS class and click handler
-                    const artistInfoClass = isArtistInfoEvent ? 'artist-info-event' : '';
-                    const stayClass = cell.event.isStay ? 'stay-event' : '';
-                    const guestSpotCanceledClass = cell.event.isCanceled ? 'canceled' : '';
-                    // Guest Spot Appointment gets different class for styling (türkis instead of braun)
-                    const guestSpotAppointmentClass = cell.event.isGuestSpotAppointment ? 'guest_spot_appointment' : '';
-                    const guestSpotClass = cell.event.isGuestSpot ? `guest_spot ${guestSpotCanceledClass} ${guestSpotAppointmentClass}` : '';
-
-                    // Click handler: Guest Spot Appointments open edit modal, Guest Spot Availability opens detail modal
-                    let clickHandler;
-                    if (cell.event.isGuestSpotAppointment) {
-                      // Guest Spot Appointment → open edit appointment modal
-                      clickHandler = `onclick="openEditEventModal('${cell.event.id}')"`;
-                    } else if (cell.event.isGuestSpot) {
-                      // Guest Spot Availability → open guest spot detail modal
-                      clickHandler = `onclick="handleGuestSpotCalendarClick('${cell.event.id}')"`;
-                    } else if (cell.event.isStay) {
-                      // Stay → open guest spot detail modal if linked, otherwise show stay info
-                      if (cell.event.guestSpotId) {
-                        clickHandler = `onclick="openGuestSpotDetailModal({ id: '${cell.event.guestSpotId}' })"`;
+                      if (evt.isGuestSpot) {
+                        if (evt.isGuestSpotAppointment) {
+                          content = `<div style="font-weight:600;font-size:11px;margin-bottom:2px;">${timeStr}</div>
+                            <div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${evt.customerName || 'Kunde'}</div>`;
+                        } else {
+                          content = `<div style="font-weight:600;font-size:11px;margin-bottom:2px;">${timeStr}</div>
+                            <div style="font-weight:700;font-size:12px;">${evt.artistName || 'Guest'}</div>`;
+                        }
+                      } else if (evt.isArtistInfo) {
+                        content = `<div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${evt.artistName || evt.title}</div>
+                          <div style="font-size:11px;opacity:0.8;">${evt.description || ''}</div>`;
                       } else {
-                        clickHandler = `onclick="showToast('Stay-Details können über den verknüpften Guest Spot geöffnet werden', 'info')"`;
+                        const displayLabel = evt.workProcess ? (typeLabels[evt.workProcess] || evt.workProcess) : typeLabel;
+                        content = `<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+                            <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;opacity:0.9;">${displayLabel}</span>
+                            ${showPrice ? `<span style="font-size:10px;font-weight:600;opacity:0.8;margin-left:auto;">${showPrice}</span>` : ''}
+                          </div>
+                          <span style="font-weight:600;font-size:11px;opacity:0.8;white-space:nowrap;">${timeStr}</span>
+                          <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:2px 0;">${evt.customerName || evt.title || ''}</div>
+                          ${paymentLabel ? `<div style="font-size:10px;opacity:0.85;display:flex;align-items:center;gap:3px;">${paymentLabel}</div>` : ''}`;
                       }
-                    } else if (isArtistInfoEvent) {
-                      clickHandler = `onclick="openArtistInfoModal('${cell.event.originalId}', ${JSON.stringify(cell.event).replace(/"/g, '&quot;')})"`;
+
+                      html += `<div class="slot-cell booking ${isHalfHour ? 'half-hour' : ''}" ${typeAttr}
+                        style="grid-column: span ${cell.span};"
+                        data-event-id="${evt.id}"
+                        onclick="openCalendarEventDetail('${evt.id}')">${content}</div>`;
                     } else {
-                      clickHandler = `onclick="openEditEventModal('${cell.event.id}')"`;
+                      // Empty cell
+                      const isHalfHour = (index % 2) === 1;
+                      html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}"></div>`;
                     }
+                  });
 
-                    html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
-                      <div class="event ${cat} ${artistInfoClass} ${stayClass} ${guestSpotClass}" ${typeAttr} data-event-id="${cell.event.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent || cell.event.isStay ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
-                        ${content}
-                        ${attendanceIndicator}
-                      </div>
-                    </div>`;
-                  } else {
-                    // Empty cell
-                    const isHalfHour = (index % 2) === 1;
-                    html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}"></div>`;
-                  }
+                  html += '</div>'; // Close slot-row
                 });
-
-                html += '</div>';
               });
             }
           }
