@@ -173,7 +173,7 @@ serve(async (req: Request) => {
             status: 'scheduled',
             state: 'Zugesagt',
             payment_status: 'paid',
-            payment_amount: 10000,
+            payment_amount: 10000, // 100€
             work_process: 'Consultation',
             stripe_checkout_session_id: session.id,
             stripe_payment_intent_id: session.payment_intent,
