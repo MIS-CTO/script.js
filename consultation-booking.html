@@ -1027,7 +1027,7 @@
                 artist_name: selectedArtist.name,
                 location_id: LOCATION_ID,
                 date: selectedDate,
-                success_url: window.location.origin + '/consultation-booking.html?success=true',
+                success_url: 'https://mommyimsorry.com/consultation-booking.html?success=true&session_id={CHECKOUT_SESSION_ID}',
                 cancel_url: window.location.origin + '/consultation-booking.html?canceled=true'
               })
             }
@@ -1059,18 +1059,59 @@
         const canceled = urlParams.get('canceled');
 
         if (success === 'true') {
-          // Show success screen (appointment was created by webhook)
-          const email = localStorage.getItem('consultation_email') || 'deine E-Mail';
-          document.getElementById('successEmail').textContent = email;
+          const sessionId = urlParams.get('session_id');
 
-          document.querySelectorAll('.progress-step').forEach(el => el.classList.add('completed'));
-          document.querySelectorAll('.booking-step').forEach(el => el.classList.remove('active'));
-          document.querySelector('.booking-step[data-step="success"]').classList.add('active');
+          // Show loading state
+          document.body.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#fff;">
+              <div style="width:40px;height:40px;border:3px solid #e5e5e5;border-top-color:#1d1d1f;border-radius:50%;animation:spin 1s linear infinite;"></div>
+              <p style="margin-top:24px;color:#86868b;">Zahlung wird überprüft...</p>
+              <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+            </div>
+          `;
 
-          localStorage.removeItem('consultation_email');
-
-          // Clean URL
-          window.history.replaceState({}, document.title, window.location.pathname);
+          // Verify payment with edge function
+          fetch('https://auxxyehgzkozdjylhqnx.supabase.co/functions/v1/verify-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.paid) {
+              document.body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center;font-family:system-ui,-apple-system,sans-serif;background:#fff;">
+                  <div style="width:80px;height:80px;background:#34c759;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:32px;">
+                    <svg width="40" height="40" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </div>
+                  <h1 style="margin:0 0 16px;font-size:32px;font-weight:600;color:#1d1d1f;">Zahlung erfolgreich!</h1>
+                  <p style="margin:0 0 12px;font-size:18px;color:#515154;max-width:450px;line-height:1.5;">Vielen Dank für deine Buchung.</p>
+                  <p style="margin:0 0 40px;font-size:16px;color:#86868b;max-width:450px;">Du erhältst in Kürze eine Bestätigung per Email.</p>
+                  <a href="https://www.mommyimsorry.com" style="padding:16px 48px;background:#1d1d1f;color:white;text-decoration:none;font-weight:500;">Zur Startseite</a>
+                </div>
+              `;
+            } else {
+              document.body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center;font-family:system-ui,-apple-system,sans-serif;background:#fff;">
+                  <div style="width:80px;height:80px;background:#ff3b30;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:32px;">
+                    <svg width="40" height="40" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </div>
+                  <h1 style="margin:0 0 16px;font-size:32px;font-weight:600;color:#1d1d1f;">Zahlung nicht gefunden</h1>
+                  <p style="margin:0 0 40px;font-size:16px;color:#86868b;">Bitte kontaktiere uns falls du bezahlt hast.</p>
+                  <a href="https://www.mommyimsorry.com/consultation-booking.html" style="padding:16px 48px;background:#1d1d1f;color:white;text-decoration:none;font-weight:500;">Erneut versuchen</a>
+                </div>
+              `;
+            }
+          })
+          .catch(() => {
+            document.body.innerHTML = `
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px;text-align:center;font-family:system-ui,-apple-system,sans-serif;">
+                <p style="color:#86868b;">Verbindungsfehler. Bitte Seite neu laden.</p>
+                <a href="https://www.mommyimsorry.com" style="margin-top:20px;color:#0071e3;">Zur Startseite</a>
+              </div>
+            `;
+          });
+          return;
         } else if (canceled === 'true') {
           // Payment was canceled, show message and clean URL
           console.log('Zahlung abgebrochen');
