@@ -739,8 +739,24 @@
     .slot-row.empty-row .slot-cell {
       min-height:50px;
     }
+    .slot-row.availability-only-row .slot-cell {
+      min-height:44px;
+    }
+    .slot-row.availability-only-row .slot-label {
+      min-height:44px;
+      padding:8px 14px;
+    }
     .slot-cell.half-hour { border-right:1px solid rgba(0,0,0,0.04); }
     .slot-cell:hover { background:rgba(0,113,227,0.02); }
+    .event-bg-wrapper {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+      background: #fff;
+      border-radius: 8px;
+    }
     .event {
       background: #fff;
       color: #1d1d1f;
@@ -1623,6 +1639,10 @@
 
     [data-theme="dark"] .slot-cell:hover {
       background: rgba(58, 58, 60, 0.9);
+    }
+
+    [data-theme="dark"] .event-bg-wrapper {
+      background: #2c2c2e;
     }
 
     /* Calendar Tabs Dark Mode */
@@ -33096,7 +33116,11 @@
                       </div>`
                     : `<span style="font-size:12px; color:var(--muted);">Empty</span>`;
 
-                  html += `<div class="slot-row"><div class="slot-label">${slotLabelContent}</div>`;
+                  // Check if this is an availability-only row (no actual appointments)
+                  const isAvailabilityOnlyRow = slotEvents.every(e => e.isAvailabilityOnly);
+                  const rowClass = isAvailabilityOnlyRow ? 'slot-row availability-only-row' : 'slot-row';
+
+                  html += `<div class="${rowClass}"><div class="slot-label">${slotLabelContent}</div>`;
 
                   // Create cells for time slots 09:00 - 21:00
                   const cells = [];
@@ -33325,9 +33349,10 @@
                         clickHandler = `onclick="openEditEventModal('${evt.id}')"`;
                       }
 
-                      // Proper container structure with event div
+                      // Proper container structure with event div and white background wrapper
                       html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative; ${availabilityBg}">
-                        <div class="event ${cat} ${artistInfoClass} ${stayClass} ${guestSpotClass}" ${typeAttr} data-event-id="${evt.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent || evt.isStay ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
+                        <div class="event-bg-wrapper"></div>
+                        <div class="event ${cat} ${artistInfoClass} ${stayClass} ${guestSpotClass}" ${typeAttr} data-event-id="${evt.id}" ${clickHandler} style="position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent || evt.isStay ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
                           ${content}
                           ${attendanceIndicator}
                         </div>
