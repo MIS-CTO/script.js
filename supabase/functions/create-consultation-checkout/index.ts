@@ -77,8 +77,8 @@ Deno.serve(async (req) => {
         },
         quantity: 1
       }],
-      success_url: success_url || 'https://mommyimsorry.com/consultation-booking.html?success=true',
-      cancel_url: cancel_url || 'https://mommyimsorry.com/consultation-booking.html?canceled=true'
+      success_url: success_url || 'https://www.mommyimsorry.com/consultation?success=true&session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: cancel_url || 'https://www.mommyimsorry.com/consultation?canceled=true'
     });
 
     return new Response(
