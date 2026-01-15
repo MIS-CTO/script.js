@@ -175,8 +175,9 @@ serve(async (req: Request) => {
             payment_status: 'paid',
             payment_amount: 10000,
             work_process: 'Consultation',
-            stripe_payment_id: session.id || session.payment_intent,
-            paid_at: new Date().toISOString()
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: session.payment_intent,
+            payment_received_at: new Date().toISOString()
           })
           .select()
           .single();
