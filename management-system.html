@@ -32934,9 +32934,33 @@
           { key: 'events', label: 'Events', visible: visibleCategories.events },
           { key: 'resident', label: 'Residents', visible: visibleCategories.residents },
           { key: 'guest', label: 'Guests', visible: visibleCategories.guests },
-          { key: 'guest_spot', label: 'Guest Spots', visible: true }, // Always show guest spots
           { key: 'artist_info', label: 'Hospitality', visible: true } // Always show hospitality/stays
         ];
+
+        // Load artist availability from dienstplan for current date
+        const artistAvailabilityMap = new Map(); // artistId -> { start: '10:00', end: '18:00' }
+
+        try {
+          const dienstplanData = window.dienstplanCache || CentralDataManager?.data?.dienstplan || [];
+          const currentDateStr = dateStr; // Calendar's current date (YYYY-MM-DD)
+
+          dienstplanData.forEach(entry => {
+            if (entry.state === 'Available' &&
+                entry.start_date <= currentDateStr &&
+                entry.end_date >= currentDateStr &&
+                entry.artist_id &&
+                !entry.deleted_at) {
+              artistAvailabilityMap.set(entry.artist_id, {
+                start: entry.working_start || '09:00',
+                end: entry.working_end || '21:00'
+              });
+            }
+          });
+
+          console.log(`📅 Loaded availability for ${artistAvailabilityMap.size} artists on ${currentDateStr}`);
+        } catch (err) {
+          console.warn('Could not load dienstplan availability:', err);
+        }
 
         categoriesToRender.forEach(({ key, label, visible }) => {
           const cat = key === 'events' ? 'events' : key;
@@ -32976,13 +33000,40 @@
               console.log(`📅 Rendering ${categoryEvents.length} ${label} for ${dateStr}`);
             }
 
+            // Add available artists without appointments as rows (for resident/guest categories)
+            if ((cat === 'resident' || cat === 'guest') && artistAvailabilityMap.size > 0) {
+              const shownArtistIds = new Set(categoryEvents.map(e => e.artistId).filter(Boolean));
+
+              artistAvailabilityMap.forEach((availability, artistId) => {
+                if (shownArtistIds.has(artistId)) return; // Already has events
+
+                const artist = allArtists.find(a => a.id === artistId);
+                if (!artist) return;
+
+                // Check if artist matches category (resident vs guest)
+                const isGuest = artist.is_guest === true;
+                if ((cat === 'resident' && isGuest) || (cat === 'guest' && !isGuest)) return;
+
+                // Add placeholder event for this artist (no actual appointment, just availability row)
+                categoryEvents.push({
+                  artistId: artistId,
+                  artistName: artist.name,
+                  isAvailabilityOnly: true, // Flag to identify this is just for showing availability
+                  startHour: 0,
+                  endHour: 0,
+                  date: dateStr,
+                  category: cat
+                });
+              });
+            }
+
             // Group non-overlapping appointments by artist into shared slots
             // Sort by start time first
             const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
             // If no events, show at least one empty slot (but not for artist users)
             if (sortedEvents.length === 0 && !(typeof isArtistUser === 'function' && isArtistUser())) {
-              html += `<div class="slot-row empty-row"><div class="slot-label">Slot 1</div>`;
+              html += `<div class="slot-row empty-row"><div class="slot-label"><span style="font-size:12px; color:var(--muted);">Empty</span></div>`;
 
               // Empty cells
               for (let h = 9; h <= 21; h++) {
@@ -33030,9 +33081,22 @@
                   globalSlotNumber++;
                   const firstEvent = slotEvents[0];
                   const artistName = firstEvent?.artistName || '';
-                  const slotLabel = artistName ? `Slot ${globalSlotNumber} - ${artistName}` : `Slot ${globalSlotNumber}`;
 
-                  html += `<div class="slot-row"><div class="slot-label">${slotLabel}</div>`;
+                  // Get artist Instagram from allArtists
+                  const artistData = firstEvent?.artistId ? allArtists.find(a => a.id === firstEvent.artistId) : null;
+                  const artistInstagram = artistData?.instagram || null;
+
+                  // Build slot label with artist name and Instagram handle (vertical layout)
+                  const slotLabelContent = artistName
+                    ? `<div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+                        <span style="font-weight:600; font-size:12px; color:var(--ink);">${artistName}</span>
+                        ${artistInstagram
+                          ? `<a href="https://instagram.com/${artistInstagram.replace('@', '')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="font-size:11px; color:#0095f6; text-decoration:none; font-weight:500;">@${artistInstagram.replace('@', '')}</a>`
+                          : ''}
+                      </div>`
+                    : `<span style="font-size:12px; color:var(--muted);">Empty</span>`;
+
+                  html += `<div class="slot-row"><div class="slot-label">${slotLabelContent}</div>`;
 
                   // Create cells for time slots 09:00 - 21:00
                   const cells = [];
@@ -33066,8 +33130,25 @@
                   });
 
                   // Render cells
+                  const slotArtistId = firstEvent?.artistId;
+                  const slotAvailability = artistAvailabilityMap.get(slotArtistId);
+
                   cells.forEach((cell, index) => {
                     if (cell.occupied) return; // Skip - covered by span
+
+                    // Calculate availability background color
+                    let availabilityBg = '';
+                    if (slotAvailability) {
+                      const cellTimeDecimal = cell.time; // Already in decimal format (9.5 = 9:30)
+                      const [availStartHour, availStartMin] = (slotAvailability.start || '09:00').split(':').map(Number);
+                      const [availEndHour, availEndMin] = (slotAvailability.end || '21:00').split(':').map(Number);
+                      const availStartDecimal = availStartHour + (availStartMin / 60);
+                      const availEndDecimal = availEndHour + (availEndMin / 60);
+
+                      if (cellTimeDecimal >= availStartDecimal && cellTimeDecimal < availEndDecimal) {
+                        availabilityBg = 'background-color: rgba(52, 199, 89, 0.15);';
+                      }
+                    }
 
                     if (cell.isEventStart && cell.event) {
                       const evt = cell.event;
@@ -33143,7 +33224,7 @@
                               </svg>
                               <span style="font-weight:600; font-size:12px;">${timeStr}</span>
                             </div>
-                            <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">
+                            <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">
                               ${evt.artistName}
                             </div>
                             <div style="display:flex; align-items:center; gap:6px;">
@@ -33159,7 +33240,7 @@
                             </svg>
                             <span style="font-weight:600; font-size:11px; color:#8e8e93;">Unterkunft</span>
                           </div>
-                          <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">
+                          <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; cursor:pointer;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">
                             ${evt.artistName}
                           </div>
                           <div style="font-size:10px; opacity:0.8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
@@ -33170,7 +33251,7 @@
                       } else if (evt.category === 'events') {
                         const displayLabel = catConfig.label || typeLabel || 'Event';
                         const titleContent = evt.artistId
-                          ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; text-decoration:underline; font-weight:600;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">${evt.title}</div>`
+                          ? `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; cursor:pointer; font-weight:600;" onclick="event.stopPropagation(); viewArtistProfile('${evt.artistId}');">${evt.title}</div>`
                           : `<div style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px; font-weight:600;">${evt.title}</div>`;
                         content = `
                           <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
@@ -33183,7 +33264,7 @@
                         // Regular bookings
                         const customerName = evt.customerName || 'Kunde';
                         const customerLink = evt.customerId
-                          ? `<span style="cursor:pointer; text-decoration:underline;" onclick="event.stopPropagation(); openCustomerProfile('${evt.customerId}');">${customerName}</span>`
+                          ? `<span style="cursor:pointer;" onclick="event.stopPropagation(); openCustomerProfile('${evt.customerId}');">${customerName}</span>`
                           : customerName;
                         const displayLabel = catConfig.label || (evt.workProcess ? (typeLabels[evt.workProcess] || evt.workProcess) : typeLabel) || eventCategory;
 
@@ -33245,7 +33326,7 @@
                       }
 
                       // Proper container structure with event div
-                      html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative;">
+                      html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative; ${availabilityBg}">
                         <div class="event ${cat} ${artistInfoClass} ${stayClass} ${guestSpotClass}" ${typeAttr} data-event-id="${evt.id}" ${clickHandler} style="position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent || evt.isStay ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
                           ${content}
                           ${attendanceIndicator}
@@ -33254,7 +33335,7 @@
                     } else {
                       // Empty cell
                       const isHalfHour = (index % 2) === 1;
-                      html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}"></div>`;
+                      html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="${availabilityBg}"></div>`;
                     }
                   });
 
