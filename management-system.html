@@ -37296,13 +37296,13 @@
           { value: 'canceled', label: 'Canceled' }
         ];
 
-        // Formatiere Datum und Zeit
-        const startDate = appointment.start_time || appointment.start ? new Date(appointment.start_time || appointment.start) : new Date();
-        const dateStr = startDate.toISOString().split('T')[0];
-        const timeStr = startDate.toTimeString().slice(0, 5);
+        // Formatiere Datum und Zeit - extract directly from ISO string to avoid timezone shift
+        const startStr = appointment.start_time || appointment.start || '';
+        const dateStr = startStr ? startStr.split('T')[0] : new Date().toISOString().split('T')[0];
+        const timeStr = startStr && startStr.includes('T') ? startStr.split('T')[1].substring(0, 5) : '09:00';
 
-        const endDate = appointment.end_time || appointment.end ? new Date(appointment.end_time || appointment.end) : new Date();
-        const endTimeStr = endDate.toTimeString().slice(0, 5);
+        const endStr = appointment.end_time || appointment.end || '';
+        const endTimeStr = endStr && endStr.includes('T') ? endStr.split('T')[1].substring(0, 5) : '10:00';
 
         // Kundenname
         const customerName = (appointment.customer?.first_name && appointment.customer?.last_name
