@@ -125,7 +125,28 @@ function isNonBlockingAppointment(apt) {
 6f38e45 feat(calendar): add status stripes and click-to-book functionality
 8d93fd5 fix(calendar): improve artist ID lookup for click-to-book handlers
 81362d9 fix(calendar): prevent extra empty rows from non-blocking appointments
+972b4a8 fix(requests): allow artist assignment on non-blocking appointment slots
 ```
+
+### Hotfix: Artist Assignment on Non-Blocking Slots (2026-01-16)
+
+**Problem:** Time slots with canceled/rescheduled/no_show appointments were showing as "blocked" in request edit mode, preventing artist assignment.
+
+**Fix Location:** `management-system.html` line ~30003
+
+```javascript
+// Filter out non-blocking appointments (canceled, rescheduled, no_show)
+const appointmentsOnDate = (artistExistingAppointments || []).filter(apt => {
+  if (!apt.start) return false;
+  const aptDate = apt.start.split('T')[0];
+  if (aptDate !== dateStr) return false;
+  // Skip non-blocking appointments - they don't block time slots
+  if (window.isNonBlockingAppointment && window.isNonBlockingAppointment(apt)) return false;
+  return true;
+});
+```
+
+---
 
 ### Hotfix: Extra Empty Rows Bug (2026-01-16)
 
