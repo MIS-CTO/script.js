@@ -126,6 +126,7 @@ function isNonBlockingAppointment(apt) {
 8d93fd5 fix(calendar): improve artist ID lookup for click-to-book handlers
 81362d9 fix(calendar): prevent extra empty rows from non-blocking appointments
 972b4a8 fix(requests): allow artist assignment on non-blocking appointment slots
+a381719 fix(payment): allow 0 as valid Gesamtpreis value
 ```
 
 ### Hotfix: Artist Assignment on Non-Blocking Slots (2026-01-16)
@@ -171,6 +172,32 @@ for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
   cells[i].occupied = true;
 }
 ```
+
+---
+
+### Hotfix: Gesamtpreis Zero Value (2026-01-16)
+
+**Problem:** The Gesamtpreis (total price) input in Payment & Pricing rejected 0 as a value because JavaScript treats 0 as falsy.
+
+**Root Cause:** Validation used `!totalPrice || totalPrice <= 0` which rejected 0 since `!0` is true.
+
+**Fix Locations:** `management-system.html` lines ~51785, ~52026, ~52210
+
+```javascript
+// Before: Rejected 0 because 0 is falsy
+if (!totalPrice || totalPrice <= 0) {
+  alert('❌ Bitte gib einen gültigen Gesamtpreis ein');
+  return;
+}
+
+// After: Only reject NaN and negative values
+if (isNaN(totalPrice) || totalPrice < 0) {
+  alert('❌ Bitte gib einen gültigen Gesamtpreis ein');
+  return;
+}
+```
+
+**Use Case:** Allows free/complimentary bookings with 0€ total price.
 
 ---
 
