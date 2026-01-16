@@ -33451,7 +33451,8 @@
                   });
 
                   // Render cells
-                  const slotArtistId = firstEvent?.artistId;
+                  // Get artist ID from firstEvent - check multiple possible property names
+                  const slotArtistId = firstEvent?.artistId || firstEvent?.artist_id || (firstEvent?.fullData?.artist_id) || null;
                   const slotAvailability = artistAvailabilityMap.get(slotArtistId);
 
                   cells.forEach((cell, index) => {
