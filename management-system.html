@@ -29999,10 +29999,14 @@
         }
 
         // Get existing appointments for this date to check conflicts
+        // Filter out non-blocking appointments (canceled, rescheduled, no_show)
         const appointmentsOnDate = (artistExistingAppointments || []).filter(apt => {
           if (!apt.start) return false;
           const aptDate = apt.start.split('T')[0];
-          return aptDate === dateStr;
+          if (aptDate !== dateStr) return false;
+          // Skip non-blocking appointments - they don't block time slots
+          if (window.isNonBlockingAppointment && window.isNonBlockingAppointment(apt)) return false;
+          return true;
         });
 
         console.log('📅 Checking conflicts for date:', dateStr);
