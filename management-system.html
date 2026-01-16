@@ -33440,12 +33440,10 @@
                       cells[startIndex].span = span;
                       cells[startIndex].event = evt;
 
-                      // Mark occupied cells (only for blocking appointments)
-                      const isBlocking = !isNonBlockingAppointment(evt.fullData || evt);
-                      if (isBlocking) {
-                        for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
-                          cells[i].occupied = true;
-                        }
+                      // Mark occupied cells (always, to prevent duplicate cell rendering)
+                      // Note: Non-blocking status only affects availability display, not cell occupation
+                      for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
+                        cells[i].occupied = true;
                       }
                     }
                   });
