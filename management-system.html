@@ -51782,7 +51782,7 @@
         paymentPriceInput.addEventListener('input', function() {
           const totalPrice = parseFloat(this.value);
 
-          if (totalPrice && totalPrice > 0) {
+          if (!isNaN(totalPrice) && totalPrice >= 0) {
             const depositAmount = totalPrice / 2;
 
             // Show calculation
@@ -52023,7 +52023,7 @@
         const totalPrice = parseFloat(priceInput.value);
         const isChecked = checkbox.checked;
 
-        if (totalPrice && totalPrice > 0 && isChecked) {
+        if (!isNaN(totalPrice) && totalPrice >= 0 && isChecked) {
           sendBtn.disabled = false;
           sendBtn.style.cursor = 'pointer';
           sendBtn.style.opacity = '1';
@@ -52207,7 +52207,7 @@
         }
 
         const totalPrice = parseFloat(document.getElementById('paymentTotalPrice').value);
-        if (!totalPrice || totalPrice <= 0) {
+        if (isNaN(totalPrice) || totalPrice < 0) {
           alert('❌ Bitte gib einen gültigen Gesamtpreis ein');
           return;
         }
