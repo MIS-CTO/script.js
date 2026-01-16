@@ -823,6 +823,56 @@
       color: #9ca3af !important;
     }
 
+    /* ========== Appointment Status Stripe Patterns ========== */
+    /* Rescheduled - Gray stripes */
+    .event.status-rescheduled {
+      background-image: repeating-linear-gradient(
+        45deg, transparent, transparent 10px,
+        rgba(142, 142, 147, 0.3) 10px, rgba(142, 142, 147, 0.3) 20px
+      ) !important;
+      opacity: 0.75;
+    }
+
+    /* Canceled - Red stripes */
+    .event.status-canceled {
+      background-image: repeating-linear-gradient(
+        45deg, transparent, transparent 10px,
+        rgba(255, 59, 48, 0.25) 10px, rgba(255, 59, 48, 0.25) 20px
+      ) !important;
+      opacity: 0.75;
+    }
+
+    /* No Show - Dark gray stripes */
+    .event.status-no-show {
+      background-image: repeating-linear-gradient(
+        45deg, transparent, transparent 10px,
+        rgba(72, 72, 74, 0.3) 10px, rgba(72, 72, 74, 0.3) 20px
+      ) !important;
+      opacity: 0.75;
+    }
+
+    /* Dark mode stripe variants */
+    [data-theme="dark"] .event.status-rescheduled {
+      background-image: repeating-linear-gradient(
+        45deg, transparent, transparent 10px,
+        rgba(174, 174, 178, 0.25) 10px, rgba(174, 174, 178, 0.25) 20px
+      ) !important;
+    }
+
+    [data-theme="dark"] .event.status-canceled {
+      background-image: repeating-linear-gradient(
+        45deg, transparent, transparent 10px,
+        rgba(255, 69, 58, 0.2) 10px, rgba(255, 69, 58, 0.2) 20px
+      ) !important;
+    }
+
+    [data-theme="dark"] .event.status-no-show {
+      background-image: repeating-linear-gradient(
+        45deg, transparent, transparent 10px,
+        rgba(99, 99, 102, 0.3) 10px, rgba(99, 99, 102, 0.3) 20px
+      ) !important;
+    }
+
     /* Guest Spot APPOINTMENTS (Termine) - Türkis/Blau statt Lila */
     .event.guest_spot.guest_spot_appointment {
       background: rgba(0, 131, 143, 0.15) !important;
@@ -17823,6 +17873,54 @@
     </div>
   </div>
 
+  <!-- Quick Booking Modal (Click-to-Book from Calendar) -->
+  <div class="modal-backdrop" id="quickBookingModal" style="display:none;">
+    <div class="modal" style="max-width:500px; max-height:90vh; overflow-y:auto;">
+      <h3>Quick Booking</h3>
+      <form class="modal-form" id="quickBookingForm">
+        <div class="form-group">
+          <label>Artist</label>
+          <select id="qbArtist" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="qbDate" class="form-control" required>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <div class="form-group" style="flex:1;">
+            <label>Start Time</label>
+            <input type="time" id="qbStartTime" class="form-control" required>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>End Time</label>
+            <input type="time" id="qbEndTime" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="qbCategory" class="form-control" required>
+            <option value="new_tattoo">Neustechen</option>
+            <option value="continuing_tattoo">Weiterstechen</option>
+            <option value="consultation">Beratung</option>
+            <option value="touch_up">Nachstechen</option>
+            <option value="selfbooking">Selfbooking</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Customer (search by name/email)</label>
+          <input type="text" id="qbCustomerSearch" class="form-control" placeholder="Search customer..." oninput="searchQuickBookingCustomers(this.value)">
+          <select id="qbCustomer" class="form-control" style="margin-top:8px;" required>
+            <option value="">-- Select Customer --</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeQuickBookingModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Edit Artist Modal -->
   <div class="modal-backdrop" id="editArtistModal">
     <div class="modal" style="max-width:650px; max-height:90vh; overflow-y:auto;">
@@ -20660,6 +20758,201 @@
     }
 
     window.getAppointmentCategory = getAppointmentCategory;
+
+    // === HELPER: Get CSS class for appointment status visualization ===
+    function getAppointmentStatusClass(apt) {
+      if (!apt) return '';
+      const status = (apt.status || '').toLowerCase();
+      const state = (apt.state || '').toLowerCase();
+
+      // Rescheduled - gray stripes
+      if (status === 'rescheduled' || state === 'verschoben') return 'status-rescheduled';
+      // Canceled - red stripes
+      if (status === 'canceled') return 'status-canceled';
+      // No Show - dark gray stripes
+      if (status === 'no_show' || state === 'ill/no show') return 'status-no-show';
+
+      return '';
+    }
+    window.getAppointmentStatusClass = getAppointmentStatusClass;
+
+    // === HELPER: Check if appointment status should NOT block new bookings ===
+    function isNonBlockingAppointment(apt) {
+      if (!apt) return false;
+      const status = (apt.status || '').toLowerCase();
+      const state = (apt.state || '').toLowerCase();
+
+      const nonBlockingStatuses = ['no_show', 'rescheduled', 'canceled'];
+      const nonBlockingStates = ['ill/no show', 'verschoben'];
+
+      return nonBlockingStatuses.includes(status) || nonBlockingStates.includes(state);
+    }
+    window.isNonBlockingAppointment = isNonBlockingAppointment;
+
+    // ==========================================
+    // QUICK BOOKING MODAL (Click-to-Book)
+    // ==========================================
+
+    /**
+     * Opens the Quick Booking modal with pre-filled data from calendar click
+     * @param {string} artistId - Artist UUID
+     * @param {string} dateStr - Date string (YYYY-MM-DD)
+     * @param {string} startTime - Start time (HH:MM)
+     */
+    function openQuickBookingModal(artistId, dateStr, startTime) {
+      console.log('📅 Opening Quick Booking:', { artistId, dateStr, startTime });
+
+      // Get modal and show it
+      const modal = document.getElementById('quickBookingModal');
+      if (!modal) {
+        console.error('Quick Booking modal not found');
+        return;
+      }
+
+      // Pre-fill artist dropdown
+      const artistSelect = document.getElementById('qbArtist');
+      const artists = window.allArtists || [];
+      artistSelect.innerHTML = artists
+        .filter(a => a.is_active !== false)
+        .map(a => `<option value="${a.id}" ${a.id === artistId ? 'selected' : ''}>${a.name}</option>`)
+        .join('');
+
+      // Pre-fill date
+      document.getElementById('qbDate').value = dateStr;
+
+      // Pre-fill start time
+      document.getElementById('qbStartTime').value = startTime;
+
+      // Calculate and pre-fill end time (+1 hour)
+      const [h, m] = startTime.split(':').map(Number);
+      const endH = Math.min(h + 1, 21);
+      document.getElementById('qbEndTime').value = `${String(endH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+      // Reset customer search
+      document.getElementById('qbCustomerSearch').value = '';
+      document.getElementById('qbCustomer').innerHTML = '<option value="">-- Select Customer --</option>';
+
+      // Show modal
+      modal.style.display = 'flex';
+    }
+    window.openQuickBookingModal = openQuickBookingModal;
+
+    /**
+     * Closes the Quick Booking modal
+     */
+    function closeQuickBookingModal() {
+      const modal = document.getElementById('quickBookingModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+    window.closeQuickBookingModal = closeQuickBookingModal;
+
+    /**
+     * Search customers for Quick Booking dropdown
+     * @param {string} query - Search query
+     */
+    async function searchQuickBookingCustomers(query) {
+      if (!query || query.length < 2) {
+        document.getElementById('qbCustomer').innerHTML = '<option value="">-- Type at least 2 characters --</option>';
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('id, first_name, last_name, email')
+          .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
+          .limit(20);
+
+        if (error) throw error;
+
+        const select = document.getElementById('qbCustomer');
+        if (data.length === 0) {
+          select.innerHTML = '<option value="">No customers found</option>';
+        } else {
+          select.innerHTML = '<option value="">-- Select Customer --</option>' +
+            data.map(c => `<option value="${c.id}">${c.first_name || ''} ${c.last_name || ''} (${c.email || 'No email'})</option>`).join('');
+        }
+      } catch (err) {
+        console.error('Customer search error:', err);
+        document.getElementById('qbCustomer').innerHTML = '<option value="">Error searching</option>';
+      }
+    }
+    window.searchQuickBookingCustomers = searchQuickBookingCustomers;
+
+    /**
+     * Submit Quick Booking form
+     */
+    async function submitQuickBooking(e) {
+      if (e) e.preventDefault();
+
+      const artistId = document.getElementById('qbArtist').value;
+      const customerId = document.getElementById('qbCustomer').value;
+      const category = document.getElementById('qbCategory').value;
+      const dateStr = document.getElementById('qbDate').value;
+      const startTime = document.getElementById('qbStartTime').value;
+      const endTime = document.getElementById('qbEndTime').value;
+
+      if (!customerId) {
+        showToast('Please select a customer', 'error');
+        return;
+      }
+
+      const appointmentData = {
+        artist_id: artistId,
+        customer_id: customerId,
+        work_process: category,
+        booking_type: category,
+        start_time: `${dateStr}T${startTime}:00`,
+        end_time: `${dateStr}T${endTime}:00`,
+        status: 'scheduled',
+        state: 'Zugesagt',
+        location_id: currentLocationId
+      };
+
+      console.log('📝 Creating appointment:', appointmentData);
+
+      try {
+        const { data, error } = await supabase
+          .from('appointments')
+          .insert(appointmentData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        showToast('Booking created successfully!', 'success');
+        closeQuickBookingModal();
+
+        // Refresh calendar
+        if (typeof loadEvents === 'function') {
+          await loadEvents();
+        }
+        if (typeof renderCalendar === 'function') {
+          renderCalendar();
+        }
+      } catch (err) {
+        console.error('Error creating booking:', err);
+        showToast('Error creating booking: ' + err.message, 'error');
+      }
+    }
+    window.submitQuickBooking = submitQuickBooking;
+
+    // Form submit handler
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('quickBookingForm');
+      if (form) {
+        form.addEventListener('submit', submitQuickBooking);
+      }
+    });
+
+    // Close modal when clicking backdrop
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'quickBookingModal') {
+        closeQuickBookingModal();
+      }
+    });
 
     // ==========================================
     // BOOKING TEAM MEMBERS (Dynamic Loading)
@@ -32393,6 +32686,7 @@
               internalNotes: apt.internal_notes,
               customerNotes: apt.customer_notes,
               status: apt.status,
+              state: apt.state,
               durationMinutes: apt.duration_minutes,
               workProcess: apt.work_process || null,
               fullData: apt // Store full appointment data for modal
@@ -33146,9 +33440,12 @@
                       cells[startIndex].span = span;
                       cells[startIndex].event = evt;
 
-                      // Mark occupied cells
-                      for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
-                        cells[i].occupied = true;
+                      // Mark occupied cells (only for blocking appointments)
+                      const isBlocking = !isNonBlockingAppointment(evt.fullData || evt);
+                      if (isBlocking) {
+                        for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
+                          cells[i].occupied = true;
+                        }
                       }
                     }
                   });
@@ -33332,6 +33629,7 @@
                       const guestSpotAppointmentClass = evt.isGuestSpotAppointment ? 'guest_spot_appointment' : '';
                       const guestSpotClass = evt.isGuestSpot ? `guest_spot ${guestSpotCanceledClass} ${guestSpotAppointmentClass}` : '';
                       const cat = evt.category || 'resident';
+                      const statusClass = evt.isAppointment ? getAppointmentStatusClass(evt.fullData || evt) : '';
 
                       // Click handler based on event type
                       let clickHandler;
@@ -33350,9 +33648,12 @@
                       }
 
                       // Proper container structure with event div and white background wrapper
+                      // For non-blocking events, skip bg-wrapper to show green availability behind
+                      const eventIsNonBlocking = isNonBlockingAppointment(evt.fullData || evt);
+                      const bgWrapper = eventIsNonBlocking ? '' : '<div class="event-bg-wrapper"></div>';
                       html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="grid-column: span ${cell.span}; position: relative; ${availabilityBg}">
-                        <div class="event-bg-wrapper"></div>
-                        <div class="event ${cat} ${artistInfoClass} ${stayClass} ${guestSpotClass}" ${typeAttr} data-event-id="${evt.id}" ${clickHandler} style="position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent || evt.isStay ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
+                        ${bgWrapper}
+                        <div class="event ${cat} ${artistInfoClass} ${stayClass} ${guestSpotClass} ${statusClass}" ${typeAttr} data-event-id="${evt.id}" ${clickHandler} style="position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; display:flex; flex-direction:column; justify-content:${isArtistInfoEvent || evt.isStay ? 'center' : 'flex-start'}; align-items:flex-start; overflow:hidden;">
                           ${content}
                           ${attendanceIndicator}
                         </div>
@@ -33360,7 +33661,15 @@
                     } else {
                       // Empty cell
                       const isHalfHour = (index % 2) === 1;
-                      html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="${availabilityBg}"></div>`;
+                      // Add click-to-book handler for available (green) cells
+                      if (availabilityBg && slotArtistId) {
+                        const cellHour = Math.floor(cell.time);
+                        const cellMin = Math.round((cell.time % 1) * 60);
+                        const cellTime = `${String(cellHour).padStart(2,'0')}:${String(cellMin).padStart(2,'0')}`;
+                        html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="${availabilityBg} cursor: pointer;" onclick="openQuickBookingModal('${slotArtistId}', '${dateStr}', '${cellTime}')" title="Click to book"></div>`;
+                      } else {
+                        html += `<div class="slot-cell ${isHalfHour ? 'half-hour' : ''}" style="${availabilityBg}"></div>`;
+                      }
                     }
                   });
 
