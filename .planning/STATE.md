@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-15 | Version: 3.1211**
-**UPDATE: Phase 5.6 Calendar Availability Visualization ✓**
+**Stand: 2026-01-16 | Version: 3.1214**
+**UPDATE: Phase 5.7 Calendar Status Stripes & Click-to-Book ✓**
 
 ---
 
@@ -36,8 +36,119 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.6: CALENDAR AVAILABILITY VISUALIZATION      ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5.7: STATUS STRIPES & CLICK-TO-BOOK           ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Phase 5.7: Status Stripes & Click-to-Book (2026-01-16) ✅ COMPLETE
+
+### Overview
+
+Added visual status indicators for appointments and click-to-book functionality for available time slots.
+
+### Features Implemented
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Status Stripes | Diagonal stripe patterns for rescheduled/canceled/no_show | ✅ |
+| Click-to-Book | Modal opens when clicking green available slots | ✅ |
+| Non-Blocking Logic | Canceled appointments don't block availability | ✅ |
+| Artist ID Lookup Fix | Improved artist ID resolution for click handlers | ✅ |
+
+### CSS Stripe Patterns
+
+```css
+/* Rescheduled - gray diagonal stripes */
+.event.status-rescheduled {
+  background-image: repeating-linear-gradient(
+    45deg, transparent, transparent 10px,
+    rgba(142, 142, 147, 0.3) 10px, rgba(142, 142, 147, 0.3) 20px
+  ) !important;
+  opacity: 0.75;
+}
+
+/* Canceled - red diagonal stripes */
+.event.status-canceled {
+  background-image: repeating-linear-gradient(
+    45deg, transparent, transparent 10px,
+    rgba(255, 59, 48, 0.25) 10px, rgba(255, 59, 48, 0.25) 20px
+  ) !important;
+  opacity: 0.75;
+}
+
+/* No Show - dark gray diagonal stripes */
+.event.status-no-show {
+  background-image: repeating-linear-gradient(
+    45deg, transparent, transparent 10px,
+    rgba(72, 72, 74, 0.3) 10px, rgba(72, 72, 74, 0.3) 20px
+  ) !important;
+  opacity: 0.75;
+}
+```
+
+### Helper Functions
+
+```javascript
+// Get status class for appointment
+function getAppointmentStatusClass(apt) {
+  const status = (apt.status || '').toLowerCase();
+  const state = (apt.state || '').toLowerCase();
+  if (status === 'rescheduled' || state === 'verschoben') return 'status-rescheduled';
+  if (status === 'canceled') return 'status-canceled';
+  if (status === 'no_show' || state === 'ill/no show') return 'status-no-show';
+  return '';
+}
+
+// Check if appointment is non-blocking
+function isNonBlockingAppointment(apt) {
+  const status = (apt.status || '').toLowerCase();
+  const state = (apt.state || '').toLowerCase();
+  return ['no_show', 'rescheduled', 'canceled'].includes(status) ||
+         ['ill/no show', 'verschoben'].includes(state);
+}
+```
+
+### Quick Booking Modal
+
+- Opens when clicking green (available) time slots
+- Pre-fills: Artist, Date, Start Time, End Time (+1 hour default)
+- Customer search with dropdown selection
+- Category selection (Neustechen, Weiterstechen, Beratung, etc.)
+
+### Commits
+
+```
+6f38e45 feat(calendar): add status stripes and click-to-book functionality
+8d93fd5 fix(calendar): improve artist ID lookup for click-to-book handlers
+81362d9 fix(calendar): prevent extra empty rows from non-blocking appointments
+```
+
+### Hotfix: Extra Empty Rows Bug (2026-01-16)
+
+**Problem:** Extra empty rows appeared between artist rows when viewing non-blocking appointments (canceled/rescheduled/no_show).
+
+**Root Cause:** The calendar uses CSS Grid with `display: contents` on slot rows. Non-blocking appointments were not marking their spanned cells as `occupied`, causing the CSS Grid to render extra cells that appeared as visual gaps between rows.
+
+**Fix Location:** `management-system.html` line ~33443
+
+```javascript
+// Before: Only blocking appointments marked cells as occupied
+const isBlocking = !isNonBlockingAppointment(evt.fullData || evt);
+if (isBlocking) {
+  for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
+    cells[i].occupied = true;
+  }
+}
+
+// After: All appointments mark cells as occupied (for rendering)
+// Non-blocking status only affects availability display, not cell occupation
+for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
+  cells[i].occupied = true;
+}
 ```
 
 ---
