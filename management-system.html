@@ -7094,7 +7094,19 @@
     .notifications-content {
       flex: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
+      justify-content: flex-start;
+      padding: 12px;
+      overflow-y: auto;
+      max-height: calc(500px - 60px); /* dropdown height minus tabs */
+    }
+
+    .notifications-content:has(.payment-notification-card) {
+      align-items: stretch;
+    }
+
+    .notifications-content:has(.empty-state) {
       justify-content: center;
       padding: 60px 20px;
     }
@@ -19800,23 +19812,23 @@
         <div class="payment-section" style="margin-top:20px; background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px;">
           <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#000; display:flex; align-items:center; gap:8px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Payment Information
+            Zahlungsinformation
           </h4>
           <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">
             <div>
-              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Price</div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Preis</div>
               <div id="modalPaymentPrice" style="font-size:14px; font-weight:600; color:#000;">-</div>
             </div>
             <div>
-              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Payment State</div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Zahlungsstatus</div>
               <div id="modalPaymentState"></div>
             </div>
             <div>
-              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Payment Intent</div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Zahlungs-ID</div>
               <div id="modalPaymentIntent" style="font-size:13px; color:#333;"></div>
             </div>
             <div>
-              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Payment Notice</div>
+              <div style="font-size:11px; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Zahlungshinweis</div>
               <div id="modalPaymentNotice" style="font-size:13px; color:#333;"></div>
             </div>
           </div>
@@ -26782,6 +26794,7 @@
           console.error('❌ Error loading invitations:', err);
         }
       }
+      window.loadPendingInvitations = loadPendingInvitations;
 
       // Render Invitations in Inbox
       function renderInvitationsInInbox() {
@@ -26868,7 +26881,7 @@
           if (error) throw error;
 
           console.log('✅ Invitation accepted');
-          await loadPendingInvitations();
+          if (typeof window.loadPendingInvitations === 'function') await window.loadPendingInvitations();
           await loadTodoProjects();
         } catch (err) {
           console.error('❌ Error accepting invitation:', err);
@@ -26887,12 +26900,15 @@
           if (error) throw error;
 
           console.log('✅ Invitation declined');
-          await loadPendingInvitations();
+          if (typeof window.loadPendingInvitations === 'function') await window.loadPendingInvitations();
         } catch (err) {
           console.error('❌ Error declining invitation:', err);
           alert('Fehler beim Ablehnen der Einladung');
         }
       }
+      // Expose functions to window for inline onclick handlers
+      window.acceptInvitation = acceptInvitation;
+      window.declineInvitation = declineInvitation;
 
       // Toggle Invitations Dropdown
       document.getElementById('projectInvitationsButton')?.addEventListener('click', (e) => {
@@ -26908,7 +26924,7 @@
           dropdown.style.display = 'none';
         } else {
           dropdown.style.display = 'block';
-          loadPendingInvitations();
+          if (typeof window.loadPendingInvitations === 'function') window.loadPendingInvitations();
         }
       });
 
@@ -27007,6 +27023,7 @@
           console.log('💰 Payment notification added:', notification);
         }
       }
+      window.addPaymentNotification = addPaymentNotification;
 
       // Render payment notifications in Updates tab
       function renderPaymentNotifications() {
@@ -27058,9 +27075,7 @@
                 <div><strong>Kunde:</strong> ${notification.customerName || notification.customerEmail || 'Unbekannt'}</div>
                 <div><strong>Termin:</strong> ${appointmentDateStr}${notification.artistName ? ' bei ' + notification.artistName : ''}</div>
                 <div><strong>Betrag:</strong> <span style="color: #059669; font-weight: 600;">€${parseFloat(notification.amount || 0).toFixed(2)}</span></div>
-              </div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
-                ${timeStr}
+                <div><strong>Bezahlt am:</strong> ${new Date(notification.timestamp).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
               </div>
             </div>
           `;
@@ -27339,7 +27354,7 @@
           (payload) => {
             console.log('📡 Project member changed:', payload);
             loadTodoProjects();
-            loadPendingInvitations();
+            if (typeof window.loadPendingInvitations === 'function') window.loadPendingInvitations();
           }
         )
         .subscribe();
@@ -53578,7 +53593,9 @@
             notificationsDropdown.classList.toggle('active');
             // Load pending invitations when opening notifications
             if (notificationsDropdown.classList.contains('active')) {
-              loadPendingInvitations();
+              if (typeof window.loadPendingInvitations === 'function') {
+                window.loadPendingInvitations();
+              }
             }
           }
           if (profileDropdown) profileDropdown.classList.remove('active');
