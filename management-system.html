@@ -27147,25 +27147,27 @@
                     .from('appointments')
                     .select(`
                       id,
-                      date,
+                      start,
                       payment_status,
                       price,
                       total_amount,
                       payment_amount,
-                      customer:customer_id (id, name, email),
-                      artist:artist_id (id, name, instagram_handle)
+                      customer:customers(id, first_name, last_name, email),
+                      artist:artists(id, name, instagram)
                     `)
                     .eq('id', newData.id)
                     .single();
 
                   if (!error && appointment) {
+                    const customerName = appointment.customer ?
+                      `${appointment.customer.first_name || ''} ${appointment.customer.last_name || ''}`.trim() : null;
                     addPaymentNotification({
                       appointmentId: appointment.id,
-                      customerName: appointment.customer?.name,
+                      customerName: customerName,
                       customerEmail: appointment.customer?.email,
-                      artistName: appointment.artist?.name || appointment.artist?.instagram_handle,
+                      artistName: appointment.artist?.name || appointment.artist?.instagram,
                       amount: appointment.price || appointment.total_amount || appointment.payment_amount,
-                      appointmentDate: appointment.date
+                      appointmentDate: appointment.start
                     });
 
                     // Also refresh the calendar if visible
@@ -27200,15 +27202,15 @@
             .from('appointments')
             .select(`
               id,
-              date,
+              start,
               stripe_payment_link,
               stripe_payment_id,
               payment_status,
               price,
               total_amount,
               payment_amount,
-              customer:customer_id (id, name, email),
-              artist:artist_id (id, name, instagram_handle)
+              customer:customers(id, first_name, last_name, email),
+              artist:artists(id, name, instagram)
             `)
             .not('stripe_payment_link', 'is', null)
             .not('payment_status', 'in', '("paid","deposit_paid","fully_paid")')
@@ -27267,13 +27269,15 @@
                 }
 
                 // Add notification
+                const syncCustomerName = appointment.customer ?
+                  `${appointment.customer.first_name || ''} ${appointment.customer.last_name || ''}`.trim() : null;
                 addPaymentNotification({
                   appointmentId: appointment.id,
-                  customerName: appointment.customer?.name,
+                  customerName: syncCustomerName,
                   customerEmail: appointment.customer?.email,
-                  artistName: appointment.artist?.name || appointment.artist?.instagram_handle,
+                  artistName: appointment.artist?.name || appointment.artist?.instagram,
                   amount: result.amount || appointment.price || appointment.total_amount,
-                  appointmentDate: appointment.date
+                  appointmentDate: appointment.start
                 });
 
                 syncedCount++;
