@@ -36935,13 +36935,23 @@
         return badges[status] || `<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#f5f5f5;color:#666;">${status || 'Unknown'}</span>`;
       };
 
-      // Helper: Get Payment Status Badge (Vercel Style)
+      // Helper: Get Payment Status Badge (Vercel Style) - Supports both German and English values
       window.getPaymentStatusBadgeVercel = function(paymentState) {
         const badges = {
-          'Komplett bezahlt': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#d1fae5;color:#065f46;">Komplett bezahlt</span>',
-          'Anzahlung bezahlt': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fef3c7;color:#92400e;">Anzahlung bezahlt</span>',
+          // German values (legacy/project)
+          'Komplett bezahlt': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#d1fae5;color:#065f46;">Bezahlt</span>',
+          'Anzahlung bezahlt': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fef3c7;color:#92400e;">Anzahlung</span>',
           'Offen': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fee2e2;color:#991b1b;">Offen</span>',
-          'archiviert': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#e5e7eb;color:#6b7280;">Archiviert</span>'
+          'archiviert': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#e5e7eb;color:#6b7280;">Archiviert</span>',
+          // English values (appointments/requests from webhook)
+          'paid': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#d1fae5;color:#065f46;">Bezahlt</span>',
+          'fully_paid': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#d1fae5;color:#065f46;">Bezahlt</span>',
+          'deposit_paid': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fef3c7;color:#92400e;">Anzahlung</span>',
+          'pending': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fff3e0;color:#e65100;">Ausstehend</span>',
+          'unpaid': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fee2e2;color:#991b1b;">Unbezahlt</span>',
+          'failed': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#fee2e2;color:#991b1b;">Fehlgeschlagen</span>',
+          'refunded': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#e3f2fd;color:#1565c0;">Erstattet</span>',
+          'canceled': '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#ffebee;color:#c62828;">Storniert</span>'
         };
         return badges[paymentState] || `<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:500;background:#f5f5f5;color:#666;">${paymentState || '-'}</span>`;
       };
@@ -37033,16 +37043,19 @@
         const viewArtistBtn = document.getElementById('modalViewArtistBtn');
         viewArtistBtn.setAttribute('data-artist-id', data.artist?.id || data.artist_id || '');
 
-        // Project Details
-        document.getElementById('modalProjectNumber').textContent = data.project?.project_number || data.project_number || '-';
-        document.getElementById('modalProjectPrice').textContent = data.project?.price ? `€${parseFloat(data.project.price).toFixed(2)}` : '-';
-        document.getElementById('modalProjectCreated').textContent = data.project?.created_at ? formatModalDateTime(data.project.created_at) : '-';
+        // Project Details - FIX: Also check appointment price/total_amount
+        document.getElementById('modalProjectNumber').textContent = data.project?.project_number || data.project_number || data.request?.request_number || '-';
+        const projectPrice = data.price || data.total_amount || data.payment_amount || data.project?.price;
+        document.getElementById('modalProjectPrice').textContent = projectPrice ? `€${parseFloat(projectPrice).toFixed(2)}` : '-';
+        document.getElementById('modalProjectCreated').textContent = data.project?.created_at || data.created_at ? formatModalDateTime(data.project?.created_at || data.created_at) : '-';
 
-        // Payment Section
-        const price = data.price || data.project?.price;
+        // Payment Section - FIX: Check all possible price fields
+        const price = data.price || data.total_amount || data.payment_amount || data.project?.price;
         document.getElementById('modalPaymentPrice').textContent = price ? `€${parseFloat(price).toFixed(2)}` : '-';
-        document.getElementById('modalPaymentState').innerHTML = getPaymentStatusBadgeVercel(data.payment_status || data.project?.payment_state);
-        document.getElementById('modalPaymentIntent').textContent = data.payment_intent || data.project?.payment_intent ? (data.payment_intent || data.project?.payment_intent).substring(0, 25) + '...' : '-';
+        document.getElementById('modalPaymentState').innerHTML = getPaymentStatusBadgeVercel(data.payment_status || data.project?.payment_state || 'unpaid');
+        // FIX: Check stripe_payment_id from appointment first
+        const paymentId = data.stripe_payment_id || data.stripe_payment_intent_id || data.payment_intent || data.project?.payment_intent;
+        document.getElementById('modalPaymentIntent').textContent = paymentId ? paymentId.substring(0, 25) + '...' : '-';
         document.getElementById('modalPaymentNotice').textContent = data.payment_notice || data.project?.payment_notice || '-';
 
         // Customer Info
