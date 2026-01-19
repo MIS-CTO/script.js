@@ -1,6 +1,6 @@
 # Culture Over Money - Roadmap
-**Stand: 2026-01-16 | Version: 3.1214**
-**UPDATE: Phase 5.7 Status Stripes & Click-to-Book COMPLETE + Hotfixes**
+**Stand: 2026-01-19 | Version: 3.1215**
+**UPDATE: Phase 5.8 Payment Notifications & Webhook Fix COMPLETE**
 
 ---
 
@@ -22,12 +22,31 @@ Phase 5.4: Security Audit            ██████████████�
 Phase 5.5: Calendar & Search         ████████████████████ 100% ✓
 Phase 5.6: Calendar Availability     ████████████████████ 100% ✓
 Phase 5.7: Status Stripes & Book     ████████████████████ 100% ✓
+Phase 5.8: Payment Notifications     ████████████████████ 100% ✓
 Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0% → NEXT
 ```
 
 ---
 
 ## Recent Completions
+
+### Phase 5.8: Payment Notifications & Webhook Fix (2026-01-19) ✓
+
+| Feature | Description |
+|---------|-------------|
+| Payment Notifications | Updates tab now shows paid appointments from last 7 days |
+| DB Query Fix | Fixed column names (customers, artists, appointments) |
+| Timestamp Fix | "Bezahlt am" now shows correct payment_received_at date |
+| Edge Function Bypass | No longer depends on broken check-payment-link-status |
+
+### Commits (Phase 5.8)
+
+```
+33faa31 fix(notifications): Fix Supabase query column names
+f5f0e90 fix(notifications): Load paid appointments from DB instead of broken Edge Function
+```
+
+---
 
 ### Phase 5.7: Status Stripes & Click-to-Book (2026-01-16) ✓
 
@@ -93,6 +112,7 @@ Januar 2026
 ├── KW 2: Phase 0-3 ✓ DONE
 ├── KW 2: Phase 3.5-4.7 ✓ DONE
 ├── KW 3: Phase 5.1-5.7 ✓ DONE (2026-01-14 to 2026-01-16)
+├── KW 4: Phase 5.8 ✓ DONE (2026-01-19)
 └── KW 4+: Phase 5.2 Performance & Polish (Optional)
 
 Februar 2026
@@ -114,4 +134,4 @@ fa9898d fix(requests): allow 0 as valid price for scheduling check
 
 ---
 
-*Last updated: 2026-01-16 with Claude Code*
+*Last updated: 2026-01-19 with Claude Code*

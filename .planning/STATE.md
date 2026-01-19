@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-16 | Version: 3.1214**
-**UPDATE: Phase 5.7 Calendar Status Stripes & Click-to-Book ✓**
+**Stand: 2026-01-19 | Version: 3.1215**
+**UPDATE: Phase 5.8 Payment Notifications & Webhook Fix ✓**
 
 ---
 
@@ -38,8 +38,95 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.7: STATUS STRIPES & CLICK-TO-BOOK           ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5.8: PAYMENT NOTIFICATIONS & WEBHOOK FIX      ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Phase 5.8: Payment Notifications & Webhook Fix (2026-01-19) ✅ COMPLETE
+
+### Overview
+
+Fixed critical payment system issues that prevented payment notifications from appearing in the Updates tab and corrected database query column name errors.
+
+### Problems Identified & Fixed
+
+| Problem | Root Cause | Fix |
+|---------|-----------|-----|
+| Updates tab empty | `syncExistingPaymentLinks` called broken Edge Function | Load paid appointments directly from DB |
+| `check-payment-link-status` 404 errors | URL format incompatible with Stripe API | Removed Edge Function dependency |
+| `customers_1.name does not exist` | Wrong column name in Supabase query | Changed to `first_name`, `last_name` |
+| `artists.instagram_handle` error | Wrong column name | Changed to `instagram` |
+| `appointments.date` error | Wrong column name | Changed to `start` |
+| Wrong "Bezahlt am" timestamp | Using `new Date()` instead of DB value | Using `payment_received_at` |
+
+### Technical Changes
+
+**syncExistingPaymentLinks Function (line ~27196):**
+```javascript
+// OLD: Called Edge Function for each appointment (broken)
+const { data: result } = await supabase.functions.invoke(
+  'check-payment-link-status',
+  { body: { payment_link_url: appointment.stripe_payment_link } }
+);
+
+// NEW: Load already-paid appointments from DB
+const { data: paidAppointments } = await supabase
+  .from('appointments')
+  .select(`id, start, payment_received_at, price, ...`)
+  .in('payment_status', ['paid', 'deposit_paid', 'fully_paid'])
+  .not('payment_received_at', 'is', null)
+  .gte('payment_received_at', sevenDaysAgo.toISOString())
+  .limit(50);
+```
+
+**addPaymentNotification Function (line ~26999):**
+```javascript
+// OLD: Always used current timestamp
+timestamp: new Date().toISOString()
+
+// NEW: Use payment_received_at if available
+timestamp: data.paidAt || new Date().toISOString()
+```
+
+**Supabase Query Column Fixes:**
+```javascript
+// OLD (broken):
+customer:customer_id (id, name, email)
+artist:artist_id (id, name, instagram_handle)
+.select('id, date, ...')
+
+// NEW (correct):
+customer:customers(id, first_name, last_name, email)
+artist:artists(id, name, instagram)
+.select('id, start, ...')
+```
+
+### Stripe Webhook Analysis
+
+Confirmed `stripe-webhook` v29 is working correctly:
+- Uses correct column `payment_received_at` (not `paid_at`)
+- Updates both `requests` and `appointments` tables
+- Creates activity log entries
+- Today's payments: 2 appointments marked as paid (12:41, 13:19)
+
+### Edge Functions Status
+
+| Function | Status | Notes |
+|----------|--------|-------|
+| `stripe-webhook` v29 | ✅ Working | Uses correct DB columns |
+| `check-payment-link-status` v3 | ⚠️ Returns 404 | URL format issue, no longer used |
+| `create-payment-link` v31 | ✅ Working | Creates Stripe Payment Links |
+| `payment-reminders` v8 | ❌ 401 Unauthorized | `verify_jwt: true` blocks Cron |
+
+### Commits
+
+```
+33faa31 fix(notifications): Fix Supabase query column names
+f5f0e90 fix(notifications): Load paid appointments from DB instead of broken Edge Function
 ```
 
 ---
@@ -503,4 +590,4 @@ After paying for consultation via Stripe, the booking page showed "Waiting for p
 
 ---
 
-*Aktualisiert am 2026-01-15 mit Claude Code*
+*Aktualisiert am 2026-01-19 mit Claude Code*

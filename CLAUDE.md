@@ -168,18 +168,28 @@ console.log('Appointments:', allAppointments.length);
 console.log('Artists:', allArtists.length);
 ```
 
-## Recent Major Changes (2026-01-15)
+## Recent Major Changes (2026-01-19)
 
-### Phase 5.6: Calendar Availability Visualization
+### Phase 5.8: Payment Notifications & Webhook Fix
+- Fixed Updates tab to show paid appointments from last 7 days
+- Fixed Supabase query column names (customers, artists, appointments)
+- "Bezahlt am" timestamp now uses correct `payment_received_at` from DB
+- Removed dependency on broken `check-payment-link-status` Edge Function
+- Realtime subscription passes `paidAt` for live payment updates
+
+### Phase 5.7: Status Stripes & Click-to-Book (2026-01-16)
+- Diagonal stripe patterns for rescheduled/canceled/no_show appointments
+- Click-to-book modal when clicking green available slots
+- Non-blocking appointments don't block availability
+
+### Phase 5.6: Calendar Availability Visualization (2026-01-15)
 - Slot labels show artist name + Instagram handle (vertical layout)
 - Green background for available time slots from dienstplan
 - Availability-only rows have smaller height (44px)
 - Event cards have white/dark background wrapper for contrast
-- Removed Guest Spots category (replaced by availability coloring)
-- Hidden unused Termine/Work Tracking tabs
 
 See `.planning/STATE.md` for full change history.
 
 ---
 
-*Last updated: 2026-01-15*
+*Last updated: 2026-01-19*
