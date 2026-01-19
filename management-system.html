@@ -40857,29 +40857,37 @@
       try {
         // Lösche alte Einträge
         for (const id of slotIds) {
-          await supabase.from('dienstplan').delete().eq('id', id);
+          const { error: delError } = await supabase.from('dienstplan').delete().eq('id', id);
+          if (delError) console.error('Delete error:', delError);
         }
 
-        // Erstelle neue Einträge für jeden Tag im Bereich
+        // Get artist data for email (required column)
         const artistId = document.getElementById('editSlotArtistId').value;
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        const artist = (window.allArtists || []).find(a => a.id === artistId);
+        const artistEmail = artist?.email || artist?.instagram || 'unknown@studio.com';
 
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split('T')[0];
-          await supabase.from('dienstplan').insert({
-            artist_id: artistId,
-            date: dateStr,
-            start_time: startTime,
-            end_time: endTime,
-            status: type
-          });
+        // Create single entry with date range (correct schema)
+        const { error: insertError } = await supabase.from('dienstplan').insert({
+          artist_id: artistId,
+          email: artistEmail,
+          start_date: startDate,
+          end_date: endDate,
+          working_start: startTime,
+          working_end: endTime,
+          state: type
+        });
+
+        if (insertError) {
+          console.error('❌ Insert error:', insertError);
+          alert('Fehler beim Speichern: ' + insertError.message);
+          return;
         }
 
         console.log('✅ Slot(s) updated');
         closeSlotEditPopup();
 
-        // Refresh Dienstplan
+        // Refresh Dienstplan - clear cache to force reload
+        window.dienstplanCache = [];
         if (typeof loadDienstplanData === 'function') {
           await loadDienstplanData();
         }
