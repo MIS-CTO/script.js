@@ -1,6 +1,6 @@
 # Culture Over Money - Roadmap
-**Stand: 2026-01-10 | Version: 3.1118**
-**UPDATE: Phase 3 Error Tracking IMPLEMENTIERT!**
+**Stand: 2026-01-16 | Version: 3.1214**
+**UPDATE: Phase 5.7 Status Stripes & Click-to-Book COMPLETE + Hotfixes**
 
 ---
 
@@ -8,117 +8,110 @@
 
 ```
 Phase 0: Mapping & Dokumentation     ████████████████████ 100% ✓
-Phase 1: Edge Functions              ████████████████████ 100% ✓ (war bereits done!)
-Phase 2: RLS Audit                   ████████████████████ 100% ✓ (RLS aktiviert!)
-Phase 3: Error Tracking              ████████████████████ 100% ✓ (Error Panel live!)
-Phase 4: Performance & Cleanup       ░░░░░░░░░░░░░░░░░░░░   0% → NEXT
+Phase 1: Edge Functions              ████████████████████ 100% ✓
+Phase 2: RLS Audit                   ████████████████████ 100% ✓
+Phase 3: Error Tracking              ████████████████████ 100% ✓
+Phase 3.5: Security Scan             ████████████████████ 100% ✓
+Phase 4: Auth Hardening              ████████████████████ 100% ✓
+Phase 4.5: Payment Status Fix        ████████████████████ 100% ✓
+Phase 4.6: Auth Inline Integration   ████████████████████ 100% ✓
+Phase 4.7: Admin Panel               ████████████████████ 100% ✓
+Phase 5.1: Agreement Form UX         ████████████████████ 100% ✓
+Phase 5.3: Consultation Payment      ████████████████████ 100% ✓
+Phase 5.4: Security Audit            ████████████████████ 100% ✓
+Phase 5.5: Calendar & Search         ████████████████████ 100% ✓
+Phase 5.6: Calendar Availability     ████████████████████ 100% ✓
+Phase 5.7: Status Stripes & Book     ████████████████████ 100% ✓
+Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0% → NEXT
 ```
 
 ---
 
-## Phase 0-2: ✓ COMPLETE
+## Recent Completions
 
-- Mapping & Dokumentation abgeschlossen
-- 7 Edge Functions verifiziert und aktiv
-- RLS für 8 kritische Tabellen aktiviert
-- 18 problematische Policies gelöscht
-- 5 simple_all_access Policies erstellt
-- 7 Backup/Temp-Tabellen gelöscht
+### Phase 5.7: Status Stripes & Click-to-Book (2026-01-16) ✓
 
----
+| Feature | Description |
+|---------|-------------|
+| Status Stripes | Diagonal stripe patterns for rescheduled/canceled/no_show |
+| Click-to-Book | Modal opens when clicking green available slots |
+| Non-Blocking Logic | Canceled appointments don't block availability |
 
-## Phase 3: Error Tracking ✓ COMPLETE
+### Hotfixes (2026-01-16)
 
-**Status**: ✓ ABGESCHLOSSEN am 2026-01-10
-**Aufwand**: ~3 Stunden
-
-### Gewählte Lösung: Custom In-Memory Error Panel
-
-Statt externer Services (Sentry, LogRocket) wurde ein leichtgewichtiges In-Memory Error Panel implementiert.
-
-### Implementierte Komponenten
-
-| Komponente | Beschreibung |
-|------------|---------------|
-| **Error Collector** | `window.errorLog[]` mit max 100 Einträgen |
-| **Error Panel UI** | Badge im Header + Modal Panel |
-| **Global Handler** | `window.onerror`, `window.onunhandledrejection` |
-| **Console Override** | Proxy für `console.error` und `console.warn` |
-
-### Analyse-Ergebnisse
-
-| Pattern | Anzahl im Code |
-|---------|----------------|
-| `console.error` | 298 |
-| `console.log` | 770 |
-| `console.warn` | 43 |
-| `try-catch` Blöcke | 204 |
-| Error Notifications | 49 |
-
-### Error Panel Features
-
-- **Badge mit Counter**: Zeigt ungelesene Errors an
-- **Modal mit Error-Liste**: Timestamp, Type, Source, Message
-- **Stack Trace Expansion**: Klappbare Stacktraces
-- **Mark as Seen**: Automatisch beim Öffnen
-- **Clear All**: Alle Errors löschen
-- **Dark Mode Support**: Passt sich an Theme an
-
-### Code Location
-
-Alle Änderungen in `management-system.html`:
-- **JavaScript**: Nach `<script>` Tag (Error Collector + Panel Logic)
-- **HTML Badge**: Im Header vor Profile Button
-- **HTML Modal**: Nach `<body>` Tag
-- **CSS**: Vor `</style>` Tag
-
-**Akzeptanzkriterien** (ALLE ERFÜLLT):
-- [x] Error Logging aktiv (In-Memory)
-- [x] Frontend-Fehler werden erfasst
-- [x] Console.error/warn werden gefangen
-- [x] Unhandled Rejections werden erfasst
-- [x] Error Panel im Admin UI
-- [x] Playwright Test bestanden (3 Warnings erfasst)
+| Fix | Description |
+|-----|-------------|
+| Extra Empty Rows | Fixed CSS grid rendering for non-blocking appointments |
+| Artist Assignment | Allow artist assignment on non-blocking appointment slots |
+| Gesamtpreis Zero | Allow 0€ as valid price for free/complimentary bookings |
 
 ---
 
-## Phase 4: Performance & Cleanup
+## Phase 5.6: Calendar Availability (2026-01-15) ✓
 
-**Status**: Nicht gestartet
-**Priorität**: NIEDRIG
-**Geschätzter Aufwand**: Optional
-
-### Mögliche Tasks
-
-1. **Overpermissive Policies reviewen**
-   - `qual=true` Policies durch rollenbasierte ersetzen
-
-2. **Error Tracking V2** (Optional)
-   - Persistente Errors in Supabase
-   - Email-Alerts bei kritischen Fehlern
-
-3. **Code Cleanup**
-   - Unused console.log entfernen
-   - Dead Code entfernen
+- Green background for available time slots from dienstplan
+- Slot labels show artist name + Instagram handle (vertical layout)
+- Availability-only rows have smaller height (44px)
+- Event cards have white/dark background wrapper for contrast
 
 ---
 
-## Timeline (AKTUALISIERT)
+## Phase 5.5: Calendar, Search & Rank (2026-01-14) ✓
+
+- Calendar day view with artist rows
+- Customer search improvements
+- Artist ranking system
+- Attachment handling
+
+---
+
+## Upcoming: Phase 5.2 Performance & Polish
+
+**Status**: Not started
+**Priority**: LOW
+
+### Possible Tasks
+
+1. **Performance Optimization**
+   - Lazy loading for large data sets
+   - Caching improvements
+
+2. **Code Cleanup**
+   - Remove unused console.log statements
+   - Dead code removal
+
+3. **UI Polish**
+   - Minor visual refinements
+   - Accessibility improvements
+
+---
+
+## Timeline
 
 ```
 Januar 2026
-├── KW 2: Phase 0 - Dokumentation ✓ DONE
-├── KW 2: Phase 1 - Edge Functions ✓ ALREADY DONE (war deployed!)
-├── KW 2: Phase 2 - RLS Audit ✓ DONE (2026-01-10)
-├── KW 2: Phase 3 - Error Tracking ✓ DONE (2026-01-10)
-└── KW 3+: Phase 4 - Performance & Cleanup (Optional)
+├── KW 2: Phase 0-3 ✓ DONE
+├── KW 2: Phase 3.5-4.7 ✓ DONE
+├── KW 3: Phase 5.1-5.7 ✓ DONE (2026-01-14 to 2026-01-16)
+└── KW 4+: Phase 5.2 Performance & Polish (Optional)
 
 Februar 2026
-├── Phase 5-6: Calendar & Notifications
-└── Phase 7: Analytics V3
+└── TBD based on business needs
 ```
 
 ---
 
-*Erstellt am 2026-01-10 mit Claude Code*
-*Phase 3 Error Tracking implementiert am 2026-01-10!*
+## Commits (Phase 5.7)
+
+```
+6f38e45 feat(calendar): add status stripes and click-to-book functionality
+8d93fd5 fix(calendar): improve artist ID lookup for click-to-book handlers
+81362d9 fix(calendar): prevent extra empty rows from non-blocking appointments
+972b4a8 fix(requests): allow artist assignment on non-blocking appointment slots
+a381719 fix(payment): allow 0 as valid Gesamtpreis value
+fa9898d fix(requests): allow 0 as valid price for scheduling check
+```
+
+---
+
+*Last updated: 2026-01-16 with Claude Code*
