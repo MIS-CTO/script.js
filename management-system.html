@@ -14354,16 +14354,27 @@
   <div class="notifications-dropdown" id="notificationsDropdown">
     <div class="notifications-tabs">
       <div class="notification-tab active" id="inboxTab">Inbox</div>
-      <div class="notification-tab" id="updatesTab">Updates</div>
+      <div class="notification-tab" id="updatesTab">Updates <span id="updatesUnreadBadge" style="display:none;background:#ef4444;color:white;border-radius:50%;width:8px;height:8px;margin-left:6px;"></span></div>
     </div>
 
-    <div class="notifications-content">
+    <!-- Inbox Content (Project Invitations) -->
+    <div class="notifications-content" id="inboxContent">
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-icon">
           <rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
           <path d="M3 9L12 14L21 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p class="empty-text">No new notifications</p>
+        <p class="empty-text">Keine neuen Einladungen</p>
+      </div>
+    </div>
+
+    <!-- Updates Content (Payment Notifications) -->
+    <div class="notifications-content" id="updatesContent" style="display:none;">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-icon">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p class="empty-text">Keine neuen Updates</p>
       </div>
     </div>
   </div>
@@ -26774,7 +26785,7 @@
 
       // Render Invitations in Inbox
       function renderInvitationsInInbox() {
-        const container = document.querySelector('.notifications-content');
+        const container = document.getElementById('inboxContent');
         if (!container) return;
 
         if (currentInvitations.length === 0) {
@@ -26913,6 +26924,369 @@
 
       // Load invitations on page load
       loadPendingInvitations();
+
+      // ============================================
+      // PAYMENT NOTIFICATIONS SYSTEM
+      // ============================================
+
+      let paymentNotifications = [];
+      const PAYMENT_NOTIFICATIONS_KEY = 'mis_payment_notifications';
+      const PAYMENT_NOTIFICATIONS_READ_KEY = 'mis_payment_notifications_read';
+
+      // Load payment notifications from localStorage
+      function loadPaymentNotifications() {
+        try {
+          const saved = localStorage.getItem(PAYMENT_NOTIFICATIONS_KEY);
+          paymentNotifications = saved ? JSON.parse(saved) : [];
+          // Keep only last 50 notifications and within 7 days
+          const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+          paymentNotifications = paymentNotifications
+            .filter(n => new Date(n.timestamp).getTime() > sevenDaysAgo)
+            .slice(0, 50);
+          savePaymentNotifications();
+          renderPaymentNotifications();
+          updatePaymentNotificationBadge();
+        } catch (e) {
+          console.error('Error loading payment notifications:', e);
+          paymentNotifications = [];
+        }
+      }
+
+      // Save payment notifications to localStorage
+      function savePaymentNotifications() {
+        try {
+          localStorage.setItem(PAYMENT_NOTIFICATIONS_KEY, JSON.stringify(paymentNotifications));
+        } catch (e) {
+          console.error('Error saving payment notifications:', e);
+        }
+      }
+
+      // Get read notification IDs
+      function getReadNotificationIds() {
+        try {
+          const saved = localStorage.getItem(PAYMENT_NOTIFICATIONS_READ_KEY);
+          return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      // Mark payment notifications as read
+      function markPaymentNotificationsAsRead() {
+        const readIds = paymentNotifications.map(n => n.id);
+        localStorage.setItem(PAYMENT_NOTIFICATIONS_READ_KEY, JSON.stringify(readIds));
+        updatePaymentNotificationBadge();
+      }
+      window.markPaymentNotificationsAsRead = markPaymentNotificationsAsRead;
+
+      // Add a payment notification
+      function addPaymentNotification(data) {
+        const notification = {
+          id: `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: 'payment_received',
+          appointmentId: data.appointmentId,
+          customerName: data.customerName,
+          customerEmail: data.customerEmail,
+          artistName: data.artistName,
+          amount: data.amount,
+          appointmentDate: data.appointmentDate,
+          timestamp: new Date().toISOString()
+        };
+
+        // Check if we already have this notification (avoid duplicates)
+        const exists = paymentNotifications.some(n =>
+          n.appointmentId === data.appointmentId &&
+          n.type === 'payment_received'
+        );
+
+        if (!exists) {
+          paymentNotifications.unshift(notification);
+          savePaymentNotifications();
+          renderPaymentNotifications();
+          updatePaymentNotificationBadge();
+          console.log('💰 Payment notification added:', notification);
+        }
+      }
+
+      // Render payment notifications in Updates tab
+      function renderPaymentNotifications() {
+        const container = document.getElementById('updatesContent');
+        if (!container) return;
+
+        if (paymentNotifications.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-icon">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <p class="empty-text">Keine neuen Updates</p>
+            </div>`;
+          return;
+        }
+
+        const readIds = getReadNotificationIds();
+
+        container.innerHTML = paymentNotifications.map(notification => {
+          const isUnread = !readIds.includes(notification.id);
+          const time = new Date(notification.timestamp);
+          const timeStr = time.toLocaleString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          const appointmentDateStr = notification.appointmentDate ?
+            new Date(notification.appointmentDate).toLocaleDateString('de-DE', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            }) : '-';
+
+          return `
+            <div class="payment-notification-card" style="margin: 8px; padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); ${isUnread ? 'border-left: 3px solid #22c55e;' : ''}">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #d1fae5; border-radius: 50%;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </span>
+                <span style="font-weight: 600; font-size: 14px; color: var(--text-primary);">Zahlung erhalten</span>
+                ${isUnread ? '<span style="background:#22c55e;color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:auto;">NEU</span>' : ''}
+              </div>
+              <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                <div><strong>Kunde:</strong> ${notification.customerName || notification.customerEmail || 'Unbekannt'}</div>
+                <div><strong>Termin:</strong> ${appointmentDateStr}${notification.artistName ? ' bei ' + notification.artistName : ''}</div>
+                <div><strong>Betrag:</strong> <span style="color: #059669; font-weight: 600;">€${parseFloat(notification.amount || 0).toFixed(2)}</span></div>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                ${timeStr}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Update notification badge (red dot on bell icon)
+      function updatePaymentNotificationBadge() {
+        const readIds = getReadNotificationIds();
+        const unreadCount = paymentNotifications.filter(n => !readIds.includes(n.id)).length;
+
+        // Update Updates tab badge
+        const updatesUnreadBadge = document.getElementById('updatesUnreadBadge');
+        if (updatesUnreadBadge) {
+          updatesUnreadBadge.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+        }
+
+        // Update main notification button badge (red dot)
+        let badge = document.querySelector('#notificationButton .notification-badge');
+        const totalUnread = currentInvitations.length + unreadCount;
+
+        if (!badge && totalUnread > 0) {
+          badge = document.createElement('span');
+          badge.className = 'notification-badge';
+          badge.style.cssText = 'position: absolute; top: 8px; right: 8px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600;';
+          document.getElementById('notificationButton')?.appendChild(badge);
+        }
+
+        if (badge) {
+          if (totalUnread > 0) {
+            badge.textContent = totalUnread > 9 ? '9+' : totalUnread;
+            badge.style.display = 'flex';
+            badge.style.background = unreadCount > 0 ? '#ef4444' : 'var(--primary-color)';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      }
+
+      // Setup realtime subscription for appointment payment updates
+      function setupPaymentRealtimeSubscription() {
+        console.log('💰 Setting up payment realtime subscription...');
+
+        const paymentChannel = supabase
+          .channel('payment-updates')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'appointments'
+            },
+            async (payload) => {
+              console.log('📡 Appointment update received:', payload);
+
+              // Check if payment status changed to paid
+              const newData = payload.new;
+              const oldData = payload.old;
+
+              if (newData && oldData) {
+                const wasPaid = ['paid', 'deposit_paid', 'fully_paid'].includes(oldData.payment_status);
+                const isPaid = ['paid', 'deposit_paid', 'fully_paid'].includes(newData.payment_status);
+
+                if (!wasPaid && isPaid) {
+                  console.log('💰 Payment detected for appointment:', newData.id);
+
+                  // Fetch full appointment details with relations
+                  const { data: appointment, error } = await supabase
+                    .from('appointments')
+                    .select(`
+                      id,
+                      date,
+                      payment_status,
+                      price,
+                      total_amount,
+                      payment_amount,
+                      customer:customer_id (id, name, email),
+                      artist:artist_id (id, name, instagram_handle)
+                    `)
+                    .eq('id', newData.id)
+                    .single();
+
+                  if (!error && appointment) {
+                    addPaymentNotification({
+                      appointmentId: appointment.id,
+                      customerName: appointment.customer?.name,
+                      customerEmail: appointment.customer?.email,
+                      artistName: appointment.artist?.name || appointment.artist?.instagram_handle,
+                      amount: appointment.price || appointment.total_amount || appointment.payment_amount,
+                      appointmentDate: appointment.date
+                    });
+
+                    // Also refresh the calendar if visible
+                    if (typeof renderCalendar === 'function') {
+                      renderCalendar();
+                    }
+                  }
+                }
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ Payment realtime subscription active');
+            }
+          });
+
+        return paymentChannel;
+      }
+
+      // Initialize payment notifications on page load
+      loadPaymentNotifications();
+      setupPaymentRealtimeSubscription();
+
+      // Sync existing payment links with Stripe
+      async function syncExistingPaymentLinks() {
+        console.log('🔄 Syncing existing payment links with Stripe...');
+
+        try {
+          // Find appointments with payment links but not marked as paid
+          const { data: appointments, error } = await supabase
+            .from('appointments')
+            .select(`
+              id,
+              date,
+              stripe_payment_link,
+              stripe_payment_id,
+              payment_status,
+              price,
+              total_amount,
+              payment_amount,
+              customer:customer_id (id, name, email),
+              artist:artist_id (id, name, instagram_handle)
+            `)
+            .not('stripe_payment_link', 'is', null)
+            .not('payment_status', 'in', '("paid","deposit_paid","fully_paid")')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (error) {
+            console.error('Error fetching appointments:', error);
+            return { synced: 0, errors: 1 };
+          }
+
+          if (!appointments || appointments.length === 0) {
+            console.log('No pending payment links found');
+            return { synced: 0, errors: 0 };
+          }
+
+          console.log(`Found ${appointments.length} appointments with pending payment links`);
+
+          let syncedCount = 0;
+          let errorCount = 0;
+
+          for (const appointment of appointments) {
+            try {
+              // Call the edge function to check payment status
+              const { data: result, error: funcError } = await supabase.functions.invoke(
+                'check-payment-link-status',
+                { body: { payment_link_url: appointment.stripe_payment_link } }
+              );
+
+              if (funcError) {
+                console.error(`Error checking payment link for ${appointment.id}:`, funcError);
+                errorCount++;
+                continue;
+              }
+
+              if (result && result.paid) {
+                console.log(`💰 Payment found for appointment ${appointment.id}`);
+
+                // Update the appointment
+                const { error: updateError } = await supabase
+                  .from('appointments')
+                  .update({
+                    payment_status: 'paid',
+                    payment_received_at: result.paid_at || new Date().toISOString(),
+                    stripe_payment_id: result.session_id || result.payment_intent,
+                    price: result.amount || appointment.price,
+                    payment_amount: result.amount || appointment.payment_amount,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', appointment.id);
+
+                if (updateError) {
+                  console.error(`Error updating appointment ${appointment.id}:`, updateError);
+                  errorCount++;
+                  continue;
+                }
+
+                // Add notification
+                addPaymentNotification({
+                  appointmentId: appointment.id,
+                  customerName: appointment.customer?.name,
+                  customerEmail: appointment.customer?.email,
+                  artistName: appointment.artist?.name || appointment.artist?.instagram_handle,
+                  amount: result.amount || appointment.price || appointment.total_amount,
+                  appointmentDate: appointment.date
+                });
+
+                syncedCount++;
+              }
+            } catch (e) {
+              console.error(`Error processing appointment ${appointment.id}:`, e);
+              errorCount++;
+            }
+          }
+
+          console.log(`✅ Sync complete: ${syncedCount} payments synced, ${errorCount} errors`);
+          return { synced: syncedCount, errors: errorCount };
+
+        } catch (e) {
+          console.error('Error in syncExistingPaymentLinks:', e);
+          return { synced: 0, errors: 1 };
+        }
+      }
+      window.syncExistingPaymentLinks = syncExistingPaymentLinks;
+
+      // Run initial sync on page load (with delay to not block other operations)
+      setTimeout(() => {
+        syncExistingPaymentLinks().then(result => {
+          if (result.synced > 0) {
+            console.log(`🔄 Initial sync found ${result.synced} new payments!`);
+          }
+        });
+      }, 5000);
 
       // ============================================
       // REALTIME UPDATES FOR TODO PROJECTS
@@ -53226,14 +53600,22 @@
       // Notification Tabs
       const inboxTab = document.getElementById('inboxTab');
       const updatesTab = document.getElementById('updatesTab');
-      if (inboxTab && updatesTab) {
+      const inboxContent = document.getElementById('inboxContent');
+      const updatesContent = document.getElementById('updatesContent');
+      if (inboxTab && updatesTab && inboxContent && updatesContent) {
         inboxTab.addEventListener('click', function() {
           inboxTab.classList.add('active');
           updatesTab.classList.remove('active');
+          inboxContent.style.display = 'block';
+          updatesContent.style.display = 'none';
         });
         updatesTab.addEventListener('click', function() {
           updatesTab.classList.add('active');
           inboxTab.classList.remove('active');
+          updatesContent.style.display = 'block';
+          inboxContent.style.display = 'none';
+          // Mark payment notifications as read when viewing
+          markPaymentNotificationsAsRead();
         });
       }
 
