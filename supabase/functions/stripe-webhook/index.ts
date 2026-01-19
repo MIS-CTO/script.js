@@ -78,12 +78,12 @@ serve(async (req: Request) => {
       console.log('Processing payment for request:', requestId);
 
       if (requestId) {
-        // Update payment status
+        // Update payment status - FIX: Use correct column name 'payment_received_at' instead of 'paid_at'
         const { error: updateError } = await supabase
           .from('requests')
           .update({
             payment_status: 'deposit_paid',
-            paid_at: new Date().toISOString(),
+            payment_received_at: new Date().toISOString(),
             stripe_payment_id: session.id || session.payment_intent,
             updated_at: new Date().toISOString()
           })
@@ -94,6 +94,26 @@ serve(async (req: Request) => {
           // Still return 200 to Stripe so it doesn't retry
         } else {
           console.log('Payment status updated successfully for:', requestId);
+        }
+
+        // Also update the linked appointment if exists
+        const { data: requestData } = await supabase
+          .from('requests')
+          .select('appointment_id')
+          .eq('id', requestId)
+          .single();
+
+        if (requestData?.appointment_id) {
+          await supabase
+            .from('appointments')
+            .update({
+              payment_status: 'deposit_paid',
+              payment_received_at: new Date().toISOString(),
+              stripe_payment_id: session.id || session.payment_intent,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', requestData.appointment_id);
+          console.log('Appointment payment status updated:', requestData.appointment_id);
         }
 
         // Log activity
@@ -249,14 +269,14 @@ serve(async (req: Request) => {
           if (fetchError) {
             console.error('Error fetching appointment:', fetchError);
           } else if (appointment) {
-            // Update appointment status
+            // Update appointment status - FIX: Use correct column name
             const { error: updateError } = await supabase
               .from('appointments')
               .update({
                 status: 'scheduled',
                 payment_status: 'paid',
                 stripe_payment_id: session.id || session.payment_intent,
-                paid_at: new Date().toISOString(),
+                payment_received_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               })
               .eq('id', appointmentId);
