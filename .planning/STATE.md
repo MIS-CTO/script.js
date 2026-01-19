@@ -127,6 +127,7 @@ function isNonBlockingAppointment(apt) {
 81362d9 fix(calendar): prevent extra empty rows from non-blocking appointments
 972b4a8 fix(requests): allow artist assignment on non-blocking appointment slots
 a381719 fix(payment): allow 0 as valid Gesamtpreis value
+fa9898d fix(requests): allow 0 as valid price for scheduling check
 ```
 
 ### Hotfix: Artist Assignment on Non-Blocking Slots (2026-01-16)
@@ -181,20 +182,18 @@ for (let i = startIndex + 1; i < endIndex && i < cells.length; i++) {
 
 **Root Cause:** Validation used `!totalPrice || totalPrice <= 0` which rejected 0 since `!0` is true.
 
-**Fix Locations:** `management-system.html` lines ~51785, ~52026, ~52210
+**Fix Locations:** `management-system.html` lines ~28398, ~51785, ~52026, ~52210
 
 ```javascript
-// Before: Rejected 0 because 0 is falsy
-if (!totalPrice || totalPrice <= 0) {
-  alert('❌ Bitte gib einen gültigen Gesamtpreis ein');
-  return;
-}
+// Payment validation - Before:
+if (!totalPrice || totalPrice <= 0) { ... }
+// After:
+if (isNaN(totalPrice) || totalPrice < 0) { ... }
 
-// After: Only reject NaN and negative values
-if (isNaN(totalPrice) || totalPrice < 0) {
-  alert('❌ Bitte gib einen gültigen Gesamtpreis ein');
-  return;
-}
+// Scheduling check (hasPrice) - Before:
+var hasPrice = request.total_amount && request.total_amount > 0;
+// After:
+var hasPrice = request.total_amount != null && request.total_amount >= 0;
 ```
 
 **Use Case:** Allows free/complimentary bookings with 0€ total price.
