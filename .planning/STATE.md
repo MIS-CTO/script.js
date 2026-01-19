@@ -129,6 +129,29 @@ Confirmed `stripe-webhook` v29 is working correctly:
 f5f0e90 fix(notifications): Load paid appointments from DB instead of broken Edge Function
 ```
 
+### Verification (2026-01-19) ✅ PASSED
+
+**Live Payment Test:**
+- User paid €1.00 with real card (Stripe is in live mode)
+- Webhook returned 200 OK (3x calls logged)
+- Appointments with linked `request_id` updated correctly
+
+**DB Verification:**
+- 5 appointments found with `payment_received_at` in last 24h
+- All correctly marked as `deposit_paid` or `fully_paid`
+- Webhook uses correct column `payment_received_at`
+
+**Frontend Verification (after browser cache clear):**
+- Console shows: "🔄 Loading recent paid appointments..."
+- Console shows: "Found 6 paid appointments from last 7 days"
+- Console shows: "✅ Loaded 6 paid appointment notifications"
+- No more 404 errors from `check-payment-link-status`
+- Updates tab displays 9 payment notifications correctly
+
+**Edge Case Identified:**
+- Appointments created without going through request flow (no `request_id`) won't be updated by webhook
+- This is expected behavior - webhook needs `request_id` in Stripe metadata to find the record
+
 ---
 
 ## Phase 5.7: Status Stripes & Click-to-Book (2026-01-16) ✅ COMPLETE
@@ -570,23 +593,18 @@ After paying for consultation via Stripe, the booking page showed "Waiting for p
 
 ---
 
-## Recent Session (2026-01-15) - Phase 5.6 Calendar Availability
+## Recent Session (2026-01-19) - Phase 5.8 Verification
 
 **Completed:**
-- Calendar slot labels refactored to show artist name + Instagram handle
-- Green availability background from dienstplan data
-- Removed Guest Spots category (replaced by availability coloring)
-- Removed underline styling from clickable names
-- Smaller availability-only rows (44px min-height)
-- White/dark background wrapper behind appointment containers
-- Hidden unused Termine/Work Tracking tabs
+- Live payment test with real card (€1.00)
+- Verified webhook correctly updates appointments with `request_id`
+- Confirmed Updates tab shows paid appointments from last 7 days
+- Cleared browser cache to verify new code working
+- Documented edge case: appointments without `request_id` not updated
 
-**PRs Merged:** #595
+**Result:** Phase 5.8 COMPLETE - Payment notifications working end-to-end
 
-**Commits:**
-- `19c1fe9` feat(calendar): add availability visualization and refactor slot labels
-- `2e03f57` feat(calendar): improve availability visualization
-- `8c83f62` chore(calendar): hide unused Termine/Work Tracking tabs
+**Next Phase:** 5.2 Performance & Polish (optional, low priority)
 
 ---
 
