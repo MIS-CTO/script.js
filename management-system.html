@@ -27006,7 +27006,7 @@
           artistName: data.artistName,
           amount: data.amount,
           appointmentDate: data.appointmentDate,
-          timestamp: new Date().toISOString()
+          timestamp: data.paidAt || new Date().toISOString()
         };
 
         // Check if we already have this notification (avoid duplicates)
@@ -27149,6 +27149,7 @@
                       id,
                       start,
                       payment_status,
+                      payment_received_at,
                       price,
                       total_amount,
                       payment_amount,
@@ -27167,7 +27168,8 @@
                       customerEmail: appointment.customer?.email,
                       artistName: appointment.artist?.name || appointment.artist?.instagram,
                       amount: appointment.price || appointment.total_amount || appointment.payment_amount,
-                      appointmentDate: appointment.start
+                      appointmentDate: appointment.start,
+                      paidAt: appointment.payment_received_at
                     });
 
                     // Also refresh the calendar if visible
@@ -27194,11 +27196,15 @@
 
       // Sync existing payment links with Stripe
       async function syncExistingPaymentLinks() {
-        console.log('🔄 Syncing existing payment links with Stripe...');
+        console.log('🔄 Loading recent paid appointments...');
 
         try {
-          // Find appointments with payment links but not marked as paid
-          const { data: appointments, error } = await supabase
+          // Load appointments that have been paid (webhook already updated them)
+          // Show notifications for payments from the last 7 days
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+          const { data: paidAppointments, error } = await supabase
             .from('appointments')
             .select(`
               id,
@@ -27206,90 +27212,53 @@
               stripe_payment_link,
               stripe_payment_id,
               payment_status,
+              payment_received_at,
               price,
               total_amount,
               payment_amount,
               customer:customers(id, first_name, last_name, email),
               artist:artists(id, name, instagram)
             `)
-            .not('stripe_payment_link', 'is', null)
-            .not('payment_status', 'in', '("paid","deposit_paid","fully_paid")')
-            .order('created_at', { ascending: false })
+            .in('payment_status', ['paid', 'deposit_paid', 'fully_paid'])
+            .not('payment_received_at', 'is', null)
+            .gte('payment_received_at', sevenDaysAgo.toISOString())
+            .order('payment_received_at', { ascending: false })
             .limit(50);
 
           if (error) {
-            console.error('Error fetching appointments:', error);
+            console.error('Error fetching paid appointments:', error);
             return { synced: 0, errors: 1 };
           }
 
-          if (!appointments || appointments.length === 0) {
-            console.log('No pending payment links found');
+          if (!paidAppointments || paidAppointments.length === 0) {
+            console.log('No recent paid appointments found');
             return { synced: 0, errors: 0 };
           }
 
-          console.log(`Found ${appointments.length} appointments with pending payment links`);
+          console.log(`Found ${paidAppointments.length} paid appointments from last 7 days`);
 
           let syncedCount = 0;
-          let errorCount = 0;
 
-          for (const appointment of appointments) {
-            try {
-              // Call the edge function to check payment status
-              const { data: result, error: funcError } = await supabase.functions.invoke(
-                'check-payment-link-status',
-                { body: { payment_link_url: appointment.stripe_payment_link } }
-              );
+          for (const appointment of paidAppointments) {
+            // Add notification for each paid appointment
+            const customerName = appointment.customer ?
+              `${appointment.customer.first_name || ''} ${appointment.customer.last_name || ''}`.trim() : null;
 
-              if (funcError) {
-                console.error(`Error checking payment link for ${appointment.id}:`, funcError);
-                errorCount++;
-                continue;
-              }
+            addPaymentNotification({
+              appointmentId: appointment.id,
+              customerName: customerName,
+              customerEmail: appointment.customer?.email,
+              artistName: appointment.artist?.name || appointment.artist?.instagram,
+              amount: appointment.price || appointment.total_amount || appointment.payment_amount,
+              appointmentDate: appointment.start,
+              paidAt: appointment.payment_received_at
+            });
 
-              if (result && result.paid) {
-                console.log(`💰 Payment found for appointment ${appointment.id}`);
-
-                // Update the appointment
-                const { error: updateError } = await supabase
-                  .from('appointments')
-                  .update({
-                    payment_status: 'paid',
-                    payment_received_at: result.paid_at || new Date().toISOString(),
-                    stripe_payment_id: result.session_id || result.payment_intent,
-                    price: result.amount || appointment.price,
-                    payment_amount: result.amount || appointment.payment_amount,
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('id', appointment.id);
-
-                if (updateError) {
-                  console.error(`Error updating appointment ${appointment.id}:`, updateError);
-                  errorCount++;
-                  continue;
-                }
-
-                // Add notification
-                const syncCustomerName = appointment.customer ?
-                  `${appointment.customer.first_name || ''} ${appointment.customer.last_name || ''}`.trim() : null;
-                addPaymentNotification({
-                  appointmentId: appointment.id,
-                  customerName: syncCustomerName,
-                  customerEmail: appointment.customer?.email,
-                  artistName: appointment.artist?.name || appointment.artist?.instagram,
-                  amount: result.amount || appointment.price || appointment.total_amount,
-                  appointmentDate: appointment.start
-                });
-
-                syncedCount++;
-              }
-            } catch (e) {
-              console.error(`Error processing appointment ${appointment.id}:`, e);
-              errorCount++;
-            }
+            syncedCount++;
           }
 
-          console.log(`✅ Sync complete: ${syncedCount} payments synced, ${errorCount} errors`);
-          return { synced: syncedCount, errors: errorCount };
+          console.log(`✅ Loaded ${syncedCount} paid appointment notifications`);
+          return { synced: syncedCount, errors: 0 };
 
         } catch (e) {
           console.error('Error in syncExistingPaymentLinks:', e);
