@@ -40887,10 +40887,47 @@
         console.log('✅ Slot updated');
         closeSlotEditPopup();
 
-        // Refresh Dienstplan - clear cache to force reload
-        window.dienstplanCache = [];
-        if (typeof loadDienstplanData === 'function') {
-          await loadDienstplanData();
+        // Update local caches immediately for instant visual feedback
+        const updatedData = {
+          start_date: startDate,
+          end_date: endDate,
+          working_start: startTime,
+          working_end: endTime,
+          state: type,
+          updated_at: new Date().toISOString()
+        };
+
+        // Update in CentralDataManager
+        if (window.CentralDataManager && CentralDataManager.data.dienstplan) {
+          const idx = CentralDataManager.data.dienstplan.findIndex(d => d.id === primaryId);
+          if (idx !== -1) {
+            Object.assign(CentralDataManager.data.dienstplan[idx], updatedData);
+            console.log('✅ CentralDataManager cache updated');
+          }
+          // Remove deleted extra slots from cache
+          if (slotIds.length > 1) {
+            const deleteIds = slotIds.slice(1);
+            CentralDataManager.data.dienstplan = CentralDataManager.data.dienstplan.filter(d => !deleteIds.includes(d.id));
+          }
+        }
+
+        // Update window.dienstplanCache as well
+        if (window.dienstplanCache && window.dienstplanCache.length > 0) {
+          const cacheIdx = window.dienstplanCache.findIndex(d => d.id === primaryId);
+          if (cacheIdx !== -1) {
+            Object.assign(window.dienstplanCache[cacheIdx], updatedData);
+          }
+          // Remove deleted extra slots
+          if (slotIds.length > 1) {
+            const deleteIds = slotIds.slice(1);
+            window.dienstplanCache = window.dienstplanCache.filter(d => !deleteIds.includes(d.id));
+          }
+        }
+
+        // Re-render the dienstplan view
+        if (typeof applyDienstplanFilters === 'function') {
+          applyDienstplanFilters();
+          console.log('✅ Dienstplan view refreshed');
         }
       } catch (err) {
         console.error('❌ Error saving slot:', err);
@@ -40909,9 +40946,21 @@
         console.log('✅ Slot(s) deleted');
         closeSlotViewPopup();
 
-        // Refresh Dienstplan
-        if (typeof loadDienstplanData === 'function') {
-          await loadDienstplanData();
+        // Remove from CentralDataManager cache immediately
+        if (window.CentralDataManager && CentralDataManager.data.dienstplan) {
+          CentralDataManager.data.dienstplan = CentralDataManager.data.dienstplan.filter(d => !slotIds.includes(d.id));
+          console.log('✅ CentralDataManager cache updated');
+        }
+
+        // Remove from window.dienstplanCache
+        if (window.dienstplanCache && window.dienstplanCache.length > 0) {
+          window.dienstplanCache = window.dienstplanCache.filter(d => !slotIds.includes(d.id));
+        }
+
+        // Re-render the dienstplan view
+        if (typeof applyDienstplanFilters === 'function') {
+          applyDienstplanFilters();
+          console.log('✅ Dienstplan view refreshed');
         }
       } catch (err) {
         console.error('❌ Error deleting slot:', err);
