@@ -40855,35 +40855,36 @@
       }
 
       try {
-        // Lösche alte Einträge
-        for (const id of slotIds) {
-          const { error: delError } = await supabase.from('dienstplan').delete().eq('id', id);
-          if (delError) console.error('Delete error:', delError);
-        }
+        // Update the first slot, delete extra ones (if grouped)
+        const primaryId = slotIds[0];
 
-        // Get artist data for email (required column)
-        const artistId = document.getElementById('editSlotArtistId').value;
-        const artist = (window.allArtists || []).find(a => a.id === artistId);
-        const artistEmail = artist?.email || artist?.instagram || 'unknown@studio.com';
+        // Update the primary slot with new values
+        const { error: updateError } = await supabase.from('dienstplan')
+          .update({
+            start_date: startDate,
+            end_date: endDate,
+            working_start: startTime,
+            working_end: endTime,
+            state: type,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', primaryId);
 
-        // Create single entry with date range (correct schema)
-        const { error: insertError } = await supabase.from('dienstplan').insert({
-          artist_id: artistId,
-          email: artistEmail,
-          start_date: startDate,
-          end_date: endDate,
-          working_start: startTime,
-          working_end: endTime,
-          state: type
-        });
-
-        if (insertError) {
-          console.error('❌ Insert error:', insertError);
-          alert('Fehler beim Speichern: ' + insertError.message);
+        if (updateError) {
+          console.error('❌ Update error:', updateError);
+          alert('Fehler beim Speichern: ' + updateError.message);
           return;
         }
 
-        console.log('✅ Slot(s) updated');
+        // Delete extra slots if there were multiple grouped
+        if (slotIds.length > 1) {
+          for (let i = 1; i < slotIds.length; i++) {
+            const { error: delError } = await supabase.from('dienstplan').delete().eq('id', slotIds[i]);
+            if (delError) console.error('Delete extra slot error:', delError);
+          }
+        }
+
+        console.log('✅ Slot updated');
         closeSlotEditPopup();
 
         // Refresh Dienstplan - clear cache to force reload
