@@ -25737,12 +25737,29 @@
               .toUpperCase()
               .substring(0, 2);
 
-            // Format date
+            // Format date with time
             const createdDate = new Date(req.created_at);
-            const formattedDate = createdDate.toLocaleDateString('de-DE', {
-              day: '2-digit',
-              month: 'short'
-            });
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const createdDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+
+            const hours = createdDate.getHours();
+            const timeStr = `${hours} Uhr`;
+
+            let formattedDate;
+            if (createdDay.getTime() === today.getTime()) {
+              formattedDate = `${timeStr} Heute`;
+            } else if (createdDay.getTime() === yesterday.getTime()) {
+              formattedDate = `${timeStr} Gestern`;
+            } else {
+              const dateStr = createdDate.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: 'short'
+              });
+              formattedDate = `${dateStr}, ${timeStr}`;
+            }
 
             // Get rank for badge
             const rank = req.customer_rank || req.rank || 'Neukunde';
