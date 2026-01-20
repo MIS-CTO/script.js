@@ -21205,18 +21205,8 @@
         .update({ appointment_id: appointment.id })
         .eq('id', request.id);
 
-      // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem Termin
-      if (request.customer_id) {
-        const { error: rankError } = await supabase
-          .from('customers')
-          .update({ rank: 'Bronze' })
-          .eq('id', request.customer_id)
-          .eq('rank', 'Neukunde');  // Nur wenn aktuell "Neukunde"
-
-        if (!rankError) {
-          console.log('🎖️ Customer upgraded from Neukunde to Bronze');
-        }
-      }
+      // NOTE: Rank upgrade removed - now happens on appointment COMPLETION, not scheduling
+      // See saveAppointmentState() for the correct upgrade logic
 
       console.log('✅ Appointment created:', appointment.id);
       return appointment;
@@ -36938,14 +36928,7 @@
 
           if (error) throw error;
 
-          // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem Termin
-          if (customerId) {
-            await supabase
-              .from('customers')
-              .update({ rank: 'Bronze' })
-              .eq('id', customerId)
-              .eq('rank', 'Neukunde');
-          }
+          // NOTE: Rank upgrade removed - now happens on appointment COMPLETION, not scheduling
 
           // Close modal and reset form
           document.getElementById('createBookingModal').classList.remove('active');
@@ -38001,6 +37984,19 @@
 
           console.log('✅ State updated successfully:', data);
 
+          // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem ABGESCHLOSSENEN Termin
+          if (selectedState === 'Abgeschlossen' && data.customer_id) {
+            const { error: rankError } = await supabase
+              .from('customers')
+              .update({ rank: 'Bronze' })
+              .eq('id', data.customer_id)
+              .eq('rank', 'Neukunde');  // Nur wenn aktuell "Neukunde"
+
+            if (!rankError) {
+              console.log('🎖️ Customer upgraded from Neukunde to Bronze (first completed appointment)');
+            }
+          }
+
           // Close modal
           closeEditStateModal();
 
@@ -38414,14 +38410,30 @@
             payment_notice: paymentNotice || null
           };
 
-          const { error } = await supabase
+          const { data: updatedAppointment, error } = await supabase
             .from('appointments')
             .update(updateData)
-            .eq('id', appointmentId);
+            .eq('id', appointmentId)
+            .select('customer_id')
+            .single();
 
           if (error) throw error;
 
           console.log('✅ Appointment updated:', appointmentId);
+
+          // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem ABGESCHLOSSENEN Termin
+          if (status === 'finished' && updatedAppointment?.customer_id) {
+            const { error: rankError } = await supabase
+              .from('customers')
+              .update({ rank: 'Bronze' })
+              .eq('id', updatedAppointment.customer_id)
+              .eq('rank', 'Neukunde');  // Nur wenn aktuell "Neukunde"
+
+            if (!rankError) {
+              console.log('🎖️ Customer upgraded from Neukunde to Bronze (first completed appointment)');
+            }
+          }
+
           closeAppointmentEditPopup();
 
           // Schließe auch das Detail-Popup und refresh Calendar
@@ -61453,14 +61465,7 @@
 
         if (error) throw error;
 
-        // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem Termin
-        if (appointmentData.customer_id) {
-          await supabase
-            .from('customers')
-            .update({ rank: 'Bronze' })
-            .eq('id', appointmentData.customer_id)
-            .eq('rank', 'Neukunde');
-        }
+        // NOTE: Rank upgrade removed - now happens on appointment COMPLETION, not scheduling
 
         console.log('✅ Guest Spot Appointment created:', data);
         showNotification('Appointment erstellt!', 'success');
