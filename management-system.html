@@ -4610,10 +4610,86 @@
     }
 
     .brett-content {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-secondary);
       line-height: 1.5;
       margin-bottom: 8px;
+    }
+
+    /* Schwarzes Brett Slider */
+    .brett-slider-wrapper {
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brett-slider-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .brett-slider-track {
+      display: flex;
+      transition: transform 0.4s ease;
+      height: 100%;
+    }
+
+    .brett-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      overflow-y: auto;
+      padding: 0 12px;
+      box-sizing: border-box;
+    }
+
+    /* Glass Slider Indicators */
+    .brett-slider-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      margin: 8px 12px 12px;
+    }
+
+    [data-theme="dark"] .brett-slider-indicators {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .brett-slider-dot {
+      width: 24px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .brett-slider-dot:hover {
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .brett-slider-dot.active {
+      background: rgba(0, 0, 0, 0.5);
+      width: 32px;
+    }
+
+    [data-theme="dark"] .brett-slider-dot {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    [data-theme="dark"] .brett-slider-dot:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    [data-theme="dark"] .brett-slider-dot.active {
+      background: rgba(255, 255, 255, 0.6);
     }
 
     .brett-footer {
@@ -25955,7 +26031,11 @@
           // Get all profiles for avatar lookup
           const allProfiles = window.CentralDataManager?.data?.profiles || [];
 
-          const messagesHTML = messages.map(msg => {
+          // Store messages for slider navigation
+          window.schwarzesBrettMessages = messages;
+          window.brettSliderIndex = 0;
+
+          const slidesHTML = messages.map((msg, index) => {
             const createdDate = new Date(msg.created_at);
             const timeAgo = getTimeAgo(createdDate);
 
@@ -25987,9 +26067,10 @@
             const isOwnMessage = msg.author_id === currentAuthUserId;
             console.log(`📝 Message "${msg.content.substring(0,20)}..." by ${msg.author_id} - isOwn: ${isOwnMessage}`);
 
-            // Build the message HTML
+            // Build the message HTML wrapped in a slide
             return `
-              <div class="brett-item" data-id="${msg.id}" style="display:flex; gap:12px; padding:12px 0;">
+              <div class="brett-slide">
+                <div class="brett-item" data-id="${msg.id}" style="display:flex; gap:12px; padding:12px 0;">
                 <!-- Avatar -->
                 <div style="flex-shrink:0;">
                   ${avatarHtml}
@@ -26043,7 +26124,7 @@
                   </div>
 
                   <!-- Message Content -->
-                  <div style="font-size:15px; line-height:1.5; color:#1d1d1f; margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
+                  <div style="font-size:13px; line-height:1.5; color:#1d1d1f; margin-bottom:8px; white-space:pre-wrap;">${msg.content}</div>
 
                   <!-- Attachments -->
                   ${(msg.attachments && msg.attachments.length > 0) ? `
@@ -26075,11 +26156,30 @@
                   </div>
                 </div>
               </div>
+            </div>
             `;
           }).join('');
 
-          container.innerHTML = messagesHTML;
-          console.log('✅ Loaded', messages.length, 'messages');
+          // Create slider indicators
+          const indicatorsHTML = messages.map((_, index) =>
+            `<div class="brett-slider-dot ${index === 0 ? 'active' : ''}" data-index="${index}" onclick="goToBrettSlide(${index})"></div>`
+          ).join('');
+
+          // Build complete slider HTML
+          container.innerHTML = `
+            <div class="brett-slider-wrapper">
+              <div class="brett-slider-container">
+                <div class="brett-slider-track" id="brettSliderTrack">
+                  ${slidesHTML}
+                </div>
+              </div>
+              <div class="brett-slider-indicators" id="brettSliderIndicators">
+                ${indicatorsHTML}
+              </div>
+            </div>
+          `;
+
+          console.log('✅ Loaded', messages.length, 'messages in slider');
 
         } catch (err) {
           console.error('❌ Error loading schwarzes brett:', err);
@@ -26088,11 +26188,38 @@
       }
 
       // ============================================
+      // BRETT SLIDER NAVIGATION
+      // ============================================
+
+      /**
+       * Navigate to a specific slide in the Schwarzes Brett slider
+       */
+      function goToBrettSlide(index) {
+        const track = document.getElementById('brettSliderTrack');
+        const indicators = document.getElementById('brettSliderIndicators');
+        if (!track || !indicators) return;
+
+        const totalSlides = window.schwarzesBrettMessages?.length || 0;
+        if (index < 0 || index >= totalSlides) return;
+
+        window.brettSliderIndex = index;
+
+        // Move track
+        track.style.transform = `translateX(-${index * 100}%)`;
+
+        // Update indicators
+        indicators.querySelectorAll('.brett-slider-dot').forEach((dot, i) => {
+          dot.classList.toggle('active', i === index);
+        });
+      }
+
+      window.goToBrettSlide = goToBrettSlide;
+
+      // ============================================
       // BRETT MENU FUNCTIONS
       // ============================================
 
-      // Store messages for edit function
-      window.schwarzesBrettMessages = [];
+      // Store messages for edit function (already set in loadSchwarzesBrett)
 
       /**
        * Toggle the dropdown menu for a specific message
