@@ -3892,7 +3892,7 @@
     }
 
     .right-column-section .glass-card-header {
-      padding: 16px 8px 8px;
+      padding: 8px 8px 8px;
     }
 
     .right-column-section .glass-card-content {
@@ -5733,6 +5733,53 @@
 
     .todo-task-checkbox:hover {
       border-color: #9ca3af;
+    }
+
+    /* Task Priority Flags */
+    .task-priority-flag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .task-priority-flag.low {
+      color: #f59e0b;
+    }
+
+    .task-priority-flag.regular {
+      color: #f97316;
+    }
+
+    .task-priority-flag.urgent {
+      color: #ef4444;
+    }
+
+    .task-priority-flag svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Priority Select in Add Task */
+    .task-priority-select {
+      padding: 8px 10px;
+      border: 1px solid var(--border-color, #e0e0e0);
+      border-radius: 6px;
+      font-size: 13px;
+      background: white;
+      color: var(--text-primary, #1d1d1f);
+      cursor: pointer;
+      min-width: 90px;
+    }
+
+    [data-theme="dark"] .task-priority-select {
+      background: var(--input-bg, #2c2c2e);
+      border-color: var(--border-color, #3a3a3c);
     }
 
     /* ========================================
@@ -15448,6 +15495,10 @@
             </div>
           </div>
           <div style="flex-shrink: 0; padding: 12px 16px; border-top: 1px solid rgba(0,0,0,0.04);">
+            <!-- Slider indicators moved here, above button -->
+            <div class="brett-slider-indicators-wrapper" id="brettSliderIndicatorsWrapper" style="margin-bottom: 12px; display: none;">
+              <div class="brett-slider-indicators" id="brettSliderIndicators"></div>
+            </div>
             <button id="addMessageBtn" style="width: 100%; padding: 12px 16px; background: #1d1d1f; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
               + Neue Nachricht
             </button>
@@ -24493,6 +24544,11 @@
       inputDiv.innerHTML = `
         <input type="text" class="new-task-input" placeholder="Neue Aufgabe..."
           style="flex:1;padding:8px 12px;border:1px solid var(--border-color,#e0e0e0);border-radius:6px;font-size:14px;background:white;">
+        <select class="task-priority-select new-task-priority">
+          <option value="low">🚩 Low</option>
+          <option value="regular" selected>🚩 Regular</option>
+          <option value="urgent">🚩 Urgent</option>
+        </select>
         <button onclick="addTaskToProject('${projectId}')"
           style="padding:8px 16px;background:var(--apple-blue,#007aff);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:500;">
           Hinzufügen
@@ -24515,7 +24571,9 @@
       const container = document.getElementById('tasks-' + projectId) ||
                         document.querySelector(`[data-project-id="${projectId}"] .tasks-container`);
       const input = container?.querySelector('.new-task-input');
+      const prioritySelect = container?.querySelector('.new-task-priority');
       const title = input?.value?.trim();
+      const priority = prioritySelect?.value || 'regular';
 
       if (!title) {
         showNotification('Bitte Task-Titel eingeben', 'warning');
@@ -24529,6 +24587,7 @@
             project_id: projectId,
             title: title,
             is_completed: false,
+            priority: priority,
             created_at: new Date().toISOString()
           }]);
 
@@ -26166,7 +26225,7 @@
             `<div class="brett-slider-dot ${index === 0 ? 'active' : ''}" data-index="${index}" onclick="goToBrettSlide(${index})"></div>`
           ).join('');
 
-          // Build complete slider HTML with indicators at bottom
+          // Build slider HTML (indicators are now in separate container outside overflow)
           container.innerHTML = `
             <div class="brett-slider-wrapper">
               <div class="brett-slider-container">
@@ -26175,10 +26234,15 @@
                 </div>
               </div>
             </div>
-            <div class="brett-slider-indicators" id="brettSliderIndicators" style="margin-bottom: 12px;">
-              ${indicatorsHTML}
-            </div>
           `;
+
+          // Put indicators in the external container (above Neue Nachricht button)
+          const indicatorsWrapper = document.getElementById('brettSliderIndicatorsWrapper');
+          const indicatorsContainer = document.getElementById('brettSliderIndicators');
+          if (indicatorsWrapper && indicatorsContainer) {
+            indicatorsContainer.innerHTML = indicatorsHTML;
+            indicatorsWrapper.style.display = messages.length > 1 ? 'block' : 'none';
+          }
 
           console.log('✅ Loaded', messages.length, 'messages in slider');
 
@@ -26782,12 +26846,16 @@
 
           // Mobile: Include tasks inside card for accordion
           const tasks = project.tasks || [];
-          const tasksHtml = isMobileView ? tasks.map(task => `
+          const tasksHtml = isMobileView ? tasks.map(task => {
+            const priority = task.priority || 'regular';
+            const priorityFlag = `<span class="task-priority-flag ${priority}"><svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" stroke-width="2"/></svg></span>`;
+            return `
             <div class="mobile-task-item ${task.is_completed ? 'completed' : ''}" data-task-id="${task.id}">
               <span class="mobile-task-checkbox ${task.is_completed ? 'completed' : ''}" onclick="event.stopPropagation(); toggleMobileTask('${task.id}', ${!task.is_completed}, '${project.id}')"></span>
+              ${priorityFlag}
               <span class="mobile-task-title" onclick="event.stopPropagation(); openTaskViewPopup('${task.id}')" style="cursor: pointer; flex: 1;">${task.title}</span>
             </div>
-          `).join('') : '';
+          `}).join('') : '';
 
           // Mobile arrow icon
           const arrowHtml = isMobileView ? `
@@ -26997,11 +27065,16 @@
         listEl.innerHTML = sortedTasks.map(task => {
           const assignee = task.assigned_to ? getAssigneeName(task.assigned_to) : '';
           const completedClass = task.is_completed ? 'completed' : '';
+          const priority = task.priority || 'regular';
+          const priorityFlag = `<span class="task-priority-flag ${priority}" title="${priority.charAt(0).toUpperCase() + priority.slice(1)}">
+            <svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" stroke-width="2"/></svg>
+          </span>`;
 
           return `
             <div class="todo-task-item ${completedClass}" data-task-id="${task.id}">
               <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
                 <input type="checkbox" class="todo-task-checkbox" ${task.is_completed ? 'checked' : ''} onchange="toggleTodoTask('${task.id}', this.checked)">
+                ${priorityFlag}
                 <span class="todo-task-title" onclick="openTaskViewPopup('${task.id}')" style="cursor: pointer; flex: 1; min-width: 0;">${task.title}</span>
               </div>
               <div class="todo-task-right">
