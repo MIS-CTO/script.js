@@ -3479,9 +3479,9 @@
     .dashboard-welcome {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 26px;
       margin-bottom: 32px;
-      padding: 0;
+      padding: 52px 0 0 0;
       background: transparent;
       border-radius: 0;
       color: var(--text-primary);
@@ -3801,7 +3801,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
       grid-template-rows: 1fr 1fr;
-      gap: 20px;
+      gap: 26px;
       height: 85vh;
     }
 
@@ -3837,7 +3837,7 @@
       grid-row: 2;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 26px;
       min-height: 0;
     }
 
@@ -3847,13 +3847,42 @@
       grid-row: 1 / 3;
       display: flex;
       flex-direction: column;
-      gap: 20px;
       min-height: 0;
     }
 
-    /* Neue Anfragen and Anstehende Termine - 50% height each */
+    /* Combined Neue Anfragen + Anstehende Termine container */
     .dashboard-col-right > .glass-card {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* Two sections inside right column container */
+    .right-column-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .right-column-section:first-child {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    [data-theme="dark"] .right-column-section:first-child {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .right-column-section .glass-card-header {
+      padding: 20px 24px 12px;
+    }
+
+    .right-column-section .glass-card-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 24px 16px;
     }
 
     /* ========================================
@@ -4230,9 +4259,10 @@
     .request-item-v2 {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      border-radius: 10px;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      flex: 1;
       transition: background 0.15s ease;
       cursor: pointer;
     }
@@ -4246,14 +4276,15 @@
     }
 
     .request-avatar-v2 {
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: var(--macos-fill-tertiary);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 15px;
+      flex-shrink: 0;
       font-weight: 600;
       color: var(--macos-text-primary);
       flex-shrink: 0;
@@ -4296,9 +4327,10 @@
     .appointment-item-v2 {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      border-radius: 10px;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      flex: 1;
       transition: background 0.15s ease;
       cursor: pointer;
     }
@@ -4312,8 +4344,8 @@
     }
 
     .appointment-avatar-v2 {
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       overflow: hidden;
       flex-shrink: 0;
@@ -15329,29 +15361,27 @@
         </div>
       </div>
 
-      <!-- RIGHT COLUMN - New Requests + Upcoming Appointments -->
+      <!-- RIGHT COLUMN - New Requests + Upcoming Appointments (Combined) -->
       <div class="dashboard-col-right">
-        <!-- New Requests -->
-        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title">
-              Neue Anfragen
-            </h3>
+        <div class="glass-card">
+          <!-- New Requests Section -->
+          <div class="right-column-section">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title">Neue Anfragen</h3>
+            </div>
+            <div class="glass-card-content requests-list-v2" id="newRequestsContainer">
+              <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">Lade Anfragen...</div>
+            </div>
           </div>
-          <div class="glass-card-body requests-list-v2" id="newRequestsContainer">
-            <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">Lade Anfragen...</div>
-          </div>
-        </div>
 
-        <!-- Upcoming Appointments -->
-        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title">
-              Anstehende Termine
-            </h3>
-          </div>
-          <div class="glass-card-body appointments-list-v2" id="upcomingAppointmentsContainer">
-            <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">Lade Termine...</div>
+          <!-- Upcoming Appointments Section -->
+          <div class="right-column-section">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title">Anstehende Termine</h3>
+            </div>
+            <div class="glass-card-content appointments-list-v2" id="upcomingAppointmentsContainer">
+              <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">Lade Termine...</div>
+            </div>
           </div>
         </div>
       </div>
