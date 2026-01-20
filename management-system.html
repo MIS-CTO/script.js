@@ -168,6 +168,24 @@
       --radius: var(--radius-xl);
       --shadow: var(--macos-shadow-medium);
 
+      /* ========================================
+         Dashboard V2 Glassmorphism Variables
+         ======================================== */
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-bg-elevated: rgba(255, 255, 255, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-blur: blur(20px);
+      --glass-blur-strong: blur(24px);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.12);
+      --glass-radius-lg: 20px;
+      --glass-radius-md: 16px;
+      --glass-radius-sm: 12px;
+
+      /* Pflicht Event Gradient */
+      --pflicht-gradient: linear-gradient(135deg, #4F7DF3 0%, #7C3AED 100%);
+      --pflicht-shadow: 0 8px 24px rgba(79, 125, 243, 0.35);
+
       /* Account Settings Page Variables */
       --bg-primary: #ffffff;
       --bg-secondary: #f5f5f7;
@@ -251,6 +269,12 @@
       --macos-accent-blue: #0a84ff;
       --macos-accent-red: #ff453a;
       --macos-accent-green: #32d74b;
+
+      /* Dashboard V2 Glassmorphism - Dark Mode */
+      --glass-bg: rgba(28, 28, 30, 0.7);
+      --glass-bg-elevated: rgba(44, 44, 46, 0.8);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --pflicht-shadow: 0 8px 24px rgba(79, 125, 243, 0.4);
     }
     /* ========================================
        macOS Typography System
@@ -3761,6 +3785,477 @@
 
     [data-theme="dark"] .event-empty {
       color: var(--macos-text-secondary);
+    }
+
+    /* ========================================
+       DASHBOARD V2 - 3-Column Grid Layout
+       Modern Glassmorphism Style
+       ======================================== */
+
+    .dashboard-container-v2 {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      grid-template-rows: auto 1fr;
+      gap: 24px;
+      min-height: 70vh;
+      max-height: 85vh;
+    }
+
+    /* Left Column - Schwarzes Brett (spans 2 rows) */
+    .dashboard-col-left {
+      grid-column: 1;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* Center Top - Events and Meetings */
+    .dashboard-col-center-top {
+      grid-column: 2;
+      grid-row: 1;
+      min-height: 0;
+    }
+
+    /* Center Bottom - Projects + Tasks (side by side) */
+    .dashboard-col-center-bottom {
+      grid-column: 2;
+      grid-row: 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      min-height: 0;
+    }
+
+    /* Right Column (spans 2 rows) */
+    .dashboard-col-right {
+      grid-column: 3;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-height: 0;
+    }
+
+    /* ========================================
+       Glassmorphism Card Base
+       ======================================== */
+
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--glass-radius-md);
+      box-shadow: var(--glass-shadow);
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+    }
+
+    .glass-card:hover {
+      box-shadow: var(--glass-shadow-hover);
+    }
+
+    .glass-card-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    [data-theme="dark"] .glass-card-header {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .glass-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .glass-card-title svg {
+      opacity: 0.6;
+    }
+
+    .glass-card-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Hidden scrollbars for glass cards */
+    .glass-card-body {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .glass-card-body::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* ========================================
+       Events & Meetings - Horizontal Scroll
+       ======================================== */
+
+    .events-scroll-container {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 8px 4px 16px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .events-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .event-card-v2 {
+      flex: 0 0 auto;
+      width: 240px;
+      height: 200px;
+      border-radius: var(--glass-radius-sm);
+      padding: 16px;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .event-card-v2:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Pflicht Event Card - Blue/Purple Gradient */
+    .event-card-v2.pflicht {
+      background: var(--pflicht-gradient);
+      color: white;
+      box-shadow: var(--pflicht-shadow);
+      border: none;
+    }
+
+    .event-card-v2.pflicht .event-card-time,
+    .event-card-v2.pflicht .event-card-title,
+    .event-card-v2.pflicht .event-card-desc {
+      color: white;
+    }
+
+    .event-card-v2.pflicht .event-card-badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+
+    .event-card-v2.pflicht:hover {
+      box-shadow: 0 12px 32px rgba(79, 125, 243, 0.45);
+    }
+
+    /* Normal Event Card - White with glassmorphism */
+    .event-card-v2.normal {
+      background: var(--glass-bg-elevated);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      color: var(--macos-text-primary);
+    }
+
+    .event-card-v2.normal:hover {
+      box-shadow: var(--glass-shadow-hover);
+    }
+
+    .event-card-time {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    .event-card-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, 0.06);
+      margin-bottom: 8px;
+      width: fit-content;
+    }
+
+    .event-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .event-card-desc {
+      font-size: 12px;
+      opacity: 0.75;
+      line-height: 1.4;
+      flex: 1;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .event-card-location {
+      margin-top: auto;
+      font-size: 11px;
+      opacity: 0.7;
+      padding-top: 8px;
+    }
+
+    /* ========================================
+       New Requests List
+       ======================================== */
+
+    .requests-list-v2 {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .request-item-v2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+
+    .request-item-v2:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    [data-theme="dark"] .request-item-v2:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .request-avatar-v2 {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--macos-fill-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+      flex-shrink: 0;
+    }
+
+    .request-info-v2 {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .request-name-v2 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--macos-text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .request-date-v2 {
+      font-size: 11px;
+      color: var(--macos-text-secondary);
+      margin-top: 2px;
+    }
+
+    .request-rank-badge {
+      flex-shrink: 0;
+    }
+
+    /* ========================================
+       Upcoming Appointments List
+       ======================================== */
+
+    .appointments-list-v2 {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .appointment-item-v2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+
+    .appointment-item-v2:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    [data-theme="dark"] .appointment-item-v2:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .appointment-avatar-v2 {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--macos-fill-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+    }
+
+    .appointment-avatar-v2 img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .appointment-info-v2 {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .appointment-customer-v2 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--macos-text-primary);
+    }
+
+    .appointment-artist-v2 {
+      font-size: 11px;
+      color: var(--macos-text-secondary);
+      margin-top: 2px;
+    }
+
+    .appointment-time-v2 {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .appointment-time-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--macos-text-primary);
+    }
+
+    .appointment-date-value {
+      font-size: 11px;
+      color: var(--macos-text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ========================================
+       Dashboard V2 Responsive - Large screens
+       ======================================== */
+
+    @media (max-width: 1400px) {
+      .dashboard-container-v2 {
+        grid-template-columns: 260px 1fr 280px;
+      }
+
+      .event-card-v2 {
+        width: 220px;
+        height: 180px;
+      }
+    }
+
+    /* Tablet - Stack center column */
+    @media (max-width: 1200px) {
+      .dashboard-container-v2 {
+        grid-template-columns: 240px 1fr;
+        grid-template-rows: auto auto auto;
+      }
+
+      .dashboard-col-left {
+        grid-column: 1;
+        grid-row: 1 / 4;
+      }
+
+      .dashboard-col-center-top {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .dashboard-col-center-bottom {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      .dashboard-col-right {
+        grid-column: 2;
+        grid-row: 3;
+        flex-direction: row;
+      }
+
+      .dashboard-col-right > .glass-card {
+        flex: 1;
+      }
+    }
+
+    /* Tablet Portrait - Single column */
+    @media (max-width: 1024px) {
+      .dashboard-container-v2 {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        max-height: none;
+      }
+
+      .dashboard-col-left,
+      .dashboard-col-center-top,
+      .dashboard-col-center-bottom,
+      .dashboard-col-right {
+        grid-column: 1;
+        grid-row: auto;
+      }
+
+      .dashboard-col-left {
+        max-height: 400px;
+      }
+
+      .dashboard-col-right {
+        flex-direction: row;
+      }
+
+      .dashboard-col-right > .glass-card {
+        flex: 1;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .dashboard-container-v2 {
+        gap: 16px;
+      }
+
+      .dashboard-col-center-bottom {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-col-right {
+        flex-direction: column;
+      }
+
+      .event-card-v2 {
+        width: 200px;
+        height: 170px;
+      }
     }
 
     /* ========================================
@@ -14509,46 +15004,20 @@
       <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1242</span>
     </div>
 
-    <!-- Dashboard Grid Layout - New 30/70 Split -->
-    <div class="dashboard-container" style="margin-top: 32px;">
-      <!-- Left Column (30%) - Pinned Events + Schwarzes Brett -->
-      <div class="dashboard-left-column">
-        <!-- Mobile Tab Switcher (only visible on mobile) -->
-        <div class="mobile-tabs-wrapper" id="mobileTabsWrapper" style="display: none;">
-          <div class="mobile-content-tabs">
-            <button class="mobile-content-tab active" data-tab="pinned-events">Pinned Events</button>
-            <button class="mobile-content-tab" data-tab="schwarzes-brett">Schwarzes Brett</button>
-          </div>
-          <div class="mobile-content-container">
-            <!-- Pinned Events Tab Content -->
-            <div class="mobile-content-pane active" id="mobilePinnedEventsPane">
-              <div class="mobile-slider-container" id="mobilePinnedEventsSlider">
-                <!-- Content will be dynamically populated -->
-              </div>
-              <div class="mobile-slider-indicator" id="mobilePinnedEventsIndicator">1 / 1</div>
-            </div>
-            <!-- Schwarzes Brett Tab Content -->
-            <div class="mobile-content-pane" id="mobileSchwarzesBrettPane">
-              <div class="mobile-slider-container" id="mobileSchwarzesBrettSlider">
-                <!-- Content will be dynamically populated -->
-              </div>
-              <div class="mobile-slider-indicator" id="mobileSchwarzesBrettIndicator">1 / 1</div>
-            </div>
-          </div>
-        </div>
+    <!-- Dashboard Grid Layout V2 - 3-Column Glassmorphism -->
+    <div class="dashboard-container-v2" style="margin-top: 32px;">
 
-        <!-- Pinned Events Section -->
-        <div class="container-section pinned-events-wrapper">
-          <h3 class="container-section-title">Pinned Events</h3>
-          <div class="dashboard-card pinned-events-card" id="pinnedEventsContainer">
-            <div class="event-empty">Lade Events...</div>
+      <!-- LEFT COLUMN - Schwarzes Brett (spans 2 rows) -->
+      <div class="dashboard-col-left">
+        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              Schwarzes Brett
+            </h3>
           </div>
-        </div>
-
-        <!-- Schwarzes Brett Section -->
-        <div class="container-section schwarzes-brett-wrapper">
-          <h3 class="container-section-title">Schwarzes Brett</h3>
-          <div class="dashboard-card schwarzes-brett-card" id="schwarzesBrettContainer" style="display:flex; flex-direction:column; overflow:hidden;">
+          <!-- Schwarzes Brett Container (preserve ID for JS) -->
+          <div id="schwarzesBrettContainer" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
             <!-- New Message Popup (hidden by default) -->
             <div class="new-message-popup" id="newMessagePopup">
               <div class="popup-header">
@@ -14573,7 +15042,6 @@
                   <option value="Paris">Paris</option>
                 </select>
               </div>
-              <!-- File Attachments -->
               <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 13px; color: #86868b; margin-bottom: 8px;">Anhänge (Bilder/PDFs)</label>
                 <input type="file" id="boardAttachments" multiple accept="image/*,.pdf" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); font-size: 13px; color: var(--text-primary); font-family: inherit;">
@@ -14583,44 +15051,120 @@
                 Veröffentlichen
               </button>
             </div>
-
             <!-- Messages scroll area -->
-            <div id="brettMessages" style="flex:1; overflow-y:auto; padding:16px;">
+            <div class="glass-card-body" id="brettMessages" style="padding: 12px;">
               <div class="brett-empty">Lade Nachrichten...</div>
             </div>
-
-            <!-- Fixed input at bottom -->
-            <div class="brett-input-container" style="flex-shrink:0; padding:12px 16px; border-top:1px solid rgba(0,0,0,0.06); background:#fff;">
-              <button id="addMessageBtn" style="width:100%; padding:12px 16px; background:#1d1d1f; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">
-                + Neue Nachricht
-              </button>
-            </div>
+          </div>
+          <div style="flex-shrink: 0; padding: 12px 16px; border-top: 1px solid rgba(0,0,0,0.04);">
+            <button id="addMessageBtn" style="width: 100%; padding: 12px 16px; background: #1d1d1f; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
+              + Neue Nachricht
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Right Columns (70%) - To-Do Projects + Tasks -->
-      <div class="dashboard-right-columns">
-        <!-- Recent Projects Section -->
-        <div class="container-section todo-projects-wrapper">
-          <h3 class="container-section-title">Recent Projects</h3>
-          <div class="todo-projects-left">
+      <!-- CENTER TOP - Events & Meetings -->
+      <div class="dashboard-col-center-top">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Events & Meetings
+            </h3>
+          </div>
+          <div class="events-scroll-container" id="eventsScrollContainer">
+            <div class="event-empty" style="padding: 40px; text-align: center; color: #86868b; width: 100%;">Lade Events...</div>
+          </div>
+        </div>
+        <!-- Hidden container for backward compatibility with loadPinnedEvents -->
+        <div id="pinnedEventsContainer" style="display: none;"></div>
+      </div>
+
+      <!-- CENTER BOTTOM - Projects + Tasks -->
+      <div class="dashboard-col-center-bottom">
+        <!-- Projects -->
+        <div class="glass-card" style="display: flex; flex-direction: column; min-height: 0;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              Recent Projects
+            </h3>
+          </div>
+          <div class="glass-card-body">
             <div class="todo-projects-list" id="todoProjectsList">
               <div class="todo-empty-state">Lade Projekte...</div>
             </div>
-            <button class="add-btn" id="todoAddProjectBtn">+ Add new</button>
+          </div>
+          <div style="padding: 12px 16px; border-top: 1px solid rgba(0,0,0,0.04);">
+            <button class="add-btn" id="todoAddProjectBtn" style="width: 100%;">+ Add new</button>
           </div>
         </div>
 
-        <!-- Tasks Section -->
-        <div class="container-section todo-tasks-wrapper">
-          <h3 class="container-section-title" id="todoTasksTitle">Tasks</h3>
-          <div class="todo-tasks-right">
+        <!-- Tasks -->
+        <div class="glass-card" style="display: flex; flex-direction: column; min-height: 0;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title" id="todoTasksTitle">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Tasks
+            </h3>
+          </div>
+          <div class="glass-card-body">
             <div class="todo-tasks-list" id="todoTasksList">
               <div class="todo-empty-state">Select Project to view</div>
             </div>
-            <button class="add-btn" id="todoAddTaskBtn" style="display: none;">+ Add Task</button>
           </div>
+          <div style="padding: 12px 16px; border-top: 1px solid rgba(0,0,0,0.04);">
+            <button class="add-btn" id="todoAddTaskBtn" style="width: 100%; display: none;">+ Add Task</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN - New Requests + Upcoming Appointments -->
+      <div class="dashboard-col-right">
+        <!-- New Requests -->
+        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Neue Anfragen
+            </h3>
+          </div>
+          <div class="glass-card-body requests-list-v2" id="newRequestsContainer">
+            <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">Lade Anfragen...</div>
+          </div>
+        </div>
+
+        <!-- Upcoming Appointments -->
+        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Anstehende Termine
+            </h3>
+          </div>
+          <div class="glass-card-body appointments-list-v2" id="upcomingAppointmentsContainer">
+            <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">Lade Termine...</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mobile Tab Switcher (hidden on desktop) -->
+    <div class="mobile-tabs-wrapper" id="mobileTabsWrapper" style="display: none;">
+      <div class="mobile-content-tabs">
+        <button class="mobile-content-tab active" data-tab="pinned-events">Events</button>
+        <button class="mobile-content-tab" data-tab="schwarzes-brett">Schwarzes Brett</button>
+      </div>
+      <div class="mobile-content-container">
+        <div class="mobile-content-pane active" id="mobilePinnedEventsPane">
+          <div class="mobile-slider-container" id="mobilePinnedEventsSlider"></div>
+          <div class="mobile-slider-indicator" id="mobilePinnedEventsIndicator">1 / 1</div>
+        </div>
+        <div class="mobile-content-pane" id="mobileSchwarzesBrettPane">
+          <div class="mobile-slider-container" id="mobileSchwarzesBrettSlider"></div>
+          <div class="mobile-slider-indicator" id="mobileSchwarzesBrettIndicator">1 / 1</div>
         </div>
       </div>
     </div>
@@ -24005,6 +24549,9 @@
           if (tabName === "dashboard") {
             loadDashboard();
             loadPinnedEvents();
+            loadEventsAndMeetings();     // Dashboard V2
+            loadNewRequests();           // Dashboard V2
+            loadUpcomingAppointments();  // Dashboard V2
             loadSchwarzesBrett();
           }
           else if (tabName === "requests") {
@@ -24149,6 +24696,9 @@
             loadEvents(),
             loadDashboard(),
             loadPinnedEvents(),
+            loadEventsAndMeetings(),      // Dashboard V2
+            loadNewRequests(),            // Dashboard V2
+            loadUpcomingAppointments(),   // Dashboard V2
             loadSchwarzesBrett()
           ]);
 
@@ -24648,6 +25198,331 @@
       window.loadPinnedEvents = loadPinnedEvents;
       window.startPinnedEventsAutoRefresh = startPinnedEventsAutoRefresh;
       window.stopPinnedEventsAutoRefresh = stopPinnedEventsAutoRefresh;
+
+      // ============================================
+      // EVENTS & MEETINGS - Dashboard V2
+      // Horizontal scroll with Pflicht-Events first
+      // ============================================
+      async function loadEventsAndMeetings() {
+        console.log('📅 Loading Events & Meetings for Dashboard V2...');
+
+        const container = document.getElementById('eventsScrollContainer');
+        if (!container) {
+          console.warn('⚠️ eventsScrollContainer not found');
+          return;
+        }
+
+        try {
+          const now = new Date().toISOString();
+
+          // Load all upcoming events (not just attendance_required)
+          const { data: events, error } = await supabase
+            .from('events')
+            .select('*')
+            .gt('end_time', now)
+            .order('start_time', { ascending: true })
+            .limit(20);
+
+          if (error) throw error;
+
+          if (!events || events.length === 0) {
+            container.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 40px; color: #86868b;">
+                Keine anstehenden Events
+              </div>
+            `;
+            return;
+          }
+
+          // Sort: Pflicht-Events first, then by date
+          const sortedEvents = events.sort((a, b) => {
+            if (a.attendance_required && !b.attendance_required) return -1;
+            if (!a.attendance_required && b.attendance_required) return 1;
+            return new Date(a.start_time) - new Date(b.start_time);
+          });
+
+          const cardsHTML = sortedEvents.map(event => {
+            const isPflicht = event.attendance_required === true;
+            const startDate = new Date(event.start_time);
+
+            const formattedTime = startDate.toLocaleTimeString('de-DE', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            const formattedDate = startDate.toLocaleDateString('de-DE', {
+              weekday: 'short',
+              day: '2-digit',
+              month: 'short'
+            });
+
+            const eventType = event.type || 'Event';
+            const description = event.description || '';
+            const truncatedDesc = description.length > 60
+              ? description.substring(0, 60) + '...'
+              : description;
+
+            return `
+              <div class="event-card-v2 ${isPflicht ? 'pflicht' : 'normal'}" data-event-id="${event.id}">
+                <div class="event-card-time">${formattedDate} · ${formattedTime}</div>
+                <div class="event-card-badge">${isPflicht ? 'Pflicht' : eventType}</div>
+                <div class="event-card-title">${event.title || 'Event'}</div>
+                <div class="event-card-desc">${truncatedDesc}</div>
+                ${event.location ? `<div class="event-card-location">📍 ${event.location}</div>` : ''}
+              </div>
+            `;
+          }).join('');
+
+          container.innerHTML = cardsHTML;
+
+          // Add click handlers for event details
+          container.querySelectorAll('.event-card-v2').forEach(card => {
+            card.addEventListener('click', () => {
+              const eventId = card.dataset.eventId;
+              if (eventId && typeof openEventDetail === 'function') {
+                openEventDetail(eventId);
+              }
+            });
+          });
+
+          console.log('✅ Loaded', events.length, 'events (',
+            events.filter(e => e.attendance_required).length, 'Pflicht)');
+
+        } catch (err) {
+          console.error('❌ Error loading events:', err);
+          container.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 40px; color: #ff3b30;">
+              Fehler beim Laden der Events
+            </div>
+          `;
+        }
+      }
+
+      window.loadEventsAndMeetings = loadEventsAndMeetings;
+
+      // ============================================
+      // NEW REQUESTS - Dashboard V2
+      // Shows latest 6 open requests with rank badges
+      // ============================================
+      async function loadNewRequests() {
+        console.log('📨 Loading New Requests for Dashboard V2...');
+
+        const container = document.getElementById('newRequestsContainer');
+        if (!container) {
+          console.warn('⚠️ newRequestsContainer not found');
+          return;
+        }
+
+        try {
+          let requests = [];
+
+          // Use CentralDataManager if available
+          if (typeof CentralDataManager !== 'undefined' && CentralDataManager.isReady && CentralDataManager.isReady()) {
+            requests = CentralDataManager.getRequests()
+              .filter(r => r.status === 'open_request')
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .slice(0, 6);
+          } else {
+            // Fallback: Direct query
+            const { data, error } = await supabase
+              .from('request_cards_view')
+              .select('*')
+              .eq('status', 'open_request')
+              .order('created_at', { ascending: false })
+              .limit(6);
+
+            if (error) throw error;
+            requests = data || [];
+          }
+
+          if (requests.length === 0) {
+            container.innerHTML = `
+              <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">
+                Keine neuen Anfragen
+              </div>
+            `;
+            return;
+          }
+
+          const itemsHTML = requests.map(req => {
+            // Get customer name
+            const customerName = req.customer_first_name && req.customer_last_name
+              ? `${req.customer_first_name} ${req.customer_last_name}`
+              : req.customer_name || req.first_name || 'Unbekannt';
+
+            const initials = customerName
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .substring(0, 2);
+
+            // Format date
+            const createdDate = new Date(req.created_at);
+            const formattedDate = createdDate.toLocaleDateString('de-DE', {
+              day: '2-digit',
+              month: 'short'
+            });
+
+            // Get rank for badge
+            const rank = req.customer_rank || req.rank || 'Neukunde';
+            const rankClass = rank.toLowerCase().replace(/\s+/g, '-');
+
+            return `
+              <div class="request-item-v2" data-request-id="${req.id}">
+                <div class="request-avatar-v2">${initials}</div>
+                <div class="request-info-v2">
+                  <div class="request-name-v2">${customerName}</div>
+                  <div class="request-date-v2">${formattedDate}</div>
+                </div>
+                <span class="rank-badge rank-${rankClass} request-rank-badge">${rank}</span>
+              </div>
+            `;
+          }).join('');
+
+          container.innerHTML = itemsHTML;
+
+          // Add click handlers
+          container.querySelectorAll('.request-item-v2').forEach(item => {
+            item.addEventListener('click', () => {
+              const requestId = item.dataset.requestId;
+              if (requestId && typeof openRequestDetail === 'function') {
+                openRequestDetail(requestId);
+              } else if (requestId) {
+                // Fallback: Navigate to requests tab
+                if (typeof switchTab === 'function') {
+                  switchTab('requests');
+                }
+              }
+            });
+          });
+
+          console.log('✅ Loaded', requests.length, 'new requests');
+
+        } catch (err) {
+          console.error('❌ Error loading new requests:', err);
+          container.innerHTML = `
+            <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #ff3b30;">
+              Fehler beim Laden
+            </div>
+          `;
+        }
+      }
+
+      window.loadNewRequests = loadNewRequests;
+
+      // ============================================
+      // UPCOMING APPOINTMENTS - Dashboard V2
+      // Shows next 6 appointments
+      // ============================================
+      async function loadUpcomingAppointments() {
+        console.log('📅 Loading Upcoming Appointments for Dashboard V2...');
+
+        const container = document.getElementById('upcomingAppointmentsContainer');
+        if (!container) {
+          console.warn('⚠️ upcomingAppointmentsContainer not found');
+          return;
+        }
+
+        try {
+          const now = new Date().toISOString();
+          let appointments = [];
+
+          if (typeof CentralDataManager !== 'undefined' && CentralDataManager.isReady && CentralDataManager.isReady()) {
+            appointments = CentralDataManager.getAppointments()
+              .filter(apt => apt.start && new Date(apt.start) >= new Date(now) && apt.status === 'scheduled')
+              .sort((a, b) => new Date(a.start) - new Date(b.start))
+              .slice(0, 6);
+          } else {
+            // Fallback: Direct query
+            const { data, error } = await supabase
+              .from('appointments')
+              .select('*, customer:customers(id, first_name, last_name), artist:artists(id, name, profile_image)')
+              .eq('status', 'scheduled')
+              .gt('start', now)
+              .order('start', { ascending: true })
+              .limit(6);
+
+            if (error) throw error;
+            appointments = data || [];
+          }
+
+          if (appointments.length === 0) {
+            container.innerHTML = `
+              <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #86868b;">
+                Keine anstehenden Termine
+              </div>
+            `;
+            return;
+          }
+
+          const itemsHTML = appointments.map(apt => {
+            // Get customer name
+            const customerName = apt.customer
+              ? `${apt.customer.first_name || ''} ${apt.customer.last_name || ''}`.trim()
+              : apt.customer_name || 'Unbekannt';
+
+            // Get artist info
+            const artistName = apt.artist?.name || apt.artist_name || 'Nicht zugewiesen';
+            const artistImage = apt.artist?.profile_image || null;
+            const artistInitials = artistName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+
+            // Format time and date
+            const startDate = new Date(apt.start);
+            const formattedTime = startDate.toLocaleTimeString('de-DE', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            const formattedDate = startDate.toLocaleDateString('de-DE', {
+              weekday: 'short',
+              day: '2-digit',
+              month: 'short'
+            });
+
+            const avatarContent = artistImage
+              ? `<img src="${artistImage}" alt="${artistName}" onerror="this.parentElement.innerHTML='${artistInitials}'">`
+              : artistInitials;
+
+            return `
+              <div class="appointment-item-v2" data-appointment-id="${apt.id}">
+                <div class="appointment-avatar-v2">${avatarContent}</div>
+                <div class="appointment-info-v2">
+                  <div class="appointment-customer-v2">${customerName}</div>
+                  <div class="appointment-artist-v2">mit ${artistName}</div>
+                </div>
+                <div class="appointment-time-v2">
+                  <div class="appointment-time-value">${formattedTime}</div>
+                  <div class="appointment-date-value">${formattedDate}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          container.innerHTML = itemsHTML;
+
+          // Add click handlers
+          container.querySelectorAll('.appointment-item-v2').forEach(item => {
+            item.addEventListener('click', () => {
+              const appointmentId = item.dataset.appointmentId;
+              if (appointmentId && typeof openAppointmentDetail === 'function') {
+                openAppointmentDetail(appointmentId);
+              }
+            });
+          });
+
+          console.log('✅ Loaded', appointments.length, 'upcoming appointments');
+
+        } catch (err) {
+          console.error('❌ Error loading appointments:', err);
+          container.innerHTML = `
+            <div class="todo-empty-state" style="text-align: center; padding: 20px; color: #ff3b30;">
+              Fehler beim Laden
+            </div>
+          `;
+        }
+      }
+
+      window.loadUpcomingAppointments = loadUpcomingAppointments;
 
       // ============================================
       // SCHWARZES BRETT - LOAD FROM SUPABASE
