@@ -3942,7 +3942,7 @@
     .event-card-v2.pflicht {
       background: linear-gradient(135deg, #3B82F6 0%, #2563EB 40%, #1D4ED8 100%);
       color: white;
-      box-shadow: 0 10px 40px rgba(37, 99, 235, 0.4);
+      box-shadow: none;
       border: 1px solid rgba(96, 165, 250, 0.5);
     }
 
@@ -4060,7 +4060,7 @@
     }
 
     .event-card-time {
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 500;
     }
 
@@ -25466,12 +25466,12 @@
             // Generate avatars with real profile pictures
             const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
             const avatarsHTML = uniqueAttendees.slice(0, 3).map((profile, i) => {
-              const initials = (profile.username || '??').substring(0, 2).toUpperCase();
+              const firstLetter = (profile.username || '?').charAt(0).toUpperCase();
               const bgColor = avatarColors[i % avatarColors.length];
               if (profile.avatar_url) {
-                return `<div class="event-card-avatar" style="background: ${bgColor};"><img src="${profile.avatar_url}" alt="${initials}" onerror="this.style.display='none';this.parentElement.textContent='${initials}';" /></div>`;
+                return `<div class="event-card-avatar" style="background: ${bgColor};"><img src="${profile.avatar_url}" alt="${firstLetter}" onerror="this.style.display='none';this.parentElement.textContent='${firstLetter}';" /></div>`;
               }
-              return `<div class="event-card-avatar" style="background: ${bgColor};">${initials}</div>`;
+              return `<div class="event-card-avatar" style="background: ${bgColor};">${firstLetter}</div>`;
             }).join('') || '<div class="event-card-avatar" style="background: #667eea;">?</div>';
 
             return `
