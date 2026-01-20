@@ -3914,97 +3914,272 @@
       display: none;
     }
 
+    /* ═══════════════════════════════════════════════════════════════
+       EVENT CARD V2 - Flowin Reference Design
+       ═══════════════════════════════════════════════════════════════ */
+
     .event-card-v2 {
       flex: 0 0 auto;
-      width: 240px;
-      height: 200px;
-      border-radius: var(--glass-radius-sm);
-      padding: 16px;
+      width: 280px;
+      min-width: 260px;
+      height: auto;
+      min-height: 220px;
+      border-radius: 20px;
+      padding: 20px;
       scroll-snap-align: start;
       display: flex;
       flex-direction: column;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
+      position: relative;
     }
 
     .event-card-v2:hover {
-      transform: translateY(-2px);
+      transform: translateY(-4px);
     }
 
-    /* Pflicht Event Card - Blue/Purple Gradient */
+    /* ─── PFLICHT EVENT CARD ─── */
     .event-card-v2.pflicht {
-      background: var(--pflicht-gradient);
+      background: linear-gradient(135deg, #4F8EF7 0%, #7B68EE 50%, #9B6DFF 100%);
       color: white;
-      box-shadow: var(--pflicht-shadow);
+      box-shadow: 0 10px 40px rgba(79, 142, 247, 0.35);
       border: none;
     }
 
-    .event-card-v2.pflicht .event-card-time,
-    .event-card-v2.pflicht .event-card-title,
-    .event-card-v2.pflicht .event-card-desc {
+    .event-card-v2.pflicht:hover {
+      box-shadow: 0 14px 48px rgba(79, 142, 247, 0.45);
+    }
+
+    .event-card-v2.pflicht .event-card-header {
       color: white;
+    }
+
+    .event-card-v2.pflicht .event-card-time {
+      color: white;
+    }
+
+    .event-card-v2.pflicht .event-card-more-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .event-card-v2.pflicht .event-card-more-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
     }
 
     .event-card-v2.pflicht .event-card-badge {
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       color: white;
     }
 
-    .event-card-v2.pflicht:hover {
-      box-shadow: 0 12px 32px rgba(79, 125, 243, 0.45);
+    .event-card-v2.pflicht .event-card-title {
+      color: white;
     }
 
-    /* Normal Event Card - White with glassmorphism */
+    .event-card-v2.pflicht .event-card-desc {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .event-card-v2.pflicht .event-card-divider {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .event-card-v2.pflicht .event-card-footer {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .event-card-v2.pflicht .event-card-avatar {
+      border-color: white;
+    }
+
+    .event-card-v2.pflicht .event-card-stat {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* ─── NORMAL EVENT CARD ─── */
     .event-card-v2.normal {
-      background: var(--glass-bg-elevated);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--glass-shadow);
-      color: var(--macos-text-primary);
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      color: #1d1d1f;
     }
 
     .event-card-v2.normal:hover {
-      box-shadow: var(--glass-shadow-hover);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .event-card-v2.normal .event-card-time {
+      color: #1d1d1f;
+    }
+
+    .event-card-v2.normal .event-card-more-btn {
+      background: rgba(0, 0, 0, 0.05);
+      color: #86868b;
+    }
+
+    .event-card-v2.normal .event-card-more-btn:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .event-card-v2.normal .event-card-badge {
+      background: #f0f4ff;
+      border: 1px solid rgba(79, 142, 247, 0.2);
+      color: #4F8EF7;
+    }
+
+    .event-card-v2.normal .event-card-title {
+      color: #1d1d1f;
+    }
+
+    .event-card-v2.normal .event-card-desc {
+      color: #86868b;
+    }
+
+    .event-card-v2.normal .event-card-divider {
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .event-card-v2.normal .event-card-avatar {
+      border-color: #f5f5f7;
+    }
+
+    .event-card-v2.normal .event-card-stat {
+      color: #86868b;
+    }
+
+    /* ─── HEADER ROW ─── */
+    .event-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
     }
 
     .event-card-time {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 500;
-      opacity: 0.8;
-      margin-bottom: 8px;
     }
 
+    .event-card-more-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border: none;
+      padding: 0;
+    }
+
+    /* ─── TYPE BADGE ─── */
     .event-card-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
-      background: rgba(0, 0, 0, 0.06);
-      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+      margin-bottom: 12px;
       width: fit-content;
     }
 
+    .event-card-badge-icon {
+      font-size: 12px;
+    }
+
+    /* ─── TITLE ─── */
     .event-card-title {
-      font-size: 15px;
+      font-size: 18px;
       font-weight: 600;
       margin-bottom: 6px;
       line-height: 1.3;
     }
 
+    /* ─── DESCRIPTION ─── */
     .event-card-desc {
-      font-size: 12px;
-      opacity: 0.75;
-      line-height: 1.4;
-      flex: 1;
+      font-size: 13px;
+      line-height: 1.5;
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      margin-bottom: 16px;
     }
 
+    /* ─── DIVIDER ─── */
+    .event-card-divider {
+      border: none;
+      border-top: 1px dashed;
+      margin: 0 0 16px 0;
+    }
+
+    /* ─── FOOTER ROW ─── */
+    .event-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    .event-card-avatars {
+      display: flex;
+      align-items: center;
+    }
+
+    .event-card-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      margin-left: -10px;
+    }
+
+    .event-card-avatar:first-child {
+      margin-left: 0;
+    }
+
+    .event-card-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .event-card-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .event-card-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .event-card-stat-icon {
+      font-size: 14px;
+    }
+
+    /* ─── LOCATION (optional, in footer) ─── */
     .event-card-location {
       margin-top: auto;
       font-size: 11px;
@@ -25244,31 +25419,80 @@
           const cardsHTML = sortedEvents.map(event => {
             const isPflicht = event.attendance_required === true;
             const startDate = new Date(event.start_time);
+            const endDate = new Date(event.end_time);
 
-            const formattedTime = startDate.toLocaleTimeString('de-DE', {
+            // Format time range (e.g., "10:30 - 12:00")
+            const startTime = startDate.toLocaleTimeString('de-DE', {
               hour: '2-digit',
               minute: '2-digit'
             });
-
-            const formattedDate = startDate.toLocaleDateString('de-DE', {
-              weekday: 'short',
-              day: '2-digit',
-              month: 'short'
+            const endTime = endDate.toLocaleTimeString('de-DE', {
+              hour: '2-digit',
+              minute: '2-digit'
             });
+            const timeRange = `${startTime} - ${endTime}`;
 
             const eventType = event.type || 'Event';
             const description = event.description || '';
-            const truncatedDesc = description.length > 60
-              ? description.substring(0, 60) + '...'
+            const truncatedDesc = description.length > 80
+              ? description.substring(0, 80) + '...'
               : description;
+
+            // Badge icon based on type
+            const badgeIcon = isPflicht ? '⚡' : (eventType === 'Meeting' ? '👥' : '📅');
+
+            // Generate placeholder avatars (would use real attendee data if available)
+            const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
+            const attendeeCount = event.attendee_count || Math.floor(Math.random() * 4) + 2;
+            const confirmedCount = event.confirmed_count || Math.floor(attendeeCount * 0.6);
+
+            const avatarsHTML = Array.from({ length: Math.min(3, attendeeCount) }, (_, i) => {
+              const initials = ['DS', 'MK', 'AJ', 'CL'][i] || '?';
+              const bgColor = avatarColors[i % avatarColors.length];
+              return `<div class="event-card-avatar" style="background: ${bgColor};">${initials}</div>`;
+            }).join('');
 
             return `
               <div class="event-card-v2 ${isPflicht ? 'pflicht' : 'normal'}" data-event-id="${event.id}">
-                <div class="event-card-time">${formattedDate} · ${formattedTime}</div>
-                <div class="event-card-badge">${isPflicht ? 'Pflicht' : eventType}</div>
+                <!-- Header Row -->
+                <div class="event-card-header">
+                  <span class="event-card-time">${timeRange}</span>
+                  <button class="event-card-more-btn" onclick="event.stopPropagation();">⋯</button>
+                </div>
+
+                <!-- Type Badge -->
+                <div class="event-card-badge">
+                  <span class="event-card-badge-icon">${badgeIcon}</span>
+                  ${isPflicht ? 'Pflicht' : eventType}
+                </div>
+
+                <!-- Title -->
                 <div class="event-card-title">${event.title || 'Event'}</div>
-                <div class="event-card-desc">${truncatedDesc}</div>
-                ${event.location ? `<div class="event-card-location">📍 ${event.location}</div>` : ''}
+
+                <!-- Description -->
+                <div class="event-card-desc">${truncatedDesc || 'Keine Beschreibung'}</div>
+
+                <!-- Divider -->
+                <hr class="event-card-divider">
+
+                <!-- Footer Row -->
+                <div class="event-card-footer">
+                  <div class="event-card-avatars">
+                    ${avatarsHTML}
+                  </div>
+                  <div class="event-card-stats">
+                    <span class="event-card-stat">
+                      <span class="event-card-stat-icon">✓</span>
+                      ${confirmedCount}/${attendeeCount}
+                    </span>
+                    ${event.comment_count ? `
+                      <span class="event-card-stat">
+                        <span class="event-card-stat-icon">💬</span>
+                        ${event.comment_count}
+                      </span>
+                    ` : ''}
+                  </div>
+                </div>
               </div>
             `;
           }).join('');
