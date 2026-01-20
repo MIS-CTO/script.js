@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-20 | Version: 3.1216**
-**UPDATE: Phase 5.9 Revenue Overview Fix ✓**
+**Stand: 2026-01-20 | Version: 3.1217**
+**UPDATE: Consultation Weekend Blocking ✓**
 
 ---
 
@@ -44,6 +44,43 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Hotfix: Consultation Weekend Blocking (2026-01-20) ✅ COMPLETE
+
+### Problem
+
+Saturdays and Sundays were selectable in the consultation booking date picker even when artists had availability set in their dienstplan for weekends.
+
+### Solution
+
+Added weekend check at the beginning of `isDateAvailable()` function to block all Saturdays (day 6) and Sundays (day 0) for ALL artists, regardless of their dienstplan.
+
+### Technical Change
+
+**Location:** `consultation-booking.html` - `isDateAvailable()` function
+
+```javascript
+function isDateAvailable(dateStr) {
+  // Block weekends (Saturday = 6, Sunday = 0) for all artists
+  const date = parseLocalDate(dateStr);
+  const dayOfWeek = date.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+
+  // ... rest of existing checks (dienstplan, appointment overlap)
+}
+```
+
+### Files Changed
+
+- `consultation-booking.html` - Added 5 lines to `isDateAvailable()` function
+
+### Commit
+
+```
+e7013257 fix(consultation): disable weekend dates (Sat/Sun) in date picker
 ```
 
 ---
@@ -646,7 +683,7 @@ After paying for consultation via Stripe, the booking page showed "Waiting for p
 ### New Edge Functions
 
 | Function | Version | Purpose |
-|----------|---------|---------|
+|----------|---------|---------
 | `create-consultation-checkout` | v5 | Creates Stripe Checkout Session with metadata |
 | `stripe-webhook` | v26 | Creates appointment from checkout metadata |
 | `verify-checkout-session` | v1 | Verifies payment status on success page |
@@ -686,19 +723,25 @@ After paying for consultation via Stripe, the booking page showed "Waiting for p
 
 ---
 
-## Recent Session (2026-01-19) - Phase 5.8 Verification
+## Recent Session (2026-01-20) - Consultation Weekend Blocking
 
 **Completed:**
-- Live payment test with real card (€1.00)
-- Verified webhook correctly updates appointments with `request_id`
-- Confirmed Updates tab shows paid appointments from last 7 days
-- Cleared browser cache to verify new code working
-- Documented edge case: appointments without `request_id` not updated
+- Added weekend (Saturday/Sunday) blocking to consultation booking date picker
+- All Saturdays and Sundays are now unselectable for ALL artists
+- This applies regardless of the artist's dienstplan availability
 
-**Result:** Phase 5.8 COMPLETE - Payment notifications working end-to-end
+**Files Changed:**
+- `consultation-booking.html` - `isDateAvailable()` function
 
-**Next Phase:** 5.2 Performance & Polish (optional, low priority)
+**Commit:**
+- `e7013257` fix(consultation): disable weekend dates (Sat/Sun) in date picker
+
+**What to Test:**
+1. Go to consultation booking page
+2. Select any artist
+3. Navigate through the calendar
+4. Verify that all Saturdays and Sundays are grayed out and not clickable
 
 ---
 
-*Aktualisiert am 2026-01-19 mit Claude Code*
+*Aktualisiert am 2026-01-20 mit Claude Code*
