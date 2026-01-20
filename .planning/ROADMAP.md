@@ -1,6 +1,6 @@
 # Culture Over Money - Roadmap
-**Stand: 2026-01-19 | Version: 3.1215**
-**UPDATE: Phase 5.8 Payment Notifications & Webhook Fix COMPLETE**
+**Stand: 2026-01-20 | Version: 3.1265**
+**UPDATE: Phase 6 Dashboard Redesign COMPLETE**
 
 ---
 
@@ -23,12 +23,48 @@ Phase 5.5: Calendar & Search         ██████████████�
 Phase 5.6: Calendar Availability     ████████████████████ 100% ✓
 Phase 5.7: Status Stripes & Book     ████████████████████ 100% ✓
 Phase 5.8: Payment Notifications     ████████████████████ 100% ✓
+Phase 6: Dashboard Redesign          ████████████████████ 100% ✓
 Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0% → NEXT
 ```
 
 ---
 
 ## Recent Completions
+
+### Phase 6: Dashboard Redesign - Glassmorphism (2026-01-20) ✓
+
+| Feature | Description |
+|---------|-------------|
+| **5-Column Grid Layout** | New CSS Grid with Schwarzes Brett, Events, Projects, Tasks, Right Column |
+| **Glassmorphism Styling** | backdrop-filter blur, transparent backgrounds, glass borders |
+| **Schwarzes Brett Slider** | Single-entry slider with glass indicators above Neue Nachricht button |
+| **Events & Meetings** | Horizontal scroll cards, Pflicht badge aligned above avatars |
+| **Neue Anfragen** | Grey container with white entries, relative time ("Heute", "Gestern") |
+| **Anstehende Termine** | Grey container with white entries, matched padding |
+| **Task Priority System** | DB column + UI dropdown (Low/Regular/Urgent) with colored flag icons |
+| **Font & Spacing** | Reduced heading weight (450), matched container padding |
+
+### Key Changes (Phase 6)
+
+| Component | Change |
+|-----------|--------|
+| `.dashboard-container-v2` | 5-column grid, 26px gap, 48px side/bottom padding |
+| `.glass-card` | backdrop-filter: blur(20px), rgba backgrounds |
+| `.right-column-section` | Grey background, white border, fade effect at bottom |
+| `.brett-slider-*` | Single slide view, indicators outside overflow |
+| `.event-card-content` | margin-top: auto (content above avatars) |
+| `project_tasks.priority` | New column: 'low' / 'regular' / 'urgent' |
+| `.task-priority-flag` | Yellow (low), Orange (regular), Red (urgent) flags |
+
+### Commits (Phase 6)
+
+```
+8117c84 feat(dashboard): slider indicators above button, padding fixes, task priorities
+2801e2e feat(events): align badge, title, description above avatars
+1cfec76 style(dashboard): reduce container heading font-weight to 450
+```
+
+---
 
 ### Phase 5.8: Payment Notifications & Webhook Fix (2026-01-19) ✓
 
@@ -113,6 +149,7 @@ Januar 2026
 ├── KW 2: Phase 3.5-4.7 ✓ DONE
 ├── KW 3: Phase 5.1-5.7 ✓ DONE (2026-01-14 to 2026-01-16)
 ├── KW 4: Phase 5.8 ✓ DONE (2026-01-19)
+├── KW 4: Phase 6 Dashboard Redesign ✓ DONE (2026-01-20)
 └── KW 4+: Phase 5.2 Performance & Polish (Optional)
 
 Februar 2026
@@ -134,4 +171,4 @@ fa9898d fix(requests): allow 0 as valid price for scheduling check
 
 ---
 
-*Last updated: 2026-01-19 with Claude Code*
+*Last updated: 2026-01-20 with Claude Code*
