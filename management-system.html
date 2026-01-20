@@ -17198,6 +17198,16 @@
                 <div class="kpi-label">Tattoo-Termine</div>
                 <div class="kpi-value" id="revTattooTermine">--</div>
                 <div class="kpi-change positive" id="revTattooPercent">--%</div>
+                <div style="margin-top: 8px; font-size: 11px; color: var(--text-300);">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                    <span>Resident:</span>
+                    <span id="revResidentBreakdown">--</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span>Guest:</span>
+                    <span id="revGuestBreakdown">--</span>
+                  </div>
+                </div>
               </div>
               <div class="kpi-card">
                 <div class="kpi-label">Offene Zahlungen</div>
@@ -47593,17 +47603,24 @@
         const revAnzahlungen = document.getElementById('revAnzahlungen');
         const revTattooPercent = document.getElementById('revTattooPercent');
         const revTotalGesamtSub = document.getElementById('revTotalGesamtSub');
+        const revResidentBreakdown = document.getElementById('revResidentBreakdown');
+        const revGuestBreakdown = document.getElementById('revGuestBreakdown');
 
         if (revTotalGesamt) revTotalGesamt.textContent = formatEuroFull(totalRevenue);
-        if (revTattooTermine) revTattooTermine.textContent = formatEuroFull(paidRevenue);
+        // Tattoo-Termine shows total revenue from projects.price
+        if (revTattooTermine) revTattooTermine.textContent = formatEuroFull(totalRevenue);
         if (revOffeneZahlungen) revOffeneZahlungen.textContent = formatEuroFull(openRevenue);
         if (revAnzahlungen) revAnzahlungen.textContent = formatEuroFull(depositRevenue);
         if (revTattooPercent && totalRevenue > 0) {
-          revTattooPercent.textContent = `${((paidRevenue / totalRevenue) * 100).toFixed(1)}%`;
+          const assignedRevenue = residentRevenue + guestRevenue;
+          revTattooPercent.textContent = `${((assignedRevenue / totalRevenue) * 100).toFixed(1)}% zugewiesen`;
         }
         if (revTotalGesamtSub) {
           revTotalGesamtSub.textContent = `${projectCount} Projekte`;
         }
+        // Resident vs Guest breakdown
+        if (revResidentBreakdown) revResidentBreakdown.textContent = formatEuroFull(residentRevenue);
+        if (revGuestBreakdown) revGuestBreakdown.textContent = formatEuroFull(guestRevenue);
 
         // Update Revenue Stream Cards - now showing Resident vs Guest breakdown
         const revStreamTattoo = document.getElementById('revStreamTattoo');
