@@ -25408,9 +25408,13 @@
             .select('id, username, avatar_url, role')
             .eq('is_active', true);
 
+          // Map profiles by lowercase role for case-insensitive matching
           const profilesMap = (allProfiles || []).reduce((acc, p) => {
-            if (p.role) acc[p.role] = acc[p.role] || [];
-            if (p.role) acc[p.role].push(p);
+            if (p.role) {
+              const roleKey = p.role.toLowerCase();
+              acc[roleKey] = acc[roleKey] || [];
+              acc[roleKey].push(p);
+            }
             return acc;
           }, {});
 
@@ -25455,9 +25459,9 @@
             // Badge icon based on type
             const badgeIcon = isPflicht ? '⚡' : (eventType === 'Meeting' ? '👥' : '📅');
 
-            // Get attendees based on visible_groups
+            // Get attendees based on visible_groups (case-insensitive matching)
             const visibleGroups = event.visible_groups || [];
-            const attendees = visibleGroups.flatMap(group => profilesMap[group] || []);
+            const attendees = visibleGroups.flatMap(group => profilesMap[group.toLowerCase()] || []);
             // Remove duplicates by id
             const uniqueAttendees = [...new Map(attendees.map(a => [a.id, a])).values()];
             const attendeeCount = uniqueAttendees.length || 1;
