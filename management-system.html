@@ -17211,7 +17211,7 @@
             </div>
 
             <div class="revenue-streams-grid">
-              <!-- Tattoo-Termine -->
+              <!-- Resident Artists Revenue -->
               <div class="revenue-stream-card">
                 <div class="revenue-stream-icon green">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -17219,14 +17219,14 @@
                   </svg>
                 </div>
                 <div class="revenue-stream-content">
-                  <div class="revenue-stream-label">Tattoo-Termine</div>
+                  <div class="revenue-stream-label">Resident Artists</div>
                   <div class="revenue-stream-value" id="revStreamTattoo">--</div>
-                  <div class="revenue-stream-sub">appointments.total_amount</div>
+                  <div class="revenue-stream-sub">projects.price (is_guest = false)</div>
                 </div>
                 <div class="revenue-stream-percent" id="revStreamTattooPercent">--%</div>
               </div>
 
-              <!-- Guest Spot Studio Share -->
+              <!-- Guest Artists Revenue -->
               <div class="revenue-stream-card">
                 <div class="revenue-stream-icon purple">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -17234,9 +17234,9 @@
                   </svg>
                 </div>
                 <div class="revenue-stream-content">
-                  <div class="revenue-stream-label">Guest Spot Studio Share</div>
+                  <div class="revenue-stream-label">Guest Artists</div>
                   <div class="revenue-stream-value" id="revStreamGuest">--</div>
-                  <div class="revenue-stream-sub">upcoming_slots.studio_share</div>
+                  <div class="revenue-stream-sub">projects.price (is_guest = true)</div>
                 </div>
                 <div class="revenue-stream-percent" id="revStreamGuestPercent">--%</div>
               </div>
@@ -17296,7 +17296,7 @@
                 <div class="revenue-stream-content">
                   <div class="revenue-stream-label">Gesamt (realisiert)</div>
                   <div class="revenue-stream-value" id="revStreamGesamt">--</div>
-                  <div class="revenue-stream-sub">Tattoo + Guest + Merch + Gutscheine eingelöst</div>
+                  <div class="revenue-stream-sub">Bezahlt + Anzahlung (aus projects.price)</div>
                 </div>
                 <div class="revenue-stream-percent">100%</div>
               </div>
@@ -47448,62 +47448,127 @@
     }
 
     async function loadRevenueOverviewData() {
-      console.log('📊 Loading revenue overview data...');
+      console.log('📊 Loading revenue overview data from projects table...');
 
       try {
-        // Get appointments from cache
-        const appointments = CentralDataManager.getAppointments() || [];
         const locations = CentralDataManager.getLocations() || [];
 
-        console.log('📊 Processing', appointments.length, 'appointments for revenue...');
+        // Load revenue data directly from projects table with artist info
+        // Join projects -> appointments -> artists to get is_guest flag
+        const { data: projectRevenueData, error } = await supabase.rpc('get_revenue_overview');
 
-        // Calculate revenue by payment status
+        let revenueData;
+        if (error || !projectRevenueData) {
+          console.log('📊 RPC not available, using direct query...');
+          // Fallback: Direct query to projects with artist join
+          const { data: projects, error: projectsError } = await supabase
+            .from('projects')
+            .select(`
+              id,
+              price,
+              payment_state,
+              location_id
+            `)
+            .gt('price', 0);
+
+          if (projectsError) throw projectsError;
+
+          // Get appointments with artist info for these projects
+          const projectIds = projects.map(p => p.id);
+          const { data: appointments, error: aptError } = await supabase
+            .from('appointments')
+            .select(`
+              project_id,
+              artist_id,
+              artist:artists!appointments_artist_id_fkey(id, is_guest)
+            `)
+            .in('project_id', projectIds);
+
+          if (aptError) console.warn('Could not load artist info:', aptError);
+
+          // Create lookup map for artist info by project_id
+          const artistByProject = {};
+          (appointments || []).forEach(apt => {
+            if (apt.project_id && apt.artist) {
+              artistByProject[apt.project_id] = apt.artist;
+            }
+          });
+
+          // Process projects with artist info
+          revenueData = projects.map(p => ({
+            ...p,
+            is_guest: artistByProject[p.id]?.is_guest ?? null
+          }));
+        } else {
+          revenueData = projectRevenueData;
+        }
+
+        console.log('📊 Processing', revenueData.length, 'projects for revenue...');
+
+        // Initialize counters
         let totalRevenue = 0;
         let paidRevenue = 0;
-        let unpaidRevenue = 0;
-        let pendingRevenue = 0;
         let depositRevenue = 0;
-        let tattooRevenue = 0;
-        let appointmentCount = 0;
+        let openRevenue = 0;
+        let residentRevenue = 0;
+        let guestRevenue = 0;
+        let projectCount = 0;
 
         // Revenue by location
         const revenueByLocation = {};
         locations.forEach(loc => {
-          revenueByLocation[loc.id] = { name: loc.name, revenue: 0 };
+          revenueByLocation[loc.id] = { name: loc.name, revenue: 0, resident: 0, guest: 0 };
         });
 
-        appointments.forEach(apt => {
-          const price = parseFloat(apt.price || apt.total_amount || apt.payment_amount || 0);
+        // Process each project
+        revenueData.forEach(project => {
+          const price = parseFloat(project.price || 0);
           if (price <= 0) return;
 
           totalRevenue += price;
-          appointmentCount++;
+          projectCount++;
 
-          // Group by payment status
-          const status = (apt.payment_status || 'unpaid').toLowerCase();
-          if (status === 'paid' || status === 'bezahlt') {
+          // Group by payment state (from projects table)
+          const paymentState = (project.payment_state || '').toLowerCase();
+          if (paymentState.includes('komplett bezahlt') || paymentState === 'paid') {
             paidRevenue += price;
-            tattooRevenue += price; // Only count paid as realized tattoo revenue
-          } else if (status === 'pending' || status === 'teilzahlung') {
-            pendingRevenue += price;
-          } else if (status === 'deposit' || status === 'anzahlung') {
+          } else if (paymentState.includes('anzahlung') || paymentState === 'deposit') {
             depositRevenue += price;
+          } else if (paymentState.includes('offen') || paymentState === 'open' || paymentState === 'unbekannt') {
+            openRevenue += price;
+          } else if (paymentState.includes('archiviert')) {
+            // Archived projects - consider as paid/completed
+            paidRevenue += price;
           } else {
-            unpaidRevenue += price;
+            openRevenue += price;
           }
 
+          // Group by artist type
+          if (project.is_guest === true) {
+            guestRevenue += price;
+          } else if (project.is_guest === false) {
+            residentRevenue += price;
+          }
+          // Unassigned projects (is_guest === null) are not counted in either category
+
           // Group by location
-          if (apt.location_id && revenueByLocation[apt.location_id]) {
-            revenueByLocation[apt.location_id].revenue += price;
+          if (project.location_id && revenueByLocation[project.location_id]) {
+            revenueByLocation[project.location_id].revenue += price;
+            if (project.is_guest === true) {
+              revenueByLocation[project.location_id].guest += price;
+            } else if (project.is_guest === false) {
+              revenueByLocation[project.location_id].resident += price;
+            }
           }
         });
 
-        console.log('📊 Revenue breakdown:', {
+        console.log('📊 Revenue breakdown from projects:', {
           total: totalRevenue,
           paid: paidRevenue,
-          unpaid: unpaidRevenue,
-          pending: pendingRevenue,
-          deposit: depositRevenue
+          deposit: depositRevenue,
+          open: openRevenue,
+          resident: residentRevenue,
+          guest: guestRevenue
         });
 
         // Format currency helper
@@ -47527,28 +47592,40 @@
 
         if (revTotalGesamt) revTotalGesamt.textContent = formatEuroFull(totalRevenue);
         if (revTattooTermine) revTattooTermine.textContent = formatEuroFull(paidRevenue);
-        if (revOffeneZahlungen) revOffeneZahlungen.textContent = formatEuroFull(unpaidRevenue + pendingRevenue);
+        if (revOffeneZahlungen) revOffeneZahlungen.textContent = formatEuroFull(openRevenue);
         if (revAnzahlungen) revAnzahlungen.textContent = formatEuroFull(depositRevenue);
         if (revTattooPercent && totalRevenue > 0) {
           revTattooPercent.textContent = `${((paidRevenue / totalRevenue) * 100).toFixed(1)}%`;
         }
         if (revTotalGesamtSub) {
-          revTotalGesamtSub.textContent = `${appointmentCount} Termine`;
+          revTotalGesamtSub.textContent = `${projectCount} Projekte`;
         }
 
-        // Update Revenue Stream Cards
+        // Update Revenue Stream Cards - now showing Resident vs Guest breakdown
         const revStreamTattoo = document.getElementById('revStreamTattoo');
         const revStreamTattooPercent = document.getElementById('revStreamTattooPercent');
+        const revStreamGuest = document.getElementById('revStreamGuest');
+        const revStreamGuestPercent = document.getElementById('revStreamGuestPercent');
         const revStreamGesamt = document.getElementById('revStreamGesamt');
 
-        if (revStreamTattoo) revStreamTattoo.textContent = formatEuroFull(paidRevenue);
+        // Tattoo-Termine shows Resident Artist revenue
+        if (revStreamTattoo) revStreamTattoo.textContent = formatEuroFull(residentRevenue);
         if (revStreamTattooPercent && totalRevenue > 0) {
-          revStreamTattooPercent.textContent = `${((paidRevenue / totalRevenue) * 100).toFixed(1)}%`;
+          revStreamTattooPercent.textContent = `${((residentRevenue / totalRevenue) * 100).toFixed(1)}%`;
         }
-        if (revStreamGesamt) revStreamGesamt.textContent = formatEuroFull(paidRevenue);
 
-        // Render charts with real data
-        renderRevenueOverviewChartsWithData(paidRevenue, revenueByLocation, locations);
+        // Guest Spot shows Guest Artist revenue
+        if (revStreamGuest) revStreamGuest.textContent = formatEuroFull(guestRevenue);
+        if (revStreamGuestPercent && totalRevenue > 0) {
+          revStreamGuestPercent.textContent = `${((guestRevenue / totalRevenue) * 100).toFixed(1)}%`;
+        }
+
+        // Total shows paid + deposit (realized revenue)
+        const realizedRevenue = paidRevenue + depositRevenue;
+        if (revStreamGesamt) revStreamGesamt.textContent = formatEuroFull(realizedRevenue);
+
+        // Render charts with real data including artist type breakdown
+        renderRevenueOverviewChartsWithData(residentRevenue, guestRevenue, revenueByLocation, locations);
 
       } catch (error) {
         console.error('❌ Error loading revenue overview data:', error);
@@ -47557,39 +47634,70 @@
       }
     }
 
-    function renderRevenueOverviewChartsWithData(tattooRevenue, revenueByLocation, locations) {
+    function renderRevenueOverviewChartsWithData(residentRevenue, guestRevenue, revenueByLocation, locations) {
       const colors = getAnalyticsChartColors();
 
-      // Prepare location data for bar chart
+      // Prepare location data for bar chart with resident/guest breakdown
       const locationNames = [];
-      const locationRevenues = [];
+      const locationResidentRevenues = [];
+      const locationGuestRevenues = [];
 
-      // Sort locations by revenue descending
+      // Sort locations by total revenue descending
       const sortedLocations = Object.entries(revenueByLocation)
         .filter(([id, data]) => data.revenue > 0)
         .sort((a, b) => b[1].revenue - a[1].revenue);
 
       sortedLocations.forEach(([id, data]) => {
         locationNames.push(data.name);
-        locationRevenues.push(Math.round(data.revenue / 1000)); // Convert to K
+        locationResidentRevenues.push(Math.round((data.resident || 0) / 1000)); // Convert to K
+        locationGuestRevenues.push(Math.round((data.guest || 0) / 1000)); // Convert to K
       });
 
       // Calculate total for percentages
-      const totalRevenue = tattooRevenue; // For now, just tattoo revenue
+      const totalRevenue = residentRevenue + guestRevenue;
 
-      // Pie chart data - for now showing tattoo revenue as main source
-      const pieData = [
-        { label: 'Tattoo-Termine (Bezahlt)', value: tattooRevenue, color: colors.green, display: `€${(tattooRevenue/1000).toFixed(1)}K (100%)` }
-      ];
+      // Pie chart data showing Resident vs Guest breakdown
+      const pieData = [];
+      if (residentRevenue > 0) {
+        const residentPercent = totalRevenue > 0 ? ((residentRevenue / totalRevenue) * 100).toFixed(1) : 0;
+        pieData.push({
+          label: 'Resident Artists',
+          value: residentRevenue,
+          color: colors.green,
+          display: `€${(residentRevenue/1000).toFixed(1)}K (${residentPercent}%)`
+        });
+      }
+      if (guestRevenue > 0) {
+        const guestPercent = totalRevenue > 0 ? ((guestRevenue / totalRevenue) * 100).toFixed(1) : 0;
+        pieData.push({
+          label: 'Guest Artists',
+          value: guestRevenue,
+          color: colors.purple,
+          display: `€${(guestRevenue/1000).toFixed(1)}K (${guestPercent}%)`
+        });
+      }
+
+      // Fallback if no data
+      if (pieData.length === 0) {
+        pieData.push({
+          label: 'No Data',
+          value: 1,
+          color: colors.gray || '#888888',
+          display: '€0 (0%)'
+        });
+      }
 
       // Create pie chart
       createAnalyticsPieChart('revenueSourcePie', 'revenueSourceLegend', pieData);
 
-      // Create bar chart for revenue by studio
+      // Create stacked bar chart for revenue by studio (Resident vs Guest)
       if (locationNames.length > 0) {
         createAnalyticsBarChart('revenueStudioChart',
           locationNames,
-          [{ label: 'Revenue €K', data: locationRevenues, backgroundColor: colors.blue }]
+          [
+            { label: 'Resident €K', data: locationResidentRevenues, backgroundColor: colors.green },
+            { label: 'Guest €K', data: locationGuestRevenues, backgroundColor: colors.purple }
+          ]
         );
       } else {
         createAnalyticsBarChart('revenueStudioChart',

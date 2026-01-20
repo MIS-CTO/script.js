@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-19 | Version: 3.1215**
-**UPDATE: Phase 5.8 Payment Notifications & Webhook Fix ✓**
+**Stand: 2026-01-20 | Version: 3.1216**
+**UPDATE: Phase 5.9 Revenue Overview Fix ✓**
 
 ---
 
@@ -40,9 +40,102 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.8: PAYMENT NOTIFICATIONS & WEBHOOK FIX      ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 5.9: REVENUE OVERVIEW FIX                     ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## Phase 5.9: Revenue Overview Fix (2026-01-20) ✅ COMPLETE
+
+### Overview
+
+Fixed revenue overview in Analytics to pull prices from the `projects` table instead of appointments, and differentiate between Guest Artists and Resident Artists.
+
+### Problem (WAS)
+
+Revenue overview was pulling data from `CentralDataManager.getAppointments()` which used appointment price fields (`price`, `total_amount`, `payment_amount`). This resulted in incorrect revenue numbers.
+
+### Solution (IMPLEMENTED)
+
+**Changed data source from appointments to projects table:**
+
+| Before | After |
+|--------|-------|
+| Data from appointments cache | Direct query to projects table |
+| No artist type distinction | Resident vs Guest artist breakdown |
+| Used `apt.price` / `apt.total_amount` | Uses `projects.price` |
+
+### Technical Changes
+
+**loadRevenueOverviewData Function (line ~47450):**
+```javascript
+// OLD: Get from appointments cache
+const appointments = CentralDataManager.getAppointments() || [];
+appointments.forEach(apt => {
+  const price = parseFloat(apt.price || apt.total_amount || apt.payment_amount || 0);
+  // ...
+});
+
+// NEW: Query projects table directly with artist info
+const { data: projects } = await supabase
+  .from('projects')
+  .select('id, price, payment_state, location_id')
+  .gt('price', 0);
+
+// Join with appointments to get artist info
+const { data: appointments } = await supabase
+  .from('appointments')
+  .select('project_id, artist_id, artist:artists!appointments_artist_id_fkey(id, is_guest)')
+  .in('project_id', projectIds);
+```
+
+**Revenue Breakdown by Artist Type:**
+```javascript
+// Group by artist type using is_guest field
+if (project.is_guest === true) {
+  guestRevenue += price;
+} else if (project.is_guest === false) {
+  residentRevenue += price;
+}
+```
+
+**Payment State Mapping:**
+- `Komplett bezahlt` / `archiviert` → paidRevenue
+- `Anzahlung bezahlt` → depositRevenue
+- `Offen` / `Unbekannt` → openRevenue
+
+### UI Changes
+
+| Element | Before | After |
+|---------|--------|-------|
+| Tattoo-Termine card | Generic tattoo revenue | Resident Artists revenue |
+| Guest Spot card | Studio share | Guest Artists revenue |
+| Chart pie | Single segment | Resident vs Guest breakdown |
+| Studio bar chart | Single color | Stacked Resident/Guest |
+
+**Updated Labels:**
+- "Tattoo-Termine" → "Resident Artists"
+- "Guest Spot Studio Share" → "Guest Artists"
+- Description: "appointments.total_amount" → "projects.price (is_guest = false/true)"
+
+### Database Query Results
+
+| Metric | Value |
+|--------|-------|
+| Total Revenue | €11.35M |
+| Resident Artists | €2.05M |
+| Guest Artists | €1.85M |
+| Unassigned | €7.45M |
+
+### Files Changed
+
+- `management-system.html`
+  - `loadRevenueOverviewData()` function (line ~47450-47635)
+  - `renderRevenueOverviewChartsWithData()` function (line ~47637-47708)
+  - UI labels in revenue-overview section (line ~17214-17302)
 
 ---
 
