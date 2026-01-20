@@ -952,6 +952,11 @@
       }
 
       function isDateAvailable(dateStr) {
+        // Block weekends (Saturday = 6, Sunday = 0) for all artists
+        const date = parseLocalDate(dateStr);
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+
         const isInDienstplan = availability.some(entry => {
           const start = entry.start_date;
           const end = entry.end_date || entry.start_date;
