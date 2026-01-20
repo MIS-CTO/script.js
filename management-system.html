@@ -3481,7 +3481,7 @@
       align-items: center;
       gap: 26px;
       margin-bottom: 32px;
-      padding: 36px 0 0 0;
+      padding: 36px 48px 0 48px;
       background: transparent;
       border-radius: 0;
       color: var(--text-primary);
@@ -4645,51 +4645,52 @@
       box-sizing: border-box;
     }
 
-    /* Glass Slider Indicators */
+    /* Glass Slider Indicators - Light & Thin */
     .brett-slider-indicators {
       display: flex;
       justify-content: center;
-      gap: 8px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 12px;
-      margin: 8px 12px 12px;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 6px;
+      margin: 0 12px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
     }
 
     [data-theme="dark"] .brett-slider-indicators {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
     .brett-slider-dot {
-      width: 24px;
-      height: 4px;
-      border-radius: 2px;
-      background: rgba(0, 0, 0, 0.15);
+      flex: 1;
+      height: 3px;
+      border-radius: 1.5px;
+      background: rgba(0, 0, 0, 0.1);
       cursor: pointer;
       transition: all 0.3s ease;
     }
 
     .brett-slider-dot:hover {
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .brett-slider-dot.active {
-      background: rgba(0, 0, 0, 0.5);
-      width: 32px;
+      background: rgba(0, 0, 0, 0.35);
     }
 
     [data-theme="dark"] .brett-slider-dot {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.15);
     }
 
     [data-theme="dark"] .brett-slider-dot:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.25);
     }
 
     [data-theme="dark"] .brett-slider-dot.active {
-      background: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.45);
     }
 
     .brett-footer {
@@ -26165,7 +26166,7 @@
             `<div class="brett-slider-dot ${index === 0 ? 'active' : ''}" data-index="${index}" onclick="goToBrettSlide(${index})"></div>`
           ).join('');
 
-          // Build complete slider HTML
+          // Build complete slider HTML with indicators at bottom
           container.innerHTML = `
             <div class="brett-slider-wrapper">
               <div class="brett-slider-container">
@@ -26173,9 +26174,9 @@
                   ${slidesHTML}
                 </div>
               </div>
-              <div class="brett-slider-indicators" id="brettSliderIndicators">
-                ${indicatorsHTML}
-              </div>
+            </div>
+            <div class="brett-slider-indicators" id="brettSliderIndicators" style="margin-bottom: 12px;">
+              ${indicatorsHTML}
             </div>
           `;
 
