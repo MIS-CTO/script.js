@@ -20609,7 +20609,12 @@
         
         <div class="form-group">
           <label>Event Type</label>
-          <input type="text" id="createEventType" placeholder="e.g. Meeting, Training, Workshop" required>
+          <select id="createEventType" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px;">
+            <option value="">-- Select Type --</option>
+            <option value="Design">Design</option>
+            <option value="Management">Management</option>
+            <option value="Social">Social</option>
+          </select>
         </div>
         
         <div class="form-group">
@@ -21277,7 +21282,12 @@
         
         <div class="form-group">
           <label>Event Type</label>
-          <input type="text" id="editEventType" required>
+          <select id="editEventType" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px;">
+            <option value="">-- Select Type --</option>
+            <option value="Design">Design</option>
+            <option value="Management">Management</option>
+            <option value="Social">Social</option>
+          </select>
         </div>
         
         <div class="form-group">
@@ -21290,46 +21300,13 @@
           <input type="text" id="editEventArtistName" readonly style="background:rgba(0,0,0,0.05);">
         </div>
         
-        <div class="form-group" id="editEventGroupsContainer">
-          <label>Visible for Groups</label>
-          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; padding:12px; background:rgba(0,0,0,0.02); border-radius:10px;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; grid-column:1/-1; padding-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:4px;">
-              <input type="checkbox" id="editGroupCheckboxAll" style="width:auto; padding:0;">
-              All Groups
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="geschäftsführung" style="width:auto; padding:0;">
-              Geschäftsführung
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="management" style="width:auto; padding:0;">
-              Management
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="booking_team" style="width:auto; padding:0;">
-              Booking Team
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="mediadepartment" style="width:auto; padding:0;">
-              Mediadepartment
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="resident_artists" style="width:auto; padding:0;">
-              Resident Artists
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="guest_artists" style="width:auto; padding:0;">
-              Guest Artists
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="azubis" style="width:auto; padding:0;">
-              Azubis
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
-              <input type="checkbox" class="edit-group-checkbox" value="andere" style="width:auto; padding:0;">
-              Andere
-            </label>
+        <div class="form-group" id="editEventParticipantsContainer">
+          <label>Participants</label>
+          <div style="position:relative;">
+            <input type="text" id="editEventParticipantSearch" placeholder="Search team members..." style="width:100%;">
+            <div id="editEventParticipantResults" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #e0e0e0; border-radius:8px; max-height:200px; overflow-y:auto; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
           </div>
+          <div id="editEventParticipantList" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; min-height:40px; padding:8px; background:rgba(0,0,0,0.02); border-radius:8px;"></div>
         </div>
         
         <div class="form-group" id="editEventAttendanceGroup">
@@ -25838,18 +25815,17 @@
 
           const cardsHTML = sortedEvents.map(event => {
             const isPflicht = event.attendance_required === true;
-            const startDate = new Date(event.start_time);
-            const endDate = new Date(event.end_time);
 
-            // Format time range (e.g., "10:30 - 12:00")
-            const startTime = startDate.toLocaleTimeString('de-DE', {
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            const endTime = endDate.toLocaleTimeString('de-DE', {
-              hour: '2-digit',
-              minute: '2-digit'
-            });
+            // Parse times directly from ISO string to avoid timezone conversion issues
+            const extractTime = (isoStr) => {
+              if (!isoStr) return '00:00';
+              const timePart = isoStr.split('T')[1];
+              if (!timePart) return '00:00';
+              return timePart.substring(0, 5); // Returns "HH:MM"
+            };
+
+            const startTime = extractTime(event.start_time);
+            const endTime = extractTime(event.end_time);
             const timeRange = `${startTime} - ${endTime}`;
 
             const eventType = event.type || 'Event';
@@ -26927,15 +26903,16 @@
 
       function formatCollaboratorsAvatars(collaborators) {
         if (!collaborators || collaborators.length === 0) {
-          return '<span style="color:#999; font-size:12px;">No collaborators</span>';
+          return '<span style="color:#999; font-size:12px;">—</span>';
         }
 
+        // Match event-card-avatar style exactly: 32px, border 1.5px, margin-left -10px
         const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
-        const maxShow = 4;
+        const maxShow = 3;
         const showCollabs = collaborators.slice(0, maxShow);
         const remaining = collaborators.length - maxShow;
 
-        let html = '<div style="display:flex; align-items:center; gap:-6px;">';
+        let html = '<div style="display:flex; align-items:center;">';
 
         showCollabs.forEach((c, i) => {
           const profile = c.profiles;
@@ -26943,20 +26920,19 @@
           const avatarUrl = profile?.avatar_url;
           const firstLetter = username.charAt(0).toUpperCase();
           const bgColor = avatarColors[i % avatarColors.length];
-          const zIndex = maxShow - i;
-          const marginLeft = i > 0 ? '-8px' : '0';
+          const marginLeft = i > 0 ? '-10px' : '0';
 
           if (avatarUrl) {
-            html += `<div style="width:24px; height:24px; border-radius:50%; background:${bgColor}; margin-left:${marginLeft}; z-index:${zIndex}; position:relative; border:2px solid white; overflow:hidden;" title="${username}">
-              <img src="${avatarUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';this.parentElement.textContent='${firstLetter}';">
+            html += `<div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%); margin-left:${marginLeft}; border:1.5px solid #f5f5f7; overflow:hidden; display:flex; align-items:center; justify-content:center;" title="${username}">
+              <img src="${avatarUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='${firstLetter}';">
             </div>`;
           } else {
-            html += `<div style="width:24px; height:24px; border-radius:50%; background:${bgColor}; margin-left:${marginLeft}; z-index:${zIndex}; position:relative; border:2px solid white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:white;" title="${username}">${firstLetter}</div>`;
+            html += `<div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%); margin-left:${marginLeft}; border:1.5px solid #f5f5f7; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:white;" title="${username}">${firstLetter}</div>`;
           }
         });
 
         if (remaining > 0) {
-          html += `<div style="width:24px; height:24px; border-radius:50%; background:#e0e0e0; margin-left:-8px; z-index:0; position:relative; border:2px solid white; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:#666;">+${remaining}</div>`;
+          html += `<div style="width:32px; height:32px; border-radius:50%; background:#e5e5e5; margin-left:-10px; border:1.5px solid #f5f5f7; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#666;">+${remaining}</div>`;
         }
 
         html += '</div>';
@@ -38434,7 +38410,7 @@
         e.preventDefault();
 
         const title = document.getElementById('createEventTitle').value.trim();
-        const type = document.getElementById('createEventType').value.trim();
+        const type = document.getElementById('createEventType').value;
         const description = document.getElementById('createEventDescription').value.trim();
         const date = document.getElementById('createEventDate').value;
         const startHour = parseFloat(document.getElementById('createEventStartTime').value);
@@ -40450,8 +40426,11 @@
         return hours + minutes / 60;
       };
 
+      // Edit event participants array
+      let editEventParticipants = [];
+
       // Internal function to open event modal
-      function openEditEventModalInternal(eventId, fullEvent, event) {
+      async function openEditEventModalInternal(eventId, fullEvent, event) {
         // Populate form fields
         document.getElementById('editEventId').value = eventId;
         document.getElementById('editEventTitle').value = fullEvent.title || '';
@@ -40461,25 +40440,137 @@
         document.getElementById('editEventStartTime').value = event.startHour.toString();
         document.getElementById('editEventEndTime').value = event.endHour.toString();
         document.getElementById('editEventAttendanceRequired').checked = fullEvent.attendance_required || false;
-        
-        // Clear all group checkboxes first
-        document.querySelectorAll('.edit-group-checkbox').forEach(cb => cb.checked = false);
-        
-        // Set selected groups
-        if (fullEvent.visible_groups && Array.isArray(fullEvent.visible_groups)) {
-          fullEvent.visible_groups.forEach(group => {
-            const checkbox = document.querySelector(`.edit-group-checkbox[value="${group}"]`);
-            if (checkbox) checkbox.checked = true;
-          });
-          
-          // Check if all groups are selected
-          const allCheckboxes = document.querySelectorAll('.edit-group-checkbox');
-          const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
-          document.getElementById('editGroupCheckboxAll').checked = allChecked;
+
+        // Load existing participants for this event
+        editEventParticipants = [];
+        try {
+          const { data: participants, error } = await supabase
+            .from('event_participants')
+            .select('artist_id, profiles:artist_id(id, username, avatar_url)')
+            .eq('event_id', eventId);
+
+          if (!error && participants) {
+            editEventParticipants = participants.map(p => ({
+              id: p.artist_id,
+              username: p.profiles?.username || 'Unknown',
+              avatar_url: p.profiles?.avatar_url
+            }));
+          }
+        } catch (e) {
+          console.error('Error loading event participants:', e);
         }
-        
+        renderEditEventParticipantList();
+
+        // Initialize participant search for edit modal
+        initEditEventParticipantSearch();
+
         // Open modal
         document.getElementById('editEventModal').classList.add('active');
+      }
+
+      // Render edit event participant list
+      function renderEditEventParticipantList() {
+        const container = document.getElementById('editEventParticipantList');
+        if (!container) return;
+
+        if (editEventParticipants.length === 0) {
+          container.innerHTML = '<span style="color:#999; font-size:13px;">No participants added yet</span>';
+          return;
+        }
+
+        const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
+        container.innerHTML = editEventParticipants.map((p, i) => {
+          const bgColor = avatarColors[i % avatarColors.length];
+          const firstLetter = (p.username || '?').charAt(0).toUpperCase();
+          const avatarStyle = p.avatar_url
+            ? `background-image:url('${p.avatar_url}'); background-size:cover;`
+            : `background:linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%);`;
+
+          return `<div style="display:flex; align-items:center; gap:6px; padding:4px 8px 4px 4px; background:#fff; border:1px solid #e0e0e0; border-radius:20px;">
+            <div style="width:24px; height:24px; border-radius:50%; ${avatarStyle} display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:white;">${p.avatar_url ? '' : firstLetter}</div>
+            <span style="font-size:13px;">${p.username}</span>
+            <button type="button" onclick="removeEditEventParticipant('${p.id}')" style="background:none; border:none; cursor:pointer; font-size:14px; color:#999; padding:0 2px;">&times;</button>
+          </div>`;
+        }).join('');
+      }
+
+      // Remove participant from edit list
+      window.removeEditEventParticipant = function(id) {
+        editEventParticipants = editEventParticipants.filter(p => p.id !== id);
+        renderEditEventParticipantList();
+      };
+
+      // Add participant to edit list
+      window.addEditEventParticipant = function(id, username, avatarUrl) {
+        if (editEventParticipants.find(p => p.id === id)) return;
+        editEventParticipants.push({ id, username, avatar_url: avatarUrl });
+        renderEditEventParticipantList();
+        document.getElementById('editEventParticipantSearch').value = '';
+        document.getElementById('editEventParticipantResults').style.display = 'none';
+      };
+
+      // Initialize participant search for edit modal
+      function initEditEventParticipantSearch() {
+        const searchInput = document.getElementById('editEventParticipantSearch');
+        const resultsContainer = document.getElementById('editEventParticipantResults');
+        if (!searchInput || !resultsContainer) return;
+
+        // Remove existing listeners by cloning
+        const newInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newInput, searchInput);
+
+        let debounceTimer;
+        newInput.addEventListener('input', async (e) => {
+          clearTimeout(debounceTimer);
+          const query = e.target.value.trim();
+
+          if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            return;
+          }
+
+          debounceTimer = setTimeout(async () => {
+            try {
+              const { data: profiles, error } = await supabase
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .ilike('username', `%${query}%`)
+                .limit(10);
+
+              if (error || !profiles?.length) {
+                resultsContainer.innerHTML = '<div style="padding:12px; color:#999;">No results found</div>';
+                resultsContainer.style.display = 'block';
+                return;
+              }
+
+              const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
+              resultsContainer.innerHTML = profiles.map((p, i) => {
+                const bgColor = avatarColors[i % avatarColors.length];
+                const firstLetter = (p.username || '?').charAt(0).toUpperCase();
+                const isSelected = editEventParticipants.find(ep => ep.id === p.id);
+                const avatarStyle = p.avatar_url
+                  ? `background-image:url('${p.avatar_url}'); background-size:cover;`
+                  : `background:linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%);`;
+
+                return `<div onclick="addEditEventParticipant('${p.id}', '${p.username}', '${p.avatar_url || ''}')" style="display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; ${isSelected ? 'opacity:0.5;' : ''}" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
+                  <div style="width:32px; height:32px; border-radius:50%; ${avatarStyle} display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:white;">${p.avatar_url ? '' : firstLetter}</div>
+                  <span style="font-size:14px;">${p.username}</span>
+                  ${isSelected ? '<span style="margin-left:auto; font-size:11px; color:#667eea;">Added</span>' : ''}
+                </div>`;
+              }).join('');
+              resultsContainer.style.display = 'block';
+            } catch (e) {
+              console.error('Error searching profiles:', e);
+            }
+          }, 300);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('#editEventParticipantsContainer')) {
+            resultsContainer.style.display = 'none';
+          }
+        });
       }
       
       // Function to open booking modal
@@ -40501,27 +40592,6 @@
         document.getElementById('editBookingModal').classList.add('active');
       }
       
-      // Edit "All Groups" checkbox handler
-      document.getElementById('editGroupCheckboxAll')?.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        const groupCheckboxes = document.querySelectorAll('.edit-group-checkbox');
-        groupCheckboxes.forEach(checkbox => {
-          checkbox.checked = isChecked;
-        });
-      });
-      
-      // Individual edit group checkbox handler
-      document.querySelectorAll('.edit-group-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-          const allCheckboxes = document.querySelectorAll('.edit-group-checkbox');
-          const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
-          const allCheckbox = document.getElementById('editGroupCheckboxAll');
-          if (allCheckbox) {
-            allCheckbox.checked = allChecked;
-          }
-        });
-      });
-      
       // Cancel edit event
       document.getElementById('cancelEditEvent')?.addEventListener('click', () => {
         document.getElementById('editEventModal').classList.remove('active');
@@ -40530,54 +40600,47 @@
       // Submit edit event form
       document.getElementById('editEventForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const eventId = document.getElementById('editEventId').value;
         const title = document.getElementById('editEventTitle').value.trim();
-        const type = document.getElementById('editEventType').value.trim();
+        const type = document.getElementById('editEventType').value;
         const description = document.getElementById('editEventDescription').value.trim();
         const date = document.getElementById('editEventDate').value;
         const startHour = parseFloat(document.getElementById('editEventStartTime').value);
         const endHour = parseFloat(document.getElementById('editEventEndTime').value);
         const attendanceRequired = document.getElementById('editEventAttendanceRequired').checked;
-        
-        // Collect selected groups
-        const selectedGroups = [];
-        const groupCheckboxes = document.querySelectorAll('.edit-group-checkbox:checked');
-        groupCheckboxes.forEach(checkbox => {
-          selectedGroups.push(checkbox.value);
-        });
-        
+
         // Validation
         if (!title || !type || !date || !startHour || !endHour) {
           return alert('Please fill in all required fields');
         }
-        
+
         if (endHour <= startHour) {
           return alert('End time must be after start time');
         }
-        
+
         // Get current event to check if date/time changed
         const currentEvent = events.find(e => e.id === eventId);
         let newSlot = currentEvent?.slot || 1;
-        
+
         // If date or time changed, find a new available slot
         if (currentEvent && (currentEvent.date !== date || currentEvent.startHour !== startHour || currentEvent.endHour !== endHour)) {
           // Temporarily remove current event from events array for slot calculation
           const tempEvents = events.filter(e => e.id !== eventId);
           const oldEvents = events;
           events = tempEvents;
-          
+
           const availableSlot = findAvailableSlot(date, 'events', startHour, endHour);
-          
+
           // Restore events array
           events = oldEvents;
-          
+
           if (availableSlot === null) {
             return alert('All slots are occupied for this new time range. Please choose a different time or date.');
           }
           newSlot = availableSlot;
         }
-        
+
         try {
           // Update event in Supabase
           const { error } = await supabase
@@ -40586,23 +40649,49 @@
               title,
               type,
               description: description || null,
-              visible_groups: selectedGroups.length > 0 ? selectedGroups : null,
               attendance_required: attendanceRequired,
               slot: newSlot,
               start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
               end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
             })
             .eq('id', eventId);
-          
+
           if (error) throw error;
-          
+
+          // Update participants: delete all existing, insert new
+          const { error: deleteError } = await supabase
+            .from('event_participants')
+            .delete()
+            .eq('event_id', eventId);
+
+          if (deleteError) {
+            console.error('Error deleting old participants:', deleteError);
+          }
+
+          // Insert new participants
+          if (editEventParticipants.length > 0) {
+            const participantRows = editEventParticipants.map(p => ({
+              event_id: eventId,
+              artist_id: p.id,
+              confirmed: false
+            }));
+
+            const { error: insertError } = await supabase
+              .from('event_participants')
+              .insert(participantRows);
+
+            if (insertError) {
+              console.error('Error inserting participants:', insertError);
+            }
+          }
+
           // Close modal
           document.getElementById('editEventModal').classList.remove('active');
-          
+
           // Reload events and refresh calendar
           await loadEvents();
           renderCalendar();
-          
+
           alert('Event updated successfully!');
         } catch (err) {
           console.error('Error updating event:', err);
