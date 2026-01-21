@@ -3797,6 +3797,33 @@
        Modern Glassmorphism Style
        ======================================== */
 
+    /* Dashboard Entry Animations */
+    @keyframes dashboardFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes dashboardSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dashboard-welcome {
+      animation: dashboardFadeIn 0.5s ease-out forwards;
+    }
+
     .dashboard-container-v2 {
       display: grid;
       grid-template-columns: 0.5fr 3.5fr 1fr;
@@ -3806,6 +3833,26 @@
       overflow: visible;
       padding: 0 48px 48px;
       box-sizing: border-box;
+    }
+
+    .dashboard-container-v2 .dashboard-col-left {
+      animation: dashboardSlideUp 0.5s ease-out 0.1s forwards;
+      opacity: 0;
+    }
+
+    .dashboard-container-v2 .dashboard-col-center-top {
+      animation: dashboardSlideUp 0.5s ease-out 0.2s forwards;
+      opacity: 0;
+    }
+
+    .dashboard-container-v2 .dashboard-col-right {
+      animation: dashboardSlideUp 0.5s ease-out 0.3s forwards;
+      opacity: 0;
+    }
+
+    .dashboard-container-v2 .dashboard-col-center-bottom {
+      animation: dashboardSlideUp 0.5s ease-out 0.4s forwards;
+      opacity: 0;
     }
 
     /* Schwarzes Brett - matches Right Column width */
@@ -44481,15 +44528,26 @@
 
       // Update Profile Button Avatar (Desktop Header)
       const profileButton = document.getElementById('profileButton');
-      if (profileButton && profile.avatar_url) {
-        profileButton.innerHTML = `<img src="${profile.avatar_url}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+      if (profileButton) {
+        if (profile.avatar_url) {
+          profileButton.innerHTML = `<img src="${profile.avatar_url}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>`;
+          profileButton.style.padding = '0';
+          profileButton.style.overflow = 'hidden';
+          console.log('✅ Profile button avatar updated:', profile.avatar_url);
+        } else {
+          // Reset to default icon when user has no avatar
+          profileButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
             <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>`;
-        profileButton.style.padding = '0';
-        profileButton.style.overflow = 'hidden';
-        console.log('✅ Profile button avatar updated:', profile.avatar_url);
+          profileButton.style.padding = '';
+          profileButton.style.overflow = '';
+          console.log('ℹ️ Profile button reset to default (no avatar)');
+        }
       }
 
       // Update Mobile Nav Avatar (Bottom Bar)
@@ -44595,6 +44653,11 @@
           img.style.display = 'none';
           initials.style.display = 'flex';
         };
+      } else {
+        // No avatar - show initials, hide image
+        img.style.display = 'none';
+        img.src = '';
+        initials.style.display = 'flex';
       }
       console.log('✅ Mobile nav avatar updated');
     }
@@ -44639,6 +44702,11 @@
           avatarImg.style.display = 'none';
           if (avatarInitials) avatarInitials.style.display = 'flex';
         };
+      } else if (avatarImg) {
+        // No avatar - show initials, hide image
+        avatarImg.style.display = 'none';
+        avatarImg.src = '';
+        if (avatarInitials) avatarInitials.style.display = 'flex';
       }
 
       // Initialize swipe after profile is loaded
