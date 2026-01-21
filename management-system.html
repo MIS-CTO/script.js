@@ -3802,9 +3802,9 @@
       grid-template-columns: 0.5fr 3.5fr 1fr;
       grid-template-rows: 1fr 1fr;
       gap: 26px;
-      height: calc(100vh - 320px);
-      min-height: 400px;
-      overflow: hidden;
+      height: auto;
+      min-height: calc(100vh - 200px);
+      overflow: visible;
       padding: 0 48px 48px;
       box-sizing: border-box;
     }
@@ -4292,7 +4292,7 @@
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      border: 1.5px solid;
+      border: 1.5px solid #f5f5f7;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
       align-items: center;
@@ -4302,6 +4302,10 @@
       color: white;
       margin-left: -10px;
       overflow: hidden;
+    }
+
+    .event-card-avatar.has-image {
+      border: none;
     }
 
     .event-card-avatar:first-child {
@@ -5784,7 +5788,7 @@
     .todo-tasks-list {
       flex: 1;
       overflow-y: auto;
-      padding: 0 16px;
+      padding: 0;
       min-height: 0;
     }
 
@@ -20615,9 +20619,11 @@
           <label>Event Type</label>
           <select id="createEventType" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px;">
             <option value="">-- Select Type --</option>
-            <option value="Design">Design</option>
-            <option value="Management">Management</option>
-            <option value="Social">Social</option>
+            <option value="Meeting">👥 Meeting</option>
+            <option value="Workshop">🛠️ Workshop</option>
+            <option value="Training">📚 Training</option>
+            <option value="Social">🎉 Social</option>
+            <option value="Other">📌 Other</option>
           </select>
         </div>
         
@@ -21275,49 +21281,50 @@
 
   <!-- Edit/View Event Modal -->
   <div class="modal-backdrop" id="editEventModal">
-    <div class="modal" style="max-width:600px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3 id="editEventModalTitle" style="margin:0;">Event Details</h3>
-        <button type="button" id="editEventToggleBtn" onclick="toggleEventEditMode()" style="padding:8px 16px; background:#f5f5f5; border:1px solid #e0e0e0; border-radius:8px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;">
-          <span>✏️</span> Edit
-        </button>
-      </div>
-
+    <div class="modal" style="max-width:520px; padding:0; border-radius:20px; overflow:hidden;">
       <!-- VIEW MODE -->
-      <div id="editEventViewMode" class="modal-form">
+      <div id="editEventViewMode">
         <input type="hidden" id="editEventId">
-        <div class="form-group">
-          <label style="color:#86868b; font-size:12px; margin-bottom:4px;">Event Title</label>
-          <div id="viewEventTitle" style="font-size:16px; font-weight:500; color:#1d1d1f;"></div>
+
+        <!-- Header with gradient background -->
+        <div id="viewEventHeader" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:28px 28px 20px; color:white;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+            <div id="viewEventTypeBadge" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(255,255,255,0.2); border-radius:20px; font-size:12px; font-weight:500; backdrop-filter:blur(10px);"></div>
+            <button type="button" id="editEventToggleBtn" onclick="toggleEventEditMode()" style="padding:8px 14px; background:rgba(255,255,255,0.2); border:none; border-radius:8px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; color:white; backdrop-filter:blur(10px); transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+              <span>✏️</span> Edit
+            </button>
+          </div>
+          <h2 id="viewEventTitle" style="margin:0 0 8px 0; font-size:22px; font-weight:600;"></h2>
+          <div id="viewEventDateTime" style="font-size:14px; opacity:0.9; display:flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="viewEventDateTimeText"></span>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label style="color:#86868b; font-size:12px; margin-bottom:4px;">Event Type</label>
-          <div id="viewEventType" style="font-size:14px; color:#1d1d1f;"></div>
+        <!-- Content -->
+        <div style="padding:24px 28px;">
+          <!-- Description -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 8px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Description</h4>
+            <div id="viewEventDescription" style="font-size:14px; color:#1d1d1f; line-height:1.5; white-space:pre-wrap;"></div>
+          </div>
+
+          <!-- Participants -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px 0; font-size:13px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px;">Participants</h4>
+            <div id="viewEventParticipants" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+          </div>
+
+          <!-- Attendance Badge -->
+          <div id="viewEventAttendanceWrapper" style="margin-bottom:24px;">
+            <div id="viewEventAttendanceBadge" style="display:inline-flex; align-items:center; gap:6px; padding:8px 14px; background:#f5f5f7; border-radius:10px; font-size:13px; font-weight:500;"></div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label style="color:#86868b; font-size:12px; margin-bottom:4px;">Description</label>
-          <div id="viewEventDescription" style="font-size:14px; color:#1d1d1f; white-space:pre-wrap;"></div>
-        </div>
-
-        <div class="form-group">
-          <label style="color:#86868b; font-size:12px; margin-bottom:4px;">Participants</label>
-          <div id="viewEventParticipants" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-        </div>
-
-        <div class="form-group">
-          <label style="color:#86868b; font-size:12px; margin-bottom:4px;">Date & Time</label>
-          <div id="viewEventDateTime" style="font-size:14px; color:#1d1d1f;"></div>
-        </div>
-
-        <div class="form-group">
-          <label style="color:#86868b; font-size:12px; margin-bottom:4px;">Attendance</label>
-          <div id="viewEventAttendance" style="font-size:14px; color:#1d1d1f;"></div>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="closeViewEventBtn" onclick="document.getElementById('editEventModal').classList.remove('active')">Close</button>
+        <!-- Footer -->
+        <div style="padding:16px 28px 24px; border-top:1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center;">
+          <button type="button" id="viewEventDeleteBtn" onclick="document.getElementById('editEventToggleBtn').click(); setTimeout(() => document.getElementById('deleteEventBtn').click(), 100);" style="padding:10px 16px; background:transparent; border:1px solid #ff3b30; border-radius:10px; font-size:13px; cursor:pointer; color:#ff3b30; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='transparent'">Delete</button>
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('editEventModal').classList.remove('active')" style="padding:10px 20px; background:#f5f5f7; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:500;">Close</button>
         </div>
       </div>
 
@@ -21332,9 +21339,11 @@
           <label>Event Type</label>
           <select id="editEventType" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px;">
             <option value="">-- Select Type --</option>
-            <option value="Design">Design</option>
-            <option value="Management">Management</option>
-            <option value="Social">Social</option>
+            <option value="Meeting">👥 Meeting</option>
+            <option value="Workshop">🛠️ Workshop</option>
+            <option value="Training">📚 Training</option>
+            <option value="Social">🎉 Social</option>
+            <option value="Other">📌 Other</option>
           </select>
         </div>
 
@@ -25906,7 +25915,7 @@
               const firstLetter = (profile.username || '?').charAt(0).toUpperCase();
               const bgColor = avatarColors[i % avatarColors.length];
               if (profile.avatar_url) {
-                return `<div class="event-card-avatar" style="background: ${bgColor};"><img src="${profile.avatar_url}" alt="${firstLetter}" onerror="this.style.display='none';this.parentElement.textContent='${firstLetter}';" /></div>`;
+                return `<div class="event-card-avatar has-image"><img src="${profile.avatar_url}" alt="${firstLetter}" onerror="this.style.display='none';this.parentElement.classList.remove('has-image');this.parentElement.style.background='${bgColor}';this.parentElement.textContent='${firstLetter}';" /></div>`;
               }
               return `<div class="event-card-avatar" style="background: ${bgColor};">${firstLetter}</div>`;
             }).join('') || '<div class="event-card-avatar" style="background: #e0e0e0; color: #999;">—</div>';
@@ -26992,7 +27001,8 @@
           return '<span style="color:#999; font-size:12px;">—</span>';
         }
 
-        // Match event-card-avatar style exactly: 32px, border 1.5px, margin-left -10px
+        // Match event-card-avatar style: 32px, margin-left -10px
+        // No border for images, border for initials only
         const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
         const maxShow = 3;
         const showCollabs = collaborators.slice(0, maxShow);
@@ -27009,10 +27019,12 @@
           const marginLeft = i > 0 ? '-10px' : '0';
 
           if (avatarUrl) {
-            html += `<div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%); margin-left:${marginLeft}; border:1.5px solid #f5f5f7; overflow:hidden; display:flex; align-items:center; justify-content:center;" title="${username}">
-              <img src="${avatarUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='${firstLetter}';">
+            // No border for image avatars
+            html += `<div style="width:32px; height:32px; border-radius:50%; margin-left:${marginLeft}; overflow:hidden; display:flex; align-items:center; justify-content:center;" title="${username}">
+              <img src="${avatarUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%)';this.parentElement.style.border='1.5px solid #f5f5f7';this.parentElement.innerHTML='<span style=\\'font-size:11px;font-weight:600;color:white\\'>${firstLetter}</span>';">
             </div>`;
           } else {
+            // Border for initial avatars
             html += `<div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%); margin-left:${marginLeft}; border:1.5px solid #f5f5f7; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:white;" title="${username}">${firstLetter}</div>`;
           }
         });
@@ -40578,17 +40590,48 @@
 
         // Populate view mode fields
         document.getElementById('viewEventTitle').textContent = fullEvent.title || 'Untitled Event';
-        document.getElementById('viewEventType').textContent = fullEvent.type || 'Not specified';
         document.getElementById('viewEventDescription').textContent = fullEvent.description || 'No description';
+
+        // Format event type badge with icon
+        const eventTypeIcons = {
+          'Meeting': '👥',
+          'Workshop': '🛠️',
+          'Training': '📚',
+          'Social': '🎉',
+          'Other': '📌'
+        };
+        const eventType = fullEvent.type || 'Other';
+        const typeIcon = eventTypeIcons[eventType] || '📌';
+        document.getElementById('viewEventTypeBadge').innerHTML = `<span>${typeIcon}</span> ${eventType}`;
 
         // Format date/time for view
         const dateObj = new Date(event.date);
         const formattedDate = dateObj.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         const startTime = `${Math.floor(event.startHour)}:${String(Math.round((event.startHour % 1) * 60)).padStart(2, '0')}`;
         const endTime = `${Math.floor(event.endHour)}:${String(Math.round((event.endHour % 1) * 60)).padStart(2, '0')}`;
-        document.getElementById('viewEventDateTime').textContent = `${formattedDate}, ${startTime} - ${endTime}`;
+        document.getElementById('viewEventDateTimeText').textContent = `${formattedDate}, ${startTime} - ${endTime}`;
 
-        document.getElementById('viewEventAttendance').textContent = fullEvent.attendance_required ? 'Anwesenheitspflicht' : 'Keine Pflichtveranstaltung';
+        // Update header gradient based on event type
+        const headerGradients = {
+          'Meeting': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          'Workshop': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          'Training': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+          'Social': 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+          'Other': 'linear-gradient(135deg, #a8a8a8 0%, #6d6d6d 100%)'
+        };
+        document.getElementById('viewEventHeader').style.background = headerGradients[eventType] || headerGradients['Other'];
+
+        // Update attendance badge
+        const attendanceBadge = document.getElementById('viewEventAttendanceBadge');
+        if (fullEvent.attendance_required) {
+          attendanceBadge.innerHTML = '<span style="color:#f5576c;">●</span> Anwesenheitspflicht';
+          attendanceBadge.style.background = 'rgba(245, 87, 108, 0.1)';
+          attendanceBadge.style.color = '#f5576c';
+        } else {
+          attendanceBadge.innerHTML = '<span style="color:#43e97b;">●</span> Freiwillig';
+          attendanceBadge.style.background = 'rgba(67, 233, 123, 0.1)';
+          attendanceBadge.style.color = '#43e97b';
+        }
 
         // Render participants for view mode
         const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
