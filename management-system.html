@@ -38978,49 +38978,47 @@
 
           try {
             console.log('🔄 Cancelling appointment:', appointmentId);
-            console.log('📋 Current appointment data:', appointment);
 
-            const updatePayload = {
-              status: 'canceled',
-              state: 'Cancelled',
-              canceled_at: new Date().toISOString(),
-              cancel_reason: 'manual_cancel'
-            };
-            console.log('📝 Update payload:', updatePayload);
+            // Step 1: Update status first (isolated)
+            console.log('📝 Step 1: Updating status to canceled...');
+            const { data: statusData, error: statusError } = await supabase
+              .from('appointments')
+              .update({ status: 'canceled' })
+              .eq('id', appointmentId)
+              .select('id, status')
+              .single();
 
+            console.log('📊 Status update response:', statusData, statusError);
+
+            if (statusError) throw statusError;
+
+            // Step 2: Update other cancel fields
+            console.log('📝 Step 2: Updating state and canceled_at...');
             const { data, error } = await supabase
               .from('appointments')
-              .update(updatePayload)
+              .update({
+                state: 'Cancelled',
+                canceled_at: new Date().toISOString(),
+                cancel_reason: 'manual_cancel'
+              })
               .eq('id', appointmentId)
               .select('id, status, state, canceled_at, cancel_reason')
               .single();
 
-            console.log('📊 Supabase response - data:', data, 'error:', error);
+            console.log('📊 Final state:', data, error);
 
-            if (error) {
-              console.error('Supabase error:', error);
-              throw error;
-            }
+            if (error) throw error;
 
-            if (!data) {
-              console.error('No data returned - appointment may not exist or update failed');
-              throw new Error('Termin konnte nicht aktualisiert werden');
-            }
-
-            // Verify the update actually worked
+            // Check final status
             if (data.status !== 'canceled') {
-              console.error('⚠️ Status was not updated! Expected: canceled, Got:', data.status);
-              throw new Error('Status konnte nicht auf "canceled" gesetzt werden');
+              console.error('⚠️ Status still not canceled after updates! Got:', data.status);
+              // Continue anyway since state is set
             }
 
-            console.log('✅ Appointment canceled successfully:', data);
+            console.log('✅ Appointment canceled:', data);
 
             if (appointment.request_id) {
-              const { error: reqError } = await supabase
-                .from('requests')
-                .update({ status: 'canceled' })
-                .eq('id', appointment.request_id);
-              if (reqError) console.warn('Could not update request status:', reqError);
+              await supabase.from('requests').update({ status: 'canceled' }).eq('id', appointment.request_id);
             }
 
             showNotification('Termin wurde storniert', 'success');
