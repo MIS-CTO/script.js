@@ -38977,15 +38977,33 @@
           if (!confirm('Möchtest du diesen Termin wirklich stornieren?')) return;
 
           try {
-            const { error } = await supabase
+            console.log('🔄 Cancelling appointment:', appointmentId);
+
+            const { data, error } = await supabase
               .from('appointments')
               .update({ status: 'canceled', state: 'Cancelled' })
-              .eq('id', appointmentId);
+              .eq('id', appointmentId)
+              .select()
+              .single();
 
-            if (error) throw error;
+            if (error) {
+              console.error('Supabase error:', error);
+              throw error;
+            }
+
+            if (!data) {
+              console.error('No data returned - appointment may not exist or update failed');
+              throw new Error('Termin konnte nicht aktualisiert werden');
+            }
+
+            console.log('✅ Appointment canceled:', data);
 
             if (appointment.request_id) {
-              await supabase.from('requests').update({ status: 'canceled' }).eq('id', appointment.request_id);
+              const { error: reqError } = await supabase
+                .from('requests')
+                .update({ status: 'canceled' })
+                .eq('id', appointment.request_id);
+              if (reqError) console.warn('Could not update request status:', reqError);
             }
 
             showNotification('Termin wurde storniert', 'success');
@@ -38993,7 +39011,7 @@
             if (typeof loadCalendarData === 'function') loadCalendarData();
           } catch (err) {
             console.error('Error cancelling:', err);
-            showNotification('Fehler beim Stornieren', 'error');
+            showNotification('Fehler beim Stornieren: ' + (err.message || 'Unbekannter Fehler'), 'error');
           }
         };
 
@@ -39003,15 +39021,25 @@
           if (!confirm('ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!')) return;
 
           try {
-            const { error } = await supabase.from('appointments').delete().eq('id', appointmentId);
-            if (error) throw error;
+            console.log('🗑️ Deleting appointment:', appointmentId);
 
+            const { error } = await supabase
+              .from('appointments')
+              .delete()
+              .eq('id', appointmentId);
+
+            if (error) {
+              console.error('Supabase delete error:', error);
+              throw error;
+            }
+
+            console.log('✅ Appointment deleted');
             showNotification('Termin wurde gelöscht', 'success');
             closeAppointmentDetailModal();
             if (typeof loadCalendarData === 'function') loadCalendarData();
           } catch (err) {
             console.error('Error deleting:', err);
-            showNotification('Fehler beim Löschen', 'error');
+            showNotification('Fehler beim Löschen: ' + (err.message || 'Unbekannter Fehler'), 'error');
           }
         };
       }
