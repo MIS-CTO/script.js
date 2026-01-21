@@ -3802,7 +3802,7 @@
       grid-template-columns: 0.5fr 3.5fr 1fr;
       grid-template-rows: 1fr 1fr;
       gap: 26px;
-      height: calc(100vh - 180px);
+      height: calc(100vh - 220px);
       overflow: visible;
       padding: 0 48px 48px;
       box-sizing: border-box;
@@ -5612,9 +5612,9 @@
       background: transparent;
     }
 
-    /* Selected Project - Mittelgrau Background */
+    /* Selected Project - Transparent Background */
     .todo-project-card.selected {
-      background: #e8e8ed; /* Mittelgrau bei Selected/Aufgerufen */
+      background: transparent;
     }
 
     .todo-project-card.selected .todo-project-title,
@@ -5651,7 +5651,7 @@
     }
 
     [data-theme="dark"] .todo-project-card.selected {
-      background: rgba(255, 255, 255, 0.1);
+      background: transparent;
     }
 
     /* Project Header Row */
@@ -20618,11 +20618,11 @@
           <label>Event Type</label>
           <select id="createEventType" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px;">
             <option value="">-- Select Type --</option>
-            <option value="Meeting">👥 Meeting</option>
-            <option value="Workshop">🛠️ Workshop</option>
-            <option value="Training">📚 Training</option>
-            <option value="Social">🎉 Social</option>
-            <option value="Other">📌 Other</option>
+            <option value="Meeting">Meeting</option>
+            <option value="Workshop">Workshop</option>
+            <option value="Training">Training</option>
+            <option value="Social">Social</option>
+            <option value="Other">Other</option>
           </select>
         </div>
         
@@ -21287,12 +21287,7 @@
 
         <!-- Header with gradient background -->
         <div id="viewEventHeader" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:28px 28px 20px; color:white;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
-            <div id="viewEventTypeBadge" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(255,255,255,0.2); border-radius:20px; font-size:12px; font-weight:500; backdrop-filter:blur(10px);"></div>
-            <button type="button" id="editEventToggleBtn" onclick="toggleEventEditMode()" style="padding:8px 14px; background:rgba(255,255,255,0.2); border:none; border-radius:8px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; color:white; backdrop-filter:blur(10px); transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-              <span>✏️</span> Edit
-            </button>
-          </div>
+          <div id="viewEventTypeBadge" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(255,255,255,0.2); border-radius:20px; font-size:12px; font-weight:500; backdrop-filter:blur(10px); margin-bottom:16px;"></div>
           <h2 id="viewEventTitle" style="margin:0 0 8px 0; font-size:22px; font-weight:600;"></h2>
           <div id="viewEventDateTime" style="font-size:14px; opacity:0.9; display:flex; align-items:center; gap:6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -21322,68 +21317,71 @@
 
         <!-- Footer -->
         <div style="padding:16px 28px 24px; border-top:1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center;">
-          <button type="button" id="viewEventDeleteBtn" onclick="document.getElementById('editEventToggleBtn').click(); setTimeout(() => document.getElementById('deleteEventBtn').click(), 100);" style="padding:10px 16px; background:transparent; border:1px solid #ff3b30; border-radius:10px; font-size:13px; cursor:pointer; color:#ff3b30; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='transparent'">Delete</button>
-          <button type="button" class="btn btn-secondary" onclick="document.getElementById('editEventModal').classList.remove('active')" style="padding:10px 20px; background:#f5f5f7; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:500;">Close</button>
+          <button type="button" id="viewEventDeleteBtn" onclick="toggleEventEditMode(); setTimeout(() => document.getElementById('deleteEventBtn').click(), 100);" style="padding:10px 16px; background:transparent; border:1px solid #ff3b30; border-radius:10px; font-size:13px; cursor:pointer; color:#ff3b30; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background='transparent'">Delete</button>
+          <div style="display:flex; gap:10px;">
+            <button type="button" id="editEventToggleBtn" onclick="toggleEventEditMode()" style="padding:10px 20px; background:#1d1d1f; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:500; color:white; transition:all 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#1d1d1f'">Edit</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('editEventModal').classList.remove('active')" style="padding:10px 20px; background:#f5f5f7; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:500;">Close</button>
+          </div>
         </div>
       </div>
 
       <!-- EDIT MODE -->
-      <form class="modal-form" id="editEventForm" style="display:none;">
-        <div class="form-group">
-          <label>Event Title</label>
-          <input type="text" id="editEventTitle" required>
+      <form class="modal-form" id="editEventForm" style="display:none; padding:24px 28px;">
+        <h3 style="margin:0 0 20px 0; font-size:18px; font-weight:600; color:#1d1d1f;">Edit Event</h3>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">Event Title</label>
+          <input type="text" id="editEventTitle" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; box-sizing:border-box;">
         </div>
 
-        <div class="form-group">
-          <label>Event Type</label>
-          <select id="editEventType" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px;">
+        <div class="form-group" style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">Event Type</label>
+          <select id="editEventType" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; box-sizing:border-box;">
             <option value="">-- Select Type --</option>
-            <option value="Meeting">👥 Meeting</option>
-            <option value="Workshop">🛠️ Workshop</option>
-            <option value="Training">📚 Training</option>
-            <option value="Social">🎉 Social</option>
-            <option value="Other">📌 Other</option>
+            <option value="Meeting">Meeting</option>
+            <option value="Workshop">Workshop</option>
+            <option value="Training">Training</option>
+            <option value="Social">Social</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="editEventDescription" rows="3" style="border-radius:10px; resize:vertical;"></textarea>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">Description</label>
+          <textarea id="editEventDescription" rows="3" style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; resize:vertical; box-sizing:border-box;"></textarea>
         </div>
 
-        <div class="form-group" id="editEventArtistGroup" style="display:none;">
-          <label>Artist</label>
-          <input type="text" id="editEventArtistName" readonly style="background:rgba(0,0,0,0.05);">
+        <div class="form-group" id="editEventArtistGroup" style="display:none; margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">Artist</label>
+          <input type="text" id="editEventArtistName" readonly style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; background:rgba(0,0,0,0.03); box-sizing:border-box;">
         </div>
 
-        <div class="form-group" id="editEventParticipantsContainer">
-          <label>Participants</label>
+        <div class="form-group" id="editEventParticipantsContainer" style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">Participants</label>
           <div style="position:relative;">
-            <input type="text" id="editEventParticipantSearch" placeholder="Search team members..." style="width:100%;">
+            <input type="text" id="editEventParticipantSearch" placeholder="Search team members..." style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; box-sizing:border-box;">
             <div id="editEventParticipantResults" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #e0e0e0; border-radius:8px; max-height:200px; overflow-y:auto; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
           </div>
           <div id="editEventParticipantList" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; min-height:40px; padding:8px; background:rgba(0,0,0,0.02); border-radius:8px;"></div>
         </div>
 
-        <div class="form-group" id="editEventAttendanceGroup">
+        <div class="form-group" id="editEventAttendanceGroup" style="margin-bottom:16px;">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
             <input type="checkbox" id="editEventAttendanceRequired" style="width:auto; padding:0;">
             <span style="font-weight:500;">Anwesenheitspflicht</span>
           </label>
         </div>
-        
-        <div style="display:grid; grid-template-columns:1fr; gap:16px;">
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="editEventDate" required>
-          </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">Date</label>
+          <input type="date" id="editEventDate" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; box-sizing:border-box;">
         </div>
         
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
           <div class="form-group">
-            <label>Start Time</label>
-            <select id="editEventStartTime" required>
-              <option value="">-- Select Time --</option>
+            <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">Start Time</label>
+            <select id="editEventStartTime" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; box-sizing:border-box;">
+              <option value="">-- Select --</option>
               <option value="10.0">10:00</option>
               <option value="10.5">10:30</option>
               <option value="11.0">11:00</option>
@@ -21406,11 +21404,11 @@
               <option value="19.5">19:30</option>
             </select>
           </div>
-          
+
           <div class="form-group">
-            <label>End Time</label>
-            <select id="editEventEndTime" required>
-              <option value="">-- Select Time --</option>
+            <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:500; color:#86868b;">End Time</label>
+            <select id="editEventEndTime" required style="width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; box-sizing:border-box;">
+              <option value="">-- Select --</option>
               <option value="10.0">10:00</option>
               <option value="10.5">10:30</option>
               <option value="11.0">11:00</option>
@@ -21437,12 +21435,13 @@
             </select>
           </div>
         </div>
-        
-        <div class="modal-actions">
-          <button type="button" class="btn btn-danger" id="deleteEventBtn">Delete Event</button>
-          <div style="flex:1;"></div>
-          <button type="button" class="btn btn-secondary" id="cancelEditEvent">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:16px; border-top:1px solid #f0f0f0;">
+          <button type="button" id="deleteEventBtn" style="padding:10px 16px; background:transparent; border:1px solid #ff3b30; border-radius:10px; font-size:13px; cursor:pointer; color:#ff3b30;">Delete</button>
+          <div style="display:flex; gap:10px;">
+            <button type="button" id="cancelEditEvent" style="padding:10px 20px; background:#f5f5f7; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:500;">Cancel</button>
+            <button type="submit" style="padding:10px 20px; background:#1d1d1f; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:500; color:white;">Save</button>
+          </div>
         </div>
       </form>
     </div>
@@ -27078,7 +27077,7 @@
                 id,
                 user_id,
                 role,
-                profiles:user_id (id, username, email)
+                profiles:user_id (id, username, email, avatar_url)
               )
             `)
             .order('created_at', { ascending: false });
@@ -27330,7 +27329,7 @@
           try {
             const { data } = await supabase
               .from('task_projects')
-              .select('*, project_collaborators(user_id, role, profiles(username))')
+              .select('*, project_collaborators(user_id, role, profiles(username, avatar_url))')
               .eq('id', projectId)
               .single();
             project = data;
@@ -40537,12 +40536,16 @@
         if (currentEventEditMode) {
           viewMode.style.display = 'none';
           editForm.style.display = 'block';
-          toggleBtn.innerHTML = '<span>👁️</span> View';
+          toggleBtn.textContent = 'View';
+          toggleBtn.style.background = '#f5f5f7';
+          toggleBtn.style.color = '#1d1d1f';
           initEditEventParticipantSearch();
         } else {
           viewMode.style.display = 'block';
           editForm.style.display = 'none';
-          toggleBtn.innerHTML = '<span>✏️</span> Edit';
+          toggleBtn.textContent = 'Edit';
+          toggleBtn.style.background = '#1d1d1f';
+          toggleBtn.style.color = 'white';
         }
       };
 
@@ -40552,7 +40555,7 @@
         currentEventEditMode = false;
         document.getElementById('editEventViewMode').style.display = 'block';
         document.getElementById('editEventForm').style.display = 'none';
-        document.getElementById('editEventToggleBtn').innerHTML = '<span>✏️</span> Edit';
+        document.getElementById('editEventToggleBtn').textContent = 'Edit';
 
         // Store event ID
         document.getElementById('editEventId').value = eventId;
