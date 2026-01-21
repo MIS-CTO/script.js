@@ -52,39 +52,61 @@
 
 ### Problem
 
-Cancel button in appointment details popup threw `ReferenceError: showToast is not defined` error. The appointment status was not being set to "canceled".
+Cancel button in appointment details popup:
+1. Threw `ReferenceError: showToast is not defined` error
+2. The appointment `status` was not being set to "canceled" (remained "unknown")
 
 ### Root Cause
 
-The code was calling `showToast()` which is not defined in `management-system.html`. The correct notification function is `showNotification()` (defined at line 52831).
+**Two issues found:**
+
+1. **JavaScript:** Code was calling `showToast()` which doesn't exist in `management-system.html`. The correct function is `showNotification()`.
+
+2. **Database Trigger:** The `calculate_appointment_status()` function was missing 'Cancelled' in its state-to-status mapping:
+   ```sql
+   -- Original: 'Cancelled' fell through to ELSE 'unknown'
+   WHEN 'Zugesagt' THEN 'scheduled'
+   WHEN 'Ill/No Show' THEN 'canceled'
+   WHEN 'Verschoben' THEN 'rescheduled'
+   ELSE 'unknown'  -- 'Cancelled' ended up here!
+   ```
+
+   The `appointment_status_auto_update` trigger runs on every UPDATE and computes `status` from `state`. Since 'Cancelled' wasn't mapped, it returned 'unknown'.
 
 ### Solution
 
-Replaced all 15 occurrences of `showToast()` with `showNotification()`.
+**1. JavaScript Fix:** Replaced all 15 occurrences of `showToast()` with `showNotification()`.
+
+**2. Database Migration:** Updated `calculate_appointment_status()` to include 'Cancelled' → 'canceled' mapping:
+
+```sql
+-- Migration: fix_appointment_status_cancelled_mapping
+CREATE OR REPLACE FUNCTION calculate_appointment_status(p_state TEXT, p_end_time TIMESTAMPTZ)
+RETURNS TEXT AS $$
+BEGIN
+    -- Added 'Cancelled' -> 'canceled' in all three CASE branches
+    RETURN CASE p_state
+        WHEN 'Zugesagt' THEN 'scheduled'
+        WHEN 'Cancelled' THEN 'canceled'  -- NEW
+        WHEN 'Ill/No Show' THEN 'canceled'
+        WHEN 'Verschoben' THEN 'rescheduled'
+        ...
+    END;
+END;
+$$ LANGUAGE plpgsql;
+```
 
 ### Files Changed
 
 - `management-system.html` - Replaced `showToast(` → `showNotification(` (15 occurrences)
+- `management-system.html` - Simplified cancel button (status auto-computed by trigger)
+- **Database** - Migration `fix_appointment_status_cancelled_mapping` applied
 
-### Affected Areas
-
-| Line | Function | Change |
-|------|----------|--------|
-| 21919 | Quick booking validation | `showNotification('Please select a customer', 'error')` |
-| 21946 | Quick booking success | `showNotification('Booking created successfully!', 'success')` |
-| 21958 | Quick booking error | `showNotification('Error creating booking: ...')` |
-| 35496 | Stay details info | `showNotification('Stay-Details können...')` |
-| 38991 | Cancel appointment success | `showNotification('Termin wurde storniert', 'success')` |
-| 38996 | Cancel appointment error | `showNotification('Fehler beim Stornieren', 'error')` |
-| 39009 | Delete appointment success | `showNotification('Termin wurde gelöscht', 'success')` |
-| 39014 | Delete appointment error | `showNotification('Fehler beim Löschen', 'error')` |
-| 60286-60338 | Accommodation booking | Various notifications |
-| 61088 | Guest spot accommodation | Warning notification |
-
-### Commit
+### Commits
 
 ```
 c6a81a4 fix(appointments): replace undefined showToast with showNotification
+ca482fd fix(appointments): simplify cancel button after DB trigger fix
 ```
 
 ---
