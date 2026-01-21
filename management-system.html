@@ -25795,23 +25795,43 @@
 
         try {
           const now = new Date().toISOString();
+          const currentUserId = currentUser?.id;
 
-          // Load all upcoming events (not just attendance_required)
-          const { data: events, error } = await supabase
-            .from('events')
-            .select('*')
-            .gt('end_time', now)
-            .order('start_time', { ascending: true })
-            .limit(20);
+          // First, get event IDs where current user is a participant
+          let userEventIds = [];
+          if (currentUserId) {
+            const { data: userParticipations } = await supabase
+              .from('event_participants')
+              .select('event_id')
+              .eq('artist_id', currentUserId);
+            userEventIds = (userParticipations || []).map(p => p.event_id);
+          }
 
-          if (error) throw error;
+          // Load only events where user is a participant (upcoming)
+          let events = [];
+          if (userEventIds.length > 0) {
+            const { data, error } = await supabase
+              .from('events')
+              .select('*')
+              .in('id', userEventIds)
+              .gt('end_time', now)
+              .order('start_time', { ascending: true })
+              .limit(20);
 
-          // Fetch participants for all events
-          const eventIds = (events || []).map(e => e.id);
-          const { data: allParticipants } = await supabase
-            .from('event_participants')
-            .select('event_id, artist_id, confirmed')
-            .in('event_id', eventIds);
+            if (error) throw error;
+            events = data || [];
+          }
+
+          // Fetch all participants for these events
+          const eventIds = events.map(e => e.id);
+          let allParticipants = [];
+          if (eventIds.length > 0) {
+            const { data } = await supabase
+              .from('event_participants')
+              .select('event_id, artist_id, confirmed')
+              .in('event_id', eventIds);
+            allParticipants = data || [];
+          }
 
           // Map participants by event_id
           const participantsByEvent = (allParticipants || []).reduce((acc, p) => {
@@ -25841,9 +25861,6 @@
             acc[p.id] = p;
             return acc;
           }, {});
-
-          // Get current user ID for participation button
-          const currentUserId = currentUser?.id;
 
           // Create card placeholder HTML (always shown at end)
           const createCardHTML = `
