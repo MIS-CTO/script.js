@@ -21916,7 +21916,7 @@
       const endTime = document.getElementById('qbEndTime').value;
 
       if (!customerId) {
-        showToast('Please select a customer', 'error');
+        showNotification('Please select a customer', 'error');
         return;
       }
 
@@ -21943,7 +21943,7 @@
 
         if (error) throw error;
 
-        showToast('Booking created successfully!', 'success');
+        showNotification('Booking created successfully!', 'success');
         closeQuickBookingModal();
 
         // Refresh calendar
@@ -21955,7 +21955,7 @@
         }
       } catch (err) {
         console.error('Error creating booking:', err);
-        showToast('Error creating booking: ' + err.message, 'error');
+        showNotification('Error creating booking: ' + err.message, 'error');
       }
     }
     window.submitQuickBooking = submitQuickBooking;
@@ -35493,7 +35493,7 @@
                       } else if (evt.isStay) {
                         clickHandler = evt.guestSpotId
                           ? `onclick="openGuestSpotDetailModal({ id: '${evt.guestSpotId}' })"`
-                          : `onclick="showToast('Stay-Details können über den verknüpften Guest Spot geöffnet werden', 'info')"`;
+                          : `onclick="showNotification('Stay-Details können über den verknüpften Guest Spot geöffnet werden', 'info')"`;
                       } else if (isArtistInfoEvent) {
                         clickHandler = `onclick="openArtistInfoModal('${evt.originalId}', ${JSON.stringify(evt).replace(/"/g, '&quot;')})"`;
                       } else {
@@ -38988,12 +38988,12 @@
               await supabase.from('requests').update({ status: 'canceled' }).eq('id', appointment.request_id);
             }
 
-            showToast('Termin wurde storniert', 'success');
+            showNotification('Termin wurde storniert', 'success');
             closeAppointmentDetailModal();
             if (typeof loadCalendarData === 'function') loadCalendarData();
           } catch (err) {
             console.error('Error cancelling:', err);
-            showToast('Fehler beim Stornieren', 'error');
+            showNotification('Fehler beim Stornieren', 'error');
           }
         };
 
@@ -39006,12 +39006,12 @@
             const { error } = await supabase.from('appointments').delete().eq('id', appointmentId);
             if (error) throw error;
 
-            showToast('Termin wurde gelöscht', 'success');
+            showNotification('Termin wurde gelöscht', 'success');
             closeAppointmentDetailModal();
             if (typeof loadCalendarData === 'function') loadCalendarData();
           } catch (err) {
             console.error('Error deleting:', err);
-            showToast('Fehler beim Löschen', 'error');
+            showNotification('Fehler beim Löschen', 'error');
           }
         };
       }
@@ -60283,19 +60283,19 @@
 
       // Validierung
       if (!artistId) {
-        showToast('Bitte Artist auswählen', 'error');
+        showNotification('Bitte Artist auswählen', 'error');
         return;
       }
       if (!stayLocationId) {
-        showToast('Bitte Unterkunft auswählen', 'error');
+        showNotification('Bitte Unterkunft auswählen', 'error');
         return;
       }
       if (!dateFrom || !dateTo) {
-        showToast('Bitte Zeitraum angeben', 'error');
+        showNotification('Bitte Zeitraum angeben', 'error');
         return;
       }
       if (standaloneStaySelectedDays.length === 0) {
-        showToast('Bitte mindestens einen Tag auswählen', 'error');
+        showNotification('Bitte mindestens einen Tag auswählen', 'error');
         return;
       }
 
@@ -60325,7 +60325,7 @@
         if (error) throw error;
 
         console.log('✅ Standalone stay created:', data);
-        showToast('Unterkunft erfolgreich gebucht', 'success');
+        showNotification('Unterkunft erfolgreich gebucht', 'success');
 
         closeStandaloneStayModal();
 
@@ -60335,7 +60335,7 @@
         }
       } catch (err) {
         console.error('❌ Error creating standalone stay:', err);
-        showToast('Fehler beim Buchen: ' + err.message, 'error');
+        showNotification('Fehler beim Buchen: ' + err.message, 'error');
       }
     }
 
@@ -61085,7 +61085,7 @@
             if (stayError) {
               console.error('Error creating stay:', stayError);
               // Guest Spot wurde erstellt, aber Stay nicht - User informieren
-              showToast('Guest Spot erstellt, aber Unterkunft konnte nicht gespeichert werden', 'warning');
+              showNotification('Guest Spot erstellt, aber Unterkunft konnte nicht gespeichert werden', 'warning');
             } else {
               console.log('✅ Stay created for Guest Spot');
             }
