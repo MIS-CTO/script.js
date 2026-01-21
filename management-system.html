@@ -3816,7 +3816,7 @@
       display: flex;
       flex-direction: column;
       min-height: 0;
-      max-width: 280px;
+      max-width: 364px;
     }
 
     /* Events & Meetings - expanded center */
@@ -4160,6 +4160,57 @@
       font-weight: 500;
     }
 
+    .event-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .event-card-confirm-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.1);
+      color: #999;
+    }
+
+    .event-card-confirm-btn:hover {
+      background: rgba(0, 0, 0, 0.15);
+      color: #666;
+    }
+
+    .event-card-confirm-btn.confirmed {
+      background: rgba(52, 199, 89, 0.2);
+      color: #34c759;
+    }
+
+    .event-card-confirm-btn.confirmed:hover {
+      background: rgba(52, 199, 89, 0.3);
+    }
+
+    .event-card-v2.pflicht .event-card-confirm-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .event-card-v2.pflicht .event-card-confirm-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+
+    .event-card-v2.pflicht .event-card-confirm-btn.confirmed {
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+
     .event-card-more-btn {
       width: 28px;
       height: 28px;
@@ -4297,7 +4348,7 @@
       height: 100%;
       min-height: 200px;
       border-radius: 20px;
-      background: #fafafa;
+      background: transparent;
       border: 1px dashed #ccc;
       border-spacing: 8px;
       background-image: none;
@@ -4333,7 +4384,7 @@
     }
 
     [data-theme="dark"] .event-create-card {
-      background: rgba(255, 255, 255, 0.05);
+      background: transparent;
       border-color: rgba(255, 255, 255, 0.2);
     }
 
@@ -5551,7 +5602,7 @@
     }
 
     .todo-project-card:hover {
-      background: #f5f5f7; /* Hellgrau bei Hover */
+      background: transparent;
     }
 
     /* Selected Project - Mittelgrau Background */
@@ -5589,7 +5640,7 @@
 
     /* Dark Mode Anpassungen für Projects */
     [data-theme="dark"] .todo-project-card:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: transparent;
     }
 
     [data-theme="dark"] .todo-project-card.selected {
@@ -6332,8 +6383,10 @@
       align-items: center;
       justify-content: center;
       height: 100%;
+      min-height: 200px;
       color: #9ca3af;
       font-size: 15px;
+      text-align: center;
     }
 
     /* Edit Project Modal */
@@ -20565,45 +20618,12 @@
         </div>
         
         <div class="form-group">
-          <label>Visible for Groups</label>
-          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; padding:12px; background:rgba(0,0,0,0.02); border-radius:10px;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; grid-column:1/-1; padding-bottom:8px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:4px;">
-              <input type="checkbox" id="groupCheckboxAll" style="width:auto; padding:0;">
-              All Groups
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="geschäftsführung" style="width:auto; padding:0;">
-              Geschäftsführung
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="management" style="width:auto; padding:0;">
-              Management
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="booking_team" style="width:auto; padding:0;">
-              Booking Team
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="mediadepartment" style="width:auto; padding:0;">
-              Mediadepartment
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="resident_artists" style="width:auto; padding:0;">
-              Resident Artists
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="guest_artists" style="width:auto; padding:0;">
-              Guest Artists
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="azubis" style="width:auto; padding:0;">
-              Azubis
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:normal;">
-              <input type="checkbox" class="group-checkbox" value="andere" style="width:auto; padding:0;">
-              Andere
-            </label>
+          <label>Participants</label>
+          <div style="position:relative;">
+            <input type="text" id="eventParticipantSearch" placeholder="Search team members..." style="width:100%;">
+            <div id="eventParticipantResults" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #e0e0e0; border-radius:8px; max-height:200px; overflow-y:auto; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
           </div>
+          <div id="eventParticipantList" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; min-height:40px; padding:8px; background:rgba(0,0,0,0.02); border-radius:8px;"></div>
         </div>
         
         <div class="form-group">
@@ -25754,6 +25774,20 @@
 
           if (error) throw error;
 
+          // Fetch participants for all events
+          const eventIds = (events || []).map(e => e.id);
+          const { data: allParticipants } = await supabase
+            .from('event_participants')
+            .select('event_id, artist_id, confirmed')
+            .in('event_id', eventIds);
+
+          // Map participants by event_id
+          const participantsByEvent = (allParticipants || []).reduce((acc, p) => {
+            acc[p.event_id] = acc[p.event_id] || [];
+            acc[p.event_id].push(p);
+            return acc;
+          }, {});
+
           // Pre-fetch all profiles for avatar display
           const { data: allProfiles } = await supabase
             .from('profiles')
@@ -25769,6 +25803,15 @@
             }
             return acc;
           }, {});
+
+          // Map profiles by id for participant lookup
+          const profilesById = (allProfiles || []).reduce((acc, p) => {
+            acc[p.id] = p;
+            return acc;
+          }, {});
+
+          // Get current user ID for participation button
+          const currentUserId = currentUser?.id;
 
           // Create card placeholder HTML (always shown at end)
           const createCardHTML = `
@@ -25818,31 +25861,53 @@
             // Badge icon based on type
             const badgeIcon = isPflicht ? '⚡' : (eventType === 'Meeting' ? '👥' : '📅');
 
-            // Get attendees based on visible_groups (case-insensitive matching)
-            const visibleGroups = event.visible_groups || [];
-            const attendees = visibleGroups.flatMap(group => profilesMap[group.toLowerCase()] || []);
-            // Remove duplicates by id
-            const uniqueAttendees = [...new Map(attendees.map(a => [a.id, a])).values()];
-            const attendeeCount = uniqueAttendees.length || 1;
-            const confirmedCount = event.confirmed_count || Math.ceil(attendeeCount * 0.7);
+            // Get participants from the new event_participants table
+            const eventParticipants = participantsByEvent[event.id] || [];
+            const attendeeCount = eventParticipants.length;
+            const confirmedCount = eventParticipants.filter(p => p.confirmed).length;
+
+            // Check if current user is a participant and their confirmation status
+            const userParticipant = eventParticipants.find(p => p.artist_id === currentUserId);
+            const isParticipant = !!userParticipant;
+            const isConfirmed = userParticipant?.confirmed || false;
+
+            // Get participant profiles for avatars
+            const participantProfiles = eventParticipants
+              .map(p => profilesById[p.artist_id])
+              .filter(Boolean);
 
             // Generate avatars with real profile pictures
             const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
-            const avatarsHTML = uniqueAttendees.slice(0, 3).map((profile, i) => {
+            const avatarsHTML = participantProfiles.slice(0, 3).map((profile, i) => {
               const firstLetter = (profile.username || '?').charAt(0).toUpperCase();
               const bgColor = avatarColors[i % avatarColors.length];
               if (profile.avatar_url) {
                 return `<div class="event-card-avatar" style="background: ${bgColor};"><img src="${profile.avatar_url}" alt="${firstLetter}" onerror="this.style.display='none';this.parentElement.textContent='${firstLetter}';" /></div>`;
               }
               return `<div class="event-card-avatar" style="background: ${bgColor};">${firstLetter}</div>`;
-            }).join('') || '<div class="event-card-avatar" style="background: #667eea;">?</div>';
+            }).join('') || '<div class="event-card-avatar" style="background: #e0e0e0; color: #999;">—</div>';
+
+            // Participation confirmation button (only shown if user is a participant)
+            const confirmBtnHTML = isParticipant ? `
+              <button class="event-card-confirm-btn ${isConfirmed ? 'confirmed' : ''}"
+                onclick="event.stopPropagation(); toggleEventParticipation('${event.id}', ${!isConfirmed});"
+                title="${isConfirmed ? 'Teilnahme bestätigt' : 'Teilnahme bestätigen'}">
+                ${isConfirmed ? '✓' : '✕'}
+              </button>
+            ` : '';
+
+            // Stats icon based on confirmation status
+            const statsIcon = confirmedCount === attendeeCount && attendeeCount > 0 ? '✓' : '✕';
 
             return `
               <div class="event-card-v2 ${isPflicht ? 'pflicht' : 'normal'}" data-event-id="${event.id}">
                 <!-- Header Row -->
                 <div class="event-card-header">
                   <span class="event-card-time">${timeRange}</span>
-                  <button class="event-card-more-btn" onclick="event.stopPropagation(); openEditEventModal('${event.id}');">⋯</button>
+                  <div class="event-card-actions">
+                    ${confirmBtnHTML}
+                    <button class="event-card-more-btn" onclick="event.stopPropagation(); openEditEventModal('${event.id}');">⋯</button>
+                  </div>
                 </div>
 
                 <!-- Content Section (pushed to bottom, above avatars) -->
@@ -25870,8 +25935,8 @@
                   </div>
                   <div class="event-card-stats">
                     <span class="event-card-stat">
-                      <span class="event-card-stat-icon">✓</span>
-                      ${confirmedCount}/${attendeeCount}
+                      <span class="event-card-stat-icon">${statsIcon}</span>
+                      ${attendeeCount > 0 ? `${confirmedCount}/${attendeeCount}` : '0'}
                     </span>
                     ${event.comment_count ? `
                       <span class="event-card-stat">
@@ -25916,6 +25981,40 @@
       }
 
       window.loadEventsAndMeetings = loadEventsAndMeetings;
+
+      /**
+       * Toggle event participation confirmation
+       */
+      async function toggleEventParticipation(eventId, confirmed) {
+        if (!currentUser?.id) {
+          console.error('❌ No current user for participation toggle');
+          return;
+        }
+
+        try {
+          const { error } = await supabase
+            .from('event_participants')
+            .update({
+              confirmed: confirmed,
+              confirmed_at: confirmed ? new Date().toISOString() : null
+            })
+            .eq('event_id', eventId)
+            .eq('artist_id', currentUser.id);
+
+          if (error) throw error;
+
+          console.log(`✅ Event participation ${confirmed ? 'confirmed' : 'unconfirmed'} for event ${eventId}`);
+
+          // Reload events to update UI
+          await loadEventsAndMeetings();
+
+        } catch (err) {
+          console.error('❌ Error toggling event participation:', err);
+          alert('Fehler beim Aktualisieren der Teilnahme');
+        }
+      }
+
+      window.toggleEventParticipation = toggleEventParticipation;
 
       // ============================================
       // NEW REQUESTS - Dashboard V2
@@ -26347,6 +26446,11 @@
 
           console.log('✅ Loaded', messages.length, 'messages in slider');
 
+          // Start auto-slide if there are multiple messages
+          if (messages.length > 1 && typeof window.startBrettAutoSlide === 'function') {
+            window.startBrettAutoSlide();
+          }
+
         } catch (err) {
           console.error('❌ Error loading schwarzes brett:', err);
           container.innerHTML = '<div style="padding:20px; text-align:center; color:#ff3b30;">Fehler beim Laden</div>';
@@ -26380,6 +26484,38 @@
       }
 
       window.goToBrettSlide = goToBrettSlide;
+
+      /**
+       * Auto-advance Schwarzes Brett slider every 5 seconds
+       */
+      let brettAutoSlideInterval = null;
+
+      function startBrettAutoSlide() {
+        // Clear any existing interval
+        if (brettAutoSlideInterval) {
+          clearInterval(brettAutoSlideInterval);
+        }
+
+        brettAutoSlideInterval = setInterval(() => {
+          const totalSlides = window.schwarzesBrettMessages?.length || 0;
+          if (totalSlides <= 1) return;
+
+          const currentIndex = window.brettSliderIndex || 0;
+          const nextIndex = (currentIndex + 1) % totalSlides;
+          goToBrettSlide(nextIndex);
+        }, 5000);
+      }
+
+      function stopBrettAutoSlide() {
+        if (brettAutoSlideInterval) {
+          clearInterval(brettAutoSlideInterval);
+          brettAutoSlideInterval = null;
+        }
+      }
+
+      // Start auto-slide when page loads (will be called after loadSchwarzesBrett)
+      window.startBrettAutoSlide = startBrettAutoSlide;
+      window.stopBrettAutoSlide = stopBrettAutoSlide;
 
       // ============================================
       // BRETT MENU FUNCTIONS
@@ -38152,9 +38288,113 @@
         document.getElementById('createEventForm').reset();
       });
       
+      // Event Participant Management
+      let eventParticipants = [];
+
+      // Initialize participant search
+      async function initEventParticipantSearch() {
+        const searchInput = document.getElementById('eventParticipantSearch');
+        const resultsContainer = document.getElementById('eventParticipantResults');
+        if (!searchInput || !resultsContainer) return;
+
+        // Fetch all profiles for search
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .eq('is_active', true)
+          .order('username');
+
+        const allProfiles = profiles || [];
+
+        searchInput.addEventListener('input', (e) => {
+          const query = e.target.value.toLowerCase().trim();
+          if (query.length < 1) {
+            resultsContainer.style.display = 'none';
+            return;
+          }
+
+          const filtered = allProfiles.filter(p =>
+            p.username?.toLowerCase().includes(query) &&
+            !eventParticipants.find(ep => ep.id === p.id)
+          ).slice(0, 5);
+
+          if (filtered.length === 0) {
+            resultsContainer.innerHTML = '<div style="padding:12px; color:#999; font-size:13px;">Keine Ergebnisse</div>';
+          } else {
+            resultsContainer.innerHTML = filtered.map(p => `
+              <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; transition:background 0.15s;"
+                   onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='none'"
+                   onclick="addEventParticipant('${p.id}', '${(p.username || '').replace(/'/g, "\\'")}', '${p.avatar_url || ''}')">
+                ${p.avatar_url
+                  ? `<img src="${p.avatar_url}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;">`
+                  : `<div style="width:28px; height:28px; border-radius:50%; background:#e0e0e0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">${(p.username || '?').charAt(0).toUpperCase()}</div>`
+                }
+                <span style="font-size:13px;">${p.username || 'Unknown'}</span>
+              </div>
+            `).join('');
+          }
+          resultsContainer.style.display = 'block';
+        });
+
+        // Hide results when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = 'none';
+          }
+        });
+      }
+
+      window.addEventParticipant = function(id, username, avatarUrl) {
+        if (eventParticipants.find(p => p.id === id)) return;
+        eventParticipants.push({ id, username, avatar_url: avatarUrl });
+        renderEventParticipantList();
+        document.getElementById('eventParticipantSearch').value = '';
+        document.getElementById('eventParticipantResults').style.display = 'none';
+      };
+
+      window.removeEventParticipant = function(id) {
+        eventParticipants = eventParticipants.filter(p => p.id !== id);
+        renderEventParticipantList();
+      };
+
+      function renderEventParticipantList() {
+        const container = document.getElementById('eventParticipantList');
+        if (!container) return;
+
+        if (eventParticipants.length === 0) {
+          container.innerHTML = '<span style="color:#999; font-size:13px;">Keine Teilnehmer ausgewählt</span>';
+          return;
+        }
+
+        container.innerHTML = eventParticipants.map(p => `
+          <div style="display:flex; align-items:center; gap:6px; padding:4px 10px 4px 6px; background:#fff; border:1px solid #e0e0e0; border-radius:20px;">
+            ${p.avatar_url
+              ? `<img src="${p.avatar_url}" style="width:22px; height:22px; border-radius:50%; object-fit:cover;">`
+              : `<div style="width:22px; height:22px; border-radius:50%; background:#e0e0e0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600;">${(p.username || '?').charAt(0).toUpperCase()}</div>`
+            }
+            <span style="font-size:12px; font-weight:500;">${p.username}</span>
+            <button type="button" onclick="removeEventParticipant('${p.id}')" style="background:none; border:none; cursor:pointer; padding:0; margin-left:4px; color:#999; font-size:14px; line-height:1;">&times;</button>
+          </div>
+        `).join('');
+      }
+
+      // Initialize on modal open
+      document.getElementById('createEventModal')?.addEventListener('transitionend', () => {
+        if (document.getElementById('createEventModal')?.classList.contains('active')) {
+          initEventParticipantSearch();
+        }
+      });
+
+      // Also initialize when clicking the create button
+      document.getElementById('createEventBtn')?.addEventListener('click', () => {
+        eventParticipants = [];
+        renderEventParticipantList();
+        setTimeout(() => initEventParticipantSearch(), 100);
+      });
+
       document.getElementById('createEventForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const title = document.getElementById('createEventTitle').value.trim();
         const type = document.getElementById('createEventType').value.trim();
         const description = document.getElementById('createEventDescription').value.trim();
@@ -38166,12 +38406,8 @@
 
         console.log('📌 Event creation - attendanceRequired:', attendanceRequired);
 
-        // Collect selected groups
-        const selectedGroups = [];
-        const groupCheckboxes = document.querySelectorAll('.group-checkbox:checked');
-        groupCheckboxes.forEach(checkbox => {
-          selectedGroups.push(checkbox.value);
-        });
+        // Get selected participants
+        const selectedParticipantIds = eventParticipants.map(p => p.id);
         
         // Validation
         if (!title || !type || !date || !startHour || !endHour) {
@@ -38198,24 +38434,45 @@
             title,
             type,
             description: description || null,
-            visible_groups: selectedGroups.length > 0 ? selectedGroups : null,
+            visible_groups: null, // No longer using groups
             attendance_required: attendanceRequired,
             slot: slot,
             artist_id: null,
             location_id: selectedLocationId,
             start_time: `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String((startHour % 1) * 60).padStart(2, '0')}:00`,
             end_time: `${date}T${String(Math.floor(endHour)).padStart(2, '0')}:${String((endHour % 1) * 60).padStart(2, '0')}:00`
-          });
-          
+          }).select();
+
           if (error) throw error;
-          
+
+          const newEventId = data?.[0]?.id;
+
+          // Add participants to event_participants table
+          if (newEventId && selectedParticipantIds.length > 0) {
+            const participantInserts = selectedParticipantIds.map(artistId => ({
+              event_id: newEventId,
+              artist_id: artistId,
+              confirmed: false
+            }));
+
+            const { error: participantError } = await supabase
+              .from('event_participants')
+              .insert(participantInserts);
+
+            if (participantError) {
+              console.error('Error adding participants:', participantError);
+            } else {
+              console.log(`✅ Added ${participantInserts.length} participants to event`);
+            }
+          }
+
           // Add to local events array
           events.push({
-            id: data?.[0]?.id || Date.now(),
+            id: newEventId || Date.now(),
             title,
             type,
             description,
-            visible_groups: selectedGroups,
+            visible_groups: null,
             attendance_required: attendanceRequired,
             date,
             slot,
@@ -38228,16 +38485,17 @@
           // Close modal and reset form
           document.getElementById('createEventModal').classList.remove('active');
           document.getElementById('createEventForm').reset();
-          
-          // Uncheck all group checkboxes
-          groupCheckboxes.forEach(id => {
-            const checkbox = document.getElementById(id);
-            if (checkbox) checkbox.checked = false;
-          });
-          
+
+          // Reset participants
+          eventParticipants = [];
+          renderEventParticipantList();
+
           // Reload events and refresh calendar
           await loadEvents();
           renderCalendar();
+
+          // Refresh dashboard events
+          await loadEventsAndMeetings();
 
           // Refresh pinned events falls es ein Pflicht-Event ist
           if (attendanceRequired) {
@@ -43872,6 +44130,19 @@
           };
           console.log('✅ Dashboard avatar updated:', profile.avatar_url);
         }
+      }
+
+      // Update Profile Button Avatar (Desktop Header)
+      const profileButton = document.getElementById('profileButton');
+      if (profileButton && profile.avatar_url) {
+        profileButton.innerHTML = `<img src="${profile.avatar_url}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M20 20C20 16.134 16.418 13 12 13C7.582 13 4 16.134 4 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>`;
+        profileButton.style.padding = '0';
+        profileButton.style.overflow = 'hidden';
+        console.log('✅ Profile button avatar updated:', profile.avatar_url);
       }
 
       // Update Mobile Nav Avatar (Bottom Bar)
