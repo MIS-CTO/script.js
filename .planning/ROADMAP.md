@@ -24,7 +24,8 @@ Phase 5.6: Calendar Availability     ██████████████�
 Phase 5.7: Status Stripes & Book     ████████████████████ 100% ✓
 Phase 5.8: Payment Notifications     ████████████████████ 100% ✓
 Phase 6: Dashboard Redesign          ████████████████████ 100% ✓
-Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0% → NEXT
+Phase 7: Events UI & Create Card     ████████████████████ 100% ✓
+Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
 ---
@@ -117,6 +118,39 @@ f5f0e90 fix(notifications): Load paid appointments from DB instead of broken Edg
 - Customer search improvements
 - Artist ranking system
 - Attachment handling
+
+---
+
+## Upcoming: Phase 7 - Events UI & Create Card
+
+**Status**: Not started
+**Priority**: HIGH
+**Depends on**: Phase 6
+
+### Goals
+
+1. **Layout Width Adjustment**
+   - Schwarzes Brett: match width of Neue Anfragen + Anstehende Termine wrapper
+   - Events & Meetings: expand to fill remaining space
+
+2. **Create Event Card Placeholder**
+   - Subtle grey container with white background + light grey outline
+   - Centered plus icon (same grey color)
+   - Responsive width: min 25px, auto-fill remaining space
+   - Row-aligned with event cards, always last in row
+   - On click: open "Create New Event or Meeting" modal
+
+3. **Modal Rename**
+   - Calendar button function → "Create New Event or Meeting"
+   - Modal title → "Create New Event or Meeting"
+
+### Tasks
+
+- [ ] Adjust CSS grid widths for Schwarzes Brett and Events sections
+- [ ] Create `.event-create-card` component with plus icon
+- [ ] Add click handler to open event creation modal
+- [ ] Rename modal and button labels
+- [ ] Test responsive behavior
 
 ---
 
