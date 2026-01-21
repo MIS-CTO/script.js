@@ -39002,7 +39002,12 @@
 
             showNotification('Termin wurde storniert', 'success');
             closeAppointmentDetailModal();
-            if (typeof loadCalendarData === 'function') loadCalendarData();
+
+            // Refresh calendar to show canceled stripe
+            if (typeof loadEvents === 'function') {
+              await loadEvents();
+              if (typeof renderCalendar === 'function') renderCalendar();
+            }
           } catch (err) {
             console.error('Error cancelling:', err);
             showNotification('Fehler beim Stornieren: ' + (err.message || 'Unbekannter Fehler'), 'error');
@@ -39030,7 +39035,12 @@
             console.log('✅ Appointment deleted');
             showNotification('Termin wurde gelöscht', 'success');
             closeAppointmentDetailModal();
-            if (typeof loadCalendarData === 'function') loadCalendarData();
+
+            // Refresh calendar
+            if (typeof loadEvents === 'function') {
+              await loadEvents();
+              if (typeof renderCalendar === 'function') renderCalendar();
+            }
           } catch (err) {
             console.error('Error deleting:', err);
             showNotification('Fehler beim Löschen: ' + (err.message || 'Unbekannter Fehler'), 'error');
