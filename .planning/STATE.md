@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-20 | Version: 3.1217**
-**UPDATE: Consultation Weekend Blocking ✓**
+**Stand: 2026-01-21 | Version: 3.1218**
+**UPDATE: Appointment Cancel Button Fix ✓**
 
 ---
 
@@ -44,6 +44,47 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     → NEXT  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Hotfix: Appointment Cancel Button Fix (2026-01-21) ✅ COMPLETE
+
+### Problem
+
+Cancel button in appointment details popup threw `ReferenceError: showToast is not defined` error. The appointment status was not being set to "canceled".
+
+### Root Cause
+
+The code was calling `showToast()` which is not defined in `management-system.html`. The correct notification function is `showNotification()` (defined at line 52831).
+
+### Solution
+
+Replaced all 15 occurrences of `showToast()` with `showNotification()`.
+
+### Files Changed
+
+- `management-system.html` - Replaced `showToast(` → `showNotification(` (15 occurrences)
+
+### Affected Areas
+
+| Line | Function | Change |
+|------|----------|--------|
+| 21919 | Quick booking validation | `showNotification('Please select a customer', 'error')` |
+| 21946 | Quick booking success | `showNotification('Booking created successfully!', 'success')` |
+| 21958 | Quick booking error | `showNotification('Error creating booking: ...')` |
+| 35496 | Stay details info | `showNotification('Stay-Details können...')` |
+| 38991 | Cancel appointment success | `showNotification('Termin wurde storniert', 'success')` |
+| 38996 | Cancel appointment error | `showNotification('Fehler beim Stornieren', 'error')` |
+| 39009 | Delete appointment success | `showNotification('Termin wurde gelöscht', 'success')` |
+| 39014 | Delete appointment error | `showNotification('Fehler beim Löschen', 'error')` |
+| 60286-60338 | Accommodation booking | Various notifications |
+| 61088 | Guest spot accommodation | Warning notification |
+
+### Commit
+
+```
+c6a81a4 fix(appointments): replace undefined showToast with showNotification
 ```
 
 ---
