@@ -38978,13 +38978,24 @@
 
           try {
             console.log('🔄 Cancelling appointment:', appointmentId);
+            console.log('📋 Current appointment data:', appointment);
+
+            const updatePayload = {
+              status: 'canceled',
+              state: 'Cancelled',
+              canceled_at: new Date().toISOString(),
+              cancel_reason: 'manual_cancel'
+            };
+            console.log('📝 Update payload:', updatePayload);
 
             const { data, error } = await supabase
               .from('appointments')
-              .update({ status: 'canceled', state: 'Cancelled' })
+              .update(updatePayload)
               .eq('id', appointmentId)
-              .select()
+              .select('id, status, state, canceled_at, cancel_reason')
               .single();
+
+            console.log('📊 Supabase response - data:', data, 'error:', error);
 
             if (error) {
               console.error('Supabase error:', error);
@@ -38996,7 +39007,13 @@
               throw new Error('Termin konnte nicht aktualisiert werden');
             }
 
-            console.log('✅ Appointment canceled:', data);
+            // Verify the update actually worked
+            if (data.status !== 'canceled') {
+              console.error('⚠️ Status was not updated! Expected: canceled, Got:', data.status);
+              throw new Error('Status konnte nicht auf "canceled" gesetzt werden');
+            }
+
+            console.log('✅ Appointment canceled successfully:', data);
 
             if (appointment.request_id) {
               const { error: reqError } = await supabase
