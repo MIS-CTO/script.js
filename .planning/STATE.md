@@ -63,9 +63,11 @@
 | Event Participation RLS Fix | Migration to allow event participation updates | ✅ |
 | Events Filtering | Events only visible to participants/collaborators | ✅ |
 | Dashboard Background Image | Supabase image for dashboard, grey for other pages | ✅ |
-| Glass Container Styling | Frosted look with 40px blur, light grey, 0.97 opacity | ✅ |
+| Glass Container Styling | Frosted look with 8px blur, light grey, 0.58 opacity | ✅ |
 | Welcome Message White | Dashboard welcome text changed to white | ✅ |
 | Hidden Scrollbars | Neue Anfragen & Anstehende Termine scroll without visible bars | ✅ |
+| Dark Mode Navbar Fix | Fixed color mismatch between header and navbar (#1c1c1e) | ✅ |
+| Mobile Testing | Verified calendar and profile views on mobile viewport (375x812) | ✅ |
 
 ### Technical Details
 
@@ -99,14 +101,21 @@ FOR UPDATE USING (true) WITH CHECK (true);
 **Glass Container Variables:**
 ```css
 /* Light Mode */
---glass-bg: rgba(245, 245, 247, 0.97);
---glass-bg-elevated: rgba(245, 245, 247, 0.99);
---glass-blur: blur(40px);
---glass-border: rgba(255, 255, 255, 0.5);
+--glass-bg: rgba(245, 245, 247, 0.58);
+--glass-bg-elevated: rgba(245, 245, 247, 0.72);
+--glass-blur: blur(8px);
+--glass-border: rgba(255, 255, 255, 0.4);
 
 /* Dark Mode */
---glass-bg: rgba(60, 60, 67, 0.97);
---glass-bg-elevated: rgba(70, 70, 77, 0.99);
+--glass-bg: rgba(60, 60, 67, 0.58);
+--glass-bg-elevated: rgba(70, 70, 77, 0.72);
+```
+
+**Dark Mode Navbar Fix:**
+```css
+[data-theme="dark"] .navbar-container {
+  background: #1c1c1e; /* Match header section color - was #2c2c2e */
+}
 ```
 
 **Dashboard Background:**
@@ -140,21 +149,23 @@ e32235f style(glass): update glassmorphism to match frosted reference
 cf35674 style(dashboard): increase glass opacity to 0.92, update background image
 2a217fa style(dashboard): hide scrollbars, light grey glass at 0.95 opacity
 260664a style(glass): increase opacity to 0.97 (10% less transparent)
+ca79cc4 style(dashboard): increase glass transparency to 58%, reduce blur to 8px, fix dark navbar
 ```
 
 ### Known Context for Next Session
 
-1. **Glass opacity is at 0.97** - nearly opaque, light grey tint
+1. **Glass opacity is at 0.58** - 40% more transparent with 8px blur for glass-like texture
 2. **Background image URL**: `https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/Background/Bildschirmfoto%202026-01-21%20um%2015.43.55.png`
 3. **Welcome message is white** for contrast against background image
-4. **Dark mode uses grey glass** (rgba 60, 60, 67) instead of dark
-5. **Event participants RLS** now has permissive update policy
+4. **Dark mode uses grey glass** (rgba 60, 60, 67, 0.58) instead of dark
+5. **Dark mode navbar** uses #1c1c1e to match header (was #2c2c2e)
+6. **Event participants RLS** now has permissive update policy
+7. **Mobile tested** - Calendar and profile views verified on 375x812 viewport
 
 ### Remaining / Potential Tasks
 
 - [ ] Further visual refinements based on user feedback
-- [ ] Dark mode background image (if needed)
-- [ ] Mobile responsiveness testing for new styles
+- [ ] Dark mode background image (optional)
 
 ---
 

@@ -25,7 +25,7 @@ Phase 5.7: Status Stripes & Book     ██████████████�
 Phase 5.8: Payment Notifications     ████████████████████ 100% ✓
 Phase 6: Dashboard Redesign          ████████████████████ 100% ✓
 Phase 7: Events UI & Create Card     ████████████████████ 100% ✓
-Phase 8: Dashboard Visual Polish     ████████████████░░░░  80% ⏳
+Phase 8: Dashboard Visual Polish     ██████████████████░░  90% ⏳
 Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
@@ -44,22 +44,31 @@ Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░�
 | **Avatar Bug Fix** | Profile button resets to default icon when user has no avatar |
 | **Event Participation** | RLS fix + events filtered to only show for participants |
 | **Background Image** | Dashboard uses Supabase image, other pages use grey (#f5f5f7) |
-| **Glassmorphism** | Frosted glass effect: 40px blur, light grey, 0.97 opacity |
+| **Glassmorphism** | Frosted glass effect: 8px blur, light grey, 0.58 opacity |
 | **Welcome Text** | Changed to white for contrast against background |
 | **Hidden Scrollbars** | Neue Anfragen & Anstehende Termine scroll without visible bars |
+| **Dark Mode Navbar** | Fixed color mismatch (#1c1c1e to match header) |
+| **Mobile Testing** | Verified calendar and profile views on 375x812 viewport |
 
 ### Technical Summary
 
 **CSS Variables (Light Mode):**
 ```css
---glass-bg: rgba(245, 245, 247, 0.97);
---glass-blur: blur(40px);
---glass-border: rgba(255, 255, 255, 0.5);
+--glass-bg: rgba(245, 245, 247, 0.58);
+--glass-blur: blur(8px);
+--glass-border: rgba(255, 255, 255, 0.4);
 ```
 
 **CSS Variables (Dark Mode):**
 ```css
---glass-bg: rgba(60, 60, 67, 0.97);
+--glass-bg: rgba(60, 60, 67, 0.58);
+```
+
+**Dark Mode Navbar:**
+```css
+[data-theme="dark"] .navbar-container {
+  background: #1c1c1e; /* Fixed: was #2c2c2e */
+}
 ```
 
 **Dashboard Background:**
@@ -88,13 +97,13 @@ e32235f style(glass): update glassmorphism to match frosted reference
 cf35674 style(dashboard): increase glass opacity to 0.92, update background image
 2a217fa style(dashboard): hide scrollbars, light grey glass at 0.95 opacity
 260664a style(glass): increase opacity to 0.97 (10% less transparent)
+ca79cc4 style(dashboard): increase glass transparency to 58%, reduce blur to 8px, fix dark navbar
 ```
 
 ### Remaining Tasks
 
 - [ ] Further visual refinements (if needed)
 - [ ] Dark mode background image (optional)
-- [ ] Mobile responsiveness verification
 
 ---
 
