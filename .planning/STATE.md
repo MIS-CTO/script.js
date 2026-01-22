@@ -1,5 +1,5 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-22 | Version: 3.1220**
+**Stand: 2026-01-22 | Version: 3.1221**
 **UPDATE: Phase 8 Dashboard Visual Polish IN PROGRESS**
 
 ---
@@ -48,6 +48,47 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Hotfix: Remove Gil from Consultation Booking (2026-01-22) ✅ COMPLETE
+
+### Problem
+Artist "Gil" was terminated and needed to be removed from the consultation booking page immediately.
+
+### Solution
+Removed Gil's artist ID (`98b63cd4-7e2e-409c-94cd-ac259a0a2635`) from the `ARTIST_IDS` array in `consultation-booking.html`.
+
+**Before:**
+```javascript
+// Artist IDs für Consultation: Ata, Gil, Luca, Mary, Mela
+const ARTIST_IDS = [
+  '90cd70be-f1a4-409e-8570-7aa2699fc683',  // Ata
+  '98b63cd4-7e2e-409c-94cd-ac259a0a2635',  // Gil
+  '9c60a246-68f0-4d9a-968e-03f490f10e5f',  // Luca
+  'a2b390b5-4898-4bd5-a6b3-8ea66878dcc9',  // Mary
+  'eb67d5dc-2f6f-45e1-ba56-f8e513ef32ba'   // Mela
+];
+```
+
+**After:**
+```javascript
+// Artist IDs für Consultation: Ata, Luca, Mary, Mela
+const ARTIST_IDS = [
+  '90cd70be-f1a4-409e-8570-7aa2699fc683',  // Ata
+  '9c60a246-68f0-4d9a-968e-03f490f10e5f',  // Luca
+  'a2b390b5-4898-4bd5-a6b3-8ea66878dcc9',  // Mary
+  'eb67d5dc-2f6f-45e1-ba56-f8e513ef32ba'   // Mela
+];
+```
+
+### Files Changed
+- `consultation-booking.html` - Removed Gil from ARTIST_IDS array
+
+### Commit
+```
+1062437 fix(consultation): remove Gil from artist selection
 ```
 
 ---
