@@ -41496,6 +41496,7 @@
     // Helper function: Get role badge HTML
     function getRoleBadge(role) {
       const roleColors = {
+        'Admin': { bg: 'rgba(255, 215, 0, 0.15)', text: '#B8860B', label: 'Admin' },
         'Geschäftsführung': { bg: 'rgba(255, 215, 0, 0.15)', text: '#B8860B', label: 'GF' },
         'Management': { bg: 'rgba(0, 122, 255, 0.15)', text: '#007AFF', label: 'Management' },
         'Booking Team': { bg: 'rgba(175, 82, 222, 0.15)', text: '#AF52DE', label: 'Booking' },
@@ -41659,7 +41660,7 @@
     }
 
     // Apply filters to dienstplan data
-    function applyDienstplanFilters() {
+    async function applyDienstplanFilters() {
       const roleFilter = document.getElementById('dienstplanRoleFilter')?.value || 'all';
       const statusFilter = document.getElementById('dienstplanStatusFilter')?.value || 'all';
 
@@ -41705,7 +41706,7 @@
       });
 
       console.log('✅ Filtered:', dienstplanFiltered.length, 'entries from', dienstplanCache.length, 'total');
-      renderDienstplanTable();
+      await renderDienstplanTable();
 
       // Update Header mit aktuellem Monat
       if (typeof updateDienstplanHeaderMonth === 'function') {
@@ -41759,7 +41760,7 @@
     window.stateConfig = stateConfig;
 
     // Render Dienstplan Timeline (Horizontal View with Role Groups)
-    function renderDienstplanTable() {
+    async function renderDienstplanTable() {
       const container = document.getElementById('dienstplanTableContainer');
       if (!container) return;
 
@@ -41792,30 +41793,51 @@
       // Toggle-Status
       const showOnlyWithEntries = document.getElementById('showOnlyWithEntries')?.checked ?? true;
 
-      // Gruppiere nach Rolle → Artist
+      // Gruppiere nach Rolle → Artist/Profile
       const groupedData = {};
       const artistsWithEntries = new Set();
 
+      // Collect emails for profile-only entries (no artist_id)
+      const profileEmails = [...new Set(
+        dienstplanFiltered
+          .filter(e => !e.artist_id && e.email)
+          .map(e => e.email)
+      )];
+
+      // Fetch profile names for profile-only entries
+      let profileNamesByEmail = {};
+      if (profileEmails.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('email, username')
+          .in('email', profileEmails);
+        profiles?.forEach(p => { profileNamesByEmail[p.email] = p.username; });
+      }
+
       dienstplanFiltered.forEach(entry => {
         const role = entry.role || 'Ohne Rolle';
-        const artistId = entry.artist_id;
-        const artistName = entry.artist?.name || 'Unbekannt';
+        // Use unique key: artist_id or 'profile_' + email for profile-only entries
+        const uniqueKey = entry.artist_id || (entry.email ? 'profile_' + entry.email : 'unknown_' + entry.id);
+        // Get name from artist join OR profile lookup
+        const artistName = entry.artist?.name || profileNamesByEmail[entry.email] || entry.email || 'Unbekannt';
 
         if (!groupedData[role]) groupedData[role] = {};
-        if (!groupedData[role][artistId]) {
-          groupedData[role][artistId] = {
+        if (!groupedData[role][uniqueKey]) {
+          groupedData[role][uniqueKey] = {
             name: artistName,
             entries: []
           };
         }
-        groupedData[role][artistId].entries.push(entry);
-        artistsWithEntries.add(artistId);
+        groupedData[role][uniqueKey].entries.push(entry);
+        artistsWithEntries.add(uniqueKey);
       });
 
       // Rollen-Konfiguration: DB-Wert → Display Label + Farbe
       const roleConfig = {
+        'Admin': { label: 'Admin', color: '#FFD60A' },
         'Geschäftsführung': { label: 'Administrator', color: '#FFD60A' },
         'Management': { label: 'Booking Manager', color: '#007AFF' },
+        'Booking Team': { label: 'Booking Team', color: '#AF52DE' },
         'Resident Artist': { label: 'Resident', color: '#34C759' },
         'Guest Artist': { label: 'Guest', color: '#00C7BE' },
         'Mediadepartment': { label: 'Media', color: '#FF9500' },
@@ -41824,8 +41846,10 @@
 
       // Rollen-Reihenfolge für Anzeige
       const roleOrder = [
+        'Admin',             // → Admin
         'Geschäftsführung',  // → Administrator
         'Management',        // → Booking Manager
+        'Booking Team',      // → Booking Team
         'Resident Artist',   // → Resident
         'Guest Artist',      // → Guest
         'Mediadepartment',   // → Media
@@ -42585,6 +42609,7 @@
             // Rolle formatieren
             const roleLabel = profile.role || 'Team';
             const roleColors = {
+              'Admin': '#FFD60A',
               'Geschäftsführung': '#FFD60A',
               'Management': '#007AFF',
               'Booking Team': '#AF52DE',
