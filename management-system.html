@@ -36342,7 +36342,9 @@
       
       // Cancel Add Customer
       document.getElementById('cancelAddCustomer')?.addEventListener('click', () => {
-        document.getElementById('addCustomerModal').classList.remove('active');
+        const modal = document.getElementById('addCustomerModal');
+        modal.classList.remove('active');
+        modal.classList.remove('elevated');
         document.getElementById('addCustomerForm').reset();
       });
       
@@ -36373,11 +36375,13 @@
 
           if (error) throw error;
 
-          document.getElementById('addCustomerModal').classList.remove('active');
+          const modal = document.getElementById('addCustomerModal');
+          modal.classList.remove('active');
+          modal.classList.remove('elevated');
           document.getElementById('addCustomerForm').reset();
           customersCache = []; // ✅ Clear cache to force reload
           await loadCustomers();
-          alert('✅ Customer added successfully!');
+          showNotification('Customer added successfully!', 'success');
         } catch(err) {
           alert('❌ Error: ' + err.message);
         }
@@ -38880,6 +38884,44 @@
       });
 
       // ============================================
+      // TIME SELECTION RESTRICTION FOR CREATE BOOKING
+      // ============================================
+      // When start time changes, filter end time options to only show times after start
+      document.getElementById('createBookingStartTime')?.addEventListener('change', (e) => {
+        const startValue = parseFloat(e.target.value);
+        const endTimeSelect = document.getElementById('createBookingEndTime');
+
+        if (!endTimeSelect) return;
+
+        // Get all options from end time select
+        const options = endTimeSelect.querySelectorAll('option');
+
+        options.forEach(option => {
+          if (option.value === '') {
+            // Keep the placeholder option visible
+            option.style.display = '';
+            option.disabled = false;
+          } else {
+            const endValue = parseFloat(option.value);
+            // Disable/hide options that are <= start time
+            if (endValue <= startValue) {
+              option.style.display = 'none';
+              option.disabled = true;
+            } else {
+              option.style.display = '';
+              option.disabled = false;
+            }
+          }
+        });
+
+        // If current end time is now invalid, reset it
+        const currentEndValue = parseFloat(endTimeSelect.value);
+        if (currentEndValue && currentEndValue <= startValue) {
+          endTimeSelect.value = '';
+        }
+      });
+
+      // ============================================
       // CUSTOMER SEARCH FOR CREATE BOOKING
       // ============================================
       let customerSearchTimeout = null;
@@ -38999,9 +39041,10 @@
         // Reset form
         document.getElementById('addCustomerForm')?.reset();
 
-        // Open the add customer modal
+        // Open the add customer modal with elevated z-index
         const modal = document.getElementById('addCustomerModal');
         if (modal) {
+          modal.classList.add('elevated');
           modal.classList.add('active');
         }
       };
