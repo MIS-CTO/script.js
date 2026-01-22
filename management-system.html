@@ -422,11 +422,23 @@
     /* Dashboard reduced side padding */
     #dashboard-section {
       padding: 24px 20px;
-      background: url('https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/Background/250617_interior-16-min%20(1).jpg') no-repeat center center;
-      background-size: cover;
-      background-attachment: fixed;
+      position: relative;
+      isolation: isolate;
     }
 
+    /* Background as pseudo-element for proper backdrop-filter support */
+    #dashboard-section::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('https://auxxyehgzkozdjylhqnx.supabase.co/storage/v1/object/public/Background/250617_interior-16-min%20(1).jpg') no-repeat center center;
+      background-size: cover;
+      z-index: -1;
+      pointer-events: none;
+    }
     h2 {
       margin: 0 0 12px;
       font-size: 22px;
