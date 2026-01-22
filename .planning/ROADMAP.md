@@ -1,6 +1,6 @@
 # Culture Over Money - Roadmap
-**Stand: 2026-01-20 | Version: 3.1265**
-**UPDATE: Phase 6 Dashboard Redesign COMPLETE**
+**Stand: 2026-01-22 | Version: 3.1266**
+**UPDATE: Phase 8 Dashboard Visual Polish IN PROGRESS**
 
 ---
 
@@ -25,12 +25,88 @@ Phase 5.7: Status Stripes & Book     ██████████████�
 Phase 5.8: Payment Notifications     ████████████████████ 100% ✓
 Phase 6: Dashboard Redesign          ████████████████████ 100% ✓
 Phase 7: Events UI & Create Card     ████████████████████ 100% ✓
+Phase 8: Dashboard Visual Polish     ████████████████░░░░  80% ⏳
 Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
 ---
 
+## Current: Phase 8 - Dashboard Visual Polish (2026-01-22) ⏳
+
+**Status**: In Progress
+**Priority**: HIGH
+
+### Completed
+
+| Feature | Description |
+|---------|-------------|
+| **Entry Animations** | Staggered slide-up animations (0.1s-0.4s delays) for dashboard columns |
+| **Avatar Bug Fix** | Profile button resets to default icon when user has no avatar |
+| **Event Participation** | RLS fix + events filtered to only show for participants |
+| **Background Image** | Dashboard uses Supabase image, other pages use grey (#f5f5f7) |
+| **Glassmorphism** | Frosted glass effect: 40px blur, light grey, 0.97 opacity |
+| **Welcome Text** | Changed to white for contrast against background |
+| **Hidden Scrollbars** | Neue Anfragen & Anstehende Termine scroll without visible bars |
+
+### Technical Summary
+
+**CSS Variables (Light Mode):**
+```css
+--glass-bg: rgba(245, 245, 247, 0.97);
+--glass-blur: blur(40px);
+--glass-border: rgba(255, 255, 255, 0.5);
+```
+
+**CSS Variables (Dark Mode):**
+```css
+--glass-bg: rgba(60, 60, 67, 0.97);
+```
+
+**Dashboard Background:**
+```css
+#dashboard-section {
+  background: url('...Supabase.../Bildschirmfoto%202026-01-21%20um%2015.43.55.png');
+  background-size: cover;
+  background-attachment: fixed;
+}
+```
+
+**Database Migration Applied:**
+```sql
+-- fix_event_participants_update_policy
+CREATE POLICY event_participants_update_all ON event_participants
+FOR UPDATE USING (true) WITH CHECK (true);
+```
+
+### Commits (Phase 8)
+
+```
+d73d1f8 feat(dashboard): add entry animations and fix avatar display bug
+4c8fb2f style(dashboard): image background for dashboard only, grey glass cards
+e32235f style(glass): update glassmorphism to match frosted reference
+3a77bd9 style(glass): adjust opacity and add grey dark mode
+cf35674 style(dashboard): increase glass opacity to 0.92, update background image
+2a217fa style(dashboard): hide scrollbars, light grey glass at 0.95 opacity
+260664a style(glass): increase opacity to 0.97 (10% less transparent)
+```
+
+### Remaining Tasks
+
+- [ ] Further visual refinements (if needed)
+- [ ] Dark mode background image (optional)
+- [ ] Mobile responsiveness verification
+
+---
+
 ## Recent Completions
+
+### Phase 7: Events UI & Create Card (2026-01-21) ✓
+
+| Feature | Description |
+|---------|-------------|
+| Grid Layout Adjustment | Schwarzes Brett width matches right column |
+| Create Event Card | Plus icon placeholder, opens modal on click |
+| Modal Rename | "Create New Event or Meeting" |
 
 ### Phase 6: Dashboard Redesign - Glassmorphism (2026-01-20) ✓
 
@@ -43,19 +119,6 @@ Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░�
 | **Neue Anfragen** | Grey container with white entries, relative time ("Heute", "Gestern") |
 | **Anstehende Termine** | Grey container with white entries, matched padding |
 | **Task Priority System** | DB column + UI dropdown (Low/Regular/Urgent) with colored flag icons |
-| **Font & Spacing** | Reduced heading weight (450), matched container padding |
-
-### Key Changes (Phase 6)
-
-| Component | Change |
-|-----------|--------|
-| `.dashboard-container-v2` | 5-column grid, 26px gap, 48px side/bottom padding |
-| `.glass-card` | backdrop-filter: blur(20px), rgba backgrounds |
-| `.right-column-section` | Grey background, white border, fade effect at bottom |
-| `.brett-slider-*` | Single slide view, indicators outside overflow |
-| `.event-card-content` | margin-top: auto (content above avatars) |
-| `project_tasks.priority` | New column: 'low' / 'regular' / 'urgent' |
-| `.task-priority-flag` | Yellow (low), Orange (regular), Red (urgent) flags |
 
 ### Commits (Phase 6)
 
@@ -76,13 +139,6 @@ Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░�
 | Timestamp Fix | "Bezahlt am" now shows correct payment_received_at date |
 | Edge Function Bypass | No longer depends on broken check-payment-link-status |
 
-### Commits (Phase 5.8)
-
-```
-33faa31 fix(notifications): Fix Supabase query column names
-f5f0e90 fix(notifications): Load paid appointments from DB instead of broken Edge Function
-```
-
 ---
 
 ### Phase 5.7: Status Stripes & Click-to-Book (2026-01-16) ✓
@@ -92,65 +148,6 @@ f5f0e90 fix(notifications): Load paid appointments from DB instead of broken Edg
 | Status Stripes | Diagonal stripe patterns for rescheduled/canceled/no_show |
 | Click-to-Book | Modal opens when clicking green available slots |
 | Non-Blocking Logic | Canceled appointments don't block availability |
-
-### Hotfixes (2026-01-16)
-
-| Fix | Description |
-|-----|-------------|
-| Extra Empty Rows | Fixed CSS grid rendering for non-blocking appointments |
-| Artist Assignment | Allow artist assignment on non-blocking appointment slots |
-| Gesamtpreis Zero | Allow 0€ as valid price for free/complimentary bookings |
-
----
-
-## Phase 5.6: Calendar Availability (2026-01-15) ✓
-
-- Green background for available time slots from dienstplan
-- Slot labels show artist name + Instagram handle (vertical layout)
-- Availability-only rows have smaller height (44px)
-- Event cards have white/dark background wrapper for contrast
-
----
-
-## Phase 5.5: Calendar, Search & Rank (2026-01-14) ✓
-
-- Calendar day view with artist rows
-- Customer search improvements
-- Artist ranking system
-- Attachment handling
-
----
-
-## Upcoming: Phase 7 - Events UI & Create Card
-
-**Status**: Not started
-**Priority**: HIGH
-**Depends on**: Phase 6
-
-### Goals
-
-1. **Layout Width Adjustment**
-   - Schwarzes Brett: match width of Neue Anfragen + Anstehende Termine wrapper
-   - Events & Meetings: expand to fill remaining space
-
-2. **Create Event Card Placeholder**
-   - Subtle grey container with white background + light grey outline
-   - Centered plus icon (same grey color)
-   - Responsive width: min 25px, auto-fill remaining space
-   - Row-aligned with event cards, always last in row
-   - On click: open "Create New Event or Meeting" modal
-
-3. **Modal Rename**
-   - Calendar button function → "Create New Event or Meeting"
-   - Modal title → "Create New Event or Meeting"
-
-### Tasks
-
-- [ ] Adjust CSS grid widths for Schwarzes Brett and Events sections
-- [ ] Create `.event-create-card` component with plus icon
-- [ ] Add click handler to open event creation modal
-- [ ] Rename modal and button labels
-- [ ] Test responsive behavior
 
 ---
 
@@ -184,6 +181,8 @@ Januar 2026
 ├── KW 3: Phase 5.1-5.7 ✓ DONE (2026-01-14 to 2026-01-16)
 ├── KW 4: Phase 5.8 ✓ DONE (2026-01-19)
 ├── KW 4: Phase 6 Dashboard Redesign ✓ DONE (2026-01-20)
+├── KW 4: Phase 7 Events UI ✓ DONE (2026-01-21)
+├── KW 4: Phase 8 Visual Polish ⏳ IN PROGRESS (2026-01-22)
 └── KW 4+: Phase 5.2 Performance & Polish (Optional)
 
 Februar 2026
@@ -192,17 +191,4 @@ Februar 2026
 
 ---
 
-## Commits (Phase 5.7)
-
-```
-6f38e45 feat(calendar): add status stripes and click-to-book functionality
-8d93fd5 fix(calendar): improve artist ID lookup for click-to-book handlers
-81362d9 fix(calendar): prevent extra empty rows from non-blocking appointments
-972b4a8 fix(requests): allow artist assignment on non-blocking appointment slots
-a381719 fix(payment): allow 0 as valid Gesamtpreis value
-fa9898d fix(requests): allow 0 as valid price for scheduling check
-```
-
----
-
-*Last updated: 2026-01-20 with Claude Code*
+*Last updated: 2026-01-22 with Claude Code*
