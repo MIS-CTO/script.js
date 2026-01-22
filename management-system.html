@@ -41500,7 +41500,10 @@
         'Geschäftsführung': { bg: 'rgba(255, 215, 0, 0.15)', text: '#B8860B', label: 'GF' },
         'Management': { bg: 'rgba(0, 122, 255, 0.15)', text: '#007AFF', label: 'Management' },
         'Booking Team': { bg: 'rgba(175, 82, 222, 0.15)', text: '#AF52DE', label: 'Booking' },
+        'team': { bg: 'rgba(175, 82, 222, 0.15)', text: '#AF52DE', label: 'Team' },
+        'user': { bg: 'rgba(142, 142, 147, 0.15)', text: '#8E8E93', label: 'User' },
         'Resident Artist': { bg: 'rgba(52, 199, 89, 0.15)', text: '#34C759', label: 'Resident' },
+        'resident_artist': { bg: 'rgba(52, 199, 89, 0.15)', text: '#34C759', label: 'Resident' },
         'Guest Artist': { bg: 'rgba(90, 200, 250, 0.15)', text: '#5AC8FA', label: 'Guest' },
         'Mediadepartment': { bg: 'rgba(255, 149, 0, 0.15)', text: '#FF9500', label: 'Media' },
         'other': { bg: 'rgba(142, 142, 147, 0.15)', text: '#8E8E93', label: 'Other' }
@@ -41838,7 +41841,10 @@
         'Geschäftsführung': { label: 'Administrator', color: '#FFD60A' },
         'Management': { label: 'Booking Manager', color: '#007AFF' },
         'Booking Team': { label: 'Booking Team', color: '#AF52DE' },
+        'team': { label: 'Team', color: '#AF52DE' },
+        'user': { label: 'User', color: '#8E8E93' },
         'Resident Artist': { label: 'Resident', color: '#34C759' },
+        'resident_artist': { label: 'Resident', color: '#34C759' },
         'Guest Artist': { label: 'Guest', color: '#00C7BE' },
         'Mediadepartment': { label: 'Media', color: '#FF9500' },
         'Ohne Rolle': { label: 'Not defined', color: '#8E8E93' }
@@ -41850,9 +41856,12 @@
         'Geschäftsführung',  // → Administrator
         'Management',        // → Booking Manager
         'Booking Team',      // → Booking Team
+        'team',              // → Team
         'Resident Artist',   // → Resident
+        'resident_artist',   // → Resident (alternate format)
         'Guest Artist',      // → Guest
         'Mediadepartment',   // → Media
+        'user',              // → User
         'Ohne Rolle'         // → Not defined (null values)
       ];
 
@@ -42613,8 +42622,11 @@
               'Geschäftsführung': '#FFD60A',
               'Management': '#007AFF',
               'Booking Team': '#AF52DE',
+              'team': '#AF52DE',
+              'user': '#8E8E93',
               'Mediadepartment': '#FF9500',
               'Resident Artist': '#34C759',
+              'resident_artist': '#34C759',
               'Guest Artist': '#00C7BE'
             };
             const roleColor = roleColors[profile.role] || '#8E8E93';
@@ -42856,6 +42868,46 @@
         if (error) throw error;
 
         console.log('Slot created:', data);
+
+        // Add to CentralDataManager cache immediately for instant display
+        if (window.CentralDataManager && CentralDataManager.data.dienstplan) {
+          // Enrich the new entry with artist/location data for proper display
+          const enrichedEntry = { ...data };
+
+          // If it's an artist entry, fetch artist details
+          if (data.artist_id) {
+            const { data: artist } = await supabase
+              .from('artists')
+              .select('name, email, instagram, rank, is_guest')
+              .eq('id', data.artist_id)
+              .single();
+            enrichedEntry.artist = artist;
+          }
+
+          // If it has a location, fetch location details
+          if (data.location_id) {
+            const { data: location } = await supabase
+              .from('locations')
+              .select('name, city')
+              .eq('id', data.location_id)
+              .single();
+            enrichedEntry.location = location;
+          }
+
+          CentralDataManager.data.dienstplan.push(enrichedEntry);
+          console.log('✅ Added new entry to CentralDataManager cache');
+
+          // Also update local cache with enriched entry
+          if (typeof dienstplanCache !== 'undefined') {
+            dienstplanCache.push(enrichedEntry);
+          }
+        } else {
+          // Fallback: update local cache with basic data
+          if (typeof dienstplanCache !== 'undefined') {
+            dienstplanCache.push(data);
+          }
+        }
+
         showNotification(
           isPreviousMode
             ? `Previous Guest Spot für ${selectedSlotArtist.name} hinzugefügt`
@@ -42866,8 +42918,8 @@
         // Modal schließen
         closeAddSlotModal();
 
-        // Daten neu laden
-        await loadDienstplanData();
+        // Re-apply filters to update display with new entry
+        await applyDienstplanFilters();
 
         // Bei Previous Mode auch Previous Guest Spots neu laden
         if (isPreviousMode && typeof loadPreviousGuestSpots === 'function') {
