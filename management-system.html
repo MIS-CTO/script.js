@@ -42908,13 +42908,6 @@
           }
         }
 
-        showNotification(
-          isPreviousMode
-            ? `Previous Guest Spot für ${selectedSlotArtist.name} hinzugefügt`
-            : `Slot für ${selectedSlotArtist.name} erstellt`,
-          'success'
-        );
-
         // Modal schließen
         closeAddSlotModal();
 
@@ -43585,32 +43578,33 @@
       if (!confirm(`${slotIds.length} Eintrag/Einträge wirklich löschen?`)) return;
 
       try {
+        // Close popup immediately for instant feedback
+        closeSlotViewPopup();
+
+        // Remove from caches immediately BEFORE database delete for instant UI update
+        if (window.CentralDataManager && CentralDataManager.data.dienstplan) {
+          CentralDataManager.data.dienstplan = CentralDataManager.data.dienstplan.filter(d => !slotIds.includes(d.id));
+        }
+        if (typeof dienstplanCache !== 'undefined') {
+          dienstplanCache = dienstplanCache.filter(d => !slotIds.includes(d.id));
+        }
+        if (window.dienstplanCache) {
+          window.dienstplanCache = window.dienstplanCache.filter(d => !slotIds.includes(d.id));
+        }
+
+        // Re-render immediately
+        if (typeof applyDienstplanFilters === 'function') {
+          await applyDienstplanFilters();
+        }
+
+        // Delete from database in background
         for (const id of slotIds) {
           await supabase.from('dienstplan').delete().eq('id', id);
         }
 
         console.log('✅ Slot(s) deleted');
-        closeSlotViewPopup();
-
-        // Remove from CentralDataManager cache immediately
-        if (window.CentralDataManager && CentralDataManager.data.dienstplan) {
-          CentralDataManager.data.dienstplan = CentralDataManager.data.dienstplan.filter(d => !slotIds.includes(d.id));
-          console.log('✅ CentralDataManager cache updated');
-        }
-
-        // Remove from window.dienstplanCache
-        if (window.dienstplanCache && window.dienstplanCache.length > 0) {
-          window.dienstplanCache = window.dienstplanCache.filter(d => !slotIds.includes(d.id));
-        }
-
-        // Re-render the dienstplan view
-        if (typeof applyDienstplanFilters === 'function') {
-          applyDienstplanFilters();
-          console.log('✅ Dienstplan view refreshed');
-        }
       } catch (err) {
         console.error('❌ Error deleting slot:', err);
-        alert('Fehler beim Löschen');
       }
     }
 
