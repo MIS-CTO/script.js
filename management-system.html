@@ -16080,8 +16080,23 @@
       <p class="tab-header-subtitle">Verwalte und bearbeite eingehende Tattoo-Anfragen</p>
     </div>
 
-    <!-- Request Status Switcher + Refresh Controls on Same Line -->
-    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px; justify-content:space-between;">
+    <!-- Horizontal Controls: Location, Create Request, State Tabs, Search -->
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+      <!-- Location Dropdown -->
+      <select id="requestLocationDropdown" style="min-width:160px; padding:8px 12px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); cursor:pointer; height:37px;">
+        <option value="all">Alle Locations</option>
+        <option value="mommy">Mommy I'm Sorry</option>
+        <option value="gon">GON</option>
+        <option value="muttersohne">Muttersöhne</option>
+        <option value="pardon">Pardon Paris</option>
+      </select>
+
+      <!-- Create Request Button -->
+      <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
+        <span style="font-size:18px; font-weight:600;">+</span>
+        <span>Create Request</span>
+      </button>
+
       <!-- Request Status Switcher -->
       <div style="position:relative; background:white; border-radius:28px; padding:6px; display:inline-flex; gap:0; border:1px solid rgba(0,0,0,0.06);">
         <div id="requestsIndicator" style="position:absolute; top:6px; left:6px; height:calc(100% - 12px); background:#f5f5f7; border-radius:22px; transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 1px 3px rgba(0,0,0,0.08); z-index:1; pointer-events:none;"></div>
@@ -16100,57 +16115,18 @@
           <span id="badge-deleted" style="display:none; background:#ff3b30; color:white; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; min-width:18px; text-align:center;">0</span>
         </button>
       </div>
-    </div>
 
-    <!-- Create Request Button + Location Dropdown + Search Bar + Refresh Controls -->
-    <div style="display:grid; grid-template-columns:350px 1fr; gap:24px; margin-bottom:16px;">
-      <!-- Left Controls: Create Request + Location -->
-      <div style="display:flex; align-items:center; gap:12px;">
-        <!-- Create Request Button (Only visible in New Requests tab) -->
-        <button id="createRequestBtn" class="btn-nav" style="background:#1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px;">
-          <span style="font-size:18px; font-weight:600;">+</span>
-          <span>Create Request</span>
-        </button>
-
-        <!-- Location Dropdown -->
-        <select id="requestLocationDropdown" style="min-width:180px; padding:8px 12px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); cursor:pointer; height:37px;">
-          <option value="all">Alle Locations</option>
-          <option value="mommy">Mommy I'm Sorry</option>
-          <option value="gon">GON</option>
-          <option value="muttersohne">Muttersöhne</option>
-          <option value="pardon">Pardon Paris</option>
-        </select>
-      </div>
-
-      <!-- Right Controls: Search Bar + Auto-Refresh + Refresh Button -->
-      <div style="display:flex; align-items:center; gap:12px;">
-        <!-- Search Bar (left, responsive) -->
-        <div style="position:relative; flex:1;">
-          <input
-            type="text"
-            id="requestSearchInput"
-            placeholder="Search requests by keyword..."
-            style="width:100%; padding:8px 12px 8px 36px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); height:37px; box-sizing:border-box;">
-          <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-        </div>
-
-        <!-- Auto-Refresh Toggle (right) -->
-        <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); cursor:pointer; white-space:nowrap;">
-          <input type="checkbox" id="autoRefreshToggle" style="cursor:pointer;">
-          <span>Auto-Refresh (30s)</span>
-        </label>
-
-        <!-- Refresh Button (right) -->
-        <button id="refreshRequestsBtn" style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(0,113,227,0.1); color:var(--accent); border:1px solid rgba(0,113,227,0.2); border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:inherit; white-space:nowrap; height:37px;">
-          <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.5s;">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-          </svg>
-          <span id="refreshBtnText">Neue Requests laden</span>
-        </button>
+      <!-- Search Bar -->
+      <div style="position:relative; flex:1; min-width:200px;">
+        <input
+          type="text"
+          id="requestSearchInput"
+          placeholder="Search requests..."
+          style="width:100%; padding:8px 12px 8px 36px; border:1px solid var(--macos-stroke-primary); border-radius:8px; font-size:13px; font-family:inherit; background:var(--macos-elevated); color:var(--macos-text-primary); height:37px; box-sizing:border-box;">
+        <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
       </div>
     </div>
 
@@ -25292,115 +25268,6 @@
         });
       }
 
-      // Refresh Requests Functionality
-      let autoRefreshInterval = null;
-      let isRefreshing = false;
-
-      async function refreshRequests() {
-        if (isRefreshing) return;
-
-        isRefreshing = true;
-        const refreshBtn = document.getElementById('refreshRequestsBtn');
-        const refreshIcon = document.getElementById('refreshIcon');
-        const refreshText = document.getElementById('refreshBtnText');
-
-        // Add loading state
-        if (refreshBtn) {
-          refreshBtn.disabled = true;
-          refreshBtn.style.opacity = '0.7';
-          refreshBtn.style.cursor = 'not-allowed';
-        }
-        if (refreshIcon) {
-          refreshIcon.style.transform = 'rotate(360deg)';
-        }
-        if (refreshText) {
-          refreshText.textContent = 'Lädt...';
-        }
-
-        try {
-          const beforeCount = allRequests.length;
-          await loadRequests();
-          const afterCount = allRequests.length;
-          const newRequestsCount = afterCount - beforeCount;
-
-          // Show success notification
-          if (refreshText) {
-            refreshText.textContent = `✓ ${allRequests.length} Requests geladen`;
-          }
-
-          // Reset button after 2 seconds
-          setTimeout(() => {
-            if (refreshText) refreshText.textContent = 'Neue Requests laden';
-            if (refreshBtn) {
-              refreshBtn.disabled = false;
-              refreshBtn.style.opacity = '1';
-              refreshBtn.style.cursor = 'pointer';
-            }
-            if (refreshIcon) {
-              refreshIcon.style.transform = 'rotate(0deg)';
-            }
-          }, 2000);
-
-          console.log(`✅ Refreshed: ${allRequests.length} total requests${newRequestsCount > 0 ? ` (+${newRequestsCount} new)` : ''}`);
-        } catch (error) {
-          console.error('❌ Refresh failed:', error);
-          if (refreshText) refreshText.textContent = '❌ Fehler';
-
-          setTimeout(() => {
-            if (refreshText) refreshText.textContent = 'Neue Requests laden';
-            if (refreshBtn) {
-              refreshBtn.disabled = false;
-              refreshBtn.style.opacity = '1';
-              refreshBtn.style.cursor = 'pointer';
-            }
-            if (refreshIcon) {
-              refreshIcon.style.transform = 'rotate(0deg)';
-            }
-          }, 2000);
-        } finally {
-          isRefreshing = false;
-        }
-      }
-
-      // Auto-Refresh Functionality
-      function startAutoRefresh() {
-        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-
-        autoRefreshInterval = setInterval(() => {
-          // Only refresh if no modal is open and we're on the requests section
-          const isModalOpen = document.querySelector('.modal.active') ||
-                              document.getElementById('requestDetail').querySelector('h2');
-          const isRequestsSection = document.getElementById('requests-section').classList.contains('active');
-
-          if (!isModalOpen && isRequestsSection && !isRefreshing) {
-            console.log('🔄 Auto-refreshing requests...');
-            refreshRequests();
-          }
-        }, 30000); // 30 seconds
-
-        console.log('✅ Auto-refresh enabled (30s interval)');
-      }
-
-      function stopAutoRefresh() {
-        if (autoRefreshInterval) {
-          clearInterval(autoRefreshInterval);
-          autoRefreshInterval = null;
-          console.log('❌ Auto-refresh disabled');
-        }
-      }
-
-      // Initialize Refresh Button
-      document.getElementById('refreshRequestsBtn')?.addEventListener('click', refreshRequests);
-
-      // Initialize Auto-Refresh Toggle
-      document.getElementById('autoRefreshToggle')?.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          startAutoRefresh();
-        } else {
-          stopAutoRefresh();
-        }
-      });
-
       // Image Modal Functions
       window.openImageModal = function(imageUrl) {
         const modal = document.getElementById('imageModal');
@@ -33418,6 +33285,9 @@
           document.getElementById('createRequestModal').classList.remove('active');
           document.getElementById('createRequestForm').reset();
           resetCreateRequestArtistSelection();
+
+          // Reload requests to show the new one immediately
+          await loadRequests();
 
           alert('Request created successfully!');
         } catch (err) {
