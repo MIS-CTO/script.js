@@ -248,9 +248,10 @@ c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
 | Dark Mode Navbar Fix | Fixed color mismatch between header and navbar (#1c1c1e) | ✅ |
 | Mobile Testing | Verified calendar and profile views on mobile viewport (375x812) | ✅ |
 | Create Booking UX Improvements | Customer search, Add buttons, Anzahlung field, fixed slot error | ✅ |
-| Schwarzes Brett Indicator Lines | Removed wrapper, thicker glass lines (6px), stronger glass effect | ✅ |
+| Schwarzes Brett Indicator Lines | Removed wrapper, thicker glass lines (6px), light grey in light mode | ✅ |
 | Edit Artist Rank Selection | Changed R1-R5 to Friends/Crew/Fam/VIP with percentages | ✅ |
 | Version Badge White | Changed version badge color to white for better contrast | ✅ |
+| Dark Mode Text White | Brett author/text and project titles white in dark mode | ✅ |
 
 ### Technical Details
 
