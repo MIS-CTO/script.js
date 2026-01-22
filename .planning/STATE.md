@@ -253,6 +253,9 @@ c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
 | Version Badge White | Changed version badge color to white for better contrast | ✅ |
 | Dark Mode Text White | Brett author/text and project titles white in dark mode (via CSS classes) | ✅ |
 | Dark Mode Navbar Sync | Navbar forced to match header (#1c1c1e) with !important | ✅ |
+| Requests Page Horizontal Layout | Location → Create → State Tabs → Search in one row | ✅ |
+| Remove Auto-Refresh | Removed auto-refresh toggle, button, and all related JS code | ✅ |
+| Immediate Request Display | New requests show immediately after creation via loadRequests() | ✅ |
 
 ### Technical Details
 
