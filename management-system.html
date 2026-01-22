@@ -3054,7 +3054,18 @@
     body.view-restricted-v1 #guestSpotCancelBtn,
     body.view-restricted-v1 #guestSpotDeleteBtn,
     body.view-restricted-v1 #createBookingBtn,
+    body.view-restricted-v1 #createStayBtn,
+    body.view-restricted-v1 #modalEditBtn,
+    body.view-restricted-v1 #modalCancelBtn,
+    body.view-restricted-v1 #modalDeleteBtn,
     body.view-restricted-v1 .v1-hide {
+      display: none !important;
+    }
+
+    /* V1: Hide Guests and Hospitality calendar sections */
+    body.view-restricted-v1 .calendar-category-guest,
+    body.view-restricted-v1 .calendar-category-hospitality,
+    body.view-restricted-v1 .calendar-category-artist_info {
       display: none !important;
     }
 
@@ -35737,6 +35748,9 @@
         categoriesToRender.forEach(({ key, label, visible }) => {
           const cat = key === 'events' ? 'events' : key;
 
+          // Start category wrapper (for V1 hiding via CSS)
+          html += `<div class="calendar-category-section calendar-category-${key}">`;
+
           // Always show category header
           html += '<div class="calendar-header"><div class="category-header">' + label + '</div>';
           for (let h = 9; h <= 21; h++) html += '<div class="category-spacer" style="grid-column:span 2;"></div>';
@@ -36146,6 +36160,9 @@
               });
             }
           }
+
+          // Close category wrapper
+          html += '</div>';
         });
 
         html += '</div>';
