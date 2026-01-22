@@ -3061,13 +3061,64 @@
     /* Dashboard layout adjustment for V1 - hide right column containers */
     body.view-restricted-v1 .dashboard-col-right,
     body.view-restricted-v1 #newRequestsWidget,
-    body.view-restricted-v1 #upcomingAppointmentsWidget {
+    body.view-restricted-v1 #upcomingAppointmentsWidget,
+    body.view-restricted-v1 .dashboard-right-columns {
       display: none !important;
     }
 
     /* Adjust dashboard grid for V1 - 2 columns instead of 3 */
     body.view-restricted-v1 .dashboard-container-v2 {
       grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* V1: Dashboard left column expands to full width with 50/50 split */
+    body.view-restricted-v1 .dashboard-left-column {
+      width: 100% !important;
+      flex-direction: row !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+
+    body.view-restricted-v1 .dashboard-left-column .pinned-events-wrapper,
+    body.view-restricted-v1 .dashboard-left-column .schwarzes-brett-wrapper {
+      flex: 1 !important;
+      width: 50% !important;
+      max-height: 70vh !important;
+      height: 70vh !important;
+    }
+
+    body.view-restricted-v1 .dashboard-left-column .pinned-events-wrapper {
+      max-height: 70vh !important;
+    }
+
+    /* V1: Hide availability slots that don't belong to user (via JS class) */
+    body.view-restricted-v1 .availability-slot.v1-other-artist {
+      display: none !important;
+    }
+
+    /* ============================================
+       V1 MOBILE RESTRICTIONS
+       ============================================ */
+    @media (max-width: 768px) {
+      /* V1 Mobile: Hide other artists' appointments and dienstplan entries */
+      body.view-restricted-v1 .mobile-appointment-card.v1-other-artist,
+      body.view-restricted-v1 .mobile-dienstplan-entry.v1-other-artist,
+      body.view-restricted-v1 .mobile-calendar-event.v1-other-artist {
+        display: none !important;
+      }
+
+      /* V1 Mobile: Dashboard layout */
+      body.view-restricted-v1 .dashboard-left-column {
+        flex-direction: column !important;
+        width: 100% !important;
+      }
+
+      body.view-restricted-v1 .dashboard-left-column .pinned-events-wrapper,
+      body.view-restricted-v1 .dashboard-left-column .schwarzes-brett-wrapper {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 50vh !important;
+      }
     }
 
     /* ============================================
@@ -35729,9 +35780,13 @@
             // Add available artists without appointments as rows (for resident/guest categories)
             if ((cat === 'resident' || cat === 'guest') && artistAvailabilityMap.size > 0) {
               const shownArtistIds = new Set(categoryEvents.map(e => e.artistId).filter(Boolean));
+              const isV1Restricted = typeof hasRestrictedView === 'function' && hasRestrictedView();
 
               artistAvailabilityMap.forEach((availability, artistId) => {
                 if (shownArtistIds.has(artistId)) return; // Already has events
+
+                // V1 Restricted: Only show availability for the current user's artist
+                if (isV1Restricted && currentUserArtistId && artistId !== currentUserArtistId) return;
 
                 const artist = allArtists.find(a => a.id === artistId);
                 if (!artist) return;
@@ -58435,7 +58490,14 @@
         allArtists = CentralDataManager.getArtists() || [];
       }
 
-      const artistsWithAppointments = artistIds.map(id => allArtists.find(a => a.id === id)).filter(Boolean);
+      let artistsWithAppointments = artistIds.map(id => allArtists.find(a => a.id === id)).filter(Boolean);
+
+      // V1 Restricted: Only show current user's artist
+      const isV1Restricted = typeof hasRestrictedView === 'function' && hasRestrictedView();
+      if (isV1Restricted && currentUserArtistId) {
+        artistsWithAppointments = artistsWithAppointments.filter(a => a.id === currentUserArtistId);
+        console.log('📅 V1 filtered to own artist only');
+      }
       console.log('📅 Artists with appointments:', artistsWithAppointments.length);
 
       // Falls keine Artists mit Terminen
