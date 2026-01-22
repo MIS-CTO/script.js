@@ -3062,10 +3062,9 @@
       display: none !important;
     }
 
-    /* V1: Hide Guests and Hospitality calendar sections */
-    body.view-restricted-v1 .calendar-category-guest,
-    body.view-restricted-v1 .calendar-category-hospitality,
-    body.view-restricted-v1 .calendar-category-artist_info {
+    /* V1: Hide Guests and Hospitality calendar sections (via data-category attribute) */
+    body.view-restricted-v1 [data-category="guest"],
+    body.view-restricted-v1 [data-category="artist_info"] {
       display: none !important;
     }
 
@@ -35748,11 +35747,8 @@
         categoriesToRender.forEach(({ key, label, visible }) => {
           const cat = key === 'events' ? 'events' : key;
 
-          // Start category wrapper (for V1 hiding via CSS)
-          html += `<div class="calendar-category-section calendar-category-${key}">`;
-
-          // Always show category header
-          html += '<div class="calendar-header"><div class="category-header">' + label + '</div>';
+          // Always show category header (with data-category for V1 CSS hiding)
+          html += `<div class="calendar-header" data-category="${key}"><div class="category-header">` + label + '</div>';
           for (let h = 9; h <= 21; h++) html += '<div class="category-spacer" style="grid-column:span 2;"></div>';
           html += '</div>';
 
@@ -35830,7 +35826,7 @@
             const hideEmptySlots = (typeof isArtistUser === 'function' && isArtistUser()) ||
                                    (typeof hasRestrictedView === 'function' && hasRestrictedView());
             if (sortedEvents.length === 0 && !hideEmptySlots) {
-              html += `<div class="slot-row empty-row"><div class="slot-label"><span style="font-size:12px; color:var(--muted);">Empty</span></div>`;
+              html += `<div class="slot-row empty-row" data-category="${key}"><div class="slot-label"><span style="font-size:12px; color:var(--muted);">Empty</span></div>`;
 
               // Empty cells
               for (let h = 9; h <= 21; h++) {
@@ -35897,7 +35893,7 @@
                   const isAvailabilityOnlyRow = slotEvents.every(e => e.isAvailabilityOnly);
                   const rowClass = isAvailabilityOnlyRow ? 'slot-row availability-only-row' : 'slot-row';
 
-                  html += `<div class="${rowClass}"><div class="slot-label">${slotLabelContent}</div>`;
+                  html += `<div class="${rowClass}" data-category="${key}"><div class="slot-label">${slotLabelContent}</div>`;
 
                   // Create cells for time slots 09:00 - 21:00
                   const cells = [];
@@ -36160,9 +36156,6 @@
               });
             }
           }
-
-          // Close category wrapper
-          html += '</div>';
         });
 
         html += '</div>';
