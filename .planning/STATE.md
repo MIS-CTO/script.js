@@ -1,5 +1,5 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-22 | Version: 3.1222**
+**Stand: 2026-01-22 | Version: 3.1223**
 **UPDATE: Phase 8 Dashboard Visual Polish IN PROGRESS**
 
 ---
@@ -49,6 +49,53 @@
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## Hotfix: Event Edit Trigger Fix (2026-01-22) ✅ COMPLETE
+
+### Problem
+
+Editing/saving an event (meeting) in the calendar failed with error:
+```
+Error updating event: {"code":"42703","details":null,"hint":null,"message":"record \"new\" has no field \"agreement_file_url\""}
+```
+
+### Root Cause
+
+A database trigger `trigger_set_agreement_uploaded_at` was attached to the `events` table, but the columns it referenced (`agreement_file_url`, `agreement_uploaded_at`) were **never created** in the table.
+
+**The broken trigger function:**
+```sql
+-- This trigger ran on EVERY UPDATE to events table
+CREATE OR REPLACE FUNCTION set_agreement_uploaded_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.agreement_file_url IS NOT NULL ...  -- Column doesn't exist!
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### Solution
+
+Applied migration `drop_broken_events_agreement_trigger` to remove:
+1. The broken trigger `trigger_set_agreement_uploaded_at`
+2. The unused function `set_agreement_uploaded_at()`
+
+```sql
+DROP TRIGGER IF EXISTS trigger_set_agreement_uploaded_at ON events;
+DROP FUNCTION IF EXISTS set_agreement_uploaded_at();
+```
+
+### Files Changed
+
+- **Database only** - No JavaScript changes required
+- Migration: `drop_broken_events_agreement_trigger`
+
+### Note
+
+The file upload UI code in management-system.html (lines ~34809-34870) also references these non-existent columns. This dead code should be removed in a future cleanup phase, but it doesn't block functionality since users don't interact with that feature.
 
 ---
 
@@ -304,7 +351,7 @@ ca482fd fix(appointments): simplify cancel button after DB trigger fix
 
 2. **Code Cleanup**
    - Unused console.log entfernen
-   - Dead Code entfernen
+   - Dead Code entfernen (inkl. agreement file upload UI für events)
 
 3. **Error Tracking V2** (Optional)
    - Persistente Errors in Supabase
