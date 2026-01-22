@@ -3037,6 +3037,40 @@
     }
 
     /* ============================================
+       V1 RESTRICTED VIEW - Hide elements for V1 users
+       ============================================ */
+    body.view-restricted-v1 .payment-badge,
+    body.view-restricted-v1 .payment-section,
+    body.view-restricted-v1 #guestSpotDetailInternalPayment,
+    body.view-restricted-v1 #guestSpotDetailExternalPayment,
+    body.view-restricted-v1 [class*="payment"],
+    body.view-restricted-v1 .price-field,
+    body.view-restricted-v1 .deposit-field,
+    body.view-restricted-v1 #guestSpotPaymentNotes,
+    body.view-restricted-v1 [id*="Payment"],
+    body.view-restricted-v1 [id*="payment"],
+    body.view-restricted-v1 .payment-info-label,
+    body.view-restricted-v1 #guestSpotEditBtn,
+    body.view-restricted-v1 #guestSpotCancelBtn,
+    body.view-restricted-v1 #guestSpotDeleteBtn,
+    body.view-restricted-v1 #createBookingBtn,
+    body.view-restricted-v1 .v1-hide {
+      display: none !important;
+    }
+
+    /* Dashboard layout adjustment for V1 - hide right column containers */
+    body.view-restricted-v1 .dashboard-col-right,
+    body.view-restricted-v1 #newRequestsWidget,
+    body.view-restricted-v1 #upcomingAppointmentsWidget {
+      display: none !important;
+    }
+
+    /* Adjust dashboard grid for V1 - 2 columns instead of 3 */
+    body.view-restricted-v1 .dashboard-container-v2 {
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* ============================================
        EDIT STATE MODAL - Interactive State Options
        ============================================ */
     .state-options .state-option {
@@ -23792,6 +23826,10 @@
         localStorage.removeItem('username');
         localStorage.removeItem('userRole');
         localStorage.removeItem('avatarUrl');
+        localStorage.removeItem('currentUserArtistId');
+        localStorage.removeItem('userViewPermission');
+        // Also remove V1 body class
+        document.body.classList.remove('view-restricted-v1');
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -35660,13 +35698,18 @@
               e.date === dateStr && e.category === cat
             );
 
-            // Filter for artist users: Only show their own appointments
-            if (typeof isArtistUser === 'function' && isArtistUser() && currentUserArtistId) {
+            // Filter for artist users or V1 restricted users: Only show their own appointments
+            const shouldFilterByArtist = (typeof isArtistUser === 'function' && isArtistUser() && currentUserArtistId) ||
+                                         (typeof hasRestrictedView === 'function' && hasRestrictedView() && currentUserArtistId);
+            if (shouldFilterByArtist) {
               categoryEvents = categoryEvents.filter(e => {
+                // Events (Meetings etc.): Always show
+                if (e.category === 'events') return true;
+
                 // Artist Info events: Always show (they're general info)
                 if (e.category === 'artist_info') return true;
 
-                // Events without artistId: Don't show to artist users
+                // Events without artistId: Don't show to artist/V1 users
                 if (!e.artistId) return false;
 
                 // Only show events where the artistId matches the logged-in user's artist ID
@@ -35714,8 +35757,10 @@
             // Sort by start time first
             const sortedEvents = categoryEvents.sort((a, b) => a.startHour - b.startHour);
 
-            // If no events, show at least one empty slot (but not for artist users)
-            if (sortedEvents.length === 0 && !(typeof isArtistUser === 'function' && isArtistUser())) {
+            // If no events, show at least one empty slot (but not for artist users or V1 restricted users)
+            const hideEmptySlots = (typeof isArtistUser === 'function' && isArtistUser()) ||
+                                   (typeof hasRestrictedView === 'function' && hasRestrictedView());
+            if (sortedEvents.length === 0 && !hideEmptySlots) {
               html += `<div class="slot-row empty-row"><div class="slot-label"><span style="font-size:12px; color:var(--muted);">Empty</span></div>`;
 
               // Empty cells
@@ -41666,6 +41711,12 @@
       console.log('🔍 Applying filters - Role:', roleFilter, 'Status:', statusFilter, 'Month:', startDateStr, 'to', endDateStr);
 
       dienstplanFiltered = dienstplanCache.filter(entry => {
+        // V1 Restricted View: Only show own schedule entries
+        const isV1 = typeof hasRestrictedView === 'function' && hasRestrictedView();
+        if (isV1 && currentUserArtistId) {
+          if (entry.artist_id !== currentUserArtistId) return false;
+        }
+
         // Date range filter: entry overlaps with selected month
         const entryStart = entry.start_date;
         const entryEnd = entry.end_date;
@@ -44006,6 +44057,7 @@
 
     let currentUser = null;
     let currentUserArtistId = null; // Artist ID für den aktuellen User (via Email-Matching)
+    let currentUserViewPermission = null; // View permission level (e.g., 'V1' for restricted)
 
     // ============================================
     // ARTIST USER RESTRICTIONS
@@ -44023,50 +44075,81 @@
     }
 
     /**
+     * Prüft ob der aktuelle User die V1 (eingeschränkte) Ansicht hat
+     * V1 User: mela, ata, mary, Luka - können nur Dashboard, Dienstplan, Calendar sehen
+     */
+    function hasRestrictedView() {
+      return currentUserViewPermission === 'V1';
+    }
+
+    // Make it globally available
+    window.hasRestrictedView = hasRestrictedView;
+
+    /**
      * Lädt die Artist-ID für den aktuellen User
      * Verbindung: profiles.email = artists.email (Matching über E-Mail)
+     * Lädt auch view_permission für Ansichtsbeschränkungen
      */
     async function loadCurrentUserArtistId() {
       if (!currentUser || !currentUser.email) {
         currentUserArtistId = null;
+        currentUserViewPermission = null;
         return;
       }
 
       try {
         // Finde Artist mit gleicher E-Mail wie der eingeloggte User
+        // Inklusive view_permission für V1 Beschränkungen
         const { data: artist, error } = await supabase
           .from('artists')
-          .select('id, name, email')
+          .select('id, name, email, view_permission')
           .eq('email', currentUser.email)  // profiles.email = artists.email
           .single();
 
         if (error || !artist) {
           console.log('ℹ️ No artist record for email:', currentUser.email);
           currentUserArtistId = null;
+          currentUserViewPermission = null;
           return;
         }
 
         currentUserArtistId = artist.id;
-        console.log('🎨 Artist found for user:', currentUser.username, '→', artist.name, '(ID:', artist.id, ')');
+        currentUserViewPermission = artist.view_permission || null;
+
+        // Store in localStorage for persistence
+        localStorage.setItem('currentUserArtistId', artist.id);
+        if (artist.view_permission) {
+          localStorage.setItem('userViewPermission', artist.view_permission);
+        } else {
+          localStorage.removeItem('userViewPermission');
+        }
+
+        console.log('🎨 Artist found for user:', currentUser.username, '→', artist.name, '(ID:', artist.id, ', ViewPermission:', artist.view_permission || 'none', ')');
       } catch (err) {
         console.error('Error loading artist ID:', err);
         currentUserArtistId = null;
+        currentUserViewPermission = null;
       }
     }
 
     /**
      * Wendet Ansichtsbeschränkungen für Artist-User an
+     * V1 Users haben zusätzliche Einschränkungen (keine Payment-Infos, keine Edit-Buttons, nur eigene Daten)
      */
     function applyArtistUserRestrictions() {
-      if (!isArtistUser()) {
-        // Nicht-Artist-User: Alle Tabs anzeigen
+      // Check if V1 restricted view
+      const isV1 = hasRestrictedView();
+
+      if (!isArtistUser() && !isV1) {
+        // Nicht-Artist-User ohne V1: Alle Tabs anzeigen, keine Einschränkungen
         showAllNavigationTabs();
+        document.body.classList.remove('view-restricted-v1');
         return;
       }
 
-      console.log('🎨 Artist User detected:', currentUser.username, '- Applying view restrictions');
+      console.log('🎨 Artist User detected:', currentUser?.username, '- Applying view restrictions (V1:', isV1, ')');
 
-      // Tabs die Artist-User sehen dürfen
+      // Tabs die Artist-User/V1-User sehen dürfen
       const allowedTabs = ['dashboard', 'calendar', 'dienstplan'];
 
       // Alle Navigation Tabs durchgehen
@@ -44079,7 +44162,63 @@
           tab.style.display = 'none'; // Verstecken
         }
       });
+
+      // V1 spezifische Einschränkungen
+      if (isV1) {
+        console.log('🔒 V1 Restricted View - Applying additional restrictions');
+
+        // Add V1 class to body for CSS-based hiding
+        document.body.classList.add('view-restricted-v1');
+
+        // Hide dashboard right column elements (Neue Anfragen + Anstehende Termine)
+        const rightCol = document.querySelector('.dashboard-col-right');
+        if (rightCol) rightCol.style.display = 'none';
+
+        // Hide Create Booking button (but keep Create Event)
+        const createBookingBtn = document.getElementById('createBookingBtn');
+        if (createBookingBtn) createBookingBtn.style.display = 'none';
+
+        // Hide all edit/cancel/delete buttons for guest spots
+        const guestSpotEditBtn = document.getElementById('guestSpotEditBtn');
+        const guestSpotCancelBtn = document.getElementById('guestSpotCancelBtn');
+        const guestSpotDeleteBtn = document.getElementById('guestSpotDeleteBtn');
+        if (guestSpotEditBtn) guestSpotEditBtn.style.display = 'none';
+        if (guestSpotCancelBtn) guestSpotCancelBtn.style.display = 'none';
+        if (guestSpotDeleteBtn) guestSpotDeleteBtn.style.display = 'none';
+
+        // Hide payment-related elements
+        document.querySelectorAll('.payment-badge, .payment-section, [id*="Payment"], [id*="payment"]').forEach(el => {
+          el.style.display = 'none';
+        });
+
+        // Filter updates content to hide payment notifications
+        filterV1Updates();
+
+        console.log('✅ V1 restrictions applied');
+      } else {
+        document.body.classList.remove('view-restricted-v1');
+      }
     }
+
+    /**
+     * Filtert Updates-Content für V1-User (versteckt Payment-Benachrichtigungen)
+     */
+    function filterV1Updates() {
+      // This function will be called when updates are rendered
+      // It filters out payment-related notifications
+      const updateCards = document.querySelectorAll('.notification-card, .update-card, .update-item');
+      updateCards.forEach(card => {
+        const text = card.textContent?.toLowerCase() || '';
+        if (text.includes('payment') || text.includes('zahlung') || text.includes('bezahl') ||
+            text.includes('preis') || text.includes('deposit') || text.includes('anzahlung') ||
+            text.includes('€') || text.includes('euro')) {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Make filterV1Updates globally available for re-filtering after updates load
+    window.filterV1Updates = filterV1Updates;
 
     /**
      * Zeigt alle Navigation Tabs (für normale User)
@@ -44089,12 +44228,14 @@
       allTabs.forEach(tab => {
         tab.style.display = ''; // Alle anzeigen
       });
+      document.body.classList.remove('view-restricted-v1');
     }
 
     // Global verfügbar machen
     window.isArtistUser = isArtistUser;
     window.applyArtistUserRestrictions = applyArtistUserRestrictions;
     window.loadCurrentUserArtistId = loadCurrentUserArtistId;
+    window.currentUserViewPermission = null; // Will be set by loadCurrentUserArtistId
 
     // Check for saved session on page load
     // ═══════════════════════════════════════════════════════════════════════
