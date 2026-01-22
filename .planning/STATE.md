@@ -251,7 +251,8 @@ c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
 | Schwarzes Brett Indicator Lines | Removed wrapper, thicker glass lines (6px), light grey in light mode | ✅ |
 | Edit Artist Rank Selection | Changed R1-R5 to Friends/Crew/Fam/VIP with percentages | ✅ |
 | Version Badge White | Changed version badge color to white for better contrast | ✅ |
-| Dark Mode Text White | Brett author/text and project titles white in dark mode | ✅ |
+| Dark Mode Text White | Brett author/text and project titles white in dark mode (via CSS classes) | ✅ |
+| Dark Mode Navbar Sync | Navbar forced to match header (#1c1c1e) with !important | ✅ |
 
 ### Technical Details
 
