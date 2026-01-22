@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-22 | Version: 3.1223**
-**UPDATE: Phase 8 Dashboard Visual Polish IN PROGRESS**
+**Stand: 2026-01-22 | Version: 3.1224**
+**UPDATE: Phase 8.1 V1 View Permissions COMPLETE**
 
 ---
 
@@ -45,6 +45,8 @@
 ║  PHASE 7: EVENTS UI & CREATE CARD                    ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 8: DASHBOARD VISUAL POLISH               IN PROGRESS  ║
+╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 8.1: V1 VIEW PERMISSIONS                      ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -133,6 +135,99 @@ width: calc((80vw - 48px) / 4);
 1062437 fix(consultation): remove Gil from artist selection
 2026c77 fix(consultation): adjust artist card width for 4 artists
 ```
+
+---
+
+## Phase 8.1: V1 View Permission System (2026-01-22) ✅ COMPLETE
+
+### Overview
+
+Implemented a restricted view permission system for specific artists who should only see their own data and limited UI elements.
+
+### V1 Users (7 total)
+
+| Artist | Email | Artist ID |
+|--------|-------|-----------|
+| Ata | atakand1995@gmail.com | 9c60a246-68f0-4d9a-968e-03f490f10e5f |
+| Luka | luca@mommyimsorry.com | 98b63cd4-7e2e-409c-94cd-ac259a0a2635 |
+| Mary | marie-sophie@truebswetter.com | a2b390b5-4898-4bd5-a6b3-8ea66878dcc9 |
+| Mela | mela@mommyimsorry.com | eb67d5dc-2f6f-45e1-ba56-f8e513ef32ba |
+| Marina Art | marina@example.com | 2fffbeca-0833-430b-b781-bade5235e17a |
+| toriatattooo | toria@example.com | ed1e2b33-80d6-4f4e-972f-3d2b756746c8 |
+| lily.shy | lily@example.com | ad5bb12d-abd6-4c98-ba3b-a886fc3d298b |
+
+### What V1 Users CAN See
+
+- **Dashboard**: Pinned Events + Schwarzes Brett (50/50 layout)
+- **Calendar**: Only their own appointments (Residents section only)
+- **Dienstplan**: Only their own schedule
+- **Events/Meetings**: Can create and participate
+
+### What V1 Users CANNOT See
+
+- **Navigation tabs**: Requests, Guest Spots, Waitlist, Artists, Customers, Agreements, Analytics, Wannados
+- **Dashboard columns**: Neue Anfragen, Anstehende Termine (right column hidden)
+- **Calendar sections**: Guests, Hospitality
+- **Payment info**: All payment badges, amounts, status everywhere
+- **Action buttons**: Edit, Cancel, Delete in appointment details
+- **Create buttons**: + Booking, + Stay
+
+### Technical Implementation
+
+**Database:**
+```sql
+-- Added view_permission column to artists table
+ALTER TABLE artists ADD COLUMN view_permission TEXT DEFAULT NULL;
+
+-- Set V1 for restricted users
+UPDATE artists SET view_permission = 'V1' WHERE id IN (...);
+```
+
+**Frontend (CSS):**
+```css
+/* V1 elements hidden via body class */
+body.view-restricted-v1 [data-category="guest"],
+body.view-restricted-v1 [data-category="artist_info"],
+body.view-restricted-v1 #createStayBtn,
+body.view-restricted-v1 #modalEditBtn,
+body.view-restricted-v1 #modalCancelBtn,
+body.view-restricted-v1 #modalDeleteBtn,
+body.view-restricted-v1 .payment-section,
+/* ... etc */
+```
+
+**Frontend (JavaScript):**
+```javascript
+// Helper function
+function hasRestrictedView() {
+  return currentUserViewPermission === 'V1';
+}
+
+// Calendar filtering
+if (hasRestrictedView() && currentUserArtistId) {
+  categoryEvents = categoryEvents.filter(e => e.artistId === currentUserArtistId);
+}
+```
+
+### Key Files Modified
+
+- `management-system.html` - CSS hiding rules, JS filtering logic
+- Database: `artists.view_permission` column
+
+### Commits
+
+```
+8f9b9b5 feat(v1-permissions): add dashboard 50/50 layout and mobile filtering
+e74555f feat(v1-permissions): hide guests, hospitality, stays and action buttons
+c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
+```
+
+### Important Notes
+
+1. **Email matching**: artists.email MUST match profiles.email for V1 detection to work
+2. **Calendar grid**: Uses `data-category` attribute on rows (not wrapper divs) to avoid breaking CSS Grid
+3. **Mobile**: Same restrictions apply via CSS and JS filtering
+4. **Schwarzes Brett**: Auto-slide disabled, users navigate manually
 
 ---
 
@@ -359,4 +454,4 @@ ca482fd fix(appointments): simplify cancel button after DB trigger fix
 
 ---
 
-*Aktualisiert am 2026-01-22 mit Claude Code*
+*Aktualisiert am 2026-01-22 mit Claude Code (Phase 8.1 V1 Permissions)*

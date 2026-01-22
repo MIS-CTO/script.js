@@ -26,6 +26,7 @@ Phase 5.8: Payment Notifications     ██████████████�
 Phase 6: Dashboard Redesign          ████████████████████ 100% ✓
 Phase 7: Events UI & Create Card     ████████████████████ 100% ✓
 Phase 8: Dashboard Visual Polish     ██████████████████░░  90% ⏳
+Phase 8.1: V1 View Permissions       ████████████████████ 100% ✓
 Phase 5.2: Performance & Polish      ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
@@ -104,6 +105,47 @@ ca79cc4 style(dashboard): increase glass transparency to 58%, reduce blur to 8px
 
 - [ ] Further visual refinements (if needed)
 - [ ] Dark mode background image (optional)
+
+---
+
+## Phase 8.1: V1 View Permission System (2026-01-22) ✓
+
+**Status**: Complete
+**Priority**: HIGH
+
+### Summary
+
+Restricted view permission system for specific artists (V1 users) who only see their own data.
+
+### V1 Users (7)
+
+Ata, Luka, Mary, Mela, Marina Art, toriatattooo, lily.shy
+
+### What V1 Users See
+
+| Feature | Visible | Hidden |
+|---------|---------|--------|
+| **Dashboard** | Pinned Events, Schwarzes Brett (50/50) | Neue Anfragen, Anstehende Termine |
+| **Calendar** | Residents (own appointments only) | Guests, Hospitality |
+| **Dienstplan** | Own schedule only | Other artists |
+| **Appointment Details** | View only | Edit, Cancel, Delete buttons |
+| **Payment Info** | - | All payment data hidden |
+
+### Technical Details
+
+- Database: `artists.view_permission = 'V1'`
+- CSS: `body.view-restricted-v1` class hides elements
+- JS: `hasRestrictedView()` helper filters data
+- Calendar: `data-category` attribute on rows for CSS targeting
+
+### Commits
+
+```
+8f9b9b5 feat(v1-permissions): add dashboard 50/50 layout and mobile filtering
+e74555f feat(v1-permissions): hide guests, hospitality, stays and action buttons
+c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
+b2024bf chore(ui): disable auto-slide for Schwarzes Brett
+```
 
 ---
 
