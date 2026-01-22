@@ -68,8 +68,28 @@
 | Hidden Scrollbars | Neue Anfragen & Anstehende Termine scroll without visible bars | ✅ |
 | Dark Mode Navbar Fix | Fixed color mismatch between header and navbar (#1c1c1e) | ✅ |
 | Mobile Testing | Verified calendar and profile views on mobile viewport (375x812) | ✅ |
+| Create Booking UX Improvements | Customer search, Add buttons, Anzahlung field, fixed slot error | ✅ |
 
 ### Technical Details
+
+**Create Booking Modal Improvements (2026-01-22):**
+
+1. **Customer Selection** - Replaced text input with:
+   - Live search dropdown (searches by name, email, phone, instagram)
+   - "Add Customer" button to open existing Add Customer modal
+   - Selected customer display card with remove option
+
+2. **Artist Selection** - Added:
+   - "Add Artist" button next to artist search
+
+3. **Payment Section** - Added:
+   - "Anzahlung" (deposit) field with € symbol
+   - Changed grid from 2 to 3 columns (Price, Anzahlung, Status)
+   - Deposit saved to `deposit_amount` column in appointments table
+
+4. **Bug Fix** - Fixed "slot column not found" error:
+   - Removed `slot: slot` from appointments insert (column doesn't exist in DB)
+   - Removed slot calculation/validation code that was blocking bookings
 
 **Dashboard Animations (CSS):**
 ```css

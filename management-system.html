@@ -21179,9 +21179,30 @@
         <!-- Customer Section -->
         <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
           <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Customer</label>
-          <div>
-            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Customer Name *</label>
-            <input type="text" id="createBookingCustomer" placeholder="e.g. John Doe" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <!-- Customer Search -->
+            <div style="flex:1; position:relative;">
+              <input type="text" id="createBookingCustomerSearch" placeholder="Search customer (name, email, phone)..." autocomplete="off" style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+              <input type="hidden" id="createBookingCustomerId">
+              <!-- Search Results Dropdown -->
+              <div id="createBookingCustomerResults" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #eaeaea; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.1); max-height:200px; overflow-y:auto; z-index:1000; margin-top:4px;"></div>
+            </div>
+            <!-- Add Customer Button -->
+            <button type="button" onclick="openAddCustomerFromBooking()" style="padding:8px 16px; border:none; border-radius:6px; background:#1d1d1f; color:#fff; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Add Customer
+            </button>
+          </div>
+          <!-- Selected Customer Display -->
+          <div id="createBookingSelectedCustomer" style="display:none; margin-top:12px; padding:12px; background:#fff; border-radius:6px; border:1px solid #eaeaea;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:40px; height:40px; border-radius:50%; background:#e0e0e0; display:flex; align-items:center; justify-content:center; font-size:16px; color:#666;" id="createBookingCustomerAvatar">?</div>
+              <div style="flex:1;">
+                <div id="createBookingCustomerName" style="font-weight:600; font-size:14px;"></div>
+                <div id="createBookingCustomerInfo" style="font-size:12px; color:#86868b;"></div>
+              </div>
+              <button type="button" onclick="clearSelectedBookingCustomer()" style="padding:6px 12px; border:1px solid #ff3b30; border-radius:6px; background:transparent; color:#ff3b30; font-size:12px; cursor:pointer;">Remove</button>
+            </div>
           </div>
         </div>
 
@@ -21213,10 +21234,17 @@
           </div>
           <div style="margin-bottom:12px;">
             <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist *</label>
-            <div style="position:relative;">
-              <input type="text" id="createBookingArtistSearch" placeholder="Search artist..." disabled style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#f5f5f5;">
-              <input type="hidden" id="createBookingArtistId">
-              <div id="artistSearchResults" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; border:1px solid #eaeaea; border-radius:6px; margin-top:4px; background:#fff; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+            <div style="display:flex; gap:8px; align-items:flex-start;">
+              <div style="flex:1; position:relative;">
+                <input type="text" id="createBookingArtistSearch" placeholder="Search artist..." disabled style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#f5f5f5;">
+                <input type="hidden" id="createBookingArtistId">
+                <div id="artistSearchResults" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; border:1px solid #eaeaea; border-radius:6px; margin-top:4px; background:#fff; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+              </div>
+              <!-- Add Artist Button -->
+              <button type="button" onclick="openAddArtistFromBooking()" style="padding:8px 16px; border:none; border-radius:6px; background:#1d1d1f; color:#fff; font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                Add Artist
+              </button>
             </div>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
@@ -21310,12 +21338,19 @@
         <!-- Payment Section -->
         <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
           <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Payment</label>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
             <div>
               <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Price</label>
               <div style="position:relative;">
                 <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#666; font-size:14px;">€</span>
                 <input type="number" id="createBookingPrice" placeholder="0.00" step="0.01" min="0" style="width:100%; padding:8px 12px 8px 28px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
+              </div>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Anzahlung</label>
+              <div style="position:relative;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#666; font-size:14px;">€</span>
+                <input type="number" id="createBookingDeposit" placeholder="0.00" step="0.01" min="0" style="width:100%; padding:8px 12px 8px 28px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
               </div>
             </div>
             <div>
@@ -38724,6 +38759,11 @@
           resetCreateBookingArtistSelection();
         }
 
+        // Reset customer selection
+        if (typeof clearSelectedBookingCustomer === 'function') {
+          clearSelectedBookingCustomer();
+        }
+
         // Open modal
         document.getElementById('createBookingModal').classList.add('active');
       });
@@ -38838,19 +38878,174 @@
           });
         });
       });
-      
-      
+
+      // ============================================
+      // CUSTOMER SEARCH FOR CREATE BOOKING
+      // ============================================
+      let customerSearchTimeout = null;
+      let selectedBookingCustomer = null;
+
+      // Customer search functionality
+      document.getElementById('createBookingCustomerSearch')?.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        const resultsDiv = document.getElementById('createBookingCustomerResults');
+
+        // Clear previous timeout
+        if (customerSearchTimeout) {
+          clearTimeout(customerSearchTimeout);
+        }
+
+        // Hide results if empty
+        if (query.length < 2) {
+          resultsDiv.style.display = 'none';
+          resultsDiv.innerHTML = '';
+          return;
+        }
+
+        // Debounce search
+        customerSearchTimeout = setTimeout(() => {
+          searchCustomersForBooking(query);
+        }, 300);
+      });
+
+      async function searchCustomersForBooking(query) {
+        const resultsDiv = document.getElementById('createBookingCustomerResults');
+        if (!resultsDiv) return;
+
+        // Show loading
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<div style="padding:12px; text-align:center; color:#86868b;">Searching...</div>';
+
+        try {
+          // Search by name, email, phone, or instagram
+          const { data, error } = await supabase
+            .from('customers')
+            .select('id, first_name, last_name, email, phone, instagram, rank')
+            .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,instagram.ilike.%${query}%`)
+            .order('first_name')
+            .limit(10);
+
+          if (error) throw error;
+
+          if (!data || data.length === 0) {
+            resultsDiv.innerHTML = '<div style="padding:12px; text-align:center; color:#86868b;">No customers found</div>';
+            return;
+          }
+
+          // Render results
+          resultsDiv.innerHTML = data.map(customer => {
+            const fullName = [customer.first_name, customer.last_name].filter(Boolean).join(' ') || 'Unknown';
+            const initial = (customer.first_name || customer.last_name || '?')[0].toUpperCase();
+            return `
+              <div class="customer-search-result"
+                onclick="selectBookingCustomer('${customer.id}', '${fullName.replace(/'/g, "\\'")}', '${customer.email || ''}', '${customer.phone || ''}', '${customer.rank || ''}')"
+                style="padding:10px 12px; display:flex; align-items:center; gap:10px; cursor:pointer; border-bottom:1px solid #eaeaea; transition:background 0.15s;"
+                onmouseover="this.style.background='#f5f5f5';"
+                onmouseout="this.style.background='';">
+                <div style="width:32px; height:32px; border-radius:50%; background:#e0e0e0; display:flex; align-items:center; justify-content:center; font-size:14px; color:#666; font-weight:500;">${initial}</div>
+                <div style="flex:1;">
+                  <div style="font-weight:500; font-size:14px; color:#1d1d1f;">${fullName}</div>
+                  <div style="font-size:12px; color:#86868b;">${customer.email || customer.phone || ''}</div>
+                </div>
+                ${customer.rank ? `<span style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(0,122,255,0.1); color:#007aff;">${customer.rank}</span>` : ''}
+              </div>
+            `;
+          }).join('');
+
+        } catch (error) {
+          console.error('Customer search error:', error);
+          resultsDiv.innerHTML = '<div style="padding:12px; text-align:center; color:#ff3b30;">Search error</div>';
+        }
+      }
+
+      window.selectBookingCustomer = function(id, name, email, phone, rank) {
+        console.log('✅ Customer selected:', name);
+
+        selectedBookingCustomer = { id, name, email, phone, rank };
+
+        // Update hidden input
+        document.getElementById('createBookingCustomerId').value = id;
+
+        // Update display
+        const selectedDisplay = document.getElementById('createBookingSelectedCustomer');
+        const avatar = document.getElementById('createBookingCustomerAvatar');
+        const nameEl = document.getElementById('createBookingCustomerName');
+        const infoEl = document.getElementById('createBookingCustomerInfo');
+
+        avatar.textContent = name[0].toUpperCase();
+        nameEl.textContent = name;
+        infoEl.textContent = email || phone || '';
+        selectedDisplay.style.display = 'block';
+
+        // Clear and hide search
+        document.getElementById('createBookingCustomerSearch').value = '';
+        document.getElementById('createBookingCustomerResults').style.display = 'none';
+      };
+
+      window.clearSelectedBookingCustomer = function() {
+        selectedBookingCustomer = null;
+        document.getElementById('createBookingCustomerId').value = '';
+        document.getElementById('createBookingSelectedCustomer').style.display = 'none';
+        document.getElementById('createBookingCustomerSearch').value = '';
+      };
+
+      // Open Add Customer Modal from Create Booking
+      window.openAddCustomerFromBooking = function() {
+        console.log('➕ Opening Add Customer from Create Booking...');
+
+        // Store flag to know we came from Create Booking
+        window.addCustomerFromBooking = true;
+
+        // Reset form
+        document.getElementById('addCustomerForm')?.reset();
+
+        // Open the add customer modal
+        const modal = document.getElementById('addCustomerModal');
+        if (modal) {
+          modal.classList.add('active');
+        }
+      };
+
+      // Open Add Artist Modal from Create Booking
+      window.openAddArtistFromBooking = function() {
+        console.log('➕ Opening Add Artist from Create Booking...');
+
+        // Store flag to know we came from Create Booking
+        window.addArtistFromBooking = true;
+
+        // Reset form
+        document.getElementById('addArtistForm')?.reset();
+
+        // Open the add artist modal
+        const modal = document.getElementById('addArtistModal');
+        if (modal) {
+          modal.classList.add('elevated');
+          modal.classList.add('active');
+        }
+      };
+
+      // Close customer results when clicking outside
+      document.addEventListener('click', (e) => {
+        const searchInput = document.getElementById('createBookingCustomerSearch');
+        const resultsContainer = document.getElementById('createBookingCustomerResults');
+        if (searchInput && resultsContainer && !searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+          resultsContainer.style.display = 'none';
+        }
+      });
+
       // Create Booking Modal Handlers
       document.getElementById('cancelCreateBooking')?.addEventListener('click', () => {
         document.getElementById('createBookingModal').classList.remove('active');
         document.getElementById('createBookingForm').reset();
         resetCreateBookingArtistSelection();
+        clearSelectedBookingCustomer();
       });
       
       document.getElementById('createBookingForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const customerName = document.getElementById('createBookingCustomer').value.trim();
+        // Get customer ID from selected customer (via search)
+        const customerId = document.getElementById('createBookingCustomerId')?.value || null;
         const type = document.getElementById('createBookingType').value;
         const artistId = document.getElementById('createBookingArtistId').value;
         const date = document.getElementById('createBookingDate').value;
@@ -38863,67 +39058,21 @@
         const style = document.getElementById('createBookingStyle')?.value || null;
         const colorway = document.getElementById('createBookingColorway')?.value || null;
         const price = document.getElementById('createBookingPrice')?.value ? parseFloat(document.getElementById('createBookingPrice').value) : null;
+        const depositAmount = document.getElementById('createBookingDeposit')?.value ? parseFloat(document.getElementById('createBookingDeposit').value) : null;
         const paymentStatus = document.getElementById('createBookingPaymentStatus')?.value || 'unpaid';
         const notes = document.getElementById('createBookingNotes')?.value || null;
 
         // Validation
-        if (!customerName || !type || !artistId || !date || !startHour || !endHour) {
-          return alert('Please fill in all required fields');
+        if (!customerId || !type || !artistId || !date || !startHour || !endHour) {
+          return alert('Please fill in all required fields (select a customer from the search)');
         }
-        
+
         if (endHour <= startHour) {
           return alert('End time must be after start time');
         }
-        
-        // Determine category based on artist
-        const artist = allArtists.find(a => a.id === artistId);
-        const category = artist?.is_guest ? 'guest' : 'resident';
-        
-        // Find available slot
-        const slot = findAvailableSlot(date, category, startHour, endHour);
-        
-        if (slot === null) {
-          return alert('All slots are occupied for this time range. Please choose a different time or date.');
-        }
-        
+
         try {
-          // 1. Find or create customer
-          let customerId = null;
-          const nameParts = customerName.split(' ');
-          const firstName = nameParts[0] || customerName;
-          const lastName = nameParts.slice(1).join(' ') || '';
-
-          // Check if customer exists
-          const { data: existingCustomers } = await supabase
-            .from('customers')
-            .select('id')
-            .ilike('first_name', firstName)
-            .ilike('last_name', lastName || '%')
-            .limit(1);
-
-          if (existingCustomers && existingCustomers.length > 0) {
-            customerId = existingCustomers[0].id;
-          } else {
-            // Create new customer
-            const { data: newCustomer, error: customerError } = await supabase
-              .from('customers')
-              .insert({
-                first_name: firstName,
-                last_name: lastName,
-                source: 'quick_booking',
-                rank: 'Neukunde'
-              })
-              .select('id')
-              .single();
-
-            if (customerError) {
-              console.warn('Could not create customer:', customerError);
-            } else {
-              customerId = newCustomer?.id;
-            }
-          }
-
-          // 2. Format timestamps
+          // Format timestamps
           const startMin = Math.round((startHour % 1) * 60);
           const endMin = Math.round((endHour % 1) * 60);
           const startTime = `${date}T${String(Math.floor(startHour)).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`;
@@ -38939,7 +39088,6 @@
             location_id: selectedLocationId,
             start: startTime,
             end: endTime,
-            slot: slot,
             booking_type: type,
             work_process: type,
             status: 'scheduled',
@@ -38950,6 +39098,7 @@
             style: style,
             colorway: colorway,
             price: price,
+            deposit_amount: depositAmount,
             notes: notes,
             created_at: new Date().toISOString()
           }).select();
@@ -38962,12 +39111,13 @@
           document.getElementById('createBookingModal').classList.remove('active');
           document.getElementById('createBookingForm').reset();
           resetCreateBookingArtistSelection();
+          clearSelectedBookingCustomer();
 
           // Reload events and refresh calendar
           await loadEvents();
           renderCalendar();
 
-          alert('Booking created successfully!');
+          showNotification('Booking created successfully!', 'success');
         } catch (err) {
           console.error('Error creating booking:', err);
           alert('Error creating booking: ' + err.message);
