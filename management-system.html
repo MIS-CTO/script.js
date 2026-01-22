@@ -4988,52 +4988,49 @@
       box-sizing: border-box;
     }
 
-    /* Glass Slider Indicators - Light & Thin */
+    /* Slider Indicators - Thick Glass Lines Only */
     .brett-slider-indicators {
       display: flex;
       justify-content: center;
-      gap: 6px;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 6px;
+      gap: 8px;
+      padding: 0;
+      background: transparent;
       margin: 0 12px;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-    }
-
-    [data-theme="dark"] .brett-slider-indicators {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.1);
     }
 
     .brett-slider-dot {
       flex: 1;
-      height: 3px;
-      border-radius: 1.5px;
-      background: rgba(0, 0, 0, 0.1);
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.3);
       cursor: pointer;
       transition: all 0.3s ease;
     }
 
     .brett-slider-dot:hover {
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(255, 255, 255, 0.55);
     }
 
     .brett-slider-dot.active {
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.4);
     }
 
     [data-theme="dark"] .brett-slider-dot {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
     }
 
     [data-theme="dark"] .brett-slider-dot:hover {
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.35);
     }
 
     [data-theme="dark"] .brett-slider-dot.active {
-      background: rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
     }
 
     .brett-footer {
@@ -15808,7 +15805,7 @@
         <h1 id="dashboardWelcomeText">Willkommen</h1>
         <p>Deine Übersicht über alle wichtigen Aktivitäten</p>
       </div>
-      <span id="versionBadge" style="background: transparent; color: #86868b; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1331</span>
+      <span id="versionBadge" style="background: transparent; color: white; padding: 6px 0; font-size: 13px; font-weight: 400; font-family: system-ui, -apple-system, sans-serif; margin-left: auto;">Version 3.1331</span>
     </div>
 
     <!-- Dashboard Grid Layout V2 - 3-Column Glassmorphism -->
@@ -15863,10 +15860,8 @@
             </div>
           </div>
           <div style="flex-shrink: 0; padding: 12px 16px; border-top: 1px solid rgba(0,0,0,0.04);">
-            <!-- Slider indicators moved here, above button -->
-            <div class="brett-slider-indicators-wrapper" id="brettSliderIndicatorsWrapper" style="margin-bottom: 12px; display: none;">
-              <div class="brett-slider-indicators" id="brettSliderIndicators"></div>
-            </div>
+            <!-- Slider indicators - lines only, no wrapper -->
+            <div class="brett-slider-indicators" id="brettSliderIndicators" style="margin-bottom: 12px; display: none;"></div>
             <button id="addMessageBtn" style="width: 100%; height: 40px; padding: 0 16px; background: transparent; color: #999; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">
               + Neue Nachricht
             </button>
@@ -26793,12 +26788,11 @@
             </div>
           `;
 
-          // Put indicators in the external container (above Neue Nachricht button)
-          const indicatorsWrapper = document.getElementById('brettSliderIndicatorsWrapper');
+          // Put indicators directly in container (no wrapper needed)
           const indicatorsContainer = document.getElementById('brettSliderIndicators');
-          if (indicatorsWrapper && indicatorsContainer) {
+          if (indicatorsContainer) {
             indicatorsContainer.innerHTML = indicatorsHTML;
-            indicatorsWrapper.style.display = messages.length > 1 ? 'block' : 'none';
+            indicatorsContainer.style.display = messages.length > 1 ? 'flex' : 'none';
           }
 
           console.log('✅ Loaded', messages.length, 'messages in slider');
@@ -36944,11 +36938,10 @@
                       background: white;
                     ">
                       <option value="">No Rank</option>
-                      <option value="R1" ${artist.rank === 'R1' ? 'selected' : ''}>R1</option>
-                      <option value="R2" ${artist.rank === 'R2' ? 'selected' : ''}>R2</option>
-                      <option value="R3" ${artist.rank === 'R3' ? 'selected' : ''}>R3</option>
-                      <option value="R4" ${artist.rank === 'R4' ? 'selected' : ''}>R4</option>
-                      <option value="R5" ${artist.rank === 'R5' ? 'selected' : ''}>R5</option>
+                      <option value="Friends" ${artist.rank === 'Friends' ? 'selected' : ''}>Friends (70/30)</option>
+                      <option value="Crew" ${artist.rank === 'Crew' ? 'selected' : ''}>Crew (75/25)</option>
+                      <option value="Fam" ${artist.rank === 'Fam' ? 'selected' : ''}>Fam (80/20)</option>
+                      <option value="VIP" ${artist.rank === 'VIP' ? 'selected' : ''}>VIP (80/20)</option>
                     </select>
                   </div>
 
