@@ -51613,7 +51613,7 @@
 
       let hoveredIndex = -1;
 
-      // Custom plugin to draw Stripe-style bars
+      // Custom plugin to draw Stripe-style bars with connections
       const stripeFunnelPlugin = {
         id: 'stripeFunnel',
         beforeDatasetsDraw: (chart) => {
@@ -51621,11 +51621,63 @@
           const meta = chart.getDatasetMeta(0);
           const activeElements = chart.getActiveElements();
           const activeIndex = activeElements.length > 0 ? activeElements[0].index : -1;
+          const dataLength = meta.data.length;
 
+          // First pass: draw connecting areas between bars
+          for (let i = 0; i < dataLength - 1; i++) {
+            const bar1 = meta.data[i];
+            const bar2 = meta.data[i + 1];
+            const { x: x1, y: y1, width: w1, base: base1 } = bar1.getProps(['x', 'y', 'width', 'base']);
+            const { x: x2, y: y2, width: w2, base: base2 } = bar2.getProps(['x', 'y', 'width', 'base']);
+
+            const rightEdge1 = x1 + w1 / 2;
+            const leftEdge2 = x2 - w2 / 2;
+
+            // Create gradient for connector
+            const connGradient = ctx.createLinearGradient(rightEdge1, Math.min(y1, y2), rightEdge1, base1);
+            if (activeIndex === -1) {
+              connGradient.addColorStop(0, '#dbeafe');
+              connGradient.addColorStop(0.5, '#93c5fd');
+              connGradient.addColorStop(1, '#60a5fa');
+            } else {
+              connGradient.addColorStop(0, '#f0f9ff');
+              connGradient.addColorStop(0.5, '#e0f2fe');
+              connGradient.addColorStop(1, '#bae6fd');
+            }
+
+            ctx.save();
+            ctx.fillStyle = connGradient;
+            ctx.beginPath();
+            ctx.moveTo(rightEdge1, y1);
+            ctx.lineTo(leftEdge2, y2);
+            ctx.lineTo(leftEdge2, base2);
+            ctx.lineTo(rightEdge1, base1);
+            ctx.closePath();
+            ctx.fill();
+
+            // Add stripes to connector if hovering
+            if (activeIndex !== -1) {
+              ctx.clip();
+              ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+              ctx.lineWidth = 2;
+              const stripeGap = 8;
+              const connHeight = base1 - Math.min(y1, y2);
+              const connWidth = leftEdge2 - rightEdge1;
+              for (let s = -connHeight; s < connWidth + connHeight; s += stripeGap) {
+                ctx.beginPath();
+                ctx.moveTo(rightEdge1 + s, base1);
+                ctx.lineTo(rightEdge1 + s + connHeight, Math.min(y1, y2));
+                ctx.stroke();
+              }
+            }
+            ctx.restore();
+          }
+
+          // Second pass: draw bars
           meta.data.forEach((bar, index) => {
             const { x, y, width, base } = bar.getProps(['x', 'y', 'width', 'base']);
             const barHeight = base - y;
-            const barWidth = width * 0.85;
+            const barWidth = width;
             const startX = x - barWidth / 2;
 
             if (barHeight <= 0) return;
@@ -51710,8 +51762,8 @@
             backgroundColor: 'transparent',
             borderRadius: 6,
             borderSkipped: false,
-            barPercentage: 0.7,
-            categoryPercentage: 0.8
+            barPercentage: 0.98,
+            categoryPercentage: 0.92
           }]
         },
         plugins: [stripeFunnelPlugin],
