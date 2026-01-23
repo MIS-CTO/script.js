@@ -256,6 +256,8 @@ c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
 | Requests Page Horizontal Layout | Location → Create → State Tabs → Search in one row | ✅ |
 | Remove Auto-Refresh | Removed auto-refresh toggle, button, and all related JS code | ✅ |
 | Immediate Request Display | New requests show immediately after creation via loadRequests() | ✅ |
+| Analytics Tab Styling | Removed white background from time filter tabs, removed blue indicator on nav | ✅ |
+| Modern Chart Design | Stripe-style funnel charts with gradients, stripes, smooth animations | ✅ |
 
 ### Technical Details
 

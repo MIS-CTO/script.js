@@ -185,16 +185,6 @@
       color: var(--text-100);
     }
 
-    .nav-item.active::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 50%;
-      transform: translateY(-50%);
-      width: 3px; height: 20px;
-      background: var(--accent-blue);
-      border-radius: 0 2px 2px 0;
-    }
-
     .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.6; }
     .nav-item.active svg { opacity: 1; }
 
@@ -240,31 +230,34 @@
     .time-filter {
       display: flex;
       align-items: center;
-      gap: 2px;
-      background: var(--bg-200);
-      padding: 3px;
-      border-radius: 8px;
+      gap: 4px;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
     }
 
     .time-pill {
-      padding: 6px 10px;
+      padding: 6px 12px;
       font-size: 12px;
-      font-weight: 450;
+      font-weight: 500;
       color: var(--text-400);
       background: transparent;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
       font-family: inherit;
     }
 
-    .time-pill:hover { color: var(--text-200); }
+    .time-pill:hover {
+      color: var(--text-200);
+      background: var(--bg-200);
+    }
 
     .time-pill.active {
-      background: var(--bg-000);
+      background: var(--bg-300);
       color: var(--text-100);
-      box-shadow: var(--shadow-sm);
+      font-weight: 600;
     }
 
     .location-select {
@@ -448,6 +441,195 @@
       color: var(--accent-blue);
       font-family: 'Geist Mono', monospace;
     }
+
+    /* ========================================
+       Modern Funnel Chart Styles
+       ======================================== */
+    .funnel-chart-container {
+      position: relative;
+      width: 100%;
+      padding: 20px 0;
+    }
+
+    .funnel-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 320px;
+      padding: 40px 20px 60px;
+      position: relative;
+    }
+
+    .funnel-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      padding: 0 8px;
+    }
+
+    .funnel-bar-wrapper {
+      width: 100%;
+      height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+
+    .funnel-bar {
+      width: 100%;
+      max-width: 120px;
+      border-radius: 6px 6px 0 0;
+      position: relative;
+      overflow: hidden;
+      transform-origin: bottom;
+      animation: funnelBarGrow 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
+      transform: scaleY(0);
+    }
+
+    .funnel-bar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 4px,
+        rgba(255, 255, 255, 0.15) 4px,
+        rgba(255, 255, 255, 0.15) 8px
+      );
+      z-index: 1;
+    }
+
+    .funnel-bar-fill {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+    }
+
+    .funnel-area {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      opacity: 0.15;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .funnel-value {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-100);
+      white-space: nowrap;
+      opacity: 0;
+      animation: funnelValueFade 0.4s ease-out forwards;
+    }
+
+    .funnel-indicator {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-000);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .funnel-label {
+      margin-top: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-400);
+      text-align: center;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .funnel-stage:nth-child(1) .funnel-bar { animation-delay: 0.05s; }
+    .funnel-stage:nth-child(2) .funnel-bar { animation-delay: 0.1s; }
+    .funnel-stage:nth-child(3) .funnel-bar { animation-delay: 0.15s; }
+    .funnel-stage:nth-child(4) .funnel-bar { animation-delay: 0.2s; }
+    .funnel-stage:nth-child(5) .funnel-bar { animation-delay: 0.25s; }
+    .funnel-stage:nth-child(6) .funnel-bar { animation-delay: 0.3s; }
+
+    .funnel-stage:nth-child(1) .funnel-value { animation-delay: 0.4s; }
+    .funnel-stage:nth-child(2) .funnel-value { animation-delay: 0.45s; }
+    .funnel-stage:nth-child(3) .funnel-value { animation-delay: 0.5s; }
+    .funnel-stage:nth-child(4) .funnel-value { animation-delay: 0.55s; }
+    .funnel-stage:nth-child(5) .funnel-value { animation-delay: 0.6s; }
+    .funnel-stage:nth-child(6) .funnel-value { animation-delay: 0.65s; }
+
+    @keyframes funnelBarGrow {
+      0% { opacity: 0; transform: scaleY(0); }
+      100% { opacity: 1; transform: scaleY(1); }
+    }
+
+    @keyframes funnelValueFade {
+      0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .funnel-tooltip {
+      position: absolute;
+      background: var(--bg-000);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .funnel-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .funnel-tooltip-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-100);
+      margin-bottom: 4px;
+    }
+
+    .funnel-tooltip-stats {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .funnel-tooltip-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .funnel-tooltip-stat.positive { color: var(--accent-green); }
+    .funnel-tooltip-stat.negative { color: var(--accent-orange); }
+
+    /* Funnel color schemes */
+    .funnel-color-1 { background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%); }
+    .funnel-color-2 { background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%); }
+    .funnel-color-3 { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); }
+    .funnel-color-4 { background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%); }
+    .funnel-color-5 { background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%); }
+    .funnel-color-6 { background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%); }
 
     /* ========================================
        Data Table
@@ -1456,9 +1638,17 @@
             <h2>Conversion Funnel</h2>
             <p>Analyse der Umwandlungsrate von Anfragen zu Terminen</p>
           </div>
-          
+
           <div class="kpi-grid" id="conversionKPIs"></div>
-          
+
+          <!-- Modern Funnel Chart -->
+          <div class="chart-card full-width" style="margin-bottom: 16px;">
+            <div class="chart-header"><div class="chart-title">Request to Appointment Funnel</div></div>
+            <div class="chart-body">
+              <div class="funnel-chart-container" id="conversionFunnelChart"></div>
+            </div>
+          </div>
+
           <div class="charts-row">
             <div class="chart-card">
               <div class="chart-header"><div class="chart-title">Umgesetzte vs. Nicht umgesetzte Termine</div></div>
@@ -2629,9 +2819,9 @@
     function createPieChart(canvasId, legendId, data, showLegend = true) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return null;
-      
+
       if (charts[canvasId]) charts[canvasId].destroy();
-      
+
       const chart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: {
@@ -2639,23 +2829,36 @@
           datasets: [{
             data: data.map(d => d.value),
             backgroundColor: data.map(d => d.color),
-            borderWidth: 0,
-            hoverOffset: 4
+            borderWidth: 2,
+            borderColor: 'rgba(255,255,255,0.8)',
+            hoverOffset: 8,
+            hoverBorderWidth: 0
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: true,
-          cutout: '65%',
+          cutout: '68%',
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
               padding: 12,
-              cornerRadius: 8
+              cornerRadius: 8,
+              boxPadding: 6,
+              usePointStyle: true
             }
           },
-          animation: { duration: 800, easing: 'easeOutQuart' }
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 1000,
+            easing: 'easeOutQuart'
+          }
         }
       });
       
@@ -2682,15 +2885,40 @@
     function createBarChart(canvasId, labels, datasets, horizontal = false) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return null;
-      
+
       const colors = getChartColors();
       if (charts[canvasId]) charts[canvasId].destroy();
-      
-      const chart = new Chart(canvas.getContext('2d'), {
+
+      // Create gradient backgrounds for modern look
+      const ctx = canvas.getContext('2d');
+      const gradientColors = {
+        blue: createGradient(ctx, '#93c5fd', '#3b82f6', horizontal),
+        green: createGradient(ctx, '#6ee7b7', '#10b981', horizontal),
+        purple: createGradient(ctx, '#c4b5fd', '#8b5cf6', horizontal),
+        cyan: createGradient(ctx, '#67e8f9', '#06b6d4', horizontal),
+        orange: createGradient(ctx, '#fcd34d', '#f59e0b', horizontal),
+        pink: createGradient(ctx, '#f9a8d4', '#ec4899', horizontal)
+      };
+
+      // Apply gradients to datasets
+      const enhancedDatasets = datasets.map((ds, i) => {
+        const colorKey = Object.keys(gradientColors)[i % Object.keys(gradientColors).length];
+        return {
+          ...ds,
+          backgroundColor: ds.backgroundColor && typeof ds.backgroundColor === 'string'
+            ? (gradientColors[getColorKey(ds.backgroundColor)] || ds.backgroundColor)
+            : ds.backgroundColor,
+          borderRadius: 6,
+          borderSkipped: false,
+          hoverBackgroundColor: ds.backgroundColor
+        };
+      });
+
+      const chart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: labels,
-          datasets: datasets.map(ds => ({ ...ds, borderRadius: 4, borderSkipped: false }))
+          datasets: enhancedDatasets
         },
         options: {
           indexAxis: horizontal ? 'y' : 'x',
@@ -2698,39 +2926,94 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: datasets.length > 1, position: 'top' },
-            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, cornerRadius: 8 }
+            tooltip: {
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8,
+              boxPadding: 6,
+              usePointStyle: true
+            }
           },
           scales: {
-            x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
-            y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
+            x: {
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8, font: { weight: 500 } }
+            },
+            y: {
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8 },
+              beginAtZero: true
+            }
           },
-          animation: { duration: 800, easing: 'easeOutQuart' }
+          animation: {
+            duration: 1000,
+            easing: 'easeOutQuart',
+            delay: (context) => context.dataIndex * 50
+          }
         }
       });
-      
+
       charts[canvasId] = chart;
       return chart;
+    }
+
+    function createGradient(ctx, color1, color2, horizontal = false) {
+      const gradient = horizontal
+        ? ctx.createLinearGradient(0, 0, 400, 0)
+        : ctx.createLinearGradient(0, 400, 0, 0);
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      return gradient;
+    }
+
+    function getColorKey(color) {
+      if (color.includes('0070f3') || color.includes('3b82f6')) return 'blue';
+      if (color.includes('10b981')) return 'green';
+      if (color.includes('8b5cf6')) return 'purple';
+      if (color.includes('06b6d4')) return 'cyan';
+      if (color.includes('f59e0b') || color.includes('eab308')) return 'orange';
+      if (color.includes('ec4899')) return 'pink';
+      return null;
     }
 
     function createLineChart(canvasId, labels, datasets) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return null;
-      
+
       const colors = getChartColors();
       if (charts[canvasId]) charts[canvasId].destroy();
-      
-      const chart = new Chart(canvas.getContext('2d'), {
+
+      const ctx = canvas.getContext('2d');
+
+      // Create gradient fills for area charts
+      const enhancedDatasets = datasets.map((ds, i) => {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+        const baseColor = ds.borderColor || '#3b82f6';
+        gradient.addColorStop(0, hexToRgba(baseColor, 0.3));
+        gradient.addColorStop(0.5, hexToRgba(baseColor, 0.1));
+        gradient.addColorStop(1, hexToRgba(baseColor, 0));
+
+        return {
+          ...ds,
+          borderWidth: 2.5,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderWidth: 2,
+          fill: { target: 'origin', above: gradient }
+        };
+      });
+
+      const chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: labels,
-          datasets: datasets.map(ds => ({
-            ...ds,
-            borderWidth: 2,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            fill: { target: 'origin', above: ds.backgroundColor || 'rgba(0, 112, 243, 0.1)' }
-          }))
+          datasets: enhancedDatasets
         },
         options: {
           responsive: true,
@@ -2738,18 +3021,134 @@
           interaction: { intersect: false, mode: 'index' },
           plugins: {
             legend: { display: datasets.length > 1, position: 'top' },
-            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, cornerRadius: 8 }
+            tooltip: {
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8,
+              boxPadding: 6,
+              usePointStyle: true
+            }
           },
           scales: {
-            x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
-            y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
+            x: {
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8 }
+            },
+            y: {
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8 },
+              beginAtZero: true
+            }
           },
-          animation: { duration: 1000, easing: 'easeOutQuart' }
+          animation: {
+            duration: 1200,
+            easing: 'easeOutQuart'
+          }
         }
       });
-      
+
       charts[canvasId] = chart;
       return chart;
+    }
+
+    function hexToRgba(hex, alpha) {
+      if (hex.startsWith('rgb')) return hex.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      if (!result) return `rgba(59, 130, 246, ${alpha})`;
+      return `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`;
+    }
+
+    // ========================================
+    // Modern Funnel Chart (Stripe-style)
+    // ========================================
+    function createFunnelChart(containerId, data) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const maxValue = Math.max(...data.map(d => d.value));
+      const colors = [
+        'linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%)',
+        'linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%)',
+        'linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)',
+        'linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%)',
+        'linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%)',
+        'linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%)'
+      ];
+
+      const indicatorColors = ['#3b82f6', '#60a5fa', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
+
+      let html = '<div class="funnel-chart">';
+
+      data.forEach((item, index) => {
+        const heightPercent = (item.value / maxValue) * 100;
+        const colorIndex = index % colors.length;
+        const prevValue = index > 0 ? data[index - 1].value : item.value;
+        const conversionRate = index > 0 ? ((item.value / data[0].value) * 100).toFixed(0) : 100;
+        const dropOff = index > 0 ? (((prevValue - item.value) / prevValue) * 100).toFixed(0) : 0;
+
+        html += `
+          <div class="funnel-stage" data-index="${index}">
+            <div class="funnel-bar-wrapper">
+              <div class="funnel-value">${formatNumber(item.value)}</div>
+              <div class="funnel-bar" style="height: ${heightPercent}%; background: ${colors[colorIndex]};">
+                <div class="funnel-bar-fill"></div>
+                <div class="funnel-indicator" style="background: ${indicatorColors[colorIndex]};"></div>
+              </div>
+              <div class="funnel-area" style="height: ${heightPercent + 10}%; background: ${colors[colorIndex]};"></div>
+            </div>
+            <div class="funnel-label">${item.label}</div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      html += `<div class="funnel-tooltip" id="${containerId}-tooltip">
+        <div class="funnel-tooltip-value"></div>
+        <div class="funnel-tooltip-stats">
+          <span class="funnel-tooltip-stat positive">Conversion: <strong></strong></span>
+          <span class="funnel-tooltip-stat negative">Drop-off: <strong></strong></span>
+        </div>
+      </div>`;
+
+      container.innerHTML = html;
+
+      // Add hover interactions
+      const stages = container.querySelectorAll('.funnel-stage');
+      const tooltip = container.querySelector('.funnel-tooltip');
+
+      stages.forEach((stage, index) => {
+        stage.addEventListener('mouseenter', (e) => {
+          const item = data[index];
+          const prevValue = index > 0 ? data[index - 1].value : item.value;
+          const conversionRate = ((item.value / data[0].value) * 100).toFixed(0);
+          const dropOff = index > 0 ? (((prevValue - item.value) / prevValue) * 100).toFixed(0) : 0;
+
+          tooltip.querySelector('.funnel-tooltip-value').textContent = `${formatNumber(item.value)} ${item.unit || 'transactions'}`;
+          tooltip.querySelector('.funnel-tooltip-stat.positive strong').textContent = `${conversionRate}%`;
+          tooltip.querySelector('.funnel-tooltip-stat.negative strong').textContent = `-${dropOff}%`;
+
+          const rect = stage.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          tooltip.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
+          tooltip.style.top = `${rect.top - containerRect.top - 70}px`;
+          tooltip.style.transform = 'translateX(-50%)';
+          tooltip.classList.add('visible');
+        });
+
+        stage.addEventListener('mouseleave', () => {
+          tooltip.classList.remove('visible');
+        });
+      });
+    }
+
+    function formatNumber(num) {
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+      return num.toString();
     }
 
     // ========================================
@@ -2870,19 +3269,28 @@
 
     function renderConversion() {
       const colors = getChartColors();
-      
+
       document.getElementById('conversionKPIs').innerHTML = `
         <div class="kpi-card"><div class="kpi-label">Total Requests</div><div class="kpi-value">639</div></div>
         <div class="kpi-card"><div class="kpi-label">Umgesetzte Termine</div><div class="kpi-value">220</div></div>
         <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value">34.4%</div></div>
         <div class="kpi-card"><div class="kpi-label">Ø Umsetzungszeit</div><div class="kpi-value">~8h</div></div>
       `;
-      
+
+      // Modern Funnel Chart
+      createFunnelChart('conversionFunnelChart', [
+        { label: 'New Requests', value: 639, unit: 'requests' },
+        { label: 'Contacted', value: 512, unit: 'requests' },
+        { label: 'Responded', value: 384, unit: 'requests' },
+        { label: 'Scheduled', value: 280, unit: 'appointments' },
+        { label: 'Completed', value: 220, unit: 'appointments' }
+      ]);
+
       createPieChart('conversionPie', 'conversionLegend', [
         { label: 'Umgesetzt', value: 220, color: colors.green, display: '220 (34.4%)' },
         { label: 'Nicht umgesetzt', value: 419, color: colors.red, display: '419 (65.6%)' }
       ]);
-      
+
       createPieChart('artistPreferencePie', 'artistPreferenceLegend', [
         { label: 'Beliebig', value: 65.6, color: colors.blue, display: '65.6%' },
         { label: 'Spezifisch', value: 34.4, color: colors.purple, display: '34.4%' }
