@@ -13525,15 +13525,15 @@
       padding: 0 !important;
     }
 
-    /* Header */
+    /* Header - Clean style without visible container */
     #analytics-section .analytics-header {
       height: var(--analytics-header-height) !important;
-      border-bottom: 1px solid var(--analytics-border-color) !important;
+      border-bottom: 1px solid transparent !important;
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
       padding: 0 24px !important;
-      background: var(--analytics-bg-000) !important;
+      background: transparent !important;
       position: sticky !important;
       top: 0 !important;
       z-index: 50 !important;
@@ -13585,9 +13585,11 @@
     }
 
     #analytics-section .time-pill.active {
-      background: var(--analytics-bg-300);
+      background: transparent;
       color: var(--analytics-text-100);
       font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 4px;
     }
 
     /* Metric Switcher Buttons */
@@ -51594,6 +51596,194 @@
       return chart;
     }
 
+    // Create Stripe-style Funnel Chart - Pillars with hover stripes effect
+    function createStripeFunnelChart(canvasId, labels, data, options = {}) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        console.warn('📊 Canvas not found:', canvasId);
+        return null;
+      }
+
+      const ctx = canvas.getContext('2d');
+      const colors = getAnalyticsChartColors();
+
+      if (analyticsCharts[canvasId]) {
+        analyticsCharts[canvasId].destroy();
+      }
+
+      let hoveredIndex = -1;
+
+      // Custom plugin to draw Stripe-style bars
+      const stripeFunnelPlugin = {
+        id: 'stripeFunnel',
+        beforeDatasetsDraw: (chart) => {
+          const { ctx, chartArea, scales } = chart;
+          const meta = chart.getDatasetMeta(0);
+          const activeElements = chart.getActiveElements();
+          const activeIndex = activeElements.length > 0 ? activeElements[0].index : -1;
+
+          meta.data.forEach((bar, index) => {
+            const { x, y, width, base } = bar.getProps(['x', 'y', 'width', 'base']);
+            const barHeight = base - y;
+            const barWidth = width * 0.85;
+            const startX = x - barWidth / 2;
+
+            if (barHeight <= 0) return;
+
+            ctx.save();
+
+            // Create gradient (light at top, darker at bottom)
+            const gradient = ctx.createLinearGradient(x, y, x, base);
+            if (activeIndex === -1 || activeIndex === index) {
+              // No hover or this bar is hovered - solid blue gradient
+              gradient.addColorStop(0, '#dbeafe');
+              gradient.addColorStop(0.3, '#93c5fd');
+              gradient.addColorStop(0.6, '#60a5fa');
+              gradient.addColorStop(1, '#3b82f6');
+            } else {
+              // Other bars when one is hovered - lighter with stripes
+              gradient.addColorStop(0, '#f0f9ff');
+              gradient.addColorStop(0.5, '#e0f2fe');
+              gradient.addColorStop(1, '#bae6fd');
+            }
+
+            // Draw rounded rect
+            const radius = 4;
+            ctx.beginPath();
+            ctx.moveTo(startX + radius, y);
+            ctx.lineTo(startX + barWidth - radius, y);
+            ctx.quadraticCurveTo(startX + barWidth, y, startX + barWidth, y + radius);
+            ctx.lineTo(startX + barWidth, base);
+            ctx.lineTo(startX, base);
+            ctx.lineTo(startX, y + radius);
+            ctx.quadraticCurveTo(startX, y, startX + radius, y);
+            ctx.closePath();
+
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Draw diagonal stripes only on non-hovered bars when something is hovered
+            if (activeIndex !== -1 && activeIndex !== index) {
+              ctx.save();
+              ctx.clip();
+              ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
+              ctx.lineWidth = 2;
+              const stripeGap = 8;
+              for (let i = -barHeight; i < barWidth + barHeight; i += stripeGap) {
+                ctx.beginPath();
+                ctx.moveTo(startX + i, base);
+                ctx.lineTo(startX + i + barHeight, y);
+                ctx.stroke();
+              }
+              ctx.restore();
+            }
+
+            // Draw small indicator pill on top of hovered bar
+            if (activeIndex === index) {
+              const pillWidth = 30;
+              const pillHeight = 6;
+              const pillY = y - 12;
+              ctx.fillStyle = '#3b82f6';
+              ctx.beginPath();
+              ctx.roundRect(x - pillWidth/2, pillY, pillWidth, pillHeight, 3);
+              ctx.fill();
+            }
+
+            ctx.restore();
+          });
+        }
+      };
+
+      // Format number with K/M suffix
+      const formatValue = (val) => {
+        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+        if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
+        return val.toLocaleString('de-DE');
+      };
+
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: 'transparent',
+            borderRadius: 6,
+            borderSkipped: false,
+            barPercentage: 0.7,
+            categoryPercentage: 0.8
+          }]
+        },
+        plugins: [stripeFunnelPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          onHover: (event, elements) => {
+            hoveredIndex = elements.length > 0 ? elements[0].index : -1;
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              backgroundColor: 'rgba(255,255,255,0.98)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 14,
+              cornerRadius: 10,
+              displayColors: false,
+              titleFont: { size: 14, weight: '600' },
+              bodyFont: { size: 13 },
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0].dataIndex;
+                  return `${formatValue(data[idx])} ${labels[idx]}`;
+                },
+                label: (item) => {
+                  const idx = item.dataIndex;
+                  const val = data[idx];
+                  const total = data[0];
+                  const prev = idx > 0 ? data[idx - 1] : total;
+                  const convRate = ((val / total) * 100).toFixed(0);
+                  const dropOff = idx > 0 ? (((prev - val) / prev) * 100).toFixed(0) : 0;
+                  if (idx === 0) return `Total: ${formatValue(val)}`;
+                  return `Conversion: ${convRate}% | Drop-off: -${dropOff}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                padding: 12,
+                font: { size: 11, weight: '500' },
+                color: '#6b7280'
+              }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false },
+              ticks: {
+                padding: 12,
+                font: { size: 11 },
+                color: '#9ca3af',
+                callback: (val) => formatValue(val)
+              }
+            }
+          },
+          animation: {
+            duration: 800,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+
+      analyticsCharts[canvasId] = chart;
+      return chart;
+    }
+
     // Create Bar Chart - Modern styling with diagonal stripes (Stripe-style)
     function createAnalyticsBarChart(canvasId, labels, datasets, horizontal = false) {
       const canvas = document.getElementById(canvasId);
@@ -51890,12 +52080,8 @@
             const monthlyValues = sortedMonths.map(m => monthlyData[m] || 0);
 
             if (sortedMonths.length > 0) {
-              createAnalyticsLineChart('dashboardTimeline', sortedMonths, [{
-                label: 'Appointments',
-                data: monthlyValues,
-                borderColor: colors.blue,
-                backgroundColor: 'rgba(0, 112, 243, 0.1)'
-              }]);
+              // Use Stripe-style funnel chart with pillars
+              createStripeFunnelChart('dashboardTimeline', sortedMonths, monthlyValues);
             }
             break;
           }
