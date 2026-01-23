@@ -13740,12 +13740,12 @@
 
     #analytics-section .kpi-change.positive {
       color: var(--analytics-accent-green) !important;
-      background: rgba(16, 185, 129, 0.1) !important;
+      background: transparent !important;
     }
 
     #analytics-section .kpi-change.negative {
       color: var(--analytics-accent-red) !important;
-      background: rgba(239, 68, 68, 0.1) !important;
+      background: transparent !important;
     }
 
     #analytics-section .kpi-change svg {
@@ -13765,8 +13765,10 @@
     }
 
     #analytics-section .chart-card {
-      background: var(--analytics-bg-000) !important;
-      border: 1px solid var(--analytics-border-color) !important;
+      background: rgba(255, 255, 255, 0.7) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.5) !important;
       border-radius: 12px !important;
       overflow: hidden !important;
       margin: 0 !important;
@@ -13775,6 +13777,7 @@
       max-width: 100% !important;
       box-sizing: border-box !important;
       transition: all 0.2s ease !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
     }
 
     #analytics-section .chart-card:hover {
@@ -51732,11 +51735,11 @@
               const stripeGap = 8;
               ctx.lineWidth = 2;
               for (let i = -barHeight; i < barWidth + barHeight; i += stripeGap) {
-                // Create gradient for each stripe (fade from bottom to top)
+                // White stripes with gradient fade
                 const stripeGradient = ctx.createLinearGradient(startX, base, startX, y);
-                stripeGradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
-                stripeGradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.3)');
-                stripeGradient.addColorStop(1, 'rgba(59, 130, 246, 0.5)');
+                stripeGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+                stripeGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+                stripeGradient.addColorStop(1, 'rgba(255, 255, 255, 0.7)');
                 ctx.strokeStyle = stripeGradient;
                 ctx.beginPath();
                 ctx.moveTo(startX + i, base);
@@ -51810,7 +51813,7 @@
           plugins: {
             legend: { display: false },
             tooltip: {
-              enabled: true,
+              enabled: false,
               backgroundColor: 'rgba(255,255,255,0.98)',
               titleColor: '#0a0a0a',
               bodyColor: '#404040',
