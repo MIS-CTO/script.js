@@ -42004,19 +42004,13 @@
 
         // Artist-Zeilen
         artists.forEach(([artistId, artistData]) => {
-          // Generate initials for avatar
-          const nameParts = (artistData.name || 'U').split(' ');
-          const initials = nameParts.length > 1
-            ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
-            : nameParts[0].substring(0, 2).toUpperCase();
-
           html += `
             <div class="artist-row-${roleClass}" style="display: ${isCollapsed ? 'none' : 'contents'};">
               <div style="
                 position: sticky;
                 left: 0;
                 padding: 8px 12px;
-                font-size: 16px;
+                font-size: 13px;
                 background: white;
                 border-bottom: 1px solid rgba(0,0,0,0.05);
                 white-space: nowrap;
@@ -42025,21 +42019,16 @@
                 z-index: 5;
                 display: flex;
                 align-items: center;
-                gap: 10px;
+                gap: 8px;
               ">
-                <div style="
-                  width: 32px;
-                  height: 32px;
+                <span style="
+                  display: inline-block;
+                  width: 6px;
+                  height: 6px;
                   border-radius: 50%;
                   background: ${roleColor};
-                  color: white;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 12px;
-                  font-weight: 600;
-                  flex-shrink: 0;
-                ">${initials}</div>
+                  opacity: 0.6;
+                "></span>
                 ${artistData.name}
               </div>
           `;
@@ -43371,59 +43360,34 @@
       const popup = document.createElement('div');
       popup.id = 'slotViewPopup';
       popup.className = 'slot-popup-overlay';
-      // Generate initials for avatar
-      const nameParts = (slotData.artist_name || 'U').split(' ');
-      const initials = nameParts.length > 1
-        ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
-        : nameParts[0].substring(0, 2).toUpperCase();
-
       popup.innerHTML = `
-        <div class="slot-popup" style="padding:16px;">
-          <div class="slot-popup-header" style="padding:0 0 12px 0;">
+        <div class="slot-popup">
+          <div class="slot-popup-header">
             <h3 class="slot-popup-title">Slot Details</h3>
             <button class="slot-popup-close" onclick="closeSlotViewPopup()">✕</button>
           </div>
-          <div class="slot-popup-body" style="padding:0;">
-            <!-- Artist with Avatar -->
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-              <div style="
-                width:40px;
-                height:40px;
-                border-radius:50%;
-                background:${typeInfo.color};
-                color:white;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                font-size:14px;
-                font-weight:600;
-                flex-shrink:0;
-              ">${initials}</div>
-              <div style="font-size:16px; font-weight:600; color:var(--ink);">${slotData.artist_name || 'Unbekannt'}</div>
+          <div class="slot-popup-body">
+            <div class="slot-popup-field">
+              <label class="slot-popup-label">Artist / Mitarbeiter</label>
+              <p class="slot-popup-value">${slotData.artist_name || 'Unbekannt'}</p>
             </div>
-
-            <!-- Info Badges Row -->
-            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
-              <!-- Date Badge -->
-              <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:rgba(0,0,0,0.04); border-radius:8px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <span style="font-weight:500;">${dateRange}</span>
-              </div>
-
-              <!-- Time Badge -->
-              <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:rgba(0,0,0,0.04); border-radius:8px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span style="font-weight:500;">${slotData.start_time || '10:00'} - ${slotData.end_time || '18:00'}</span>
-              </div>
-
-              <!-- Status Badge -->
-              <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:${typeInfo.color}20; border-radius:8px; color:${typeInfo.color};">
-                <span style="display:inline-flex; align-items:center;">${typeInfo.icon}</span>
-                <span style="font-weight:500;">${typeInfo.label}</span>
-              </div>
+            <div class="slot-popup-field">
+              <label class="slot-popup-label">Datum</label>
+              <p class="slot-popup-value">${dateRange}</p>
+            </div>
+            <div class="slot-popup-field">
+              <label class="slot-popup-label">Zeit</label>
+              <p class="slot-popup-value">${slotData.start_time || '10:00'} - ${slotData.end_time || '18:00'}</p>
+            </div>
+            <div class="slot-popup-field">
+              <label class="slot-popup-label">Status / Typ</label>
+              <p class="slot-popup-value" style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; color: ${typeInfo.color};">${typeInfo.icon}</span>
+                <span>${typeInfo.label}</span>
+              </p>
             </div>
           </div>
-          <div class="slot-popup-actions" style="padding:12px 0 0 0; border-top:1px solid rgba(0,0,0,0.08);">
+          <div class="slot-popup-actions">
             <button class="slot-popup-btn edit" onclick="openSlotEditPopup(${slotDataStr})">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
