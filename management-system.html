@@ -18402,6 +18402,26 @@
         Create Guest Spot
       </button>
 
+      <!-- Status Toggle (Upcoming/Active/Previous/Canceled) - Only for List View -->
+      <div id="guestSpotStatusToggle" style="display:flex; gap:4px; background:rgba(142,142,147,0.12); padding:3px; border-radius:10px; height:37px; box-sizing:border-box;">
+        <button class="list-toggle-option active" data-list-type="upcoming" style="padding:0 14px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:white; color:#007aff; box-shadow:0 1px 3px rgba(0,0,0,0.1); height:100%; display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Upcoming
+        </button>
+        <button class="list-toggle-option" data-list-type="active" style="padding:0 14px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none; height:100%; display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+          Active
+        </button>
+        <button class="list-toggle-option" data-list-type="previous" style="padding:0 14px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none; height:100%; display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          Previous
+        </button>
+        <button class="list-toggle-option" data-list-type="canceled" style="padding:0 14px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none; height:100%; display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+          Canceled
+        </button>
+      </div>
+
       <!-- Search Bar (fills remaining width) -->
       <div style="position:relative; flex:1; min-width:200px;">
         <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -18436,22 +18456,6 @@
           Jahr
         </button>
       </div>
-    </div>
-
-    <!-- Status Toggle (Upcoming/Active/Previous/Canceled) - Only for List View -->
-    <div id="guestSpotStatusToggle" style="display:flex; gap:4px; margin-bottom:20px; background:rgba(142,142,147,0.12); padding:3px; border-radius:10px; width:fit-content;">
-      <button class="list-toggle-option active" data-list-type="upcoming" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:white; color:#1d1d1f; box-shadow:0 2px 4px rgba(0,0,0,0.08);">
-        Upcoming
-      </button>
-      <button class="list-toggle-option" data-list-type="active" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none;">
-        Active
-      </button>
-      <button class="list-toggle-option" data-list-type="previous" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none;">
-        Previous
-      </button>
-      <button class="list-toggle-option" data-list-type="canceled" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none;">
-        Canceled
-      </button>
     </div>
 
     <!-- List View Container (Active Slots Display) -->
@@ -53145,17 +53149,23 @@
           if (btn.dataset.listType === listType) {
             btn.classList.add('active');
             // Tab-specific colors
-            if (listType === 'active') {
+            if (listType === 'upcoming') {
+              btn.style.background = 'white';
+              btn.style.color = '#007aff';
+            } else if (listType === 'active') {
               btn.style.background = '#dcfce7';
-              btn.style.color = '#166534';
+              btn.style.color = '#34c759';
+            } else if (listType === 'previous') {
+              btn.style.background = 'white';
+              btn.style.color = '#8e8e93';
             } else if (listType === 'canceled') {
               btn.style.background = '#fee2e2';
-              btn.style.color = '#991b1b';
+              btn.style.color = '#ff3b30';
             } else {
               btn.style.background = 'white';
               btn.style.color = '#1d1d1f';
             }
-            btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)';
+            btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
           } else {
             btn.classList.remove('active');
             btn.style.background = 'transparent';
