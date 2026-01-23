@@ -51623,7 +51623,7 @@
           const activeIndex = activeElements.length > 0 ? activeElements[0].index : -1;
           const dataLength = meta.data.length;
 
-          // First pass: draw connecting areas between bars
+          // First pass: draw connecting areas between bars (lighter fade)
           for (let i = 0; i < dataLength - 1; i++) {
             const bar1 = meta.data[i];
             const bar2 = meta.data[i + 1];
@@ -51633,17 +51633,11 @@
             const rightEdge1 = x1 + w1 / 2;
             const leftEdge2 = x2 - w2 / 2;
 
-            // Create gradient for connector
+            // Create lighter gradient for connector (inverted: dark top, light bottom)
             const connGradient = ctx.createLinearGradient(rightEdge1, Math.min(y1, y2), rightEdge1, base1);
-            if (activeIndex === -1) {
-              connGradient.addColorStop(0, '#dbeafe');
-              connGradient.addColorStop(0.5, '#93c5fd');
-              connGradient.addColorStop(1, '#60a5fa');
-            } else {
-              connGradient.addColorStop(0, '#f0f9ff');
-              connGradient.addColorStop(0.5, '#e0f2fe');
-              connGradient.addColorStop(1, '#bae6fd');
-            }
+            connGradient.addColorStop(0, '#bfdbfe');
+            connGradient.addColorStop(0.5, '#dbeafe');
+            connGradient.addColorStop(1, '#eff6ff');
 
             ctx.save();
             ctx.fillStyle = connGradient;
@@ -51655,15 +51649,19 @@
             ctx.closePath();
             ctx.fill();
 
-            // Add stripes to connector if hovering
+            // Add stripes to connector if hovering (with fade)
             if (activeIndex !== -1) {
               ctx.clip();
-              ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
-              ctx.lineWidth = 2;
               const stripeGap = 8;
               const connHeight = base1 - Math.min(y1, y2);
               const connWidth = leftEdge2 - rightEdge1;
+              ctx.lineWidth = 2;
               for (let s = -connHeight; s < connWidth + connHeight; s += stripeGap) {
+                const stripeGradient = ctx.createLinearGradient(rightEdge1, base1, rightEdge1, Math.min(y1, y2));
+                stripeGradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
+                stripeGradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.25)');
+                stripeGradient.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
+                ctx.strokeStyle = stripeGradient;
                 ctx.beginPath();
                 ctx.moveTo(rightEdge1 + s, base1);
                 ctx.lineTo(rightEdge1 + s + connHeight, Math.min(y1, y2));
@@ -51684,44 +51682,40 @@
 
             ctx.save();
 
-            // Create gradient (light at top, darker at bottom)
+            // Create gradient (inverted: dark at top, light at bottom)
             const gradient = ctx.createLinearGradient(x, y, x, base);
             if (activeIndex === -1 || activeIndex === index) {
-              // No hover or this bar is hovered - solid blue gradient
-              gradient.addColorStop(0, '#dbeafe');
-              gradient.addColorStop(0.3, '#93c5fd');
-              gradient.addColorStop(0.6, '#60a5fa');
-              gradient.addColorStop(1, '#3b82f6');
+              // No hover or this bar is hovered - solid blue gradient (dark top, light bottom)
+              gradient.addColorStop(0, '#3b82f6');
+              gradient.addColorStop(0.4, '#60a5fa');
+              gradient.addColorStop(0.7, '#93c5fd');
+              gradient.addColorStop(1, '#dbeafe');
             } else {
-              // Other bars when one is hovered - lighter with stripes
-              gradient.addColorStop(0, '#f0f9ff');
-              gradient.addColorStop(0.5, '#e0f2fe');
-              gradient.addColorStop(1, '#bae6fd');
+              // Other bars when one is hovered - lighter with stripes (faded)
+              gradient.addColorStop(0, '#93c5fd');
+              gradient.addColorStop(0.5, '#bfdbfe');
+              gradient.addColorStop(1, '#eff6ff');
             }
 
-            // Draw rounded rect
-            const radius = 4;
+            // Draw rect with 0px corner radius
             ctx.beginPath();
-            ctx.moveTo(startX + radius, y);
-            ctx.lineTo(startX + barWidth - radius, y);
-            ctx.quadraticCurveTo(startX + barWidth, y, startX + barWidth, y + radius);
-            ctx.lineTo(startX + barWidth, base);
-            ctx.lineTo(startX, base);
-            ctx.lineTo(startX, y + radius);
-            ctx.quadraticCurveTo(startX, y, startX + radius, y);
-            ctx.closePath();
-
+            ctx.rect(startX, y, barWidth, barHeight);
             ctx.fillStyle = gradient;
             ctx.fill();
 
-            // Draw diagonal stripes only on non-hovered bars when something is hovered
+            // Draw diagonal stripes with fade on non-hovered bars when something is hovered
             if (activeIndex !== -1 && activeIndex !== index) {
               ctx.save();
               ctx.clip();
-              ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-              ctx.lineWidth = 2;
               const stripeGap = 8;
+              ctx.lineWidth = 2;
               for (let i = -barHeight; i < barWidth + barHeight; i += stripeGap) {
+                // Create gradient for each stripe (fade from bottom to top)
+                const stripeGradient = ctx.createLinearGradient(startX, base, startX, y);
+                stripeGradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
+                stripeGradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.3)');
+                stripeGradient.addColorStop(1, 'rgba(59, 130, 246, 0.5)');
+                ctx.strokeStyle = stripeGradient;
                 ctx.beginPath();
                 ctx.moveTo(startX + i, base);
                 ctx.lineTo(startX + i + barHeight, y);
@@ -51730,17 +51724,23 @@
               ctx.restore();
             }
 
-            // Draw small indicator pill on top of hovered bar
-            if (activeIndex === index) {
-              const pillWidth = 30;
-              const pillHeight = 6;
-              const pillY = y - 12;
-              ctx.fillStyle = '#3b82f6';
-              ctx.beginPath();
-              ctx.roundRect(x - pillWidth/2, pillY, pillWidth, pillHeight, 3);
-              ctx.fill();
-            }
+            ctx.restore();
+          });
 
+          // Third pass: draw data labels above bars
+          meta.data.forEach((bar, index) => {
+            const { x, y } = bar.getProps(['x', 'y']);
+            const val = data[index];
+            const label = formatValue(val);
+
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+            // Grey normally, black when hovered
+            ctx.fillStyle = activeIndex === index ? '#0a0a0a' : '#9ca3af';
+            ctx.fillText(label, x, y - 8);
             ctx.restore();
           });
         }
