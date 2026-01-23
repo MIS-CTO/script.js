@@ -18404,7 +18404,7 @@
 
       <!-- Status Toggle (Upcoming/Active/Previous/Canceled) - Only for List View -->
       <div id="guestSpotStatusToggle" style="display:flex; gap:4px; background:rgba(142,142,147,0.12); padding:3px; border-radius:10px; height:37px; box-sizing:border-box;">
-        <button class="list-toggle-option active" data-list-type="upcoming" style="padding:0 14px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:white; color:#007aff; box-shadow:0 1px 3px rgba(0,0,0,0.1); height:100%; display:flex; align-items:center; gap:6px;">
+        <button class="list-toggle-option active" data-list-type="upcoming" style="padding:0 14px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:#1d1d1f; color:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.2); height:100%; display:flex; align-items:center; gap:6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Upcoming
         </button>
@@ -53143,29 +53143,14 @@
           resetGuestspotView();
         }
 
-        // Update toggle UI with tab-specific colors
+        // Update toggle UI - dark grey for active button
         const toggleButtons = document.querySelectorAll('.list-toggle-option');
         toggleButtons.forEach(btn => {
           if (btn.dataset.listType === listType) {
             btn.classList.add('active');
-            // Tab-specific colors
-            if (listType === 'upcoming') {
-              btn.style.background = 'white';
-              btn.style.color = '#007aff';
-            } else if (listType === 'active') {
-              btn.style.background = '#dcfce7';
-              btn.style.color = '#34c759';
-            } else if (listType === 'previous') {
-              btn.style.background = 'white';
-              btn.style.color = '#8e8e93';
-            } else if (listType === 'canceled') {
-              btn.style.background = '#fee2e2';
-              btn.style.color = '#ff3b30';
-            } else {
-              btn.style.background = 'white';
-              btn.style.color = '#1d1d1f';
-            }
-            btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            btn.style.background = '#1d1d1f';
+            btn.style.color = '#ffffff';
+            btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
           } else {
             btn.classList.remove('active');
             btn.style.background = 'transparent';
@@ -53214,7 +53199,7 @@
             loadActiveGuestSpotsTab();
             break;
           case 'previous':
-            loadPreviousGuestSpots(currentWaitlistLocation);
+            loadPreviousGuestSpotsTab();
             break;
           case 'canceled':
             loadCanceledGuestSpotsTab();
@@ -53502,6 +53487,35 @@
 
         } catch (error) {
           console.error('❌ Error loading active guest spots:', error);
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:#ff3b30;">Fehler beim Laden</div>';
+        }
+      }
+
+      // ============================================
+      // Load Previous Guest Spots (date_to < today)
+      // ============================================
+      async function loadPreviousGuestSpotsTab() {
+        console.log('📋 Loading Previous Guest Spots...');
+        const container = document.getElementById('waitlistSlotsContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Laden...</div>';
+
+        try {
+          // Use centralized loading to prevent multi-day spot splitting
+          const { previous } = await loadAllNonCanceledGuestSpots();
+
+          if (previous.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine vergangenen Guest Spots</p></div>';
+            return;
+          }
+
+          console.log(`✅ Displaying ${previous.length} previous guest spots`);
+          waitlistSlots = previous;
+          renderWaitlistSlots(previous);
+
+        } catch (error) {
+          console.error('❌ Error loading previous guest spots:', error);
           container.innerHTML = '<div style="text-align:center;padding:40px;color:#ff3b30;">Fehler beim Laden</div>';
         }
       }
