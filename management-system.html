@@ -51633,11 +51633,19 @@
             const rightEdge1 = x1 + w1 / 2;
             const leftEdge2 = x2 - w2 / 2;
 
-            // Create lighter gradient for connector (inverted: dark top, light bottom)
+            // Create gradient for connector - normal or faded on hover
             const connGradient = ctx.createLinearGradient(rightEdge1, Math.min(y1, y2), rightEdge1, base1);
-            connGradient.addColorStop(0, '#bfdbfe');
-            connGradient.addColorStop(0.5, '#dbeafe');
-            connGradient.addColorStop(1, '#eff6ff');
+            if (activeIndex === -1) {
+              // Normal state - blue gradient (dark top, light bottom)
+              connGradient.addColorStop(0, '#60a5fa');
+              connGradient.addColorStop(0.5, '#93c5fd');
+              connGradient.addColorStop(1, '#dbeafe');
+            } else {
+              // Hover state - faded lighter gradient
+              connGradient.addColorStop(0, '#bfdbfe');
+              connGradient.addColorStop(0.5, '#dbeafe');
+              connGradient.addColorStop(1, '#eff6ff');
+            }
 
             ctx.save();
             ctx.fillStyle = connGradient;
