@@ -16223,14 +16223,41 @@
         + Stay
       </button>
 
+      <!-- View Mode Tabs -->
+      <div class="calendar-view-tabs" style="display:flex; gap:4px; background:rgba(142,142,147,0.12); padding:3px; border-radius:8px;">
+        <button onclick="switchCalendarViewMode('day')" id="calendarViewDay" class="calendar-view-tab active" style="padding:6px 16px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:#fff; color:#1d1d1f; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          Tag
+        </button>
+        <button onclick="switchCalendarViewMode('month')" id="calendarViewMonth" class="calendar-view-tab" style="padding:6px 16px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#6b7280;">
+          Monat
+        </button>
+        <button onclick="switchCalendarViewMode('year')" id="calendarViewYear" class="calendar-view-tab" style="padding:6px 16px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#6b7280;">
+          Jahr
+        </button>
+      </div>
+
       <!-- Date Navigation Container -->
-      <div class="date-nav-container" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <div class="date-nav-container" id="dayViewNavContainer" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <input type="date" id="datePickerInput">
         <div class="day-nav-buttons" style="display:flex; gap:8px;">
           <button id="prevDayBtn" class="btn-nav">‹ Prev</button>
           <button id="todayBtn" class="btn-nav">Today</button>
           <button id="nextDayBtn" class="btn-nav">Next ›</button>
         </div>
+      </div>
+
+      <!-- Month Navigation Container (hidden by default) -->
+      <div class="month-nav-container" id="monthViewNavContainer" style="display:none; gap:8px; align-items:center;">
+        <button onclick="navigateCalendarMonth(-1)" class="btn-nav">‹ Prev</button>
+        <button onclick="navigateCalendarMonth(0)" class="btn-nav">Today</button>
+        <button onclick="navigateCalendarMonth(1)" class="btn-nav">Next ›</button>
+      </div>
+
+      <!-- Year Navigation Container (hidden by default) -->
+      <div class="year-nav-container" id="yearViewNavContainer" style="display:none; gap:8px; align-items:center;">
+        <button onclick="navigateCalendarYear(-1)" class="btn-nav">‹ Prev</button>
+        <button onclick="navigateCalendarYear(0)" class="btn-nav">Today</button>
+        <button onclick="navigateCalendarYear(1)" class="btn-nav">Next ›</button>
       </div>
 
       <!-- Switches: Events, Residents, Guests -->
@@ -16265,6 +16292,12 @@
     </div>
 
     <div class="calendar-container" id="calendarContainer"></div>
+
+    <!-- Month View Container (hidden by default) -->
+    <div class="calendar-month-container" id="calendarMonthContainer" style="display:none;"></div>
+
+    <!-- Year View Container (hidden by default) -->
+    <div class="calendar-year-container" id="calendarYearContainer" style="display:none;"></div>
 
     <!-- Combined Container: Location Info + Booking Types -->
     <div style="margin-top:16px; padding:16px 20px; background:rgba(255,255,255,0.95); border-radius:12px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:16px;">
@@ -36110,6 +36143,419 @@
 
       // Make renderCalendar globally available
       window.renderCalendar = renderCalendar;
+
+      // ============================================
+      // Calendar View Mode (Day / Month / Year)
+      // ============================================
+      let calendarViewMode = 'day';
+      let calendarViewMonth = new Date().getMonth();
+      let calendarViewYear = new Date().getFullYear();
+
+      function switchCalendarViewMode(mode) {
+        calendarViewMode = mode;
+
+        // Update tab styles
+        document.querySelectorAll('.calendar-view-tab').forEach(tab => {
+          tab.style.background = 'transparent';
+          tab.style.color = '#6b7280';
+          tab.style.boxShadow = 'none';
+        });
+        const activeTab = document.getElementById(`calendarView${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
+        if (activeTab) {
+          activeTab.style.background = '#fff';
+          activeTab.style.color = '#1d1d1f';
+          activeTab.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        }
+
+        // Show/hide navigation containers
+        document.getElementById('dayViewNavContainer').style.display = mode === 'day' ? 'flex' : 'none';
+        document.getElementById('monthViewNavContainer').style.display = mode === 'month' ? 'flex' : 'none';
+        document.getElementById('yearViewNavContainer').style.display = mode === 'year' ? 'flex' : 'none';
+
+        // Show/hide view containers
+        document.getElementById('calendarContainer').style.display = mode === 'day' ? 'block' : 'none';
+        document.getElementById('calendarMonthContainer').style.display = mode === 'month' ? 'block' : 'none';
+        document.getElementById('calendarYearContainer').style.display = mode === 'year' ? 'block' : 'none';
+
+        // Update header display
+        updateCalendarHeaderDisplay();
+
+        // Render appropriate view
+        if (mode === 'day') {
+          renderCalendar();
+        } else if (mode === 'month') {
+          renderCalendarMonthView();
+        } else if (mode === 'year') {
+          renderCalendarYearView();
+        }
+      }
+      window.switchCalendarViewMode = switchCalendarViewMode;
+
+      function updateCalendarHeaderDisplay() {
+        const dateDisplayTop = document.getElementById('currentDateDisplayTop');
+        if (!dateDisplayTop) return;
+
+        const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                            'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+        if (calendarViewMode === 'day') {
+          const day = currentDate.getDate();
+          const month = monthNames[currentDate.getMonth()];
+          const year = currentDate.getFullYear();
+          const weekdayShort = currentDate.toLocaleDateString('de-DE', { weekday: 'short' });
+          dateDisplayTop.textContent = `${weekdayShort} ${day}. ${month} ${year}`;
+        } else if (calendarViewMode === 'month') {
+          dateDisplayTop.textContent = `${monthNames[calendarViewMonth]} ${calendarViewYear}`;
+        } else if (calendarViewMode === 'year') {
+          dateDisplayTop.textContent = `${calendarViewYear}`;
+        }
+      }
+
+      function navigateCalendarMonth(direction) {
+        if (direction === 0) {
+          // Today
+          const today = new Date();
+          calendarViewMonth = today.getMonth();
+          calendarViewYear = today.getFullYear();
+        } else {
+          calendarViewMonth += direction;
+          if (calendarViewMonth > 11) {
+            calendarViewMonth = 0;
+            calendarViewYear++;
+          } else if (calendarViewMonth < 0) {
+            calendarViewMonth = 11;
+            calendarViewYear--;
+          }
+        }
+        updateCalendarHeaderDisplay();
+        renderCalendarMonthView();
+      }
+      window.navigateCalendarMonth = navigateCalendarMonth;
+
+      function navigateCalendarYear(direction) {
+        if (direction === 0) {
+          calendarViewYear = new Date().getFullYear();
+        } else {
+          calendarViewYear += direction;
+        }
+        updateCalendarHeaderDisplay();
+        renderCalendarYearView();
+      }
+      window.navigateCalendarYear = navigateCalendarYear;
+
+      // ============================================
+      // Render Calendar Month View
+      // ============================================
+      async function renderCalendarMonthView() {
+        const container = document.getElementById('calendarMonthContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Laden...</div>';
+
+        const daysInMonth = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
+        const dayNames = ['S', 'M', 'D', 'M', 'D', 'F', 'S'];
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        // Load guest spots for this month
+        let guestSpots = [];
+        try {
+          const startDate = `${calendarViewYear}-${String(calendarViewMonth + 1).padStart(2, '0')}-01`;
+          const endDate = `${calendarViewYear}-${String(calendarViewMonth + 1).padStart(2, '0')}-${daysInMonth}`;
+
+          const { data, error } = await supabase
+            .from('upcoming_slots')
+            .select(`
+              *,
+              artist:artists!upcoming_slots_artist_id_fkey(id, name, profile_picture_url),
+              location:locations!upcoming_slots_location_id_fkey(id, name)
+            `)
+            .gte('date_from', startDate)
+            .lte('date_from', endDate)
+            .neq('status', 'canceled')
+            .order('date_from', { ascending: true });
+
+          if (!error && data) {
+            guestSpots = data.map(slot => ({
+              ...slot,
+              artist_name: slot.artist?.name || 'Unknown',
+              profile_picture_url: slot.artist?.profile_picture_url || null,
+              location_name: slot.location?.name || ''
+            }));
+          }
+        } catch (err) {
+          console.error('Error loading month view data:', err);
+        }
+
+        // Group guest spots by date
+        const spotsByDate = {};
+        guestSpots.forEach(spot => {
+          const dateKey = spot.date_from?.split('T')[0] || spot.date_from;
+          if (!spotsByDate[dateKey]) spotsByDate[dateKey] = [];
+          spotsByDate[dateKey].push(spot);
+        });
+
+        // Generate pastel colors function
+        const pastelColors = [
+          '#FFB5BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#D4A5A5', '#A5D4D4', '#D4D4A5', '#C9BFFF',
+          '#FFD1DC', '#AEC6CF', '#B2E2F0', '#F0E6B2', '#E2B2F0', '#B2F0D4', '#F0B2B2', '#B2C8F0', '#F0E2B2', '#D4B2F0'
+        ];
+        const getPastelColor = (name) => {
+          const idx = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % pastelColors.length;
+          return pastelColors[idx];
+        };
+
+        let html = `
+          <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--border-color); background:var(--macos-elevated);">
+            <div style="display:grid; grid-template-columns:repeat(${daysInMonth}, minmax(120px, 1fr)); min-width:max-content;">
+              <!-- Day Headers -->
+        `;
+
+        // Day headers
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(calendarViewYear, calendarViewMonth, day);
+          const dateKey = `${calendarViewYear}-${String(calendarViewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const dayOfWeek = date.getDay();
+          const isToday = dateKey === todayStr;
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+          html += `
+            <div style="
+              padding:12px 8px;
+              text-align:center;
+              font-size:12px;
+              font-weight:${isToday ? '700' : '500'};
+              background:${isToday ? '#007AFF' : isWeekend ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.02)'};
+              color:${isToday ? 'white' : isWeekend ? '#86868b' : '#1d1d1f'};
+              border-bottom:1px solid var(--border-color);
+              border-right:1px solid var(--border-color);
+              position:sticky;
+              top:0;
+              z-index:10;
+            ">
+              <div style="font-size:16px; font-weight:600;">${day}</div>
+              <div style="font-size:11px; opacity:0.8;">${dayNames[dayOfWeek]}</div>
+            </div>
+          `;
+        }
+
+        html += `</div><div style="display:grid; grid-template-columns:repeat(${daysInMonth}, minmax(120px, 1fr)); min-width:max-content; align-items:start;">`;
+
+        // Day content columns
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateKey = `${calendarViewYear}-${String(calendarViewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const daySpots = spotsByDate[dateKey] || [];
+          const date = new Date(calendarViewYear, calendarViewMonth, day);
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+          html += `<div style="min-height:150px; padding:8px; border-right:1px solid var(--border-color); background:${isWeekend ? 'rgba(0,0,0,0.015)' : 'transparent'};">`;
+
+          if (daySpots.length === 0) {
+            html += `<div style="text-align:center; padding:20px 4px; color:var(--muted); font-size:11px;">-</div>`;
+          } else {
+            daySpots.forEach(spot => {
+              const initials = (spot.artist_name || 'U').split(' ').map(n => n.charAt(0).toUpperCase()).slice(0, 2).join('');
+              const pastelBg = getPastelColor(spot.artist_name || 'Unknown');
+              const hasProfilePic = spot.profile_picture_url && spot.profile_picture_url.trim() !== '';
+
+              html += `
+                <div onclick="openGuestSpotDetailFromCache('${spot.id}')" style="
+                  background:white;
+                  border-radius:8px;
+                  padding:8px;
+                  margin-bottom:6px;
+                  cursor:pointer;
+                  border:1px solid var(--border-color);
+                  transition:all 0.2s;
+                  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+                " onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    ${hasProfilePic
+                      ? `<img src="${spot.profile_picture_url}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                         <div style="width:24px; height:24px; border-radius:50%; background:${pastelBg}; display:none; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:10px; flex-shrink:0;">${initials}</div>`
+                      : `<div style="width:24px; height:24px; border-radius:50%; background:${pastelBg}; display:flex; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:10px; flex-shrink:0;">${initials}</div>`
+                    }
+                    <span style="font-size:11px; font-weight:500; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${spot.artist_name}</span>
+                  </div>
+                  ${spot.location_name ? `<div style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:3px;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    ${spot.location_name}
+                  </div>` : ''}
+                </div>
+              `;
+            });
+          }
+
+          html += `</div>`;
+        }
+
+        html += `</div></div>`;
+        container.innerHTML = html;
+      }
+      window.renderCalendarMonthView = renderCalendarMonthView;
+
+      // ============================================
+      // Render Calendar Year View
+      // ============================================
+      async function renderCalendarYearView() {
+        const container = document.getElementById('calendarYearContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Laden...</div>';
+
+        const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                            'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+        const monthNamesShort = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+        // Load guest spots for the entire year
+        let guestSpots = [];
+        try {
+          const startDate = `${calendarViewYear}-01-01`;
+          const endDate = `${calendarViewYear}-12-31`;
+
+          const { data, error } = await supabase
+            .from('upcoming_slots')
+            .select(`
+              *,
+              artist:artists!upcoming_slots_artist_id_fkey(id, name, profile_picture_url),
+              location:locations!upcoming_slots_location_id_fkey(id, name)
+            `)
+            .gte('date_from', startDate)
+            .lte('date_from', endDate)
+            .neq('status', 'canceled')
+            .order('date_from', { ascending: true });
+
+          if (!error && data) {
+            guestSpots = data.map(slot => ({
+              ...slot,
+              artist_name: slot.artist?.name || 'Unknown',
+              profile_picture_url: slot.artist?.profile_picture_url || null,
+              location_name: slot.location?.name || ''
+            }));
+          }
+        } catch (err) {
+          console.error('Error loading year view data:', err);
+        }
+
+        // Group guest spots by month
+        const spotsByMonth = {};
+        for (let m = 0; m < 12; m++) spotsByMonth[m] = [];
+        guestSpots.forEach(spot => {
+          const dateStr = spot.date_from?.split('T')[0] || spot.date_from;
+          if (dateStr) {
+            const month = parseInt(dateStr.split('-')[1], 10) - 1;
+            if (month >= 0 && month < 12) spotsByMonth[month].push(spot);
+          }
+        });
+
+        // Pastel colors
+        const pastelColors = [
+          '#FFB5BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#D4A5A5', '#A5D4D4', '#D4D4A5', '#C9BFFF',
+          '#FFD1DC', '#AEC6CF', '#B2E2F0', '#F0E6B2', '#E2B2F0', '#B2F0D4', '#F0B2B2', '#B2C8F0', '#F0E2B2', '#D4B2F0'
+        ];
+        const getPastelColor = (name) => {
+          const idx = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % pastelColors.length;
+          return pastelColors[idx];
+        };
+
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+
+        let html = `
+          <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--border-color); background:var(--macos-elevated);">
+            <div style="display:grid; grid-template-columns:repeat(12, minmax(140px, 1fr)); min-width:max-content;">
+              <!-- Month Headers -->
+        `;
+
+        // Month headers
+        for (let month = 0; month < 12; month++) {
+          const isCurrentMonth = month === currentMonth && calendarViewYear === currentYear;
+          const spotCount = spotsByMonth[month].length;
+
+          html += `
+            <div style="
+              padding:16px 12px;
+              text-align:center;
+              font-size:13px;
+              font-weight:600;
+              background:${isCurrentMonth ? '#007AFF' : 'rgba(0,0,0,0.02)'};
+              color:${isCurrentMonth ? 'white' : '#1d1d1f'};
+              border-bottom:1px solid var(--border-color);
+              border-right:1px solid var(--border-color);
+              position:sticky;
+              top:0;
+              z-index:10;
+            ">
+              <div>${monthNamesShort[month]}</div>
+              <div style="font-size:11px; font-weight:400; opacity:0.7; margin-top:2px;">${spotCount} Spots</div>
+            </div>
+          `;
+        }
+
+        html += `</div><div style="display:grid; grid-template-columns:repeat(12, minmax(140px, 1fr)); min-width:max-content; align-items:start;">`;
+
+        // Month content columns
+        for (let month = 0; month < 12; month++) {
+          const monthSpots = spotsByMonth[month];
+
+          html += `<div style="min-height:200px; padding:8px; border-right:1px solid var(--border-color);">`;
+
+          if (monthSpots.length === 0) {
+            html += `<div style="text-align:center; padding:40px 8px; color:var(--muted); font-size:12px;">Keine Guest Spots</div>`;
+          } else {
+            // Show first 5 spots, then a "more" indicator
+            const displaySpots = monthSpots.slice(0, 6);
+            const remaining = monthSpots.length - 6;
+
+            displaySpots.forEach(spot => {
+              const initials = (spot.artist_name || 'U').split(' ').map(n => n.charAt(0).toUpperCase()).slice(0, 2).join('');
+              const pastelBg = getPastelColor(spot.artist_name || 'Unknown');
+              const hasProfilePic = spot.profile_picture_url && spot.profile_picture_url.trim() !== '';
+              const dateStr = spot.date_from?.split('T')[0] || spot.date_from;
+              const dayNum = dateStr ? parseInt(dateStr.split('-')[2], 10) : '';
+
+              html += `
+                <div onclick="openGuestSpotDetailFromCache('${spot.id}')" style="
+                  background:white;
+                  border-radius:8px;
+                  padding:8px;
+                  margin-bottom:6px;
+                  cursor:pointer;
+                  border:1px solid var(--border-color);
+                  transition:all 0.2s;
+                  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+                " onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    ${hasProfilePic
+                      ? `<img src="${spot.profile_picture_url}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                         <div style="width:24px; height:24px; border-radius:50%; background:${pastelBg}; display:none; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:10px; flex-shrink:0;">${initials}</div>`
+                      : `<div style="width:24px; height:24px; border-radius:50%; background:${pastelBg}; display:flex; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:10px; flex-shrink:0;">${initials}</div>`
+                    }
+                    <div style="flex:1; min-width:0;">
+                      <div style="font-size:11px; font-weight:500; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${spot.artist_name}</div>
+                      <div style="font-size:10px; color:var(--muted);">${dayNum}. ${monthNamesShort[month]}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+
+            if (remaining > 0) {
+              html += `
+                <div style="text-align:center; padding:8px; font-size:11px; color:var(--muted); cursor:pointer;" onclick="switchCalendarViewMode('month'); calendarViewMonth=${month}; renderCalendarMonthView(); updateCalendarHeaderDisplay();">
+                  +${remaining} weitere
+                </div>
+              `;
+            }
+          }
+
+          html += `</div>`;
+        }
+
+        html += `</div></div>`;
+        container.innerHTML = html;
+      }
+      window.renderCalendarYearView = renderCalendarYearView;
 
       // Mobile calendar state
       let mobileSelectedDate = new Date();
