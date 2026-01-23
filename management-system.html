@@ -16204,24 +16204,24 @@
     <div id="calendarAppointmentsView">
 
     <div class="calendar-controls" style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
-      <button id="createEventBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px;">
+      <!-- Location Dropdown - 1st -->
+      <select id="locationDropdown" style="min-width:200px; height:37px; padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer;"></select>
+
+      <button id="createEventBtn" class="btn-nav" style="background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.10) 100%), #1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px; border:none; border-top:1px solid rgba(255,255,255,0.38); border-bottom:1px solid rgba(255,255,255,0.18); border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; backdrop-filter:blur(8px);">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Create New Event or Meeting</span>
       </button>
-      <button id="createBookingBtn" class="btn-nav" style="background:#333; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px;">
+      <button id="createBookingBtn" class="btn-nav" style="background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.10) 100%), #1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px; border:none; border-top:1px solid rgba(255,255,255,0.38); border-bottom:1px solid rgba(255,255,255,0.18); border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; backdrop-filter:blur(8px);">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Create Booking</span>
       </button>
-      <button id="createStayBtn" onclick="openStandaloneStayModal()" style="display:none; padding:10px 16px; border:none; border-radius:8px; background:rgba(142,142,147,0.15); color:#1d1d1f; font-size:14px; font-weight:500; cursor:pointer; align-items:center; gap:6px; height:37px;">
+      <button id="createStayBtn" onclick="openStandaloneStayModal()" style="display:none; padding:10px 16px; border:none; border-radius:8px; background:rgba(142,142,147,0.15); color:#1d1d1f; font-size:13px; font-weight:500; cursor:pointer; align-items:center; gap:6px; height:37px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
         + Stay
       </button>
-      <div style="display:flex; align-items:center; gap:8px; margin-right:40px;">
-        <select id="locationDropdown" style="min-width:200px;"></select>
-      </div>
 
       <!-- Date Navigation Container -->
       <div class="date-nav-container" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -16344,6 +16344,11 @@
       flex-wrap: wrap;
       align-items: flex-end;
     ">
+      <!-- Location Filter - 1st -->
+      <select id="dienstplanLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px; min-width:200px;">
+        <option value="">Alle Locations</option>
+      </select>
+
       <!-- Add Slot Button -->
       <button onclick="openAddSlotModal()" style="
         background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.10) 100%), #1d1d1f;
@@ -16719,6 +16724,13 @@
 
     <!-- Add Button, Search Bar, and Filters Row -->
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <!-- Location Filter - 1st -->
+      <select id="artistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px; min-width:200px;">
+        <option value="">Alle Locations</option>
+        <option value="NULL">Ohne Location</option>
+        <!-- Locations werden dynamisch geladen -->
+      </select>
+
       <button id="addArtistBtn" class="btn-nav" style="background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.10) 100%), #1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px; border:none; border-top:1px solid rgba(255,255,255,0.38); border-bottom:1px solid rgba(255,255,255,0.18); border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; backdrop-filter:blur(8px);">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Add Artist</span>
@@ -16731,13 +16743,6 @@
         </svg>
         <input type="text" id="artistSearchInput" placeholder="Search artists by name or Instagram..." style="width:100%; padding:12px 16px 12px 42px; font-size:13px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; height:37px; box-sizing:border-box;">
       </div>
-
-      <!-- Location Filter -->
-      <select id="artistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px;">
-        <option value="">Alle Locations</option>
-        <option value="NULL">Ohne Location</option>
-        <!-- Locations werden dynamisch geladen -->
-      </select>
 
       <!-- Rank Filter -->
       <select id="artistRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px;">
@@ -16798,6 +16803,11 @@
 
     <!-- Add Button, Search Bar, and Filters Row -->
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <!-- Location Filter - 1st -->
+      <select id="customerLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px; min-width:200px;">
+        <option value="">Alle Locations</option>
+      </select>
+
       <button id="addCustomerBtn" class="btn-nav" style="background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.10) 100%), #1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; white-space:nowrap; height:37px; border:none; border-top:1px solid rgba(255,255,255,0.38); border-bottom:1px solid rgba(255,255,255,0.18); border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; backdrop-filter:blur(8px);">
         <span style="font-size:18px; font-weight:600;">+</span>
         <span>Add Customer</span>
@@ -18591,40 +18601,51 @@
   </section>
 
   <section id="agreements-section">
-    <div class="tab-header">
-      <h2 class="tab-header-title">Agreements</h2>
+    <div class="tab-header" style="margin-bottom: 16px;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <h2 class="tab-header-title" style="margin-bottom: 0;">Agreements</h2>
+        <div id="agreementsDateDisplay" style="font-weight:700; font-size:24px; color:var(--ink);"></div>
+      </div>
       <p class="tab-header-subtitle">Digitale Einwilligungserklaerungen verwalten</p>
     </div>
 
-    <!-- Agreements Header Actions -->
-    <div style="margin-top:48px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap;">
-        <div style="display:flex; align-items:center; gap:16px;">
-          <h2 style="margin:0; font-size:22px; font-weight:600;">Agreements</h2>
-          <div id="agreementsDateDisplay" style="font-weight:600; font-size:22px; color:var(--ink);"></div>
-        </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <input type="text" id="agreementSearchInput" placeholder="Suche nach Name..."
-                 style="padding:10px 16px; border:1px solid var(--border); border-radius:10px; font-size:14px; width:200px;">
-          <a href="agreement-form.html" target="_blank" class="request-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-            iPad Form
-          </a>
-        </div>
+    <!-- Agreements Controls -->
+    <div class="calendar-controls" style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+      <!-- Location Dropdown - 1st -->
+      <select id="agreementsLocationFilter" style="min-width:200px; height:37px; padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer;">
+        <option value="">Alle Locations</option>
+      </select>
+
+      <a href="agreement-form.html" target="_blank" style="background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.10) 100%), #1d1d1f; color:white; display:flex; align-items:center; gap:8px; padding:10px 20px; height:37px; border:none; border-top:1px solid rgba(255,255,255,0.38); border-bottom:1px solid rgba(255,255,255,0.18); border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; backdrop-filter:blur(8px); text-decoration:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        iPad Form
+      </a>
+
+      <div style="position:relative; flex:1; min-width:200px;">
+        <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="agreementSearchInput" placeholder="Suche nach Name..."
+               style="width:100%; padding:12px 16px 12px 42px; font-size:13px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; height:37px; box-sizing:border-box;">
       </div>
 
-      <div class="calendar-controls" style="margin-bottom:24px;">
-        <button id="agreementsPrevDayBtn" class="btn-nav">‹ Prev</button>
-        <input type="date" id="agreementsDatePickerInput">
-        <button id="agreementsTodayBtn" class="btn-nav">Today</button>
-        <button id="agreementsNextDayBtn" class="btn-nav">Next ›</button>
+      <!-- Date Navigation -->
+      <div class="date-nav-container" style="display:flex; gap:8px; align-items:center;">
+        <input type="date" id="agreementsDatePickerInput" style="height:37px; padding:10px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px;">
+        <div class="day-nav-buttons" style="display:flex; gap:8px;">
+          <button id="agreementsPrevDayBtn" class="btn-nav" style="height:37px; font-size:13px;">‹ Prev</button>
+          <button id="agreementsTodayBtn" class="btn-nav" style="height:37px; font-size:13px;">Today</button>
+          <button id="agreementsNextDayBtn" class="btn-nav" style="height:37px; font-size:13px;">Next ›</button>
+        </div>
       </div>
+    </div>
 
-      <table id="agreementsTable">
+    <table id="agreementsTable">
         <thead>
           <tr>
             <th>Kunde</th>
@@ -18778,6 +18799,12 @@
 
     <!-- Search & Filter Row -->
     <div style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
+      <!-- Location Filter - 1st -->
+      <select id="wannadoLocationFilter" onchange="window.filterWannadoCollections()"
+        style="padding:12px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; font-family:inherit; background:white; min-width:200px; cursor:pointer; height:37px;">
+        <option value="">Alle Locations</option>
+      </select>
+
       <!-- Searchbar -->
       <div style="flex:1; min-width:200px;">
         <input type="text" id="wannadoSearchInput" placeholder="Collection oder Wannado suchen..."
