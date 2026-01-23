@@ -13522,7 +13522,7 @@
       flex: 1 !important;
       margin-left: var(--analytics-sidebar-width) !important;
       min-height: calc(100vh - 60px) !important;
-      background: var(--analytics-bg-100) !important;
+      background: transparent !important;
       transition: background 0.3s ease;
       padding: 0 !important;
     }
@@ -13765,19 +13765,19 @@
     }
 
     #analytics-section .chart-card {
-      background: rgba(255, 255, 255, 0.7) !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.5) !important;
-      border-radius: 12px !important;
+      background: rgba(255, 255, 255, 0.4) !important;
+      backdrop-filter: blur(20px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.6) !important;
+      border-radius: 16px !important;
       overflow: hidden !important;
       margin: 0 !important;
       padding: 0 !important;
       width: 100% !important;
       max-width: 100% !important;
       box-sizing: border-box !important;
-      transition: all 0.2s ease !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+      transition: all 0.3s ease !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.3) !important;
     }
 
     #analytics-section .chart-card:hover {
@@ -51626,7 +51626,7 @@
           const activeElements = chart.getActiveElements();
           const activeIndex = activeElements.length > 0 ? activeElements[0].index : -1;
           const dataLength = meta.data.length;
-          const labelY = chartArea.top - 25; // Fixed Y position for all labels (above chart area)
+          const labelY = chartArea.top - 45; // Fixed Y position for all labels (higher, closer to top)
 
           // Draw grey background behind hovered pillar
           if (activeIndex !== -1) {
@@ -51804,7 +51804,7 @@
           maintainAspectRatio: false,
           layout: {
             padding: {
-              top: 70 // Space for labels above pillars
+              top: 90 // Space for labels above pillars (more bottom spacing)
             }
           },
           onHover: (event, elements) => {
@@ -51865,6 +51865,17 @@
           animation: {
             duration: 800,
             easing: 'easeOutQuart'
+          },
+          hover: {
+            animationDuration: 300
+          },
+          transitions: {
+            active: {
+              animation: {
+                duration: 300,
+                easing: 'easeOutCubic'
+              }
+            }
           }
         }
       });
