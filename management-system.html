@@ -53502,7 +53502,7 @@
       }
 
       // ============================================
-      // Load Previous Guest Spots (date_to < today)
+      // Load Previous Guest Spots (completed status from view)
       // ============================================
       async function loadPreviousGuestSpotsTab() {
         console.log('📋 Loading Previous Guest Spots...');
@@ -53512,17 +53512,25 @@
         container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Laden...</div>';
 
         try {
-          // Use centralized loading to prevent multi-day spot splitting
-          const { previous } = await loadAllNonCanceledGuestSpots();
+          // Use the grouped view for completed spots (same approach as Canceled tab)
+          const { data, error } = await supabase
+            .from('previous_guest_spots_grouped')
+            .select('*')
+            .eq('status', 'completed')
+            .order('date_to', { ascending: false })
+            .limit(100);
 
-          if (previous.length === 0) {
+          if (error) throw error;
+
+          console.log(`✅ Loaded ${data?.length || 0} previous guest spots`);
+
+          if (!data || data.length === 0) {
             container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);"><p>Keine vergangenen Guest Spots</p></div>';
             return;
           }
 
-          console.log(`✅ Displaying ${previous.length} previous guest spots`);
-          waitlistSlots = previous;
-          renderWaitlistSlots(previous);
+          // Use the same render function as Canceled tab
+          renderPreviousGuestSpots(data);
 
         } catch (error) {
           console.error('❌ Error loading previous guest spots:', error);
@@ -53569,6 +53577,7 @@
       // Expose new functions
       window.loadUpcomingGuestSpotsTab = loadUpcomingGuestSpotsTab;
       window.loadActiveGuestSpotsTab = loadActiveGuestSpotsTab;
+      window.loadPreviousGuestSpotsTab = loadPreviousGuestSpotsTab;
       window.loadCanceledGuestSpotsTab = loadCanceledGuestSpotsTab;
 
       // ============================================
