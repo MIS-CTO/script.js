@@ -18370,39 +18370,13 @@
       <p class="tab-header-subtitle">Verwalte Gastartist-Termine und Verfügbarkeiten</p>
     </div>
 
-    <!-- Add Slot Button + Location Dropdown + View Tabs + Search Bar in One Row -->
+    <!-- Controls: Location Dropdown | Create Button | Search Bar | View Tabs -->
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap;">
       <!-- Location Dropdown -->
       <select id="waitlistLocationFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px;">
         <option value="all">All Locations</option>
         <!-- Locations will be loaded dynamically -->
       </select>
-
-      <!-- View Mode Tabs (Tag/Monat/Jahr) -->
-      <div class="guestspot-view-tabs" style="display:flex; gap:4px; background:rgba(142,142,147,0.12); padding:3px; border-radius:8px;">
-        <button onclick="switchGuestSpotViewMode('list')" id="guestspotViewList" class="guestspot-view-tab active" style="padding:6px 16px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:#fff; color:#1d1d1f; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-          Liste
-        </button>
-        <button onclick="switchGuestSpotViewMode('month')" id="guestspotViewMonth" class="guestspot-view-tab" style="padding:6px 16px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#6b7280;">
-          Monat
-        </button>
-        <button onclick="switchGuestSpotViewMode('year')" id="guestspotViewYear" class="guestspot-view-tab" style="padding:6px 16px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#6b7280;">
-          Jahr
-        </button>
-      </div>
-
-      <!-- Month/Year Navigation (shown when in month or year view) -->
-      <div id="guestspotMonthNavContainer" style="display:none; gap:8px; align-items:center;">
-        <button onclick="navigateGuestSpotMonth(-1)" class="btn-nav" style="height:37px;">‹ Prev</button>
-        <span id="guestspotCurrentMonthLabel" style="font-weight:600; font-size:14px; min-width:120px; text-align:center;"></span>
-        <button onclick="navigateGuestSpotMonth(1)" class="btn-nav" style="height:37px;">Next ›</button>
-      </div>
-
-      <div id="guestspotYearNavContainer" style="display:none; gap:8px; align-items:center;">
-        <button onclick="navigateGuestSpotYear(-1)" class="btn-nav" style="height:37px;">‹ Prev</button>
-        <span id="guestspotCurrentYearLabel" style="font-weight:600; font-size:14px; min-width:60px; text-align:center;"></span>
-        <button onclick="navigateGuestSpotYear(1)" class="btn-nav" style="height:37px;">Next ›</button>
-      </div>
 
       <!-- Create Guest Spot Button -->
       <button id="createGuestSpotBtnWaitlist" onclick="openCreateGuestSpotModal()" style="
@@ -18435,6 +18409,32 @@
           <path d="m21 21-4.35-4.35"></path>
         </svg>
         <input type="text" id="waitlistSearchInput" placeholder="Search guest artists..." style="width:100%; padding:12px 16px 12px 42px; font-size:13px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; height:37px; box-sizing:border-box;">
+      </div>
+
+      <!-- Month/Year Navigation (shown when in month or year view) -->
+      <div id="guestspotMonthNavContainer" style="display:none; gap:8px; align-items:center;">
+        <button onclick="navigateGuestSpotMonth(-1)" class="btn-nav" style="height:37px;">‹ Prev</button>
+        <span id="guestspotCurrentMonthLabel" style="font-weight:600; font-size:14px; min-width:120px; text-align:center;"></span>
+        <button onclick="navigateGuestSpotMonth(1)" class="btn-nav" style="height:37px;">Next ›</button>
+      </div>
+
+      <div id="guestspotYearNavContainer" style="display:none; gap:8px; align-items:center;">
+        <button onclick="navigateGuestSpotYear(-1)" class="btn-nav" style="height:37px;">‹ Prev</button>
+        <span id="guestspotCurrentYearLabel" style="font-weight:600; font-size:14px; min-width:60px; text-align:center;"></span>
+        <button onclick="navigateGuestSpotYear(1)" class="btn-nav" style="height:37px;">Next ›</button>
+      </div>
+
+      <!-- View Mode Tabs (Liste/Monat/Jahr) - 37px height -->
+      <div class="guestspot-view-tabs" style="display:flex; gap:4px; background:rgba(142,142,147,0.12); padding:3px; border-radius:10px; height:37px; box-sizing:border-box;">
+        <button onclick="switchGuestSpotViewMode('list')" id="guestspotViewList" class="guestspot-view-tab active" style="padding:0 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:#fff; color:#1d1d1f; box-shadow:0 1px 3px rgba(0,0,0,0.1); height:100%; display:flex; align-items:center;">
+          Liste
+        </button>
+        <button onclick="switchGuestSpotViewMode('month')" id="guestspotViewMonth" class="guestspot-view-tab" style="padding:0 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#6b7280; height:100%; display:flex; align-items:center;">
+          Monat
+        </button>
+        <button onclick="switchGuestSpotViewMode('year')" id="guestspotViewYear" class="guestspot-view-tab" style="padding:0 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#6b7280; height:100%; display:flex; align-items:center;">
+          Jahr
+        </button>
       </div>
     </div>
 
@@ -60654,7 +60654,6 @@
 
         // Status colors
         const statusColor = isCanceled ? '#ff3b30' : isPaid ? '#34c759' : '#ff9500';
-        const statusBg = isCanceled ? 'rgba(255,59,48,0.08)' : isPaid ? 'rgba(52,199,89,0.08)' : 'rgba(255,149,0,0.08)';
 
         return `
           <div onclick="event.stopPropagation(); openGuestSpotDetailFromCache('${cacheKey}')"
@@ -60664,10 +60663,13 @@
                  grid-row: ${bar.row + 1};
                  margin: 4px 2px;
                  padding: 10px 12px;
-                 border-radius: 10px;
+                 border-radius: 12px;
                  cursor: pointer;
-                 background: ${statusBg};
-                 border-left: 4px solid ${statusColor};
+                 background: rgba(255,255,255,0.85);
+                 backdrop-filter: blur(12px);
+                 -webkit-backdrop-filter: blur(12px);
+                 border: 1px solid rgba(255,255,255,0.6);
+                 box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
                  display: flex;
                  align-items: center;
                  gap: 10px;
@@ -60675,8 +60677,8 @@
                  overflow: hidden;
                  min-height: 54px;
                "
-               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
-               onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)';"
+               onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)';">
             <!-- Avatar -->
             <div style="
               width: 44px;
@@ -60912,7 +60914,6 @@
 
         // Status colors
         const statusColor = isCanceled ? '#ff3b30' : isPaid ? '#34c759' : '#ff9500';
-        const statusBg = isCanceled ? 'rgba(255,59,48,0.08)' : isPaid ? 'rgba(52,199,89,0.08)' : 'rgba(255,149,0,0.08)';
 
         return `
           <div onclick="event.stopPropagation(); openGuestSpotDetailFromCache('${cacheKey}')"
@@ -60922,10 +60923,13 @@
                  grid-row: ${bar.row + 1};
                  margin: 4px 4px;
                  padding: 10px 14px;
-                 border-radius: 10px;
+                 border-radius: 12px;
                  cursor: pointer;
-                 background: ${statusBg};
-                 border-left: 4px solid ${statusColor};
+                 background: rgba(255,255,255,0.85);
+                 backdrop-filter: blur(12px);
+                 -webkit-backdrop-filter: blur(12px);
+                 border: 1px solid rgba(255,255,255,0.6);
+                 box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
                  display: flex;
                  align-items: center;
                  gap: 12px;
@@ -60933,8 +60937,8 @@
                  overflow: hidden;
                  min-height: 54px;
                "
-               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
-               onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)';"
+               onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)';">
             <!-- Avatar -->
             <div style="
               width: 44px;
