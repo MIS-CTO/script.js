@@ -60543,106 +60543,229 @@
       // Get days in month
       const lastDay = new Date(year, month + 1, 0);
       const daysInMonth = lastDay.getDate();
+      const monthStart = new Date(year, month, 1);
+      const monthEnd = new Date(year, month + 1, 0);
 
-      // Create slots lookup by date
-      const slotsByDate = {};
-      guestspotCachedSlots.forEach(slot => {
-        if (slot.date_from && slot.date_to) {
-          const from = new Date(slot.date_from);
-          const to = new Date(slot.date_to);
-          for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-            const key = d.toISOString().split('T')[0];
-            if (!slotsByDate[key]) slotsByDate[key] = [];
-            slotsByDate[key].push(slot);
-          }
-        }
-      });
+      // Pastel colors for avatar fallback
+      const pastelColors = [
+        '#FFB5BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#D4A5A5', '#A5D4D4', '#D4D4A5', '#C9BFFF',
+        '#FFD1DC', '#AEC6CF', '#B2E2F0', '#F0E6B2', '#E2B2F0', '#B2F0D4', '#F0B2B2', '#B2C8F0', '#F0E2B2', '#D4B2F0'
+      ];
+      const getPastelColor = (name) => {
+        const idx = (name || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % pastelColors.length;
+        return pastelColors[idx];
+      };
 
       // Day names for header
       const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
       const today = new Date().toISOString().split('T')[0];
 
-      // Build Dienstplan-style horizontal grid
+      // Build header cells
       let headerCells = '';
-      let contentCells = '';
-
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateObj = new Date(year, month, day);
         const dayOfWeek = dateObj.getDay();
         const dayName = dayNames[dayOfWeek];
         const isToday = dateStr === today;
-        const isPast = dateStr < today;
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const slots = slotsByDate[dateStr] || [];
 
-        // Header cell
         headerCells += `
           <div style="
             text-align:center;
-            padding:8px 4px;
+            padding:10px 4px;
             background:${isToday ? '#007aff' : isWeekend ? 'rgba(0,0,0,0.04)' : 'transparent'};
             border-radius:${isToday ? '8px 8px 0 0' : '0'};
-            min-width:80px;
+            min-width:60px;
             box-sizing:border-box;
+            border-left:1px solid var(--border-color);
           ">
             <div style="font-size:11px; font-weight:500; color:${isToday ? '#fff' : '#86868b'}; margin-bottom:2px;">${dayName}</div>
             <div style="font-size:14px; font-weight:${isToday ? '700' : '600'}; color:${isToday ? '#fff' : 'var(--ink)'};">${day}</div>
           </div>
         `;
+      }
 
-        // Content cell with guest spot cards
-        let slotCards = '';
-        if (slots.length > 0) {
-          slotCards = slots.map(s => {
-            const artistName = (s.artist_name || 'Artist').substring(0, 10);
-            const isPaid = s.is_paid === true;
-            const isCanceled = s.entry_status === 'canceled' || s.status === 'canceled';
-            const timeFrom = s.time_from ? s.time_from.substring(0, 5) : '';
+      // Filter and process slots for this month (Gantt-chart style)
+      const monthSlots = guestspotCachedSlots.filter(slot => {
+        if (!slot.date_from || !slot.date_to) return false;
+        const from = new Date(slot.date_from);
+        const to = new Date(slot.date_to);
+        return from <= monthEnd && to >= monthStart;
+      });
 
-            let statusClass = isPaid ? 'paid' : 'unpaid';
-            if (isCanceled) statusClass = 'canceled';
+      // Calculate grid positions for each slot
+      const slotBars = monthSlots.map(slot => {
+        const from = new Date(slot.date_from);
+        const to = new Date(slot.date_to);
 
-            const cacheKey = cacheGuestSpotSlot(s);
+        // Clamp to month boundaries
+        const startDay = from < monthStart ? 1 : from.getDate();
+        const endDay = to > monthEnd ? daysInMonth : to.getDate();
 
-            return `
-              <div class="guest-spot-day-item ${statusClass}"
-                   onclick="event.stopPropagation(); openGuestSpotDetailFromCache('${cacheKey}')"
-                   title="${s.artist_name || 'Artist'}${timeFrom ? ' - ' + timeFrom : ''}${isPaid ? ' (Bezahlt)' : ' (Unbezahlt)'}${isCanceled ? ' (Storniert)' : ''}"
-                   style="
-                     padding:6px 8px;
-                     border-radius:6px;
-                     font-size:11px;
-                     cursor:pointer;
-                     background:${isCanceled ? 'rgba(255,59,48,0.1)' : isPaid ? 'rgba(52,199,89,0.1)' : 'rgba(255,149,0,0.1)'};
-                     border-left:3px solid ${isCanceled ? '#ff3b30' : isPaid ? '#34c759' : '#ff9500'};
-                     margin-bottom:4px;
-                     transition:all 0.2s;
-                   ">
-                <div style="font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${artistName}</div>
-                ${timeFrom ? `<div style="font-size:10px; color:#86868b;">${timeFrom}</div>` : ''}
-              </div>
-            `;
-          }).join('');
+        return {
+          slot,
+          startCol: startDay,
+          endCol: endDay + 1, // CSS grid end is exclusive
+          span: endDay - startDay + 1
+        };
+      });
+
+      // Assign rows to avoid overlaps (simple greedy algorithm)
+      const rows = [];
+      slotBars.forEach(bar => {
+        let placed = false;
+        for (let r = 0; r < rows.length; r++) {
+          const canPlace = rows[r].every(existing =>
+            bar.endCol <= existing.startCol || bar.startCol >= existing.endCol
+          );
+          if (canPlace) {
+            rows[r].push(bar);
+            bar.row = r;
+            placed = true;
+            break;
+          }
         }
+        if (!placed) {
+          bar.row = rows.length;
+          rows.push([bar]);
+        }
+      });
 
-        contentCells += `
-          <div style="
-            min-width:80px;
-            padding:8px 4px;
-            display:flex;
-            flex-direction:column;
-            background:${isToday ? 'rgba(0,122,255,0.05)' : isWeekend ? 'rgba(0,0,0,0.02)' : 'transparent'};
-            border-left:1px solid var(--border-color);
-            box-sizing:border-box;
-            ${isPast && !isToday ? 'opacity:0.6;' : ''}
-          " data-date="${dateStr}">
-            ${slotCards}
+      const numRows = Math.max(rows.length, 3); // Minimum 3 rows height
+      const rowHeight = 70; // Double height for cards
+
+      // Build slot bars HTML
+      let slotBarsHtml = slotBars.map(bar => {
+        const s = bar.slot;
+        const artistName = s.artist_name || 'Artist';
+        const artistInitials = artistName.split(' ').map(n => n.charAt(0).toUpperCase()).slice(0, 2).join('');
+        const isPaid = s.is_paid === true;
+        const isCanceled = s.entry_status === 'canceled' || s.status === 'canceled';
+        const hasProfilePic = s.profile_picture_url && s.profile_picture_url.trim() !== '';
+        const pastelBg = getPastelColor(artistName);
+        const cacheKey = cacheGuestSpotSlot(s);
+
+        // Date range text
+        const fromDate = new Date(s.date_from);
+        const toDate = new Date(s.date_to);
+        const dateRange = `${fromDate.getDate()}.${fromDate.getMonth() + 1} - ${toDate.getDate()}.${toDate.getMonth() + 1}`;
+        const dayCount = bar.span;
+
+        // Status colors
+        const statusColor = isCanceled ? '#ff3b30' : isPaid ? '#34c759' : '#ff9500';
+        const statusBg = isCanceled ? 'rgba(255,59,48,0.08)' : isPaid ? 'rgba(52,199,89,0.08)' : 'rgba(255,149,0,0.08)';
+
+        return `
+          <div onclick="event.stopPropagation(); openGuestSpotDetailFromCache('${cacheKey}')"
+               title="${artistName} - ${dateRange} (${dayCount} Tag${dayCount > 1 ? 'e' : ''})${isPaid ? ' ✓ Bezahlt' : ' ✗ Unbezahlt'}${isCanceled ? ' (Storniert)' : ''}"
+               style="
+                 grid-column: ${bar.startCol} / ${bar.endCol};
+                 grid-row: ${bar.row + 1};
+                 margin: 4px 2px;
+                 padding: 10px 12px;
+                 border-radius: 10px;
+                 cursor: pointer;
+                 background: ${statusBg};
+                 border-left: 4px solid ${statusColor};
+                 display: flex;
+                 align-items: center;
+                 gap: 10px;
+                 transition: all 0.2s;
+                 overflow: hidden;
+                 min-height: 54px;
+               "
+               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
+               onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+            <!-- Avatar -->
+            <div style="
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 600;
+              font-size: 14px;
+              color: #1d1d1f;
+              background: ${hasProfilePic ? 'transparent' : pastelBg};
+              overflow: hidden;
+            ">
+              ${hasProfilePic
+                ? `<img src="${s.profile_picture_url}" alt="${artistName}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='${artistInitials}'; this.parentElement.style.background='${pastelBg}';">`
+                : artistInitials
+              }
+            </div>
+            <!-- Info -->
+            <div style="flex:1; min-width:0; overflow:hidden;">
+              <div style="font-weight:600; font-size:13px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${artistName}</div>
+              <div style="font-size:11px; color:#86868b; margin-top:2px;">${dateRange} · ${dayCount} Tag${dayCount > 1 ? 'e' : ''}</div>
+            </div>
+            <!-- Status indicator -->
+            <div style="
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              background: ${statusColor};
+              flex-shrink: 0;
+            "></div>
           </div>
+        `;
+      }).join('');
+
+      // Build day column backgrounds
+      let dayBackgrounds = '';
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateObj = new Date(year, month, day);
+        const dayOfWeek = dateObj.getDay();
+        const isToday = dateStr === today;
+        const isPast = dateStr < today;
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+        dayBackgrounds += `
+          <div style="
+            grid-column: ${day};
+            grid-row: 1 / ${numRows + 1};
+            background: ${isToday ? 'rgba(0,122,255,0.05)' : isWeekend ? 'rgba(0,0,0,0.02)' : 'transparent'};
+            border-left: 1px solid var(--border-color);
+            ${isPast && !isToday ? 'opacity:0.5;' : ''}
+          "></div>
         `;
       }
 
-      // Render container with header and content in single grid
+      // Empty state
+      if (monthSlots.length === 0) {
+        container.innerHTML = `
+          <div style="
+            background:var(--macos-elevated);
+            border-radius:12px;
+            border:1px solid var(--border-color);
+            overflow:hidden;
+          ">
+            <div style="overflow-x:auto;">
+              <div style="display:grid; grid-template-columns:repeat(${daysInMonth}, minmax(60px, 1fr)); min-width:${daysInMonth * 60}px;">
+                ${headerCells}
+              </div>
+              <div style="
+                min-height:200px;
+                border-top:1px solid var(--border-color);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#86868b;
+                font-size:14px;
+              ">
+                Keine Guest Spots in diesem Monat
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Render container with Gantt-chart grid
       container.innerHTML = `
         <div style="
           background:var(--macos-elevated);
@@ -60651,18 +60774,19 @@
           overflow:hidden;
         ">
           <div style="overflow-x:auto;">
-            <div style="display:grid; grid-template-columns:repeat(${daysInMonth}, minmax(80px, 1fr)); min-width:${daysInMonth * 80}px;">
+            <div style="display:grid; grid-template-columns:repeat(${daysInMonth}, minmax(60px, 1fr)); min-width:${daysInMonth * 60}px;">
               ${headerCells}
             </div>
             <div style="
               display:grid;
-              grid-template-columns:repeat(${daysInMonth}, minmax(80px, 1fr));
-              min-width:${daysInMonth * 80}px;
-              min-height:400px;
+              grid-template-columns:repeat(${daysInMonth}, minmax(60px, 1fr));
+              grid-template-rows:repeat(${numRows}, ${rowHeight}px);
+              min-width:${daysInMonth * 60}px;
               border-top:1px solid var(--border-color);
-              align-items:stretch;
+              position:relative;
             ">
-              ${contentCells}
+              ${dayBackgrounds}
+              ${slotBarsHtml}
             </div>
           </div>
         </div>
@@ -60670,8 +60794,8 @@
     }
 
     // ============================================
-    // GUEST SPOT YEAR VIEW - Dienstplan Style
-    // Shows horizontal months header with slots grouped by month
+    // GUEST SPOT YEAR VIEW - Gantt-chart Style
+    // Shows continuous bars spanning multiple months
     // ============================================
     function renderGuestspotYearView() {
       const container = document.getElementById('guestspotYearViewContainer');
@@ -60683,11 +60807,25 @@
         yearLabel.textContent = guestspotViewYear.toString();
       }
 
-      // Filter slots for the current year
+      // Pastel colors for avatar fallback
+      const pastelColors = [
+        '#FFB5BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#D4A5A5', '#A5D4D4', '#D4D4A5', '#C9BFFF',
+        '#FFD1DC', '#AEC6CF', '#B2E2F0', '#F0E6B2', '#E2B2F0', '#B2F0D4', '#F0B2B2', '#B2C8F0', '#F0E2B2', '#D4B2F0'
+      ];
+      const getPastelColor = (name) => {
+        const idx = (name || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % pastelColors.length;
+        return pastelColors[idx];
+      };
+
+      const yearStart = new Date(guestspotViewYear, 0, 1);
+      const yearEnd = new Date(guestspotViewYear, 11, 31);
+
+      // Filter slots that overlap with this year
       const yearSlots = guestspotCachedSlots.filter(slot => {
-        if (!slot.date_from) return false;
-        const date = new Date(slot.date_from);
-        return date.getFullYear() === guestspotViewYear;
+        if (!slot.date_from || !slot.date_to) return false;
+        const from = new Date(slot.date_from);
+        const to = new Date(slot.date_to);
+        return from <= yearEnd && to >= yearStart;
       });
 
       // Month names
@@ -60702,91 +60840,152 @@
         headerCells += `
           <div style="
             text-align:center;
-            padding:12px 8px;
+            padding:14px 8px;
             background:${isCurrentMonth ? '#007aff' : 'transparent'};
             border-radius:${isCurrentMonth ? '8px 8px 0 0' : '0'};
             min-width:100px;
             box-sizing:border-box;
+            border-left:1px solid var(--border-color);
           ">
-            <div style="font-size:13px; font-weight:600; color:${isCurrentMonth ? '#fff' : 'var(--ink)'};">${monthNames[month]}</div>
+            <div style="font-size:14px; font-weight:600; color:${isCurrentMonth ? '#fff' : 'var(--ink)'};">${monthNames[month]}</div>
           </div>
         `;
       }
 
-      // Group slots by month
-      const slotsByMonth = {};
-      for (let m = 0; m < 12; m++) {
-        slotsByMonth[m] = [];
-      }
+      // Calculate grid positions for each slot (Gantt-chart style)
+      const slotBars = yearSlots.map(slot => {
+        const from = new Date(slot.date_from);
+        const to = new Date(slot.date_to);
 
-      yearSlots.forEach(slot => {
-        if (slot.date_from && slot.date_to) {
-          const from = new Date(slot.date_from);
-          const to = new Date(slot.date_to);
-          // Add slot to each month it spans
-          for (let m = from.getMonth(); m <= to.getMonth() || (to.getFullYear() > from.getFullYear() && m < 12); m++) {
-            if (m >= 0 && m < 12) {
-              slotsByMonth[m].push(slot);
-            }
+        // Clamp to year boundaries
+        const startMonth = from < yearStart ? 0 : from.getMonth();
+        const endMonth = to > yearEnd ? 11 : to.getMonth();
+
+        return {
+          slot,
+          startCol: startMonth + 1, // CSS grid is 1-based
+          endCol: endMonth + 2, // CSS grid end is exclusive
+          span: endMonth - startMonth + 1
+        };
+      });
+
+      // Assign rows to avoid overlaps (simple greedy algorithm)
+      const rows = [];
+      slotBars.forEach(bar => {
+        let placed = false;
+        for (let r = 0; r < rows.length; r++) {
+          const canPlace = rows[r].every(existing =>
+            bar.endCol <= existing.startCol || bar.startCol >= existing.endCol
+          );
+          if (canPlace) {
+            rows[r].push(bar);
+            bar.row = r;
+            placed = true;
+            break;
           }
+        }
+        if (!placed) {
+          bar.row = rows.length;
+          rows.push([bar]);
         }
       });
 
-      // Build content cells
-      let contentCells = '';
+      const numRows = Math.max(rows.length, 3); // Minimum 3 rows height
+      const rowHeight = 70; // Double height for cards
+
+      // Build slot bars HTML
+      let slotBarsHtml = slotBars.map(bar => {
+        const s = bar.slot;
+        const artistName = s.artist_name || 'Artist';
+        const artistInitials = artistName.split(' ').map(n => n.charAt(0).toUpperCase()).slice(0, 2).join('');
+        const isPaid = s.is_paid === true;
+        const isCanceled = s.entry_status === 'canceled' || s.status === 'canceled';
+        const hasProfilePic = s.profile_picture_url && s.profile_picture_url.trim() !== '';
+        const pastelBg = getPastelColor(artistName);
+        const cacheKey = cacheGuestSpotSlot(s);
+
+        // Date range text
+        const fromDate = new Date(s.date_from);
+        const toDate = new Date(s.date_to);
+        const dateRange = `${fromDate.getDate()}.${fromDate.getMonth() + 1} - ${toDate.getDate()}.${toDate.getMonth() + 1}`;
+        const monthCount = bar.span;
+
+        // Status colors
+        const statusColor = isCanceled ? '#ff3b30' : isPaid ? '#34c759' : '#ff9500';
+        const statusBg = isCanceled ? 'rgba(255,59,48,0.08)' : isPaid ? 'rgba(52,199,89,0.08)' : 'rgba(255,149,0,0.08)';
+
+        return `
+          <div onclick="event.stopPropagation(); openGuestSpotDetailFromCache('${cacheKey}')"
+               title="${artistName} - ${dateRange} (${monthCount} Monat${monthCount > 1 ? 'e' : ''})${isPaid ? ' ✓ Bezahlt' : ' ✗ Unbezahlt'}${isCanceled ? ' (Storniert)' : ''}"
+               style="
+                 grid-column: ${bar.startCol} / ${bar.endCol};
+                 grid-row: ${bar.row + 1};
+                 margin: 4px 4px;
+                 padding: 10px 14px;
+                 border-radius: 10px;
+                 cursor: pointer;
+                 background: ${statusBg};
+                 border-left: 4px solid ${statusColor};
+                 display: flex;
+                 align-items: center;
+                 gap: 12px;
+                 transition: all 0.2s;
+                 overflow: hidden;
+                 min-height: 54px;
+               "
+               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
+               onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+            <!-- Avatar -->
+            <div style="
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 600;
+              font-size: 14px;
+              color: #1d1d1f;
+              background: ${hasProfilePic ? 'transparent' : pastelBg};
+              overflow: hidden;
+            ">
+              ${hasProfilePic
+                ? `<img src="${s.profile_picture_url}" alt="${artistName}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='${artistInitials}'; this.parentElement.style.background='${pastelBg}';">`
+                : artistInitials
+              }
+            </div>
+            <!-- Info -->
+            <div style="flex:1; min-width:0; overflow:hidden;">
+              <div style="font-weight:600; font-size:13px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${artistName}</div>
+              <div style="font-size:11px; color:#86868b; margin-top:2px;">${dateRange}</div>
+            </div>
+            <!-- Status indicator -->
+            <div style="
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              background: ${statusColor};
+              flex-shrink: 0;
+            "></div>
+          </div>
+        `;
+      }).join('');
+
+      // Build month column backgrounds
+      let monthBackgrounds = '';
       for (let month = 0; month < 12; month++) {
         const isCurrentMonth = month === currentMonth && guestspotViewYear === currentYear;
         const isPastMonth = guestspotViewYear < currentYear || (guestspotViewYear === currentYear && month < currentMonth);
-        const slots = slotsByMonth[month] || [];
 
-        let slotCards = '';
-        if (slots.length > 0) {
-          // Remove duplicates (same slot might be added multiple times)
-          const uniqueSlots = [...new Map(slots.map(s => [s.id, s])).values()];
-
-          slotCards = uniqueSlots.map(s => {
-            const artistName = (s.artist_name || 'Artist').substring(0, 12);
-            const isPaid = s.is_paid === true;
-            const isCanceled = s.entry_status === 'canceled' || s.status === 'canceled';
-            const dateFrom = new Date(s.date_from);
-            const dateTo = new Date(s.date_to);
-            const dateRange = `${dateFrom.getDate()}.${dateFrom.getMonth() + 1} - ${dateTo.getDate()}.${dateTo.getMonth() + 1}`;
-
-            const cacheKey = cacheGuestSpotSlot(s);
-
-            return `
-              <div onclick="event.stopPropagation(); openGuestSpotDetailFromCache('${cacheKey}')"
-                   title="${s.artist_name || 'Artist'} - ${dateRange}${isPaid ? ' (Bezahlt)' : ' (Unbezahlt)'}${isCanceled ? ' (Storniert)' : ''}"
-                   style="
-                     padding:8px 10px;
-                     border-radius:8px;
-                     font-size:12px;
-                     cursor:pointer;
-                     background:${isCanceled ? 'rgba(255,59,48,0.1)' : isPaid ? 'rgba(52,199,89,0.1)' : 'rgba(255,149,0,0.1)'};
-                     border-left:3px solid ${isCanceled ? '#ff3b30' : isPaid ? '#34c759' : '#ff9500'};
-                     margin-bottom:6px;
-                     transition:all 0.2s;
-                   ">
-                <div style="font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${artistName}</div>
-                <div style="font-size:10px; color:#86868b; margin-top:2px;">${dateRange}</div>
-              </div>
-            `;
-          }).join('');
-        }
-
-        contentCells += `
+        monthBackgrounds += `
           <div style="
-            min-width:100px;
-            padding:12px 8px;
-            display:flex;
-            flex-direction:column;
-            background:${isCurrentMonth ? 'rgba(0,122,255,0.05)' : 'transparent'};
-            border-left:1px solid var(--border-color);
-            box-sizing:border-box;
-            ${isPastMonth ? 'opacity:0.6;' : ''}
-          " data-month="${month}">
-            ${slotCards || '<div style="text-align:center; color:#c7c7cc; font-size:11px; padding:20px 0;">-</div>'}
-          </div>
+            grid-column: ${month + 1};
+            grid-row: 1 / ${numRows + 1};
+            background: ${isCurrentMonth ? 'rgba(0,122,255,0.05)' : 'transparent'};
+            border-left: 1px solid var(--border-color);
+            ${isPastMonth ? 'opacity:0.5;' : ''}
+          "></div>
         `;
       }
 
@@ -60797,22 +60996,30 @@
             background:var(--macos-elevated);
             border-radius:12px;
             border:1px solid var(--border-color);
-            padding:60px 20px;
-            text-align:center;
+            overflow:hidden;
           ">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:16px; opacity:0.3;">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <p style="color:#86868b; margin:0;">Keine Guest Spots in ${guestspotViewYear}</p>
+            <div style="overflow-x:auto;">
+              <div style="display:grid; grid-template-columns:repeat(12, minmax(100px, 1fr)); min-width:1200px;">
+                ${headerCells}
+              </div>
+              <div style="
+                min-height:200px;
+                border-top:1px solid var(--border-color);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#86868b;
+                font-size:14px;
+              ">
+                Keine Guest Spots in ${guestspotViewYear}
+              </div>
+            </div>
           </div>
         `;
         return;
       }
 
-      // Render container with header and content in single grid
+      // Render container with Gantt-chart grid
       container.innerHTML = `
         <div style="
           background:var(--macos-elevated);
@@ -60827,12 +61034,13 @@
             <div style="
               display:grid;
               grid-template-columns:repeat(12, minmax(100px, 1fr));
+              grid-template-rows:repeat(${numRows}, ${rowHeight}px);
               min-width:1200px;
-              min-height:400px;
               border-top:1px solid var(--border-color);
-              align-items:stretch;
+              position:relative;
             ">
-              ${contentCells}
+              ${monthBackgrounds}
+              ${slotBarsHtml}
             </div>
           </div>
         </div>
