@@ -51654,10 +51654,10 @@
               connGradient.addColorStop(0.4, '#60a5fa');
               connGradient.addColorStop(1, '#93c5fd');
             } else {
-              // Hover state - faded lighter gradient
-              connGradient.addColorStop(0, '#bfdbfe');
-              connGradient.addColorStop(0.5, '#dbeafe');
-              connGradient.addColorStop(1, '#eff6ff');
+              // Hover state - brighter/lighter gradient (no stripes)
+              connGradient.addColorStop(0, '#dbeafe');
+              connGradient.addColorStop(0.5, '#eff6ff');
+              connGradient.addColorStop(1, '#f8fafc');
             }
 
             ctx.save();
@@ -51669,26 +51669,6 @@
             ctx.lineTo(rightEdge1, base1);
             ctx.closePath();
             ctx.fill();
-
-            // Add stripes to connector if hovering (with fade)
-            if (activeIndex !== -1) {
-              ctx.clip();
-              const stripeGap = 8;
-              const connHeight = base1 - Math.min(y1, y2);
-              const connWidth = leftEdge2 - rightEdge1;
-              ctx.lineWidth = 2;
-              for (let s = -connHeight; s < connWidth + connHeight; s += stripeGap) {
-                const stripeGradient = ctx.createLinearGradient(rightEdge1, base1, rightEdge1, Math.min(y1, y2));
-                stripeGradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
-                stripeGradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.25)');
-                stripeGradient.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
-                ctx.strokeStyle = stripeGradient;
-                ctx.beginPath();
-                ctx.moveTo(rightEdge1 + s, base1);
-                ctx.lineTo(rightEdge1 + s + connHeight, Math.min(y1, y2));
-                ctx.stroke();
-              }
-            }
 
             // White stroke outline on hover
             if (activeIndex !== -1) {
@@ -51790,7 +51770,7 @@
             ctx.save();
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            ctx.font = '400 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.font = '400 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
             // Grey normally, black when hovered
             ctx.fillStyle = activeIndex === index ? '#0a0a0a' : '#9ca3af';
@@ -51824,6 +51804,11 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: {
+              top: 40 // Space for labels above pillars
+            }
+          },
           onHover: (event, elements) => {
             hoveredIndex = elements.length > 0 ? elements[0].index : -1;
           },
