@@ -49588,15 +49588,33 @@
           datasets: [{
             data: data.map(d => d.value),
             backgroundColor: data.map(d => d.color),
-            borderWidth: 0
+            borderWidth: 2,
+            borderColor: 'rgba(255,255,255,0.8)',
+            hoverOffset: 8,
+            hoverBorderWidth: 0
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '65%',
+          cutout: '68%',
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8
+            }
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 1000,
+            easing: 'easeOutQuart'
           }
         }
       });
@@ -49627,25 +49645,173 @@
         analyticsCharts[canvasId].destroy();
       }
 
+      const ctx = canvas.getContext('2d');
       const colors = getAnalyticsChartColors();
 
-      analyticsCharts[canvasId] = new Chart(canvas, {
+      // Create diagonal stripe pattern with gradient
+      function createStripedGradient(lightColor, darkColor) {
+        // Create pattern canvas for diagonal stripes
+        const patternCanvas = document.createElement('canvas');
+        const patternCtx = patternCanvas.getContext('2d');
+        const size = 8;
+        patternCanvas.width = size;
+        patternCanvas.height = size;
+
+        // Draw diagonal stripe
+        patternCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        patternCtx.lineWidth = 2;
+        patternCtx.beginPath();
+        patternCtx.moveTo(0, size);
+        patternCtx.lineTo(size, 0);
+        patternCtx.stroke();
+
+        const pattern = ctx.createPattern(patternCanvas, 'repeat');
+
+        // Create gradient for base
+        const gradient = ctx.createLinearGradient(0, 400, 0, 0);
+        gradient.addColorStop(0, darkColor);
+        gradient.addColorStop(0.5, lightColor);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.7)');
+
+        return { gradient, pattern };
+      }
+
+      // Helper to parse color and create gradient shades
+      function createColorGradient(ctx, color, x, y, base, isVertical = true) {
+        // Parse the color to get RGB values
+        let r, g, b;
+        if (color.startsWith('#')) {
+          const hex = color.slice(1);
+          r = parseInt(hex.substr(0, 2), 16);
+          g = parseInt(hex.substr(2, 2), 16);
+          b = parseInt(hex.substr(4, 2), 16);
+        } else if (color.startsWith('rgb')) {
+          const match = color.match(/(\d+),\s*(\d+),\s*(\d+)/);
+          if (match) {
+            r = parseInt(match[1]); g = parseInt(match[2]); b = parseInt(match[3]);
+          } else {
+            r = 59; g = 130; b = 246; // fallback blue
+          }
+        } else {
+          r = 59; g = 130; b = 246; // fallback blue
+        }
+
+        const gradient = isVertical
+          ? ctx.createLinearGradient(x, base, x, y)
+          : ctx.createLinearGradient(x, 0, base, 0);
+
+        // Create gradient from dark (bottom) to light (top)
+        gradient.addColorStop(0, `rgb(${Math.max(0, r-60)}, ${Math.max(0, g-60)}, ${Math.max(0, b-60)})`);
+        gradient.addColorStop(0.4, `rgb(${r}, ${g}, ${b})`);
+        gradient.addColorStop(0.8, `rgb(${Math.min(255, r+60)}, ${Math.min(255, g+60)}, ${Math.min(255, b+60)})`);
+        gradient.addColorStop(1, `rgb(${Math.min(255, r+100)}, ${Math.min(255, g+100)}, ${Math.min(255, b+100)})`);
+
+        return gradient;
+      }
+
+      // Store original colors before making transparent
+      const originalColors = datasets.map(ds => {
+        const bg = ds.backgroundColor;
+        return Array.isArray(bg) ? bg : [bg];
+      });
+
+      // Custom plugin to draw striped bars
+      const stripedBarPlugin = {
+        id: 'stripedBar',
+        beforeDatasetsDraw: (chart) => {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            const colors = originalColors[datasetIndex] || ['#3b82f6'];
+
+            meta.data.forEach((bar, index) => {
+              const { x, y, width, height, base } = bar.getProps(['x', 'y', 'width', 'height', 'base']);
+              const barHeight = base - y;
+
+              if (barHeight <= 0) return;
+
+              ctx.save();
+
+              // Get color for this bar (cycle if fewer colors than bars)
+              const barColor = colors[index % colors.length] || '#3b82f6';
+              const gradient = createColorGradient(ctx, barColor, x, y, base, true);
+
+              // Draw rounded rect with gradient
+              const radius = 4;
+              ctx.beginPath();
+              ctx.moveTo(x - width/2 + radius, y);
+              ctx.lineTo(x + width/2 - radius, y);
+              ctx.quadraticCurveTo(x + width/2, y, x + width/2, y + radius);
+              ctx.lineTo(x + width/2, base);
+              ctx.lineTo(x - width/2, base);
+              ctx.lineTo(x - width/2, y + radius);
+              ctx.quadraticCurveTo(x - width/2, y, x - width/2 + radius, y);
+              ctx.closePath();
+
+              ctx.fillStyle = gradient;
+              ctx.fill();
+
+              // Draw diagonal stripes
+              ctx.clip();
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+              ctx.lineWidth = 2;
+              const stripeGap = 6;
+              for (let i = -barHeight; i < width + barHeight; i += stripeGap) {
+                ctx.beginPath();
+                ctx.moveTo(x - width/2 + i, base);
+                ctx.lineTo(x - width/2 + i + barHeight, y);
+                ctx.stroke();
+              }
+
+              ctx.restore();
+            });
+          });
+        }
+      };
+
+      // Hide default bars since we draw custom ones
+      const enhancedDatasets = datasets.map(ds => ({
+        ...ds,
+        backgroundColor: 'transparent',
+        borderRadius: 6,
+        borderSkipped: false
+      }));
+
+      analyticsCharts[canvasId] = new Chart(ctx, {
         type: 'bar',
-        data: { labels, datasets },
+        data: { labels, datasets: enhancedDatasets },
+        plugins: [stripedBarPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: datasets.length > 1 }
+            legend: { display: datasets.length > 1 },
+            tooltip: {
+              backgroundColor: 'rgba(255,255,255,0.98)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.08)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8,
+              boxPadding: 6
+            }
           },
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: colors.grid }
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8 }
             },
             x: {
-              grid: { display: false }
+              grid: { display: false },
+              ticks: { padding: 8, font: { weight: 500 } }
             }
+          },
+          animation: {
+            duration: 1000,
+            easing: 'easeOutQuart',
+            delay: (context) => context.dataIndex * 50
           }
         }
       });
@@ -49659,25 +49825,71 @@
         analyticsCharts[canvasId].destroy();
       }
 
+      const ctx = canvas.getContext('2d');
       const colors = getAnalyticsChartColors();
 
-      analyticsCharts[canvasId] = new Chart(canvas, {
+      // Helper to convert hex to rgba
+      function hexToRgba(hex, alpha) {
+        if (!hex) return `rgba(59, 130, 246, ${alpha})`;
+        if (hex.startsWith('rgb')) return hex.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!result) return `rgba(59, 130, 246, ${alpha})`;
+        return `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`;
+      }
+
+      // Create gradient fills
+      const enhancedDatasets = datasets.map(ds => {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+        const baseColor = ds.borderColor || '#3b82f6';
+        gradient.addColorStop(0, hexToRgba(baseColor, 0.3));
+        gradient.addColorStop(0.5, hexToRgba(baseColor, 0.1));
+        gradient.addColorStop(1, hexToRgba(baseColor, 0));
+
+        return {
+          ...ds,
+          borderWidth: 2.5,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderWidth: 2,
+          fill: { target: 'origin', above: gradient }
+        };
+      });
+
+      analyticsCharts[canvasId] = new Chart(ctx, {
         type: 'line',
-        data: { labels, datasets },
+        data: { labels, datasets: enhancedDatasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
           plugins: {
-            legend: { display: datasets.length > 1 }
+            legend: { display: datasets.length > 1 },
+            tooltip: {
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8
+            }
           },
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: colors.grid }
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8 }
             },
             x: {
-              grid: { display: false }
+              grid: { display: false },
+              ticks: { padding: 8 }
             }
+          },
+          animation: {
+            duration: 1200,
+            easing: 'easeOutQuart'
           }
         }
       });
@@ -51382,7 +51594,7 @@
       return chart;
     }
 
-    // Create Bar Chart - Modern styling with gradients
+    // Create Bar Chart - Modern styling with diagonal stripes (Stripe-style)
     function createAnalyticsBarChart(canvasId, labels, datasets, horizontal = false) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
@@ -51397,34 +51609,136 @@
         analyticsCharts[canvasId].destroy();
       }
 
-      // Create gradient backgrounds for modern look
-      function createGradient(color1, color2) {
-        const gradient = horizontal
-          ? ctx.createLinearGradient(0, 0, 400, 0)
-          : ctx.createLinearGradient(0, 400, 0, 0);
-        gradient.addColorStop(0, color1);
-        gradient.addColorStop(1, color2);
-        return gradient;
+      // Helper to parse color and create gradient shades
+      function parseColor(color) {
+        let r, g, b;
+        if (color && color.startsWith('#')) {
+          const hex = color.slice(1);
+          r = parseInt(hex.substr(0, 2), 16);
+          g = parseInt(hex.substr(2, 2), 16);
+          b = parseInt(hex.substr(4, 2), 16);
+        } else if (color && color.startsWith('rgb')) {
+          const match = color.match(/(\d+),\s*(\d+),\s*(\d+)/);
+          if (match) {
+            r = parseInt(match[1]); g = parseInt(match[2]); b = parseInt(match[3]);
+          } else {
+            r = 59; g = 130; b = 246;
+          }
+        } else {
+          r = 59; g = 130; b = 246;
+        }
+        return { r, g, b };
       }
 
-      const gradientMap = {
-        '#0070f3': createGradient('#93c5fd', '#3b82f6'),
-        '#3b82f6': createGradient('#93c5fd', '#3b82f6'),
-        '#10b981': createGradient('#6ee7b7', '#10b981'),
-        '#8b5cf6': createGradient('#c4b5fd', '#8b5cf6'),
-        '#06b6d4': createGradient('#67e8f9', '#06b6d4'),
-        '#f59e0b': createGradient('#fcd34d', '#f59e0b'),
-        '#ec4899': createGradient('#f9a8d4', '#ec4899')
+      // Store original colors before making transparent
+      const originalColors = datasets.map(ds => {
+        const bg = ds.backgroundColor;
+        return Array.isArray(bg) ? bg : [bg];
+      });
+
+      // Custom plugin to draw striped bars with gradient
+      const stripedBarPlugin = {
+        id: 'stripedBar',
+        beforeDatasetsDraw: (chart) => {
+          const { ctx } = chart;
+          const isHorizontal = chart.options.indexAxis === 'y';
+
+          chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            const dsColors = originalColors[datasetIndex] || ['#3b82f6'];
+
+            meta.data.forEach((bar, index) => {
+              const { x, y, width, height, base } = bar.getProps(['x', 'y', 'width', 'height', 'base']);
+
+              ctx.save();
+
+              let gradient, barWidth, barHeight, startX, startY;
+              const barColor = dsColors[index % dsColors.length] || '#3b82f6';
+              const { r, g, b } = parseColor(barColor);
+
+              if (isHorizontal) {
+                barWidth = x - base;
+                barHeight = height;
+                startX = base;
+                startY = y - height/2;
+                if (barWidth <= 0) { ctx.restore(); return; }
+                gradient = ctx.createLinearGradient(startX, 0, startX + barWidth, 0);
+                // Gradient: light to dark for horizontal
+                gradient.addColorStop(0, `rgb(${Math.min(255, r+100)}, ${Math.min(255, g+100)}, ${Math.min(255, b+100)})`);
+                gradient.addColorStop(0.3, `rgb(${Math.min(255, r+60)}, ${Math.min(255, g+60)}, ${Math.min(255, b+60)})`);
+                gradient.addColorStop(0.7, `rgb(${r}, ${g}, ${b})`);
+                gradient.addColorStop(1, `rgb(${Math.max(0, r-60)}, ${Math.max(0, g-60)}, ${Math.max(0, b-60)})`);
+              } else {
+                barWidth = width;
+                barHeight = base - y;
+                startX = x - width/2;
+                startY = y;
+                if (barHeight <= 0) { ctx.restore(); return; }
+                gradient = ctx.createLinearGradient(0, base, 0, y);
+                // Gradient: dark at bottom, light at top
+                gradient.addColorStop(0, `rgb(${Math.max(0, r-60)}, ${Math.max(0, g-60)}, ${Math.max(0, b-60)})`);
+                gradient.addColorStop(0.4, `rgb(${r}, ${g}, ${b})`);
+                gradient.addColorStop(0.8, `rgb(${Math.min(255, r+60)}, ${Math.min(255, g+60)}, ${Math.min(255, b+60)})`);
+                gradient.addColorStop(1, `rgb(${Math.min(255, r+100)}, ${Math.min(255, g+100)}, ${Math.min(255, b+100)})`);
+              }
+
+              // Draw rounded rect
+              const radius = 4;
+              ctx.beginPath();
+              if (isHorizontal) {
+                ctx.moveTo(startX, startY + radius);
+                ctx.lineTo(startX, startY + barHeight - radius);
+                ctx.quadraticCurveTo(startX, startY + barHeight, startX + radius, startY + barHeight);
+                ctx.lineTo(startX + barWidth - radius, startY + barHeight);
+                ctx.quadraticCurveTo(startX + barWidth, startY + barHeight, startX + barWidth, startY + barHeight - radius);
+                ctx.lineTo(startX + barWidth, startY + radius);
+                ctx.quadraticCurveTo(startX + barWidth, startY, startX + barWidth - radius, startY);
+                ctx.lineTo(startX + radius, startY);
+                ctx.quadraticCurveTo(startX, startY, startX, startY + radius);
+              } else {
+                ctx.moveTo(startX + radius, startY);
+                ctx.lineTo(startX + barWidth - radius, startY);
+                ctx.quadraticCurveTo(startX + barWidth, startY, startX + barWidth, startY + radius);
+                ctx.lineTo(startX + barWidth, startY + barHeight);
+                ctx.lineTo(startX, startY + barHeight);
+                ctx.lineTo(startX, startY + radius);
+                ctx.quadraticCurveTo(startX, startY, startX + radius, startY);
+              }
+              ctx.closePath();
+
+              ctx.fillStyle = gradient;
+              ctx.fill();
+
+              // Draw diagonal stripes
+              ctx.clip();
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+              ctx.lineWidth = 2;
+              const stripeGap = 6;
+              const maxDim = Math.max(barWidth, barHeight) * 2;
+              for (let i = -maxDim; i < maxDim; i += stripeGap) {
+                ctx.beginPath();
+                if (isHorizontal) {
+                  ctx.moveTo(startX + i, startY + barHeight);
+                  ctx.lineTo(startX + i + barHeight, startY);
+                } else {
+                  ctx.moveTo(startX + i, startY + barHeight);
+                  ctx.lineTo(startX + i + barHeight, startY);
+                }
+                ctx.stroke();
+              }
+
+              ctx.restore();
+            });
+          });
+        }
       };
 
+      // Hide default bars since we draw custom ones
       const enhancedDatasets = datasets.map(ds => ({
         ...ds,
-        backgroundColor: typeof ds.backgroundColor === 'string'
-          ? (gradientMap[ds.backgroundColor] || ds.backgroundColor)
-          : ds.backgroundColor,
+        backgroundColor: 'transparent',
         borderRadius: 6,
-        borderSkipped: false,
-        hoverBackgroundColor: ds.backgroundColor
+        borderSkipped: false
       }));
 
       const chart = new Chart(ctx, {
@@ -51433,6 +51747,7 @@
           labels: labels,
           datasets: enhancedDatasets
         },
+        plugins: [stripedBarPlugin],
         options: {
           indexAxis: horizontal ? 'y' : 'x',
           responsive: true,
@@ -51440,10 +51755,10 @@
           plugins: {
             legend: { display: datasets.length > 1, position: 'top' },
             tooltip: {
-              backgroundColor: 'rgba(255,255,255,0.95)',
+              backgroundColor: 'rgba(255,255,255,0.98)',
               titleColor: '#0a0a0a',
               bodyColor: '#404040',
-              borderColor: 'rgba(0,0,0,0.1)',
+              borderColor: 'rgba(0,0,0,0.08)',
               borderWidth: 1,
               padding: 12,
               cornerRadius: 8,
@@ -52756,12 +53071,12 @@
       }
 
       // Bar Chart
-      createAnalyticsBarChart('teamRevenuePie', labels, chartData, chartLabel);
+      createTeamBarChart('teamRevenuePie', labels, chartData, chartLabel);
     }
     window.renderTeamCharts = renderTeamCharts;
 
-    // Bar Chart Helper für Team Performance
-    function createAnalyticsBarChart(canvasId, labels, data, label) {
+    // Bar Chart Helper für Team Performance (separate function to avoid overwriting main createAnalyticsBarChart)
+    function createTeamBarChart(canvasId, labels, data, label) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return null;
 
@@ -52773,6 +53088,66 @@
         window.analyticsCharts[canvasId].destroy();
       }
 
+      // Custom plugin to draw striped horizontal bars
+      const stripedBarPlugin = {
+        id: 'stripedBarHorizontal',
+        beforeDatasetsDraw: (chart) => {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            meta.data.forEach((bar) => {
+              const { x, y, width, height, base } = bar.getProps(['x', 'y', 'width', 'height', 'base']);
+              const barWidth = x - base;
+              const barHeight = height;
+              const startX = base;
+              const startY = y - height/2;
+
+              if (barWidth <= 0) return;
+
+              ctx.save();
+
+              // Create horizontal gradient
+              const gradient = ctx.createLinearGradient(startX, 0, startX + barWidth, 0);
+              gradient.addColorStop(0, '#dbeafe');
+              gradient.addColorStop(0.3, '#93c5fd');
+              gradient.addColorStop(0.7, '#3b82f6');
+              gradient.addColorStop(1, '#1e40af');
+
+              // Draw rounded rect
+              const radius = 4;
+              ctx.beginPath();
+              ctx.moveTo(startX, startY + radius);
+              ctx.lineTo(startX, startY + barHeight - radius);
+              ctx.quadraticCurveTo(startX, startY + barHeight, startX + radius, startY + barHeight);
+              ctx.lineTo(startX + barWidth - radius, startY + barHeight);
+              ctx.quadraticCurveTo(startX + barWidth, startY + barHeight, startX + barWidth, startY + barHeight - radius);
+              ctx.lineTo(startX + barWidth, startY + radius);
+              ctx.quadraticCurveTo(startX + barWidth, startY, startX + barWidth - radius, startY);
+              ctx.lineTo(startX + radius, startY);
+              ctx.quadraticCurveTo(startX, startY, startX, startY + radius);
+              ctx.closePath();
+
+              ctx.fillStyle = gradient;
+              ctx.fill();
+
+              // Draw diagonal stripes
+              ctx.clip();
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+              ctx.lineWidth = 2;
+              const stripeGap = 6;
+              for (let i = -barHeight * 2; i < barWidth + barHeight * 2; i += stripeGap) {
+                ctx.beginPath();
+                ctx.moveTo(startX + i, startY + barHeight);
+                ctx.lineTo(startX + i + barHeight, startY);
+                ctx.stroke();
+              }
+
+              ctx.restore();
+            });
+          });
+        }
+      };
+
       const chart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -52780,26 +53155,44 @@
           datasets: [{
             label: label,
             data: data,
-            backgroundColor: colors.blue,
-            borderRadius: 4,
-            barThickness: 24
+            backgroundColor: 'transparent',
+            borderRadius: 6,
+            barThickness: 24,
+            borderSkipped: false
           }]
         },
+        plugins: [stripedBarPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(255,255,255,0.98)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.08)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8
+            }
           },
           scales: {
             x: {
               beginAtZero: true,
-              grid: { color: 'rgba(0,0,0,0.05)' }
+              grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+              ticks: { padding: 8 }
             },
             y: {
-              grid: { display: false }
+              grid: { display: false },
+              ticks: { padding: 8, font: { weight: 500 } }
             }
+          },
+          animation: {
+            duration: 1000,
+            easing: 'easeOutQuart',
+            delay: (context) => context.dataIndex * 80
           }
         }
       });
