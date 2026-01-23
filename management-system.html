@@ -51496,20 +51496,27 @@
         },
         plugins: [{
           id: 'pieGradient',
-          beforeDraw: (chart) => {
+          afterLayout: (chart) => {
+            // Apply gradient after layout when dimensions are known
+            if (chart._gradientApplied) return; // Only apply once
             const { ctx, chartArea } = chart;
-            const meta = chart.getDatasetMeta(0);
+            if (!chartArea) return;
+
             const centerX = (chartArea.left + chartArea.right) / 2;
             const centerY = (chartArea.top + chartArea.bottom) / 2;
             const radius = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2;
 
-            meta.data.forEach((arc, i) => {
-              const baseColor = data[i].color;
-              const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.4, centerX, centerY, radius);
-              gradient.addColorStop(0, adjustColorBrightness(baseColor, 30));
-              gradient.addColorStop(1, baseColor);
-              arc.options.backgroundColor = gradient;
+            const gradients = data.map((d) => {
+              const baseColor = d.color;
+              const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.3, centerX, centerY, radius);
+              gradient.addColorStop(0, adjustColorBrightness(baseColor, 50)); // Lighter center
+              gradient.addColorStop(0.7, baseColor);
+              gradient.addColorStop(1, adjustColorBrightness(baseColor, -20)); // Darker edge
+              return gradient;
             });
+
+            chart.data.datasets[0].backgroundColor = gradients;
+            chart._gradientApplied = true;
           }
         }],
         options: {
@@ -51912,6 +51919,7 @@
             },
             y: {
               beginAtZero: true,
+              max: Math.max(...data) * 1.02, // Set max to data maximum so pillars fill height
               grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false },
               ticks: {
                 padding: 12,
