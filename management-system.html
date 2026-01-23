@@ -18438,7 +18438,21 @@
       </div>
     </div>
 
-    <!-- Location Filter removed - now using dropdown above -->
+    <!-- Status Toggle (Upcoming/Active/Previous/Canceled) - Only for List View -->
+    <div id="guestSpotStatusToggle" style="display:flex; gap:4px; margin-bottom:20px; background:rgba(142,142,147,0.12); padding:3px; border-radius:10px; width:fit-content;">
+      <button class="list-toggle-option active" data-list-type="upcoming" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:white; color:#1d1d1f; box-shadow:0 2px 4px rgba(0,0,0,0.08);">
+        Upcoming
+      </button>
+      <button class="list-toggle-option" data-list-type="active" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none;">
+        Active
+      </button>
+      <button class="list-toggle-option" data-list-type="previous" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none;">
+        Previous
+      </button>
+      <button class="list-toggle-option" data-list-type="canceled" style="padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; background:transparent; color:#86868b; box-shadow:none;">
+        Canceled
+      </button>
+    </div>
 
     <!-- List View Container (Active Slots Display) -->
     <div id="waitlistSlotsContainer">
@@ -60477,6 +60491,10 @@
       const yearNav = document.getElementById('guestspotYearNavContainer');
       if (monthNav) monthNav.style.display = viewMode === 'month' ? 'flex' : 'none';
       if (yearNav) yearNav.style.display = viewMode === 'year' ? 'flex' : 'none';
+
+      // Show/hide status toggle (only for list view)
+      const statusToggle = document.getElementById('guestSpotStatusToggle');
+      if (statusToggle) statusToggle.style.display = viewMode === 'list' ? 'flex' : 'none';
 
       // Show appropriate view
       if (viewMode === 'list') {
