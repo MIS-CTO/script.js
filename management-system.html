@@ -53366,7 +53366,7 @@
               artist:artists!upcoming_slots_artist_id_fkey(id, name, instagram, profile_picture_url, background_image_url, style),
               location:locations!upcoming_slots_location_id_fkey(id, name, city)
             `)
-            .in('status', ['upcoming', 'active', 'completed'])
+            .in('status', ['upcoming', 'active'])
             .order('date_from', { ascending: true });
 
           if (error) throw error;
@@ -53842,7 +53842,7 @@
           const allSlotIds = slot.all_slot_ids || [slot.id];
           const slotCount = slot.slot_count || allSlotIds.length;
 
-          // Date calculations for all date-based tabs (upcoming/active/previous)
+          // Date calculations for all date-based tabs
           let fromDate, toDate, isActive, isUpcoming, isPrevious, daysRemaining, daysUntilStart;
           if (displayDateFrom && displayDateTo) {
             fromDate = new Date(displayDateFrom);
@@ -53858,23 +53858,20 @@
             daysUntilStart = Math.ceil((fromDate - today) / (1000 * 60 * 60 * 24));
           }
 
-          // Status badge based on current tab and date status
+          // Status badge - show based on date status with SVG icons (no background)
           let statusBadge = '';
           if (fromDate && toDate) {
-            if (currentListType === 'active' || isActive) {
-              // Active guest spots
+            if (isActive) {
               statusBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;color:#34c759;font-size:11px;font-weight:600;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
-                  Active${daysRemaining > 0 ? ` (${daysRemaining}d left)` : ''}
+                  Active${daysRemaining > 0 ? ' (' + daysRemaining + 'd left)' : ''}
                 </span>`;
-            } else if (currentListType === 'previous' || isPrevious) {
-              // Completed guest spots
+            } else if (isPrevious) {
               statusBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;color:#8e8e93;font-size:11px;font-weight:600;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
                   Completed
                 </span>`;
-            } else if (currentListType === 'upcoming' || isUpcoming) {
-              // Upcoming guest spots
+            } else if (isUpcoming) {
               statusBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;color:#007aff;font-size:11px;font-weight:600;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   Starts in ${daysUntilStart}d
