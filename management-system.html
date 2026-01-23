@@ -13502,18 +13502,6 @@
       color: var(--analytics-text-100) !important;
     }
 
-    #analytics-section .nav-item.active::before {
-      content: '' !important;
-      position: absolute !important;
-      left: 0 !important;
-      top: 50% !important;
-      transform: translateY(-50%) !important;
-      width: 3px !important;
-      height: 20px !important;
-      background: var(--analytics-accent-blue) !important;
-      border-radius: 0 2px 2px 0 !important;
-    }
-
     #analytics-section .nav-item svg {
       width: 18px !important;
       height: 18px !important;
@@ -13568,37 +13556,38 @@
       gap: 12px !important;
     }
 
-    /* Time Filter */
+    /* Time Filter - Clean style without background container */
     #analytics-section .time-filter {
       display: flex;
       align-items: center;
-      gap: 2px;
-      background: var(--analytics-bg-200);
-      padding: 3px;
-      border-radius: 8px;
+      gap: 4px;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
     }
 
     #analytics-section .time-pill {
-      padding: 6px 10px;
+      padding: 6px 12px;
       font-size: 12px;
-      font-weight: 450;
+      font-weight: 500;
       color: var(--analytics-text-400);
       background: transparent;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
       font-family: inherit;
     }
 
     #analytics-section .time-pill:hover {
       color: var(--analytics-text-200);
+      background: var(--analytics-bg-200);
     }
 
     #analytics-section .time-pill.active {
-      background: var(--analytics-bg-000);
+      background: var(--analytics-bg-300);
       color: var(--analytics-text-100);
-      box-shadow: var(--analytics-shadow-sm);
+      font-weight: 600;
     }
 
     /* Metric Switcher Buttons */
@@ -51229,7 +51218,7 @@
     }
     window.getLocationFilteredData = getLocationFilteredData;
 
-    // Create Pie Chart
+    // Create Pie Chart - Modern styling
     function createAnalyticsPieChart(canvasId, legendId, data, showLegend = true) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
@@ -51251,26 +51240,34 @@
           datasets: [{
             data: data.map(d => d.value),
             backgroundColor: data.map(d => d.color),
-            borderWidth: 0,
-            hoverOffset: 4
+            borderWidth: 2,
+            borderColor: 'rgba(255,255,255,0.8)',
+            hoverOffset: 8,
+            hoverBorderWidth: 0
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: true,
-          cutout: '65%',
+          cutout: '68%',
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
               padding: 12,
-              cornerRadius: 8
+              cornerRadius: 8,
+              boxPadding: 6,
+              usePointStyle: true
             }
           },
           animation: {
             animateRotate: true,
             animateScale: true,
-            duration: 800,
+            duration: 1000,
             easing: 'easeOutQuart'
           }
         }
@@ -51303,7 +51300,7 @@
       return chart;
     }
 
-    // Create Line Chart
+    // Create Line Chart - Modern styling with gradient fills
     function createAnalyticsLineChart(canvasId, labels, datasets) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
@@ -51318,21 +51315,39 @@
         analyticsCharts[canvasId].destroy();
       }
 
+      // Helper to convert hex to rgba
+      function hexToRgba(hex, alpha) {
+        if (hex.startsWith('rgb')) return hex.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!result) return `rgba(59, 130, 246, ${alpha})`;
+        return `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`;
+      }
+
+      // Create gradient fills for area charts
+      const enhancedDatasets = datasets.map((ds) => {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+        const baseColor = ds.borderColor || '#3b82f6';
+        gradient.addColorStop(0, hexToRgba(baseColor, 0.3));
+        gradient.addColorStop(0.5, hexToRgba(baseColor, 0.1));
+        gradient.addColorStop(1, hexToRgba(baseColor, 0));
+
+        return {
+          ...ds,
+          borderWidth: 2.5,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderWidth: 2,
+          fill: ds.fill !== false ? { target: 'origin', above: gradient } : false
+        };
+      });
+
       const chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: labels,
-          datasets: datasets.map(ds => ({
-            ...ds,
-            borderWidth: 2,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            fill: ds.fill !== false ? {
-              target: 'origin',
-              above: ds.backgroundColor || 'rgba(0, 112, 243, 0.1)'
-            } : false
-          }))
+          datasets: enhancedDatasets
         },
         options: {
           responsive: true,
@@ -51344,16 +51359,22 @@
               position: 'top'
             },
             tooltip: {
-              backgroundColor: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
               padding: 12,
-              cornerRadius: 8
+              cornerRadius: 8,
+              boxPadding: 6,
+              usePointStyle: true
             }
           },
           scales: {
             x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
             y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
           },
-          animation: { duration: 1000, easing: 'easeOutQuart' }
+          animation: { duration: 1200, easing: 'easeOutQuart' }
         }
       });
 
@@ -51361,7 +51382,7 @@
       return chart;
     }
 
-    // Create Bar Chart
+    // Create Bar Chart - Modern styling with gradients
     function createAnalyticsBarChart(canvasId, labels, datasets, horizontal = false) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
@@ -51376,15 +51397,41 @@
         analyticsCharts[canvasId].destroy();
       }
 
+      // Create gradient backgrounds for modern look
+      function createGradient(color1, color2) {
+        const gradient = horizontal
+          ? ctx.createLinearGradient(0, 0, 400, 0)
+          : ctx.createLinearGradient(0, 400, 0, 0);
+        gradient.addColorStop(0, color1);
+        gradient.addColorStop(1, color2);
+        return gradient;
+      }
+
+      const gradientMap = {
+        '#0070f3': createGradient('#93c5fd', '#3b82f6'),
+        '#3b82f6': createGradient('#93c5fd', '#3b82f6'),
+        '#10b981': createGradient('#6ee7b7', '#10b981'),
+        '#8b5cf6': createGradient('#c4b5fd', '#8b5cf6'),
+        '#06b6d4': createGradient('#67e8f9', '#06b6d4'),
+        '#f59e0b': createGradient('#fcd34d', '#f59e0b'),
+        '#ec4899': createGradient('#f9a8d4', '#ec4899')
+      };
+
+      const enhancedDatasets = datasets.map(ds => ({
+        ...ds,
+        backgroundColor: typeof ds.backgroundColor === 'string'
+          ? (gradientMap[ds.backgroundColor] || ds.backgroundColor)
+          : ds.backgroundColor,
+        borderRadius: 6,
+        borderSkipped: false,
+        hoverBackgroundColor: ds.backgroundColor
+      }));
+
       const chart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: labels,
-          datasets: datasets.map(ds => ({
-            ...ds,
-            borderRadius: 4,
-            borderSkipped: false
-          }))
+          datasets: enhancedDatasets
         },
         options: {
           indexAxis: horizontal ? 'y' : 'x',
@@ -51392,13 +51439,34 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: datasets.length > 1, position: 'top' },
-            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, cornerRadius: 8 }
+            tooltip: {
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              titleColor: '#0a0a0a',
+              bodyColor: '#404040',
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8,
+              boxPadding: 6,
+              usePointStyle: true
+            }
           },
           scales: {
-            x: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 } },
-            y: { grid: { color: colors.grid, drawBorder: false }, ticks: { padding: 8 }, beginAtZero: true }
+            x: {
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8, font: { weight: 500 } }
+            },
+            y: {
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { padding: 8 },
+              beginAtZero: true
+            }
           },
-          animation: { duration: 800, easing: 'easeOutQuart' }
+          animation: {
+            duration: 1000,
+            easing: 'easeOutQuart',
+            delay: (context) => context.dataIndex * 50
+          }
         }
       });
 
