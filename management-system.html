@@ -53232,6 +53232,17 @@
           const artistName = spot.artist_name || spot.name || 'Unknown Artist';
           const artistInitials = artistName.split(' ').map(n => n.charAt(0).toUpperCase()).slice(0, 2).join('');
 
+          // Generate consistent pastel color from artist name
+          const pastelColors = [
+            '#FFB5BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#D4A5A5', '#A5D4D4', '#D4D4A5', '#C9BFFF',
+            '#FFD1DC', '#AEC6CF', '#B2E2F0', '#F0E6B2', '#E2B2F0', '#B2F0D4', '#F0B2B2', '#B2C8F0', '#F0E2B2', '#D4B2F0'
+          ];
+          const colorIndex = artistName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % pastelColors.length;
+          const pastelBg = pastelColors[colorIndex];
+
+          // Check for profile picture
+          const hasProfilePic = spot.profile_picture_url && spot.profile_picture_url.trim() !== '';
+
           return `
             <div class="waitlist-slot-card" data-slot-id="${spot.id}" style="
               background:var(--macos-elevated);
@@ -53247,9 +53258,16 @@
               <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;">
                 <div style="display:flex; align-items:center; gap:12px;">
                   <!-- Avatar Circle -->
-                  <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:14px; flex-shrink:0;">
-                    ${artistInitials}
-                  </div>
+                  ${hasProfilePic ? `
+                    <img src="${spot.profile_picture_url}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <div style="width:40px; height:40px; border-radius:50%; background:${pastelBg}; display:none; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:14px; flex-shrink:0;">
+                      ${artistInitials}
+                    </div>
+                  ` : `
+                    <div style="width:40px; height:40px; border-radius:50%; background:${pastelBg}; display:flex; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:14px; flex-shrink:0;">
+                      ${artistInitials}
+                    </div>
+                  `}
                   <div>
                     <h3 style="margin:0 0 4px 0; font-size:16px; color:var(--ink); font-weight:600;">
                       ${artistName}
@@ -53271,12 +53289,12 @@
                 <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                   <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(142, 142, 147, 0.12); border-radius:8px;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <span style="font-weight:600; color:var(--ink); font-size:13px;">${formatDateDE(spot.date_from)} - ${formatDateDE(spot.date_to)}</span>
+                    <span style="font-weight:400; color:var(--ink); font-size:13px;">${formatDateDE(spot.date_from)} - ${formatDateDE(spot.date_to)}</span>
                   </div>
                   ${spot.location_name ? `
                     <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(142, 142, 147, 0.12); border-radius:8px;">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                      <span style="font-weight:600; color:var(--ink); font-size:13px;">${spot.location_name}</span>
+                      <span style="font-weight:400; color:var(--ink); font-size:13px;">${spot.location_name}</span>
                     </div>
                   ` : ''}
                 </div>
@@ -53496,6 +53514,17 @@
           const artistNameSlot = slot.artist_name || 'Unknown Artist';
           const artistInitialsSlot = artistNameSlot.split(' ').map(n => n.charAt(0).toUpperCase()).slice(0, 2).join('');
 
+          // Generate consistent pastel color from artist name
+          const pastelColorsSlot = [
+            '#FFB5BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#D4A5A5', '#A5D4D4', '#D4D4A5', '#C9BFFF',
+            '#FFD1DC', '#AEC6CF', '#B2E2F0', '#F0E6B2', '#E2B2F0', '#B2F0D4', '#F0B2B2', '#B2C8F0', '#F0E2B2', '#D4B2F0'
+          ];
+          const colorIndexSlot = artistNameSlot.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % pastelColorsSlot.length;
+          const pastelBgSlot = pastelColorsSlot[colorIndexSlot];
+
+          // Check for profile picture
+          const hasProfilePicSlot = slot.profile_picture_url && slot.profile_picture_url.trim() !== '';
+
           return `
             <div class="waitlist-slot-card" data-slot-id="${slot.id}" style="
               background:var(--macos-elevated);
@@ -53510,9 +53539,16 @@
               <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;">
                 <div style="display:flex; align-items:center; gap:12px;">
                   <!-- Avatar Circle -->
-                  <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:14px; flex-shrink:0;">
-                    ${artistInitialsSlot}
-                  </div>
+                  ${hasProfilePicSlot ? `
+                    <img src="${slot.profile_picture_url}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <div style="width:40px; height:40px; border-radius:50%; background:${pastelBgSlot}; display:none; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:14px; flex-shrink:0;">
+                      ${artistInitialsSlot}
+                    </div>
+                  ` : `
+                    <div style="width:40px; height:40px; border-radius:50%; background:${pastelBgSlot}; display:flex; align-items:center; justify-content:center; color:#1d1d1f; font-weight:600; font-size:14px; flex-shrink:0;">
+                      ${artistInitialsSlot}
+                    </div>
+                  `}
                   <!-- Artist Info -->
                   <div>
                     <h3 style="margin:0 0 4px 0; font-size:16px; color:var(--ink); font-weight:600;">
@@ -53538,13 +53574,13 @@
                   ${currentListType !== 'waitlist' && fromDate && toDate ? `
                     <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(142, 142, 147, 0.12); border-radius:8px;">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      <span style="font-weight:600; color:var(--ink); font-size:13px;">${fromDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })} - ${toDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                      <span style="font-weight:400; color:var(--ink); font-size:13px;">${fromDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })} - ${toDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                     </div>
                   ` : ''}
                   ${slot.location_name ? `
                     <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(142, 142, 147, 0.12); border-radius:8px;">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                      <span style="font-weight:600; color:var(--ink); font-size:13px;">${slot.location_name}</span>
+                      <span style="font-weight:400; color:var(--ink); font-size:13px;">${slot.location_name}</span>
                     </div>
                   ` : ''}
                 </div>
