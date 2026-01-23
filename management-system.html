@@ -13863,6 +13863,34 @@
       flex-shrink: 0 !important;
     }
 
+    /* Dashboard Pie Chart Cards - Compact height with glass effect */
+    #dashboard-origins-card,
+    #dashboard-conversion-card {
+      background: rgba(255, 255, 255, 0.5) !important;
+      backdrop-filter: blur(24px) saturate(200%) !important;
+      -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.7) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.4) !important;
+    }
+
+    #dashboard-origins-card .chart-body,
+    #dashboard-conversion-card .chart-body {
+      padding: 16px 20px !important;
+    }
+
+    #dashboard-origins-card .pie-chart-layout,
+    #dashboard-conversion-card .pie-chart-layout {
+      gap: 24px !important;
+    }
+
+    #dashboard-origins-card .pie-chart-wrapper,
+    #dashboard-conversion-card .pie-chart-wrapper {
+      width: 120px !important;
+      height: 120px !important;
+      min-width: 120px !important;
+      min-height: 120px !important;
+    }
+
     #analytics-section .pie-legend,
     #analytics-section .chart-legend {
       flex: 1 !important;
@@ -17128,9 +17156,9 @@
               </div>
             </div>
 
-            <!-- Charts Row -->
-            <div class="charts-row">
-              <div class="chart-card">
+            <!-- Charts Row - Request Origins & Conversion -->
+            <div class="charts-row" id="dashboard-pie-charts-row">
+              <div class="chart-card" id="dashboard-origins-card">
                 <div class="chart-header">
                   <div class="chart-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
@@ -17147,7 +17175,7 @@
                 </div>
               </div>
 
-              <div class="chart-card">
+              <div class="chart-card" id="dashboard-conversion-card">
                 <div class="chart-header">
                   <div class="chart-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
@@ -17159,26 +17187,7 @@
                     <div class="pie-chart-wrapper">
                       <canvas id="dashboardConversionPie"></canvas>
                     </div>
-                    <div class="pie-legend" id="dashboardConversionLegend">
-                      <div class="legend-item">
-                        <div class="legend-label">
-                          <div class="legend-dot" style="background: #10b981;"></div>
-                          <span class="legend-text">Umgesetzte Termine</span>
-                        </div>
-                        <span class="legend-value" id="legendConvertedCount">--</span>
-                      </div>
-                      <div class="legend-item">
-                        <div class="legend-label">
-                          <div class="legend-dot" style="background: #ef4444;"></div>
-                          <span class="legend-text">Nicht umgesetzt</span>
-                        </div>
-                        <span class="legend-value" id="legendNotConvertedCount">--</span>
-                      </div>
-                      <div class="legend-extra">
-                        <span class="legend-extra-label">Ø Umsetzungszeit</span>
-                        <span class="legend-extra-value" id="legendAvgConversionTime">--</span>
-                      </div>
-                    </div>
+                    <div class="pie-legend" id="dashboardConversionLegend"></div>
                   </div>
                 </div>
               </div>
@@ -52228,10 +52237,10 @@
             }
 
             // Conversion Pie Chart
-            createAnalyticsPieChart('dashboardConversionPie', null, [
+            createAnalyticsPieChart('dashboardConversionPie', 'dashboardConversionLegend', [
               { label: 'Umgesetzt', value: convertedRequests, color: colors.green },
               { label: 'Nicht umgesetzt', value: totalRequests - convertedRequests, color: colors.red }
-            ], false);
+            ]);
 
             // Timeline Chart
             const monthlyData = {};
