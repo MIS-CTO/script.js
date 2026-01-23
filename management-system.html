@@ -51623,7 +51623,7 @@
           const activeElements = chart.getActiveElements();
           const activeIndex = activeElements.length > 0 ? activeElements[0].index : -1;
           const dataLength = meta.data.length;
-          const labelY = chartArea.top + 5; // Fixed Y position for all labels (higher)
+          const labelY = chartArea.top - 25; // Fixed Y position for all labels (above chart area)
 
           // Draw grey background behind hovered pillar
           if (activeIndex !== -1) {
@@ -51648,20 +51648,12 @@
             const rightEdge1 = x1 + w1 / 2;
             const leftEdge2 = x2 - w2 / 2;
 
-            // Create diagonal gradient for connector (top-right to bottom-left)
+            // Create diagonal gradient for connector - always light (white with hint of blue)
             const connGradient = ctx.createLinearGradient(leftEdge2, Math.min(y1, y2), rightEdge1, base1);
-            if (activeIndex === -1) {
-              // Normal state - blue gradient from top-right (darker)
-              connGradient.addColorStop(0, '#3b82f6');
-              connGradient.addColorStop(0.4, '#60a5fa');
-              connGradient.addColorStop(1, '#93c5fd');
-            } else {
-              // Hover state - very light gradient, mostly white with hint of blue at top
-              connGradient.addColorStop(0, '#bfdbfe');
-              connGradient.addColorStop(0.3, '#f0f9ff');
-              connGradient.addColorStop(0.6, '#ffffff');
-              connGradient.addColorStop(1, '#ffffff');
-            }
+            connGradient.addColorStop(0, '#bfdbfe');
+            connGradient.addColorStop(0.3, '#f0f9ff');
+            connGradient.addColorStop(0.6, '#ffffff');
+            connGradient.addColorStop(1, '#ffffff');
 
             ctx.save();
             ctx.fillStyle = connGradient;
