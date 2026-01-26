@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-26 | Version: 3.1226**
-**UPDATE: Phase 8 Unified Pie Chart Design System**
+**Stand: 2026-01-26 | Version: 3.1227**
+**UPDATE: Phase 8 Dashboard Analytics Consolidation**
 
 ---
 
@@ -259,8 +259,26 @@ c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
 | Analytics Tab Styling (management-system.html) | Removed white background from time filter tabs, removed blue indicator on nav | ✅ |
 | Modern Chart Design (management-system.html) | Updated pie/bar/line charts with gradients, modern tooltips, smooth animations | ✅ |
 | Unified Pie Chart Design System | Created unified CSS classes for 17 pie charts, fixed missing legend styles | ✅ |
+| Pie Chart Centered Layout | Updated all pie charts to center alignment with space-between, even padding | ✅ |
+| Location Breakdown Merge | Location cards and charts merged into Analytics Dashboard | ✅ |
+| Website Traffic Merge | PostHog web analytics merged into Analytics Dashboard (compact view) | ✅ |
 
 ### Technical Details
+
+**Dashboard Analytics Consolidation (2026-01-26):**
+
+Merged Location Breakdown and Website Traffic into the main Analytics Dashboard for a unified overview.
+
+**Changes:**
+1. **Pie Chart Layout Update**: Changed from `flex-start` to `center` with `space-between` for legend items
+2. **Location Breakdown**: Added to Dashboard with location cards, revenue chart, and requests pie chart
+3. **Website Traffic**: Added compact PostHog view to Dashboard with KPIs and top pages/referrers
+4. **New HTML Elements**:
+   - `dashboardLocationCardsContainer` - Location cards in dashboard
+   - `dashboardLocationRevenueChart` - Bar chart for revenue by location
+   - `dashboardLocationRequestsPie` - Pie chart for requests by location
+   - `dashboardWebAnalyticsContent` - Compact web analytics view
+5. **New JavaScript Function**: `renderDashboardWebAnalytics()` - Renders compact web analytics
 
 **Unified Pie Chart Design System V2 (2026-01-26):**
 

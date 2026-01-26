@@ -13852,16 +13852,17 @@
        Single source of truth for ALL pie charts
        ======================================== */
 
-    /* Base layout - horizontal: chart | legend */
+    /* Base layout - horizontal: chart | legend - centered with even spacing */
     #analytics-section .pie-chart-layout,
     .pie-chart-layout {
       display: flex !important;
       align-items: center !important;
-      justify-content: flex-start !important;
+      justify-content: center !important;
       gap: 24px !important;
       flex-direction: row !important;
       width: 100% !important;
-      padding: 8px 0 !important;
+      padding: 16px !important;
+      box-sizing: border-box !important;
     }
 
     /* Chart wrapper - UNIFIED 140x140px */
@@ -13908,14 +13909,15 @@
       border-radius: 2px !important;
     }
 
-    /* Legend item - Format: Percent% | Color | Name | Count */
+    /* Legend item - Format: Percent% | Color | Name | Count - centered with space-between */
     #analytics-section .pie-legend-item,
     .pie-legend .pie-legend-item,
     .chart-legend .pie-legend-item {
       display: flex !important;
       align-items: center !important;
-      gap: 12px !important;
-      padding: 6px 0 !important;
+      justify-content: space-between !important;
+      gap: 8px !important;
+      padding: 8px 4px !important;
       border-bottom: 1px solid var(--analytics-border-color, rgba(0,0,0,0.06)) !important;
     }
 
@@ -13964,13 +13966,15 @@
       text-align: right !important;
     }
 
-    /* Narrow variant for 4+ column layouts */
+    /* Narrow variant for 4+ column layouts - centered with even spacing */
     #analytics-section .pie-chart-layout.narrow,
     .pie-chart-layout.narrow {
       flex-direction: column !important;
       gap: 12px !important;
       align-items: center !important;
-      padding: 4px 0 !important;
+      justify-content: center !important;
+      padding: 12px !important;
+      box-sizing: border-box !important;
     }
 
     #analytics-section .pie-chart-layout.narrow .pie-chart-wrapper,
@@ -17286,6 +17290,83 @@
                     <canvas id="dashboardTimeline"></canvas>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Location Breakdown Section (merged from Locations view) -->
+            <div class="section-divider" style="margin: 32px 0 24px; padding-top: 24px; border-top: 1px solid var(--analytics-border-color, rgba(0,0,0,0.08));">
+              <h3 style="font-size: 18px; font-weight: 600; color: var(--analytics-text-100, #1a1a1a); margin-bottom: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                Location Breakdown
+              </h3>
+              <p style="font-size: 13px; color: var(--analytics-text-400, #86868b);">Performance-Vergleich aller Standorte</p>
+            </div>
+
+            <div class="location-cards" id="dashboardLocationCardsContainer">
+              <!-- Wird dynamisch gefüllt -->
+            </div>
+
+            <div class="charts-row">
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">Revenue by Location</div>
+                </div>
+                <div class="chart-body">
+                  <div class="chart-container">
+                    <canvas id="dashboardLocationRevenueChart"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="chart-header">
+                  <div class="chart-title">Requests by Location</div>
+                </div>
+                <div class="chart-body">
+                  <div class="pie-chart-layout">
+                    <div class="pie-chart-wrapper">
+                      <canvas id="dashboardLocationRequestsPie"></canvas>
+                    </div>
+                    <div class="pie-legend" id="dashboardLocationRequestsLegend"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Website Traffic Section (merged from Web Analytics view) -->
+            <div class="section-divider" style="margin: 32px 0 24px; padding-top: 24px; border-top: 1px solid var(--analytics-border-color, rgba(0,0,0,0.08));">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <h3 style="font-size: 18px; font-weight: 600; color: var(--analytics-text-100, #1a1a1a); margin-bottom: 8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;">
+                      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                    Website Traffic
+                  </h3>
+                  <p style="font-size: 13px; color: var(--analytics-text-400, #86868b);">Website traffic analytics powered by PostHog</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div class="posthog-period-filter dashboard-posthog-filter" style="display:flex; gap:4px; background:#f5f5f5; padding:4px; border-radius:8px;">
+                    <button class="posthog-period-pill" data-period="24h" onclick="setPostHogPeriod('24h', true)" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:#666; transition:all 0.2s;">24h</button>
+                    <button class="posthog-period-pill active" data-period="7d" onclick="setPostHogPeriod('7d', true)" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:#fff; color:#1d1d1f; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:all 0.2s;">7d</button>
+                    <button class="posthog-period-pill" data-period="30d" onclick="setPostHogPeriod('30d', true)" style="padding:6px 12px; border:none; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:#666; transition:all 0.2s;">30d</button>
+                  </div>
+                  <button onclick="openPostHogSettingsModal()" style="padding:8px 12px; background:#f5f5f5; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:#666; display:flex; align-items:center; gap:6px;" title="PostHog Settings">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div id="dashboardWebAnalyticsContent">
+              <!-- Content will be rendered dynamically by renderWebAnalyticsDashboard() -->
+              <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px;">
+                <div class="loading-spinner" style="width:32px; height:32px; border:3px solid #eaeaea; border-top-color:#000; border-radius:50%; animation:spin 1s linear infinite;"></div>
+                <p style="margin-top:12px; color:#86868b; font-size:13px;">Loading web analytics...</p>
               </div>
             </div>
           </div>
@@ -48492,6 +48573,107 @@
         renderPostHogCharts();
         renderWorldMap();
       }, 50);
+
+      // Also render compact version to dashboard
+      renderDashboardWebAnalytics(data);
+    }
+
+    // Render compact Web Analytics to Dashboard
+    function renderDashboardWebAnalytics(data) {
+      const dashContainer = document.getElementById('dashboardWebAnalyticsContent');
+      if (!dashContainer) return;
+
+      // If not configured
+      if (!isPostHogConfigured()) {
+        dashContainer.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; padding:40px; text-align:center; background:#fafafa; border-radius:12px;">
+            <div>
+              <p style="margin:0 0 12px 0; color:#86868b; font-size:14px;">Connect PostHog to view website analytics</p>
+              <button onclick="openPostHogSettingsModal()" style="padding:10px 20px; background:#000; color:#fff; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Configure PostHog</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // If loading
+      if (postHogLoading) {
+        dashContainer.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; min-height:150px;">
+            <div class="loading-spinner" style="width:32px; height:32px; border:3px solid #eaeaea; border-top-color:#000; border-radius:50%; animation:spin 1s linear infinite;"></div>
+          </div>
+        `;
+        return;
+      }
+
+      // If error
+      if (postHogError) {
+        dashContainer.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; padding:40px; text-align:center; background:#fef2f2; border-radius:12px;">
+            <div>
+              <p style="margin:0 0 12px 0; color:#dc2626; font-size:14px;">Error loading analytics</p>
+              <button onclick="loadPostHogWebAnalytics()" style="padding:8px 16px; background:#000; color:#fff; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Retry</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Render compact dashboard version
+      dashContainer.innerHTML = `
+        <!-- Compact KPI Cards -->
+        <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:20px;">
+          <div class="kpi-card" style="padding:16px;">
+            <div class="kpi-label" style="font-size:11px;">Pageviews</div>
+            <div class="kpi-value" style="font-size:24px;">${(data.pageviews || 0).toLocaleString('de-DE')}</div>
+          </div>
+          <div class="kpi-card" style="padding:16px;">
+            <div class="kpi-label" style="font-size:11px;">Visitors</div>
+            <div class="kpi-value" style="font-size:24px;">${(data.uniqueVisitors || 0).toLocaleString('de-DE')}</div>
+          </div>
+          <div class="kpi-card" style="padding:16px;">
+            <div class="kpi-label" style="font-size:11px;">Sessions</div>
+            <div class="kpi-value" style="font-size:24px;">${(data.sessions || 0).toLocaleString('de-DE')}</div>
+          </div>
+          <div class="kpi-card" style="padding:16px;">
+            <div class="kpi-label" style="font-size:11px;">Bounce Rate</div>
+            <div class="kpi-value" style="font-size:24px;">${data.bounceRate || 0}%</div>
+          </div>
+        </div>
+
+        <!-- Compact Charts Row -->
+        <div class="charts-row">
+          <!-- Top Pages -->
+          <div class="chart-card">
+            <div class="chart-header"><div class="chart-title">Top Pages</div></div>
+            <div class="chart-body" style="padding:0;">
+              <div style="max-height:200px; overflow-y:auto;">
+                ${data.topPages && data.topPages.length > 0 ? data.topPages.slice(0, 5).map((item, i) => `
+                  <div style="display:flex; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #f3f4f6;">
+                    <span style="font-size:13px; color:#1d1d1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${i + 1}. ${item.page || '/'}</span>
+                    <span style="font-size:13px; font-weight:500; color:#86868b;">${(item.views || 0).toLocaleString('de-DE')}</span>
+                  </div>
+                `).join('') : '<div style="padding:20px; text-align:center; color:#86868b;">No data</div>'}
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Referrers -->
+          <div class="chart-card">
+            <div class="chart-header"><div class="chart-title">Top Referrers</div></div>
+            <div class="chart-body" style="padding:0;">
+              <div style="max-height:200px; overflow-y:auto;">
+                ${data.topReferrers && data.topReferrers.length > 0 ? data.topReferrers.slice(0, 5).map((item, i) => `
+                  <div style="display:flex; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #f3f4f6;">
+                    <span style="font-size:13px; color:#1d1d1f; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${i + 1}. ${extractDomain(item.referrer || '')}</span>
+                    <span style="font-size:13px; font-weight:500; color:#86868b;">${(item.visits || 0).toLocaleString('de-DE')}</span>
+                  </div>
+                `).join('') : '<div style="padding:20px; text-align:center; color:#86868b;">No data</div>'}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     // Helper function to render country table
@@ -52338,6 +52520,51 @@
               // Use Stripe-style funnel chart with pillars
               createStripeFunnelChart('dashboardTimeline', sortedMonths, monthlyValues);
             }
+
+            // Location Breakdown (merged from Locations view)
+            const locStats = {};
+            const locationNames = { stuttgart: 'Stuttgart', koeln: 'Köln', muenchen: 'München', berlin: 'Berlin', paris: 'Paris' };
+            Object.keys(locationNames).forEach(k => {
+              locStats[k] = { name: locationNames[k], requests: 0, appointments: 0, revenue: 0 };
+            });
+            requests.forEach(r => {
+              if (r.location_id && locStats[r.location_id]) locStats[r.location_id].requests++;
+            });
+            appointments.forEach(a => {
+              if (a.location_id && locStats[a.location_id]) {
+                locStats[a.location_id].appointments++;
+                locStats[a.location_id].revenue += parseFloat(a.total_amount) || 0;
+              }
+            });
+
+            const dashLocContainer = document.getElementById('dashboardLocationCardsContainer');
+            if (dashLocContainer) {
+              dashLocContainer.innerHTML = Object.values(locStats).map((l, i) => `
+                <div class="location-card ${i === 0 ? 'active' : ''}">
+                  <h4>${l.name}</h4>
+                  <div class="location-stat"><span>Requests</span><span class="value">${l.requests.toLocaleString('de-DE')}</span></div>
+                  <div class="location-stat"><span>Appointments</span><span class="value">${l.appointments.toLocaleString('de-DE')}</span></div>
+                  <div class="location-stat"><span>Revenue</span><span class="value">€${Math.round(l.revenue / 1000)}K</span></div>
+                </div>
+              `).join('');
+            }
+
+            const dashSortedLocs = Object.values(locStats).sort((a, b) => b.revenue - a.revenue);
+            createAnalyticsBarChart('dashboardLocationRevenueChart',
+              dashSortedLocs.map(l => l.name),
+              [{ label: 'Revenue €K', data: dashSortedLocs.map(l => Math.round(l.revenue / 1000)), backgroundColor: colors.blue }]
+            );
+            createAnalyticsPieChart('dashboardLocationRequestsPie', 'dashboardLocationRequestsLegend',
+              dashSortedLocs.map((l, i) => ({
+                label: l.name,
+                value: l.requests,
+                color: [colors.blue, colors.purple, colors.green, colors.orange, colors.pink][i % 5],
+                display: l.requests.toLocaleString('de-DE')
+              }))
+            );
+
+            // Load Web Analytics for dashboard (merged from Web Analytics view)
+            loadPostHogWebAnalytics();
             break;
           }
 
