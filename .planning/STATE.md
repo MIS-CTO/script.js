@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-22 | Version: 3.1224**
-**UPDATE: Phase 8.1 V1 View Permissions COMPLETE**
+**Stand: 2026-01-26 | Version: 3.1226**
+**UPDATE: Phase 8 Unified Pie Chart Design System**
 
 ---
 
@@ -258,8 +258,38 @@ c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
 | Immediate Request Display | New requests show immediately after creation via loadRequests() | ✅ |
 | Analytics Tab Styling (management-system.html) | Removed white background from time filter tabs, removed blue indicator on nav | ✅ |
 | Modern Chart Design (management-system.html) | Updated pie/bar/line charts with gradients, modern tooltips, smooth animations | ✅ |
+| Unified Pie Chart Design System | Created unified CSS classes for 17 pie charts, fixed missing legend styles | ✅ |
 
 ### Technical Details
+
+**Unified Pie Chart Design System (2026-01-26):**
+
+Created a comprehensive CSS class system for all 17 analytics pie charts:
+
+1. **Fixed missing CSS definitions** - JavaScript was using `.analytics-legend-*` classes that had no CSS:
+   - Added `.analytics-legend-item`, `.analytics-legend-color`, `.analytics-legend-label`, `.analytics-legend-value`
+   - Applied to all contexts: `#analytics-section`, `.pie-legend`, `.chart-legend`
+
+2. **Created unified layout classes**:
+   - `.unified-pie-layout` - main flex container (140px chart + legend)
+   - `.unified-pie-chart` - consistent 140x140px chart wrapper
+   - `.unified-pie-legend` - scrollable legend with thin scrollbar
+   - `.unified-legend-item/dot/text/value` - individual legend items
+
+3. **Size variants**:
+   - `.compact` - 120x120px for dashboard cards
+   - `.narrow` - 100x100px vertical layout for 4-column grids
+
+4. **Fixed inconsistent HTML**:
+   - Team Distribution: Replaced inline styles with proper `.pie-chart-layout` classes
+   - PostHog Browsers/Devices: Added `.narrow` class, removed inline styles
+
+**Charts covered (17 total)**:
+- Request Origins, Conversion Funnel, Booking Sources, Conversion Breakdown
+- Team Distribution, Traffic Sources, Device Breakdown, New vs Returning
+- Customer Segmentation, Guest Spots by Studio, Booking Type Distribution
+- Artists per Rank, Einnahmen nach Quelle, Category Distribution
+- Umsatz nach Kategorie, Eingelöst vs. Offen, Requests by Location
 
 **Create Booking Modal Improvements (2026-01-22):**
 

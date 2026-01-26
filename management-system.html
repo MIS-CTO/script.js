@@ -13989,6 +13989,195 @@
     }
 
     /* ========================================
+       UNIFIED PIE CHART SYSTEM
+       Consistent design for all analytics pie charts
+       ======================================== */
+
+    /* Main container - horizontal layout with chart and legend */
+    #analytics-section .unified-pie-layout {
+      display: flex !important;
+      align-items: center !important;
+      gap: 32px !important;
+      flex-direction: row !important;
+      width: 100% !important;
+      min-height: 160px !important;
+    }
+
+    /* Chart wrapper - consistent sizing */
+    #analytics-section .unified-pie-chart {
+      width: 140px !important;
+      height: 140px !important;
+      min-width: 140px !important;
+      min-height: 140px !important;
+      flex-shrink: 0 !important;
+      position: relative !important;
+    }
+
+    #analytics-section .unified-pie-chart canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Dashboard compact variant - smaller charts */
+    #analytics-section .unified-pie-layout.compact {
+      gap: 24px !important;
+      min-height: 120px !important;
+    }
+
+    #analytics-section .unified-pie-layout.compact .unified-pie-chart {
+      width: 120px !important;
+      height: 120px !important;
+      min-width: 120px !important;
+      min-height: 120px !important;
+    }
+
+    /* Extra-small variant for narrow columns (4+ column layouts) */
+    #analytics-section .pie-chart-layout.narrow,
+    .pie-chart-layout.narrow {
+      flex-direction: column !important;
+      gap: 16px !important;
+      align-items: center !important;
+    }
+
+    #analytics-section .pie-chart-layout.narrow .pie-chart-wrapper,
+    .pie-chart-layout.narrow .pie-chart-wrapper {
+      width: 100px !important;
+      height: 100px !important;
+      min-width: 100px !important;
+      min-height: 100px !important;
+      max-width: 100px !important;
+    }
+
+    #analytics-section .pie-chart-layout.narrow .pie-legend,
+    .pie-chart-layout.narrow .pie-legend {
+      max-width: 100% !important;
+      font-size: 11px !important;
+    }
+
+    /* Legend container */
+    #analytics-section .unified-pie-legend {
+      flex: 1 !important;
+      max-height: 200px !important;
+      overflow-y: auto !important;
+      max-width: 300px !important;
+      scrollbar-width: thin !important;
+    }
+
+    #analytics-section .unified-pie-legend::-webkit-scrollbar {
+      width: 4px !important;
+    }
+
+    #analytics-section .unified-pie-legend::-webkit-scrollbar-thumb {
+      background: var(--analytics-border-color) !important;
+      border-radius: 2px !important;
+    }
+
+    /* Individual legend item */
+    #analytics-section .unified-legend-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 8px 0 !important;
+      border-bottom: 1px solid var(--analytics-border-color) !important;
+    }
+
+    #analytics-section .unified-legend-item:last-child {
+      border-bottom: none !important;
+    }
+
+    /* Legend color dot */
+    #analytics-section .unified-legend-dot {
+      width: 10px !important;
+      height: 10px !important;
+      min-width: 10px !important;
+      border-radius: 3px !important;
+      flex-shrink: 0 !important;
+    }
+
+    /* Legend text label */
+    #analytics-section .unified-legend-text {
+      flex: 1 !important;
+      font-size: 13px !important;
+      color: var(--analytics-text-300) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 140px !important;
+    }
+
+    /* Legend value */
+    #analytics-section .unified-legend-value {
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: var(--analytics-text-100) !important;
+      font-family: 'Geist Mono', monospace !important;
+      white-space: nowrap !important;
+      text-align: right !important;
+    }
+
+    /* ========================================
+       ANALYTICS LEGEND (used by createAnalyticsPieChart)
+       Styles for dynamically generated legends
+       ======================================== */
+    #analytics-section .analytics-legend-item,
+    .pie-legend .analytics-legend-item,
+    .chart-legend .analytics-legend-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 8px 0 !important;
+      border-bottom: 1px solid var(--analytics-border-color, rgba(0,0,0,0.08)) !important;
+    }
+
+    #analytics-section .analytics-legend-item:last-child,
+    .pie-legend .analytics-legend-item:last-child,
+    .chart-legend .analytics-legend-item:last-child {
+      border-bottom: none !important;
+    }
+
+    #analytics-section .analytics-legend-color,
+    .pie-legend .analytics-legend-color,
+    .chart-legend .analytics-legend-color {
+      width: 10px !important;
+      height: 10px !important;
+      min-width: 10px !important;
+      border-radius: 3px !important;
+      flex-shrink: 0 !important;
+    }
+
+    #analytics-section .analytics-legend-label,
+    .pie-legend .analytics-legend-label,
+    .chart-legend .analytics-legend-label {
+      flex: 1 !important;
+      font-size: 13px !important;
+      color: var(--analytics-text-300, #666) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 140px !important;
+    }
+
+    #analytics-section .analytics-legend-value,
+    .pie-legend .analytics-legend-value,
+    .chart-legend .analytics-legend-value {
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: var(--analytics-text-100, #1a1a1a) !important;
+      font-family: 'Geist Mono', monospace !important;
+      white-space: nowrap !important;
+      text-align: right !important;
+    }
+
+    /* Dark mode support for analytics legends */
+    [data-theme="dark"] .analytics-legend-label {
+      color: var(--analytics-text-300, #a0a0a0) !important;
+    }
+
+    [data-theme="dark"] .analytics-legend-value {
+      color: var(--analytics-text-100, #f0f0f0) !important;
+    }
+
+    /* ========================================
        Data Table
        ======================================== */
     #analytics-section .data-table-container {
@@ -17348,9 +17537,9 @@
                   <div class="chart-title">Team Distribution</div>
                 </div>
                 <div class="chart-body">
-                  <div class="pie-chart-wrapper" style="display: flex; align-items: center; gap: 24px;">
-                    <div style="flex: 1; max-width: 200px;"><canvas id="teamConversionPie"></canvas></div>
-                    <div id="teamConversionLegend" class="chart-legend"></div>
+                  <div class="pie-chart-layout">
+                    <div class="pie-chart-wrapper"><canvas id="teamConversionPie"></canvas></div>
+                    <div id="teamConversionLegend" class="pie-legend"></div>
                   </div>
                 </div>
               </div>
@@ -48385,11 +48574,11 @@
               <div class="chart-title">Browsers</div>
             </div>
             <div class="chart-body">
-              <div class="pie-chart-layout">
-                <div class="pie-chart-wrapper" style="max-width:120px;">
+              <div class="pie-chart-layout narrow">
+                <div class="pie-chart-wrapper">
                   <canvas id="postHogBrowsersChart"></canvas>
                 </div>
-                <div id="postHogBrowsersLegend" class="pie-legend" style="font-size:11px;"></div>
+                <div id="postHogBrowsersLegend" class="pie-legend"></div>
               </div>
             </div>
           </div>
@@ -48400,11 +48589,11 @@
               <div class="chart-title">Devices</div>
             </div>
             <div class="chart-body">
-              <div class="pie-chart-layout">
-                <div class="pie-chart-wrapper" style="max-width:120px;">
+              <div class="pie-chart-layout narrow">
+                <div class="pie-chart-wrapper">
                   <canvas id="postHogDevicesChart"></canvas>
                 </div>
-                <div id="postHogDevicesLegend" class="pie-legend" style="font-size:11px;"></div>
+                <div id="postHogDevicesLegend" class="pie-legend"></div>
               </div>
             </div>
           </div>
