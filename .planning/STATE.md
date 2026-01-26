@@ -54,6 +54,58 @@
 
 ---
 
+## Hotfix: Neukunde Rank Bug - Database Trigger Fix (2026-01-26) ✅ COMPLETE
+
+### Problem
+
+New customers were getting "Bronze" rank instead of "Neukunde" despite multiple previous fixes. This bug kept recurring.
+
+### Root Cause
+
+**Database trigger `update_customer_rank()` had flawed logic:**
+
+```sql
+-- The ELSE clause was returning 'Bronze' for 0 completed bookings
+IF booking_count >= 11 THEN new_rank := 'Platinum';
+ELSIF booking_count >= 6 THEN new_rank := 'Gold';
+ELSIF booking_count >= 3 THEN new_rank := 'Silver';
+ELSE new_rank := 'Bronze';  -- ❌ BUG: Should have been 'Neukunde'
+END IF;
+```
+
+**Why previous fixes didn't work:**
+- JavaScript code fixes were correct (setting 'Neukunde' on customer creation)
+- But the database trigger fired on EVERY request UPDATE
+- For customers with 0 completed bookings, it overwrote their rank to 'Bronze'
+- This is why the bug "kept coming back"
+
+### Solution
+
+1. **Fixed database trigger** (Migration: `fix_update_customer_rank_neukunde`):
+   - Added condition: `ELSIF booking_count >= 1 THEN new_rank := 'Bronze'`
+   - Changed ELSE to return 'Neukunde' for 0 completed bookings
+
+2. **Fixed Add Customer modal** (`management-system.html:37009`):
+   - Changed `rank: rank || null` to `rank: rank || 'Neukunde'`
+
+3. **Data cleanup** (Migration: `fix_customers_neukunde_rank_cleanup`):
+   - Fixed 4362 customers with incorrect Bronze rank
+   - Updated to 'Neukunde' where they had no completed bookings
+
+### Files Changed
+
+- **Database**: `update_customer_rank()` function
+- `management-system.html` - Line 37009
+
+### Migrations Applied
+
+```
+fix_update_customer_rank_neukunde
+fix_customers_neukunde_rank_cleanup
+```
+
+---
+
 ## Hotfix: Guest Spot Creation NULL Email Fix (2026-01-26) ✅ COMPLETE
 
 ### Problem

@@ -26,6 +26,13 @@ Einige Tabellen haben RLS mit `qual = true` (erlaubt alles).
 
 ## RESOLVED Issues
 
+- ~~ISSUE-011: Neukunde Rank Bug (Recurring)~~ → **RESOLVED** (2026-01-26)
+  - New customers were getting Bronze rank instead of Neukunde
+  - **Root cause**: Database trigger `update_customer_rank()` set Bronze for 0 bookings
+  - **Why it kept recurring**: JavaScript fixes were overwritten by trigger on every request UPDATE
+  - Fixed trigger, Add Customer modal, and cleaned up 4362 customers
+  - Migrations: `fix_update_customer_rank_neukunde`, `fix_customers_neukunde_rank_cleanup`
+
 - ~~ISSUE-010: Guest Spot Creation NULL Email~~ → **RESOLVED** (2026-01-26)
   - Guest artists without email caused dienstplan insert to fail
   - Trigger `sync_upcoming_to_dienstplan` now uses placeholder email
