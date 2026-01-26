@@ -1,6 +1,6 @@
 # Culture Over Money - Roadmap
-**Stand: 2026-01-22 | Version: 3.1266**
-**UPDATE: Phase 8 Dashboard Visual Polish IN PROGRESS**
+**Stand: 2026-01-26 | Version: 3.1227**
+**UPDATE: Hotfix Guest Spot NULL Email + Phase 8 Dashboard Visual Polish**
 
 ---
 
@@ -149,6 +149,27 @@ b2024bf chore(ui): disable auto-slide for Schwarzes Brett
 
 ---
 
+## Hotfixes
+
+### Guest Spot NULL Email Fix (2026-01-26) ✓
+
+**Problem**: Creating guest spots failed with `null value in column "email" violates not-null constraint`
+
+**Root Cause**: Many guest artists have no email in `artists` table. Trigger `sync_upcoming_to_dienstplan` tried to insert NULL into `dienstplan.email` (NOT NULL column).
+
+**Solution**: Updated trigger to use placeholder email when artist email is NULL:
+```sql
+IF v_artist_email IS NULL OR v_artist_email = '' THEN
+  v_artist_email := 'guest-' || NEW.artist_id::text || '@placeholder.internal';
+END IF;
+```
+
+**Migration**: `fix_guest_spot_dienstplan_null_email`
+
+**Commit**: `e156880 fix(guestspot): handle NULL email in dienstplan sync trigger`
+
+---
+
 ## Recent Completions
 
 ### Phase 7: Events UI & Create Card (2026-01-21) ✓
@@ -242,4 +263,4 @@ Februar 2026
 
 ---
 
-*Last updated: 2026-01-22 with Claude Code*
+*Last updated: 2026-01-26 with Claude Code*

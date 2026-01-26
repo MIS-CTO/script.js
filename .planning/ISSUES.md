@@ -1,5 +1,5 @@
 # Culture Over Money - Known Issues
-**Stand: 2026-01-15 | Version: 3.1181**
+**Stand: 2026-01-26 | Version: 3.1227**
 
 ---
 
@@ -26,6 +26,11 @@ Einige Tabellen haben RLS mit `qual = true` (erlaubt alles).
 
 ## RESOLVED Issues
 
+- ~~ISSUE-010: Guest Spot Creation NULL Email~~ → **RESOLVED** (2026-01-26)
+  - Guest artists without email caused dienstplan insert to fail
+  - Trigger `sync_upcoming_to_dienstplan` now uses placeholder email
+  - Migration: `fix_guest_spot_dienstplan_null_email`
+
 - ~~ISSUE-009: Consultation Payment~~ → **RESOLVED** (2026-01-15)
   - Replaced Stripe Payment Links with Checkout Sessions
   - New edge function: `create-consultation-checkout` v5
@@ -49,4 +54,4 @@ Einige Tabellen haben RLS mit `qual = true` (erlaubt alles).
 
 ---
 
-*Aktualisiert am 2026-01-15 mit Claude Code*
+*Aktualisiert am 2026-01-26 mit Claude Code*
