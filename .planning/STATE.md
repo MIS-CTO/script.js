@@ -262,34 +262,43 @@ c876722 fix(v1-permissions): fix calendar grid alignment for hidden sections
 
 ### Technical Details
 
-**Unified Pie Chart Design System (2026-01-26):**
+**Unified Pie Chart Design System V2 (2026-01-26):**
 
-Created a comprehensive CSS class system for all 17 analytics pie charts:
+Complete rewrite of pie chart styling for consistent design across all 17 analytics charts.
 
-1. **Fixed missing CSS definitions** - JavaScript was using `.analytics-legend-*` classes that had no CSS:
-   - Added `.analytics-legend-item`, `.analytics-legend-color`, `.analytics-legend-label`, `.analytics-legend-value`
-   - Applied to all contexts: `#analytics-section`, `.pie-legend`, `.chart-legend`
+**1. Unified CSS System** (Single source of truth):
+```css
+/* All charts now use these classes */
+.pie-chart-layout { display: flex; gap: 24px; padding: 8px 0; }
+.pie-chart-wrapper { width: 140px; height: 140px; /* FIXED SIZE */ }
+.pie-legend { flex: 1; max-height: 180px; overflow-y: auto; }
+.pie-chart-layout.narrow { flex-direction: column; } /* For 4-col grids */
+```
 
-2. **Created unified layout classes**:
-   - `.unified-pie-layout` - main flex container (140px chart + legend)
-   - `.unified-pie-chart` - consistent 140x140px chart wrapper
-   - `.unified-pie-legend` - scrollable legend with thin scrollbar
-   - `.unified-legend-item/dot/text/value` - individual legend items
+**2. New Legend Format** - `Percent% | Color | Name | Count`:
+```html
+<div class="pie-legend-item">
+  <span class="pie-legend-percent">45.2%</span>
+  <div class="pie-legend-dot" style="background: #0071e3"></div>
+  <span class="pie-legend-name">Instagram</span>
+  <span class="pie-legend-count">1.234</span>
+</div>
+```
 
-3. **Size variants**:
-   - `.compact` - 120x120px for dashboard cards
-   - `.narrow` - 100x100px vertical layout for 4-column grids
+**3. Size Variants**:
+- **Standard**: 140×140px - all analytics views
+- **Narrow**: 100×100px - 4-column layouts (Browsers, Devices)
 
-4. **Fixed inconsistent HTML**:
-   - Team Distribution: Replaced inline styles with proper `.pie-chart-layout` classes
-   - PostHog Browsers/Devices: Added `.narrow` class, removed inline styles
+**4. JavaScript Updates**:
+- `createAnalyticsPieChart()` - updated legend template
+- `createAnalyticsDoughnutChart()` - updated legend template
 
 **Charts covered (17 total)**:
-- Request Origins, Conversion Funnel, Booking Sources, Conversion Breakdown
-- Team Distribution, Traffic Sources, Device Breakdown, New vs Returning
-- Customer Segmentation, Guest Spots by Studio, Booking Type Distribution
-- Artists per Rank, Einnahmen nach Quelle, Category Distribution
-- Umsatz nach Kategorie, Eingelöst vs. Offen, Requests by Location
+Request Origins, Conversion Funnel, Booking Sources, Conversion Breakdown,
+Team Distribution, Traffic Sources, Device Breakdown, New vs Returning,
+Customer Segmentation, Guest Spots by Studio, Booking Type Distribution,
+Artists per Rank, Einnahmen nach Quelle, Category Distribution,
+Umsatz nach Kategorie, Eingelöst vs. Offen, Requests by Location
 
 **Create Booking Modal Improvements (2026-01-22):**
 

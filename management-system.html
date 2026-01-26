@@ -13847,23 +13847,169 @@
       display: block !important;
     }
 
-    /* Pie Chart Layout - KRITISCH */
-    #analytics-section .pie-chart-layout {
+    /* ========================================
+       UNIFIED PIE CHART SYSTEM
+       Single source of truth for ALL pie charts
+       ======================================== */
+
+    /* Base layout - horizontal: chart | legend */
+    #analytics-section .pie-chart-layout,
+    .pie-chart-layout {
       display: flex !important;
       align-items: center !important;
-      gap: 32px !important;
+      justify-content: flex-start !important;
+      gap: 24px !important;
       flex-direction: row !important;
+      width: 100% !important;
+      padding: 8px 0 !important;
     }
 
-    #analytics-section .pie-chart-wrapper {
+    /* Chart wrapper - UNIFIED 140x140px */
+    #analytics-section .pie-chart-wrapper,
+    .pie-chart-wrapper {
       width: 140px !important;
       height: 140px !important;
       min-width: 140px !important;
       min-height: 140px !important;
+      max-width: 140px !important;
+      max-height: 140px !important;
+      flex-shrink: 0 !important;
+      position: relative !important;
+    }
+
+    #analytics-section .pie-chart-wrapper canvas,
+    .pie-chart-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+    }
+
+    /* Legend container - scrollable */
+    #analytics-section .pie-legend,
+    #analytics-section .chart-legend,
+    .pie-legend,
+    .chart-legend {
+      flex: 1 !important;
+      max-height: 180px !important;
+      overflow-y: auto !important;
+      min-width: 180px !important;
+      max-width: 280px !important;
+      scrollbar-width: thin !important;
+    }
+
+    .pie-legend::-webkit-scrollbar,
+    .chart-legend::-webkit-scrollbar {
+      width: 4px !important;
+    }
+
+    .pie-legend::-webkit-scrollbar-thumb,
+    .chart-legend::-webkit-scrollbar-thumb {
+      background: var(--analytics-border-color, rgba(0,0,0,0.1)) !important;
+      border-radius: 2px !important;
+    }
+
+    /* Legend item - Format: Percent% | Color | Name | Count */
+    #analytics-section .pie-legend-item,
+    .pie-legend .pie-legend-item,
+    .chart-legend .pie-legend-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      padding: 6px 0 !important;
+      border-bottom: 1px solid var(--analytics-border-color, rgba(0,0,0,0.06)) !important;
+    }
+
+    #analytics-section .pie-legend-item:last-child,
+    .pie-legend .pie-legend-item:last-child,
+    .chart-legend .pie-legend-item:last-child {
+      border-bottom: none !important;
+    }
+
+    /* Percent badge - left aligned */
+    .pie-legend-percent {
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      font-family: 'Geist Mono', monospace !important;
+      color: var(--analytics-text-100, #1a1a1a) !important;
+      min-width: 48px !important;
+      text-align: right !important;
+    }
+
+    /* Color dot */
+    .pie-legend-dot {
+      width: 10px !important;
+      height: 10px !important;
+      min-width: 10px !important;
+      border-radius: 3px !important;
       flex-shrink: 0 !important;
     }
 
-    /* Dashboard Pie Chart Cards - 300px height with glass effect */
+    /* Name/label - flexible width with ellipsis */
+    .pie-legend-name {
+      flex: 1 !important;
+      font-size: 13px !important;
+      color: var(--analytics-text-300, #666) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    /* Count value - right aligned */
+    .pie-legend-count {
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      font-family: 'Geist Mono', monospace !important;
+      color: var(--analytics-text-200, #444) !important;
+      min-width: 50px !important;
+      text-align: right !important;
+    }
+
+    /* Narrow variant for 4+ column layouts */
+    #analytics-section .pie-chart-layout.narrow,
+    .pie-chart-layout.narrow {
+      flex-direction: column !important;
+      gap: 12px !important;
+      align-items: center !important;
+      padding: 4px 0 !important;
+    }
+
+    #analytics-section .pie-chart-layout.narrow .pie-chart-wrapper,
+    .pie-chart-layout.narrow .pie-chart-wrapper {
+      width: 100px !important;
+      height: 100px !important;
+      min-width: 100px !important;
+      min-height: 100px !important;
+      max-width: 100px !important;
+      max-height: 100px !important;
+    }
+
+    #analytics-section .pie-chart-layout.narrow .pie-legend,
+    .pie-chart-layout.narrow .pie-legend {
+      max-width: 100% !important;
+      min-width: unset !important;
+      max-height: 120px !important;
+    }
+
+    .pie-chart-layout.narrow .pie-legend-item {
+      gap: 8px !important;
+      padding: 4px 0 !important;
+    }
+
+    .pie-chart-layout.narrow .pie-legend-percent {
+      font-size: 11px !important;
+      min-width: 38px !important;
+    }
+
+    .pie-chart-layout.narrow .pie-legend-name {
+      font-size: 11px !important;
+    }
+
+    .pie-chart-layout.narrow .pie-legend-count {
+      font-size: 11px !important;
+      min-width: 40px !important;
+    }
+
+    /* Dashboard cards - glass effect */
     #dashboard-origins-card,
     #dashboard-conversion-card {
       background: rgba(255, 255, 255, 0.5) !important;
@@ -13883,20 +14029,7 @@
       align-items: center !important;
     }
 
-    #dashboard-origins-card .pie-chart-layout,
-    #dashboard-conversion-card .pie-chart-layout {
-      gap: 24px !important;
-    }
-
-    #dashboard-origins-card .pie-chart-wrapper,
-    #dashboard-conversion-card .pie-chart-wrapper {
-      width: 120px !important;
-      height: 120px !important;
-      min-width: 120px !important;
-      min-height: 120px !important;
-    }
-
-    /* Dashboard Timeline Chart - 400px height */
+    /* Dashboard Timeline */
     #dashboardTimeline {
       height: 400px !important;
     }
@@ -13906,275 +14039,17 @@
       min-height: 400px !important;
     }
 
-    #analytics-section .pie-legend,
-    #analytics-section .chart-legend {
-      flex: 1 !important;
-      max-height: 250px !important;
-      overflow-y: auto !important;
-      max-width: 280px !important;
+    /* Dark mode support */
+    [data-theme="dark"] .pie-legend-percent {
+      color: var(--analytics-text-100, #f0f0f0) !important;
     }
 
-    #analytics-section .legend-item {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      padding: 10px 0 !important;
-      margin: 0 !important;
-      border-bottom: 1px solid var(--analytics-border-color) !important;
-    }
-
-    #analytics-section .legend-item:last-child {
-      border-bottom: none !important;
-    }
-
-    #analytics-section .legend-label {
-      display: flex !important;
-      align-items: center !important;
-      gap: 10px !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    #analytics-section .legend-dot {
-      width: 10px !important;
-      height: 10px !important;
-      border-radius: 3px !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    #analytics-section .legend-text {
-      font-size: 13px !important;
-      color: var(--analytics-text-300) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      max-width: 120px !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      white-space: nowrap !important;
-    }
-
-    #analytics-section .legend-value {
-      font-size: 13px !important;
-      font-weight: 600 !important;
-      color: var(--analytics-text-100) !important;
-      font-family: 'Geist Mono', monospace !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    #analytics-section .legend-extra {
-      margin: 16px 0 0 0 !important;
-      padding: 16px 0 0 0 !important;
-      border-top: 1px solid var(--analytics-border-color) !important;
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-    }
-
-    #analytics-section .legend-extra-label {
-      font-size: 12px !important;
-      color: var(--analytics-text-400) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    #analytics-section .legend-extra-value {
-      font-size: 14px !important;
-      font-weight: 600 !important;
-      color: var(--analytics-accent-blue) !important;
-      font-family: 'Geist Mono', monospace !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    /* ========================================
-       UNIFIED PIE CHART SYSTEM
-       Consistent design for all analytics pie charts
-       ======================================== */
-
-    /* Main container - horizontal layout with chart and legend */
-    #analytics-section .unified-pie-layout {
-      display: flex !important;
-      align-items: center !important;
-      gap: 32px !important;
-      flex-direction: row !important;
-      width: 100% !important;
-      min-height: 160px !important;
-    }
-
-    /* Chart wrapper - consistent sizing */
-    #analytics-section .unified-pie-chart {
-      width: 140px !important;
-      height: 140px !important;
-      min-width: 140px !important;
-      min-height: 140px !important;
-      flex-shrink: 0 !important;
-      position: relative !important;
-    }
-
-    #analytics-section .unified-pie-chart canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    /* Dashboard compact variant - smaller charts */
-    #analytics-section .unified-pie-layout.compact {
-      gap: 24px !important;
-      min-height: 120px !important;
-    }
-
-    #analytics-section .unified-pie-layout.compact .unified-pie-chart {
-      width: 120px !important;
-      height: 120px !important;
-      min-width: 120px !important;
-      min-height: 120px !important;
-    }
-
-    /* Extra-small variant for narrow columns (4+ column layouts) */
-    #analytics-section .pie-chart-layout.narrow,
-    .pie-chart-layout.narrow {
-      flex-direction: column !important;
-      gap: 16px !important;
-      align-items: center !important;
-    }
-
-    #analytics-section .pie-chart-layout.narrow .pie-chart-wrapper,
-    .pie-chart-layout.narrow .pie-chart-wrapper {
-      width: 100px !important;
-      height: 100px !important;
-      min-width: 100px !important;
-      min-height: 100px !important;
-      max-width: 100px !important;
-    }
-
-    #analytics-section .pie-chart-layout.narrow .pie-legend,
-    .pie-chart-layout.narrow .pie-legend {
-      max-width: 100% !important;
-      font-size: 11px !important;
-    }
-
-    /* Legend container */
-    #analytics-section .unified-pie-legend {
-      flex: 1 !important;
-      max-height: 200px !important;
-      overflow-y: auto !important;
-      max-width: 300px !important;
-      scrollbar-width: thin !important;
-    }
-
-    #analytics-section .unified-pie-legend::-webkit-scrollbar {
-      width: 4px !important;
-    }
-
-    #analytics-section .unified-pie-legend::-webkit-scrollbar-thumb {
-      background: var(--analytics-border-color) !important;
-      border-radius: 2px !important;
-    }
-
-    /* Individual legend item */
-    #analytics-section .unified-legend-item {
-      display: flex !important;
-      align-items: center !important;
-      gap: 10px !important;
-      padding: 8px 0 !important;
-      border-bottom: 1px solid var(--analytics-border-color) !important;
-    }
-
-    #analytics-section .unified-legend-item:last-child {
-      border-bottom: none !important;
-    }
-
-    /* Legend color dot */
-    #analytics-section .unified-legend-dot {
-      width: 10px !important;
-      height: 10px !important;
-      min-width: 10px !important;
-      border-radius: 3px !important;
-      flex-shrink: 0 !important;
-    }
-
-    /* Legend text label */
-    #analytics-section .unified-legend-text {
-      flex: 1 !important;
-      font-size: 13px !important;
-      color: var(--analytics-text-300) !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      max-width: 140px !important;
-    }
-
-    /* Legend value */
-    #analytics-section .unified-legend-value {
-      font-size: 13px !important;
-      font-weight: 600 !important;
-      color: var(--analytics-text-100) !important;
-      font-family: 'Geist Mono', monospace !important;
-      white-space: nowrap !important;
-      text-align: right !important;
-    }
-
-    /* ========================================
-       ANALYTICS LEGEND (used by createAnalyticsPieChart)
-       Styles for dynamically generated legends
-       ======================================== */
-    #analytics-section .analytics-legend-item,
-    .pie-legend .analytics-legend-item,
-    .chart-legend .analytics-legend-item {
-      display: flex !important;
-      align-items: center !important;
-      gap: 10px !important;
-      padding: 8px 0 !important;
-      border-bottom: 1px solid var(--analytics-border-color, rgba(0,0,0,0.08)) !important;
-    }
-
-    #analytics-section .analytics-legend-item:last-child,
-    .pie-legend .analytics-legend-item:last-child,
-    .chart-legend .analytics-legend-item:last-child {
-      border-bottom: none !important;
-    }
-
-    #analytics-section .analytics-legend-color,
-    .pie-legend .analytics-legend-color,
-    .chart-legend .analytics-legend-color {
-      width: 10px !important;
-      height: 10px !important;
-      min-width: 10px !important;
-      border-radius: 3px !important;
-      flex-shrink: 0 !important;
-    }
-
-    #analytics-section .analytics-legend-label,
-    .pie-legend .analytics-legend-label,
-    .chart-legend .analytics-legend-label {
-      flex: 1 !important;
-      font-size: 13px !important;
-      color: var(--analytics-text-300, #666) !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      max-width: 140px !important;
-    }
-
-    #analytics-section .analytics-legend-value,
-    .pie-legend .analytics-legend-value,
-    .chart-legend .analytics-legend-value {
-      font-size: 13px !important;
-      font-weight: 600 !important;
-      color: var(--analytics-text-100, #1a1a1a) !important;
-      font-family: 'Geist Mono', monospace !important;
-      white-space: nowrap !important;
-      text-align: right !important;
-    }
-
-    /* Dark mode support for analytics legends */
-    [data-theme="dark"] .analytics-legend-label {
+    [data-theme="dark"] .pie-legend-name {
       color: var(--analytics-text-300, #a0a0a0) !important;
     }
 
-    [data-theme="dark"] .analytics-legend-value {
-      color: var(--analytics-text-100, #f0f0f0) !important;
+    [data-theme="dark"] .pie-legend-count {
+      color: var(--analytics-text-200, #c0c0c0) !important;
     }
 
     /* ========================================
@@ -49840,18 +49715,19 @@
         }
       });
 
-      // Render custom legend mit % Werten
+      // Render custom legend: Percent | Color | Name | Count
       const legendContainer = document.getElementById(legendId);
       if (legendContainer) {
         const total = data.reduce((sum, d) => sum + (d.value || 0), 0);
         legendContainer.innerHTML = data.map(d => {
           const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : 0;
-          const displayValue = d.display || d.value;
+          const countDisplay = d.display || d.value?.toLocaleString('de-DE') || '0';
           return `
-          <div class="analytics-legend-item">
-            <div class="analytics-legend-color" style="background: ${d.color}"></div>
-            <span class="analytics-legend-label">${d.label}</span>
-            <span class="analytics-legend-value">${displayValue} (${pct}%)</span>
+          <div class="pie-legend-item">
+            <span class="pie-legend-percent">${pct}%</span>
+            <div class="pie-legend-dot" style="background: ${d.color}"></div>
+            <span class="pie-legend-name">${d.label}</span>
+            <span class="pie-legend-count">${countDisplay}</span>
           </div>
         `;
         }).join('');
@@ -51775,19 +51651,18 @@
       if (showLegend && legendId) {
         const legendContainer = document.getElementById(legendId);
         if (legendContainer) {
-          // Berechne Total für % Werte
+          // Unified legend format: Percent | Color | Name | Count
           const total = data.reduce((sum, d) => sum + (d.value || 0), 0);
           legendContainer.innerHTML = data.map(d => {
             const val = d.value || 0;
             const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-            const displayValue = d.display || val.toLocaleString('de-DE');
+            const countDisplay = d.display || val.toLocaleString('de-DE');
             return `
-            <div class="legend-item">
-              <div class="legend-label">
-                <div class="legend-dot" style="background: ${d.color};"></div>
-                <span class="legend-text">${d.label}</span>
-              </div>
-              <span class="legend-value">${displayValue} (${pct}%)</span>
+            <div class="pie-legend-item">
+              <span class="pie-legend-percent">${pct}%</span>
+              <div class="pie-legend-dot" style="background: ${d.color};"></div>
+              <span class="pie-legend-name">${d.label}</span>
+              <span class="pie-legend-count">${countDisplay}</span>
             </div>
           `;
           }).join('');
