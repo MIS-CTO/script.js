@@ -54,6 +54,51 @@
 
 ---
 
+## Hotfix: Guest Spot Creation NULL Email Fix (2026-01-26) ✅ COMPLETE
+
+### Problem
+
+Creating a Guest Spot via the Create Guest Spot modal failed with error:
+```
+❌ Error creating Guest Spot: {"code":"23502","details":null,"hint":null,"message":"null value in column \"email\" of relation \"dienstplan\" violates not-null constraint"}
+```
+
+### Root Cause
+
+The trigger `sync_upcoming_to_dienstplan` runs after inserting into `upcoming_slots`. It looks up the artist's email from the `artists` table:
+
+```sql
+SELECT email, is_guest
+INTO v_artist_email, v_is_guest
+FROM public.artists
+WHERE id = NEW.artist_id;
+```
+
+Then inserts into `dienstplan` which has `email` as a **NOT NULL** column. Many guest artists don't have email addresses set (15+ artists found with `email = NULL`), causing the insert to fail.
+
+### Solution
+
+Applied migration `fix_guest_spot_dienstplan_null_email` to update the trigger function with a placeholder email fallback:
+
+```sql
+-- Use placeholder email if artist email is NULL
+-- Format: guest-{artist_id}@placeholder.internal
+IF v_artist_email IS NULL OR v_artist_email = '' THEN
+  v_artist_email := 'guest-' || NEW.artist_id::text || '@placeholder.internal';
+END IF;
+```
+
+### Files Changed
+
+- **Database only** - No JavaScript changes required
+- Migration: `fix_guest_spot_dienstplan_null_email`
+
+### Testing
+
+Guest Spot creation now works for artists without email addresses. The placeholder email ensures the `dienstplan` entry is created successfully.
+
+---
+
 ## Hotfix: Event Edit Trigger Fix (2026-01-22) ✅ COMPLETE
 
 ### Problem
