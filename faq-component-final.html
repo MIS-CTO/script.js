@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Mommy I'm Sorry</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Container */
+        .faq-wrapper {
+            width: 100%;
+            max-width: 50vw;
+            padding: 0 4vw;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            color: #000;
+            background: #fff;
+            min-height: 400px;
+            margin: 0 auto;
+        }
+
+        /* Navigation Links */
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            margin-top: 32px;
+            align-items: center;
+        }
+
+        .nav-link {
+            font-size: 0.875rem;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            color: #666;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            background: none;
+            border: none;
+            padding: 0;
+            position: relative;
+            padding-bottom: 4px;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: #000;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #000;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: #000;
+            font-weight: 500;
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        /* Category Selection View */
+        .category-view {
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .category-view.hidden {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* Themen Heading */
+        .category-heading {
+            font-size: 1.2rem;
+            font-weight: 500;
+            text-align: left;
+            margin-bottom: 24px;
+            letter-spacing: 0.3px;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .category-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .category-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 350px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #1a1a1a;
+            border-bottom: none;
+            font-size: 0.875rem;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            text-align: left;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            outline: none;
+        }
+
+        .category-btn:first-child {
+            border-top: 1px solid #1a1a1a;
+        }
+
+        .category-btn:last-child {
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .category-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .category-btn:focus {
+            outline: none;
+        }
+
+        .category-btn:active {
+            outline: none;
+        }
+
+        .category-btn span {
+            color: #000;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .category-btn.fading span {
+            opacity: 0;
+        }
+
+        .category-btn svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .category-btn.fading svg {
+            opacity: 0;
+        }
+
+        /* Contact View */
+        .contact-view {
+            opacity: 0;
+            display: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .contact-view.active {
+            opacity: 1;
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            max-width: 800px;
+        }
+
+        .contact-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #1a1a1a;
+            font-size: 0.875rem;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            text-decoration: none;
+            color: #000;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .contact-option:hover {
+            background-color: #f5f5f5;
+        }
+
+        .contact-option svg,
+        .contact-option img {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Email Form */
+        .email-form-container {
+            opacity: 0;
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.5s ease, max-height 0.5s ease;
+            margin-top: 32px;
+        }
+
+        .email-form-container.active {
+            opacity: 1;
+            display: block;
+            max-height: 2000px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .email-form {
+            max-width: 800px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: #000;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            font-size: 0.875rem;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: #1a1a1a;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-submit {
+            background: #9e9e9e;
+            color: #fff;
+            border: none;
+            padding: 16px 32px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            float: right;
+        }
+
+        .form-submit:hover {
+            background: #757575;
+        }
+
+        .phone-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .phone-prefix {
+            width: 100px;
+            flex-shrink: 0;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* FAQ Content View */
+        .faq-view {
+            opacity: 0;
+            display: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .faq-view.active {
+            opacity: 1;
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Back Button */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.2s ease;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            outline: none;
+        }
+
+        .back-button:hover {
+            color: #000;
+        }
+
+        .back-button:focus {
+            outline: none;
+        }
+
+        .back-button:active {
+            outline: none;
+        }
+
+        .back-button svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .back-button:hover svg {
+            transform: translateX(-4px);
+        }
+
+        /* FAQ Items */
+        .faq-section {
+            border: 1px solid #1a1a1a;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 17px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            outline: none;
+        }
+
+        .faq-question:focus {
+            outline: none;
+        }
+
+        .faq-question:active {
+            outline: none;
+        }
+
+        .faq-question h3 {
+            font-size: 0.875rem;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            line-height: 1.5;
+            padding-right: 40px;
+            transition: font-weight 0.3s ease;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .faq-item.open .faq-question h3 {
+            font-weight: 500;
+        }
+
+        /* Plus/Minus Icon */
+        .faq-icon {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .faq-icon::before,
+        .faq-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            background: #1a1a1a;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .faq-icon::before {
+            width: 12px;
+            height: 2px;
+            transform: translate(-50%, -50%);
+        }
+
+        .faq-icon::after {
+            width: 2px;
+            height: 12px;
+            transform: translate(-50%, -50%);
+        }
+
+        .faq-item.open .faq-icon::after {
+            transform: translate(-50%, -50%) rotate(90deg);
+            opacity: 0;
+        }
+
+        /* FAQ Answer */
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 340px;
+            padding: 0 17px 15px 17px;
+        }
+
+        .faq-answer p {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #666;
+            letter-spacing: 0.2px;
+            font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .faq-wrapper {
+                max-width: 100vw;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .faq-wrapper {
+                max-width: 100vw;
+                padding: 0 4vw;
+            }
+
+            .category-buttons {
+                max-width: 100%;
+            }
+
+            .category-btn {
+                width: 100%;
+                padding: 18px;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .back-button {
+                font-size: 0.875rem;
+                margin-bottom: 20px;
+            }
+
+            .faq-question {
+                padding: 14px;
+            }
+
+            .faq-question h3 {
+                padding-right: 30px;
+            }
+
+            .faq-item.open .faq-answer {
+                max-height: 340px;
+                padding: 0 14px 14px 14px;
+            }
+
+            .category-heading {
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+            .nav-links {
+                gap: 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .category-btn {
+                padding: 16px;
+            }
+
+            .faq-question {
+                padding: 12px;
+            }
+
+            .faq-item.open .faq-answer {
+                max-height: 340px;
+                padding: 0 12px 12px 12px;
+            }
+
+            .nav-links {
+                gap: 16px;
+            }
+        }
+
+        /* Remove all focus outlines */
+        *:focus {
+            outline: none !important;
+        }
+
+        *:active {
+            outline: none !important;
+        }
+
+        button::-moz-focus-inner {
+            border: 0;
+        }
+
+        /* Visually Hidden Helper */
+        .visually-hidden {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="faq-wrapper">
+        <!-- Contact View -->
+        <div class="contact-view" id="contactView">
+            <div class="contact-grid">
+                <a href="https://api.whatsapp.com/send/?phone=4971151875672&text=Hi+Mommy+I%27m+Sorry+Team%2C&type=phone_number&app_absent=0" target="_blank" class="contact-option">
+                    <span>WhatsApp</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                </a>
+
+                <button class="contact-option" id="emailButton">
+                    <span>E-Mail senden</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                </button>
+
+                <a href="tel:004971151875672" class="contact-option">
+                    <span>Rufen Sie uns an</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                </a>
+
+                <button class="contact-option" id="terminButton">
+                    <span>Termin</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Email Form -->
+            <div class="email-form-container" id="emailFormContainer">
+                <form class="email-form" id="emailForm">
+                    <h2 style="font-size: 1.5rem; font-weight: 500; margin-bottom: 24px;">E-Mail senden</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Grund Ihrer Anfrage*</label>
+                            <select class="form-select" name="grund" required>
+                                <option value="">Bitte wählen</option>
+                                <option value="beratung">Beratung</option>
+                                <option value="termin">Termin</option>
+                                <option value="anfrage">Allgemeine Anfrage</option>
+                                <option value="sonstiges">Sonstiges</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Details*</label>
+                            <select class="form-select" name="details" required>
+                                <option value="">Bitte wählen</option>
+                                <option value="neues-tattoo">Neues Tattoo</option>
+                                <option value="cover-up">Cover-Up</option>
+                                <option value="ergaenzung">Ergänzung</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Anrede</label>
+                            <select class="form-select" name="anrede">
+                                <option value="">Bitte wählen</option>
+                                <option value="herr">Herr</option>
+                                <option value="frau">Frau</option>
+                                <option value="divers">Divers</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nachname*</label>
+                            <input type="text" class="form-input" name="nachname" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Vorname*</label>
+                            <input type="text" class="form-input" name="vorname" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail*</label>
+                            <input type="email" class="form-input" name="email" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Telefonnummer</label>
+                            <div class="phone-input-group">
+                                <input type="text" class="form-input phone-prefix" value="DE +49" readonly>
+                                <input type="tel" class="form-input" name="telefon" placeholder="">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ort*</label>
+                            <select class="form-select" name="ort" required>
+                                <option value="">Deutschland</option>
+                                <option value="stuttgart">Stuttgart</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Land*</label>
+                            <select class="form-select" name="land" required>
+                                <option value="">Bitte wählen</option>
+                                <option value="deutschland">Deutschland</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sprache</label>
+                            <select class="form-select" name="sprache">
+                                <option value="german">German</option>
+                                <option value="english">English</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label class="form-label">Betreff*</label>
+                            <input type="text" class="form-input" name="betreff" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">Zusätzliche Info*</label>
+                        <textarea class="form-textarea" name="nachricht" maxlength="200" required></textarea>
+                        <div class="char-count">200 Zeichen übrig</div>
+                    </div>
+
+                    <button type="submit" class="form-submit">ABSENDEN</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Category Selection View -->
+        <nav class="category-view active" id="categoryView" aria-label="FAQ Kategorien">
+            <h2 class="category-heading">Themen</h2>
+            <div class="category-buttons" role="list">
+                <button 
+                    class="category-btn" 
+                    data-category="anfrage" 
+                    aria-label="Anfrage FAQs anzeigen"
+                    role="listitem">
+                    <span>Anfrage</span>
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" aria-hidden="true">
+                        <path fill="#000000" d="M869 487.8L491.2 159.9c-2.9-2.5-6.6-3.9-10.5-3.9h-88.5c-7.4 0-10.8 9.2-5.2 14l350.2 304H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h585.1L386.9 854c-5.6 4.9-2.2 14 5.2 14h91.5c1.9 0 3.8-.7 5.2-2L869 536.2a32.07 32.07 0 0 0 0-48.4z"></path>
+                    </svg>
+                </button>
+
+                <button 
+                    class="category-btn" 
+                    data-category="beratung"
+                    aria-label="Beratung FAQs anzeigen"
+                    role="listitem">
+                    <span>Beratung</span>
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" aria-hidden="true">
+                        <path fill="#000000" d="M869 487.8L491.2 159.9c-2.9-2.5-6.6-3.9-10.5-3.9h-88.5c-7.4 0-10.8 9.2-5.2 14l350.2 304H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h585.1L386.9 854c-5.6 4.9-2.2 14 5.2 14h91.5c1.9 0 3.8-.7 5.2-2L869 536.2a32.07 32.07 0 0 0 0-48.4z"></path>
+                    </svg>
+                </button>
+
+                <button 
+                    class="category-btn" 
+                    data-category="termin"
+                    aria-label="Termin FAQs anzeigen"
+                    role="listitem">
+                    <span>Termin</span>
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" aria-hidden="true">
+                        <path fill="#000000" d="M869 487.8L491.2 159.9c-2.9-2.5-6.6-3.9-10.5-3.9h-88.5c-7.4 0-10.8 9.2-5.2 14l350.2 304H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h585.1L386.9 854c-5.6 4.9-2.2 14 5.2 14h91.5c1.9 0 3.8-.7 5.2-2L869 536.2a32.07 32.07 0 0 0 0-48.4z"></path>
+                    </svg>
+                </button>
+
+                <button 
+                    class="category-btn" 
+                    data-category="aftercare"
+                    aria-label="Aftercare FAQs anzeigen"
+                    role="listitem">
+                    <span>Aftercare</span>
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" aria-hidden="true">
+                        <path fill="#000000" d="M869 487.8L491.2 159.9c-2.9-2.5-6.6-3.9-10.5-3.9h-88.5c-7.4 0-10.8 9.2-5.2 14l350.2 304H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h585.1L386.9 854c-5.6 4.9-2.2 14 5.2 14h91.5c1.9 0 3.8-.7 5.2-2L869 536.2a32.07 32.07 0 0 0 0-48.4z"></path>
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- FAQ Content Views -->
+        <article class="faq-view" id="faqView" aria-live="polite">
+            <button class="back-button" id="backButton" aria-label="Zurück zur Kategorieauswahl">
+                <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" aria-hidden="true" style="transform: rotate(180deg);">
+                    <path fill="currentColor" d="M869 487.8L491.2 159.9c-2.9-2.5-6.6-3.9-10.5-3.9h-88.5c-7.4 0-10.8 9.2-5.2 14l350.2 304H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h585.1L386.9 854c-5.6 4.9-2.2 14 5.2 14h91.5c1.9 0 3.8-.7 5.2-2L869 536.2a32.07 32.07 0 0 0 0-48.4z"></path>
+                </svg>
+                <span>FAQ</span>
+            </button>
+
+            <!-- Anfrage Section -->
+            <section class="faq-section" data-section="anfrage" style="display: none;">
+                <h2 class="visually-hidden">Anfrage FAQs</h2>
+                
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie kann man eine Anfrage bei euch stellen?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Über unser Anfrageformular – mit Motiv, Größe und Stelle – damit wir dein Projekt präzise einschätzen können, oder einfach persönlich bei uns in der Sophienstraße.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Was sollte ich bei einer Anfrage mit schicken?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Referenzbilder, Größenangaben und eine kurze Beschreibung, um deinen Wunsch klar einzuordnen.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie schnell erhalte ich eine Rückmeldung?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Innerhalb weniger Tage, abhängig vom Anfragevolumen und der Komplexität des Motivs.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Kann ich mehrere Ideen einreichen?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ja – verschiedene Motive helfen uns, deinen Stil und die beste Richtung zu bestimmen. Jedoch kannst du auch eine Beratung buchen um dich festzulegen.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Kann ich vorab einen Preis erfahren?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Wir geben eine genaue Angabe zum Festpreis bei jeder Anfrage.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Werden meine Bilder vertraulich behandelt?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ja – alle Inhalte bleiben ausschließlich intern und werden nicht weitergegeben.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Beratung Section -->
+            <section class="faq-section" data-section="beratung" style="display: none;">
+                <h2 class="visually-hidden">Beratung FAQs</h2>
+                
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie läuft eine Beratung ab?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Wir prüfen Motiv, Stil und Platzierung und geben klare Empfehlungen zur Umsetzung.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Brauche ich einen Termin für die Beratung?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ja – damit wir uns Zeit nehmen und dich ohne Wartezeit beraten können.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Kann ich eigene Designs mitbringen?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Natürlich – bringe sehr gerne eigene Ideen mit da sie eine gute Grundlage bieten für uns!</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Helft ihr bei der Motivfindung?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ja – wir entwickeln Vorschläge, die zu deinem Stil und deiner Persönlichkeit passen.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie wähle ich die richtige Körperstelle?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Wir orientieren uns an Form, Muskulatur, Größe und technischer Machbarkeit des Motivs.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Sehe ich das finale Design vorab?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Nein - erst am Termin, jedoch hast du dann noch immer genug Zeit für Anpassungen.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Termin Section -->
+            <section class="faq-section" data-section="termin" style="display: none;">
+                <h2 class="visually-hidden">Termin FAQs</h2>
+                
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie buche ich einen Termin?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Nach Motivprüfung – wir schlagen passende Zeitfenster vor.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Ist eine Anzahlung erforderlich?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ja – sie sichert deinen Termin und wird später verrechnet.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Kann ich meinen Termin verschieben?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ja – rechtzeitig gemeldet, im Rahmen unserer Richtlinien.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie bereite ich mich vor?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ausgeschlafen, ausreichend gegessen, Alkohol und Blutverdünner vermeiden.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie lange dauert eine Session?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Je nach Motiv – von kurz bis mehrstündig, abhängig von Form und Detailgrad.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Kann ich jemanden mitbringen?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Ja – solange Ruhe und Arbeitsfluss gewährleistet bleiben, jedoch sind bei uns leider keine Kinder und Hunde gestattet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Aftercare Section -->
+            <section class="faq-section" data-section="aftercare" style="display: none;">
+                <h2 class="visually-hidden">Aftercare FAQs</h2>
+                
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie pflege ich das Tattoo?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Reinigen, dünn eincremen und die Haut während der Heilung geschützt halten.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie lange dauert die Heilung?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Oberflächlich zwei bis vier Wochen – vollständig im Durchschnitt etwa 6 Wochen.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Darf ich duschen oder schwimmen?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Duschen ja – Schwimmbäder, Seen und Sauna erst nach vollständiger Heilung.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Was tun bei Juckreiz?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Nicht kratzen – sanft eincremen und die Haut ruhig halten.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wie schütze ich mein Tattoo vor der Sonne?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Während der Heilung abdecken – danach konsequent mit SPF schützen.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <button class="faq-question" aria-expanded="false">
+                        <h3 itemprop="name">Wann sollte ich mich bei euch melden?</h3>
+                        <div class="faq-icon" aria-hidden="true"></div>
+                    </button>
+                    <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Bei starken Rötungen, anhaltendem Schmerz oder ungewöhnlichen Reaktionen.</p>
+                    </div>
+                </div>
+            </section>
+        </article>
+
+        <!-- Navigation Links (Always Visible) -->
+        <nav class="nav-links">
+            <button class="nav-link" id="navBeratung">Beratung</button>
+            <button class="nav-link" id="navKontakt">Kontakt</button>
+            <button class="nav-link active" id="navFAQ">FAQ</button>
+        </nav>
+    </div>
+
+    <script>
+        // Navigation Controller
+        const NavigationController = {
+            navBeratung: document.getElementById('navBeratung'),
+            navKontakt: document.getElementById('navKontakt'),
+            navFAQ: document.getElementById('navFAQ'),
+            categoryView: document.getElementById('categoryView'),
+            contactView: document.getElementById('contactView'),
+            faqView: document.getElementById('faqView'),
+            emailButton: document.getElementById('emailButton'),
+            terminButton: document.getElementById('terminButton'),
+            emailFormContainer: document.getElementById('emailFormContainer'),
+            emailForm: document.getElementById('emailForm'),
+
+            init() {
+                this.attachEventListeners();
+            },
+
+            attachEventListeners() {
+                this.navBeratung.addEventListener('click', () => this.showBeratung());
+                this.navKontakt.addEventListener('click', () => this.showKontakt());
+                this.navFAQ.addEventListener('click', () => this.showFAQ());
+                this.emailButton.addEventListener('click', () => this.toggleEmailForm());
+                this.terminButton.addEventListener('click', () => this.openTermin());
+                this.emailForm.addEventListener('submit', (e) => this.handleEmailSubmit(e));
+
+                // Character counter
+                const textarea = document.querySelector('.form-textarea');
+                const charCount = document.querySelector('.char-count');
+                textarea.addEventListener('input', () => {
+                    const remaining = 200 - textarea.value.length;
+                    charCount.textContent = `${remaining} Zeichen übrig`;
+                });
+            },
+
+            showBeratung() {
+                // Redirect to booking page
+                window.location.href = '/consultation';
+            },
+
+            showKontakt() {
+                this.updateNavActive('kontakt');
+                this.hideAllViews();
+                this.contactView.classList.add('active');
+                this.emailFormContainer.classList.remove('active');
+                FAQController.currentCategory = null;
+            },
+
+            showFAQ() {
+                this.updateNavActive('faq');
+                this.hideAllViews();
+                this.categoryView.classList.remove('hidden');
+                this.categoryView.classList.add('active');
+                FAQController.currentCategory = null;
+            },
+
+            hideAllViews() {
+                this.categoryView.classList.add('hidden');
+                this.categoryView.classList.remove('active');
+                this.contactView.classList.remove('active');
+                this.faqView.classList.remove('active');
+            },
+
+            updateNavActive(active) {
+                [this.navBeratung, this.navKontakt, this.navFAQ].forEach(nav => {
+                    nav.classList.remove('active');
+                });
+                
+                if (active === 'kontakt') this.navKontakt.classList.add('active');
+                if (active === 'faq') this.navFAQ.classList.add('active');
+                if (active === 'beratung') this.navBeratung.classList.add('active');
+            },
+
+            toggleEmailForm() {
+                if (this.emailFormContainer.classList.contains('active')) {
+                    this.emailFormContainer.classList.remove('active');
+                } else {
+                    this.emailFormContainer.classList.add('active');
+                    // Smooth scroll to form
+                    setTimeout(() => {
+                        this.emailFormContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+
+            openTermin() {
+                // Redirect to booking page
+                window.location.href = '/booking';
+            },
+
+            handleEmailSubmit(e) {
+                e.preventDefault();
+                const formData = new FormData(this.emailForm);
+                
+                // Create mailto link
+                const subject = formData.get('betreff');
+                const body = `
+Grund: ${formData.get('grund')}
+Details: ${formData.get('details')}
+Anrede: ${formData.get('anrede')}
+Name: ${formData.get('vorname')} ${formData.get('nachname')}
+Email: ${formData.get('email')}
+Telefon: ${formData.get('telefon')}
+Ort: ${formData.get('ort')}
+Land: ${formData.get('land')}
+Sprache: ${formData.get('sprache')}
+
+Nachricht:
+${formData.get('nachricht')}
+                `.trim();
+
+                window.location.href = `mailto:info@mommyimsorry.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            }
+        };
+
+        // FAQ Controller - Mommy I'm Sorry
+        const FAQController = {
+            categoryView: document.getElementById('categoryView'),
+            faqView: document.getElementById('faqView'),
+            backButton: document.getElementById('backButton'),
+            categoryButtons: document.querySelectorAll('.category-btn'),
+            currentCategory: null,
+
+            init() {
+                this.attachEventListeners();
+            },
+
+            attachEventListeners() {
+                this.categoryButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const category = button.dataset.category;
+                        this.showFAQSection(category);
+                    });
+                });
+
+                this.backButton.addEventListener('click', () => {
+                    this.showCategoryView();
+                });
+            },
+
+            showFAQSection(category) {
+                this.currentCategory = category;
+                
+                // Update navigation to show FAQ is active
+                NavigationController.updateNavActive('faq');
+                
+                // Add fading class to all buttons for smooth text fade
+                this.categoryButtons.forEach(btn => btn.classList.add('fading'));
+                
+                // Wait for text fade (400ms), then add gap (300ms), then show FAQ
+                setTimeout(() => {
+                    this.categoryView.classList.add('hidden');
+                    
+                    // Time gap before showing accordions
+                    setTimeout(() => {
+                        this.faqView.classList.add('active');
+                        
+                        document.querySelectorAll('.faq-section').forEach(section => {
+                            section.style.display = section.dataset.section === category ? 'block' : 'none';
+                        });
+
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        
+                        // Remove fading class
+                        this.categoryButtons.forEach(btn => btn.classList.remove('fading'));
+                    }, 300);
+                }, 400);
+
+                this.trackEvent('category_selected', { category });
+            },
+
+            showCategoryView() {
+                this.faqView.classList.remove('active');
+                
+                // Keep FAQ nav active
+                NavigationController.updateNavActive('faq');
+                
+                // Time gap before showing buttons
+                setTimeout(() => {
+                    this.categoryView.classList.remove('hidden');
+                    
+                    document.querySelectorAll('.faq-item.open').forEach(item => {
+                        item.classList.remove('open');
+                        const question = item.querySelector('.faq-question');
+                        if (question) question.setAttribute('aria-expanded', 'false');
+                    });
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 300);
+
+                this.trackEvent('back_to_categories');
+                this.currentCategory = null;
+            },
+
+            trackEvent(eventName, data = {}) {
+                if (typeof gtag === 'function') {
+                    gtag('event', eventName, { event_category: 'FAQ', ...data });
+                }
+                if (typeof fbq === 'function') {
+                    fbq('trackCustom', eventName, data);
+                }
+            }
+        };
+
+        // Accordion Controller
+        const AccordionController = {
+            init() {
+                this.attachEventListeners();
+            },
+
+            attachEventListeners() {
+                document.querySelectorAll('.faq-question').forEach(question => {
+                    question.addEventListener('click', () => {
+                        this.toggleItem(question);
+                    });
+                });
+            },
+
+            toggleItem(questionButton) {
+                const item = questionButton.closest('.faq-item');
+                const wasOpen = item.classList.contains('open');
+                const section = item.closest('.faq-section');
+
+                section.querySelectorAll('.faq-item.open').forEach(openItem => {
+                    openItem.classList.remove('open');
+                    const btn = openItem.querySelector('.faq-question');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                });
+
+                if (!wasOpen) {
+                    item.classList.add('open');
+                    questionButton.setAttribute('aria-expanded', 'true');
+
+                    const questionText = questionButton.querySelector('h3')?.textContent;
+                    const category = FAQController.currentCategory;
+                    
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'faq_opened', {
+                            event_category: 'FAQ',
+                            event_label: questionText,
+                            category: category
+                        });
+                    }
+
+                    if (typeof fbq === 'function') {
+                        fbq('trackCustom', 'FAQOpened', {
+                            question: questionText,
+                            category: category
+                        });
+                    }
+                }
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            NavigationController.init();
+            FAQController.init();
+            AccordionController.init();
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && FAQController.faqView.classList.contains('active')) {
+                FAQController.showCategoryView();
+            }
+        });
+    </script>
+</body>
+</html>
