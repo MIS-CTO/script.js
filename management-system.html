@@ -35184,6 +35184,7 @@
               paymentStatus: apt.payment_status || 'unpaid',
               paymentAmount: apt.payment_amount,
               depositAmount: apt.deposit_amount,
+              sendPaymentReminders: apt.send_payment_reminders,
               totalAmount: apt.total_amount,
               priceEstimate: apt.price_estimate,
               price: apt.price || apt.total_amount || apt.price_estimate,
@@ -36132,12 +36133,23 @@
                             <span style="font-weight:600; font-size:11px; opacity:0.8; white-space:nowrap;">${timeStr}</span>
                             <span style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:right;">${customerLink}</span>
                           </div>
+                          <div style="display:flex; align-items:center; gap:4px; margin-top:2px;">
                           ${paymentInfo ? `
-                            <div style="display:inline-flex; align-items:center; gap:3px; padding:2px 6px; border-radius:4px; background:${paymentInfo.bg}; margin-top:2px;">
+                            <div style="display:inline-flex; align-items:center; gap:3px; padding:2px 6px; border-radius:4px; background:${paymentInfo.bg};">
                               <span style="display:inline-flex; color:${paymentInfo.color};">${paymentInfo.icon}</span>
                               <span style="font-size:9px; font-weight:600; color:${paymentInfo.color}; text-transform:uppercase;">${paymentInfo.label}</span>
                             </div>
-                          ` : ''}`;
+                          ` : ''}
+                          ${evt.sendPaymentReminders === false ? `
+                            <span style="display:inline-flex; align-items:center;" title="Zahlungserinnerungen deaktiviert">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="1.5" style="position:relative;">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                                <line x1="3" y1="3" x2="21" y2="21" stroke="#ff3b30" stroke-width="2"/>
+                              </svg>
+                            </span>
+                          ` : ''}
+                          </div>`;
                       }
 
                       // Attendance indicator for events
@@ -41186,16 +41198,33 @@
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                   Payment & Billing
                 </h4>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
                   <div>
                     <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Price (€)</label>
                     <input type="number" id="editAppointmentPrice" value="${appointment.price || ''}" placeholder="0.00" step="0.01" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
+                  </div>
+                  <div>
+                    <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Anzahlung (€)</label>
+                    <input type="number" id="editAppointmentDeposit" value="${appointment.deposit_amount || ''}" placeholder="0.00" step="0.01" min="0" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box;">
                   </div>
                   <div>
                     <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Payment Status</label>
                     <select id="editAppointmentPaymentStatus" style="width:100%; padding:10px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff; box-sizing:border-box; cursor:pointer;">
                       ${paymentStatusOptions.map(p => `<option value="${p.value}" ${p.value === (appointment.payment_status || 'unpaid') ? 'selected' : ''}>${p.label}</option>`).join('')}
                     </select>
+                  </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                  <label style="display:block; font-size:11px; font-weight:500; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Zahlungserinnerungen</label>
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="editAppointmentReminders" ${appointment.send_payment_reminders !== false ? 'checked' : ''}>
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <span style="font-size:13px; color:#666;">${appointment.send_payment_reminders !== false ? 'Aktiv' : 'Deaktiviert'}</span>
+                  </div>
+                  <div style="font-size:11px; color:#999; margin-top:4px;">
+                    Bei Deaktivierung: Keine Zahlungserinnerungen, keine automatische Stornierung
                   </div>
                 </div>
                 <div style="margin-bottom:12px;">
@@ -41261,9 +41290,11 @@
 
         // Payment Felder
         const price = document.getElementById('editAppointmentPrice').value;
+        const depositAmount = document.getElementById('editAppointmentDeposit').value;
         const paymentStatus = document.getElementById('editAppointmentPaymentStatus').value;
         const paymentIntent = document.getElementById('editAppointmentPaymentIntent').value;
         const paymentNotice = document.getElementById('editAppointmentPaymentNotice').value;
+        const sendPaymentReminders = document.getElementById('editAppointmentReminders').checked;
 
         if (!date || !startTime || !status) {
           alert('Bitte alle Pflichtfelder ausfüllen (Datum, Start Zeit, Status)');
@@ -41293,9 +41324,11 @@
             notice: notice || null,
             // Payment Felder
             price: price ? parseFloat(price) : null,
+            deposit_amount: depositAmount ? parseFloat(depositAmount) : null,
             payment_status: paymentStatus || null,
             payment_intent: paymentIntent || null,
-            payment_notice: paymentNotice || null
+            payment_notice: paymentNotice || null,
+            send_payment_reminders: sendPaymentReminders
           };
 
           const { data: updatedAppointment, error } = await supabase

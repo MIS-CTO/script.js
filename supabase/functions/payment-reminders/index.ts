@@ -24,7 +24,7 @@ async function sendEmail(apiKey, to, subject, html) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Mommy I'm Sorry <booking@mommyimsorry.com>",
+        from: "Mommy I'm Sorry <info@mommyimsorry.com>",
         to: to,
         reply_to: "info@mommyimsorry.com",
         subject: subject,
@@ -390,7 +390,7 @@ Deno.serve(async (req) => {
 
     var fetchResult = await supabase
       .from("requests")
-      .select("*, customer:customers(*), artist:artists(*)")
+      .select("*, customer:customers(*), artist:artists(*), appointment:appointments!requests_appointment_id_fkey(id, send_payment_reminders)")
       .eq("payment_status", "pending")
       .not("stripe_payment_link", "is", null)
       .is("payment_auto_canceled_at", null);
@@ -424,6 +424,12 @@ Deno.serve(async (req) => {
 
         if (!customerEmail) {
           console.log("Skipping (no email):", request.id);
+          continue;
+        }
+
+        // Check if payment reminders are disabled for this appointment
+        if (request.appointment && request.appointment.send_payment_reminders === false) {
+          console.log("Skipping (reminders disabled):", request.id);
           continue;
         }
 

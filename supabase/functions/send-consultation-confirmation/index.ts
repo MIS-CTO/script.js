@@ -142,7 +142,7 @@ serve(async (req: Request) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Mommy I\'m Sorry <noreply@mommyimsorry.com>',
+        from: 'Mommy I\'m Sorry <info@mommyimsorry.com>',
         to: customer_email,
         subject: `Beratung bestätigt – ${appointment_date} bei ${artist_name}`,
         html: emailHtml
