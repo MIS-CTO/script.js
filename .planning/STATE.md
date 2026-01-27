@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-26 | Version: 3.1227**
-**UPDATE: Phase 8 Dashboard Analytics Consolidation**
+**Stand: 2026-01-27 | Version: 3.1388**
+**UPDATE: Payment Reminder Toggle & Deposit Field**
 
 ---
 
@@ -50,6 +50,40 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Feature: Appointment Payment Reminders & Email Config (2026-01-27) ✅ COMPLETE
+
+### Changes
+
+1. **Email Sender Address**: Changed from `booking@` / `noreply@` to `info@mommyimsorry.com` for all payment and reminder emails
+
+2. **Payment Reminders Toggle**: Added ability to disable payment reminders per appointment
+   - New DB column: `appointments.send_payment_reminders` (boolean, default: true)
+   - Toggle switch in appointment edit modal
+   - When disabled: no reminder emails, no automatic cancellation
+   - Crossed-out mail icon shown in calendar when disabled
+
+3. **Deposit Amount Field**: Added deposit tracking per appointment
+   - New DB column: `appointments.deposit_amount` (numeric)
+   - Input field in appointment edit modal (next to price)
+
+### Files Changed
+
+- **Database**: Added `send_payment_reminders` and `deposit_amount` columns
+- `supabase/functions/payment-reminders/index.ts` - Email sender, reminder flag check
+- `supabase/functions/create-payment-link/index.ts` - Email sender
+- `supabase/functions/send-consultation-confirmation/index.ts` - Email sender
+- `management-system.html` - Edit modal UI, save function, calendar rendering
+
+### Edge Functions to Deploy
+
+```bash
+supabase functions deploy payment-reminders --no-verify-jwt
+supabase functions deploy create-payment-link
+supabase functions deploy send-consultation-confirmation
 ```
 
 ---
