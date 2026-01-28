@@ -88,48 +88,97 @@ supabase functions deploy send-consultation-confirmation
 
 ---
 
-## Hotfix: Neukunde Rank Bug - Database Trigger Fix (2026-01-26) ✅ COMPLETE
+## Hotfix: Neukunde Rank Bug - Database Trigger Fix (2026-01-28) ✅ COMPLETE
 
 ### Problem
 
-New customers were getting "Bronze" rank instead of "Neukunde" despite multiple previous fixes. This bug kept recurring.
+New customers were getting "Bronze" rank instead of "Neukunde" despite multiple previous fixes (Phase 5.5, etc.). This bug kept recurring and was marked as "fixed" at least 3 times before.
 
-### Root Cause
+### Root Cause Analysis
 
-**Database trigger `update_customer_rank()` had flawed logic:**
+**The bug had TWO layers that made it appear to "keep coming back":**
+
+#### Layer 1: Database Trigger `update_customer_rank()` (PRIMARY CAUSE)
 
 ```sql
--- The ELSE clause was returning 'Bronze' for 0 completed bookings
+-- BUGGY CODE: The ELSE clause returned 'Bronze' for 0 completed bookings
 IF booking_count >= 11 THEN new_rank := 'Platinum';
 ELSIF booking_count >= 6 THEN new_rank := 'Gold';
 ELSIF booking_count >= 3 THEN new_rank := 'Silver';
-ELSE new_rank := 'Bronze';  -- ❌ BUG: Should have been 'Neukunde'
+ELSE new_rank := 'Bronze';  -- ❌ BUG: 0 bookings = Bronze (should be Neukunde)
 END IF;
 ```
 
-**Why previous fixes didn't work:**
-- JavaScript code fixes were correct (setting 'Neukunde' on customer creation)
-- But the database trigger fired on EVERY request UPDATE
-- For customers with 0 completed bookings, it overwrote their rank to 'Bronze'
-- This is why the bug "kept coming back"
+**Why this was the REAL problem:**
+- This trigger fires on EVERY `requests` table UPDATE
+- Even simple status changes (open_request → pending) triggered it
+- For customers with 0 completed bookings, it OVERWROTE their correct 'Neukunde' rank to 'Bronze'
+- **This is why JavaScript fixes appeared to work initially but "broke" later**
 
-### Solution
+**Timeline of a typical bug occurrence:**
+1. Customer created via booking form → rank = 'Neukunde' ✅ (JS code correct)
+2. Staff updates the request (assigns artist, changes status, etc.)
+3. Trigger fires → counts 0 finished requests → sets rank = 'Bronze' ❌
+4. Customer now has Bronze despite having no completed bookings
+
+#### Layer 2: Add Customer Modal (MINOR)
+
+```javascript
+// Line 37009 - was sending null if no rank selected
+rank: rank || null  // ❌ null overrides DB default
+```
+
+When staff added customers manually without selecting a rank, `null` was sent explicitly, which doesn't use the database default.
+
+### Why Previous Fixes Failed
+
+| Fix Attempt | What It Did | Why It Didn't Work |
+|-------------|-------------|-------------------|
+| Phase 5.5 (2026-01-14) | Fixed `findOrCreateCustomer()` to set 'Neukunde' | Trigger overwrote it on request UPDATE |
+| Stripe webhook fix | Set 'Neukunde' in consultation checkout | Trigger overwrote it on request UPDATE |
+| Database cleanup | Updated 13 rows to 'Neukunde' | Trigger overwrote them again on next request UPDATE |
+
+**The fundamental mistake:** All fixes targeted the INSERT/creation of customers, but the database trigger was corrupting ranks on UPDATE operations. The trigger was never examined until now.
+
+### Solution Applied (2026-01-28)
 
 1. **Fixed database trigger** (Migration: `fix_update_customer_rank_neukunde`):
-   - Added condition: `ELSIF booking_count >= 1 THEN new_rank := 'Bronze'`
-   - Changed ELSE to return 'Neukunde' for 0 completed bookings
+   ```sql
+   -- Added condition: 0 bookings = Neukunde
+   ELSIF booking_count >= 1 THEN new_rank := 'Bronze';
+   ELSE new_rank := 'Neukunde';  -- ✅ FIX
+   ```
 
-2. **Fixed Add Customer modal** (`management-system.html:37009`):
-   - Changed `rank: rank || null` to `rank: rank || 'Neukunde'`
+2. **Fixed Add Customer modal** (`management-system.html:37021`):
+   ```javascript
+   rank: rank || 'Neukunde'  // ✅ Defaults to Neukunde
+   ```
 
 3. **Data cleanup** (Migration: `fix_customers_neukunde_rank_cleanup`):
-   - Fixed 4362 customers with incorrect Bronze rank
-   - Updated to 'Neukunde' where they had no completed bookings
+   - Fixed 4,362 customers with incorrect Bronze rank
+   - Additional cleanup on 2026-01-28: Fixed 6 more customers created before trigger fix propagated
+
+### Verification
+
+```sql
+-- This query should return 0
+SELECT COUNT(*) FROM customers
+WHERE rank = 'Bronze'
+  AND id NOT IN (
+    SELECT DISTINCT customer_id FROM requests
+    WHERE customer_id IS NOT NULL AND status = 'finished'
+  );
+-- Result: 0 ✅
+```
+
+### Lesson Learned
+
+**When debugging "recurring" bugs, always check database triggers.** JavaScript fixes may be correct but can be overwritten by server-side trigger logic that runs on different events (INSERT vs UPDATE).
 
 ### Files Changed
 
 - **Database**: `update_customer_rank()` function
-- `management-system.html` - Line 37009
+- `management-system.html` - Line 37021
 
 ### Migrations Applied
 
