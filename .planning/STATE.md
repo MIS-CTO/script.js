@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-27 | Version: 3.1388**
-**UPDATE: Payment Reminder Toggle & Deposit Field**
+**Stand: 2026-01-28 | Version: 3.1389**
+**UPDATE: Request Action Buttons Click Fix**
 
 ---
 
@@ -51,6 +51,29 @@
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## Hotfix: Request Action Buttons Unclickable (2026-01-28) ✅ COMPLETE
+
+### Problem
+
+After switching between requests multiple times, the "Assign to User" and "Delete" buttons became unclickable. Cursor remained as default (no pointer), no console errors.
+
+### Root Cause
+
+1. **Async race condition**: `showRequestDetail()` is async and awaits `generateActivityCards()` (Supabase query). Rapid switching between requests caused multiple concurrent calls, where a stale older call could finish after a newer one and overwrite `detailEl.innerHTML` with outdated content.
+2. **Fragile inline onclick handlers**: Buttons relied on inline `onclick` attributes generated via innerHTML, which could become detached or broken during async DOM overwrites.
+
+### Solution
+
+1. **Race condition guard**: Added version counter (`showRequestDetailVersion`) so stale async calls abort before setting innerHTML
+2. **Event delegation**: Replaced inline `onclick` attributes with `data-action` / `data-request-id` attributes and a single delegated click listener on `#requestDetail`. This listener survives innerHTML replacements.
+3. **Z-index elevation**: Added `position:relative;z-index:2` to action buttons and their container to ensure they stay above any potential overlay elements.
+
+### Files Changed
+
+- `management-system.html` - `generateActionButtons()`, `showRequestDetail()`, event delegation setup
 
 ---
 

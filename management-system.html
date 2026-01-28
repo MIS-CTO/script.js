@@ -30889,6 +30889,26 @@
         `;
       }
 
+      // Event delegation for request detail action buttons
+      // Buttons use data-action and data-request-id attributes
+      // This delegation pattern survives innerHTML replacements and prevents race conditions
+      (function() {
+        const detailEl = document.getElementById('requestDetail');
+        if (!detailEl) return;
+        detailEl.addEventListener('click', function(e) {
+          const btn = e.target.closest('button[data-action]');
+          if (!btn) return;
+          const action = btn.dataset.action;
+          const reqId = btn.dataset.requestId;
+          if (!action || !reqId) return;
+          const fn = window[action];
+          if (typeof fn === 'function') {
+            e.stopPropagation();
+            fn(reqId);
+          }
+        });
+      })();
+
       /**
        * Generiert die Action-Buttons basierend auf Request-Status
        * @param {Object} request - Der Request
@@ -30911,52 +30931,52 @@
         if (isDeleted) {
           var daysLeft = 5 - Math.floor((Date.now() - new Date(request.deleted_at).getTime()) / (1000 * 60 * 60 * 24));
           buttons.push('<div style="background:#fff3cd;padding:12px 16px;border-radius:8px;margin-bottom:12px;border-left:4px solid #ffc107"><p style="margin:0;font-size:13px;color:#856404">⏳ Wird in <strong>' + Math.max(0, daysLeft) + ' Tagen</strong> permanent geloescht</p></div>');
-          buttons.push('<button onclick="restoreRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#34c759;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Restore</button>');
-          buttons.push('<button onclick="permanentDeleteRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#ff3b30;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Permanent Delete</button>');
-          return '<div style="display:flex;flex-direction:column;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #e5e5e5">' + buttons.join('') + '</div>';
+          buttons.push('<button data-action="restoreRequest" data-request-id="' + request.id + '" style="flex:1;padding:12px 16px;background:#34c759;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Restore</button>');
+          buttons.push('<button data-action="permanentDeleteRequest" data-request-id="' + request.id + '" style="flex:1;padding:12px 16px;background:#ff3b30;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Permanent Delete</button>');
+          return '<div style="display:flex;flex-direction:column;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #e5e5e5;position:relative;z-index:2">' + buttons.join('') + '</div>';
         }
 
         // New Request
         if (status === 'open_request') {
-          buttons.push('<button onclick="assignRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Assign to User</button>');
-          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+          buttons.push('<button data-action="assignRequest" data-request-id="' + request.id + '" style="flex:1;padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Assign to User</button>');
+          buttons.push('<button data-action="softDeleteRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Delete</button>');
         }
 
         // Pending
         else if (status === 'pending') {
-          buttons.push('<button onclick="editRequest(\'' + request.id + '\')" style="padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Edit Request</button>');
+          buttons.push('<button data-action="editRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Edit Request</button>');
 
           if (allDataComplete) {
-            buttons.push('<button onclick="scheduleAppointmentDirect(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Schedule</button>');
-            buttons.push('<button onclick="scheduleWithPayment(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Schedule + Payment</button>');
+            buttons.push('<button data-action="scheduleAppointmentDirect" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Schedule</button>');
+            buttons.push('<button data-action="scheduleWithPayment" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Schedule + Payment</button>');
           }
 
-          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+          buttons.push('<button data-action="softDeleteRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Delete</button>');
         }
 
         // Scheduled
         else if (status === 'scheduled') {
-          buttons.push('<button onclick="editRequestInfos(\'' + request.id + '\')" style="padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Edit Infos</button>');
-          buttons.push('<button onclick="rescheduleRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Reschedule</button>');
+          buttons.push('<button data-action="editRequestInfos" data-request-id="' + request.id + '" style="padding:12px 16px;background:#1d1d1f;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Edit Infos</button>');
+          buttons.push('<button data-action="rescheduleRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#1d1d1f;border:2px solid #1d1d1f;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Reschedule</button>');
 
           // Resend Payment Email Button - only if payment link exists and payment is pending/unpaid
           if (canResendPaymentEmail) {
-            buttons.push('<button onclick="resendPaymentEmail(\'' + request.id + '\')" style="padding:12px 16px;background:#007aff;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">📧 Resend Payment</button>');
+            buttons.push('<button data-action="resendPaymentEmail" data-request-id="' + request.id + '" style="padding:12px 16px;background:#007aff;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">📧 Resend Payment</button>');
           }
 
           if (hasPaymentLink) {
-            buttons.push('<button onclick="storniereRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Stornierung</button>');
+            buttons.push('<button data-action="storniereRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Stornierung</button>');
           } else {
-            buttons.push('<button onclick="cancelRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff9500;border:2px solid #ff9500;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Cancel</button>');
+            buttons.push('<button data-action="cancelRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#ff9500;border:2px solid #ff9500;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Cancel</button>');
           }
 
-          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+          buttons.push('<button data-action="softDeleteRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Delete</button>');
         }
 
         // Canceled
         else if (status === 'canceled') {
-          buttons.push('<button onclick="restoreRequest(\'' + request.id + '\')" style="flex:1;padding:12px 16px;background:#34c759;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Restore</button>');
-          buttons.push('<button onclick="softDeleteRequest(\'' + request.id + '\')" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">Delete</button>');
+          buttons.push('<button data-action="restoreRequest" data-request-id="' + request.id + '" style="flex:1;padding:12px 16px;background:#34c759;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Restore</button>');
+          buttons.push('<button data-action="softDeleteRequest" data-request-id="' + request.id + '" style="padding:12px 16px;background:white;color:#ff3b30;border:2px solid #ff3b30;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;position:relative;z-index:2">Delete</button>');
         }
 
         // Warnung wenn Daten fehlen (bei pending)
@@ -30969,7 +30989,7 @@
           warnings.push('<div style="background:#fff3cd;padding:12px 16px;border-radius:8px;border-left:4px solid #ffc107;margin-top:12px"><p style="margin:0;font-size:13px;color:#856404">Fuer Terminierung fehlt: <strong>' + missing.join(', ') + '</strong></p></div>');
         }
 
-        var buttonsHtml = '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #e5e5e5">' + buttons.join('') + '</div>';
+        var buttonsHtml = '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #e5e5e5;position:relative;z-index:2">' + buttons.join('') + '</div>';
 
         return buttonsHtml + warnings.join('');
       }
@@ -31159,9 +31179,15 @@
       window.generateActivityCards = generateActivityCards;
       window.generateSingleActivityCard = generateSingleActivityCard;
 
+      // Race condition guard for showRequestDetail
+      let showRequestDetailVersion = 0;
+
       async function showRequestDetail(requestId) {
         const request = allRequests.find(r => r.id === requestId);
         if (!request) return;
+
+        // Increment version to invalidate any pending older calls
+        const myVersion = ++showRequestDetailVersion;
 
         // Set selectedRequestId globally for onclick handlers
         selectedRequestId = requestId;
@@ -31208,6 +31234,9 @@
 
         // Activity Cards laden
         var activityCardsHtml = await generateActivityCards(requestId, request);
+
+        // Race condition guard: if a newer call started while we awaited, abort this one
+        if (myVersion !== showRequestDetailVersion) return;
 
         detailEl.innerHTML = `
           <div style="margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #eaeaea;">
