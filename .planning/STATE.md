@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-28 | Version: 3.1389**
-**UPDATE: Request Action Buttons Click Fix**
+**Stand: 2026-01-28 | Version: 3.1390**
+**UPDATE: Payment Email Text Fix & Paid Anzahlung Status**
 
 ---
 
@@ -50,6 +50,34 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Hotfix: Payment Email Text & Paid Anzahlung Status (2026-01-28) ✅ COMPLETE
+
+### Changes
+
+1. **Payment Email Option 1 Text**: Updated the bank transfer description in `create-payment-link` edge function
+   - **Before**: `50% (X EUR) vorab überweisen, 50% am Termin bar`
+   - **After**: `50% (X EUR) vorab überweisen, 50% am Termin bar und Antworte auf diese E-mail mit einem Screenshot der Überweisung zur Bestätigung deiner Zahlung.`
+
+2. **Payment Status Options**: Added `paid_anzahlung` as new payment status in appointment edit modal
+   - **Before**: unpaid, pending (Anzahlung), paid, canceled
+   - **After**: unpaid, pending, paid_anzahlung, paid, canceled
+   - `paid_anzahlung` has orange badge (same style as pending) with label "Anzahlung bezahlt"
+   - `pending` label changed from "Pending (Anzahlung)" to just "Pending"
+   - Both `pending` and `paid_anzahlung` are orange, indicating open balance
+
+### Files Changed
+
+- `supabase/functions/create-payment-link/index.ts` - Email template Option 1 text (Edge Function v33 deployed)
+- `management-system.html` - `paymentStatusOptions` array (line ~41024), `getPaymentStatusBadge` badges (line ~40111)
+
+### Edge Functions Deployed
+
+```bash
+create-payment-link  # v33
 ```
 
 ---
