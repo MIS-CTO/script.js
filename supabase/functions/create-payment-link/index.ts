@@ -149,7 +149,7 @@ function generatePaymentLinkEmail(customerName, dateStr, artistName, totalAmount
                   <tr>
                     <td style="vertical-align:top;">
                       <p style="margin:0 0 12px 0;font-family:Georgia,'Times New Roman',serif;font-size:18px;color:#1a1a1a;">Option 1: Überweisung</p>
-                      <p style="margin:0 0 16px 0;font-size:13px;color:#666666;line-height:1.6;">50% (${halfAmount} EUR) vorab überweisen, 50% am Termin bar</p>
+                      <p style="margin:0 0 16px 0;font-size:13px;color:#666666;line-height:1.6;">50% (${halfAmount} EUR) vorab überweisen, 50% am Termin bar und Antworte auf diese E-mail mit einem Screenshot der Überweisung zur Bestätigung deiner Zahlung.</p>
                       <p style="margin:0 0 4px 0;font-size:13px;color:#1a1a1a;"><strong>Empfänger:</strong> Mommy I'm Sorry Verwaltung GmbH</p>
                       <p style="margin:0 0 4px 0;font-size:13px;color:#1a1a1a;"><strong>IBAN:</strong> LT69 3250 0708 9191 0477</p>
                       <p style="margin:0 0 4px 0;font-size:13px;color:#1a1a1a;"><strong>BIC:</strong> REVOLT21</p>
