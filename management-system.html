@@ -34320,7 +34320,16 @@
           return;
         }
 
+        const pastelColors = ['#FFB5BA','#FFDFBA','#FFFFBA','#BAFFC9','#BAE1FF','#E0BBE4','#D4A5A5','#A5D4D4','#D4D4A5','#C9BFFF','#FFD1DC','#AEC6CF','#B2E2F0','#F0E6B2','#E2B2F0','#B2F0D4','#F0B2B2','#B2C8F0','#F0E2B2','#D4B2F0'];
+        const getPastelColor = (name) => { const idx = (name||'').split('').reduce((a,c) => a + c.charCodeAt(0), 0) % pastelColors.length; return pastelColors[idx]; };
+
         tbody.innerHTML = artists.map(artist => {
+          const pastelBg = getPastelColor(artist.name || '');
+          const initials = (artist.name || '?').charAt(0).toUpperCase();
+          const avatarHtml = artist.profile_picture_url
+            ? `<img src="${artist.profile_picture_url}" style="width:28px; height:28px; border-radius:50%; object-fit:cover; flex-shrink:0;">`
+            : `<div style="width:28px; height:28px; border-radius:50%; background:${pastelBg}; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#1d1d1f; flex-shrink:0;">${initials}</div>`;
+
           // Show location from city_location field (text) or location relation
           const locationDisplay = artist.location && artist.location.name
             ? `<span class="location-badge">${artist.location.name}</span>`
@@ -34334,13 +34343,13 @@
 
           return `
             <tr>
-              <td>${artist.name || '-'}</td>
+              <td><div style="display:flex; align-items:center; gap:10px;">${avatarHtml}<span>${artist.name || '-'}</span></div></td>
               <td>${artist.instagram ? `<span style="color:var(--muted); font-size:13px;">@${artist.instagram}</span>` : '-'}</td>
               <td>${artist.phone || '-'}</td>
               <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
               <td>${locationDisplay}</td>
               <td>${cityDisplay}</td>
-              <td>${artist.style ? `<span class="location-badge">${artist.style}</span>` : '<span style="color:#8E8E93;">-</span>'}</td>
+              <td>${artist.style ? `<span style="color:#4a4a4a; font-size:13px;">${artist.style}</span>` : '<span style="color:#8E8E93;">-</span>'}</td>
               <td><span class="rank-badge rank-${artist.rank || 'Friends'}">${artist.rank || 'Friends'}</span></td>
               <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? 'Aktiv' : 'Inaktiv'}</span></td>
               <td style="text-align:right;">
@@ -37874,7 +37883,6 @@
                       width: 120px;
                       height: 120px;
                       border-radius: 50%;
-                      border: 4px solid white;
                       object-fit: cover;
                     ">
                   ` : `
@@ -37882,7 +37890,6 @@
                       width: 120px;
                       height: 120px;
                       border-radius: 50%;
-                      border: 4px solid white;
                       background: ${pastelBg};
                       display: flex;
                       align-items: center;
@@ -37898,14 +37905,7 @@
 
                   <div style="flex: 1; color: ${artist.background_image_url ? 'white' : '#1d1d1f'};">
                     <h2 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600;">${artist.name}</h2>
-                    ${artist.rank ? `<span style="
-                      display: inline-block;
-                      padding: 6px 12px;
-                      background: ${artist.background_image_url ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)'};
-                      border-radius: 6px;
-                      font-size: 14px;
-                      font-weight: 600;
-                    ">${artist.rank}</span>` : ''}
+                    ${artist.rank ? `<span class="rank-badge rank-${artist.rank}" style="font-size: 13px;">${artist.rank}</span>` : ''}
                     ${artist.is_guest ? `<span style="
                       display: inline-block;
                       padding: 6px 12px;
@@ -37986,8 +37986,8 @@
                         font-size: 14px;
                         font-weight: 600;
                         cursor: pointer;
-                        color: #007aff;
-                        border-bottom: 2px solid #007aff;
+                        color: #1d1d1f;
+                        border-bottom: 2px solid #1d1d1f;
                         margin-bottom: -2px;
                         transition: all 0.2s;
                       ">Completed Projects</button>
@@ -38297,8 +38297,8 @@
         const activeBtn = document.querySelector('.artist-profile-tab[data-tab="' + tab + '"]');
         if (activeBtn) {
           activeBtn.classList.add('active');
-          activeBtn.style.borderBottomColor = '#007aff';
-          activeBtn.style.color = '#007aff';
+          activeBtn.style.borderBottomColor = '#1d1d1f';
+          activeBtn.style.color = '#1d1d1f';
         }
 
         if (tab === 'projects') {
