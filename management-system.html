@@ -7086,7 +7086,7 @@
     /* Artist Type Badges */
     .type-badge {
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 500;
     }
@@ -7104,7 +7104,7 @@
     /* Status Badges */
     .status-badge {
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 500;
     }
@@ -7124,7 +7124,7 @@
       background: var(--location-light);
       color: var(--location-primary);
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 500;
     }
@@ -16871,6 +16871,7 @@
           <th>Type</th>
           <th>Location</th>
           <th>City</th>
+          <th>Style</th>
           <th>Rank</th>
           <th>Status</th>
           <th style="text-align:right;">Actions</th>
@@ -34315,7 +34316,7 @@
         if (!tbody) return;
 
         if (artists.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:40px; color:var(--muted);">Keine Artists gefunden. Versuche andere Filter-Einstellungen.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:40px; color:var(--muted);">Keine Artists gefunden. Versuche andere Filter-Einstellungen.</td></tr>';
           return;
         }
 
@@ -34339,6 +34340,7 @@
               <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
               <td>${locationDisplay}</td>
               <td>${cityDisplay}</td>
+              <td>${artist.style ? `<span class="location-badge">${artist.style}</span>` : '<span style="color:#8E8E93;">-</span>'}</td>
               <td><span class="rank-badge rank-${artist.rank || 'Friends'}">${artist.rank || 'Friends'}</span></td>
               <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? 'Aktiv' : 'Inaktiv'}</span></td>
               <td style="text-align:right;">
@@ -37209,8 +37211,8 @@
               </h2>
 
               <form id="customEditArtistForm" onsubmit="saveArtistChanges(event)">
-                <!-- Basic Info -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <!-- Row 1: Name, Email, Phone, Instagram -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                   <div>
                     <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Name</label>
                     <input type="text" id="customEditArtistName" value="${artist.name || ''}" required style="
@@ -37222,10 +37224,31 @@
                       margin-top: 4px;
                     ">
                   </div>
-
                   <div>
                     <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Email</label>
                     <input type="email" id="customEditArtistEmail" value="${artist.email || ''}" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                    ">
+                  </div>
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Phone</label>
+                    <input type="text" id="customEditArtistPhone" value="${artist.phone || ''}" placeholder="+49..." style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                    ">
+                  </div>
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Instagram</label>
+                    <input type="text" id="customEditArtistInstagram" value="${artist.instagram || ''}" placeholder="@username" style="
                       width: 100%;
                       padding: 10px 12px;
                       border: 1px solid rgba(0,0,0,0.1);
@@ -37246,8 +37269,6 @@
                       <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">
                         Profile Picture (Square)
                       </label>
-
-                      <!-- Current Image -->
                       <div id="currentProfilePic" style="
                         width: 100%;
                         height: 200px;
@@ -37264,14 +37285,12 @@
                       ">
                         ${!artist.profile_picture_url ? 'No Image' : ''}
                       </div>
-
-                      <!-- Upload & Delete Buttons -->
                       <div style="display: flex; gap: 8px;">
                         <input type="file" id="profilePicInput" accept="image/*" style="display: none;" onchange="handleProfilePicUpload(event)">
                         <button type="button" onclick="document.getElementById('profilePicInput').click()" style="
                           flex: 1;
                           padding: 10px;
-                          background: #007AFF;
+                          background: #1d1d1f;
                           color: white;
                           border: none;
                           border-radius: 8px;
@@ -37299,8 +37318,6 @@
                       <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">
                         Background Image (Landscape)
                       </label>
-
-                      <!-- Current Image -->
                       <div id="currentBackgroundImg" style="
                         width: 100%;
                         height: 200px;
@@ -37317,14 +37334,12 @@
                       ">
                         ${!artist.background_image_url ? 'No Image' : ''}
                       </div>
-
-                      <!-- Upload & Delete Buttons -->
                       <div style="display: flex; gap: 8px;">
                         <input type="file" id="backgroundImgInput" accept="image/*" style="display: none;" onchange="handleBackgroundImgUpload(event)">
                         <button type="button" onclick="document.getElementById('backgroundImgInput').click()" style="
                           flex: 1;
                           padding: 10px;
-                          background: #007AFF;
+                          background: #1d1d1f;
                           color: white;
                           border: none;
                           border-radius: 8px;
@@ -37349,7 +37364,7 @@
                   </div>
                 </div>
 
-                <!-- Bio & Description -->
+                <!-- Short Description -->
                 <div style="margin-bottom: 16px;">
                   <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Short Description</label>
                   <input type="text" id="customEditArtistShortDesc" value="${artist.short_description || ''}" maxlength="150" style="
@@ -37363,6 +37378,7 @@
                   <small style="color: #86868b; font-size: 11px;">Max 150 characters for Webflow Waitlist Display</small>
                 </div>
 
+                <!-- Bio -->
                 <div style="margin-bottom: 16px;">
                   <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Bio</label>
                   <textarea id="customEditArtistBio" rows="4" style="
@@ -37377,8 +37393,26 @@
                   ">${artist.bio || ''}</textarea>
                 </div>
 
-                <!-- Type, City & Location (Studio) -->
+                <!-- Rank, Type, Style -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Rank</label>
+                    <select id="customEditArtistRank" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                      background: white;
+                    ">
+                      <option value="">No Rank</option>
+                      <option value="Friends" ${artist.rank === 'Friends' ? 'selected' : ''}>Friends (70/30)</option>
+                      <option value="Crew" ${artist.rank === 'Crew' ? 'selected' : ''}>Crew (75/25)</option>
+                      <option value="Fam" ${artist.rank === 'Fam' ? 'selected' : ''}>Fam (80/20)</option>
+                      <option value="VIP" ${artist.rank === 'VIP' ? 'selected' : ''}>VIP (80/20)</option>
+                    </select>
+                  </div>
                   <div>
                     <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Type</label>
                     <select id="customEditArtistType" style="
@@ -37394,26 +37428,21 @@
                       <option value="guest" ${artist.is_guest ? 'selected' : ''}>Guest</option>
                     </select>
                   </div>
-
                   <div>
-                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">City</label>
-                    <select id="customEditArtistCityLocation" style="
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Style</label>
+                    <input type="text" id="customEditArtistStyle" value="${artist.style || ''}" placeholder="e.g. Realism, Traditional" style="
                       width: 100%;
                       padding: 10px 12px;
                       border: 1px solid rgba(0,0,0,0.1);
                       border-radius: 8px;
                       font-size: 14px;
                       margin-top: 4px;
-                      background: white;
                     ">
-                      <option value="">-- Select City --</option>
-                      <option value="Stuttgart" ${artist.city_location === 'Stuttgart' ? 'selected' : ''}>Stuttgart</option>
-                      <option value="Köln" ${artist.city_location === 'Köln' ? 'selected' : ''}>Köln</option>
-                      <option value="Berlin" ${artist.city_location === 'Berlin' ? 'selected' : ''}>Berlin</option>
-                      <option value="München" ${artist.city_location === 'München' ? 'selected' : ''}>München</option>
-                    </select>
                   </div>
+                </div>
 
+                <!-- Location, City -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                   <div>
                     <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location (Studio)</label>
                     <select id="customEditArtistLocation" style="
@@ -37433,36 +37462,9 @@
                       <option value="0e2b095b-1559-4673-97bd-fff6edcf1139" ${artist.location_id === '0e2b095b-1559-4673-97bd-fff6edcf1139' ? 'selected' : ''}>seventyone</option>
                     </select>
                   </div>
-                </div>
-
-                <!-- Phone, Instagram, Rank & Style -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                   <div>
-                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Phone</label>
-                    <input type="text" id="customEditArtistPhone" value="${artist.phone || ''}" placeholder="+49..." style="
-                      width: 100%;
-                      padding: 10px 12px;
-                      border: 1px solid rgba(0,0,0,0.1);
-                      border-radius: 8px;
-                      font-size: 14px;
-                      margin-top: 4px;
-                    ">
-                  </div>
-                  <div>
-                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Instagram</label>
-                    <input type="text" id="customEditArtistInstagram" value="${artist.instagram || ''}" placeholder="@username" style="
-                      width: 100%;
-                      padding: 10px 12px;
-                      border: 1px solid rgba(0,0,0,0.1);
-                      border-radius: 8px;
-                      font-size: 14px;
-                      margin-top: 4px;
-                    ">
-                  </div>
-
-                  <div>
-                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Rank</label>
-                    <select id="customEditArtistRank" style="
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">City</label>
+                    <select id="customEditArtistCityLocation" style="
                       width: 100%;
                       padding: 10px 12px;
                       border: 1px solid rgba(0,0,0,0.1);
@@ -37471,24 +37473,12 @@
                       margin-top: 4px;
                       background: white;
                     ">
-                      <option value="">No Rank</option>
-                      <option value="Friends" ${artist.rank === 'Friends' ? 'selected' : ''}>Friends (70/30)</option>
-                      <option value="Crew" ${artist.rank === 'Crew' ? 'selected' : ''}>Crew (75/25)</option>
-                      <option value="Fam" ${artist.rank === 'Fam' ? 'selected' : ''}>Fam (80/20)</option>
-                      <option value="VIP" ${artist.rank === 'VIP' ? 'selected' : ''}>VIP (80/20)</option>
+                      <option value="">-- Select City --</option>
+                      <option value="Stuttgart" ${artist.city_location === 'Stuttgart' ? 'selected' : ''}>Stuttgart</option>
+                      <option value="Köln" ${artist.city_location === 'Köln' ? 'selected' : ''}>Köln</option>
+                      <option value="Berlin" ${artist.city_location === 'Berlin' ? 'selected' : ''}>Berlin</option>
+                      <option value="München" ${artist.city_location === 'München' ? 'selected' : ''}>München</option>
                     </select>
-                  </div>
-
-                  <div>
-                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Style</label>
-                    <input type="text" id="customEditArtistStyle" value="${artist.style || ''}" placeholder="e.g. Realism, Traditional" style="
-                      width: 100%;
-                      padding: 10px 12px;
-                      border: 1px solid rgba(0,0,0,0.1);
-                      border-radius: 8px;
-                      font-size: 14px;
-                      margin-top: 4px;
-                    ">
                   </div>
                 </div>
 
@@ -37830,26 +37820,26 @@
                 position: absolute;
                 top: 16px;
                 right: 16px;
-                background: rgba(0,0,0,0.5);
-                backdrop-filter: blur(10px);
+                background: none;
                 border: none;
-                color: white;
+                color: ${artist.background_image_url ? 'white' : '#1d1d1f'};
                 width: 32px;
                 height: 32px;
                 border-radius: 50%;
-                font-size: 18px;
+                font-size: 20px;
                 cursor: pointer;
                 z-index: 1000;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 transition: all 0.2s;
-              " onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">×</button>
+                ${artist.background_image_url ? "text-shadow: 0 1px 3px rgba(0,0,0,0.5);" : ""}
+              " onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">×</button>
 
               <!-- Background Header -->
               <div style="
                 height: 300px;
-                background: ${artist.background_image_url ? `url('${artist.background_image_url}')` : 'linear-gradient(135deg, #e0e0e0 0%, #9e9e9e 100%)'};
+                background: ${artist.background_image_url ? `url('${artist.background_image_url}')` : 'white'};
                 background-size: cover;
                 background-position: center;
                 position: relative;
@@ -37857,18 +37847,29 @@
                 align-items: flex-end;
                 padding: 30px;
               ">
-                <div style="
+                ${artist.background_image_url ? `<div style="
                   position: absolute;
                   top: 0;
                   left: 0;
                   right: 0;
                   bottom: 0;
                   background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);
-                "></div>
+                "></div>` : `<div style="
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.05) 100%);
+                "></div>`}
 
                 <!-- Profile Picture & Name -->
                 <div style="position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 20px; width: 100%;">
-                  ${artist.profile_picture_url ? `
+                  ${(() => {
+                    const pastelColors = ['#FFB5BA','#FFDFBA','#FFFFBA','#BAFFC9','#BAE1FF','#E0BBE4','#D4A5A5','#A5D4D4','#D4D4A5','#C9BFFF','#FFD1DC','#AEC6CF','#B2E2F0','#F0E6B2','#E2B2F0','#B2F0D4','#F0B2B2','#B2C8F0','#F0E2B2','#D4B2F0'];
+                    const idx = artist.name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % pastelColors.length;
+                    const pastelBg = pastelColors[idx];
+                    return artist.profile_picture_url ? `
                     <img src="${artist.profile_picture_url}" style="
                       width: 120px;
                       height: 120px;
@@ -37882,25 +37883,25 @@
                       height: 120px;
                       border-radius: 50%;
                       border: 4px solid white;
-                      background: rgba(255,255,255,0.2);
+                      background: ${pastelBg};
                       display: flex;
                       align-items: center;
                       justify-content: center;
                       font-size: 48px;
-                      color: white;
+                      color: #1d1d1f;
                       font-weight: 600;
                     ">
                       ${artist.name.charAt(0).toUpperCase()}
                     </div>
-                  `}
+                  `;
+                  })()}
 
-                  <div style="flex: 1; color: white;">
+                  <div style="flex: 1; color: ${artist.background_image_url ? 'white' : '#1d1d1f'};">
                     <h2 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600;">${artist.name}</h2>
                     ${artist.rank ? `<span style="
                       display: inline-block;
                       padding: 6px 12px;
-                      background: rgba(255,255,255,0.2);
-                      backdrop-filter: blur(10px);
+                      background: ${artist.background_image_url ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)'};
                       border-radius: 6px;
                       font-size: 14px;
                       font-weight: 600;
@@ -37908,8 +37909,7 @@
                     ${artist.is_guest ? `<span style="
                       display: inline-block;
                       padding: 6px 12px;
-                      background: rgba(90, 200, 250, 0.3);
-                      backdrop-filter: blur(10px);
+                      background: ${artist.background_image_url ? 'rgba(90, 200, 250, 0.3)' : 'rgba(90, 200, 250, 0.2)'};
                       border-radius: 6px;
                       font-size: 14px;
                       font-weight: 600;
@@ -38027,24 +38027,17 @@
                   </div>
                 </div>
 
-                <!-- Actions -->
-                <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-                  <button onclick="closeViewArtistModal()" style="
-                    padding: 12px 24px;
-                    background: #1d1d1f;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                  ">Close</button>
-                </div>
               </div>
             </div>
           </div>
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Close on click outside
+        document.getElementById('customViewArtistModal').addEventListener('click', function(e) {
+          if (e.target === this) closeViewArtistModal();
+        });
 
         // Load artist projects asynchronously
         try {
