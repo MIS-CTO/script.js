@@ -8,9 +8,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    @font-face { font-family: "Town 80"; src: url("https://cdn.prod.website-files.com/68b5db0f0b26c2723e743d3f/68c1c01886c4c9f12d2c8270_Town80Text-Book.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Town 80"; src: url("https://cdn.prod.website-files.com/68b5db0f0b26c2723e743d3f/68c1c01839b39a437aef50b9_Town80Text-BookItalic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: "Town 80"; src: url("https://cdn.prod.website-files.com/68b5db0f0b26c2723e743d3f/68c1c0183a1db3419b61d312_Town80Text-Medium.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Town 80"; src: url("https://cdn.prod.website-files.com/68b5db0f0b26c2723e743d3f/68c1c01882f4cb4556b96d37_Town80Text-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Town 80"; src: url("https://cdn.prod.website-files.com/68b5db0f0b26c2723e743d3f/68c1c01862dc7cb8c4cee795_Town80Text-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: auto !important; min-height: auto !important; overflow: visible !important; overflow-y: visible !important; }
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: #ffffff; color: #1d1d1f; line-height: 1.5; padding: 0; margin: 0; }
+    body { font-family: "Town 80", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: #ffffff; color: #1d1d1f; line-height: 1.5; padding: 0; margin: 0; }
     .container { max-width: 100%; width: 100%; margin: 0; padding: 0; height: auto !important; max-height: none !important; overflow: visible !important; }
     .header { display: none; }
     .filter-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; justify-content: flex-start; }
@@ -510,13 +515,14 @@
 
         if (error) throw error;
 
-        // Konvertiere start/end zu Zeiten für die Slot-Berechnung
+        // Konvertiere start/end zu Zeiten — DB speichert als UTC-Strings die lokale Zeiten darstellen
         const appointments = (data || []).map(apt => {
-          const startDate = new Date(apt.start);
-          const endDate = new Date(apt.end);
+          // Parse time directly from DB string (e.g. "2026-01-29 12:00:00+00") to avoid timezone shift
+          const sMatch = apt.start.match(/(\d{2}):(\d{2}):\d{2}/);
+          const eMatch = apt.end.match(/(\d{2}):(\d{2}):\d{2}/);
           return {
-            scheduled_start: startDate.getHours().toString().padStart(2,'0') + ':' + startDate.getMinutes().toString().padStart(2,'0'),
-            scheduled_end: endDate.getHours().toString().padStart(2,'0') + ':' + endDate.getMinutes().toString().padStart(2,'0')
+            scheduled_start: sMatch ? `${sMatch[1]}:${sMatch[2]}` : '00:00',
+            scheduled_end: eMatch ? `${eMatch[1]}:${eMatch[2]}` : '00:00'
           };
         });
 
