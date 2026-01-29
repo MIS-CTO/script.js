@@ -22,17 +22,28 @@
     .collection-header { width: 100%; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
     .collection-title { font-size: clamp(0.75rem, 1.5vw, 0.875rem); font-weight: 500; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
     .collection-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%; }
-    .wannado-card { width: 100%; aspect-ratio: 2/3; border-radius: 0; background: white; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: none; cursor: pointer; }
-    .artist-profile-card { aspect-ratio: 2/3; position: relative; width: 100%; overflow: hidden; cursor: pointer; }
-    .wannado-card:hover { transform: none; box-shadow: none; }
-    .wannado-image { width: 100%; flex: 1; object-fit: contain; background: #f5f5f5; border-radius: 0; min-height: 0; }
-    .wannado-image-placeholder { width: 100%; flex: 1; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 64px; border-radius: 0; min-height: 0; }
-    .wannado-info { padding: 12px 16px; flex-shrink: 0; }
-    .wannado-collection { font-size: 12px; color: #86868b; margin-bottom: 4px; }
-    .wannado-name { font-size: clamp(0.875rem, 2vw, 1.125rem); font-weight: 600; margin-bottom: 8px; }
-    .wannado-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-    .wannado-price { font-size: 14px; font-weight: 400; color: #1d1d1f; }
-    .wannado-duration { font-size: 14px; font-weight: 400; color: #86868b; }
+    .wannado-card { width: 100%; aspect-ratio: 3/4; position: relative; overflow: hidden; cursor: pointer; }
+    .artist-profile-card { aspect-ratio: 3/4; position: relative; width: 100%; overflow: hidden; cursor: pointer; }
+    @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+    .collection-cards > * { animation: fadeInLeft .4s cubic-bezier(.25,.1,.25,1) forwards; opacity: 0; }
+    .collection-cards > *:nth-child(1) { animation-delay: 0s; }
+    .collection-cards > *:nth-child(2) { animation-delay: .05s; }
+    .collection-cards > *:nth-child(3) { animation-delay: .1s; }
+    .collection-cards > *:nth-child(4) { animation-delay: .15s; }
+    .collection-cards > *:nth-child(5) { animation-delay: .2s; }
+    .collection-cards > *:nth-child(6) { animation-delay: .25s; }
+    .collection-cards > *:nth-child(7) { animation-delay: .3s; }
+    .collection-cards > *:nth-child(8) { animation-delay: .35s; }
+    .wannado-card .card-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+    .wannado-card .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+    .wannado-card:hover .card-image img { transform: scale(1.05); }
+    .wannado-card .card-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(0,0,0,.8) 0%, rgba(0,0,0,.4) 30%, rgba(0,0,0,0) 60%); z-index: 5; pointer-events: none; }
+    .wannado-card .card-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; z-index: 10; display: flex; flex-direction: column; gap: 4px; }
+    .wannado-card .card-name { margin: 0; font-size: 1.2rem; font-weight: 500; color: #fff; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,.3); }
+    .wannado-card .card-meta { display: flex; justify-content: space-between; align-items: center; }
+    .wannado-card .card-price { font-size: .9rem; font-weight: 500; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+    .wannado-card .card-duration { font-size: .8rem; color: #999; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+    .wannado-image-placeholder { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #f0f0f0; }
     .empty-state { text-align: center; padding: 60px 20px; color: #86868b; }
     .empty-state-icon { font-size: 64px; margin-bottom: 16px; }
     .loading { text-align: center; padding: 60px 20px; }
@@ -94,55 +105,43 @@
     .summary-row.total { border-top: 1px solid rgba(0,0,0,0.1); margin-top: 8px; padding-top: 16px; font-size: 18px; font-weight: 700; }
     .summary-row.total .value { color: #333; }
     /* Artist Profile Card */
-    .artist-profile-card img { width: 100%; height: 100%; object-fit: cover; }
+    .artist-profile-card .card-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+    .artist-profile-card .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s, opacity .5s; }
+    .artist-profile-card .card-image .hover-img { position: absolute; top: 0; left: 0; opacity: 0; z-index: 2; }
+    .artist-profile-card:hover .card-image .hover-img { opacity: 1; }
+    .artist-profile-card:hover .card-image img:first-child { transform: scale(1.05); }
+    .artist-profile-card .card-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(0,0,0,.8) 0%, rgba(0,0,0,.4) 30%, rgba(0,0,0,0) 60%); z-index: 5; pointer-events: none; }
+    .artist-profile-card .card-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; z-index: 10; display: flex; flex-direction: column; gap: 12px; }
+    .artist-profile-card .card-info { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .artist-profile-card .card-name { margin: 0; font-size: 1.4rem; font-weight: 500; color: #fff; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,.3); }
+    .artist-profile-card .card-style { margin: 0; font-size: .8rem; color: #999; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+    .artist-profile-card .card-buttons { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .artist-profile-btn { background: transparent; color: #fff; border: 1px solid #fff; padding: 8px 14px; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px; text-decoration: none; }
+    .artist-profile-btn:hover { background: rgba(255,255,255,.1); }
+    .artist-profile-btn svg { width: 14px; height: 14px; }
     /* Sold Out Overlay */
     .wannado-card.sold-out { pointer-events: none; }
-    .wannado-card.sold-out .wannado-image, .wannado-card.sold-out .wannado-image-placeholder { opacity: 0.5; filter: grayscale(50%); }
-    .sold-out-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; z-index: 5; }
-    .artist-profile-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-    .artist-profile-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0) 100%); }
-    .artist-profile-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .artist-profile-left { display: flex; flex-direction: column; gap: 4px; }
-    .artist-profile-label { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 400; }
-    .artist-profile-name { font-size: clamp(1.25rem, 3vw, 1.75rem); font-weight: 600; color: white; }
-    .visit-profile-btn { display: flex; align-items: center; gap: 8px; padding: clamp(0.375rem, 1vw, 0.625rem) clamp(0.75rem, 2vw, 1rem); border: 1px solid rgba(255,255,255,0.8); border-radius: 0; color: white; font-size: clamp(0.625rem, 1.5vw, 0.875rem); font-weight: 500; background: transparent; transition: all 0.2s ease; }
-    .visit-profile-btn:hover { background: #333; border-color: #333; color: white; }
-    .visit-profile-btn .arrow { font-size: clamp(0.875rem, 2vw, 1.125rem); }
+    .wannado-card.sold-out .card-image img, .wannado-card.sold-out .wannado-image-placeholder { opacity: 0.5; filter: grayscale(50%); }
+    .sold-out-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; z-index: 15; }
     @media (max-width: 1024px) {
       .collection-cards { grid-template-columns: repeat(3, 1fr); }
     }
-    /* Mobile text row styles */
-    .name-price-row { display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%; }
-    .artist-mobile-info { display: none; }
-    @media (max-width: 768px) {
+    @media (max-width: 991px) {
       .collection-cards { grid-template-columns: repeat(2, 1fr); }
-      .container { padding: 16px; }
-      /* Mobile: 2:3 image ratio */
-      .wannado-card { aspect-ratio: unset; }
-      .wannado-image { aspect-ratio: 2/3; width: 100%; height: auto; object-fit: cover; flex: none; }
-      .wannado-image-placeholder { aspect-ratio: 2/3; flex: none; }
-      /* Mobile: 2-row text layout for wannado cards */
-      .wannado-info { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
-      .wannado-duration { font-size: 0.75rem; color: #86868b; order: -1; }
-      .wannado-name { font-size: 0.875rem; font-weight: 500; margin-bottom: 0; }
-      .wannado-price { font-size: 0.875rem; font-weight: 400; }
-      .wannado-meta { display: none; }
-      .name-price-row { display: flex; }
-      /* Mobile: Artist card 2-row text layout */
-      .artist-profile-card { aspect-ratio: unset; display: flex; flex-direction: column; }
-      .artist-profile-card .artist-profile-bg { position: relative; aspect-ratio: 2/3; width: 100%; height: auto; }
-      .artist-profile-overlay { display: none; }
-      .artist-profile-content { display: none; }
-      .artist-mobile-info { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
-      .artist-mobile-label { font-size: 0.75rem; color: #86868b; }
-      .artist-mobile-row { display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%; }
-      .artist-mobile-name { font-size: 0.875rem; font-weight: 500; color: #1d1d1f; }
-      .artist-mobile-type { font-size: 0.875rem; font-weight: 400; color: #86868b; }
+      .artist-profile-card .card-content { padding: 16px; gap: 10px; }
+      .artist-profile-card .card-name { font-size: 1.2rem; }
+      .artist-profile-card .card-style { font-size: .7rem; }
+      .artist-profile-btn { padding: 6px 10px; font-size: 12px; }
+      .wannado-card .card-content { padding: 16px; }
+      .wannado-card .card-name { font-size: 1rem; }
+    }
+    @media (max-width: 480px) {
+      .artist-profile-card .card-buttons { flex-direction: column; gap: 6px; }
+      .artist-profile-btn { width: 100%; justify-content: center; }
       .modal { border-radius: 12px; max-height: 95vh; margin-top: auto; }
       .selected-wannado { flex-direction: column; align-items: center; text-align: center; }
       .form-row { grid-template-columns: 1fr; }
       .time-slots { grid-template-columns: repeat(2, 1fr); }
-      .visit-profile-btn { display: none !important; }
       .filter-tab:not(.active) { color: #000000 !important; }
       .filter-tab.active { color: #ffffff !important; }
     }
@@ -245,6 +244,19 @@
     const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-wannado-checkout`;
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const PROFILE_BASE_URL = 'https://www.mommyimsorry.com/residents/stuttgart';
+    const SLUG_MAP = {
+      'ata': 'ata', 'ben': 'ben', 'lily.shy': 'lily-shy', 'luka': 'luca',
+      'marina art': 'marina', 'mary': 'maryrain', 'mela': 'mela',
+      'silas': 'silas', 'toriatattooo': 'toria'
+    };
+    function getArtistSlug(name) {
+      if (!name) return '';
+      const lower = name.toLowerCase().trim();
+      return SLUG_MAP[lower] || lower.replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    }
+    const ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
+
     let allWannados = [], allArtists = [], selectedWannado = null, selectedDate = null, selectedTime = null, currentMonth = new Date(), artistAvailability = {};
 
     document.addEventListener('DOMContentLoaded', async () => { await loadWannados(); renderCalendar(); });
@@ -253,7 +265,7 @@
       try {
         const { data, error } = await supabaseClient
           .from('wannados')
-          .select('*, artist:artists(id, name, profile_picture_url, instagram), collection:wannado_collections!inner(id, name, is_active)')
+          .select('*, artist:artists(id, name, profile_picture_url, background_image_url, instagram, style), collection:wannado_collections!inner(id, name, is_active)')
           .eq('collection.is_active', true)
           .in('status', ['available', 'sold'])
           .order('sort_order', { ascending: true });
@@ -285,7 +297,7 @@
       let filtered = filter === 'all' ? allWannados : allWannados.filter(w => w.artist?.id === filter);
 
       if (!filtered.length) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎨</div><h3>Keine Motive verfügbar</h3></div>`;
+        container.innerHTML = `<div class="empty-state"><h3>Keine Motive verfügbar</h3></div>`;
         return;
       }
 
@@ -319,24 +331,30 @@
         // Cards container
         html += `<div class="collection-cards">`;
 
-        // Artist Profile Card (first in each collection)
+        // Artist Profile Card (resident card pattern)
+        const artistName = artist?.name || 'Artist';
+        const artistStyle = artist?.style || 'Various Styles';
+        const bg = artist?.background_image_url || '';
+        const pfp = artist?.profile_picture_url || '';
+        const img1 = bg || pfp || '';
+        const img2 = bg && pfp ? pfp : '';
+        const slug = getArtistSlug(artistName);
+        const profileLink = `${PROFILE_BASE_URL}/${slug}`;
+
         html += `
-          <div class="artist-profile-card" onclick="window.open('${artist?.instagram ? 'https://instagram.com/' + artist.instagram.replace('@','') : '#'}', '_blank')">
-            <img src="${artist?.profile_picture_url || ''}" alt="${artist?.name}" class="artist-profile-bg">
-            <div class="artist-profile-overlay"></div>
-            <div class="artist-profile-content">
-              <div class="artist-profile-left">
-                <span class="artist-profile-label">Resident</span>
-                <span class="artist-profile-name">${artist?.name || 'Artist'}</span>
-              </div>
-              <div class="artist-profile-right">
-                <span class="visit-profile-btn">Visit profile <span class="arrow">→</span></span>
-              </div>
+          <div class="artist-profile-card">
+            <div class="card-image">
+              <img src="${img1}" alt="${artistName}" loading="lazy">
+              ${img2 ? `<img class="hover-img" src="${img2}" alt="${artistName}" loading="lazy">` : ''}
             </div>
-            <div class="artist-mobile-info">
-              <div class="artist-mobile-row">
-                <span class="artist-mobile-name">${artist?.name || 'Artist'}</span>
-                <span class="artist-mobile-type">Resident</span>
+            <div class="card-overlay"></div>
+            <div class="card-content">
+              <div class="card-info">
+                <h2 class="card-name">${artistName}</h2>
+                <p class="card-style">${artistStyle}</p>
+              </div>
+              <div class="card-buttons">
+                <a href="${profileLink}" target="_blank" class="artist-profile-btn" onclick="event.stopPropagation()">View Profile ${ARROW_SVG}</a>
               </div>
             </div>
           </div>
@@ -350,14 +368,15 @@
             <div class="wannado-card ${isSold ? 'sold-out' : ''}" ${!isSold ? `onclick="selectWannado('${w.id}')"` : ''}>
               ${isSold ? '<div class="sold-out-badge">Sold Out</div>' : ''}
               ${w.image_url
-                ? `<img src="${w.image_url}" class="wannado-image">`
-                : `<div class="wannado-image-placeholder">🎨</div>`
+                ? `<div class="card-image"><img src="${w.image_url}" alt="${w.name}" loading="lazy"></div>`
+                : `<div class="wannado-image-placeholder"></div>`
               }
-              <div class="wannado-info">
-                <span class="wannado-duration">ca. ${w.duration_hours}h</span>
-                <div class="name-price-row">
-                  <span class="wannado-name">${w.name}</span>
-                  <span class="wannado-price">${Number(w.price).toFixed(0)}€</span>
+              <div class="card-overlay"></div>
+              <div class="card-content">
+                <span class="card-duration">ca. ${w.duration_hours}h</span>
+                <h3 class="card-name">${w.name}</h3>
+                <div class="card-meta">
+                  <span class="card-price">${Number(w.price).toFixed(0)}€</span>
                 </div>
               </div>
             </div>
@@ -380,7 +399,7 @@
       selectedWannado = allWannados.find(w => w.id === id);
       if (!selectedWannado) return;
       selectedDate = null; selectedTime = null; currentMonth = new Date();
-      document.getElementById('selectedWannadoPreview').innerHTML = `${selectedWannado.image_url ? `<img src="${selectedWannado.image_url}">` : `<div style="width:100px;height:100px;background:#f0f0f0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;">🎨</div>`}<div class="selected-wannado-info"><h3>${selectedWannado.name}</h3><div class="artist">von ${selectedWannado.artist?.name || 'Artist'} · ca. ${selectedWannado.duration_hours}h</div><div class="price">${Number(selectedWannado.price).toFixed(0)}€</div></div>`;
+      document.getElementById('selectedWannadoPreview').innerHTML = `${selectedWannado.image_url ? `<img src="${selectedWannado.image_url}">` : `<div style="width:100px;height:100px;background:#f0f0f0;border-radius:12px;"></div>`}<div class="selected-wannado-info"><h3>${selectedWannado.name}</h3><div class="artist">von ${selectedWannado.artist?.name || 'Artist'} · ca. ${selectedWannado.duration_hours}h</div><div class="price">${Number(selectedWannado.price).toFixed(0)}€</div></div>`;
       goToStep(1);
       document.getElementById('bookingModal').classList.add('active');
       document.body.classList.add('modal-open');

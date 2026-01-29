@@ -247,6 +247,148 @@ serve(async (req: Request) => {
           }
         }
       }
+      // Handle wannado checkout (creates appointment ONLY after payment)
+      if (session.metadata?.type === 'wannado') {
+        console.log('🎯 Processing wannado checkout from metadata');
+
+        const m = session.metadata;
+
+        // 1. Create or get customer
+        let customerId = null;
+        const { data: existingWannadoCustomer } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('email', m.customer_email)
+          .single();
+
+        if (existingWannadoCustomer) {
+          customerId = existingWannadoCustomer.id;
+          console.log('Found existing customer:', customerId);
+        } else {
+          const { data: newCustomer, error: custError } = await supabase
+            .from('customers')
+            .insert({
+              first_name: m.customer_first_name,
+              last_name: m.customer_last_name,
+              email: m.customer_email,
+              phone: m.customer_phone,
+              instagram: m.customer_instagram || null,
+              rank: 'Neukunde'
+            })
+            .select()
+            .single();
+
+          if (custError) {
+            console.error('❌ Customer creation failed:', custError);
+          } else {
+            customerId = newCustomer.id;
+            console.log('Created new customer:', customerId);
+          }
+        }
+
+        // 2. Create appointment
+        const startDateTime = new Date(`${m.selected_date}T${m.selected_start_time}:00`).toISOString();
+        const endDateTime = new Date(`${m.selected_date}T${m.selected_end_time}:00`).toISOString();
+
+        const { data: wannadoAppointment, error: wannadoAptError } = await supabase
+          .from('appointments')
+          .insert({
+            customer_id: customerId,
+            artist_id: m.artist_id,
+            location_id: null,
+            customer_email: m.customer_email,
+            customer_phone: m.customer_phone,
+            first_name: m.customer_first_name,
+            last_name: m.customer_last_name,
+            instagram: m.customer_instagram || null,
+            start: startDateTime,
+            end: endDateTime,
+            booking_type: 'wannado',
+            status: 'scheduled',
+            state: 'Zugesagt',
+            payment_status: 'paid',
+            payment_amount: Math.round(parseFloat(m.wannado_price) * 100),
+            work_process: 'Wannado',
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: session.payment_intent,
+            payment_received_at: new Date().toISOString(),
+            description: `Wannado: ${m.wannado_name}`,
+            placement: m.wannado_name
+          })
+          .select()
+          .single();
+
+        if (wannadoAptError) {
+          console.error('❌ Wannado appointment creation failed:', wannadoAptError);
+        } else {
+          console.log('✅ Wannado appointment created:', wannadoAppointment.id);
+
+          // 3. Mark wannado as sold
+          const { error: wannadoUpdateError } = await supabase
+            .from('wannados')
+            .update({ status: 'sold' })
+            .eq('id', m.wannado_id);
+
+          if (wannadoUpdateError) {
+            console.error('❌ Failed to mark wannado as sold:', wannadoUpdateError);
+          } else {
+            console.log('✅ Wannado marked as sold:', m.wannado_id);
+          }
+
+          // 4. Log to payment_logs
+          await supabase
+            .from('payment_logs')
+            .insert({
+              appointment_id: wannadoAppointment.id,
+              action: 'payment_received',
+              amount: parseFloat(m.wannado_price),
+              email_sent_to: m.customer_email,
+              status: 'completed'
+            })
+            .catch(err => console.error('Payment log error:', err));
+
+          // 5. Send confirmation email
+          const formattedDate = new Date(m.selected_date + 'T12:00:00').toLocaleDateString('de-DE', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+          });
+
+          try {
+            const emailResponse = await fetch(
+              `${supabaseUrl}/functions/v1/send-wannado-confirmation`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseServiceKey}`
+                },
+                body: JSON.stringify({
+                  customer_email: m.customer_email,
+                  customer_name: `${m.customer_first_name} ${m.customer_last_name}`.trim(),
+                  artist_name: m.artist_name,
+                  wannado_name: m.wannado_name,
+                  appointment_date: formattedDate,
+                  appointment_time: m.selected_start_time,
+                  duration_hours: m.wannado_duration_hours,
+                  location_name: "MOMMY I'M SORRY",
+                  location_address: 'Tübinger Str. 73, 70178 Stuttgart'
+                })
+              }
+            );
+
+            if (emailResponse.ok) {
+              console.log('✅ Wannado confirmation email sent');
+            } else {
+              console.error('❌ Email failed:', await emailResponse.text());
+            }
+          } catch (emailErr) {
+            console.error('❌ Email error:', emailErr);
+          }
+        }
+      }
+
       // LEGACY: Handle old-style consultation payment (appointment already exists)
       // Keep for backwards compatibility with any pending bookings
       else {
