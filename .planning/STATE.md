@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-29 | Version: 3.1400**
-**UPDATE: Artist Page Polish - City Filter, No Confirmations, R-Rank Cleanup**
+**Stand: 2026-01-29 | Version: 3.1500**
+**UPDATE: Artist Page Polish - Extended UI Overhaul**
 
 ---
 
@@ -50,8 +50,62 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 8.2: ARTIST PAGE POLISH                       ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 8.3: ARTIST PAGE POLISH (EXTENDED)       IN PROGRESS  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Phase 8.3: Artist Page Polish Extended (2026-01-29) 🔄 IN PROGRESS
+
+### Changes
+
+1. **Location display fix**: Changed CentralDataManager artists config to include `location:locations!location_id(id, name, city)` join — fixes "Keine" display for artists with assigned locations.
+
+2. **Instant refresh after edit/add**: After editing, fetches updated artist with relations and updates CentralDataManager directly (fixed bug where `closeEditArtistModal()` nulled the artist ID before fetch). After adding, fetches full artist record and adds to CentralDataManager. No page reload needed.
+
+3. **Remove confirmations**: Removed `showNotification('Artist added successfully!')` popup and `[OK] Artist updated successfully!` messages.
+
+4. **Remove Active checkbox** from add artist form (defaults to true).
+
+5. **"No data" styling**: Empty fields show "No data" in light grey (`#b0b0b0`) instead of "N/A".
+
+6. **Artist profile info grid**: 3-column dense layout — Row 1: Email, Phone, Instagram; Row 2: Rank, Type, Style; Row 3: Location, City. Reduced spacing.
+
+7. **Removed Images section** from artist profile view (redundant with header).
+
+8. **Artist profile close UX**: Removed black "Close" button, removed grey circle behind X, click outside to close.
+
+9. **Pastel avatar colors**: No profile picture → randomized pastel background with initial letter (same 20 colors as guest spot list). White background when no background image with adaptive text colors.
+
+10. **Edit modal reorder**: Name/Email/Phone/Instagram → Images → Short Description → Bio → Rank/Type/Style → Location/City. Upload buttons black instead of blue.
+
+11. **Style column** added to artist table (plain dark grey text, no badge).
+
+12. **Profile pictures in table**: Avatar circle next to artist name (picture or pastel initial).
+
+13. **Rank badges in profile**: Use CSS rank-badge classes matching table design.
+
+14. **Tab colors**: Active tab (Completed Projects / Waitlist) changed from blue to black.
+
+15. **Badge corner radius**: Unified all badges (type, status, location) to `border-radius: 8px` matching rank badges. Removed box-shadow from rank badges.
+
+16. **Status column**: Plain text (green/red) without badge container.
+
+### Files Changed
+
+- `management-system.html` - Artist table, profile, edit modal, CSS badges
+
+### Commits
+
+```
+5e6e3aa Fix artist page: location display, instant refresh, remove Images section & notification
+1a944fe Remove Active checkbox from add artist, fix edit refresh, replace N/A with No data
+7ae2cd9 Polish artist profile: dense 3-col layout, grey No data, remove rank badge shadow
+ab8bd38 Polish artist profile & table: close UX, pastel avatars, edit layout, Style column
+d981fa1 Artist table avatars, plain style text, rank badges in profile, black tabs
 ```
 
 ---
