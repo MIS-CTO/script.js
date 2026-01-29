@@ -341,8 +341,8 @@
         const artistStyle = artist?.style || 'Various Styles';
         const bg = artist?.background_image_url || '';
         const pfp = artist?.profile_picture_url || '';
-        const img1 = bg || pfp || '';
-        const img2 = bg && pfp ? pfp : '';
+        const img1 = pfp || bg || '';
+        const img2 = bg && pfp ? bg : '';
         const slug = getArtistSlug(artistName);
         const profileLink = `${PROFILE_BASE_URL}/${slug}`;
 
@@ -479,6 +479,17 @@
       }
     }
 
+    function hasAvailableSlots(dateStr) {
+      const avail = artistAvailability[dateStr];
+      if (!avail) return false;
+      const dayAppts = artistAppointments.filter(apt => apt.start.substring(0, 10) === dateStr).map(apt => {
+        const sMatch = apt.start.match(/(\d{2}):(\d{2}):\d{2}/);
+        const eMatch = apt.end.match(/(\d{2}):(\d{2}):\d{2}/);
+        return { scheduled_start: sMatch ? `${sMatch[1]}:${sMatch[2]}` : '00:00', scheduled_end: eMatch ? `${eMatch[1]}:${eMatch[2]}` : '00:00' };
+      });
+      return calculateSlots(avail.working_start, avail.working_end, dayAppts, selectedWannado?.duration_hours || 1).length > 0;
+    }
+
     function renderCalendar() {
       const container = document.getElementById('calendarDays'), monthLabel = document.getElementById('calendarMonth');
       const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
@@ -490,8 +501,8 @@
       for (let i = 0; i < startingDay; i++) html += `<button class="calendar-day other-month" disabled></button>`;
       for (let day = 1; day <= totalDays; day++) {
         const date = new Date(year, month, day), dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isPast = date < today, hasAvail = artistAvailability[dateStr], isSelected = selectedDate === dateStr;
-        html += `<button class="calendar-day ${isSelected ? 'selected' : ''}" ${isPast || !hasAvail ? 'disabled' : ''} onclick="selectDate('${dateStr}')">${day}</button>`;
+        const isPast = date < today, hasSlots = hasAvailableSlots(dateStr), isSelected = selectedDate === dateStr;
+        html += `<button class="calendar-day ${isSelected ? 'selected' : ''}" ${isPast || !hasSlots ? 'disabled' : ''} onclick="selectDate('${dateStr}')">${day}</button>`;
       }
       container.innerHTML = html;
     }
