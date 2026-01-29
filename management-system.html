@@ -19387,12 +19387,6 @@
             <option value="VIP">VIP (80/20)</option>
           </select>
         </div>
-        <div class="form-group">
-          <label style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" id="addArtistActive" checked>
-            Active
-          </label>
-        </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="cancelAddArtist">Cancel</button>
           <button type="submit" class="btn btn-primary">Add Artist</button>
@@ -36962,8 +36956,6 @@
         const locationId = document.getElementById('addArtistLocation').value;
         const cityLocation = document.getElementById('addArtistCityLocation').value;
         const rank = document.getElementById('addArtistRank').value;
-        const active = document.getElementById('addArtistActive').checked;
-
         if (!name || !locationId) return alert('Please enter name and select location');
 
         try {
@@ -36971,7 +36963,7 @@
             name,
             instagram: instagram || null,
             is_guest: type === 'guest',
-            active,
+            active: true,
             location_id: locationId,
             city_location: cityLocation || null,
             rank: rank || 'Friends'
@@ -37767,19 +37759,20 @@
 
         console.log('✅ Artist updated successfully');
 
+        const savedArtistId = currentEditingArtistId;
         closeEditArtistModal();
 
         // Fetch updated artist with location relation
         const { data: updatedArtist } = await supabase
           .from('artists')
           .select('*, location:locations!location_id(id, name, city)')
-          .eq('id', currentEditingArtistId)
+          .eq('id', savedArtistId)
           .single();
 
         if (updatedArtist) {
           // Update in CentralDataManager
           if (window.CentralDataManager && CentralDataManager.data.artists) {
-            const idx = CentralDataManager.data.artists.findIndex(a => a.id === currentEditingArtistId);
+            const idx = CentralDataManager.data.artists.findIndex(a => a.id === savedArtistId);
             if (idx >= 0) {
               CentralDataManager.data.artists[idx] = updatedArtist;
             }
@@ -37941,19 +37934,19 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Email</label>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.email ? `<a href="mailto:${artist.email}" style="color: #007AFF; text-decoration: none;">${artist.email}</a>` : 'N/A'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.email ? `<a href="mailto:${artist.email}" style="color: #007AFF; text-decoration: none;">${artist.email}</a>` : 'No data'}</p>
                   </div>
 
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Instagram</label>
                     <p style="margin: 4px 0 0 0; font-size: 14px;">
-                      ${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color: #007AFF; text-decoration: none;">@${artist.instagram.replace('@', '')}</a>` : 'N/A'}
+                      ${artist.instagram ? `<a href="https://instagram.com/${artist.instagram.replace('@', '')}" target="_blank" style="color: #007AFF; text-decoration: none;">@${artist.instagram.replace('@', '')}</a>` : 'No data'}
                     </p>
                   </div>
 
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Phone</label>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.phone ? `<a href="tel:${artist.phone}" style="color: #007AFF; text-decoration: none;">${artist.phone}</a>` : 'N/A'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.phone ? `<a href="tel:${artist.phone}" style="color: #007AFF; text-decoration: none;">${artist.phone}</a>` : 'No data'}</p>
                   </div>
 
                   <div>
@@ -37968,17 +37961,17 @@
 
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">City</label>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.city_location || (artist.location && artist.location.city) || 'N/A'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.city_location || (artist.location && artist.location.city) || 'No data'}</p>
                   </div>
 
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location (Studio)</label>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">${(artist.location && artist.location.name) || 'N/A'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${(artist.location && artist.location.name) || 'No data'}</p>
                   </div>
 
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Style</label>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.style || 'N/A'}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.style || 'No data'}</p>
                   </div>
                 </div>
 
