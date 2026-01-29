@@ -37129,7 +37129,6 @@
           await loadInitialData();
           await loadArtists();
           renderCalendar();
-          showNotification('Artist updated successfully!', 'success');
         } catch (err) {
           alert('Error updating artist: ' + err.message);
         }
@@ -37374,8 +37373,8 @@
                   ">${artist.bio || ''}</textarea>
                 </div>
 
-                <!-- Type & Location -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <!-- Type, City & Location (Studio) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                   <div>
                     <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Type</label>
                     <select id="customEditArtistType" style="
@@ -37393,7 +37392,26 @@
                   </div>
 
                   <div>
-                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location</label>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">City</label>
+                    <select id="customEditArtistCityLocation" style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                      background: white;
+                    ">
+                      <option value="">-- Select City --</option>
+                      <option value="Stuttgart" ${artist.city_location === 'Stuttgart' ? 'selected' : ''}>Stuttgart</option>
+                      <option value="Köln" ${artist.city_location === 'Köln' ? 'selected' : ''}>Köln</option>
+                      <option value="Berlin" ${artist.city_location === 'Berlin' ? 'selected' : ''}>Berlin</option>
+                      <option value="München" ${artist.city_location === 'München' ? 'selected' : ''}>München</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location (Studio)</label>
                     <select id="customEditArtistLocation" style="
                       width: 100%;
                       padding: 10px 12px;
@@ -37403,17 +37421,29 @@
                       margin-top: 4px;
                       background: white;
                     ">
-                      <option value="">-- Select Location --</option>
-                      <option value="Stuttgart" ${artist.city_location === 'Stuttgart' ? 'selected' : ''}>Stuttgart</option>
-                      <option value="Köln" ${artist.city_location === 'Köln' ? 'selected' : ''}>Köln</option>
-                      <option value="Berlin" ${artist.city_location === 'Berlin' ? 'selected' : ''}>Berlin</option>
-                      <option value="München" ${artist.city_location === 'München' ? 'selected' : ''}>München</option>
+                      <option value="">-- Select Studio --</option>
+                      <option value="bbb9f280-5d07-413f-a319-d81bfddafc24" ${artist.location_id === 'bbb9f280-5d07-413f-a319-d81bfddafc24' ? 'selected' : ''}>Mommy I'm Sorry</option>
+                      <option value="560b9624-4d2c-48d2-8c96-7b4f26b97ec0" ${artist.location_id === '560b9624-4d2c-48d2-8c96-7b4f26b97ec0' ? 'selected' : ''}>Muttersöhne</option>
+                      <option value="97e312db-c9c9-4ef4-8716-42a7b02878c3" ${artist.location_id === '97e312db-c9c9-4ef4-8716-42a7b02878c3' ? 'selected' : ''}>GON</option>
+                      <option value="c373fbee-6d55-44bd-8f34-2384ee78e995" ${artist.location_id === 'c373fbee-6d55-44bd-8f34-2384ee78e995' ? 'selected' : ''}>Pardon Paris</option>
+                      <option value="0e2b095b-1559-4673-97bd-fff6edcf1139" ${artist.location_id === '0e2b095b-1559-4673-97bd-fff6edcf1139' ? 'selected' : ''}>seventyone</option>
                     </select>
                   </div>
                 </div>
 
-                <!-- Instagram, Rank & Style -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <!-- Phone, Instagram, Rank & Style -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                  <div>
+                    <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Phone</label>
+                    <input type="text" id="customEditArtistPhone" value="${artist.phone || ''}" placeholder="+49..." style="
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid rgba(0,0,0,0.1);
+                      border-radius: 8px;
+                      font-size: 14px;
+                      margin-top: 4px;
+                    ">
+                  </div>
                   <div>
                     <label style="font-size: 12px; font-weight: 600; color: #86868b; text-transform: uppercase;">Instagram</label>
                     <input type="text" id="customEditArtistInstagram" value="${artist.instagram || ''}" placeholder="@username" style="
@@ -37690,13 +37720,15 @@
         const updateData = {
           name: document.getElementById('customEditArtistName').value,
           email: document.getElementById('customEditArtistEmail').value || null,
+          phone: document.getElementById('customEditArtistPhone').value || null,
           short_description: document.getElementById('customEditArtistShortDesc').value || null,
           bio: document.getElementById('customEditArtistBio').value || null,
           instagram: document.getElementById('customEditArtistInstagram').value || null,
           rank: document.getElementById('customEditArtistRank').value || null,
           style: document.getElementById('customEditArtistStyle').value || null,
           is_guest: document.getElementById('customEditArtistType').value === 'guest',
-          city_location: document.getElementById('customEditArtistLocation').value || null
+          city_location: document.getElementById('customEditArtistCityLocation').value || null,
+          location_id: document.getElementById('customEditArtistLocation').value || null
         };
 
         // Add uploaded images if any
@@ -37721,7 +37753,6 @@
         }
 
         console.log('✅ Artist updated successfully');
-        showNotification('Artist updated successfully!', 'success');
 
         closeEditArtistModal();
 
@@ -37891,6 +37922,11 @@
                   </div>
 
                   <div>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Phone</label>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.phone ? `<a href="tel:${artist.phone}" style="color: #007AFF; text-decoration: none;">${artist.phone}</a>` : 'N/A'}</p>
+                  </div>
+
+                  <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Type</label>
                     <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.is_guest ? 'Guest Artist' : 'Resident'}</p>
                   </div>
@@ -37906,7 +37942,7 @@
                   </div>
 
                   <div>
-                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location</label>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location (Studio)</label>
                     <p style="margin: 4px 0 0 0; font-size: 14px;">${(artist.location && artist.location.name) || 'N/A'}</p>
                   </div>
 
@@ -37991,7 +38027,7 @@
                     </div>
                     <button onclick="closeViewArtistModal(); openEditArtistModal('${artist.id}');" style="
                       padding: 8px 16px;
-                      background: #007AFF;
+                      background: #1d1d1f;
                       color: white;
                       border: none;
                       border-radius: 8px;
@@ -38016,7 +38052,8 @@
                 <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
                   <button onclick="closeViewArtistModal()" style="
                     padding: 12px 24px;
-                    background: #f0f0f0;
+                    background: #1d1d1f;
+                    color: white;
                     border: none;
                     border-radius: 8px;
                     font-weight: 600;
