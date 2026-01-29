@@ -104,8 +104,8 @@ Deno.serve(async (req) => {
         },
         quantity: 1
       }],
-      success_url: success_url || 'https://www.mommyimsorry.com/wannado-success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: cancel_url || 'https://www.mommyimsorry.com/wannado-booking'
+      success_url: success_url || 'https://www.mommyimsorry.com/shop/wannado',
+      cancel_url: cancel_url || 'https://www.mommyimsorry.com/shop/wannado'
     });
 
     console.log('✅ Wannado checkout session created:', session.id, '| Expires:', new Date(expiresAt * 1000).toISOString());
