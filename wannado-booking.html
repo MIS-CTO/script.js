@@ -471,7 +471,7 @@
       let html = ''; const today = new Date(); today.setHours(0,0,0,0);
       for (let i = 0; i < startingDay; i++) html += `<button class="calendar-day other-month" disabled></button>`;
       for (let day = 1; day <= totalDays; day++) {
-        const date = new Date(year, month, day), dateStr = date.toISOString().split('T')[0];
+        const date = new Date(year, month, day), dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isPast = date < today, hasAvail = artistAvailability[dateStr], isSelected = selectedDate === dateStr;
         html += `<button class="calendar-day ${isSelected ? 'selected' : ''}" ${isPast || !hasAvail ? 'disabled' : ''} onclick="selectDate('${dateStr}')">${day}</button>`;
       }
@@ -561,7 +561,7 @@
     }
 
     function updateSummary() {
-      const dateStr = new Date(selectedDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const dateStr = new Date(selectedDate + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       document.getElementById('bookingSummary').innerHTML = `<div class="summary-row"><span>Motiv</span><span>${selectedWannado.name}</span></div><div class="summary-row"><span>Artist</span><span>${selectedWannado.artist?.name}</span></div><div class="summary-row"><span>Datum</span><span>${dateStr}</span></div><div class="summary-row"><span>Uhrzeit</span><span>${selectedTime.start} - ${selectedTime.end} Uhr</span></div><div class="summary-row"><span>Dauer</span><span>ca. ${selectedWannado.duration_hours}h</span></div><div class="summary-row total"><span>Gesamtpreis</span><span class="value">${Number(selectedWannado.price).toFixed(0)}€</span></div>`;
     }
 
