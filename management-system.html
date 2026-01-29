@@ -23658,7 +23658,7 @@
         wannados:      { batchSize: 500,  parallel: 1, relations: '*' },
         project_tasks: { batchSize: 500,  parallel: 1, relations: '*' },
         work_tracking: { batchSize: 500,  parallel: 1, relations: '*' },
-        artists:       { batchSize: 500,  parallel: 1, relations: '*' },
+        artists:       { batchSize: 500,  parallel: 1, relations: '*, location:locations!location_id(id, name, city)' },
 
         // Mittlere Tabellen - moderate Batches
         // Dienstplan MIT Artist Relations für Namen-Anzeige
@@ -36981,8 +36981,22 @@
 
           document.getElementById('addArtistModal').classList.remove('active', 'elevated');
           document.getElementById('addArtistForm').reset();
-          artistsCache = []; // ✅ Clear cache to force reload
-          await loadInitialData();
+
+          // Fetch new artist with location relation and add to CentralDataManager
+          if (data && data[0]) {
+            const { data: fullArtist } = await supabase
+              .from('artists')
+              .select('*, location:locations!location_id(id, name, city)')
+              .eq('id', data[0].id)
+              .single();
+
+            if (fullArtist && window.CentralDataManager && CentralDataManager.data.artists) {
+              CentralDataManager.data.artists.unshift(fullArtist);
+            }
+          }
+
+          artistsCache = CentralDataManager.getArtists();
+          allArtists = artistsCache;
           await loadArtists();
 
           // Check if we came from Guest Spot Modal
@@ -36997,7 +37011,6 @@
             window.addArtistFromGuestSpot = false;
           }
 
-          showNotification('Artist added successfully!', 'success');
         } catch(err) {
           alert('Error: ' + err.message);
         }
@@ -37756,9 +37769,26 @@
 
         closeEditArtistModal();
 
-        // Clear cache and reload
-        artistsCache = [];
-        await loadInitialData();
+        // Fetch updated artist with location relation
+        const { data: updatedArtist } = await supabase
+          .from('artists')
+          .select('*, location:locations!location_id(id, name, city)')
+          .eq('id', currentEditingArtistId)
+          .single();
+
+        if (updatedArtist) {
+          // Update in CentralDataManager
+          if (window.CentralDataManager && CentralDataManager.data.artists) {
+            const idx = CentralDataManager.data.artists.findIndex(a => a.id === currentEditingArtistId);
+            if (idx >= 0) {
+              CentralDataManager.data.artists[idx] = updatedArtist;
+            }
+          }
+          // Update local caches
+          artistsCache = CentralDataManager.getArtists();
+          allArtists = artistsCache;
+        }
+
         await loadArtists();
       }
 
@@ -37959,42 +37989,6 @@
                     <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #1d1d1f;">${artist.bio}</p>
                   </div>
                 ` : ''}
-
-                <!-- Images Section -->
-                <div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px; margin-bottom: 24px;">
-                  <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Images</h3>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div>
-                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Profile Picture</label>
-                      ${artist.profile_picture_url ? `
-                        <img src="${artist.profile_picture_url}" style="
-                          width: 100%;
-                          height: 200px;
-                          object-fit: cover;
-                          border-radius: 8px;
-                        ">
-                        <div style="margin-top: 8px;">
-                          <a href="${artist.profile_picture_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">Open full size</a>
-                        </div>
-                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">No Image</div>'}
-                    </div>
-
-                    <div>
-                      <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; display: block; margin-bottom: 8px;">Background Image</label>
-                      ${artist.background_image_url ? `
-                        <img src="${artist.background_image_url}" style="
-                          width: 100%;
-                          height: 200px;
-                          object-fit: cover;
-                          border-radius: 8px;
-                        ">
-                        <div style="margin-top: 8px;">
-                          <a href="${artist.background_image_url}" target="_blank" style="font-size: 11px; color: #007AFF; text-decoration: none;">Open full size</a>
-                        </div>
-                      ` : '<div style="width: 100%; height: 200px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #86868b;">No Image</div>'}
-                    </div>
-                  </div>
-                </div>
 
                 <!-- Tab Navigation -->
                 <div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px;">
