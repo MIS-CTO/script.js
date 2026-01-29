@@ -262,7 +262,7 @@
     }
     const ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
 
-    let allWannados = [], allArtists = [], selectedWannado = null, selectedDate = null, selectedTime = null, currentMonth = new Date(), artistAvailability = {};
+    let allWannados = [], allArtists = [], selectedWannado = null, selectedDate = null, selectedTime = null, currentMonth = new Date(), artistAvailability = {}, artistAppointments = [];
 
     document.addEventListener('DOMContentLoaded', async () => { await loadWannados(); renderCalendar(); });
 
@@ -432,14 +432,15 @@
         const today = new Date();
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 60);
-        const todayStr = today.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
+        const fmtDate = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const todayStr = fmtDate(today);
+        const endDateStr = fmtDate(endDate);
 
         const { data, error } = await supabaseClient
           .from('dienstplan')
           .select('id, start_date, end_date, state, working_start, working_end')
           .eq('artist_id', selectedWannado.artist.id)
-          .eq('state', 'Available')
+          .in('state', ['Available', 'Verfügbar'])
           .lte('start_date', endDateStr)
           .gte('end_date', todayStr)
           .order('start_date', { ascending: true });
@@ -449,16 +450,28 @@
         // Erstelle availability map für jeden Tag im Zeitraum
         artistAvailability = {};
         (data || []).forEach(entry => {
-          const start = new Date(entry.start_date);
-          const end = new Date(entry.end_date);
+          const [sy,sm,sd] = entry.start_date.split('-').map(Number);
+          const [ey,em,ed] = entry.end_date.split('-').map(Number);
+          const start = new Date(sy, sm-1, sd);
+          const end = new Date(ey, em-1, ed);
           for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            const dateStr = d.toISOString().split('T')[0];
-            artistAvailability[dateStr] = {
+            artistAvailability[fmtDate(d)] = {
               working_start: entry.working_start?.substring(0,5) || '10:00',
               working_end: entry.working_end?.substring(0,5) || '20:00'
             };
           }
         });
+
+        // Load ALL existing appointments for this artist (same as consultation-booking pattern)
+        const { data: apts } = await supabaseClient
+          .from('appointments')
+          .select('start, end')
+          .eq('artist_id', selectedWannado.artist.id)
+          .not('status', 'in', '("canceled","no_show","rescheduled")')
+          .gte('start', todayStr);
+
+        artistAppointments = apts || [];
+        console.log('Loaded', artistAppointments.length, 'appointments for', selectedWannado.artist.name);
 
         renderCalendar();
       } catch (err) {
@@ -486,70 +499,58 @@
     function prevMonth() { currentMonth.setMonth(currentMonth.getMonth() - 1); renderCalendar(); }
     function nextMonth() { currentMonth.setMonth(currentMonth.getMonth() + 1); renderCalendar(); }
 
-    async function selectDate(dateStr) {
+    function selectDate(dateStr) {
       selectedDate = dateStr; selectedTime = null;
       document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
       event.target.classList.add('selected');
-      await loadTimeSlots(dateStr);
+      loadTimeSlots(dateStr);
       document.getElementById('toStep2Btn').disabled = true;
     }
 
-    async function loadTimeSlots(dateStr) {
+    function loadTimeSlots(dateStr) {
       const container = document.getElementById('timeSlots');
-      container.innerHTML = '<div class="no-slots">Lade Zeiten...</div>';
       const avail = artistAvailability[dateStr];
       if (!avail) { container.innerHTML = '<div class="no-slots">Keine Verfügbarkeit</div>'; return; }
 
-      try {
-        // Erstelle Start und Ende des Tages für die Abfrage
-        const dayStart = dateStr + 'T00:00:00';
-        const dayEnd = dateStr + 'T23:59:59';
+      // Filter pre-loaded appointments for this date using overlap detection (consultation-booking pattern)
+      const dayAppts = artistAppointments.filter(apt => {
+        // Parse date from DB string "2026-01-29 12:00:00+00" — extract the date part
+        const aptDateStr = apt.start.substring(0, 10);
+        return aptDateStr === dateStr;
+      }).map(apt => {
+        // Extract HH:MM directly from DB string to avoid timezone conversion
+        const sMatch = apt.start.match(/(\d{2}):(\d{2}):\d{2}/);
+        const eMatch = apt.end.match(/(\d{2}):(\d{2}):\d{2}/);
+        return {
+          scheduled_start: sMatch ? `${sMatch[1]}:${sMatch[2]}` : '00:00',
+          scheduled_end: eMatch ? `${eMatch[1]}:${eMatch[2]}` : '00:00'
+        };
+      });
 
-        const { data, error } = await supabaseClient
-          .from('appointments')
-          .select('start, end')
-          .eq('artist_id', selectedWannado.artist.id)
-          .gte('start', dayStart)
-          .lte('start', dayEnd)
-          .not('status', 'in', '("canceled","no_show","rescheduled")');
+      console.log(`Slots for ${dateStr}: ${dayAppts.length} appointments blocking`, dayAppts);
 
-        if (error) throw error;
-
-        // Konvertiere start/end zu Zeiten — DB speichert als UTC-Strings die lokale Zeiten darstellen
-        const appointments = (data || []).map(apt => {
-          // Parse time directly from DB string (e.g. "2026-01-29 12:00:00+00") to avoid timezone shift
-          const sMatch = apt.start.match(/(\d{2}):(\d{2}):\d{2}/);
-          const eMatch = apt.end.match(/(\d{2}):(\d{2}):\d{2}/);
-          return {
-            scheduled_start: sMatch ? `${sMatch[1]}:${sMatch[2]}` : '00:00',
-            scheduled_end: eMatch ? `${eMatch[1]}:${eMatch[2]}` : '00:00'
-          };
-        });
-
-        const slots = calculateSlots(avail.working_start, avail.working_end, appointments, selectedWannado.duration_hours);
-        if (!slots.length) { container.innerHTML = '<div class="no-slots">Keine freien Zeiten</div>'; return; }
-        container.innerHTML = slots.map(s => `<button class="time-slot" onclick="selectTimeSlot('${s.start}','${s.end}')">${s.start} - ${s.end}</button>`).join('');
-      } catch (err) {
-        console.error('Error:', err);
-        container.innerHTML = '<div class="no-slots">Fehler beim Laden</div>';
-      }
+      const slots = calculateSlots(avail.working_start, avail.working_end, dayAppts, selectedWannado.duration_hours);
+      if (!slots.length) { container.innerHTML = '<div class="no-slots">Keine freien Zeiten</div>'; return; }
+      container.innerHTML = slots.map(s => `<button class="time-slot" onclick="selectTimeSlot('${s.start}','${s.end}')">${s.start} - ${s.end}</button>`).join('');
     }
 
     function calculateSlots(workStart, workEnd, appointments, duration) {
-      const slots = [], durationMin = duration * 60;
+      const durationMin = duration * 60;
       const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
       const toTime = m => `${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}`;
       const startMin = toMin(workStart), endMin = toMin(workEnd);
       const booked = appointments.map(a => ({ start: toMin(a.scheduled_start), end: toMin(a.scheduled_end) })).sort((a,b) => a.start - b.start);
-      let curr = startMin;
-      for (const b of booked) {
-        let s = curr;
-        while (s + durationMin <= b.start) { slots.push({ start: toTime(s), end: toTime(s + durationMin) }); s += 60; }
-        curr = Math.max(curr, b.end);
+
+      // Generate candidate slots every 60 min, then filter out any that overlap with bookings
+      const candidates = [];
+      for (let s = startMin; s + durationMin <= endMin; s += 60) {
+        candidates.push({ startMin: s, endMin: s + durationMin, start: toTime(s), end: toTime(s + durationMin) });
       }
-      let s = curr;
-      while (s + durationMin <= endMin) { slots.push({ start: toTime(s), end: toTime(s + durationMin) }); s += 60; }
-      return slots;
+
+      // Filter: remove any slot that overlaps with any booking
+      return candidates.filter(slot => {
+        return !booked.some(b => slot.startMin < b.end && slot.endMin > b.start);
+      });
     }
 
     function selectTimeSlot(start, end) {
