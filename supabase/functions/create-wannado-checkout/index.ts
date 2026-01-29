@@ -65,8 +65,8 @@ Deno.serve(async (req) => {
 
     const priceInCents = Math.round(Number(wannado.price) * 100);
 
-    // Session expires in 10 minutes
-    const expiresAt = Math.floor(Date.now() / 1000) + (10 * 60);
+    // Session expires in 30 minutes (Stripe minimum)
+    const expiresAt = Math.floor(Date.now() / 1000) + (30 * 60);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -104,8 +104,8 @@ Deno.serve(async (req) => {
         },
         quantity: 1
       }],
-      success_url: success_url || 'https://www.mommyimsorry.com/wannado-success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: cancel_url || 'https://www.mommyimsorry.com/wannado-booking'
+      success_url: success_url || 'https://www.mommyimsorry.com/shop/wannado',
+      cancel_url: cancel_url || 'https://www.mommyimsorry.com/shop/wannado'
     });
 
     console.log('✅ Wannado checkout session created:', session.id, '| Expires:', new Date(expiresAt * 1000).toISOString());
