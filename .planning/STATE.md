@@ -52,6 +52,8 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 8.3: ARTIST PAGE POLISH (EXTENDED)       IN PROGRESS  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 8.4: WANNADO POLISH                          ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
@@ -106,6 +108,34 @@
 7ae2cd9 Polish artist profile: dense 3-col layout, grey No data, remove rank badge shadow
 ab8bd38 Polish artist profile & table: close UX, pastel avatars, edit layout, Style column
 d981fa1 Artist table avatars, plain style text, rank badges in profile, black tabs
+```
+
+---
+
+## Phase 8.4: Wannado Polish (2026-01-29) ✅ COMPLETE
+
+### Changes
+
+1. **Card redesign**: Artist + wannado cards use 3:4 resident card pattern with full-bleed images, dark gradient overlay, bottom-positioned content with fadeInLeft animation.
+2. **Artist View Profile buttons**: Link to Webflow resident pages via SLUG_MAP.
+3. **Removed art palette emoji**: All placeholder emoji removed from wannado-booking.html and management-system.html.
+4. **create-wannado-checkout edge function** (NEW): Validates wannado availability, creates Stripe Checkout Session with 10-min expiry, card + klarna payment methods.
+5. **Wannado webhook handler**: Added to stripe-webhook — creates customer, appointment (booking_type: 'wannado', payment_status: 'paid'), marks wannado as sold, logs payment, sends confirmation email. Appointments only created after payment.
+6. **send-wannado-confirmation edge function** (NEW): German confirmation email via Resend API with motif, artist, date/time, location details.
+7. **Payment tracking**: Management system shows wannado payments with purple WANNADO badge and motif name in Updates tab. Added booking_type + description to both realtime and sync queries.
+
+### Files Changed
+
+- `wannado-booking.html` — Card CSS/HTML redesign, emoji removal, SLUG_MAP + profile links
+- `management-system.html` — Payment notification rendering with WANNADO badge, emoji removal
+- `supabase/functions/create-wannado-checkout/index.ts` — **NEW**
+- `supabase/functions/stripe-webhook/index.ts` — Wannado payment handler
+- `supabase/functions/send-wannado-confirmation/index.ts` — **NEW**
+
+### Commits
+
+```
+675381b feat(wannado): card redesign, secure checkout, payment tracking
 ```
 
 ---
