@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-28 | Version: 3.1390**
-**UPDATE: Payment Email Text Fix & Paid Anzahlung Status**
+**Stand: 2026-01-29 | Version: 3.1400**
+**UPDATE: Artist Page Polish - City Filter, No Confirmations, R-Rank Cleanup**
 
 ---
 
@@ -48,8 +48,43 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 8.1: V1 VIEW PERMISSIONS                      ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 8.2: ARTIST PAGE POLISH                       ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Phase 8.2: Artist Page Polish (2026-01-29) ✅ COMPLETE
+
+### Changes
+
+1. **No more confirmation popups**: Replaced `alert()` with `showNotification()` for artist add and edit operations. Artists appear immediately in the table after add/edit.
+
+2. **City filter**: Added City filter dropdown (Stuttgart/Köln/Berlin/München) to the artist table filter bar. Filter logic checks both `city_location` field and `location.city` relation.
+
+3. **City column in table**: Added separate City column to the artist table. Location column now shows the location name, City column shows the city.
+
+4. **City & Location in artist profile**: Added City and Location fields to the artist profile view info grid.
+
+5. **City saved on add**: The Add Artist form now sends `city_location` and `rank` fields to the database.
+
+6. **R1-R5 rank cleanup**:
+   - Removed R1-R5 CSS badge styles (`.rank-badge.rank-R1` through `.rank-R5`)
+   - Removed R1-R5 fallback entries from revenue split calculation
+   - Changed default rank fallback from `R1` to `Friends` in table rendering
+   - Updated analytics text from "R1-R5" to "Friends/Crew/Fam/VIP"
+   - **No DB changes needed**: Verified 0 artists have R-ranks (all already Friends/Crew/Fam/VIP)
+
+### Files Changed
+
+- `management-system.html` - Artist table, filters, profile view, add/edit forms, CSS, rank splits
+
+### Commits
+
+```
+513ceb4 feat(artists): polish artist page - city filter, no confirmations, R-rank cleanup
 ```
 
 ---
