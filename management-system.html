@@ -7047,50 +7047,7 @@
     }
 
     /* Artist Rank Badges */
-    .rank-badge.rank-R1 {
-      background: #FEE2E2;
-      color: #991B1B;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .rank-badge.rank-R2 {
-      background: #FED7AA;
-      color: #9A3412;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .rank-badge.rank-R3 {
-      background: #FEF3C7;
-      color: #92400E;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .rank-badge.rank-R4 {
-      background: #D1FAE5;
-      color: #065F46;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .rank-badge.rank-R5 {
-      background: #DBEAFE;
-      color: #1E40AF;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-    }
+    /* R1-R5 rank badges removed - using Friends/Crew/Fam/VIP only */
 
     /* ═══════════════════════════════════════════════════════════════════════
        NEU: Artist Rang Badges - Friends, Crew, Fam, VIP
@@ -16863,6 +16820,15 @@
         <input type="text" id="artistSearchInput" placeholder="Search artists by name or Instagram..." style="width:100%; padding:12px 16px 12px 42px; font-size:13px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; height:37px; box-sizing:border-box;">
       </div>
 
+      <!-- City Filter -->
+      <select id="artistCityFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px;">
+        <option value="">Alle Cities</option>
+        <option value="Stuttgart">Stuttgart</option>
+        <option value="Köln">Köln</option>
+        <option value="Berlin">Berlin</option>
+        <option value="München">München</option>
+      </select>
+
       <!-- Rank Filter -->
       <select id="artistRankFilter" class="filter-select" style="padding:10px 16px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; font-size:13px; background:white; cursor:pointer; height:37px;">
         <option value="">Alle Ranks</option>
@@ -16905,6 +16871,7 @@
           <th>Phone</th>
           <th>Type</th>
           <th>Location</th>
+          <th>City</th>
           <th>Rank</th>
           <th>Status</th>
           <th style="text-align:right;">Actions</th>
@@ -17723,7 +17690,7 @@
           <div class="analytics-view" id="view-rankings">
             <div class="page-header">
               <h2>Artist Rankings</h2>
-              <p>Performance nach Rang-Kategorie (R1-R5)</p>
+              <p>Performance nach Rang-Kategorie (Friends/Crew/Fam/VIP)</p>
             </div>
 
             <div class="charts-row">
@@ -34272,6 +34239,7 @@
       function applyArtistFilters() {
         const searchTerm = document.getElementById('artistSearchInput')?.value.toLowerCase().trim() || '';
         const locationFilter = document.getElementById('artistLocationFilter')?.value || '';
+        const cityFilter = document.getElementById('artistCityFilter')?.value || '';
         const rankFilter = document.getElementById('artistRankFilter')?.value || '';
         const typeFilter = document.getElementById('artistTypeFilter')?.value || '';
         const statusFilter = document.getElementById('artistStatusFilter')?.value || '';
@@ -34294,6 +34262,12 @@
             } else {
               if (artist.location_id !== locationFilter) return false;
             }
+          }
+
+          // City filter
+          if (cityFilter) {
+            const artistCity = artist.city_location || (artist.location && artist.location.city) || '';
+            if (artistCity !== cityFilter) return false;
           }
 
           // Rank filter
@@ -34334,6 +34308,7 @@
       function clearArtistFilters() {
         document.getElementById('artistSearchInput').value = '';
         document.getElementById('artistLocationFilter').value = '';
+        document.getElementById('artistCityFilter').value = '';
         document.getElementById('artistRankFilter').value = '';
         document.getElementById('artistTypeFilter').value = '';
         document.getElementById('artistStatusFilter').value = '';
@@ -34347,17 +34322,21 @@
         if (!tbody) return;
 
         if (artists.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--muted);">Keine Artists gefunden. Versuche andere Filter-Einstellungen.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:40px; color:var(--muted);">Keine Artists gefunden. Versuche andere Filter-Einstellungen.</td></tr>';
           return;
         }
 
         tbody.innerHTML = artists.map(artist => {
           // Show location from city_location field (text) or location relation
-          const locationDisplay = artist.city_location
+          const locationDisplay = artist.location && artist.location.name
+            ? `<span class="location-badge">${artist.location.name}</span>`
+            : '<span style="color:#8E8E93;">Keine</span>';
+
+          const cityDisplay = artist.city_location
             ? `<span class="location-badge">${artist.city_location}</span>`
-            : (artist.location && artist.location.name)
-              ? `<span class="location-badge">${artist.location.name}</span>`
-              : '<span style="color:#8E8E93;">Keine</span>';
+            : (artist.location && artist.location.city)
+              ? `<span class="location-badge">${artist.location.city}</span>`
+              : '<span style="color:#8E8E93;">-</span>';
 
           return `
             <tr>
@@ -34366,7 +34345,8 @@
               <td>${artist.phone || '-'}</td>
               <td><span class="type-badge ${artist.is_guest ? 'guest' : 'resident'}">${artist.is_guest ? 'Guest' : 'Resident'}</span></td>
               <td>${locationDisplay}</td>
-              <td><span class="rank-badge rank-${artist.rank || 'R1'}">${artist.rank || 'R1'}</span></td>
+              <td>${cityDisplay}</td>
+              <td><span class="rank-badge rank-${artist.rank || 'Friends'}">${artist.rank || 'Friends'}</span></td>
               <td><span class="status-badge ${artist.active ? 'active' : 'inactive'}">${artist.active ? 'Aktiv' : 'Inaktiv'}</span></td>
               <td style="text-align:right;">
                 <button class="btn btn-primary" onclick="viewArtistProfile('${artist.id}')" style="padding:6px 16px; font-size:13px; background:#1d1d1f; color:white;">View Profile</button>
@@ -36980,6 +36960,8 @@
         const instagram = document.getElementById('addArtistInstagram').value.trim();
         const type = document.getElementById('addArtistType').value;
         const locationId = document.getElementById('addArtistLocation').value;
+        const cityLocation = document.getElementById('addArtistCityLocation').value;
+        const rank = document.getElementById('addArtistRank').value;
         const active = document.getElementById('addArtistActive').checked;
 
         if (!name || !locationId) return alert('Please enter name and select location');
@@ -36990,7 +36972,9 @@
             instagram: instagram || null,
             is_guest: type === 'guest',
             active,
-            location_id: locationId
+            location_id: locationId,
+            city_location: cityLocation || null,
+            rank: rank || 'Friends'
           }).select();
 
           if (error) throw error;
@@ -37013,7 +36997,7 @@
             window.addArtistFromGuestSpot = false;
           }
 
-          alert('Artist added successfully!');
+          showNotification('Artist added successfully!', 'success');
         } catch(err) {
           alert('Error: ' + err.message);
         }
@@ -37074,6 +37058,7 @@
       // Artist Filter Event Listeners
       document.getElementById('artistSearchInput')?.addEventListener('input', filterArtists);
       document.getElementById('artistLocationFilter')?.addEventListener('change', filterArtists);
+      document.getElementById('artistCityFilter')?.addEventListener('change', filterArtists);
       document.getElementById('artistRankFilter')?.addEventListener('change', filterArtists);
       document.getElementById('artistTypeFilter')?.addEventListener('change', filterArtists);
       document.getElementById('artistStatusFilter')?.addEventListener('change', filterArtists);
@@ -37144,7 +37129,7 @@
           await loadInitialData();
           await loadArtists();
           renderCalendar();
-          alert('Artist updated successfully!');
+          showNotification('Artist updated successfully!', 'success');
         } catch (err) {
           alert('Error updating artist: ' + err.message);
         }
@@ -37736,7 +37721,7 @@
         }
 
         console.log('✅ Artist updated successfully');
-        alert('✅ Artist updated successfully!');
+        showNotification('Artist updated successfully!', 'success');
 
         closeEditArtistModal();
 
@@ -37913,6 +37898,16 @@
                   <div>
                     <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Rank</label>
                     <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.rank || 'No rank'}</p>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">City</label>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${artist.city_location || (artist.location && artist.location.city) || 'N/A'}</p>
+                  </div>
+
+                  <div>
+                    <label style="font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase;">Location</label>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${(artist.location && artist.location.name) || 'N/A'}</p>
                   </div>
 
                   <div>
@@ -62404,12 +62399,7 @@
       'Crew':    { artist: 75, studio: 25 },
       'Fam':     { artist: 80, studio: 20 },
       'VIP':     { artist: 80, studio: 20 },
-      // Fallback für alte Ränge (Übergangszeit)
-      'R1':      { artist: 70, studio: 30 },
-      'R2':      { artist: 75, studio: 25 },
-      'R3':      { artist: 80, studio: 20 },
-      'R4':      { artist: 80, studio: 20 },
-      'R5':      { artist: 80, studio: 20 },
+      // R1-R5 legacy ranks removed
       'default': { artist: 75, studio: 25 }
     };
 
