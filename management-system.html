@@ -23650,6 +23650,7 @@
         profiles:      { batchSize: 100,  parallel: 1, relations: '*' },
         task_projects: { batchSize: 100,  parallel: 1, relations: '*' },
         wannados:      { batchSize: 500,  parallel: 1, relations: '*' },
+        wannado_collections: { batchSize: 100, parallel: 1, relations: '*, artist:artists(id, name, profile_picture_url), wannados(*)' },
         project_tasks: { batchSize: 500,  parallel: 1, relations: '*' },
         work_tracking: { batchSize: 500,  parallel: 1, relations: '*' },
         artists:       { batchSize: 500,  parallel: 1, relations: '*, location:locations!location_id(id, name, city)' },
@@ -24178,7 +24179,8 @@
           'artists',
           'appointments',
           'dienstplan',
-          'wannados'
+          'wannados',
+          'wannado_collections'
         ];
 
         tablesToWatch.forEach(table => {
@@ -58837,8 +58839,10 @@
                 ${!wannados.length ? '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#86868b;">Noch keine Wannados</div>' :
                   wannados.map(w => `
                     <div class="wannado-card ${w.status === 'sold' ? 'sold' : ''}" onclick="window.openEditWannadoModal('${w.id}')">
-                      ${w.image_url ? `<img src="${w.image_url}" class="wannado-image" onerror="this.style.display='none'">` : ''}
-                      <div class="wannado-image" style="${w.image_url ? 'display:none;' : ''}display:flex;align-items:center;justify-content:center;background:#f0f0f0;"></div>
+                      ${w.image_url
+                        ? `<img src="${w.image_url}" class="wannado-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+                        : ''}
+                      <div class="wannado-image" style="${w.image_url ? 'display:none;' : 'display:flex;'}align-items:center;justify-content:center;background:#f0f0f0;"></div>
                       <div class="wannado-details">
                         <h4 class="wannado-name">${w.name}</h4>
                         <div class="wannado-meta">
@@ -59059,6 +59063,15 @@
       window.deleteWannadoFromEdit = deleteWannadoFromEdit;
       window.deleteCollection = deleteCollection;
       window.toggleCollectionVisibility = toggleCollectionVisibility;
+
+      // Auto-refresh wannado UI on realtime changes
+      window.addEventListener('centralDataUpdate', (e) => {
+        const t = e.detail?.table;
+        if (t === 'wannados' || t === 'wannadoCollections') {
+          console.log('📡 Wannado realtime update, refreshing UI');
+          loadWannadoCollections();
+        }
+      });
 
       // ==========================================
       // MOBILE OPTIMIZATIONS
