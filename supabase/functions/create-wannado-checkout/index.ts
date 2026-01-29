@@ -65,8 +65,8 @@ Deno.serve(async (req) => {
 
     const priceInCents = Math.round(Number(wannado.price) * 100);
 
-    // Session expires in 10 minutes
-    const expiresAt = Math.floor(Date.now() / 1000) + (10 * 60);
+    // Session expires in 30 minutes (Stripe minimum)
+    const expiresAt = Math.floor(Date.now() / 1000) + (30 * 60);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
