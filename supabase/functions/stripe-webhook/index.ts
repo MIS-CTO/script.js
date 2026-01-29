@@ -288,6 +288,14 @@ serve(async (req: Request) => {
         }
 
         // 2. Create appointment
+        // Look up artist's location
+        const { data: artistData } = await supabase
+          .from('artists')
+          .select('location_id')
+          .eq('id', m.artist_id)
+          .single();
+        const artistLocationId = artistData?.location_id || null;
+
         const startDateTime = new Date(`${m.selected_date}T${m.selected_start_time}:00`).toISOString();
         const endDateTime = new Date(`${m.selected_date}T${m.selected_end_time}:00`).toISOString();
 
@@ -296,7 +304,7 @@ serve(async (req: Request) => {
           .insert({
             customer_id: customerId,
             artist_id: m.artist_id,
-            location_id: null,
+            location_id: artistLocationId,
             customer_email: m.customer_email,
             customer_phone: m.customer_phone,
             first_name: m.customer_first_name,
@@ -362,7 +370,7 @@ serve(async (req: Request) => {
           try {
             const emailHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f7f6f5;font-family:Georgia,'Times New Roman',serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f6f5;padding:40px 20px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:#fff;"><tr><td style="padding:48px 48px 32px;text-align:center;border-bottom:1px solid #e5e5e5;"><h1 style="margin:0;font-size:28px;font-weight:normal;color:#1d1d1f;letter-spacing:1px;">MOMMY I'M SORRY</h1></td></tr><tr><td style="padding:48px;"><h2 style="margin:0 0 24px;font-size:22px;font-weight:normal;color:#1d1d1f;">Dein Wannado-Termin ist bestätigt</h2><p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#515154;">Hallo ${customerName || 'there'},<br><br>vielen Dank für deine Zahlung! Dein Wannado-Motiv ist jetzt für dich reserviert.</p><table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f6f5;border-radius:8px;margin-bottom:32px;"><tr><td style="padding:24px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:8px 0;border-bottom:1px solid #e5e5e5;"><span style="color:#86868b;font-size:13px;">MOTIV</span><br><span style="color:#1d1d1f;font-size:16px;font-weight:500;">${m.wannado_name || '-'}</span></td></tr><tr><td style="padding:8px 0;border-bottom:1px solid #e5e5e5;"><span style="color:#86868b;font-size:13px;">ARTIST</span><br><span style="color:#1d1d1f;font-size:16px;font-weight:500;">${m.artist_name || '-'}</span></td></tr><tr><td style="padding:8px 0;border-bottom:1px solid #e5e5e5;"><span style="color:#86868b;font-size:13px;">DATUM</span><br><span style="color:#1d1d1f;font-size:16px;font-weight:500;">${formattedDate}</span></td></tr><tr><td style="padding:8px 0;border-bottom:1px solid #e5e5e5;"><span style="color:#86868b;font-size:13px;">UHRZEIT</span><br><span style="color:#1d1d1f;font-size:16px;font-weight:500;">${m.selected_start_time || '-'} Uhr</span></td></tr><tr><td style="padding:8px 0;border-bottom:1px solid #e5e5e5;"><span style="color:#86868b;font-size:13px;">DAUER</span><br><span style="color:#1d1d1f;font-size:16px;font-weight:500;">ca. ${m.wannado_duration_hours || '3'} Stunden</span></td></tr><tr><td style="padding:8px 0;"><span style="color:#86868b;font-size:13px;">LOCATION</span><br><span style="color:#1d1d1f;font-size:16px;font-weight:500;">MOMMY I'M SORRY</span><br><span style="color:#515154;font-size:14px;">Tübinger Str. 73, 70178 Stuttgart</span></td></tr></table></td></tr></table><p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#86868b;"><strong>Wichtig:</strong> Bitte sei pünktlich (max. 30 Min. Verspätung). Dein Wannado-Motiv ist jetzt exklusiv für dich reserviert.</p><p style="margin:0;font-size:14px;line-height:1.6;color:#86868b;">Bei Fragen erreichst du uns unter:<br><a href="mailto:info@mommyimsorry.com" style="color:#1d1d1f;">info@mommyimsorry.com</a></p></td></tr><tr><td style="padding:32px 48px;background:#1d1d1f;text-align:center;"><p style="margin:0;font-size:12px;color:#86868b;">&copy; 2026 Mommy I'm Sorry &middot; Culture Over Money</p></td></tr></table></td></tr></table></body></html>`;
 
-            console.log('📧 Sending wannado email to:', m.customer_email, 'via Resend API');
+            console.log('📧 Sending wannado email to:', m.customer_email, 'via Resend API, key present:', !!resendApiKey, 'key length:', resendApiKey.length);
             const emailResponse = await fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: {
