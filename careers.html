@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @font-face {
+      font-family: 'Town 80';
+      src: local('Town 80');
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    *:focus, *:active {
+      outline: none !important;
+    }
+
+    button::-moz-focus-inner {
+      border: 0;
+    }
+
+    body {
+      font-family: 'Town 80', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      line-height: 1.6;
+      color: #000;
+      background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 50vw;
+      margin: 0 auto;
+      padding: 0 4vw;
+    }
+
+    /* Header */
+    .page-header {
+      padding: 48px 0 32px;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      font-size: 0.875rem;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    /* Area Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 32px;
+    }
+
+    .filter-tab {
+      padding: 14px 24px;
+      border: 1px solid #1a1a1a;
+      border-right: none;
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      color: #000;
+    }
+
+    .filter-tab:last-child {
+      border-right: 1px solid #1a1a1a;
+    }
+
+    .filter-tab:hover {
+      background: #f5f5f5;
+    }
+
+    .filter-tab.active {
+      font-weight: 500;
+      background: #000;
+      color: #fff;
+    }
+
+    /* Job Listing Items */
+    .job-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .job-item {
+      border: 1px solid #1a1a1a;
+      border-bottom: none;
+    }
+
+    .job-item:last-child {
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .job-header:hover {
+      background: #f5f5f5;
+    }
+
+    .job-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .job-title {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .job-meta {
+      font-size: 0.8rem;
+      color: #666;
+      letter-spacing: 0.3px;
+    }
+
+    .job-toggle {
+      width: 18px;
+      height: 18px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .job-toggle::before,
+    .job-toggle::after {
+      content: '';
+      position: absolute;
+      background: #000;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform 0.3s ease;
+    }
+
+    .job-toggle::before {
+      width: 12px;
+      height: 2px;
+    }
+
+    .job-toggle::after {
+      width: 2px;
+      height: 12px;
+    }
+
+    .job-item.open .job-toggle::after {
+      transform: translate(-50%, -50%) rotate(90deg);
+      opacity: 0;
+    }
+
+    .job-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .job-item.open .job-content {
+      max-height: 2000px;
+    }
+
+    .job-content-inner {
+      padding: 0 20px 24px;
+    }
+
+    .job-content-inner p {
+      margin-bottom: 16px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .job-section-title {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      margin: 24px 0 12px;
+    }
+
+    .job-content-inner ul {
+      list-style: disc;
+      padding-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    .job-content-inner li {
+      margin-bottom: 6px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .apply-btn {
+      display: inline-block;
+      padding: 16px 32px;
+      background: #9e9e9e;
+      color: #fff;
+      border: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      margin-top: 16px;
+    }
+
+    .apply-btn:hover {
+      background: #757575;
+    }
+
+    /* Application Form View */
+    .form-view {
+      display: none;
+    }
+
+    .form-view.active {
+      display: block;
+      animation: fadeIn 600ms ease forwards;
+    }
+
+    .listings-view {
+      display: block;
+    }
+
+    .listings-view.hidden {
+      display: none;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      color: #666;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 24px;
+      transition: color 0.2s ease;
+    }
+
+    .back-btn:hover {
+      color: #000;
+    }
+
+    .back-btn:hover .back-arrow {
+      transform: translateX(-4px);
+    }
+
+    .back-arrow {
+      transition: transform 0.3s ease;
+      display: inline-block;
+    }
+
+    .form-job-title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px;
+    }
+
+    .form-job-meta {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 32px;
+    }
+
+    .form-section-title {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      margin-bottom: 16px;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      color: #666;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #e0e0e0;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 400;
+      transition: border-color 0.2s ease;
+      background: #fff;
+      color: #000;
+    }
+
+    .form-input:focus {
+      border-color: #1a1a1a;
+    }
+
+    .form-input::placeholder {
+      color: #999;
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.6;
+    }
+
+    /* File Upload */
+    .file-section {
+      margin-bottom: 24px;
+    }
+
+    .file-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px;
+    }
+
+    .file-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .file-option-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border: 1px solid #1a1a1a;
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 400;
+      cursor: pointer;
+      text-align: center;
+      max-width: 250px;
+      transition: background-color 0.2s ease;
+    }
+
+    .file-option-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .file-option-btn.selected {
+      background: #000;
+      color: #fff;
+    }
+
+    .file-hint {
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .file-input-hidden {
+      display: none;
+    }
+
+    .file-name-display {
+      font-size: 0.8rem;
+      color: #333;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .manual-text-area {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .submit-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .submit-btn {
+      padding: 16px 32px;
+      background: #9e9e9e;
+      color: #fff;
+      border: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      background: #757575;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Success Message */
+    .success-message {
+      display: none;
+      text-align: left;
+      padding: 48px 0;
+    }
+
+    .success-message h2 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      margin-bottom: 12px;
+    }
+
+    .success-message p {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    /* Empty State */
+    .empty-state {
+      padding: 48px 0;
+      color: #666;
+      text-align: left;
+    }
+
+    /* Loading */
+    .loading {
+      padding: 48px 0;
+      color: #999;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .container {
+        max-width: 100vw;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 4vw;
+      }
+
+      .page-header {
+        padding: 32px 0 24px;
+      }
+
+      .page-header h1 {
+        font-size: 1.5rem;
+      }
+
+      .filter-tabs {
+        flex-wrap: wrap;
+      }
+
+      .filter-tab {
+        padding: 12px 18px;
+        font-size: 0.8rem;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .job-header {
+        padding: 16px;
+      }
+
+      .job-content-inner {
+        padding: 0 16px 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      .page-header {
+        padding: 24px 0 16px;
+      }
+
+      .filter-tab {
+        padding: 10px 14px;
+        font-size: 0.75rem;
+      }
+
+      .submit-row {
+        justify-content: stretch;
+      }
+
+      .submit-btn, .apply-btn {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Listings View -->
+    <div class="listings-view" id="listingsView">
+      <div class="page-header">
+        <h1>Offene Positionen</h1>
+        <p>Werde Teil des Teams</p>
+      </div>
+
+      <div class="filter-tabs" id="filterTabs"></div>
+
+      <div class="job-list" id="jobList">
+        <div class="loading">Laden...</div>
+      </div>
+    </div>
+
+    <!-- Application Form View -->
+    <div class="form-view" id="formView">
+      <div class="page-header">
+        <button class="back-btn" onclick="showListings()">
+          <span class="back-arrow">&lsaquo;</span> Zurück zu allen Stellen
+        </button>
+        <h1 class="form-job-title" id="formJobTitle"></h1>
+        <p class="form-job-meta" id="formJobMeta"></p>
+      </div>
+
+      <!-- Job Details (collapsed in form view) -->
+      <div id="formJobDetails" style="margin-bottom:32px;"></div>
+
+      <h2 class="form-section-title">Bewerbung einreichen</h2>
+
+      <form id="applicationForm" onsubmit="submitApplication(event)">
+        <input type="hidden" id="formJobId">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Vorname *</label>
+            <input type="text" class="form-input" id="appFirstName" required placeholder="Vorname">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nachname *</label>
+            <input type="text" class="form-input" id="appLastName" required placeholder="Nachname">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">E-Mail *</label>
+          <input type="email" class="form-input" id="appEmail" required placeholder="deine@email.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Telefon</label>
+          <input type="tel" class="form-input" id="appPhone" placeholder="+49 ...">
+        </div>
+
+        <!-- CV Section -->
+        <div class="file-section">
+          <div class="file-label">Lebenslauf / CV</div>
+          <div class="file-options">
+            <button type="button" class="file-option-btn" id="cvAttachBtn" onclick="toggleCvMode('file')">Datei anhängen</button>
+            <button type="button" class="file-option-btn" id="cvManualBtn" onclick="toggleCvMode('text')">Manuell eingeben</button>
+          </div>
+          <input type="file" class="file-input-hidden" id="cvFileInput" accept=".pdf,.doc,.docx,.txt,.rtf" onchange="showFileName('cv')">
+          <div class="file-name-display" id="cvFileName"></div>
+          <div class="file-hint" id="cvFileHint" style="display:none;">Akzeptierte Dateiformate: pdf, doc, docx, txt, rtf</div>
+          <div class="manual-text-area" id="cvTextArea">
+            <textarea class="form-input" id="cvText" placeholder="Lebenslauf hier eingeben..."></textarea>
+          </div>
+        </div>
+
+        <!-- Cover Letter Section -->
+        <div class="file-section">
+          <div class="file-label">Anschreiben</div>
+          <div class="file-options">
+            <button type="button" class="file-option-btn" id="clAttachBtn" onclick="toggleClMode('file')">Datei anhängen</button>
+            <button type="button" class="file-option-btn" id="clManualBtn" onclick="toggleClMode('text')">Manuell eingeben</button>
+          </div>
+          <input type="file" class="file-input-hidden" id="clFileInput" accept=".pdf,.doc,.docx,.txt,.rtf" onchange="showFileName('cl')">
+          <div class="file-name-display" id="clFileName"></div>
+          <div class="file-hint" id="clFileHint" style="display:none;">Akzeptierte Dateiformate: pdf, doc, docx, txt, rtf</div>
+          <div class="manual-text-area" id="clTextArea">
+            <textarea class="form-input" id="clText" placeholder="Anschreiben hier eingeben..."></textarea>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="submit-btn" id="submitBtn">Bewerbung absenden</button>
+        </div>
+      </form>
+
+      <!-- Success -->
+      <div class="success-message" id="successMessage">
+        <h2>Bewerbung eingegangen</h2>
+        <p>Vielen Dank für deine Bewerbung. Wir melden uns bei dir.</p>
+        <button class="apply-btn" onclick="showListings()" style="margin-top:24px;">Weitere Stellen ansehen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://auxxyehgzkozdjylhqnx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eHh5ZWhnemtvemRqeWxocW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NDczODgsImV4cCI6MjA3NjEyMzM4OH0.bg8NunF2qkps28Aj0ZqY35eKK--QOu8NduCkFyqp5KA';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allPostings = [];
+    let currentFilter = 'all';
+    let cvMode = null; // 'file' or 'text'
+    let clMode = null;
+
+    // Load active job postings
+    async function loadPostings() {
+      try {
+        const { data, error } = await sb
+          .from('job_postings')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        allPostings = data || [];
+        renderFilterTabs();
+        renderJobList();
+      } catch (err) {
+        console.log('Error loading postings:', err);
+        document.getElementById('jobList').innerHTML = '<div class="empty-state">Fehler beim Laden der Stellenanzeigen.</div>';
+      }
+    }
+
+    function renderFilterTabs() {
+      const areas = [...new Set(allPostings.map(p => p.area).filter(Boolean))];
+      if (areas.length <= 1) {
+        document.getElementById('filterTabs').style.display = 'none';
+        return;
+      }
+
+      const tabs = [{ label: 'Alle', value: 'all' }];
+      areas.forEach(a => tabs.push({ label: a, value: a }));
+
+      document.getElementById('filterTabs').innerHTML = tabs.map(t =>
+        `<button class="filter-tab ${t.value === currentFilter ? 'active' : ''}" onclick="setFilter('${t.value}')">${t.label}</button>`
+      ).join('');
+    }
+
+    function setFilter(value) {
+      currentFilter = value;
+      renderFilterTabs();
+      renderJobList();
+    }
+
+    function renderJobList() {
+      const filtered = currentFilter === 'all'
+        ? allPostings
+        : allPostings.filter(p => p.area === currentFilter);
+
+      if (filtered.length === 0) {
+        document.getElementById('jobList').innerHTML = '<div class="empty-state">Aktuell keine offenen Stellen.</div>';
+        return;
+      }
+
+      document.getElementById('jobList').innerHTML = filtered.map(p => {
+        const metaParts = [p.area, p.location].filter(Boolean);
+        const meta = metaParts.join(' \u2013 ');
+
+        return `<div class="job-item" id="job-${p.id}">
+          <div class="job-header" onclick="toggleJob('${p.id}')">
+            <div class="job-header-left">
+              <div class="job-title">${esc(p.title)}</div>
+              ${meta ? `<div class="job-meta">${esc(meta)}</div>` : ''}
+            </div>
+            <div class="job-toggle"></div>
+          </div>
+          <div class="job-content">
+            <div class="job-content-inner">
+              ${p.head_info ? `<p>${esc(p.head_info)}</p>` : ''}
+              ${p.responsibilities ? `<h3 class="job-section-title">Aufgaben & Verantwortlichkeiten</h3>${renderParagraph(p.responsibilities)}` : ''}
+              ${p.qualifications ? `<h3 class="job-section-title">Qualifikationen</h3>${renderParagraph(p.qualifications)}` : ''}
+              ${p.why_join_us ? `<h3 class="job-section-title">Warum bei uns?</h3>${renderParagraph(p.why_join_us)}` : ''}
+              <button class="apply-btn" onclick="showApplicationForm('${p.id}')">Jetzt Bewerben</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderParagraph(text) {
+      if (!text) return '';
+      const lines = text.split('\n').filter(l => l.trim());
+      const isBulletList = lines.every(l => l.trim().startsWith('•') || l.trim().startsWith('-') || l.trim().startsWith('*'));
+
+      if (isBulletList) {
+        return '<ul>' + lines.map(l => `<li>${esc(l.replace(/^[\s•\-*]+/, ''))}</li>`).join('') + '</ul>';
+      }
+      return `<p>${esc(text)}</p>`;
+    }
+
+    function toggleJob(id) {
+      const el = document.getElementById('job-' + id);
+      if (el) el.classList.toggle('open');
+    }
+
+    // Application Form
+    function showApplicationForm(postingId) {
+      const posting = allPostings.find(p => p.id === postingId);
+      if (!posting) return;
+
+      document.getElementById('formJobId').value = postingId;
+      document.getElementById('formJobTitle').textContent = posting.title;
+      const metaParts = [posting.area, posting.location].filter(Boolean);
+      document.getElementById('formJobMeta').textContent = metaParts.join(' \u2013 ');
+
+      // Show job details in form view
+      let details = '';
+      if (posting.head_info) details += `<p style="color:#333; margin-bottom:16px; line-height:1.6;">${esc(posting.head_info)}</p>`;
+      if (posting.responsibilities) details += `<h3 class="job-section-title">Aufgaben & Verantwortlichkeiten</h3>${renderParagraph(posting.responsibilities)}`;
+      if (posting.qualifications) details += `<h3 class="job-section-title">Qualifikationen</h3>${renderParagraph(posting.qualifications)}`;
+      if (posting.why_join_us) details += `<h3 class="job-section-title">Warum bei uns?</h3>${renderParagraph(posting.why_join_us)}`;
+      document.getElementById('formJobDetails').innerHTML = details;
+
+      // Reset form
+      document.getElementById('applicationForm').reset();
+      resetFileMode('cv');
+      resetFileMode('cl');
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('applicationForm').style.display = 'block';
+      document.getElementById('submitBtn').disabled = false;
+
+      // Switch views
+      document.getElementById('listingsView').classList.add('hidden');
+      const formView = document.getElementById('formView');
+      formView.classList.add('active');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showListings() {
+      document.getElementById('formView').classList.remove('active');
+      document.getElementById('listingsView').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // CV / Cover Letter Mode Toggle
+    function toggleCvMode(mode) {
+      cvMode = (cvMode === mode) ? null : mode;
+      updateFileUI('cv', cvMode);
+    }
+
+    function toggleClMode(mode) {
+      clMode = (clMode === mode) ? null : mode;
+      updateFileUI('cl', clMode);
+    }
+
+    function resetFileMode(prefix) {
+      if (prefix === 'cv') cvMode = null;
+      else clMode = null;
+      updateFileUI(prefix, null);
+    }
+
+    function updateFileUI(prefix, mode) {
+      const attachBtn = document.getElementById(prefix + 'AttachBtn');
+      const manualBtn = document.getElementById(prefix + 'ManualBtn');
+      const fileInput = document.getElementById(prefix + 'FileInput');
+      const fileHint = document.getElementById(prefix + 'FileHint');
+      const fileName = document.getElementById(prefix + 'FileName');
+      const textArea = document.getElementById(prefix + 'TextArea');
+
+      attachBtn.classList.remove('selected');
+      manualBtn.classList.remove('selected');
+      fileHint.style.display = 'none';
+      fileName.style.display = 'none';
+      textArea.style.display = 'none';
+
+      if (mode === 'file') {
+        attachBtn.classList.add('selected');
+        fileHint.style.display = 'block';
+        fileInput.click();
+      } else if (mode === 'text') {
+        manualBtn.classList.add('selected');
+        textArea.style.display = 'block';
+      }
+    }
+
+    function showFileName(prefix) {
+      const fileInput = document.getElementById(prefix + 'FileInput');
+      const fileNameEl = document.getElementById(prefix + 'FileName');
+      if (fileInput.files.length > 0) {
+        fileNameEl.textContent = fileInput.files[0].name;
+        fileNameEl.style.display = 'block';
+      }
+    }
+
+    // Submit Application
+    async function submitApplication(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Wird gesendet...';
+
+      const postingId = document.getElementById('formJobId').value;
+      const firstName = document.getElementById('appFirstName').value.trim();
+      const lastName = document.getElementById('appLastName').value.trim();
+      const email = document.getElementById('appEmail').value.trim();
+      const phone = document.getElementById('appPhone').value.trim();
+      const cvTextVal = document.getElementById('cvText').value.trim();
+      const clTextVal = document.getElementById('clText').value.trim();
+
+      try {
+        let cvUrl = null, cvFilename = null;
+        let clUrl = null, clFilename = null;
+
+        // Upload CV file
+        const cvFile = document.getElementById('cvFileInput').files[0];
+        if (cvFile) {
+          const path = `${postingId}/${Date.now()}_cv_${cvFile.name}`;
+          const { data: uploadData, error: uploadErr } = await sb.storage
+            .from('career-applications')
+            .upload(path, cvFile);
+
+          if (uploadErr) throw uploadErr;
+          const { data: urlData } = sb.storage.from('career-applications').getPublicUrl(path);
+          cvUrl = urlData.publicUrl;
+          cvFilename = cvFile.name;
+        }
+
+        // Upload Cover Letter file
+        const clFile = document.getElementById('clFileInput').files[0];
+        if (clFile) {
+          const path = `${postingId}/${Date.now()}_cl_${clFile.name}`;
+          const { data: uploadData, error: uploadErr } = await sb.storage
+            .from('career-applications')
+            .upload(path, clFile);
+
+          if (uploadErr) throw uploadErr;
+          const { data: urlData } = sb.storage.from('career-applications').getPublicUrl(path);
+          clUrl = urlData.publicUrl;
+          clFilename = clFile.name;
+        }
+
+        // Insert application
+        const { error } = await sb.from('job_applications').insert([{
+          job_posting_id: postingId,
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone: phone || null,
+          cv_url: cvUrl,
+          cv_filename: cvFilename,
+          cv_text: cvTextVal || null,
+          cover_letter_url: clUrl,
+          cover_letter_filename: clFilename,
+          cover_letter_text: clTextVal || null
+        }]);
+
+        if (error) throw error;
+
+        // Show success
+        document.getElementById('applicationForm').style.display = 'none';
+        document.getElementById('successMessage').style.display = 'block';
+
+      } catch (err) {
+        console.log('Error submitting application:', err);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Bewerbung absenden';
+      }
+    }
+
+    // Escape HTML
+    function esc(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', loadPostings);
+  </script>
+</body>
+</html>

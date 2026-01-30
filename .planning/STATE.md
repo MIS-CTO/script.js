@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-30 | Version: 3.1501**
-**UPDATE: Phase 8.5 Request Polish**
+**Stand: 2026-01-30 | Version: 3.1502**
+**UPDATE: Phase 9 Careers**
 
 ---
 
@@ -56,8 +56,41 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 8.5: REQUEST POLISH                           ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 9: CAREERS                                    ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Phase 9: Careers (2026-01-30) ✅ COMPLETE
+
+### Changes
+
+1. **New database tables**: Created `job_postings` and `job_applications` tables with RLS policies (permissive, matching custom auth pattern). Created `career-applications` storage bucket for CV/cover letter file uploads.
+
+2. **Management System — Careers tab**: Added "Careers" nav link to management-system.html. New section with two sub-views:
+   - **Job Postings List**: Table with filters (location, status, search). Create/edit modal with all fields (title, location, area, head info, responsibilities, qualifications, why join us, active toggle). Delete with cascade.
+   - **Applications Review**: Click a posting row to see its applications. Table shows name, email, phone, CV/cover letter links, status badge, date. Status dropdown (Neu/Gesehen/Interview/Eingestellt/Abgelehnt) for inline updates. Click row for side panel with full details, notes field, and delete option.
+   - Hidden from V1 restricted users (not in `allowedTabs` array).
+
+3. **Public Embed — careers.html**: New self-contained HTML file for Webflow custom code element. Design follows MIS brand guidelines (minimalist black/white, Town 80 font, no shadows/gradients/rounded corners).
+   - **Listings view**: Accordion-style job listings with area filter tabs, expandable details (responsibilities as bullet lists), "Jetzt Bewerben" button.
+   - **Application form**: First Name, Last Name, Email, Phone, CV (file upload OR manual text input), Cover Letter (file upload OR manual text input), Submit button. Files uploaded to `career-applications` Supabase Storage bucket.
+   - Responsive: 50vw desktop → 100vw tablet → full mobile. Animations with fadeIn and cubic-bezier accordion.
+
+### Files Changed
+
+- `careers.html` — **NEW** (public embed for Webflow)
+- `management-system.html` — Careers nav link, section HTML, create/edit modal, all JS functions
+- `.planning/ROADMAP.md` — Added Phase 9
+- `.planning/STATE.md` — Documented changes
+
+### Database Migration
+
+```
+create_careers_tables — job_postings + job_applications tables, RLS policies, career-applications storage bucket
 ```
 
 ---
