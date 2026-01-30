@@ -74,11 +74,30 @@
 
 4. **Customer edit null rank fix**: Changed both customer edit forms (edit modal + profile save) from `rank: rank || null` to only including rank in the update payload when explicitly selected. This prevents accidentally wiping a customer's rank to null when editing other fields.
 
+5. **No required fields**: Removed all `required` attributes and `*` labels from the Create Request form. All fields are now optional.
+
+6. **Artist search rewrite**: Rewrote artist preference search to use the `allArtists` in-memory cache (same pattern as Create Booking modal) instead of async Supabase queries. Instant results, shows instagram handles, uses mouseenter/mouseleave + click handlers. Search icon added to input.
+
+7. **UUID empty string fix**: Fixed `location_id` and other optional fields sending `""` (empty string) instead of `null`, which caused `invalid input syntax for type uuid` errors.
+
+8. **Removed success popup**: Removed `alert('Request created successfully!')` after request creation.
+
 ### Files Changed
 
-- `management-system.html` — All 4 fixes (modal close, artist preference, rank overrides, customer edit)
+- `management-system.html` — All fixes (modal close, artist preference, rank overrides, customer edit, form validation, UUID fix, popup removal)
 - `.planning/ROADMAP.md` — Added Phase 8.5
 - `.planning/STATE.md` — Documented changes
+
+### Commits
+
+```
+2e6bc50 fix(requests): request polish - modal close protection, artist preference multi-select, neukunde rank fix
+ad36a9c fix(requests): remove all required fields from create request form
+5037911 fix(requests): fix artist preference search and selection in create request
+2293732 fix(requests): rewrite artist preference search to match Create Booking pattern
+5994beb fix(requests): fix UUID error when creating request with empty optional fields
+31b2168 fix(requests): remove success popup after creating request
+```
 
 ---
 
