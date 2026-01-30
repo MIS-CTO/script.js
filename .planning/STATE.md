@@ -64,6 +64,43 @@
 
 ---
 
+## Feature: V2 View Permission Level (2026-01-30) ✅ COMPLETE
+
+### Changes
+
+1. **New V2 permission level**: V2 users see all tabs except Analytics and Careers
+2. **Database**: Added `view_permission` column to `profiles` table (for non-artist users). Set `V2` for dominic, Fay, Jan.
+3. **JS**: Added `hasV2View()` helper, profiles-based view_permission lookup for non-artist users, V2 tab hiding in `applyArtistUserRestrictions()`, V2 click blocking in tab handler
+
+### V2 Users
+
+| User | Profile ID |
+|------|-----------|
+| dominic | 3eef0a0f-e9c8-4d5f-b498-eef6a7c5da53 |
+| Fay | feb0f09d-4461-44c5-a769-67a7716ba7ad |
+| Jan | feef5b54-4506-4324-af8b-1617636e3ee2 |
+
+### Permission Levels Summary
+
+| Level | Location | Visible Tabs | Hidden Tabs |
+|-------|----------|-------------|-------------|
+| NULL | — | All | None |
+| V1 | artists.view_permission | Dashboard, Calendar, Dienstplan | Everything else + payment info |
+| V2 | profiles.view_permission | All except Analytics & Careers | Analytics, Careers |
+
+### Files Changed
+
+- `management-system.html` — hasV2View(), profiles lookup, applyArtistUserRestrictions(), tab click handler
+- Database migration: `add_view_permission_to_profiles_v2`
+
+### Commits
+
+```
+68d4ba7 feat(permissions): add V2 view permission level hiding Analytics and Careers
+```
+
+---
+
 ## Hotfix: Request Assignment User Update (2026-01-30) ✅ COMPLETE
 
 ### Changes
