@@ -1,6 +1,6 @@
 # Culture Over Money - Project State
-**Stand: 2026-01-29 | Version: 3.1500**
-**UPDATE: Artist Page Polish - Extended UI Overhaul**
+**Stand: 2026-01-30 | Version: 3.1501**
+**UPDATE: Phase 8.5 Request Polish**
 
 ---
 
@@ -54,9 +54,31 @@
 ╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 8.4: WANNADO POLISH                          ✓ DONE  ║
 ╠═══════════════════════════════════════════════════════════════╣
+║  PHASE 8.5: REQUEST POLISH                           ✓ DONE  ║
+╠═══════════════════════════════════════════════════════════════╣
 ║  PHASE 5.2: PERFORMANCE & POLISH                     BACKLOG  ║
 ╚═══════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## Phase 8.5: Request Polish (2026-01-30) ✅ COMPLETE
+
+### Changes
+
+1. **Create Request modal — prevent accidental close**: Excluded `createRequestModal` from generic backdrop-click-to-close handler. Modal now only closes via X button or Cancel button, preventing data loss from accidental clicks outside the form.
+
+2. **Artist Preference multi-select**: Replaced "Assignment" section with "Artist Preference". Removed Resident/Guest type toggle requirement — search now queries ALL artists. Multiple artists can be selected as tags (chips). Selected names are stored as comma-separated text in `artist_preference` field. First selected artist is also set as `artist_id` FK for backwards compatibility.
+
+3. **Neukunde rank bug — removed JS rank overrides**: Removed two JavaScript code paths (appointment state change + appointment edit/save) that directly set `rank: 'Bronze'` on first completed appointment, bypassing the DB trigger. The database trigger `update_customer_rank()` is now the single source of truth for rank.
+
+4. **Customer edit null rank fix**: Changed both customer edit forms (edit modal + profile save) from `rank: rank || null` to only including rank in the update payload when explicitly selected. This prevents accidentally wiping a customer's rank to null when editing other fields.
+
+### Files Changed
+
+- `management-system.html` — All 4 fixes (modal close, artist preference, rank overrides, customer edit)
+- `.planning/ROADMAP.md` — Added Phase 8.5
+- `.planning/STATE.md` — Documented changes
 
 ---
 

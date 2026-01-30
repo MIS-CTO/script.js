@@ -19838,9 +19838,9 @@
           </div>
         </div>
 
-        <!-- Assignment Section -->
+        <!-- Artist Preference Section -->
         <div style="background:#fafafa; border:1px solid #eaeaea; border-radius:8px; padding:16px; margin-bottom:16px;">
-          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Assignment</label>
+          <label style="display:block; font-size:13px; font-weight:500; color:#666; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">Preference</label>
           <div style="margin-bottom:12px;">
             <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Location *</label>
             <select id="createLocation" required style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
@@ -19848,17 +19848,11 @@
               <!-- Locations will be loaded dynamically -->
             </select>
           </div>
-          <div style="margin-bottom:12px;">
-            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist Type</label>
-            <div style="display:flex; gap:8px;">
-              <button type="button" id="createRequestResidentBtn" onclick="setCreateRequestArtistType('resident')" style="flex:1; padding:8px 16px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; cursor:pointer; background:#fff; color:#666; transition:all 0.2s;">Resident</button>
-              <button type="button" id="createRequestGuestBtn" onclick="setCreateRequestArtistType('guest')" style="flex:1; padding:8px 16px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; cursor:pointer; background:#fff; color:#666; transition:all 0.2s;">Guest</button>
-            </div>
-          </div>
           <div>
-            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist</label>
+            <label style="display:block; font-size:12px; font-weight:500; color:#666; margin-bottom:4px;">Artist Preference</label>
+            <div id="createRequestSelectedArtists" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
             <div style="position:relative;">
-              <input type="text" id="createRequestArtistSearch" placeholder="Search artist..." disabled style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#f5f5f5;">
+              <input type="text" id="createRequestArtistSearch" placeholder="Search artist..." style="width:100%; padding:8px 12px; border:1px solid #eaeaea; border-radius:6px; font-size:14px; background:#fff;">
               <input type="hidden" id="createRequestArtistId">
               <div id="createRequestArtistResults" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; border:1px solid #eaeaea; border-radius:6px; margin-top:4px; background:#fff; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
             </div>
@@ -22614,7 +22608,7 @@
           }
         }
 
-        // 3. Neuen Customer erstellen (mit "Neukunde" Rang - wird bei erstem Termin auf "Bronze" upgraded)
+        // 3. Neuen Customer erstellen (mit "Neukunde" Rang - DB trigger handles rank upgrades)
         const { data: newCustomer, error: insertError } = await supabase
           .from('customers')
           .insert({
@@ -33237,72 +33231,45 @@
         resetCreateRequestArtistSelection();
       });
 
-      // Create Request Artist Type Toggle
-      let createRequestArtistType = null;
-
-      window.setCreateRequestArtistType = function(type) {
-        createRequestArtistType = type;
-        const residentBtn = document.getElementById('createRequestResidentBtn');
-        const guestBtn = document.getElementById('createRequestGuestBtn');
-        const searchInput = document.getElementById('createRequestArtistSearch');
-
-        if (type === 'resident') {
-          residentBtn.style.background = '#000';
-          residentBtn.style.color = '#fff';
-          residentBtn.style.borderColor = '#000';
-          guestBtn.style.background = '#fff';
-          guestBtn.style.color = '#666';
-          guestBtn.style.borderColor = '#eaeaea';
-        } else {
-          guestBtn.style.background = '#000';
-          guestBtn.style.color = '#fff';
-          guestBtn.style.borderColor = '#000';
-          residentBtn.style.background = '#fff';
-          residentBtn.style.color = '#666';
-          residentBtn.style.borderColor = '#eaeaea';
-        }
-
-        // Enable search input
-        searchInput.disabled = false;
-        searchInput.style.background = '#fff';
-        searchInput.value = '';
-        document.getElementById('createRequestArtistId').value = '';
-        document.getElementById('createRequestArtistResults').style.display = 'none';
-      };
+      // Create Request Artist Preference (multi-select)
+      let createRequestSelectedArtists = []; // Array of { id, name }
 
       function resetCreateRequestArtistSelection() {
-        createRequestArtistType = null;
-        const residentBtn = document.getElementById('createRequestResidentBtn');
-        const guestBtn = document.getElementById('createRequestGuestBtn');
+        createRequestSelectedArtists = [];
+        const container = document.getElementById('createRequestSelectedArtists');
+        if (container) container.innerHTML = '';
         const searchInput = document.getElementById('createRequestArtistSearch');
-
-        if (residentBtn) {
-          residentBtn.style.background = '#fff';
-          residentBtn.style.color = '#666';
-          residentBtn.style.borderColor = '#eaeaea';
-        }
-        if (guestBtn) {
-          guestBtn.style.background = '#fff';
-          guestBtn.style.color = '#666';
-          guestBtn.style.borderColor = '#eaeaea';
-        }
-        if (searchInput) {
-          searchInput.disabled = true;
-          searchInput.style.background = '#f5f5f5';
-          searchInput.value = '';
-        }
+        if (searchInput) searchInput.value = '';
         const artistIdInput = document.getElementById('createRequestArtistId');
         if (artistIdInput) artistIdInput.value = '';
         const resultsDiv = document.getElementById('createRequestArtistResults');
         if (resultsDiv) resultsDiv.style.display = 'none';
       }
 
-      // Create Request Artist Search
+      function renderSelectedArtistTags() {
+        const container = document.getElementById('createRequestSelectedArtists');
+        if (!container) return;
+        container.innerHTML = createRequestSelectedArtists.map((a, idx) => `
+          <span style="display:inline-flex; align-items:center; gap:4px; background:#e8e8e8; border-radius:12px; padding:4px 10px; font-size:13px; color:#1d1d1f;">
+            ${a.name}
+            <span onclick="removeCreateRequestArtist(${idx})" style="cursor:pointer; color:#999; font-weight:700; font-size:14px; line-height:1;">&times;</span>
+          </span>
+        `).join('');
+        // Set first artist as primary artist_id for FK
+        document.getElementById('createRequestArtistId').value = createRequestSelectedArtists.length > 0 ? createRequestSelectedArtists[0].id : '';
+      }
+
+      window.removeCreateRequestArtist = function(idx) {
+        createRequestSelectedArtists.splice(idx, 1);
+        renderSelectedArtistTags();
+      };
+
+      // Create Request Artist Search (searches all artists, no type filter required)
       document.getElementById('createRequestArtistSearch')?.addEventListener('input', async function() {
         const query = this.value.trim();
         const resultsDiv = document.getElementById('createRequestArtistResults');
 
-        if (query.length < 2 || !createRequestArtistType) {
+        if (query.length < 2) {
           resultsDiv.style.display = 'none';
           return;
         }
@@ -33310,21 +33277,24 @@
         try {
           const { data: artists, error } = await supabase
             .from('artists')
-            .select('id, name, email')
-            .eq('artist_type', createRequestArtistType)
+            .select('id, name, email, artist_type')
             .ilike('name', `%${query}%`)
             .limit(10);
 
           if (error) throw error;
 
-          if (artists && artists.length > 0) {
-            resultsDiv.innerHTML = artists.map(artist => `
+          // Filter out already selected artists
+          const selectedIds = new Set(createRequestSelectedArtists.map(a => a.id));
+          const filtered = (artists || []).filter(a => !selectedIds.has(a.id));
+
+          if (filtered.length > 0) {
+            resultsDiv.innerHTML = filtered.map(artist => `
               <div onclick="selectCreateRequestArtist('${artist.id}', '${artist.name.replace(/'/g, "\\'")}')"
                    style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #eaeaea; transition:background 0.2s;"
                    onmouseover="this.style.background='#f5f5f5'"
                    onmouseout="this.style.background='#fff'">
                 <div style="font-weight:500; color:#1d1d1f;">${artist.name}</div>
-                ${artist.email ? `<div style="font-size:12px; color:#666;">${artist.email}</div>` : ''}
+                <div style="font-size:12px; color:#999;">${artist.artist_type || ''}</div>
               </div>
             `).join('');
             resultsDiv.style.display = 'block';
@@ -33338,8 +33308,12 @@
       });
 
       window.selectCreateRequestArtist = function(artistId, artistName) {
-        document.getElementById('createRequestArtistSearch').value = artistName;
-        document.getElementById('createRequestArtistId').value = artistId;
+        // Add to multi-select list
+        if (!createRequestSelectedArtists.find(a => a.id === artistId)) {
+          createRequestSelectedArtists.push({ id: artistId, name: artistName });
+          renderSelectedArtistTags();
+        }
+        document.getElementById('createRequestArtistSearch').value = '';
         document.getElementById('createRequestArtistResults').style.display = 'none';
       };
 
@@ -33380,8 +33354,9 @@
             // Continue without customer_id - not critical
           }
 
-          // Get artist_id if selected
+          // Get artist preference (multi-select): first artist as FK, all names as artist_preference text
           const artistId = document.getElementById('createRequestArtistId')?.value || null;
+          const artistPreferenceText = createRequestSelectedArtists.map(a => a.name).join(', ') || null;
 
           const requestData = {
             first_name: firstName,
@@ -33390,7 +33365,8 @@
             customer_phone: phone,
             instagram: instagram,
             customer_id: customerId,  // Link to customer
-            artist_id: artistId || null,  // Optional artist assignment
+            artist_id: artistId || null,  // First selected artist as FK
+            artist_preference: artistPreferenceText,  // All selected artist names
             priority: document.getElementById('createPriority').value || 'normal',
             placement: document.getElementById('createPlacement').value || null,
             size: document.getElementById('createSize').value || null,
@@ -38445,12 +38421,13 @@
             last_name: lastName,
             email,
             phone: phone || null,
-            instagram: instagram || null,
-            rank: rank || null
+            instagram: instagram || null
           };
-          
+          // Only include rank if explicitly selected (don't overwrite with null)
+          if (rank) updateData.rank = rank;
+
           console.log('Update data:', updateData);
-          
+
           const { data, error } = await supabase
             .from('customers')
             .update(updateData)
@@ -39037,9 +39014,10 @@
             last_name: lastName,
             email,
             phone: phone || null,
-            instagram: instagram || null,
-            rank: rank || null
+            instagram: instagram || null
           };
+          // Only include rank if explicitly selected (don't overwrite with null)
+          if (rank) updateData.rank = rank;
 
           const { data, error } = await supabase
             .from('customers')
@@ -39175,10 +39153,10 @@
         }
       };
 
-      // Close modals on backdrop click
+      // Close modals on backdrop click (except createRequestModal — protected from accidental close)
       document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
         backdrop.addEventListener('click', (e) => {
-          if (e.target === backdrop) {
+          if (e.target === backdrop && backdrop.id !== 'createRequestModal') {
             backdrop.classList.remove('active');
           }
         });
@@ -40938,18 +40916,7 @@
 
           console.log('✅ State updated successfully:', data);
 
-          // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem ABGESCHLOSSENEN Termin
-          if (selectedState === 'Abgeschlossen' && data.customer_id) {
-            const { error: rankError } = await supabase
-              .from('customers')
-              .update({ rank: 'Bronze' })
-              .eq('id', data.customer_id)
-              .eq('rank', 'Neukunde');  // Nur wenn aktuell "Neukunde"
-
-            if (!rankError) {
-              console.log('🎖️ Customer upgraded from Neukunde to Bronze (first completed appointment)');
-            }
-          }
+          // Rank upgrade handled by DB trigger update_customer_rank() — no JS override needed
 
           // Close modal
           closeEditStateModal();
@@ -41397,18 +41364,7 @@
 
           console.log('✅ Appointment updated:', appointmentId);
 
-          // Rang-Upgrade: "Neukunde" → "Bronze" bei erstem ABGESCHLOSSENEN Termin
-          if (status === 'finished' && updatedAppointment?.customer_id) {
-            const { error: rankError } = await supabase
-              .from('customers')
-              .update({ rank: 'Bronze' })
-              .eq('id', updatedAppointment.customer_id)
-              .eq('rank', 'Neukunde');  // Nur wenn aktuell "Neukunde"
-
-            if (!rankError) {
-              console.log('🎖️ Customer upgraded from Neukunde to Bronze (first completed appointment)');
-            }
-          }
+          // Rank upgrade handled by DB trigger update_customer_rank() — no JS override needed
 
           closeAppointmentEditPopup();
 
