@@ -33265,75 +33265,53 @@
         renderSelectedArtistTags();
       };
 
-      // Create Request Artist Search (searches all artists, no type filter required)
-      document.getElementById('createRequestArtistSearch')?.addEventListener('input', async function() {
-        const query = this.value.trim();
+      // Create Request Artist Search (uses allArtists cache, same pattern as Create Booking)
+      document.getElementById('createRequestArtistSearch')?.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
         const resultsDiv = document.getElementById('createRequestArtistResults');
 
-        if (query.length < 2) {
+        if (!searchTerm) {
           resultsDiv.style.display = 'none';
           return;
         }
 
-        try {
-          const { data: artists, error } = await supabase
-            .from('artists')
-            .select('id, name, email, artist_type')
-            .ilike('name', `%${query}%`)
-            .limit(10);
+        // Filter from in-memory cache (same as Create Booking), exclude already selected
+        const selectedIds = new Set(createRequestSelectedArtists.map(a => a.id));
+        const filteredArtists = allArtists.filter(artist =>
+          artist.active &&
+          !selectedIds.has(artist.id) &&
+          artist.name.toLowerCase().includes(searchTerm)
+        );
 
-          if (error) throw error;
-
-          // Filter out already selected artists
-          const selectedIds = new Set(createRequestSelectedArtists.map(a => a.id));
-          const filtered = (artists || []).filter(a => !selectedIds.has(a.id));
-
-          if (filtered.length > 0) {
-            resultsDiv.innerHTML = filtered.map(artist => `
-              <div data-artist-id="${artist.id}" data-artist-name="${artist.name.replace(/"/g, '&quot;')}"
-                   style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #eaeaea; transition:background 0.2s;"
-                   onmouseover="this.style.background='#f5f5f5'"
-                   onmouseout="this.style.background='#fff'">
-                <div style="font-weight:500; color:#1d1d1f;">${artist.name}</div>
-                <div style="font-size:12px; color:#999;">${artist.artist_type || ''}</div>
-              </div>
-            `).join('');
-            resultsDiv.style.display = 'block';
-          } else {
-            resultsDiv.innerHTML = '<div style="padding:10px 12px; color:#666; font-size:14px;">No artists found</div>';
-            resultsDiv.style.display = 'block';
-          }
-        } catch (err) {
-          console.error('Error searching artists:', err);
+        if (filteredArtists.length === 0) {
+          resultsDiv.innerHTML = '<div style="padding:12px; color:#666; font-size:14px;">No artists found</div>';
+          resultsDiv.style.display = 'block';
+          return;
         }
-      });
 
-      window.selectCreateRequestArtist = function(artistId, artistName) {
-        // Add to multi-select list
-        if (!createRequestSelectedArtists.find(a => a.id === artistId)) {
-          createRequestSelectedArtists.push({ id: artistId, name: artistName });
-          renderSelectedArtistTags();
-        }
-        document.getElementById('createRequestArtistSearch').value = '';
-        document.getElementById('createRequestArtistResults').style.display = 'none';
-      };
+        resultsDiv.innerHTML = filteredArtists.map(artist => `
+          <div class="create-request-artist-result" data-id="${artist.id}" data-name="${artist.name.replace(/"/g, '&quot;')}" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #eaeaea; font-size:14px; transition:background 0.15s;">
+            <div style="font-weight:500; color:#1d1d1f;">${artist.name}</div>
+            ${artist.instagram ? `<div style="font-size:12px; color:#666;">@${artist.instagram}</div>` : ''}
+          </div>
+        `).join('');
+        resultsDiv.style.display = 'block';
 
-      // Use mousedown on results so selection fires before the blur/click-outside hides the dropdown
-      document.getElementById('createRequestArtistResults')?.addEventListener('mousedown', function(e) {
-        const item = e.target.closest('[data-artist-id]');
-        if (item) {
-          e.preventDefault(); // prevent blur on search input
-          selectCreateRequestArtist(item.dataset.artistId, item.dataset.artistName);
-        }
-      });
-
-      // Hide artist results when clicking outside
-      document.addEventListener('click', function(e) {
-        const searchInput = document.getElementById('createRequestArtistSearch');
-        const resultsDiv = document.getElementById('createRequestArtistResults');
-        if (searchInput && resultsDiv && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
-          resultsDiv.style.display = 'none';
-        }
+        // Add hover + click handlers (same pattern as Create Booking)
+        document.querySelectorAll('.create-request-artist-result').forEach(item => {
+          item.addEventListener('mouseenter', function() { this.style.background = '#f5f5f5'; });
+          item.addEventListener('mouseleave', function() { this.style.background = ''; });
+          item.addEventListener('click', function() {
+            const artistId = this.dataset.id;
+            const artistName = this.dataset.name;
+            if (!createRequestSelectedArtists.find(a => a.id === artistId)) {
+              createRequestSelectedArtists.push({ id: artistId, name: artistName });
+              renderSelectedArtistTags();
+            }
+            document.getElementById('createRequestArtistSearch').value = '';
+            resultsDiv.style.display = 'none';
+          });
+        });
       });
 
       // Submit handler for create request form
