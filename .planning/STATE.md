@@ -64,6 +64,26 @@
 
 ---
 
+## Hotfix: Request Assignment User Update (2026-01-30) ✅ COMPLETE
+
+### Changes
+
+1. **Removed Dennis** from hardcoded request assignment fallback lists (both main fallback and error fallback)
+2. **Added Dominic** (`3eef0a0f-e9c8-4d5f-b498-eef6a7c5da53`, role: Management) to both fallback lists
+3. No DB changes needed — Dominic already has "Management" role and will be picked up by the dynamic loader
+
+### Files Changed
+
+- `management-system.html` — Lines 22704-22711 (main fallback) and 22722-22729 (error fallback)
+
+### Commits
+
+```
+23a55ef fix(requests): replace Dennis with Dominic in request assignment fallback lists
+```
+
+---
+
 ## Phase 9: Careers (2026-01-30) ✅ COMPLETE
 
 ### Changes
