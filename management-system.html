@@ -19055,11 +19055,12 @@
               <th style="text-align:left; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(0,0,0,0.1);">Status</th>
               <th style="text-align:left; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(0,0,0,0.1);">Bewerbungen</th>
               <th style="text-align:left; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(0,0,0,0.1);">Erstellt</th>
+              <th style="text-align:left; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(0,0,0,0.1);">Bewerbungen</th>
               <th style="text-align:right; padding:12px 16px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(0,0,0,0.1);">Aktionen</th>
             </tr>
           </thead>
           <tbody id="jobPostingsTableBody">
-            <tr><td colspan="7" style="text-align:center; padding:40px; color:#86868b;">Laden...</td></tr>
+            <tr><td colspan="8" style="text-align:center; padding:40px; color:#86868b;">Laden...</td></tr>
           </tbody>
         </table>
       </div>
@@ -19106,6 +19107,19 @@
         <button onclick="window.closeApplicationDetail()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#86868b;">&times;</button>
       </div>
       <div id="applicationDetailContent"></div>
+    </div>
+
+    <!-- Bewerbungen Popup Modal -->
+    <div id="bewerbungenPopupModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+      <div style="background:white; border-radius:16px; max-width:900px; width:95%; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="padding:24px; border-bottom:1px solid rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:white; border-radius:16px 16px 0 0; z-index:1;">
+          <h3 style="margin:0; font-size:20px; font-weight:600;" id="bewerbungenPopupTitle">Bewerbungen</h3>
+          <button onclick="window.closeBewerbungenPopup()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#86868b;">&times;</button>
+        </div>
+        <div style="padding:24px;" id="bewerbungenPopupContent">
+          <p style="color:#86868b; text-align:center; padding:24px;">Laden...</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -66996,7 +67010,7 @@
       if (!tbody) return;
 
       if (!postings || postings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#86868b;">Keine Stellenanzeigen vorhanden</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:#86868b;">Keine Stellenanzeigen vorhanden</td></tr>';
         return;
       }
 
@@ -67017,6 +67031,12 @@
           <td style="padding:14px 16px;">${statusBadge}</td>
           <td style="padding:14px 16px;">${appBadge}</td>
           <td style="padding:14px 16px; font-size:13px; color:#86868b;">${date}</td>
+          <td style="padding:14px 16px;">
+            <button onclick="event.stopPropagation(); window.openBewerbungenPopup('${p.id}', '${(p.title || '').replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; gap:4px; background:none; border:1px solid rgba(0,113,227,0.3); border-radius:6px; cursor:pointer; padding:5px 10px; color:#0071e3; font-size:12px; font-family:inherit; font-weight:500;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Bewerbungen
+            </button>
+          </td>
           <td style="padding:14px 16px; text-align:right;">
             <button onclick="event.stopPropagation(); window.openEditJobPostingModal('${p.id}')" style="background:none; border:none; cursor:pointer; padding:6px; color:#86868b;" title="Bearbeiten">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -67105,6 +67125,86 @@
           </td>
         </tr>`;
       }).join('');
+    };
+
+    // Bewerbungen Popup
+    window.openBewerbungenPopup = async function(postingId, title) {
+      const modal = document.getElementById('bewerbungenPopupModal');
+      document.getElementById('bewerbungenPopupTitle').textContent = 'Bewerbungen – ' + (title || '');
+      document.getElementById('bewerbungenPopupContent').innerHTML = '<p style="color:#86868b; text-align:center; padding:24px;">Laden...</p>';
+      modal.style.display = 'flex';
+
+      try {
+        const { data, error } = await supabase
+          .from('job_applications')
+          .select('*')
+          .eq('job_posting_id', postingId)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        const apps = data || [];
+
+        if (apps.length === 0) {
+          document.getElementById('bewerbungenPopupContent').innerHTML = '<p style="color:#86868b; text-align:center; padding:24px;">Keine Bewerbungen vorhanden.</p>';
+          return;
+        }
+
+        const statusLabels = { new: 'Neu', reviewed: 'Gesehen', interview: 'Interview', rejected: 'Abgelehnt', hired: 'Eingestellt' };
+        const statusColors = { new: '#0071e3', reviewed: '#ff9500', interview: '#af52de', rejected: '#ff3b30', hired: '#34c759' };
+
+        let html = '<table style="width:100%; border-collapse:collapse;"><thead><tr>';
+        html += '<th style="text-align:left; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">Name</th>';
+        html += '<th style="text-align:left; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">E-Mail</th>';
+        html += '<th style="text-align:left; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">Telefon</th>';
+        html += '<th style="text-align:left; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">CV</th>';
+        html += '<th style="text-align:left; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">Anschreiben</th>';
+        html += '<th style="text-align:left; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">Status</th>';
+        html += '<th style="text-align:left; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">Datum</th>';
+        html += '<th style="text-align:right; padding:10px 12px; font-size:12px; font-weight:600; color:#86868b; text-transform:uppercase; border-bottom:1px solid rgba(0,0,0,0.1);">Status ändern</th>';
+        html += '</tr></thead><tbody>';
+
+        apps.forEach(a => {
+          const status = a.status || 'new';
+          const color = statusColors[status] || '#86868b';
+          const label = statusLabels[status] || status;
+          const date = a.created_at ? new Date(a.created_at).toLocaleDateString('de-DE') : '-';
+          const cvLink = a.cv_url
+            ? `<a href="${a.cv_url}" target="_blank" style="color:#0071e3; text-decoration:none; font-size:13px;">Download</a>`
+            : (a.cv_text ? '<span style="color:#34c759; font-size:13px;">Text</span>' : '<span style="color:#86868b;">-</span>');
+          const clLink = a.cover_letter_url
+            ? `<a href="${a.cover_letter_url}" target="_blank" style="color:#0071e3; text-decoration:none; font-size:13px;">Download</a>`
+            : (a.cover_letter_text ? '<span style="color:#34c759; font-size:13px;">Text</span>' : '<span style="color:#86868b;">-</span>');
+
+          html += `<tr style="border-bottom:1px solid rgba(0,0,0,0.05); cursor:pointer;" onclick="window.closeBewerbungenPopup(); window.showApplicationsView('${postingId}', '${(title||'').replace(/'/g,"\\'")}'); setTimeout(()=>window.showApplicationDetail('${a.id}'),300);">
+            <td style="padding:12px; font-size:14px; font-weight:500;">${a.first_name || ''} ${a.last_name || ''}</td>
+            <td style="padding:12px; font-size:13px;">${a.email || '-'}</td>
+            <td style="padding:12px; font-size:13px; color:#666;">${a.phone || '-'}</td>
+            <td style="padding:12px;">${cvLink}</td>
+            <td style="padding:12px;">${clLink}</td>
+            <td style="padding:12px;"><span style="display:inline-block; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:500; background:${color}1a; color:${color};">${label}</span></td>
+            <td style="padding:12px; font-size:13px; color:#86868b;">${date}</td>
+            <td style="padding:12px; text-align:right;">
+              <select onclick="event.stopPropagation();" onchange="event.stopPropagation(); window.updateApplicationStatus('${a.id}', this.value); this.closest('tr').querySelector('.popup-status-badge').style.color=({'new':'#0071e3','reviewed':'#ff9500','interview':'#af52de','rejected':'#ff3b30','hired':'#34c759'}[this.value]||'#86868b');" style="padding:5px 8px; border:1px solid rgba(0,0,0,0.1); border-radius:6px; font-size:12px; font-family:inherit; cursor:pointer;">
+                <option value="new" ${status === 'new' ? 'selected' : ''}>Neu</option>
+                <option value="reviewed" ${status === 'reviewed' ? 'selected' : ''}>Gesehen</option>
+                <option value="interview" ${status === 'interview' ? 'selected' : ''}>Interview</option>
+                <option value="hired" ${status === 'hired' ? 'selected' : ''}>Eingestellt</option>
+                <option value="rejected" ${status === 'rejected' ? 'selected' : ''}>Abgelehnt</option>
+              </select>
+            </td>
+          </tr>`;
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('bewerbungenPopupContent').innerHTML = html;
+      } catch (err) {
+        console.log('Error loading popup applications:', err);
+        document.getElementById('bewerbungenPopupContent').innerHTML = '<p style="color:#ff3b30; text-align:center; padding:24px;">Fehler beim Laden.</p>';
+      }
+    };
+
+    window.closeBewerbungenPopup = function() {
+      document.getElementById('bewerbungenPopupModal').style.display = 'none';
     };
 
     window.showApplicationDetail = async function(applicationId) {

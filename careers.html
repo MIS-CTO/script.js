@@ -461,7 +461,7 @@
   <div class="container">
     <!-- Listings View -->
     <div class="listings-view" id="listingsView">
-      <div class="page-title">Available Positions</div>
+      <div class="page-title">Offene Stellen</div>
       <div class="job-list" id="jobList">
         <div class="loading">Laden...</div>
       </div>
@@ -470,12 +470,12 @@
     <!-- Detail View (job details + application form) -->
     <div class="detail-view" id="detailView">
       <button class="back-link" onclick="showListings()">
-        <span class="back-arrow">&larr;</span> Back to Jobs
+        <span class="back-arrow">&larr;</span> Zurück zu allen Stellen
       </button>
 
       <div class="detail-header">
         <h1 class="detail-title" id="detailTitle"></h1>
-        <button class="detail-apply-btn" onclick="scrollToForm()">Apply</button>
+        <button class="detail-apply-btn" onclick="scrollToForm()">Bewerben</button>
       </div>
       <div class="detail-meta" id="detailMeta"></div>
 
@@ -484,7 +484,7 @@
       <!-- Application Form -->
       <hr class="form-separator">
       <div id="formArea">
-        <h2 class="form-heading">Apply for this Position</h2>
+        <h2 class="form-heading">Jetzt bewerben</h2>
 
         <form id="applicationForm" onsubmit="submitApplication(event)">
           <input type="hidden" id="formJobId">
@@ -512,7 +512,7 @@
 
           <!-- CV Section -->
           <div class="file-section">
-            <div class="file-label">Lebenslauf / CV</div>
+            <div class="file-label">Lebenslauf / CV *</div>
             <div class="file-options">
               <button type="button" class="file-option-btn" id="cvAttachBtn" onclick="toggleCvMode('file')">Datei anhängen</button>
               <button type="button" class="file-option-btn" id="cvManualBtn" onclick="toggleCvMode('text')">Manuell eingeben</button>
@@ -527,7 +527,7 @@
 
           <!-- Cover Letter Section -->
           <div class="file-section">
-            <div class="file-label">Anschreiben</div>
+            <div class="file-label">Anschreiben *</div>
             <div class="file-options">
               <button type="button" class="file-option-btn" id="clAttachBtn" onclick="toggleClMode('file')">Datei anhängen</button>
               <button type="button" class="file-option-btn" id="clManualBtn" onclick="toggleClMode('text')">Manuell eingeben</button>
@@ -710,6 +710,23 @@
     async function submitApplication(e) {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
+
+      const cvFile = document.getElementById('cvFileInput').files[0];
+      const cvTextVal = document.getElementById('cvText').value.trim();
+      const clFile = document.getElementById('clFileInput').files[0];
+      const clTextVal = document.getElementById('clText').value.trim();
+
+      // Validate CV required
+      if (!cvFile && !cvTextVal) {
+        alert('Bitte füge deinen Lebenslauf hinzu (Datei oder Text).');
+        return;
+      }
+      // Validate Cover Letter required
+      if (!clFile && !clTextVal) {
+        alert('Bitte füge dein Anschreiben hinzu (Datei oder Text).');
+        return;
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'Wird gesendet...';
 
@@ -718,14 +735,13 @@
       const lastName = document.getElementById('appLastName').value.trim();
       const email = document.getElementById('appEmail').value.trim();
       const phone = document.getElementById('appPhone').value.trim();
-      const cvTextVal = document.getElementById('cvText').value.trim();
-      const clTextVal = document.getElementById('clText').value.trim();
+      const posting = allPostings.find(p => p.id === postingId);
+      const jobTitle = posting ? posting.title : '';
 
       try {
         let cvUrl = null, cvFilename = null;
         let clUrl = null, clFilename = null;
 
-        const cvFile = document.getElementById('cvFileInput').files[0];
         if (cvFile) {
           const path = `${postingId}/${Date.now()}_cv_${cvFile.name}`;
           const { error: uploadErr } = await sb.storage
@@ -737,7 +753,6 @@
           cvFilename = cvFile.name;
         }
 
-        const clFile = document.getElementById('clFileInput').files[0];
         if (clFile) {
           const path = `${postingId}/${Date.now()}_cl_${clFile.name}`;
           const { error: uploadErr } = await sb.storage
@@ -764,6 +779,13 @@
         }]);
 
         if (error) throw error;
+
+        // Send thank-you email via edge function (fire and forget)
+        fetch(SUPABASE_URL + '/functions/v1/send-application-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+          body: JSON.stringify({ applicant_email: email, applicant_name: firstName, job_title: jobTitle })
+        }).catch(() => {});
 
         document.getElementById('applicationForm').style.display = 'none';
         document.getElementById('successMessage').style.display = 'block';
