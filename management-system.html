@@ -25634,6 +25634,15 @@
           }
         }
 
+        // Prevent V2 users from accessing analytics and careers via click
+        if (typeof hasV2View === 'function' && hasV2View()) {
+          const tabName = tab.id.replace('tab-', '');
+          if (['analytics', 'careers'].includes(tabName)) {
+            console.log('🚫 V2 user blocked from accessing:', tabName);
+            return;
+          }
+        }
+
         showSection(tab);
       }));
 
@@ -44881,8 +44890,13 @@
       return currentUserViewPermission === 'V1';
     }
 
+    function hasV2View() {
+      return currentUserViewPermission === 'V2';
+    }
+
     // Make it globally available
     window.hasRestrictedView = hasRestrictedView;
+    window.hasV2View = hasV2View;
 
     /**
      * Lädt die Artist-ID für den aktuellen User
@@ -44908,7 +44922,21 @@
         if (error || !artist) {
           console.log('ℹ️ No artist record for email:', currentUser.email);
           currentUserArtistId = null;
-          currentUserViewPermission = null;
+          // Check profiles table for view_permission (for non-artist users like V2)
+          if (currentUser?.id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('view_permission')
+              .eq('id', currentUser.id)
+              .single();
+            currentUserViewPermission = profile?.view_permission || null;
+            if (currentUserViewPermission) {
+              console.log('🔑 View permission from profiles:', currentUserViewPermission);
+              localStorage.setItem('userViewPermission', currentUserViewPermission);
+            }
+          } else {
+            currentUserViewPermission = null;
+          }
           return;
         }
 
@@ -44936,13 +44964,28 @@
      * V1 Users haben zusätzliche Einschränkungen (keine Payment-Infos, keine Edit-Buttons, nur eigene Daten)
      */
     function applyArtistUserRestrictions() {
-      // Check if V1 restricted view
+      // Check if V1 or V2 restricted view
       const isV1 = hasRestrictedView();
+      const isV2 = hasV2View();
 
-      if (!isArtistUser() && !isV1) {
-        // Nicht-Artist-User ohne V1: Alle Tabs anzeigen, keine Einschränkungen
+      if (!isArtistUser() && !isV1 && !isV2) {
+        // Nicht-Artist-User ohne V-Level: Alle Tabs anzeigen, keine Einschränkungen
         showAllNavigationTabs();
         document.body.classList.remove('view-restricted-v1');
+        return;
+      }
+
+      // V2: Only hide Analytics and Careers tabs, no other restrictions
+      if (isV2) {
+        console.log('🔒 V2 View - Hiding Analytics and Careers tabs');
+        const v2HiddenTabs = ['analytics', 'careers'];
+        const allTabs = document.querySelectorAll('nav a[id^="tab-"]');
+        allTabs.forEach(tab => {
+          const tabName = tab.id.replace('tab-', '');
+          if (v2HiddenTabs.includes(tabName)) {
+            tab.style.display = 'none';
+          }
+        });
         return;
       }
 
